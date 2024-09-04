@@ -35,6 +35,10 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     faExclamationTriangle = faExclamationTriangle;
     protected readonly PROFILE_LOCALCI = PROFILE_LOCALCI;
     protected readonly PROFILE_AEOLUS = PROFILE_AEOLUS;
+    readonly DOCKER_REGISTRY_LINKS = {
+        ghcrLink: 'https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry',
+        dockerhubLink: 'https://hub.docker.com/',
+    };
 
     ngAfterViewInit() {
         this.fieldSubscriptions.push(this.selectLanguageField.valueChanges?.subscribe(() => setTimeout(() => this.calculateFormValid())));

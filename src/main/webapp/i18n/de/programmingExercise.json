@@ -648,7 +648,7 @@
             },
             "otherLanguageHints": {
                 "title": "Führe folgende Schritte aus, um eine andere Sprache zu benutzen:",
-                "setImage": "Setze ein Docker Image mit installierten Abhängigkeiten.",
+                "setImage": "Lege ein angepasstes Docker Image mit benötigten Abhängigkeiten fest (erstelle möglicherweise ein eigenes und lade es in die <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> oder auf den <a href=\"{{dockerhubLink}}\">Docker Hub</a> hoch).",
                 "buildScript": {
                     "title": "Passe das Build Skript an:",
                     "dependencies": "Optional: Installiere aufgabenspezifische Abhängigkeiten.",
