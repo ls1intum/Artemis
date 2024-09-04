@@ -1,6 +1,6 @@
 import { AfterViewChecked, AfterViewInit, Component, EventEmitter, Input, OnDestroy, ViewChild } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
 import { NgModel } from '@angular/forms';
@@ -32,7 +32,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
 
     fieldSubscriptions: (Subscription | undefined)[] = [];
 
-    faQuestionCircle = faQuestionCircle;
+    faExclamationTriangle = faExclamationTriangle;
     protected readonly PROFILE_LOCALCI = PROFILE_LOCALCI;
     protected readonly PROFILE_AEOLUS = PROFILE_AEOLUS;
 

@@ -60,8 +60,11 @@
     }
     @if (programmingExercise.programmingLanguage === ProgrammingLanguage.EMPTY) {
         <div>
-            <p jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.title" class="mb-0"></p>
-            <ul>
+            <p>
+                <fa-icon [icon]="faExclamationTriangle" size="2xl" class="text-warning"></fa-icon>
+                <span jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.title"></span>
+            </p>
+            <ol>
                 <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.setImage"></li>
                 <li>
                     <p jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.buildScript.title" class="mb-0"></p>
@@ -74,7 +77,7 @@
                 <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.pushExercise" [translateValues]="{ checkoutDirectory: './assignment/' }"></li>
                 <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.pushSolution"></li>
                 <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.pushTest" [translateValues]="{ checkoutDirectory: './' }"></li>
-            </ul>
+            </ol>
         </div>
     }
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE) {
