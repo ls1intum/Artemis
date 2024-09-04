@@ -112,6 +112,7 @@
             [isExamMode]="programmingExerciseCreationConfig.isExamMode"
             [readOnly]="false"
             [importOptions]="importOptions"
+            [isSimpleMode]="isSimpleMode()"
         />
     </div>
     @if (programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {

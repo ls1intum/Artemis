@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, OnInit, QueryList, SimpleChanges, ViewChildren, input } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -20,15 +20,19 @@ import { ImportOptions } from 'app/types/programming-exercises';
     styleUrls: ['./programming-exercise-test-schedule-picker.scss'],
 })
 export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnDestroy, OnInit, OnChanges {
+    protected readonly assessmentType = AssessmentType;
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly faCogs = faCogs;
+    protected readonly faUserCheck = faUserCheck;
+    protected readonly faUserSlash = faUserSlash;
+
     @Input() exercise: ProgrammingExercise;
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
     @Input() importOptions?: ImportOptions;
+    isSimpleMode = input<boolean>(false);
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
-
-    readonly assessmentType = AssessmentType;
-    readonly IncludedInOverallScore = IncludedInOverallScore;
 
     formValid: boolean;
     formEmpty: boolean;
@@ -36,11 +40,6 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     inputfieldSubscriptions: (Subscription | undefined)[] = [];
     datePickerChildrenSubscription?: Subscription;
-
-    // Icons
-    faCogs = faCogs;
-    faUserCheck = faUserCheck;
-    faUserSlash = faUserSlash;
 
     isAthenaEnabled$: Observable<boolean> | undefined;
 
@@ -108,7 +107,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     calculateFormStatus() {
         const datePickers = this.datePickerComponents.toArray();
-        this.formValid = every(datePickers, (picker) => picker.dateInput.valid);
+        this.formValid = every(datePickers, (picker) => picker?.dateInput?.valid);
         this.formEmpty = !every(datePickers, (picker) => picker.selectedDate);
         this.formValidChanges.next(this.formValid);
     }

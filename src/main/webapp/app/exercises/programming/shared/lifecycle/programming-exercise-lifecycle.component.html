@@ -11,7 +11,7 @@
                     tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
                 />
             }
-            @if (!isExamMode) {
+            @if (!isExamMode && !isSimpleMode()) {
                 <jhi-programming-exercise-test-schedule-date-picker
                     [(ngModel)]="exercise.startDate"
                     (ngModelChange)="updateStartDate($event)"
@@ -47,7 +47,7 @@
                     id="programming-exercise-due-date-picker"
                 />
             }
-            @if (isExamMode || exercise.dueDate) {
+            @if (isExamMode || (exercise.dueDate && !isSimpleMode())) {
                 <jhi-programming-exercise-test-schedule-date-picker
                     class="test-schedule-date px-1"
                     [(ngModel)]="exercise.buildAndTestStudentSubmissionsAfterDueDate"
@@ -99,7 +99,7 @@
                     }
                 </div>
             }
-            @if (!isExamMode) {
+            @if (!isExamMode && !isSimpleMode()) {
                 <div>
                     <jhi-programming-exercise-test-schedule-date-picker
                         [(ngModel)]="exercise.exampleSolutionPublicationDate"
