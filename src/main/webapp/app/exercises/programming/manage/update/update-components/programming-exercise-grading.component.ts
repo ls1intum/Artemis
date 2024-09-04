@@ -18,9 +18,9 @@ import { ImportOptions } from 'app/types/programming-exercises';
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly AssessmentType = AssessmentType;
-    readonly faQuestionCircle = faQuestionCircle;
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly faQuestionCircle = faQuestionCircle;
 
     private translationBasePath = 'artemisApp.programmingExercise.wizardMode.gradingLabels.';
 

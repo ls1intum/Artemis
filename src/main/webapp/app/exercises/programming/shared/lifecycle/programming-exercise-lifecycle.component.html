@@ -116,7 +116,7 @@
             }
         </div>
     </div>
-    @if (!readOnly) {
+    @if (!readOnly && !isSimpleMode()) {
         <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
         @if (isExamMode || exercise.course?.complaintsEnabled) {
             <div class="form-check">
