@@ -1,0 +1,31 @@
+<div class="row justify-content-center">
+    <div class="col-12">
+        <div>
+            <h4>
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
+                @if (attachment) {
+                    {{ attachment.id }}: {{ attachment.name }}
+                } @else if (attachmentUnit) {
+                    {{ attachmentUnit.id }}: {{ attachmentUnit.name }}
+                }
+            </h4>
+            <div class="row">
+                <div class="pdf-container" #pdfContainer>
+                    @if (isEnlargedView) {
+                        <div class="enlarged-container" (click)="closeIfOutside($event)">
+                            <canvas #enlargedCanvas></canvas>
+                            <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
+                            @if (currentPage !== 1) {
+                                <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)">←</button>
+                            }
+                            @if (currentPage !== totalPages) {
+                                <button class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)">→</button>
+                            }
+                            <div class="page-number-display">{{ currentPage }}</div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
