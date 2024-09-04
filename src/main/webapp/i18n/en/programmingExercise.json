@@ -7,9 +7,8 @@
                 "editLabel": "Edit Programming Exercise",
                 "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
-                "switchToGuidedModeLabel": "Switch to guided mode",
-                "switchToTraditionalModeLabel": "Switch to normal mode",
-                "nextStepLabel": "Next"
+                "switchToSimpleMode": "Switch to simple mode",
+                "switchToAdvancedMode": "Switch to advanced mode"
             },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",

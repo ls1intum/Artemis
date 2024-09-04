@@ -7,9 +7,8 @@
                 "editLabel": "Programmieraufgabe bearbeiten",
                 "importLabel": "Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
-                "switchToGuidedModeLabel": "Zum geführten Modus wechseln",
-                "switchToTraditionalModeLabel": "Zum normalen Modus wechseln",
-                "nextStepLabel": "Weiter"
+                "switchToSimpleMode": "Zum einfachen Modus wechseln",
+                "switchToAdvancedMode": "Zum erweiterten Modus wechseln"
             },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",

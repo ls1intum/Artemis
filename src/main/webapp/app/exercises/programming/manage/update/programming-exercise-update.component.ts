@@ -25,7 +25,7 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faExclamationCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faHandshakeAngle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -72,6 +72,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     protected readonly invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
     // length of < 3 is also accepted in order to provide more accurate validation error messages
     protected readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
+    protected readonly faHandShakeAngle = faHandshakeAngle;
 
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) exerciseDifficultyComponent?: ProgrammingExerciseDifficultyComponent;
@@ -801,6 +802,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (!this.programmingExercise.staticCodeAnalysisEnabled) {
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
         }
+    }
+
+    protected switchEditMode() {
+        this.isSimpleMode.set(!this.isSimpleMode());
     }
 
     /**
