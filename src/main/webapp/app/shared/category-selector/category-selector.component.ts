@@ -17,33 +17,26 @@ const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '
     encapsulation: ViewEncapsulation.None,
 })
 export class CategorySelectorComponent implements OnChanges {
-    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
+    protected readonly faTimes = faTimes;
+    protected readonly separatorKeysCodes = [ENTER, COMMA, TAB];
+    private readonly COLOR_SELECTOR_HEIGHT = 150;
 
-    /**
-     * the selected categories, which can be manipulated by the user in the UI
-     */
+    /** the selected categories, which can be manipulated by the user in the UI */
     @Input() categories: ExerciseCategory[];
-
-    /**
-     * the existing categories used for auto-completion, might include duplicates
-     */
+    /** the existing categories used for auto-completion, might include duplicates */
     @Input() existingCategories: ExerciseCategory[];
 
-    @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
-
+    @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     @ViewChild('categoryInput') categoryInput: ElementRef<HTMLInputElement>;
-
     @ViewChild(MatAutocompleteTrigger) autocompleteTrigger: MatAutocompleteTrigger;
+
+    @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
 
     categoryColors = DEFAULT_COLORS;
     selectedCategory: ExerciseCategory;
     uniqueCategoriesForAutocomplete: Observable<string[]>;
-    private readonly COLOR_SELECTOR_HEIGHT = 150;
 
-    separatorKeysCodes = [ENTER, COMMA, TAB];
     categoryCtrl = new FormControl<string | undefined>(undefined);
-
-    readonly faTimes = faTimes;
 
     ngOnChanges() {
         this.uniqueCategoriesForAutocomplete = this.categoryCtrl.valueChanges.pipe(

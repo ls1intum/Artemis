@@ -27,13 +27,16 @@
                 [isSimpleMode]="isSimpleMode()"
             />
             <hr class="mb-5" />
-            <jhi-programming-exercise-mode
-                [programmingExercise]="programmingExercise"
-                [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
-                [isSimpleMode]="isSimpleMode()"
-                (triggerValidation)="calculateFormStatusSections()"
-            />
-            <hr class="mb-5" />
+            @if (!isSimpleMode()) {
+                <!-- The mode section would only contain the difficulty in the simple mode,
+                in the simple mode the difficulty will be part of the general section -->
+                <jhi-programming-exercise-mode
+                    [programmingExercise]="programmingExercise"
+                    [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                    (triggerValidation)="calculateFormStatusSections()"
+                />
+                <hr class="mb-5" />
+            }
             <jhi-programming-exercise-language
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"

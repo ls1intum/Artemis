@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 
@@ -11,6 +11,4 @@ import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-p
 })
 export class ProgrammingExerciseDifficultyComponent {
     @Input({ required: true }) programmingExercise: ProgrammingExercise;
-
-    @Output() triggerValidation = new EventEmitter<void>();
 }

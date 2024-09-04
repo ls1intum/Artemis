@@ -191,4 +191,7 @@
             />
         </div>
     }
+    @if (isSimpleMode()) {
+        <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise" />
+    }
 </section>
