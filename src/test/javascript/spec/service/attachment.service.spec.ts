@@ -145,4 +145,23 @@ describe('Attachment Service', () => {
             expect(results).toEqual(elemDefault);
         });
     });
+
+    describe('getAttachmentFile', () => {
+        it('should retrieve a file as Blob for a given course and attachment ID', () => {
+            const courseId = 1;
+            const attachmentId = 100;
+            const expectedBlob = new Blob(['dummy content'], { type: 'application/pdf' });
+
+            service.getAttachmentFile(courseId, attachmentId).subscribe((resp) => {
+                expect(resp).toEqual(expectedBlob);
+            });
+
+            const req = httpMock.expectOne({
+                url: `api/files/courses/${courseId}/attachments/${attachmentId}`,
+                method: 'GET',
+            });
+            expect(req.request.responseType).toBe('blob');
+            req.flush(expectedBlob);
+        });
+    });
 });

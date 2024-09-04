@@ -20,6 +20,7 @@ import { of, take, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { LectureService } from 'app/lecture/lecture.service';
+import { RouterModule } from '@angular/router';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
@@ -84,7 +85,7 @@ describe('LectureAttachmentsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), RouterModule],
             declarations: [
                 LectureAttachmentsComponent,
                 MockComponent(FormDateTimePickerComponent),
@@ -154,7 +155,7 @@ describe('LectureAttachmentsComponent', () => {
         fixture.detectChanges();
         tick();
         expect(comp.attachments).toHaveLength(3);
-        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
+        expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledTimes(2);
     }));
 
     it('should not accept too large file', fakeAsync(() => {
@@ -379,4 +380,21 @@ describe('LectureAttachmentsComponent', () => {
         expect(comp.attachmentToBeCreated.link).toBe(myBlob1.name);
         expect(attachmentServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
+
+    describe('isViewButtonAvailable', () => {
+        it('should return true if the attachment link ends with .pdf', () => {
+            const attachment = { id: 1, link: 'example.pdf', attachmentType: 'FILE' } as Attachment;
+            expect(comp.isViewButtonAvailable(attachment.link!)).toBeTrue();
+        });
+
+        it('should return false if the attachment link does not end with .pdf', () => {
+            const attachment = { id: 2, link: 'example.txt', attachmentType: 'FILE' } as Attachment;
+            expect(comp.isViewButtonAvailable(attachment.link!)).toBeFalse();
+        });
+
+        it.each([['document.docx'], ['spreadsheet.xlsx'], ['presentation.pptx'], ['image.jpeg']])('should return false for common file extension %s', (link) => {
+            const attachment = { link };
+            expect(comp.isViewButtonAvailable(attachment.link)).toBeFalse();
+        });
+    });
 });
