@@ -10,10 +10,10 @@
             <jhi-difficulty-picker [exercise]="programmingExercise" />
         </div>
     </div>
-    <div class="form-group">
-        <jhi-team-config-form-group class="form-element" [exercise]="programmingExercise" [isImport]="programmingExerciseCreationConfig.isImportFromExistingExercise" />
-    </div>
     @if (!isSimpleMode()) {
+        <div class="form-group">
+            <jhi-team-config-form-group class="form-element" [exercise]="programmingExercise" [isImport]="programmingExerciseCreationConfig.isImportFromExistingExercise" />
+        </div>
         <div class="form-group">
             <div class="form-check">
                 <label [class]="!programmingExerciseCreationConfig.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOfflineIde">
