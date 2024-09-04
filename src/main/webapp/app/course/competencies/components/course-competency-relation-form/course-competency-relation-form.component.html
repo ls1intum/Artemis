@@ -1,0 +1,42 @@
+<div class="course-competency-relation-form-container row m-0 p-3 align-items-end">
+    <div class="form-group col m-0 ps-0">
+        <label for="head" jhiTranslate="artemisApp.competency.relation.headCompetency"></label>
+        <select class="form-select mt-1" id="head" name="head" [ngModel]="headCompetencyId()" (change)="selectHeadCourseCompetency($event)">
+            <option [value]="undefined" disabled>Select head course competency</option>
+            @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
+                <option [value]="courseCompetency.id">{{ courseCompetency.title }}</option>
+            }
+        </select>
+    </div>
+    <div class="form-group col m-0">
+        <label for="type" jhiTranslate="artemisApp.competency.relation.relationType"></label>
+        <select class="form-select mt-1" id="type" name="type" [(ngModel)]="relationType">
+            <option [value]="undefined" disabled>Select relation type</option>
+            @for (relationType of competencyRelationType | keyvalue; track relationType) {
+                <option
+                    [value]="relationType.value"
+                    [jhiTranslate]="'artemisApp.competency.relation.type.' + relationType.value"
+                    [title]="'artemisApp.competency.relation.typeExplanation.' + relationType.value | artemisTranslate"
+                ></option>
+            }
+        </select>
+    </div>
+    <div class="form-group col m-0">
+        <label for="tail" jhiTranslate="artemisApp.competency.relation.tailCompetency"></label>
+        <select class="form-select mt-1" id="tail" name="tail" [(ngModel)]="tailCompetencyId">
+            <option [value]="undefined" disabled>Select tail course competency</option>
+            @for (courseCompetency of selectableTailCourseCompetencies(); track courseCompetency.id) {
+                <option [value]="courseCompetency.id">{{ courseCompetency.title }}</option>
+            }
+        </select>
+    </div>
+    <div class="col-2 pe-0 d-flex justify-content-end">
+        @if (relationTypeAlreadyExists()) {
+            <button (click)="deleteRelation()" class="btn btn-danger">Delete relation</button>
+        } @else if (relationAlreadyExists()) {
+            <button class="btn btn-info">Update relation</button>
+        } @else {
+            <button (click)="createRelation()" [disabled]="!tailCompetencyId() || !headCompetencyId() || !relationType()" class="btn btn-primary">Create relation</button>
+        }
+    </div>
+</div>

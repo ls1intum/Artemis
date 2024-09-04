@@ -25,6 +25,14 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
         return await this.delete<void>(`${this.getBasePath(courseId)}/${courseCompetencyId}`);
     }
 
+    async createCourseCompetencyRelation(courseId: number, courseCompetencyRelationDto: CompetencyRelationDTO): Promise<CompetencyRelationDTO> {
+        return await this.post<CompetencyRelationDTO>(`${this.getBasePath(courseId)}/relations`, courseCompetencyRelationDto);
+    }
+
+    async deleteCourseCompetencyRelation(courseId: number, relationId: number): Promise<void> {
+        return await this.delete<void>(`${this.getBasePath(courseId)}/relations/${relationId}`);
+    }
+
     async importAll(courseId: number, sourceCourseId: number, importRelations: boolean): Promise<CompetencyWithTailRelationDTO[]> {
         const params = new HttpParams().set('importRelations', importRelations);
         return await this.post<CompetencyWithTailRelationDTO[]>(`${this.getBasePath(courseId)}/import-all/${sourceCourseId}`, null, {
