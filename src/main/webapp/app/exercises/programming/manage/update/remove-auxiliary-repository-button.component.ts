@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 
 @Component({

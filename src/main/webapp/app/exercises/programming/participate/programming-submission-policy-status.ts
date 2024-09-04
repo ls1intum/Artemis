@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
 @Component({

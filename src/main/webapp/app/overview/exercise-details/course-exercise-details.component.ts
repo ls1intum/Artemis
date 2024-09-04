@@ -16,7 +16,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { ExampleSolutionInfo, ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';

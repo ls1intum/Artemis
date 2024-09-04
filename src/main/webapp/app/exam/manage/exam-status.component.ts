@@ -1,8 +1,8 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
-import { ExamChecklist } from 'app/entities/exam-checklist.model';
+import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
