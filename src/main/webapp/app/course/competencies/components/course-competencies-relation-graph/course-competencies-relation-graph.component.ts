@@ -1,4 +1,4 @@
-import { Component, computed, effect, input, model, signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
@@ -22,6 +22,9 @@ export class CourseCompetenciesRelationGraphComponent {
     readonly courseCompetencies = input.required<CourseCompetency[]>();
     readonly relations = model.required<CompetencyRelationDTO[]>();
 
+    readonly onCourseCompetencySelection = output<number>();
+    readonly onRelationSelection = output<number>();
+
     readonly update$ = new Subject<boolean>();
     readonly center$ = new Subject<boolean>();
     readonly zoomToFit$ = new Subject<NgxGraphZoomOptions>();
@@ -31,8 +34,8 @@ export class CourseCompetenciesRelationGraphComponent {
     readonly edges = computed<Edge[]>(() => {
         return this.relations().map((relation) => ({
             id: `edge-${relation.id}`,
-            source: `${relation.tailCompetencyId}`,
-            target: `${relation.headCompetencyId}`,
+            source: `${relation.headCompetencyId}`,
+            target: `${relation.tailCompetencyId}`,
             label: relation.relationType,
             data: {
                 id: relation.id,
@@ -49,6 +52,7 @@ export class CourseCompetenciesRelationGraphComponent {
                             id: courseCompetency.id!.toString(),
                             label: courseCompetency.title,
                             data: {
+                                id: courseCompetency.id,
                                 type: courseCompetency.type,
                             },
                         }),

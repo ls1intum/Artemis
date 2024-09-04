@@ -1,4 +1,4 @@
-<div class="competency-graph-modal">
+<div class="course-competencies-graph-modal">
     <div class="col p-3">
         <div class="row m-0">
             <span class="col p-0 h5 m-0 align-self-center">Course competency relations</span>
@@ -6,7 +6,7 @@
         </div>
     </div>
     <hr class="m-0" />
-    <div class="competency-graph-modal-body h-100">
+    <div class="course-competencies-graph-modal-body h-100">
         @if (isLoading()) {
             <div class="row justify-content-center m-4">
                 <div class="spinner-border text-primary" role="status">
@@ -14,7 +14,15 @@
                 </div>
             </div>
         } @else {
-            <jhi-course-competencies-relation-graph [(relations)]="relations" [courseCompetencies]="courseCompetencies()" />
+            <div class="p-3">
+                <jhi-course-competency-relation-form [courseId]="courseId()" [(relations)]="relations" [courseCompetencies]="courseCompetencies()" />
+            </div>
+            <jhi-course-competencies-relation-graph
+                [(relations)]="relations"
+                [courseCompetencies]="courseCompetencies()"
+                (onRelationSelection)="selectRelation($event)"
+                (onCourseCompetencySelection)="selectCourseCompetency($event)"
+            />
         }
     </div>
 </div>
