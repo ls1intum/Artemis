@@ -21,9 +21,13 @@
     color: var(--metis-green);
 }
 
+.post-header-author-date {
+    line-height: 1.1;
+}
+
 .post-profile-picture {
-    width: 2rem;
-    height: 2rem;
+    width: 2.15rem;
+    height: 2.15rem;
     font-size: 0.9rem;
     display: inline-flex;
     align-items: center;
