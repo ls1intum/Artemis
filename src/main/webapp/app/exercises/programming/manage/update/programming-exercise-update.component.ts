@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, effect, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -73,6 +73,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // length of < 3 is also accepted in order to provide more accurate validation error messages
     protected readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
     protected readonly faHandShakeAngle = faHandshakeAngle;
+    protected readonly faQuestionCircle = faQuestionCircle;
+    protected readonly faExclamationCircle = faExclamationCircle;
 
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseModeComponent) exerciseDifficultyComponent?: ProgrammingExerciseModeComponent;
@@ -152,10 +154,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     public modePickerOptions?: ModePickerOption<ProjectType>[] = [];
 
-    // Icons
-    faQuestionCircle = faQuestionCircle;
-    faExclamationCircle = faExclamationCircle;
-
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
         private modalService: NgbModal,
@@ -171,7 +169,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private aeolusService: AeolusService,
-    ) {}
+    ) {
+        effect(
+            function updateStatusBarSectionsWhenEditModeChanges() {
+                if (this.isSimpleMode()) {
+                    this.calculateFormStatusSections();
+                }
+            }.bind(this),
+        );
+    }
 
     /**
      * Updates the name of the editedAuxiliaryRepository.
@@ -496,7 +502,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     calculateFormStatusSections() {
-        this.formStatusSections = [
+        const updatedFormStatusSections = [
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.generalInfoStepTitle',
                 valid: this.exerciseInfoComponent?.formValid ?? false,
@@ -516,6 +522,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 empty: this.exerciseGradingComponent?.formEmpty,
             },
         ];
+
+        if (this.isSimpleMode()) {
+            // the mode section would only contain the difficulty in the simple mode,
+            // which is why the difficulty is moved to the general section instead
+            const MODE_SECTION_INDEX = 1;
+            updatedFormStatusSections.splice(MODE_SECTION_INDEX, MODE_SECTION_INDEX);
+        }
+
+        this.formStatusSections = updatedFormStatusSections;
     }
 
     private defineSupportedProgrammingLanguages() {
