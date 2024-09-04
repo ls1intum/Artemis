@@ -86,12 +86,13 @@
         </div>
     }
     <div class="form-group">
-        <jhi-submission-policy-update
-            #submissionPolicyForm
-            [editable]="!programmingExerciseCreationConfig.isEdit"
-            [programmingExercise]="programmingExercise"
-            (submissionPolicyTypeChange)="calculateFormStatus()"
-        />
+        @if (!isSimpleMode()) {
+            <jhi-submission-policy-update
+                [editable]="!programmingExerciseCreationConfig.isEdit"
+                [programmingExercise]="programmingExercise"
+                (submissionPolicyTypeChange)="calculateFormStatus()"
+            />
+        }
         @if (programmingExerciseCreationConfig.isEdit) {
             <ngb-alert [dismissible]="false" [type]="'info'">
                 <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.editInGradingInformation"></span>
