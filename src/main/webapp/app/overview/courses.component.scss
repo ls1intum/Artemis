@@ -17,8 +17,8 @@
 .course-grid {
     display: grid;
     // cards can shrink to 325px
-    grid-template-columns: repeat(auto-fill, minmax(325px, 1fr));
-    grid-gap: 2rem;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    grid-gap: 1rem;
     justify-items: center;
 }
 
