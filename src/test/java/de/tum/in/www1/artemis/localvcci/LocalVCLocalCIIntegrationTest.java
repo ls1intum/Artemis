@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
@@ -977,10 +976,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
-        AtomicInteger counter = new AtomicInteger();
+
         await().atMost(Duration.ofSeconds(15)).pollInterval(Duration.ofSeconds(1)).until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
-            counter.set(counter.get() + 1);
             return buildJobOptional.isPresent();
         });
 
