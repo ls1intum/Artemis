@@ -1,6 +1,6 @@
 import sys
 from logging_config import logging
-from typing import List, Dict, Any
+from typing import Dict, Any
 from requests import Session
 
 exercise_Ids: list[int] = []

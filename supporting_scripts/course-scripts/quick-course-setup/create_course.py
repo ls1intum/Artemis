@@ -104,9 +104,8 @@ def main() -> None:
     """Main function to create a course and add users."""
     session = requests.session()
     login_as_admin(session)
-    created_course_response = create_course(session)
 
-    response_data = created_course_response.json()
+    response_data = create_course(session)
     course_id = response_data["id"]
 
     add_users_to_groups_of_course(session, course_id)

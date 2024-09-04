@@ -6,9 +6,9 @@ This project contains Python scripts that automate the setup and management of c
 
 ### 1. Install Python and the Python Plugin for IntelliJ
 
-- Ensure that Python (preferably version 3.9) is installed on your system.
+- Ensure that Python (preferably version 3.12) is installed on your system.
 ```shell
-python3.9 --version
+python3.12 --version
 ```
 - Install the [Python Plugin for IntelliJ](https://plugins.jetbrains.com/plugin/631-python).
 - Enable Python support in IntelliJ:
@@ -22,12 +22,12 @@ python3.9 --version
 ### 2. Configure the Environment
 
 - Start your local Artemis instance.
-- Configure the [config.ini](././supporting_scripts/course-scripts/quick-course-setup/config.ini) file according to your local or test server setup.
+- Configure the [config.ini](./config.ini) file according to your local or test server setup.
 - If packages are missing when running the script, install the necessary Python packages using the following command (replace `<packageName>` with the actual package name and the python version with your used python version):
 
-  ```shell
-  python3.9 -m pip install <packageName>
-
+```shell
+python3.12 -m pip install <packageName>
+```
 # Usage
 
 ## Section 1: Create Local Course and Users
@@ -36,14 +36,14 @@ These scripts help you configure and set up your first Artemis course quickly.
 
 1. Start your local Artemis instance.
 
-2. Configure the values in config.ini according to your setup.
+2. Configure the values in [config.ini](./config.ini) according to your setup.
 
-3. Install the missing packages of the Python scripts that you want to execute (if not done already). You can check the [requirements.txt](./supporting_scripts/course-scripts/quick-course-setup/requirements.txt) file for the required packages.
+3. Install the missing packages of the Python scripts that you want to execute (if not done already). You can check the [requirements.txt](./requirements.txt) file for the required packages.
 
 4. Run the main script using IntelliJ:
 
-   •	Use the play button within IntelliJ (if Python is configured properly).
-   •	Alternatively, follow the command line instructions for each script.
+    - Use the play button within IntelliJ (if Python is configured properly).
+    - Alternatively, you can run the script directly from the terminal using the commands provided in this README.
 
 ### Creating a Course with Standard User Groups
 
@@ -75,7 +75,7 @@ python3 authenticate_all_users.py
 
 1.	Adjust server_url and client_url according to the test server.
 2.  Update admin_user and admin_password to valid values for the test server.
-3.	Set is_local_course in config.ini to False.
+3.  Set is_local_course in [config.ini](./config.ini) to False.
 
 Create a Course and Assign the Default Users
 
@@ -92,7 +92,7 @@ python3 create_course.py
 
 ### Add Users to Existing Course
 
-Define the course_id in the config.ini.
+Define the course_id in the [config.ini](./config.ini).
 
 ```shell  
 python3 add_users_to_course.py
@@ -115,13 +115,14 @@ The large_course_main script performs all necessary steps to set up a large cour
 
 1. Open the project in IntelliJ. 
 2. Locate the large_course_main.py file in the project directory.
-3. To change the number of students created, modify the students variable in the config.ini file.
-4. To change the number of commits each student should perform in the example exercise, modify the commits variable in the config.ini file.
-5. To change the number of programming exercises created, modify the exercises variable in the config.ini file.
-6. To change the name of programming exercises created, modify the exercise_name variable in the config.ini file.
-7. To use an existing course, modify the create_course variable to False and provide a valid course_id in the config.ini file.
-8. To use an existing programming exercise, modify the create_exercises variable to False and provide a valid exercise_Ids in the config.ini file.
-9. You can use the play button within IntelliJ (if Python is configured properly) to run the script. (Run large_course_main.py)
+3. Update the [config.ini](./config.ini) to your needs
+   1. To change the number of students created, modify the students variable in the config.ini file.
+   2. To change the number of commits each student should perform in the example exercise, modify the commits variable in the config.ini file.
+   3. To change the number of programming exercises created, modify the exercises variable in the config.ini file.
+   4. To change the name of programming exercises created, modify the exercise_name variable in the config.ini file.
+   5. To use an existing course, modify the create_course variable to False and provide a valid course_id in the config.ini file.
+   6. To use an existing programming exercise, modify the create_exercises variable to False and provide a valid exercise_Ids in the config.ini file.
+4. You can use the play button within IntelliJ (if Python is configured properly) to run the script.
 ```shell
 python3 large_course_main.py
 ```
