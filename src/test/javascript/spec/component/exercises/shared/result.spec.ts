@@ -24,7 +24,7 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('ResultComponent', () => {
