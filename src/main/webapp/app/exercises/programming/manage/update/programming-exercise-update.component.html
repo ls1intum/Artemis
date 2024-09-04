@@ -48,7 +48,7 @@
                 [importOptions]="importOptions"
                 [isSimpleMode]="isSimpleMode()"
             />
-            @if (!isExamMode) {
+            @if (!isExamMode && !isSimpleMode()) {
                 <jhi-exercise-update-plagiarism [exercise]="programmingExercise" />
             }
             <jhi-form-footer
