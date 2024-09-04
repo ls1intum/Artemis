@@ -10,10 +10,10 @@ import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/text
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionExerciseType, SubmissionType, getLatestSubmissionResult } from 'app/entities/submission.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -22,7 +22,7 @@ import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.compo
 import { Course } from 'app/entities/course.model';
 import { ManualTextblockSelectionComponent } from 'app/exercises/text/assess/manual-textblock-selection/manual-textblock-selection.component';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
-import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
+import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -45,7 +45,7 @@ import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/co
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
 import { AthenaService } from 'app/assessment/athena.service';
 import { MockAthenaService } from '../../helpers/mocks/service/mock-athena-service';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextSubmissionAssessmentComponent', () => {

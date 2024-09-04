@@ -9,10 +9,10 @@ import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.mode
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Team } from 'app/entities/team.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
