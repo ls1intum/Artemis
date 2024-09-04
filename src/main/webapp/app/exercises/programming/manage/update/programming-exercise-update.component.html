@@ -43,6 +43,7 @@
             <jhi-programming-exercise-problem
                 [(exercise)]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                [isSimpleMode]="isSimpleMode()"
                 (problemStatementChange)="calculateFormStatusSections()"
             />
             <hr class="mb-5" />
