@@ -30,6 +30,7 @@
             <jhi-programming-exercise-difficulty
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
+                [isSimpleMode]="isSimpleMode()"
                 (triggerValidation)="calculateFormStatusSections()"
             />
             <hr class="mb-5" />

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, input } from '@angular/core';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -12,8 +12,10 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseDifficultyComponent implements OnInit {
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    @Input({ required: true }) programmingExercise: ProgrammingExercise;
+    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    isSimpleMode = input.required<boolean>();
+
     @ViewChild(TeamConfigFormGroupComponent) teamConfigComponent: TeamConfigFormGroupComponent;
 
     @Output() triggerValidation = new EventEmitter<void>();
