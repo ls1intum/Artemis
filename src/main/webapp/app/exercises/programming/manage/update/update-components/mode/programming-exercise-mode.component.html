@@ -3,13 +3,7 @@
         jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle"
         id="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepTitle"
     ></h3>
-    <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.difficultyStepMessage"></p>
-    <div class="form-group">
-        <label class="label-narrow" jhiTranslate="artemisApp.exercise.difficulty"></label>
-        <div>
-            <jhi-difficulty-picker [exercise]="programmingExercise" />
-        </div>
-    </div>
+    <jhi-programming-exercise-difficulty [programmingExercise]="programmingExercise" />
     @if (!isSimpleMode()) {
         <div class="form-group">
             <jhi-team-config-form-group class="form-element" [exercise]="programmingExercise" [isImport]="programmingExerciseCreationConfig.isImportFromExistingExercise" />

@@ -53,11 +53,11 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
-import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
-import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
-import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
-import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
-import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/information/programming-exercise-information.component';
+import { ProgrammingExerciseModeComponent } from 'app/exercises/programming/manage/update/update-components/mode/programming-exercise-mode.component';
+import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/language/programming-exercise-language.component';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/grading/programming-exercise-grading.component';
+import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
@@ -119,7 +119,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ButtonComponent),
                 MockComponent(CompetencySelectionComponent),
                 MockComponent(ProgrammingExerciseInformationComponent),
-                MockComponent(ProgrammingExerciseDifficultyComponent),
+                MockComponent(ProgrammingExerciseModeComponent),
                 MockComponent(ProgrammingExerciseLanguageComponent),
                 MockComponent(ProgrammingExerciseGradingComponent),
                 MockComponent(ProgrammingExerciseProblemComponent),
@@ -1049,7 +1049,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 formValidChanges: new Subject(),
                 formValid: true,
             },
-        } as ProgrammingExerciseDifficultyComponent;
+        } as ProgrammingExerciseModeComponent;
         comp.exerciseLanguageComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseLanguageComponent;
         comp.exerciseGradingComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseGradingComponent;
         comp.exercisePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;

@@ -12,7 +12,7 @@ import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/man
 @Component({
     selector: 'jhi-programming-exercise-language',
     templateUrl: './programming-exercise-language.component.html',
-    styleUrls: ['../../programming-exercise-form.scss'],
+    styleUrls: ['../../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, AfterViewInit, OnDestroy {
     readonly ProgrammingLanguage = ProgrammingLanguage;

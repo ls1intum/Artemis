@@ -3,7 +3,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-problem.component';
+import { ProgrammingExerciseProblemComponent } from 'app/exercises/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';

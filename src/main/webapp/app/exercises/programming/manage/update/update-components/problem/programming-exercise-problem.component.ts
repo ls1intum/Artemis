@@ -8,7 +8,7 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 @Component({
     selector: 'jhi-programming-exercise-problem',
     templateUrl: './programming-exercise-problem.component.html',
-    styleUrls: ['../../programming-exercise-form.scss'],
+    styleUrls: ['../../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseProblemComponent {
     protected readonly ProgrammingLanguage = ProgrammingLanguage;

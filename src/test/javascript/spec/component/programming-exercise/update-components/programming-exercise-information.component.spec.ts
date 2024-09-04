@@ -3,7 +3,7 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/information/programming-exercise-information.component';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';

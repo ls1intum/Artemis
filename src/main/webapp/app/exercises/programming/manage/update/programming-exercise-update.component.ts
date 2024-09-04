@@ -33,10 +33,10 @@ import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exerci
 import { PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
-import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
-import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
-import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-language.component';
-import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
+import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/information/programming-exercise-information.component';
+import { ProgrammingExerciseModeComponent } from 'app/exercises/programming/manage/update/update-components/mode/programming-exercise-mode.component';
+import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/manage/update/update-components/language/programming-exercise-language.component';
+import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ImportOptions } from 'app/types/programming-exercises';
 
@@ -75,7 +75,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     protected readonly faHandShakeAngle = faHandshakeAngle;
 
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
-    @ViewChild(ProgrammingExerciseDifficultyComponent) exerciseDifficultyComponent?: ProgrammingExerciseDifficultyComponent;
+    @ViewChild(ProgrammingExerciseModeComponent) exerciseDifficultyComponent?: ProgrammingExerciseModeComponent;
     @ViewChild(ProgrammingExerciseLanguageComponent) exerciseLanguageComponent?: ProgrammingExerciseLanguageComponent;
     @ViewChild(ProgrammingExerciseGradingComponent) exerciseGradingComponent?: ProgrammingExerciseGradingComponent;
     @ViewChild(ExerciseUpdatePlagiarismComponent) exercisePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;

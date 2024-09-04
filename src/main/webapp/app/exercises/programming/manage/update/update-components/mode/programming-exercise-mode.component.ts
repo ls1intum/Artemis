@@ -7,11 +7,14 @@ import { PROFILE_THEIA } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
-    selector: 'jhi-programming-exercise-difficulty',
-    templateUrl: './programming-exercise-difficulty.component.html',
-    styleUrls: ['../../programming-exercise-form.scss'],
+    selector: 'jhi-programming-exercise-mode',
+    templateUrl: './programming-exercise-mode.component.html',
+    styleUrls: ['../../../programming-exercise-form.scss'],
 })
-export class ProgrammingExerciseDifficultyComponent implements OnInit {
+export class ProgrammingExerciseModeComponent implements OnInit {
+    protected readonly ProjectType = ProjectType;
+    protected readonly faQuestionCircle = faQuestionCircle;
+
     @Input({ required: true }) programmingExercise: ProgrammingExercise;
     @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     isSimpleMode = input.required<boolean>();
@@ -19,8 +22,6 @@ export class ProgrammingExerciseDifficultyComponent implements OnInit {
     @ViewChild(TeamConfigFormGroupComponent) teamConfigComponent: TeamConfigFormGroupComponent;
 
     @Output() triggerValidation = new EventEmitter<void>();
-
-    protected readonly ProjectType = ProjectType;
 
     theiaEnabled: boolean = false;
 
@@ -31,6 +32,4 @@ export class ProgrammingExerciseDifficultyComponent implements OnInit {
             this.theiaEnabled = profileInfo.activeProfiles?.includes(PROFILE_THEIA);
         });
     }
-
-    faQuestionCircle = faQuestionCircle;
 }

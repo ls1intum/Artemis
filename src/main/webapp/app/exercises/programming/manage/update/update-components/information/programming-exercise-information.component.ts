@@ -11,7 +11,7 @@ import { ImportOptions } from 'app/types/programming-exercises';
 @Component({
     selector: 'jhi-programming-exercise-info',
     templateUrl: './programming-exercise-information.component.html',
-    styleUrls: ['../../programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
+    styleUrls: ['../../../programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnDestroy {
     @Input() isImport: boolean;

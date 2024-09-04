@@ -15,7 +15,7 @@ import { ImportOptions } from 'app/types/programming-exercises';
 @Component({
     selector: 'jhi-programming-exercise-grading',
     templateUrl: './programming-exercise-grading.component.html',
-    styleUrls: ['../../programming-exercise-form.scss'],
+    styleUrls: ['../../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
     protected readonly IncludedInOverallScore = IncludedInOverallScore;
