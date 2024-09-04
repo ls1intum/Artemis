@@ -51,8 +51,3 @@ jhi-category-selector {
         background: #ccc;
     }
 }
-
-/* This would otherwise add whitespace under the category selection that we do not need */
-.mat-mdc-form-field-subscript-wrapper.mat-mdc-form-field-bottom-align.ng-tns-c2400808035-1 {
-    display: none;
-}
