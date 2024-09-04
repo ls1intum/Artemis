@@ -46,6 +46,7 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [importOptions]="importOptions"
+                [isSimpleMode]="isSimpleMode()"
             />
             @if (!isExamMode) {
                 <jhi-exercise-update-plagiarism [exercise]="programmingExercise" />

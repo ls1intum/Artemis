@@ -120,7 +120,9 @@
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="programmingExercise" />
         </div>
     }
-    <jhi-presentation-score-checkbox [exercise]="programmingExercise" />
+    @if (!isSimpleMode()) {
+        <jhi-presentation-score-checkbox [exercise]="programmingExercise" />
+    }
     @if (programmingExerciseCreationConfig.showSummary) {
         <h6>{{ getGradingSummary() }}</h6>
     }
