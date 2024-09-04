@@ -111,7 +111,6 @@ public class LtiService {
             log.info("User with email {} already exists. Email is already in use.", email);
 
             if (trustExternalLTISystems) {
-                // If the email is already in use, but we trust external LTI systems, we authenticate the user with the email
                 log.info("Trusting external LTI system. Authenticating user with email: {}", email);
                 User user = userRepository.findUserWithGroupsAndAuthoritiesByEmail(email).orElseThrow();
                 SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), user.getGrantedAuthorities()));
@@ -199,7 +198,7 @@ public class LtiService {
             uriComponentsBuilder.queryParam("initialize", "");
         }
 
-        log.info("Add/Update JWT cookie so the user will be logged in");
+        log.info("Add/Update JWT cookie so the user will be logged in.");
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
     }
