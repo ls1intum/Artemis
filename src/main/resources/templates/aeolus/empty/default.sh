@@ -3,11 +3,13 @@ set -e
 export AEOLUS_INITIAL_DIRECTORY=${PWD}
 install_dependencies () {
   echo '⚙️ executing install_dependencies'
+  # TODO: Install dependencies not provided by the Docker image
   echo 'Install dependencies'
 }
 
 run_tests () {
   echo '⚙️ executing run_tests'
+  # TODO: Run the tests and generate JUnit XMLs
   echo 'Hello World'
 }
 
@@ -15,6 +17,7 @@ process_results () {
   echo '⚙️ executing process_results'
   rm -rf results
   mkdir results
+  # TODO: Move JUnit XMLs into the results directory
 }
 
 main () {

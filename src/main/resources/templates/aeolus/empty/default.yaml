@@ -5,13 +5,18 @@ metadata:
   description: Provides a starting point
 actions:
   - name: install_dependencies
-    script: echo 'Install dependencies'
+    script: |-
+      # TODO: Install dependencies not provided by the Docker image
+      echo 'Install dependencies'
   - name: run_tests
-    script: echo 'Hello World'
+    script: |-
+      # TODO: Run the tests and generate JUnit XMLs
+      echo 'Hello World'
   - name: process_results
     script: |-
       rm -rf results
       mkdir results
+      # TODO: Move JUnit XMLs into the results directory
     results:
       - name: junit
         path: results/*.xml
