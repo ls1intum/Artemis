@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, input } from '@angular/core';
 import { ControlContainer, NgForm, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 
@@ -17,6 +17,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     @Input() hideChannelName?: boolean;
     @Input() minTitleLength: number;
     @Input() initChannelName = true;
+    isSimpleMode = input<boolean>(false);
 
     @ViewChild('field_title') field_title: NgModel;
     @ViewChild('field_channel_name') field_channel_name?: NgModel;

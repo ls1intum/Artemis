@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, input } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -15,6 +15,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() isExamMode: boolean;
     @Input() isImport: boolean;
     @Input() hideTitleLabel: boolean;
+    isSimpleMode = input<boolean>(false);
 
     @ViewChild(TitleChannelNameComponent) titleChannelNameComponent: TitleChannelNameComponent;
 

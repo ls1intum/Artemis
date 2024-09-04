@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, QueryList, ViewChild, ViewChildren, input } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -20,6 +20,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     @Input() isLocal: boolean;
     @Input() importOptions: ImportOptions;
+    isSimpleMode = input.required<boolean>();
 
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;

@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -46,17 +46,40 @@ import { ImportOptions } from 'app/types/programming-exercises';
     styleUrls: ['../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    protected readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly FeatureToggle = FeatureToggle;
+    protected readonly ProgrammingLanguage = ProgrammingLanguage;
+    protected readonly ProjectType = ProjectType;
+    protected readonly documentationType: DocumentationType = 'Programming';
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
+    // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
+    // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
+    protected readonly packageNamePatternForJavaKotlin =
+        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
+    // No dots allowed for the blackbox project type, because the folder naming works slightly different here.
+    protected readonly packageNamePatternForJavaBlackbox =
+        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*$';
+    // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
+    // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
+    protected readonly appNamePatternForSwift =
+        '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$';
+    packageNamePattern = '';
+    // Auxiliary Repository names must only include words or '-' characters.
+    protected readonly invalidRepositoryNamePattern = RegExp('^(?!(solution|exercise|tests|auxiliary)\\b)\\b(\\w|-)+$');
+    // Auxiliary Repository checkout directories must be valid directory paths. Those must only include words,
+    // '-' or '/' characters.
+    protected readonly invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
+    // length of < 3 is also accepted in order to provide more accurate validation error messages
+    protected readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
+
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) exerciseDifficultyComponent?: ProgrammingExerciseDifficultyComponent;
     @ViewChild(ProgrammingExerciseLanguageComponent) exerciseLanguageComponent?: ProgrammingExerciseLanguageComponent;
     @ViewChild(ProgrammingExerciseGradingComponent) exerciseGradingComponent?: ProgrammingExerciseGradingComponent;
     @ViewChild(ExerciseUpdatePlagiarismComponent) exercisePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
 
-    readonly IncludedInOverallScore = IncludedInOverallScore;
-    readonly FeatureToggle = FeatureToggle;
-    readonly ProgrammingLanguage = ProgrammingLanguage;
-    readonly ProjectType = ProjectType;
-    readonly documentationType: DocumentationType = 'Programming';
+    isSimpleMode = signal<boolean>(true);
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
@@ -85,35 +108,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     notificationText?: string;
     courseId: number;
 
-    AssessmentType = AssessmentType;
     rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue?: ProjectType;
-    maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
-    // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
-    // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
-    packageNamePatternForJavaKotlin =
-        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*(?:\\.[A-Z_a-z][0-9A-Z_a-z]*)*$';
-    // No dots allowed for the blackbox project type, because the folder naming works slightly different here.
-    packageNamePatternForJavaBlackbox =
-        '^(?!.*(?:\\.|^)(?:abstract|continue|for|new|switch|assert|default|if|package|synchronized|boolean|do|goto|private|this|break|double|implements|protected|throw|byte|else|import|public|throws|case|enum|instanceof|return|transient|catch|extends|int|short|try|char|final|interface|static|void|class|finally|long|strictfp|volatile|const|float|native|super|while|_|true|false|null)(?:\\.|$))[A-Z_a-z][0-9A-Z_a-z]*$';
-    // Swift package name Regex derived from (https://docs.swift.org/swift-book/ReferenceManual/LexicalStructure.html#ID412),
-    // with the restriction to a-z,A-Z as "Swift letter" and 0-9 as digits where no separators are allowed
-    appNamePatternForSwift =
-        '^(?!(?:associatedtype|class|deinit|enum|extension|fileprivate|func|import|init|inout|internal|let|open|operator|private|protocol|public|rethrows|static|struct|subscript|typealias|var|break|case|continue|default|defer|do|else|fallthrough|for|guard|if|in|repeat|return|switch|where|while|as|Any|catch|false|is|nil|super|self|Self|throw|throws|true|try|_|[sS]wift)$)[A-Za-z][0-9A-Za-z]*$';
-    packageNamePattern = '';
-
-    // Auxiliary Repository names must only include words or '-' characters.
-    invalidRepositoryNamePattern = RegExp('^(?!(solution|exercise|tests|auxiliary)\\b)\\b(\\w|-)+$');
-
-    // Auxiliary Repository checkout directories must be valid directory paths. Those must only include words,
-    // '-' or '/' characters.
-    invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
-
-    // length of < 3 is also accepted in order to provide more accurate validation error messages
-    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
 
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
