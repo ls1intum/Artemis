@@ -38,18 +38,28 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
     exerciseTitle = signal<string | undefined>(undefined);
+    shortNameRandomPart = signal<string>(this.appendRandomLetters(''));
 
     constructor() {
         effect(() => {
             const newShortName = this.exerciseTitle();
-            // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-            const sanitizedShortName = this.removeSpecialCharacters(newShortName ?? '').substring(0, 6);
-            this.programmingExercise.shortName = sanitizedShortName;
+            if (newShortName && newShortName.length > 3) {
+                const sanitizedShortName = this.removeSpecialCharacters(newShortName ?? '').substring(0, 6);
+                // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+                const shortnameWithRandomness = sanitizedShortName + this.shortNameRandomPart();
+                this.programmingExercise.shortName = shortnameWithRandomness;
+            }
         });
     }
 
     removeSpecialCharacters(input: string): string {
         return input.replace(/[^a-zA-Z0-9]/g, '');
+    }
+
+    appendRandomLetters(shortName: string): string {
+        const letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const randomLetters = Array.from({ length: 3 }, () => letters.charAt(Math.floor(Math.random() * letters.length))).join('');
+        return `${shortName}${randomLetters}`;
     }
 
     ngAfterViewInit() {
