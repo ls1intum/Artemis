@@ -6,17 +6,17 @@ from typing import Dict, Any, List
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-server_url: str = config.get('Settings', 'server_url')
-admin_user: str = config.get('Settings', 'admin_user')
-admin_password: str = config.get('Settings', 'admin_password')
+SERVER_URL: str = config.get('Settings', 'server_url')
+ADMIN_USER: str = config.get('Settings', 'admin_user')
+ADMIN_PASSWORD: str = config.get('Settings', 'admin_password')
 
 def login_as_admin(session: requests.Session) -> None:
     """Authenticate as an admin using the provided session."""
-    authenticate_user(admin_user, admin_password, session)
+    authenticate_user(ADMIN_USER, ADMIN_PASSWORD, session)
 
 def add_user_to_course(session: requests.Session, course_id: int, user_group: str, user_name: str) -> None:
     """Add a user to a specified course and group."""
-    url: str = f"{server_url}/courses/{course_id}/{user_group}/{user_name}"
+    url: str = f"{SERVER_URL}/courses/{course_id}/{user_group}/{user_name}"
     response: requests.Response = session.post(url)
     if response.status_code == 200:
         logging.info(f"Added user {user_name} to group {user_group}")
@@ -25,7 +25,7 @@ def add_user_to_course(session: requests.Session, course_id: int, user_group: st
 
 def authenticate_user(username: str, password: str, session: requests.Session = requests.Session()) -> requests.Response:
     """Authenticate a user and return the session response."""
-    url: str = f"{server_url}/public/authenticate"
+    url: str = f"{SERVER_URL}/public/authenticate"
     headers: Dict[str, str] = {
         "Content-Type": "application/json"
     }

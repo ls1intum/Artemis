@@ -1,10 +1,11 @@
+import sys
 from logging_config import logging
 from typing import List, Dict, Any
 from requests import Session
 
-exercise_ids: List[int] = []
+exercise_Ids: list[int] = []
 
-def create_programming_exercise(session: Session, course_id: int, server_url: str, exercises_to_create: int) -> None:
+def create_programming_exercise(session: Session, course_id: int, server_url: str, exercises_to_create: int, exercise_name: str) -> None:
     """Create multiple programming exercises for the course."""
     for i in range(exercises_to_create):
         url: str = f"{server_url}/programming-exercises/setup"
@@ -13,7 +14,7 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
 
         default_programming_exercise: Dict[str, Any] = {
             "type": "programming",
-            "title": f"Example Programming Exercise {short_name_index}",
+            "title": f"{exercise_name} {short_name_index}",
             "shortName": f"ExProgEx{short_name_index}",
             "course": {"id": course_id},
             "programmingLanguage": "JAVA",
@@ -35,7 +36,10 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
 
         if response.status_code == 201:
             logging.info(f"Created programming exercise {default_programming_exercise['title']} successfully")
-            exercise_ids.append(response.json().get('id'))
+            exercise_Ids.append(response.json().get('id'))
+        elif response.status_code == 400:
+            logging.info(f"Programming exercise with shortName {default_programming_exercise['shortName']} already exists. Please provide the exercise IDs in the config file and set create_exercises to FALSE.")
+            sys.exit(0)
         else:
             raise Exception(f"Could not create programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
 
@@ -47,6 +51,9 @@ def add_participation(session: Session, exercise_id: int, client_url: str) -> Di
     response = session.post(url, headers=headers)
     if response.status_code == 201:
         return response.json()
+    elif response.status_code == 403:
+        logging.info(f"Not allowed to push to following programming exercise with following id: {exercise_id}. Please double check if the exercise is part of the Course and update the exercise_Ids in the config file.")
+        sys.exit(0)
     else:
         response.raise_for_status()
 

@@ -1,6 +1,6 @@
 # Artemis Course Setup Scripts
 
-This project contains Python scripts that automate the setup and management of courses and users in an Artemis instance. The scripts help you create a course, generate users, enroll them into courses, and manage programming exercises, including participation and commits. The project is useful for setting up test environments or quickly initializing a course with a large number of students.
+This project contains Python scripts that automate the setup and management of courses and users in an Artemis instance. The scripts help you create a course, generate users, enroll them into courses, and manage programming exercises, including participations and commits. The project is useful for setting up test environments or quickly initializing a course with a large number of students.
 
 # Setup
 
@@ -22,7 +22,7 @@ python3.9 --version
 ### 2. Configure the Environment
 
 - Start your local Artemis instance.
-- Configure the [config.ini](./config.ini) file according to your local or test server setup.
+- Configure the [config.ini](././supporting_scripts/course-scripts/quick-course-setup/config.ini) file according to your local or test server setup.
 - If packages are missing when running the script, install the necessary Python packages using the following command (replace `<packageName>` with the actual package name and the python version with your used python version):
 
   ```shell
@@ -38,7 +38,7 @@ These scripts help you configure and set up your first Artemis course quickly.
 
 2. Configure the values in config.ini according to your setup.
 
-3. Install the missing packages of the Python scripts that you want to execute (if not done already).
+3. Install the missing packages of the Python scripts that you want to execute (if not done already). You can check the [requirements.txt](./supporting_scripts/course-scripts/quick-course-setup/requirements.txt) file for the required packages.
 
 4. Run the main script using IntelliJ:
 
@@ -55,7 +55,7 @@ python3 create_course.py
 
 ### Create Users
 
-Creates users 1-20 (students, tutors, editors, instructors - 5 for each group) and users needed for Cypress E2E testing (100-106).
+Creates users 1-20 (students, tutors, editors, instructors - 5 for each group).
     
 ```shell
 python3 create_users.py
@@ -118,21 +118,28 @@ The large_course_main script performs all necessary steps to set up a large cour
 3. To change the number of students created, modify the students variable in the config.ini file.
 4. To change the number of commits each student should perform in the example exercise, modify the commits variable in the config.ini file.
 5. To change the number of programming exercises created, modify the exercises variable in the config.ini file.
-6. You can use the play button within IntelliJ (if Python is configured properly) to run the script. (Run large_course_main.py)
+6. To change the name of programming exercises created, modify the exercise_name variable in the config.ini file.
+7. To use an existing course, modify the create_course variable to False and provide a valid course_id in the config.ini file.
+8. To use an existing programming exercise, modify the create_exercises variable to False and provide a valid exercise_Ids in the config.ini file.
+9. You can use the play button within IntelliJ (if Python is configured properly) to run the script. (Run large_course_main.py)
+```shell
+python3 large_course_main.py
+```
 
 The script will automatically perform all the necessary steps:
 
 1. Authenticate as admin. 
 2. Create students.
-3. Create a course.
+3. Create a course or use an existing one.
 4. Add students to the course. 
-5. Create a programming exercise. 
+5. Create a programming exercise or use an existing one. 
 6. Add participation and commit for each student.
 
 ### Optional: Deleting All Created Students
 
 If you want to delete all the students created by the script:
 
-1.	Uncomment the relevant section in large_course_main.py that calls the delete_all_created_students() function. 
-2.  Comment out steps 2 to 6.
-3.	Re-run the script.
+1.	Run the main in delete_students.py.
+```shell
+python3 delete_students.py
+```

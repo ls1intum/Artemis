@@ -13,11 +13,6 @@ def authenticate_all_generated_users() -> None:
         user_details = get_user_details_by_index(user_index)
         authenticate_user(user_details['login'], user_details['password'])
 
-    # Login Cypress users
-    for user_index in range(100, 107):
-        user_details = get_user_details_by_index(user_index)
-        authenticate_user(user_details['login'], user_details['password'])
-
 def main() -> None:
     authenticate_all_generated_users()
 
