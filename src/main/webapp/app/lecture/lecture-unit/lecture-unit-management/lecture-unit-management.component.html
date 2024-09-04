@@ -71,6 +71,16 @@
                         @if (lecture.course?.id && showCompetencies) {
                             <jhi-competencies-popover [courseId]="lecture.course!.id!" [competencies]="lectureUnit.competencies || []" [navigateTo]="'competencyManagement'" />
                         }
+                        @if (viewButtonAvailable[lectureUnit.id!]) {
+                            <a
+                                type="button"
+                                class="btn btn-primary btn-sm flex-grow-1"
+                                [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', lectureUnit.id, 'view']"
+                                [ngbTooltip]="'entity.action.view' | artemisTranslate"
+                            >
+                                <fa-icon [icon]="faEye" />
+                            </a>
+                        }
                         <div class="d-flex gap-1 w-100">
                             @if (this.emitEditEvents) {
                                 @if (editButtonAvailable(lectureUnit)) {
