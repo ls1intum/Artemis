@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, QueryList, ViewChild, ViewChildren, input } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -13,7 +13,9 @@ import { ImportOptions } from 'app/types/programming-exercises';
     templateUrl: './programming-exercise-information.component.html',
     styleUrls: ['../../../programming-exercise-form.scss', 'programming-exercise-information.component.scss'],
 })
-export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnDestroy {
+export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnChanges, OnDestroy {
+    protected readonly ProjectType = ProjectType;
+
     @Input() isImport: boolean;
     @Input() isExamMode: boolean;
     @Input() programmingExercise: ProgrammingExercise;
@@ -28,23 +30,48 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
+    @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
-    protected readonly ProjectType = ProjectType;
+    exerciseTitle = signal<string | undefined>(undefined);
+
+    constructor() {
+        effect(() => {
+            const newShortName = this.exerciseTitle();
+            console.log(newShortName);
+            this.programmingExercise.shortName = newShortName;
+        });
+    }
 
     ngAfterViewInit() {
         this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.shortNameField.valueChanges?.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.shortNameField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.tableEditableFields?.changes.subscribe((fields: QueryList<TableEditableFieldComponent>) => {
             fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
+
+        this.titleComponent?.titleChannelNameComponent?.field_title?.valueChanges?.subscribe((newTitle: string) => {
+            if (this.isSimpleMode()) {
+                this.updateShortName(newTitle);
+            }
+        });
+    }
+
+    updateShortName(newTitle: string) {
+        this.exerciseTitle.set(newTitle);
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.programmingExercise) {
+            this.exerciseTitle.set(this.programmingExercise.title);
+        }
     }
 
     ngOnDestroy(): void {

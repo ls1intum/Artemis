@@ -10,6 +10,7 @@
             <jhi-help-icon text="artemisApp.programmingExercise.titleTooltip" />
         </div>
         <jhi-exercise-title-channel-name
+            #titleChannelNameComponent
             [exercise]="programmingExercise"
             [course]="programmingExercise.course"
             [minTitleLength]="3"
@@ -20,33 +21,35 @@
             [isSimpleMode]="isSimpleMode()"
         />
     </div>
-    <div class="form-group">
-        <div>
-            <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label>
-            <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
-        </div>
-        <input
-            required
-            type="text"
-            class="form-control"
-            name="shortName"
-            id="field_shortName"
-            minlength="3"
-            [pattern]="programmingExerciseCreationConfig.shortNamePattern"
-            [(ngModel)]="programmingExercise.shortName"
-            [readOnly]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id"
-            [disabled]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id"
-            #shortName="ngModel"
-        />
-        @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error) {
-            @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
-                <div class="alert alert-danger">
-                    <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
-                </div>
+    @if (!isSimpleMode()) {
+        <div class="form-group">
+            <div>
+                <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label>
+                <jhi-help-icon text="artemisApp.programmingExercise.shortNameTooltip" />
+            </div>
+            <input
+                required
+                type="text"
+                class="form-control"
+                name="shortName"
+                id="field_shortName"
+                minlength="3"
+                [pattern]="programmingExerciseCreationConfig.shortNamePattern"
+                [(ngModel)]="programmingExercise.shortName"
+                [readOnly]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id"
+                [disabled]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id"
+                #shortName="ngModel"
+            />
+            @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error) {
+                @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
+                    <div class="alert alert-danger">
+                        <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
+                    </div>
+                }
             }
-        }
-    </div>
-    @if (programmingExercise.shortName && !shortName.invalid) {
+        </div>
+    }
+    @if (programmingExercise.shortName && !shortNameField?.invalid) {
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
