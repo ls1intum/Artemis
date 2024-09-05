@@ -4,6 +4,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-problem',
@@ -18,7 +19,7 @@ export class ProgrammingExerciseProblemComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
 
     @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
-    isSimpleMode = input.required<boolean>();
+    isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
     @Output() exerciseChange = new EventEmitter<ProgrammingExercise>();
     @Output() problemStatementChange = new EventEmitter<string>();

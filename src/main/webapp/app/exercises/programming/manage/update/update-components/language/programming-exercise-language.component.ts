@@ -21,7 +21,6 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
 
     @Input({ required: true }) programmingExercise: ProgrammingExercise;
     @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
-    isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild('select') selectLanguageField: NgModel;
