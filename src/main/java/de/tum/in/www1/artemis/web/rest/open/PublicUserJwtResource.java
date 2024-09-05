@@ -100,6 +100,24 @@ public class PublicUserJwtResource {
     }
 
     /**
+     * Sends the token back as either a cookie or a bearer token
+     *
+     * @param response HTTP response
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
+     */
+    @PostMapping("re-key")
+    @EnforceNothing
+    public ResponseEntity<String> reKey(@RequestParam(value = "as-bearer", defaultValue = "false") boolean asBearer, HttpServletResponse response) {
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
+        if (asBearer) {
+            return ResponseEntity.ok(responseCookie.getValue());
+        }
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * Authorizes a User logged in with SAML2
      *
      * @param body     the body of the request. "true" to remember the user.
