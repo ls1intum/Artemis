@@ -53,6 +53,7 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
+import de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -68,6 +69,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     @Autowired
     private BuildJobRepository buildJobRepository;
+
+    @Autowired
+    private LocalCITriggerService localCITriggerService;
 
     // ---- Repository handles ----
     private LocalRepository templateRepository;
@@ -975,9 +979,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
-        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
+        localCITriggerService.triggerBuild(studentParticipation, false);
 
-        await().atMost(Duration.ofSeconds(3)).pollInterval(Duration.ofSeconds(1)).until(() -> {
+        await().atMost(Duration.ofSeconds(7)).pollInterval(Duration.ofSeconds(1)).until(() -> {
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
             return buildJobOptional.isPresent();
         });
