@@ -13,8 +13,8 @@
                     <div [jhiTranslate]="'home.login.traditional.pleaseSignIn'" class="lead text-center">Please sign in with your account.</div>
                 }
                 @if (accountName) {
-                    <div [jhiTranslate]="'home.login.traditional.pleaseSignInAccount'" [translateValues]="{ account: accountName }" class="lead text-center">
-                        Please sign in with your account.
+                    <div [jhiTranslate]="'home.login.traditional.pleaseSignInAccount'" [translateValues]="{ account: accountName }" class="lead text-center mb-4">
+                        Sign in with your account.
                     </div>
                 }
                 <div class="login-form">
@@ -22,12 +22,12 @@
                         <div class="form-group">
                             @if (authenticationError) {
                                 <div class="alert alert-danger my-3" jhiTranslate="home.errors.failedToLogin">
-                                    <span class="bold">Failed to sign in!</span> Please check your username and password and try again.
+                                    <span class="bold">Failed to sign in!</span> Please check your login and password and try again.
                                 </div>
                             }
                         </div>
-                        <div class="form-group">
-                            <label class="font-weight-bold" for="username" jhiTranslate="global.form.username"></label>
+                        <div class="form-group pb-2">
+                            <label class="mb-2" for="username" jhiTranslate="global.form.username"></label>
                             <input
                                 #usernameForm="ngModel"
                                 [(ngModel)]="username"
@@ -37,26 +37,35 @@
                                 class="form-control"
                                 id="username"
                                 name="username"
-                                placeholder="{{ 'global.form.username.placeholder' | artemisTranslate }}"
+                                [placeholder]="usernamePlaceholderTranslated"
                                 type="text"
                             />
                             @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched)) {
-                                <div [jhiTranslate]="errorMessageUsername" class="help-block">
-                                    <p class="text-primary small">Invalid username</p>
-                                </div>
+                                <span class="mt-1 text-danger small" [jhiTranslate]="errorMessageUsername"></span>
                             }
                         </div>
                         <div class="form-group">
-                            <label class="font-weight-bold" for="password" jhiTranslate="login.form.password"></label>
+                            <div class="d-flex mb-2">
+                                <label for="password" jhiTranslate="login.form.password"></label>
+                                <div class="ms-auto">
+                                    <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="account/reset/request"></a>
+                                </div>
+                            </div>
                             <input
+                                #passwordForm="ngModel"
                                 [(ngModel)]="password"
+                                [ngModelOptions]="{ updateOn: 'blur' }"
                                 autocomplete="current-password"
                                 class="form-control"
                                 id="password"
                                 name="password"
-                                placeholder="{{ 'login.form.password.placeholder' | artemisTranslate }}"
                                 type="password"
+                                [minlength]="PASSWORD_MIN_LENGTH"
+                                [maxLength]="PASSWORD_MAX_LENGTH"
                             />
+                            @if (passwordForm.errors && (passwordForm.dirty || passwordForm.touched)) {
+                                <span class="mt-1 text-danger small" jhiTranslate="home.errors.passwordIncorrect"></span>
+                            }
                         </div>
                         <div class="form-group">
                             <div class="form-check">
@@ -84,7 +93,7 @@
                                     !username ||
                                     username.length < USERNAME_MIN_LENGTH
                                 "
-                                class="btn btn-primary"
+                                class="btn btn-primary w-100"
                                 id="login-button"
                                 type="submit"
                             >
@@ -99,10 +108,9 @@
                         @if (isRegistrationEnabled) {
                             <div>
                                 <span jhiTranslate="global.messages.info.register.noaccount"></span>&nbsp;
-                                <a class="alert-link" jhiTranslate="global.messages.info.register.link" routerLink="account/register"></a>
+                                <a class="text-primary" jhiTranslate="global.messages.info.register.link" routerLink="account/register"></a>
                             </div>
                         }
-                        <a class="alert-link" jhiTranslate="login.password.forgot" routerLink="account/reset/request"></a>
                     </div>
                 </div>
             </div>
