@@ -6,6 +6,7 @@ import { Fixtures } from '../../../../fixtures/fixtures';
 
 export class QuizExerciseCreationPage {
     private readonly page: Page;
+    private readonly DEFAULT_MULTIPLE_CHOICE_ANSWER_COUNT = 4;
 
     constructor(page: Page) {
         this.page = page;
@@ -27,7 +28,32 @@ export class QuizExerciseCreationPage {
         const fileContent = await Fixtures.get('exercise/quiz/multiple_choice/question.txt');
         const textInputField = this.page.locator('.monaco-editor');
         await textInputField.click();
+        await clearTextField(textInputField);
         await textInputField.pressSequentially(fileContent!);
+    }
+
+    /**
+     * Creates a multiple choice question using the default template and makes changes in the visual mode.
+     * @param title The title of the question.
+     * @param answerOptions An array, each element containing the text of an answer option.
+     */
+    async createAndEditMultipleChoiceQuestionInVisualMode(title: string, answerOptions: string[]) {
+        await this.addMultipleChoiceQuestion(title);
+        const editLocator = this.page.locator('.edit-mc-question');
+        await editLocator.getByRole('tab', { name: 'Visual' }).click();
+        for (const [index, answerOption] of answerOptions.entries()) {
+            let answerOptionLocator = this.page.locator(`#answer-option-${index}`);
+            if ((await answerOptionLocator.count()) === 0) {
+                await this.page.locator('#add-mc-answer-option').click();
+                answerOptionLocator = this.page.locator(`#answer-option-${index}`);
+            }
+            await answerOptionLocator.locator(`#answer-option-${index}-text`).fill(answerOption);
+        }
+
+        // Delete excess answer options, going backwards to avoid index issues.
+        for (let i = this.DEFAULT_MULTIPLE_CHOICE_ANSWER_COUNT; i > answerOptions.length; i--) {
+            await this.page.locator(`#answer-option-${i - 1}-delete`).click();
+        }
     }
 
     async addShortAnswerQuestion(title: string) {

@@ -42,12 +42,13 @@
                     <fa-icon [icon]="answerOption.isCorrect ? faCheck : faXmark" />
                 </div>
                 <input
+                    id="answer-option-{{ i }}-text"
                     class="form-control"
                     [(ngModel)]="answerOption.text"
                     (input)="this.questionChanged.emit()"
                     placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
                 />
-                <div class="visual-answer-delete-container" (click)="deleteAnswer(i)">
+                <div id="answer-option-{{ i }}-delete" class="visual-answer-delete-container" (click)="deleteAnswer(i)">
                     <fa-icon [icon]="faTrash" />
                 </div>
             </div>
@@ -75,7 +76,7 @@
             </div>
         </div>
     }
-    <button id="quiz-add-mc-question" class="btn btn-block btn-success mt-2" (click)="addNewAnswer()">
+    <button id="add-mc-answer-option" class="btn btn-block btn-success mt-2" (click)="addNewAnswer()">
         <fa-icon [icon]="faPlus" />
         <span jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.newAnswerTitle"></span>
     </button>
