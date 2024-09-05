@@ -4,17 +4,17 @@ import java.time.ZonedDateTime;
 
 public interface OldDataCleanUpRepository {
 
-    void deleteOrphans();
+    void deleteOrphans(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 
-    void deletePlagiarismComparisons(ZonedDateTime keepAllLaterThan);
+    void deletePlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 
-    void deleteNonRatedResults(ZonedDateTime keepAllLaterThan);
+    void deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 
-    void deleteOldRatedResults(ZonedDateTime keepAllLaterThan);
+    void deleteOldRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 
-    void deleteOldSubmissionVersions(ZonedDateTime keepAllLaterThan);
+    void deleteOldSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 
-    void deleteOldFeedback(ZonedDateTime keepAllLaterThan);
+    void deleteOldFeedback(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 
-    boolean existsDataForCleanup(ZonedDateTime keepAllLaterThan);
+    boolean existsDataForCleanup(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 }
