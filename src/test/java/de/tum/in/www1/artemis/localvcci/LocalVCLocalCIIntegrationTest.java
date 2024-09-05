@@ -14,7 +14,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +38,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.hazelcast.collection.IQueue;
+import com.hazelcast.core.HazelcastInstance;
+
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -53,7 +55,8 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.repository.BuildJobRepository;
-import de.tum.in.www1.artemis.service.connectors.localci.LocalCITriggerService;
+import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
+import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -69,9 +72,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     @Autowired
     private BuildJobRepository buildJobRepository;
-
-    @Autowired
-    private LocalCITriggerService localCITriggerService;
 
     // ---- Repository handles ----
     private LocalRepository templateRepository;
@@ -91,6 +91,14 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     @Value("${artemis.user-management.internal-admin.password}")
     private String localVCPassword;
+
+    @Autowired
+    private SharedQueueProcessingService sharedQueueProcessingService;
+
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
+
+    protected IQueue<BuildJobQueueItem> queuedJobs;
 
     @BeforeAll
     void setupAll() {
@@ -141,6 +149,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         doReturn(true).when(ldapTemplate).compare(anyString(), anyString(), any());
 
         localVCLocalCITestService.mockInspectImage(dockerClient);
+
+        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
     }
 
     @AfterEach
@@ -933,21 +943,32 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildPriorityAfterDueDate() throws Exception {
         // Set dueDate before now
+        sharedQueueProcessingService.removeListener();
         programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
         programmingExerciseRepository.save(programmingExercise);
 
         testPriority(instructor1Login, PRIORITY_OPTIONAL_EXERCISE);
+
+        queuedJobs.clear();
+        sharedQueueProcessingService.init();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildPriorityBeforeDueDate() throws Exception {
+        sharedQueueProcessingService.removeListener();
+
         testPriority(student1Login, PRIORITY_NORMAL);
+
+        queuedJobs.clear();
+        sharedQueueProcessingService.init();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPriorityRunningExam() throws Exception {
+        sharedQueueProcessingService.removeListener();
+
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
@@ -969,6 +990,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         studentExamRepository.save(studentExam);
 
         testPriority(student1Login, PRIORITY_EXAM_CONDUCTION);
+
+        queuedJobs.clear();
+        sharedQueueProcessingService.init();
     }
 
     private void testPriority(String login, int expectedPriority) throws Exception {
@@ -979,18 +1003,17 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                 Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
-        localCITriggerService.triggerBuild(studentParticipation, false);
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
 
-        await().atMost(Duration.ofSeconds(7)).pollInterval(Duration.ofSeconds(1)).until(() -> {
-            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
-            return buildJobOptional.isPresent();
+        await().until(() -> {
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+            return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
         });
 
-        Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
+        BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
 
-        BuildJob buildJob = buildJobOptional.orElseThrow();
-
-        assertThat(buildJob.getPriority()).isEqualTo(expectedPriority);
+        assertThat(buildJobQueueItem).isNotNull();
+        assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
 
     }
 }
