@@ -1,0 +1,56 @@
+<div>
+    <h2>
+        <span id="cleanup-page-heading" jhiTranslate="cleanupService.title">Cleanup Service Operations</span>
+        <button class="btn btn-primary float-end" (click)="refresh()">
+            <fa-icon [icon]="faSync"></fa-icon>
+            <span jhiTranslate="cleanup.refresh.button">Refresh</span>
+        </button>
+    </h2>
+    <div class="table-responsive">
+        <table id="cleanupOperations" class="table table-striped" aria-describedby="cleanup-page-heading">
+            <thead>
+                <tr>
+                    <th scope="col" jhiTranslate="cleanupService.table.operation">Operation</th>
+                    <th scope="col" jhiTranslate="cleanupService.table.deleteFrom">Delete From</th>
+                    <th scope="col" jhiTranslate="cleanupService.table.deleteTo">Delete To</th>
+                    <th scope="col" jhiTranslate="cleanupService.table.lastExecuted">Last Executed</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (operation of cleanupOperations; track operation) {
+                    <tr>
+                        <td>
+                            {{ 'cleanupService.operation.' + operation.name | artemisTranslate }}
+                        </td>
+                        <td>
+                            <div class="form-group flex-grow-1">
+                                <jhi-date-time-picker name="deleteFromDate" id="deleteFromDate" [(ngModel)]="operation.deleteFrom" [shouldDisplayTimeZoneWarning]="false" />
+                            </div>
+                        </td>
+                        <td>
+                            <div class="form-group flex-grow-1">
+                                <jhi-date-time-picker name="deleteToDate" id="deleteToDate" [(ngModel)]="operation.deleteTo" [shouldDisplayTimeZoneWarning]="false" />
+                            </div>
+                        </td>
+                        <td>
+                            {{ operation.lastExecuted | artemisDate }}
+                        </td>
+                        <td>
+                            <button
+                                id="execute-operation"
+                                jhiDeleteButton
+                                [entityTitle]="'cleanupService.operation.' + operation.name | artemisTranslate"
+                                deleteQuestion="cleanupService.execute.question"
+                                deleteConfirmationText="cleanupService.execute.typeOperationNameToConfirm"
+                                (delete)="executeCleanupOperation(operation)"
+                                [dialogError]="dialogError"
+                                class="btn mt-1"
+                            ></button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
