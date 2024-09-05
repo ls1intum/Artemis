@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.broker.service.name }}
+spec:
+  selector:
+    app: activemq-broker
+  ports:
+    - name: stomp
+      port: {{ .Values.broker.service.port }}
+      protocol: TCP
+      targetPort: activemq-stomp
+    - name: jms
+      port: 61613
+      protocol: TCP
+      targetPort: activemq-jms

@@ -1,0 +1,47 @@
+name: Build and Push Helm Chart
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.15.0
+
+      - name: Get branch name
+        id: branch
+        run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      - name: Determine tag
+        id: determine-tag
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            SEM_VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            SEM_VERSION="0.0.0-${{ env.BRANCH_NAME }}"
+          fi
+          echo "SEM_VERSION=${SEM_VERSION}" >> $GITHUB_ENV
+      - name: Update chart dependencies
+        run: helm dependency update helm/artemis
+
+      - name: Chart | Push
+        uses: appany/helm-oci-chart-releaser@v0.3.0
+        with:
+          name: artemis
+          repository: ${{ github.repository_owner }}/helm
+          tag: ${{ env.SEM_VERSION }}
+          path: helm/artemis
+          registry: ghcr.io
+          registry_username: ${{ github.repository_owner }}
+          registry_password: ${{ secrets.GITHUB_TOKEN }}
+          update_dependencies: 'true'

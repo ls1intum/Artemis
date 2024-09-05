@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jhipster-registry-env-configmap
+data:
+  SPRING_PROFILES_ACTIVE: prod,k8s
+  SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_TYPE: native
+  SPRING_CLOUD_CONFIG_SERVER_COMPOSITE_0_SEARCH_LOCATIONS: file:./central-config
+  K8S_CONFIG_PATH: /central-config/

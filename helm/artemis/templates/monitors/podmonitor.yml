@@ -1,0 +1,16 @@
+# This ServiceMonitor is used in combination with a Rancher cluster, where it is not possible to deploy a custom prometheus instance.
+# This ServiceMonitor configures the existing instance to also monitor the artemis service.
+{{- if and .Values.artemis.autoscaler.enabled (not .Values.artemis.autoscaler.customPrometheus) }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "artemis.fullname" . }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "artemis.selectorLabels" . | nindent 6 }}
+  endpoints:
+  - port: http
+    path: "/management/prometheus"
+    interval: "15s"
+{{- end }}
