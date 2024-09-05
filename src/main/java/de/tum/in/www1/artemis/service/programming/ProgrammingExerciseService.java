@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.ALLOWED_CHECKOUT_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
@@ -365,6 +366,7 @@ public class ProgrammingExerciseService {
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateSettingsForFeedbackRequest();
+        validateCustomCheckoutPaths(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -430,6 +432,16 @@ public class ProgrammingExerciseService {
         }
     }
 
+    private void validateCustomCheckoutPaths(ProgrammingExercise programmingExercise) {
+        var buildConfig = programmingExercise.getBuildConfig();
+        Matcher ciCheckoutAssignmentDirectoryMatcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(buildConfig.getAssignmentCheckoutPath());
+        Matcher ciCheckoutSolutionDirectoryMatcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(buildConfig.getSolutionCheckoutPath());
+        Matcher ciCheckoutTestDirectoryMatcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(buildConfig.getTestCheckoutPath());
+        if (!ciCheckoutAssignmentDirectoryMatcher.matches() || !ciCheckoutSolutionDirectoryMatcher.matches() || !ciCheckoutTestDirectoryMatcher.matches()) {
+            throw new BadRequestAlertException("The custom checkout paths are invalid!", "programmingExercise", "checkoutDirectoriesInvalid");
+        }
+    }
+
     /**
      * Validates static code analysis settings
      *
@@ -439,6 +451,16 @@ public class ProgrammingExerciseService {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
+    }
+
+    public void validateCheckoutDirectoriesUnchanged(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise updatedProgrammingExercise) {
+        var originalBuildConfig = originalProgrammingExercise.getBuildConfig();
+        var updatedBuildConfig = updatedProgrammingExercise.getBuildConfig();
+        if (!Objects.equals(originalBuildConfig.getAssignmentCheckoutPath(), updatedBuildConfig.getAssignmentCheckoutPath())
+                || !Objects.equals(originalBuildConfig.getSolutionCheckoutPath(), updatedBuildConfig.getSolutionCheckoutPath())
+                || !Objects.equals(originalBuildConfig.getTestCheckoutPath(), updatedBuildConfig.getTestCheckoutPath())) {
+            throw new BadRequestAlertException("The custom checkout paths cannot be changed!", "programmingExercise", "checkoutDirectoriesChanged");
+        }
     }
 
     /**

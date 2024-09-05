@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
+import static de.tum.in.www1.artemis.config.Constants.ALLOWED_CHECKOUT_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
@@ -7,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -26,8 +26,6 @@ import de.tum.in.www1.artemis.web.rest.programming.ProgrammingExerciseResourceEr
 public class AuxiliaryRepositoryService {
 
     private static final String AUX_REPO_ENTITY_NAME = "programmingExercise";
-
-    private static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 

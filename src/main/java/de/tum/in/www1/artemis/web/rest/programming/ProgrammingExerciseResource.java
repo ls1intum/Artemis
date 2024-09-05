@@ -327,6 +327,9 @@ public class ProgrammingExerciseResource {
             }
         }
 
+        // Verify that the checkout directories have not been changed. This is required since the buildScript and result paths are determined during the creation of the exercise.
+        programmingExerciseService.validateCheckoutDirectoriesUnchanged(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+
         // Verify that a theia image is provided when the online IDE is enabled
         if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getBuildConfig().getTheiaImage() == null) {
             throw new BadRequestAlertException("You need to provide a Theia image when the online IDE is enabled", ENTITY_NAME, "noTheiaImageProvided");
