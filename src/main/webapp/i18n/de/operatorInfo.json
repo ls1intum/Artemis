@@ -1,0 +1,10 @@
+{
+    "artemisApp": {
+        "operatorInfo": {
+            "title": "Betreiber",
+            "name": "Name",
+            "admin": "Administrator:in",
+            "adminEmail": "Kontakt-E-Mail"
+        }
+    }
+}
