@@ -102,6 +102,7 @@
         "jsdom": "24.1.1",
         "katex": "0.16.11",
         "postcss": "8.4.41",
+        "rimraf": "6.0.1",
         "semver": "7.6.3",
         "showdown-katex": {
             "showdown": "2.1.0"
@@ -155,6 +156,7 @@
         "lint-staged": "15.2.10",
         "ng-mocks": "14.13.1",
         "prettier": "3.3.3",
+        "rimraf": "6.0.1",
         "sass": "1.78.0",
         "ts-jest": "29.2.5",
         "typescript": "5.5.4",
