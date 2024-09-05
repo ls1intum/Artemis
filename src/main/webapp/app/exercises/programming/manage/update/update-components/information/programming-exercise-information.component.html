@@ -18,11 +18,10 @@
             [hideTitleLabel]="true"
             [isExamMode]="isExamMode"
             [isImport]="isImport"
-            [isSimpleMode]="isSimpleMode()"
             [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
         />
     </div>
-    @if (!isSimpleMode()) {
+    @if (isEditFieldDisplayedRecord().shortName) {
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName" for="field_shortName"></label>
@@ -182,7 +181,7 @@
             </div>
         }
     </div>
-    @if (!programmingExerciseCreationConfig.isExamMode) {
+    @if (!programmingExerciseCreationConfig.isExamMode && isEditFieldDisplayedRecord().categories) {
         <div id="creation-config-selector">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.categories"></label>

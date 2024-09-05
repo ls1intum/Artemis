@@ -16,7 +16,6 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() isExamMode: boolean;
     @Input() isImport: boolean;
     @Input() hideTitleLabel: boolean;
-    isSimpleMode = input<boolean>(false);
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild(TitleChannelNameComponent) titleChannelNameComponent: TitleChannelNameComponent;

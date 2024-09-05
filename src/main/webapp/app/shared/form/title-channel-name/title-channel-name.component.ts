@@ -18,7 +18,6 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     @Input() hideChannelName?: boolean;
     @Input() minTitleLength: number;
     @Input() initChannelName = true;
-    isSimpleMode = input<boolean>(false);
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild('field_title') field_title: NgModel;

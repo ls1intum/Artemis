@@ -43,15 +43,20 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     shortNameRandomPart = signal<string>(this.appendRandomLetters(''));
 
     constructor() {
-        effect(() => {
-            const newShortName = this.exerciseTitle();
-            if (newShortName && newShortName.length > 3) {
-                const sanitizedShortName = this.removeSpecialCharacters(newShortName ?? '').substring(0, 6);
-                // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-                const shortnameWithRandomness = sanitizedShortName + this.shortNameRandomPart();
-                this.programmingExercise.shortName = shortnameWithRandomness;
-            }
-        });
+        effect(
+            function generateShortNameWhenInSimpleMode() {
+                if (!this.isSimpleMode()) {
+                    return;
+                }
+                const newShortName = this.exerciseTitle();
+                if (newShortName && newShortName.length > 3) {
+                    const sanitizedShortName = this.removeSpecialCharacters(newShortName ?? '').substring(0, 6);
+                    // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+                    const shortnameWithRandomness = sanitizedShortName + this.shortNameRandomPart();
+                    this.programmingExercise.shortName = shortnameWithRandomness;
+                }
+            }.bind(this),
+        );
     }
 
     removeSpecialCharacters(input: string): string {
