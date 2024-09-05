@@ -1,10 +1,6 @@
 <div>
     <h2>
         <span id="cleanup-page-heading" jhiTranslate="cleanupService.title">Cleanup Service Operations</span>
-        <button class="btn btn-primary float-end" (click)="refresh()">
-            <fa-icon [icon]="faSync"></fa-icon>
-            <span jhiTranslate="cleanup.refresh.button">Refresh</span>
-        </button>
     </h2>
     <div class="table-responsive">
         <table id="cleanupOperations" class="table table-striped" aria-describedby="cleanup-page-heading">
@@ -25,12 +21,12 @@
                         </td>
                         <td>
                             <div class="form-group flex-grow-1">
-                                <jhi-date-time-picker name="deleteFromDate" id="deleteFromDate" [(ngModel)]="operation.deleteFrom" [shouldDisplayTimeZoneWarning]="false" />
+                                <jhi-date-time-picker id="deleteFromDate" [(ngModel)]="operation.deleteFrom" [shouldDisplayTimeZoneWarning]="false" />
                             </div>
                         </td>
                         <td>
                             <div class="form-group flex-grow-1">
-                                <jhi-date-time-picker name="deleteToDate" id="deleteToDate" [(ngModel)]="operation.deleteTo" [shouldDisplayTimeZoneWarning]="false" />
+                                <jhi-date-time-picker id="deleteToDate" [(ngModel)]="operation.deleteTo" [shouldDisplayTimeZoneWarning]="false" />
                             </div>
                         </td>
                         <td>
