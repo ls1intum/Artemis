@@ -35,7 +35,7 @@ describe('Language Helper', () => {
     it('determinePreferredLanguages should respect user preference', inject([JhiLanguageHelper], (service: JhiLanguageHelper) => {
         const navigator = {
             languages: ['de', 'en'],
-        };
+        } as unknown as Navigator;
 
         const languageChangeSpy = jest.spyOn(service, 'getNavigatorReference').mockReturnValue(navigator);
         expect(service.determinePreferredLanguage()).toBe('de');
@@ -45,7 +45,7 @@ describe('Language Helper', () => {
     it('determinePreferredLanguage should return english if no other language matches', inject([JhiLanguageHelper], (service: JhiLanguageHelper) => {
         const navigator = {
             languages: ['elvish', 'orcish'],
-        };
+        } as unknown as Navigator;
 
         const languageChangeSpy = jest.spyOn(service, 'getNavigatorReference').mockReturnValue(navigator);
         expect(service.determinePreferredLanguage()).toBe('en');
