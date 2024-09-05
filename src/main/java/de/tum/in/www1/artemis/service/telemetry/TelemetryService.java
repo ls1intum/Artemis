@@ -15,6 +15,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -76,6 +77,7 @@ public class TelemetryService {
      * This function runs once, at the startup of the application.
      * If telemetry is disabled in artemis.telemetry.enabled, no data is sent.
      */
+    @Async
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
         if (!useTelemetry || profileService.isDevActive()) {
