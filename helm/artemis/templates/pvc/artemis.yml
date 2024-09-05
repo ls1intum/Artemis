@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.artemis.volumes.name }}
+spec:
+  {{- with .Values.artemis.volumes.accessModes }}
+  accessModes:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.artemis.volumes.size }}
+  {{- if ne .Values.artemis.volumes.storageClassName "" }}
+  storageClassName: {{ .Values.artemis.volumes.storageClassName }}
+  {{- end }}
+
+  volumeMode: Filesystem

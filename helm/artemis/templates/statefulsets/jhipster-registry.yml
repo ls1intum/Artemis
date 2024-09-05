@@ -1,0 +1,50 @@
+# JHipster Registry HA cluster
+#
+# Note that as this is based on a StatefulSet, it will only work on Kubernetes >= 1.5
+#
+# By default, the JHipster Registry and its UI is not accessible from outside the cluster for security reasons
+# You can setup temporary access to it on localhost:8761 by running :
+#   kubectl port-forward jhipster-registry-0 8761
+#
+# To scale your JHipster Registry cluster :
+#   In this file, change the value of spec.replicas and CLUSTER_SIZE to any value
+#   Apply the descriptor again : `kubectl apply -f jhipster-registry.yml`
+#   This will create new replicas with the correct CLUSTER_SIZE which is mandatory so that all Eureka server can connect directly to all the others.
+#   Then delete the previous replica pods one by one so tht they can be recreated with the correct CLUSTER_SIZE configuration.
+#   `kubectl delete pod jhipster-registry-0`, `kubectl delete pod jhipster-registry-1`
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: jhipster-registry
+spec:
+  serviceName: {{ .Values.registry.service.name | quote }}
+  replicas: {{ .Values.registry.replicaCount }}
+  selector:
+    matchLabels:
+      app: jhipster-registry
+  template:
+    metadata:
+      labels:
+        app: jhipster-registry
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: jhipster-registry
+          image: "{{ .Values.registry.image.repository }}{{ .Values.registry.image.name }}:{{ .Values.registry.image.version }}"
+          ports:
+            - name: registry-p-port
+              containerPort: 8761
+          envFrom:
+          - configMapRef:
+              name: jhipster-registry-env-configmap
+          - secretRef:
+              name: jhipster-registry-secrets
+          volumeMounts:
+            - name: config-volume
+              mountPath: /central-config
+          resources:
+            {{- toYaml .Values.registry.resources | nindent 12 }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: jhipster-registry-configmap

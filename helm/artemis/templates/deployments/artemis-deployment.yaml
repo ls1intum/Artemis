@@ -1,0 +1,8 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "artemis.fullname" . }}
+  labels:
+    {{- include "artemis.labels" . | nindent 4 }}
+spec:
+    {{- include "deployment-template" . | nindent 4 }} 

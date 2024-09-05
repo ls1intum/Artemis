@@ -1,0 +1,12 @@
+{{- range .Values.artemis.profileDeployments }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "artemis.fullname" $ }}-{{ .profile }}
+  labels:
+    {{- include "artemis.labels" $ | nindent 4 }}
+
+spec:
+    {{- include "deployment-template" (merge (dict "Args" .) $ ) | nindent 4 }}
+---
+{{ end }}
