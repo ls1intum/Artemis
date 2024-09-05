@@ -8,6 +8,7 @@ import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
@@ -21,6 +22,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     @Input({ required: true }) programmingExercise: ProgrammingExercise;
     @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     isSimpleMode = input.required<boolean>();
+    isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild('select') selectLanguageField: NgModel;
     @ViewChild('packageName') packageNameField?: NgModel;

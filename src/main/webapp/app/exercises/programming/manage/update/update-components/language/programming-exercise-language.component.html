@@ -4,40 +4,44 @@
         id="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle"
     ></h3>
     <p jhiTranslate="artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepMessage"></p>
-    <div class="form-group">
-        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage"></label>
-        <select
-            #select="ngModel"
-            required
-            class="form-select"
-            [ngModel]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
-            (ngModelChange)="select.model = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
-            name="programmingLanguage"
-            id="field_programmingLanguage"
-            [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
-        >
-            @for (supportedLanguage of programmingExerciseCreationConfig.supportedLanguages; track supportedLanguage) {
-                <option [value]="supportedLanguage">
-                    {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
-                </option>
-            }
-        </select>
-    </div>
-    @if (
-        !isSimpleMode() && programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes?.length && programmingExerciseCreationConfig.modePickerOptions
-    ) {
-        <div class="form-group mt-2">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"></label>
-            <jhi-mode-picker
+    @if (isEditFieldDisplayedRecord().programmingLanguage) {
+        <div class="form-group">
+            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.programmingLanguage" for="field_programmingLanguage"></label>
+            <select
+                #select="ngModel"
                 required
-                [options]="programmingExerciseCreationConfig.modePickerOptions"
-                [value]="programmingExerciseCreationConfig.selectedProjectType"
-                (valueChange)="programmingExerciseCreationConfig.onProjectTypeChange($event!)"
-                [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile || !!programmingExercise.id"
-                name="projectType"
-                id="field_projectType"
-            />
+                class="form-select"
+                [ngModel]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
+                (ngModelChange)="select.model = programmingExerciseCreationConfig.onProgrammingLanguageChange($event)"
+                name="programmingLanguage"
+                id="field_programmingLanguage"
+                [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
+            >
+                @for (supportedLanguage of programmingExerciseCreationConfig.supportedLanguages; track supportedLanguage) {
+                    <option [value]="supportedLanguage">
+                        {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
+                    </option>
+                }
+            </select>
+        </div>
+    }
+
+    @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.projectTypes?.length && programmingExerciseCreationConfig.modePickerOptions) {
+        <div class="form-group mt-2">
+            @if (isEditFieldDisplayedRecord().projectType) {
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.projectType" for="field_projectType"> </label>
+                <jhi-mode-picker
+                    required
+                    [options]="programmingExerciseCreationConfig.modePickerOptions"
+                    [value]="programmingExerciseCreationConfig.selectedProjectType"
+                    (valueChange)="programmingExerciseCreationConfig.onProjectTypeChange($event!)"
+                    [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || programmingExerciseCreationConfig.isImportFromFile || !!programmingExercise.id"
+                    name="projectType"
+                    id="field_projectType"
+                />
+            }
             @if (
+                isEditFieldDisplayedRecord().withExemplaryDependency &&
                 !programmingExerciseCreationConfig.isImportFromExistingExercise &&
                 !programmingExerciseCreationConfig.isImportFromFile &&
                 !programmingExercise.id &&
@@ -60,58 +64,60 @@
             }
         </div>
     }
-    @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE) {
-        <div class="form-group">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label>
-            <input
-                required
-                type="text"
-                [pattern]="programmingExerciseCreationConfig.packageNamePattern"
-                class="form-control"
-                name="packageName"
-                id="field_packageName"
-                [(ngModel)]="programmingExercise.packageName"
-                [readonly]="programmingExercise.id"
-                #packageName="ngModel"
-                [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
-            />
-            @for (e of packageName.errors! | keyvalue | removekeys: ['required']; track e) {
-                @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
-                    <div class="alert alert-danger">
-                        @if (programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX) {
-                            <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage + '_BLACKBOX'"></div>
-                        }
-                        @if (programmingExercise.projectType !== ProjectType.MAVEN_BLACKBOX) {
+    @if (isEditFieldDisplayedRecord().packageName) {
+        @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE) {
+            <div class="form-group">
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.packageName" for="field_packageName"></label>
+                <input
+                    required
+                    type="text"
+                    [pattern]="programmingExerciseCreationConfig.packageNamePattern"
+                    class="form-control"
+                    name="packageName"
+                    id="field_packageName"
+                    [(ngModel)]="programmingExercise.packageName"
+                    [readonly]="programmingExercise.id"
+                    #packageName="ngModel"
+                    [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
+                />
+                @for (e of packageName.errors! | keyvalue | removekeys: ['required']; track e) {
+                    @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
+                        <div class="alert alert-danger">
+                            @if (programmingExercise.projectType === ProjectType.MAVEN_BLACKBOX) {
+                                <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage + '_BLACKBOX'"></div>
+                            }
+                            @if (programmingExercise.projectType !== ProjectType.MAVEN_BLACKBOX) {
+                                <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        }
+        @if (programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise.projectType === ProjectType.XCODE) {
+            <div class="form-group">
+                <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
+                <input
+                    required
+                    type="text"
+                    [pattern]="programmingExerciseCreationConfig.appNamePatternForSwift"
+                    class="form-control"
+                    name="packageName"
+                    id="field_appName"
+                    [(ngModel)]="programmingExercise.packageName"
+                    [readonly]="programmingExercise.id"
+                    #packageName="ngModel"
+                    [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
+                />
+                @for (e of packageName.errors! | keyvalue | removekeys: ['required']; track e) {
+                    @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
+                        <div class="alert alert-danger">
                             <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
-                        }
-                    </div>
+                        </div>
+                    }
                 }
-            }
-        </div>
-    }
-    @if (programmingExercise.programmingLanguage === ProgrammingLanguage.SWIFT && programmingExercise.projectType === ProjectType.XCODE) {
-        <div class="form-group">
-            <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.appName" for="field_packageName"></label>
-            <input
-                required
-                type="text"
-                [pattern]="programmingExerciseCreationConfig.appNamePatternForSwift"
-                class="form-control"
-                name="packageName"
-                id="field_appName"
-                [(ngModel)]="programmingExercise.packageName"
-                [readonly]="programmingExercise.id"
-                #packageName="ngModel"
-                [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
-            />
-            @for (e of packageName.errors! | keyvalue | removekeys: ['required']; track e) {
-                @if (packageName.invalid && (packageName.dirty || packageName.touched)) {
-                    <div class="alert alert-danger">
-                        <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
-                    </div>
-                }
-            }
-        </div>
+            </div>
+        }
     }
 
     <!-- Theia Image Selection -->
@@ -121,7 +127,12 @@
     }
 
     <!-- Static code analysis checkbox -->
-    @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed && !isSimpleMode()) {
+    @if (
+        isEditFieldDisplayedRecord().enableStaticCodeAnalysis &&
+        programmingExercise.programmingLanguage &&
+        programmingExerciseCreationConfig.staticCodeAnalysisAllowed &&
+        !isSimpleMode()
+    ) {
         <div>
             <div class="form-check custom-control custom-checkbox">
                 <input
@@ -148,7 +159,7 @@
     }
     <!-- Sequential Test Runs checkbox
     It would be very complicated to change the sequential test run feature after an exercise is created, which is why it can only be activated if the exercise was not yet created.-->
-    @if (programmingExerciseCreationConfig.sequentialTestRunsAllowed && !isSimpleMode()) {
+    @if (isEditFieldDisplayedRecord().sequentialTestRuns && programmingExerciseCreationConfig.sequentialTestRunsAllowed) {
         <div>
             <div class="form-check custom-control custom-checkbox">
                 <input
@@ -199,7 +210,7 @@
             </label>
         </div>
     }
-    @if (!isSimpleMode()) {
+    @if (isEditFieldDisplayedRecord().customizeBuildScript) {
         @if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
             <jhi-programming-exercise-custom-build-plan [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig" />
         } @else if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
