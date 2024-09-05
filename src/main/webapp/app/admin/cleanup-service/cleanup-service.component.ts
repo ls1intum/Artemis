@@ -24,46 +24,45 @@ export class CleanupServiceComponent implements OnInit {
         private eventManager: EventManager,
     ) {}
 
+    // TODO Michal Kawka replace with API call fetching operations from the DB
     cleanupOperations: CleanupOperation[] = [
         {
             name: 'deleteOrphans',
-            deleteFrom: dayjs().subtract(30, 'days'), // 30 days ago
-            deleteTo: dayjs().subtract(10, 'days'), // 10 days ago
-            lastExecuted: dayjs().subtract(1, 'days'), // 1 day ago
+            deleteFrom: dayjs().subtract(6, 'months'),
+            deleteTo: dayjs(),
+            lastExecuted: dayjs().subtract(1, 'days'),
         },
         {
             name: 'deletePlagiarismComparisons',
-            deleteFrom: dayjs().subtract(60, 'days'), // 60 days ago
-            deleteTo: dayjs().subtract(20, 'days'), // 20 days ago
-            lastExecuted: dayjs().subtract(2, 'days'), // 2 days ago
+            deleteFrom: dayjs().subtract(6, 'months'),
+            deleteTo: dayjs(),
+            lastExecuted: dayjs().subtract(2, 'days'),
         },
         {
             name: 'deleteNonRatedResults',
-            deleteFrom: dayjs().subtract(90, 'days'), // 90 days ago
-            deleteTo: dayjs().subtract(30, 'days'), // 30 days ago
-            lastExecuted: dayjs().subtract(3, 'days'), // 3 days ago
+            deleteFrom: dayjs().subtract(6, 'months'),
+            deleteTo: dayjs(),
+            lastExecuted: dayjs().subtract(3, 'days'),
         },
         {
             name: 'deleteOldRatedResults',
-            deleteFrom: dayjs().subtract(120, 'days'), // 120 days ago
-            deleteTo: dayjs().subtract(40, 'days'), // 40 days ago
-            lastExecuted: dayjs().subtract(4, 'days'), // 4 days ago
+            deleteFrom: dayjs().subtract(6, 'months'),
+            deleteTo: dayjs(),
+            lastExecuted: dayjs().subtract(4, 'days'),
         },
         {
             name: 'deleteOldSubmissionVersions',
-            deleteFrom: dayjs().subtract(150, 'days'), // 150 days ago
-            deleteTo: dayjs().subtract(50, 'days'), // 50 days ago
-            lastExecuted: dayjs().subtract(5, 'days'), // 5 days ago
+            deleteFrom: dayjs().subtract(6, 'months'),
+            deleteTo: dayjs(),
+            lastExecuted: dayjs().subtract(5, 'days'),
         },
         {
             name: 'deleteOldFeedback',
-            deleteFrom: dayjs().subtract(180, 'days'), // 180 days ago
-            deleteTo: dayjs().subtract(60, 'days'), // 60 days ago
-            lastExecuted: dayjs().subtract(6, 'days'), // 6 days ago
+            deleteFrom: dayjs().subtract(6, 'months'),
+            deleteTo: dayjs(),
+            lastExecuted: dayjs().subtract(6, 'days'),
         },
     ];
-
-    // constructor(private cleanupService: CleanupService) {}
 
     ngOnInit(): void {
         this.refresh();
@@ -78,7 +77,7 @@ export class CleanupServiceComponent implements OnInit {
         const deleteFrom = convertDateFromClient(operation.deleteFrom)!;
         const deleteTo = convertDateFromClient(operation.deleteTo)!;
 
-        const subscriptionHandler = this.handleResponse();
+        const subscriptionHandler = this.handleResponse(operation);
 
         switch (operation.name) {
             case 'deleteOrphans':
@@ -99,15 +98,14 @@ export class CleanupServiceComponent implements OnInit {
             case 'deleteOldFeedback':
                 this.cleanupService.deleteOldFeedback(deleteFrom, deleteTo).subscribe(subscriptionHandler);
                 break;
-            default:
-                console.warn(`Unknown operation: ${operation.name}`);
         }
     }
 
-    private handleResponse() {
+    private handleResponse(operation: CleanupOperation) {
         return {
             next: () => {
                 this.dialogErrorSource.next('');
+                operation.lastExecuted = dayjs(); // Update lastExecuted to now
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
