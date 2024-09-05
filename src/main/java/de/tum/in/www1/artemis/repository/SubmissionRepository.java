@@ -83,6 +83,15 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     List<Submission> findAllWithResultsAndAssessorByParticipationId(Long participationId);
 
     /**
+     * Get all submissions of a participation and eagerly load results and assessor ordered by submission date in ascending order
+     *
+     * @param participationId the id of the participation
+     * @return a list of the participation's submissions
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor" })
+    List<Submission> findAllWithResultsAndAssessorByParticipationIdOrderBySubmissionDateAsc(Long participationId);
+
+    /**
      * Get all submissions with their results by the submission ids
      *
      * @param submissionIds the ids of the submissions which should be retrieved

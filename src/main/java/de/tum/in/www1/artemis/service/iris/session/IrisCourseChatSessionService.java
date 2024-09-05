@@ -2,9 +2,13 @@ package de.tum.in.www1.artemis.service.iris.session;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -12,6 +16,9 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
@@ -19,6 +26,10 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.in.www1.artemis.domain.iris.settings.event.IrisEventType;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisCourseChatSessionRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -30,7 +41,9 @@ import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * Service to handle the course chat subsystem of Iris.
@@ -38,6 +51,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @Service
 @Profile("iris")
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
+
+    private static final Logger log = LoggerFactory.getLogger(IrisCourseChatSessionService.class);
 
     private final IrisMessageService irisMessageService;
 
@@ -53,11 +68,18 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final IrisCourseChatSessionRepository irisCourseChatSessionRepository;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     private final PyrisPipelineService pyrisPipelineService;
+
+    private final SubmissionRepository submissionRepository;
+
+    private final double SUCCESS_THRESHOLD = 80.0; // TODO: Retrieve configuration from Iris settings
 
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
             AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper) {
+            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper,
+            StudentParticipationRepository studentParticipationRepository, SubmissionRepository submissionRepository) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.irisSettingsService = irisSettingsService;
@@ -67,6 +89,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         this.rateLimitService = rateLimitService;
         this.irisCourseChatSessionRepository = irisCourseChatSessionRepository;
         this.pyrisPipelineService = pyrisPipelineService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.submissionRepository = submissionRepository;
     }
 
     /**
@@ -117,10 +141,9 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
         requestAndHandleResponse(session, "default", null);
     }
 
-    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, CompetencyJol competencyJol) {
+    private void requestAndHandleResponse(IrisCourseChatSession session, String variant, Object object) {
         var chatSession = (IrisCourseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-
-        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, competencyJol);
+        pyrisPipelineService.executeCourseChatPipeline(variant, chatSession, object);
     }
 
     /**
@@ -151,13 +174,74 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
      */
     public void onJudgementOfLearningSet(CompetencyJol competencyJol) {
         var course = competencyJol.getCompetency().getCourse();
-        if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.CHAT, course)) {
-            return;
-        }
+
+        irisSettingsService.isActivatedForElseThrow(IrisEventType.JOL, course);
+
         var user = competencyJol.getUser();
         user.hasAcceptedIrisElseThrow();
         var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
         CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "jol", competencyJol));
+    }
+
+    /**
+     * Triggers the course chat in response to a new submission for a non-exam exercise.
+     * Triggers the pipeline only the first time a user successfully submits an exercise.
+     * Subsequent successful submissions are ignored.
+     *
+     * @param result The submission event to trigger the course chat for
+     * @throws ConflictException             If the exercise is an exam exercise
+     * @throws AccessForbiddenAlertException If the course chat is not enabled for the course
+     */
+    public void onSubmissionSuccess(Result result) {
+        var participation = result.getParticipation();
+        if (!(participation instanceof ProgrammingExerciseStudentParticipation studentParticipation)) {
+            return;
+        }
+        var exercise = (ProgrammingExercise) participation.getExercise();
+
+        if (exercise.isExamExercise()) {
+            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+        }
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+        irisSettingsService.isActivatedForElseThrow(IrisEventType.PROGRESS_STALLED, course);
+
+        log.info("Submission was successful for user {}", studentParticipation.getParticipant().getName());
+        // The submission was successful, so we inform Iris about the successful submission,
+        // but before we do that, we check if this is the first successful time out of all submissions out of all submissions for this exercise
+        var allSubmissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(studentParticipation.getId());
+        var latestSubmission = allSubmissions.getLast();
+        var allSuccessful = allSubmissions.stream().filter(submission -> submission.getLatestResult() != null && submission.getLatestResult().getScore() >= SUCCESS_THRESHOLD)
+                .count();
+        if (allSuccessful == 1 && Objects.requireNonNull(latestSubmission.getLatestResult()).getScore() >= SUCCESS_THRESHOLD) {
+            log.info("First successful submission for user {}", studentParticipation.getParticipant().getName());
+            var participant = studentParticipation.getParticipant();
+            if (participant instanceof User user) {
+                setStudentParticipationsToExercise(user.getId(), exercise);
+                var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
+                CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
+            }
+            else {
+                var team = (Team) participant;
+                var teamMembers = team.getStudents();
+                for (var user : teamMembers) {
+                    setStudentParticipationsToExercise(user.getId(), exercise);
+                    var session = getCurrentSessionOrCreateIfNotExistsInternal(course, user, false);
+                    CompletableFuture.runAsync(() -> requestAndHandleResponse(session, "submission_successful", exercise));
+                }
+            }
+        }
+        else {
+            log.info("User {} has already successfully submitted before, so we do not inform Iris about the successful submission",
+                    studentParticipation.getParticipant().getName());
+        }
+    }
+
+    private void setStudentParticipationsToExercise(Long studentId, ProgrammingExercise exercise) {
+        // TODO: Write a repository function to pull student participations for a specific exercise instead of a list of exercises
+        var studentParticipation = new HashSet<>(
+                studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentId, List.of(exercise)));
+        exercise.setStudentParticipations(studentParticipation);
     }
 
     /**

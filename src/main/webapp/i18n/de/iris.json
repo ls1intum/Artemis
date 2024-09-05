@@ -27,6 +27,25 @@
                     },
                     "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
+                    "proactivitySettings": {
+                        "title": "Proaktivitätseinstellungen",
+                        "eventSettings": {
+                            "title": "Ereigniseinstellungen",
+                            "progressStalled": "Fortschritt-verzögert Ereignis",
+                            "buildFailed": "Fehlgeschlagenes Build-Ereignis",
+                            "jol": "Lernbeurteilungsereignis",
+                            "active": "Aktiv",
+                            "inactive": "Inaktiv",
+                            "target": "Ziel",
+                            "pipelineVariant": "Pipeline-Variante",
+                            "tooltips": {
+                                "active": "Wenn das Ereignis aktiv ist, wird es für Proaktivität berücksichtigt.",
+                                "inactive": "Wenn das Ereignis inaktiv ist, wird es nicht für Proaktivität berücksichtigt.",
+                                "target": "Das Ziel des Ereignisses. Das Ziel bestimmt den Typ der Iris-Chat-Sitzung, an die die Ereignisantwort übermittelt wird.",
+                                "pipelineVariant": "Die Pyris-Pipeline-Variante, die für das Ereignis verwendet werden soll."
+                            }
+                        }
+                    },
                     "enabled-disabled": "Aktiviert/Deaktiviert",
                     "models": {
                         "title": "Modelle",
