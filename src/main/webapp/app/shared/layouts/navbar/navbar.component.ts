@@ -23,6 +23,7 @@ import {
     faBell,
     faBook,
     faBookOpen,
+    faBroom,
     faChevronRight,
     faCog,
     faEye,
@@ -119,6 +120,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     faGears = faGears;
     faPuzzlePiece = faPuzzlePiece;
     faChevronRight = faChevronRight;
+    faBroom = faBroom;
 
     private standardizedCompetencySubscription: Subscription;
     private authStateSubscription: Subscription;
