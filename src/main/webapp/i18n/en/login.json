@@ -4,7 +4,7 @@
         "divider": "or",
         "form": {
             "password": "Password",
-            "password.placeholder": "Your password",
+            "password.placeholder": "Password",
             "rememberme": "Remember me",
             "acceptTerms": "Accept terms",
             "button": "Sign in"
@@ -15,7 +15,7 @@
             }
         },
         "password": {
-            "forgot": "Did you forget your password?"
+            "forgot": "Forgot password?"
         },
         "ide": {
             "confirmation": "Do you want to store your credentials in your IDE?\nThis will make importing your exercises a lot easier!",

@@ -4,10 +4,10 @@
             "title": "Passwort zurücksetzen",
             "form": {
                 "button": "Passwort zurücksetzen",
-                "emailUsername": "E-Mail/Benutzername"
+                "emailUsername": "E-Mail / Login"
             },
             "messages": {
-                "info": "Gib die E-Mail-Adresse ein, die du bei der Registrierung verwendest hast oder deinen Benutzernamen.",
+                "info": "Gib die E-Mail-Adresse ein, die du bei der Registrierung verwendest hast oder deinen Login.",
                 "success": "Eine E-Mail mit weiteren Instruktionen für das Zurücksetzen des Passworts wurde gesendet. Aus Sicherheitsgründen erscheint dieser Hinweis auch wenn der angegebene Account nicht existiert. Überprüfe deine Eingabe, wenn du keine E-Mail erhältst."
             },
             "external": {
