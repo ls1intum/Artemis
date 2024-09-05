@@ -122,12 +122,13 @@
             "continueTutorial": "Tutorial fortsetzen"
         },
         "form": {
-            "username": "Login",
+            "username": "Login oder E-Mail",
             "firstname": "Vorname",
             "firstname.placeholder": "Vorname",
             "lastname": "Nachname",
             "lastname.placeholder": "Nachname",
-            "username.placeholder": "Login",
+            "username.placeholder": "Login oder E-Mail",
+            "username.tumPlaceholder": "z.B. go42tum / example@tum.de",
             "currentpassword": "Aktuelles Passwort",
             "currentpassword.placeholder": "Aktuelles Passwort",
             "newpassword": "Neues Passwort",
