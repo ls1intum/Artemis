@@ -5,7 +5,6 @@ import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.mo
 import { DataCleanupService } from 'app/admin/cleanup-service/cleanup-service.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
 import { Subject } from 'rxjs';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -19,10 +18,7 @@ export class CleanupServiceComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
-    constructor(
-        private cleanupService: DataCleanupService,
-        private eventManager: EventManager,
-    ) {}
+    constructor(private cleanupService: DataCleanupService) {}
 
     // TODO Michal Kawka replace with API call fetching operations from the DB
     cleanupOperations: CleanupOperation[] = [
@@ -60,7 +56,7 @@ export class CleanupServiceComponent implements OnInit {
             name: 'deleteOldFeedback',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
-            lastExecuted: dayjs().subtract(6, 'days'),
+            lastExecuted: dayjs().subtract(1, 'days'),
         },
     ];
 
@@ -68,9 +64,7 @@ export class CleanupServiceComponent implements OnInit {
         this.refresh();
     }
 
-    refresh(): void {
-        // Implement logic to refresh the data, possibly fetching from a service
-    }
+    refresh(): void {}
 
     executeCleanupOperation(operation: CleanupOperation): void {
         console.log(`Executing cleanup operation: ${operation.name}`);
@@ -105,11 +99,15 @@ export class CleanupServiceComponent implements OnInit {
         return {
             next: () => {
                 this.dialogErrorSource.next('');
-                operation.lastExecuted = dayjs(); // Update lastExecuted to now
+                operation.lastExecuted = dayjs();
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);
             },
         };
+    }
+
+    areDatesValid(operation: CleanupOperation): boolean {
+        return operation.deleteFrom && operation.deleteTo && dayjs(operation.deleteTo).isAfter(dayjs(operation.deleteFrom));
     }
 }

@@ -20,13 +20,28 @@
                             {{ 'cleanupService.operation.' + operation.name | artemisTranslate }}
                         </td>
                         <td>
-                            <div class="form-group flex-grow-1">
-                                <jhi-date-time-picker id="deleteFromDate" [(ngModel)]="operation.deleteFrom" [shouldDisplayTimeZoneWarning]="false" />
+                            <div class="col-md-12">
+                                <jhi-date-time-picker
+                                    id="deleteFromDate"
+                                    [labelName]="'cleanupService.table.deleteFrom' | artemisTranslate"
+                                    [hideLabelName]="true"
+                                    [(ngModel)]="operation.deleteFrom"
+                                    [shouldDisplayTimeZoneWarning]="false"
+                                />
                             </div>
                         </td>
                         <td>
-                            <div class="form-group flex-grow-1">
-                                <jhi-date-time-picker id="deleteToDate" [(ngModel)]="operation.deleteTo" [shouldDisplayTimeZoneWarning]="false" />
+                            <div class="col-md-12">
+                                <jhi-date-time-picker
+                                    id="deleteToDate"
+                                    [labelName]="'cleanupService.table.deleteTo' | artemisTranslate"
+                                    [hideLabelName]="true"
+                                    [(ngModel)]="operation.deleteTo"
+                                    [shouldDisplayTimeZoneWarning]="false"
+                                />
+                                @if (!areDatesValid(operation)) {
+                                    <span class="invalid-feedback" jhiTranslate="entity.startDateError"></span>
+                                }
                             </div>
                         </td>
                         <td>
@@ -36,6 +51,7 @@
                             <button
                                 id="execute-operation"
                                 jhiDeleteButton
+                                [disabled]="!areDatesValid(operation)"
                                 [entityTitle]="'cleanupService.operation.' + operation.name | artemisTranslate"
                                 deleteQuestion="cleanupService.execute.question"
                                 deleteConfirmationText="cleanupService.execute.typeOperationNameToConfirm"
