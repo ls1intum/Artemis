@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.cleanup.OldDataCleanupService;
 
 /**
  * REST controller for managing old data cleanup operations in Artemis.
- * Provides an endpoint for administrators to clean up old or orphaned data in the database.
+ * Provides endpoints for administrators to clean up old or orphaned data in the database.
  */
 @RestController
 @RequestMapping("api/admin/")
@@ -33,20 +33,59 @@ public class AdminOldDataCleanUpResource {
         this.oldDataCleanupService = oldDataCleanupService;
     }
 
-    /**
-     * REST endpoint to trigger the cleanup of old data in the Artemis database based on a user-provided date.
-     * This operation will remove old or orphaned data that is older than the specified date.
-     * This method is restricted to admin users only.
-     *
-     * @param cleanupDate the date before which data should be cleaned up. Data older than this date will be deleted.
-     * @return an empty HTTP 200 response if the cleanup was successful
-     */
-    @PostMapping("deleteOldData")
+    @PostMapping("delete-orphans")
     @EnforceAdmin
-    public ResponseEntity<Void> deleteOldData(@RequestParam("cleanupDate") ZonedDateTime cleanupDate) {
-        log.debug("REST request to clean up Artemis database for data before {}", cleanupDate);
-        this.oldDataCleanupService.cleanupOldData(cleanupDate);
+    public ResponseEntity<Void> deleteOrphans(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+        log.debug("REST request to delete orphaned data in Artemis database");
+        // oldDataCleanupService.deleteOrphans(deleteFrom, deleteTo);
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("delete-plagiarism-comparisons")
+    @EnforceAdmin
+    public ResponseEntity<Void> deletePlagiarismComparisons(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+        log.debug("REST request to delete plagiarism comparisons between {} and {}", deleteFrom, deleteTo);
+        // oldDataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("delete-non-rated-results")
+    @EnforceAdmin
+    public ResponseEntity<Void> deleteNonRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+        log.debug("REST request to delete non-rated results between {} and {}", deleteFrom, deleteTo);
+        // oldDataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("delete-old-rated-results")
+    @EnforceAdmin
+    public ResponseEntity<Void> deleteOldRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+        log.debug("REST request to delete old rated results between {} and {}", deleteFrom, deleteTo);
+        // oldDataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("delete-old-submission-versions")
+    @EnforceAdmin
+    public ResponseEntity<Void> deleteOldSubmissionVersions(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+        log.debug("REST request to delete old submission versions between {} and {}", deleteFrom, deleteTo);
+        // oldDataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("delete-old-feedback")
+    @EnforceAdmin
+    public ResponseEntity<Void> deleteOldFeedback(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+        log.debug("REST request to delete old feedback between {} and {}", deleteFrom, deleteTo);
+        // oldDataCleanupService.deleteOldFeedback(deleteFrom, deleteTo);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("delete-all-old-data")
+    @EnforceAdmin
+    public ResponseEntity<Void> deleteOldData(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+        log.debug("REST request to clean up Artemis database for data between {} and {}", deleteFrom, deleteTo);
+        // oldDataCleanupService.cleanupOldData(deleteFrom, deleteTo);
+        return ResponseEntity.ok().build();
+    }
 }
