@@ -13,6 +13,7 @@ import { every } from 'lodash-es';
 import { ActivatedRoute } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { ImportOptions } from 'app/types/programming-exercises';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-lifecycle',
@@ -30,7 +31,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
     @Input() isExamMode: boolean;
     @Input() readOnly: boolean;
     @Input() importOptions?: ImportOptions;
-    isSimpleMode = input<boolean>(false);
+    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChildren(ProgrammingExerciseTestScheduleDatePickerComponent) datePickerComponents: QueryList<ProgrammingExerciseTestScheduleDatePickerComponent>;
 
@@ -107,8 +108,13 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
 
     calculateFormStatus() {
         const datePickers = this.datePickerComponents.toArray();
-        this.formValid = every(datePickers, (picker) => picker?.dateInput?.valid);
-        this.formEmpty = !every(datePickers, (picker) => picker.selectedDate);
+        this.formValid = every(datePickers, (picker) => picker?.dateInput?.valid ?? true);
+        this.formEmpty = !every(datePickers, (picker) => {
+            if (picker instanceof ProgrammingExerciseTestScheduleDatePickerComponent) {
+                return picker.selectedDate;
+            }
+            return true;
+        });
         this.formValidChanges.next(this.formValid);
     }
 

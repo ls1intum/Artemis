@@ -11,6 +11,7 @@ import { NgModel } from '@angular/forms';
 import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission-policy/submission-policy-update.component';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { ImportOptions } from 'app/types/programming-exercises';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-grading',
@@ -27,7 +28,7 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     @Input() importOptions: ImportOptions;
-    isSimpleMode = input.required<boolean>();
+    isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild(SubmissionPolicyUpdateComponent) submissionPolicyUpdateComponent?: SubmissionPolicyUpdateComponent;
     @ViewChild(ProgrammingExerciseLifecycleComponent) lifecycleComponent?: ProgrammingExerciseLifecycleComponent;

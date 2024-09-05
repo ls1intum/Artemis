@@ -57,9 +57,9 @@
                 [programmingExercise]="programmingExercise"
                 [programmingExerciseCreationConfig]="getProgrammingExerciseCreationConfig()"
                 [importOptions]="importOptions"
-                [isSimpleMode]="isSimpleMode()"
+                [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
             />
-            @if (!isExamMode && !isSimpleMode()) {
+            @if (isEditFieldDisplayedRecord().plagiarismControl && !isExamMode) {
                 <jhi-exercise-update-plagiarism [exercise]="programmingExercise" />
             }
             <jhi-form-footer

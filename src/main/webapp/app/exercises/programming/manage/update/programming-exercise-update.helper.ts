@@ -25,7 +25,7 @@ export enum ProgrammingExerciseInputField {
     linkedCompetencies = 'linkedCompetencies',
 
     // Grading section
-    includeCourseInScoreCalculation = 'includeCourseInScoreCalculation',
+    includeExerciseInCourseScoreCalculation = 'includeExerciseInCourseScoreCalculation',
     points = 'points',
     bonusPoints = 'bonusPoints',
     submissionPolicy = 'submissionPolicy',
@@ -113,7 +113,7 @@ export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
         editModesToBeDisplayed: ['ADVANCED'],
     },
     // Grading section
-    includeCourseInScoreCalculation: {
+    includeExerciseInCourseScoreCalculation: {
         editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
     },
     points: {
