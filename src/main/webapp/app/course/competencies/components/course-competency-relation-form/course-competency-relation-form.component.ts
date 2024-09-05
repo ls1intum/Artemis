@@ -4,7 +4,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 
-type AdjacencyMap = { [key in CompetencyRelationType]?: Map<number, number[]> };
+type AdjacencyMap = Map<number, number[]>;
 
 @Component({
     selector: 'jhi-course-competency-relation-form',
@@ -129,9 +129,7 @@ export class CourseCompetencyRelationFormComponent {
             .filter(
                 ({ id }) =>
                     // only extends and assumes relations are considered when checking for circles because only they don't make sense
-                    relationType === CompetencyRelationType.MATCHES ||
-                    (!this.hasRelation(adjacencyMap, id!, headCompetencyId, CompetencyRelationType.EXTENDS) &&
-                        !this.hasRelation(adjacencyMap, id!, headCompetencyId, CompetencyRelationType.ASSUMES)),
+                    !this.hasRelation(adjacencyMap, id!, headCompetencyId, relationType),
             );
     }
 
@@ -141,18 +139,13 @@ export class CourseCompetencyRelationFormComponent {
      *
      * @returns The adjacency list for the current relations
      */
-    private getAdjacencyMap(): AdjacencyMap {
-        const adjacencyMap: AdjacencyMap = {
-            ASSUMES: new Map(),
-            EXTENDS: new Map(),
-            MATCHES: new Map(),
-        };
+    private getAdjacencyMap(): Map<number, number[]> {
+        const adjacencyMap: Map<number, number[]> = new Map();
         this.relations().forEach((relation) => {
-            const relationType = relation.relationType!;
-            if (!adjacencyMap[relationType]!.has(relation.headCompetencyId!)) {
-                adjacencyMap[relationType]!.set(relation.headCompetencyId!, []);
+            if (!adjacencyMap.has(relation.headCompetencyId!)) {
+                adjacencyMap.set(relation.headCompetencyId!, []);
             }
-            adjacencyMap[relationType]!.get(relation.headCompetencyId!)!.push(relation.tailCompetencyId!);
+            adjacencyMap.get(relation.headCompetencyId!)!.push(relation.tailCompetencyId!);
         });
         return adjacencyMap;
     }
@@ -177,7 +170,7 @@ export class CourseCompetencyRelationFormComponent {
         }
         visited.add(head);
 
-        const neighbors = adjacencyMap[relationType]?.get(head) || [];
+        const neighbors = adjacencyMap.get(head) || [];
         for (const neighbor of neighbors) {
             if (this.hasRelation(adjacencyMap, neighbor, tail, relationType, visited)) {
                 return true;
