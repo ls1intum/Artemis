@@ -38,7 +38,7 @@ test.describe('Login page tests', () => {
         const alertElement = await page.waitForSelector('.alert');
         expect(await alertElement.isVisible()).toBeTruthy();
         const alertText = await alertElement.textContent();
-        expect(alertText).toContain('Failed to sign in! Please check your username and password and try again.');
+        expect(alertText).toContain('Failed to sign in! Please check your login and password and try again.');
 
         await page.click('#login-button');
         await page.click('#login-button');
