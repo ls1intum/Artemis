@@ -209,8 +209,8 @@ public class LectureUnitResource {
     }
 
     /**
-     * POST /courses/{courseId}/ingest
-     * This endpooint is for starting the ingestion of all lectures or only one lecture when triggered in Artemis.
+     * POST lectures/{lectureId}/lecture-units/{lectureUnitId}/ingest
+     * This endpooint is for starting the ingestion of one lecture unit.
      *
      * @param lectureUnitId The Id of the Lecture Unit that is <going to be ingested
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed

@@ -68,7 +68,7 @@
                         </div>
                     </div>
                     <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
-                        @if (this.lectureIngestionEnabled) {
+                        @if (this.lectureIngestionEnabled && this.lectureUnit.type == LectureUnitType.ATTACHMENT) {
                             <div class="d-flex gap-1">
                                 @if (lecture.course?.id && showCompetencies) {
                                     <jhi-competencies-popover

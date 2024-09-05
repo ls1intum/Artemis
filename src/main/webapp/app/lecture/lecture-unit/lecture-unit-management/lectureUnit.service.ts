@@ -7,7 +7,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Injectable } from '@angular/core';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -166,6 +166,18 @@ export class LectureUnitService {
 
     getLectureUnitById(lectureUnitId: number): Observable<LectureUnit> {
         return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
+    }
+    /**
+     * Fetch the actual ingestion state for a lecture unit from an external service (e.g., Pyris).
+     * @param courseId
+     * @param lectureUnitId ID of the lecture unit
+     * @param lectureId ID of the lecture
+     * @returns Observable with the ingestion state
+     */
+    getIngestionState(courseId: number, lectureId: number, lectureUnitId: number): Observable<HttpResponse<IngestionState>> {
+        return this.httpClient.get<IngestionState>(`${this.resourceURL}/public/pyris/courses/${courseId}/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingestion-state`, {
+            observe: 'response',
+        });
     }
     /**
      * Triggers the ingestion of one lecture unit.

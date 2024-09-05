@@ -143,20 +143,23 @@
                             @if (lectureIngestionEnabled) {
                                 <td>
                                     @switch (lecture.ingested) {
-                                        @case (IngestionState.PARTIALLY_INGESTED) {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.partiallyIngested"></span>
-                                        }
-                                        @case (IngestionState.ERROR) {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.error"></span>
-                                        }
-                                        @case (IngestionState.DONE) {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.done"></span>
+                                        @case (IngestionState.NOT_STARTED) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.notStarted"></span>
                                         }
                                         @case (IngestionState.IN_PROGRESS) {
                                             <span jhiTranslate="artemisApp.iris.ingestionStates.inProgress"></span>
                                         }
+                                        @case (IngestionState.PARTIALLY_INGESTED) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.partiallyIngested"></span>
+                                        }
+                                        @case (IngestionState.DONE) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.done"></span>
+                                        }
+                                        @case (IngestionState.ERROR) {
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.error"></span>
+                                        }
                                         @default {
-                                            <span jhiTranslate="artemisApp.iris.ingestionStates.notStarted"></span>
+                                            <span jhiTranslate="artemisApp.iris.ingestionStates.loading"></span>
                                         }
                                     }
                                 </td>

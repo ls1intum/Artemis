@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.pyris;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.IngestionState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisModelDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
@@ -45,16 +48,19 @@ public class PyrisConnectorService {
 
     private final ObjectMapper objectMapper;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final LectureRepository lectureRepository;
+
+    @Value("${server.url}")
+    private String artemisBaseUrl;
 
     @Value("${artemis.iris.url}")
     private String pyrisUrl;
 
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            LectureUnitRepository lectureUnitRepository) {
+            LectureRepository lectureRepository) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
-        this.lectureUnitRepository = lectureUnitRepository;
+        this.lectureRepository = lectureRepository;
     }
 
     /**
@@ -109,26 +115,51 @@ public class PyrisConnectorService {
             restTemplate.postForEntity(pyrisUrl + endpoint, objectMapper.valueToTree(executionDTO), Void.class);
         }
         catch (HttpStatusCodeException e) {
-            setIngestionStateToError(executionDTO, e);
+            log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
             throw toIrisException(e);
         }
         catch (RestClientException | IllegalArgumentException e) {
-            setIngestionStateToError(executionDTO, e);
+            log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
             throw new PyrisConnectorException("Could not fetch response from Pyris");
         }
     }
 
-    private void setIngestionStateToError(PyrisWebhookLectureIngestionExecutionDTO executionDTO, RuntimeException e) {
-        log.error("Failed to send lecture unit {} to Pyris: {}", executionDTO.pyrisLectureUnit().lectureUnitId(), e.getMessage());
-        if (executionDTO != null) {
-            Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(executionDTO.pyrisLectureUnit().lectureUnitId());
-            optionalUnit.ifPresent(unit -> {
-                if (unit instanceof AttachmentUnit attachmentUnit) {
-                    attachmentUnit.setPyrisIngestionState(IngestionState.ERROR);
-                    lectureUnitRepository.save(attachmentUnit);
-                }
-            });
+    public IngestionState getLectureIngestionState(long courseId, long lectureId) {
+        try {
+            List<LectureUnit> lectureunits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lectureId).get().getLectureUnits();
+            var states = lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
+                    .map(unit -> getLectureUnitIngestionState(courseId, lectureId, unit.getId())).collect(Collectors.toSet());
+
+            if (states.equals(Set.of(IngestionState.DONE)))
+                return IngestionState.DONE;
+            if (states.equals(Set.of(IngestionState.NOT_STARTED)))
+                return IngestionState.NOT_STARTED;
+            if (states.equals(Set.of(IngestionState.ERROR)))
+                return IngestionState.ERROR;
+            if (states.contains(IngestionState.DONE) || states.contains(IngestionState.IN_PROGRESS)) {
+                return IngestionState.PARTIALLY_INGESTED;
+            }
+
+            return IngestionState.NOT_STARTED;
+
         }
+        catch (Exception e) {
+            log.error("Error determining ingestion state for lecture {}", lectureId, e);
+            return IngestionState.ERROR;
+        }
+    }
+
+    public IngestionState getLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId) {
+        try {
+            String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
+            String url = String.format("%s/api/v1/courses/%d/lectures/%d/lectureUnits/%d/ingestion-state?base_url=%s", pyrisUrl, courseId, lectureId, lectureUnitId,
+                    encodedBaseUrl);
+            return restTemplate.getForObject(url, IngestionState.class);
+        }
+        catch (RestClientException e) {
+            log.error("Error fetching ingestion state for lecture {}, lecture unit {}, baseUrl {}", lectureId, lectureUnitId, pyrisUrl, e);
+        }
+        return null;
     }
 
     /**

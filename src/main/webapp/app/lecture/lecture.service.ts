@@ -8,6 +8,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 type EntityResponseType = HttpResponse<Lecture>;
 type EntityArrayResponseType = HttpResponse<Lecture[]>;
@@ -127,6 +128,14 @@ export class LectureService {
             params: params,
             observe: 'response',
         });
+    }
+    /**
+     * Fetch the ingestion state for a specific lecture
+     * @param courseId
+     * @param lectureId ID of the lecture
+     */
+    getIngestionState(courseId: number, lectureId: number): Observable<HttpResponse<IngestionState>> {
+        return this.http.get<IngestionState>(`api/public/pyris/courses/${courseId}/lectures/${lectureId}/ingestion-state`, { observe: 'response' });
     }
     /**
      * Clones and imports the lecture to the course

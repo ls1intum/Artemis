@@ -85,6 +85,7 @@
                 "helpOffer": "Wie kann ich Dir helfen?"
             },
             "ingestionStates": {
+                "loading": "Wird geladen...",
                 "notStarted": "Nicht gestartet",
                 "inProgress": "In Bearbeitung",
                 "done": "Abgeschlossen",

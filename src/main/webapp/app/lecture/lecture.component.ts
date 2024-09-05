@@ -45,6 +45,7 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     readonly filterType = LectureDateFilter;
     readonly documentationType: DocumentationType = 'Lecture';
+    readonly ingestionState: IngestionState;
 
     // Icons
     faPlus = faPlus;
@@ -76,7 +77,6 @@ export class LectureComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.loadAll();
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
             if (this.irisEnabled) {
@@ -85,6 +85,7 @@ export class LectureComponent implements OnInit, OnDestroy {
                 });
             }
         });
+        this.loadAll();
     }
 
     ngOnDestroy(): void {
@@ -161,11 +162,9 @@ export class LectureComponent implements OnInit, OnDestroy {
                     this.lectures = res.map((lectureData) => {
                         const lecture = new Lecture();
                         Object.assign(lecture, lectureData);
-                        if (lecture.updateIngestionState) {
-                            lecture.updateIngestionState();
-                        }
                         return lecture;
                     });
+                    this.updateIngestionStates();
                     this.applyFilters();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -219,6 +218,22 @@ export class LectureComponent implements OnInit, OnDestroy {
                 error: (error) => console.error('Failed to send Ingestion request', error),
             });
         }
+    }
+
+    /**
+     * Fetches the ingestion state for each lecture asynchronously and updates the lecture object.
+     */
+    private updateIngestionStates() {
+        this.lectures.forEach((lecture) => {
+            this.lectureService.getIngestionState(lecture.course!.id!, lecture.id!).subscribe({
+                next: (res: HttpResponse<IngestionState>) => {
+                    if (res.body) {
+                        lecture.ingested = res.body;
+                    }
+                },
+                error: (err: HttpErrorResponse) => console.error(`Error fetching ingestion state for lecture ${lecture.id}`, err),
+            });
+        });
     }
 
     protected readonly IngestionState = IngestionState;

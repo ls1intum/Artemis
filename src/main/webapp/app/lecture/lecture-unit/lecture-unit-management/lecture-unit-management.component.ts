@@ -103,8 +103,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     loadData() {
         this.isLoading = true;
-        // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
-        // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
             .findWithDetails(this.lectureId!)
             .pipe(
@@ -117,8 +115,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 next: (lecture) => {
                     this.lecture = lecture;
                     if (lecture?.lectureUnits) {
-                        this.lectureUnits = lecture?.lectureUnits;
+                        this.lectureUnits = lecture.lectureUnits;
                         this.initializeProfileInfo();
+                        this.updateIngestionStates();
                     } else {
                         this.lectureUnits = [];
                     }
@@ -247,8 +246,30 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return undefined;
         }
     }
-
+    /**
+     * Fetches the ingestion state for each lecture unit asynchronously and updates the lecture unit object.
+     */
+    private updateIngestionStates() {
+        this.lectureUnits.forEach((lectureUnit) => {
+            if (lectureUnit.id) {
+                this.lectureUnitService.getIngestionState(this.lecture.course!.id!, this.lecture.id!, lectureUnit.id).subscribe({
+                    next: (res: HttpResponse<IngestionState>) => {
+                        if (res.body) {
+                            (<AttachmentUnit>lectureUnit).pyrisIngestionState = res.body;
+                        }
+                    },
+                    error: (err: HttpErrorResponse) => {
+                        console.error(`Error fetching ingestion state for lecture unit ${lectureUnit.id}`, err);
+                    },
+                });
+            }
+        });
+    }
     onIngestButtonClicked(lectureUnitId: number) {
+        const unit: AttachmentUnit | undefined = this.lectureUnits.find((unit) => unit.id === lectureUnitId);
+        if (unit) {
+            unit.pyrisIngestionState = IngestionState.IN_PROGRESS;
+        }
         this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
             error: (error) => console.error('Failed to send Ingestion request', error),
         });
