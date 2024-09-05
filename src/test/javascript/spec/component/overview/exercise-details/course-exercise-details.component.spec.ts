@@ -349,7 +349,7 @@ describe('CourseExerciseDetailsComponent', () => {
         const result3 = { completionDate: dayjs() } as Result;
 
         const results = [result3, result1, result2];
-        results.sort(comp.resultSortFunction);
+        results.sort((a, b) => comp['resultSortFunction'](a, b));
 
         expect(results).toEqual([result1, result2, result3]);
     });
@@ -360,14 +360,14 @@ describe('CourseExerciseDetailsComponent', () => {
         const result3 = { completionDate: dayjs() } as Result;
 
         const results = [result3, result1, result2];
-        results.sort(comp.resultSortFunction);
+        results.sort((a, b) => comp['resultSortFunction'](a, b));
 
         expect(results).toEqual([result1, result3, result2]);
     });
 
     it('should handle empty results array', () => {
         const results: Result[] = [];
-        results.sort(comp.resultSortFunction);
+        results.sort((a, b) => comp['resultSortFunction'](a, b));
 
         expect(results).toEqual([]);
     });
@@ -378,7 +378,7 @@ describe('CourseExerciseDetailsComponent', () => {
         const result2 = { completionDate: date } as Result;
 
         const results = [result2, result1];
-        results.sort(comp.resultSortFunction);
+        results.sort((a, b) => comp['resultSortFunction'](a, b));
 
         expect(results).toEqual([result2, result1]);
     });
