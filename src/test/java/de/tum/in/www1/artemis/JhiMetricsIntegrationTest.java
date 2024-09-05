@@ -10,7 +10,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class JhiMetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class JhiMetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ObjectMapper objectMapper;
