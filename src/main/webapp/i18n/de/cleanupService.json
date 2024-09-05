@@ -1,0 +1,23 @@
+{
+    "cleanupService": {
+        "title": "Cleanup service",
+        "table": {
+            "operation": "Operationsname",
+            "deleteFrom": "Löschen von",
+            "deleteTo": "Löschen bis",
+            "lastExecuted": "Zuletzt ausgeführt"
+        },
+        "operation": {
+            "deleteOrphans": "Orphans löschen",
+            "deletePlagiarismComparisons": "Plagiatsvergleiche löschen",
+            "deleteNonRatedResults": "Nicht bewertete Ergebnisse löschen",
+            "deleteOldRatedResults": "Alte bewertete Ergebnisse löschen",
+            "deleteOldSubmissionVersions": "Alte Teilnahmeversionen löschen",
+            "deleteOldFeedback": "Altes Feedback löschen"
+        },
+        "execute": {
+            "question": "Bist du sicher, dass du die Operation <strong>{{ title }}</strong> ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
+            "typeOperationNameToConfirm": "Bitte gib den Namen der Operation ein, um zu bestätigen."
+        }
+    }
+}
