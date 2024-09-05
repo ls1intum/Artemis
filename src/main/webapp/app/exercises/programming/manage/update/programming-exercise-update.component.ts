@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, effect, signal } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, computed, effect, signal } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -39,6 +39,7 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ImportOptions } from 'app/types/programming-exercises';
+import { INPUT_FIELD_EDIT_MODE_MAPPING, ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -83,6 +84,20 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     @ViewChild(ExerciseUpdatePlagiarismComponent) exercisePlagiarismComponent?: ExerciseUpdatePlagiarismComponent;
 
     isSimpleMode = signal<boolean>(true);
+
+    isEditFieldDisplayedRecord = computed(() => {
+        const mapping = INPUT_FIELD_EDIT_MODE_MAPPING;
+
+        const booleanMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
+        Object.keys(mapping).forEach((key) => {
+            const modeToBeIncluded = this.isSimpleMode() ? 'SIMPLE' : 'ADVANCED';
+            // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+            const isDisplayed = mapping[key as ProgrammingExerciseInputField].editModesToBeDisplayed.includes(modeToBeIncluded);
+            booleanMapping[key as ProgrammingExerciseInputField] = isDisplayed;
+        });
+
+        return booleanMapping;
+    });
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 

@@ -1,6 +1,7 @@
 import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, input } from '@angular/core';
 import { ControlContainer, NgForm, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-title-channel-name',
@@ -18,6 +19,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     @Input() minTitleLength: number;
     @Input() initChannelName = true;
     isSimpleMode = input<boolean>(false);
+    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild('field_title') field_title: NgModel;
     @ViewChild('field_channel_name') field_channel_name?: NgModel;

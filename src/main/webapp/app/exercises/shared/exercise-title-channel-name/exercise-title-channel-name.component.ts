@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewC
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-exercise-title-channel-name',
@@ -16,6 +17,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() isImport: boolean;
     @Input() hideTitleLabel: boolean;
     isSimpleMode = input<boolean>(false);
+    isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild(TitleChannelNameComponent) titleChannelNameComponent: TitleChannelNameComponent;
 

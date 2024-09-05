@@ -7,6 +7,7 @@ import { Subject, Subscription } from 'rxjs';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { every } from 'lodash-es';
 import { ImportOptions } from 'app/types/programming-exercises';
+import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-info',
@@ -23,6 +24,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @Input() isLocal: boolean;
     @Input() importOptions: ImportOptions;
     isSimpleMode = input.required<boolean>();
+    isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
