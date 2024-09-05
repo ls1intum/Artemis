@@ -77,7 +77,6 @@ public class TelemetryService {
      * This function runs once, at the startup of the application.
      * If telemetry is disabled in artemis.telemetry.enabled, no data is sent.
      */
-    @Async
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
         if (!useTelemetry || profileService.isDevActive()) {
@@ -102,6 +101,7 @@ public class TelemetryService {
      *
      * @throws Exception if the writing the telemetry data to a json format fails, or the connection to the telemetry server fails
      */
+    @Async
     public void sendTelemetryByPostRequest() throws Exception {
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         TelemetryData telemetryData;
