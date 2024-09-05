@@ -343,6 +343,46 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.activatedExerciseHints).toContain(activatedHint);
     });
 
+    it('should sort results by completion date in ascending order', () => {
+        const result1 = { completionDate: dayjs().subtract(2, 'days') } as Result;
+        const result2 = { completionDate: dayjs().subtract(1, 'day') } as Result;
+        const result3 = { completionDate: dayjs() } as Result;
+
+        const results = [result3, result1, result2];
+        results.sort(comp.resultSortFunction);
+
+        expect(results).toEqual([result1, result2, result3]);
+    });
+
+    it('should handle results with undefined completion dates', () => {
+        const result1 = { completionDate: dayjs().subtract(2, 'days') } as Result;
+        const result2 = { completionDate: undefined } as Result;
+        const result3 = { completionDate: dayjs() } as Result;
+
+        const results = [result3, result1, result2];
+        results.sort(comp.resultSortFunction);
+
+        expect(results).toEqual([result1, result3, result2]);
+    });
+
+    it('should handle empty results array', () => {
+        const results: Result[] = [];
+        results.sort(comp.resultSortFunction);
+
+        expect(results).toEqual([]);
+    });
+
+    it('should handle results with same completion dates', () => {
+        const date = dayjs();
+        const result1 = { completionDate: date } as Result;
+        const result2 = { completionDate: date } as Result;
+
+        const results = [result2, result1];
+        results.sort(comp.resultSortFunction);
+
+        expect(results).toEqual([result2, result1]);
+    });
+
     it('should handle new programming exercise', () => {
         const courseId = programmingExercise.course!.id!;
 
