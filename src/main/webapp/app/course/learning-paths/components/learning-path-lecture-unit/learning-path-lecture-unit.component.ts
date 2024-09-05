@@ -1,4 +1,4 @@
-import { Component, InputSignal, WritableSignal, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -23,12 +23,12 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 export class LearningPathLectureUnitComponent {
     protected readonly LectureUnitType = LectureUnitType;
 
-    private readonly lectureUnitService: LectureUnitService = inject(LectureUnitService);
+    private readonly lectureUnitService = inject(LectureUnitService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
-    private readonly alertService: AlertService = inject(AlertService);
+    private readonly alertService = inject(AlertService);
 
-    readonly lectureUnitId: InputSignal<number> = input.required<number>();
-    readonly isLoading: WritableSignal<boolean> = signal(false);
+    readonly lectureUnitId = input.required<number>();
+    readonly isLoading = signal<boolean>(false);
     readonly lectureUnit = signal<LectureUnit | undefined>(undefined);
 
     readonly lecture = computed(() => this.lectureUnit()?.lecture);
@@ -52,11 +52,9 @@ export class LearningPathLectureUnitComponent {
     }
 
     setLearningObjectCompletion(completionEvent: LectureUnitCompletionEvent): void {
-        try {
-            this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent);
+        this.lectureUnitService.completeLectureUnit(this.lectureUnit()!.lecture!, completionEvent);
+        if (this.lectureUnit()?.completed === completionEvent.completed) {
             this.learningPathNavigationService.setCurrentLearningObjectCompletion(completionEvent.completed);
-        } catch (error) {
-            this.alertService.error(error);
         }
     }
 }
