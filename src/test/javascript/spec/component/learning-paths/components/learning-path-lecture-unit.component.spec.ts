@@ -125,7 +125,7 @@ describe('LearningPathLectureUnitComponent', () => {
 
         component.setLearningObjectCompletion({ completed: true, lectureUnit: lectureUnit });
 
-        expect(completeLectureUnitSpy).toHaveBeenCalledWith(lectureUnit.lecture, {
+        expect(completeLectureUnitSpy).toHaveBeenCalledExactlyOnceWith(lectureUnit.lecture, {
             completed: true,
             lectureUnit: lectureUnit,
         });
