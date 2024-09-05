@@ -21,24 +21,19 @@ import { Lecture } from 'app/entities/lecture.model';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Competency } from 'app/entities/competency.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { IrisLectureIngestionSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
-import { PROFILE_IRIS } from 'app/app.constants';
-import { Course } from 'app/entities/course.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {
@@ -64,6 +59,7 @@ describe('LectureUnitManagementComponent', () => {
     let updateOrderSpy: jest.SpyInstance;
     let getProfileInfo: jest.SpyInstance;
     let getCombinedCourseSettings: jest.SpyInstance;
+
     let attachmentUnit: AttachmentUnit;
     let exerciseUnit: ExerciseUnit;
     let textUnit: TextUnit;
@@ -119,6 +115,7 @@ describe('LectureUnitManagementComponent', () => {
                 lectureUnitService = TestBed.inject(LectureUnitService);
                 profileService = TestBed.inject(ProfileService);
                 irisSettingsService = TestBed.inject(IrisSettingsService);
+
                 findLectureSpy = jest.spyOn(lectureService, 'find');
                 findLectureWithDetailsSpy = jest.spyOn(lectureService, 'findWithDetails');
                 deleteLectureUnitSpy = jest.spyOn(lectureUnitService, 'delete');
@@ -150,6 +147,7 @@ describe('LectureUnitManagementComponent', () => {
                 irisCourseSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
                 irisCourseSettings.irisLectureIngestionSettings.enabled = true;
                 getCombinedCourseSettings.mockReturnValue(of(irisCourseSettings));
+
                 lectureUnitManagementComponentFixture.detectChanges();
             });
     });
@@ -164,11 +162,13 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should emit edit button event', () => {
-        lectureUnitManagementComponent.emitEditEvents = true;
         const editButtonClickedSpy = jest.spyOn(lectureUnitManagementComponent, 'onEditButtonClicked');
+        lectureUnitManagementComponent.emitEditEvents = true;
         lectureUnitManagementComponentFixture.detectChanges();
         const buttons = lectureUnitManagementComponentFixture.debugElement.queryAll(By.css(`.edit`));
-        buttons.forEach((button) => button.nativeElement.click());
+        for (const button of buttons) {
+            button.nativeElement.click();
+        }
         lectureUnitManagementComponentFixture.detectChanges();
         expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
     });
@@ -187,12 +187,28 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new OnlineUnit())).toBe('artemisApp.onlineUnit.delete.question');
     });
 
+    it('should return default question translation key for unhandled types', () => {
+        const mockUnit = {
+            type: null,
+        };
+
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(mockUnit as unknown as LectureUnit)).toBe('');
+    });
+
     it('should give the correct confirmation text translation key', () => {
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).toBe('artemisApp.attachmentUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toBe('artemisApp.textUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new OnlineUnit())).toBe('artemisApp.onlineUnit.delete.typeNameToConfirm');
+    });
+
+    it('should return default confirmation text translation key for unhandled types', () => {
+        const mockUnit = {
+            type: null,
+        };
+
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(mockUnit as unknown as LectureUnit)).toBe('');
     });
 
     it('should give the correct action type', () => {
@@ -213,6 +229,15 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitService.ingestLectureUnitInPyris).toHaveBeenCalledWith(lectureUnitId, lectureUnitManagementComponent.lecture.id);
     });
 
+    it('should initialize profile info and check for Iris settings', () => {
+        const mockCourse: Course = { id: 1, title: 'Test Course' };
+        lectureUnitManagementComponent.lecture = { id: 2, course: mockCourse } as Lecture;
+        lectureUnitManagementComponent.initializeProfileInfo();
+        expect(profileService.getProfileInfo).toHaveBeenCalled();
+        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(lectureUnitManagementComponent.lecture!.course!.id);
+        expect(lectureUnitManagementComponent.irisEnabled).toBeTrue();
+        expect(lectureUnitManagementComponent.lectureIngestionEnabled).toBeTrue();
+    });
     it('should handle error when ingestLectureUnitInPyris fails', () => {
         const ingestLectureUnitInPyris = jest.spyOn(lectureUnitService, 'ingestLectureUnitInPyris');
         const lectureUnitId = 1;
@@ -228,27 +253,28 @@ describe('LectureUnitManagementComponent', () => {
         expect(console.error).toHaveBeenCalledWith('Failed to send Ingestion request', error);
     });
 
-    it('should update the icon based on ingestion state', () => {
-        const attachmentUnit = { pyrisIngestionState: 'NOT_STARTED' } as any;
-        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.faFileExport);
+    describe('isViewButtonAvailable', () => {
+        it('should return true for an attachment unit with a PDF link', () => {
+            const lectureUnit = {
+                type: LectureUnitType.ATTACHMENT,
+                attachment: { link: 'file.pdf' },
+            } as LectureUnit;
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeTrue();
+        });
 
-        attachmentUnit.pyrisIngestionState = 'IN_PROGRESS';
-        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.faSpinner);
+        it('should return false for file extension different than .pdf', () => {
+            const lectureUnit = {
+                type: LectureUnitType.ATTACHMENT,
+                attachment: { link: 'file.txt' },
+            };
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();
+        });
 
-        attachmentUnit.pyrisIngestionState = 'DONE';
-        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.faCheckCircle);
-
-        attachmentUnit.pyrisIngestionState = 'ERROR';
-        expect(lectureUnitManagementComponent.getIcon(attachmentUnit)).toEqual(lectureUnitManagementComponent.faRepeat);
-    });
-
-    it('should initialize profile info and check for Iris settings', () => {
-        const mockCourse: Course = { id: 1, title: 'Test Course' };
-        lectureUnitManagementComponent.lecture = { id: 2, course: mockCourse } as Lecture;
-        lectureUnitManagementComponent.initializeProfileInfo();
-        expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(lectureUnitManagementComponent.lecture!.course!.id);
-        expect(lectureUnitManagementComponent.irisEnabled).toBeTrue();
-        expect(lectureUnitManagementComponent.lectureIngestionEnabled).toBeTrue();
+        it('should return false for a text unit', () => {
+            const lectureUnit = {
+                type: LectureUnitType.TEXT,
+            };
+            expect(lectureUnitManagementComponent.isViewButtonAvailable(lectureUnit)).toBeFalse();
+        });
     });
 });

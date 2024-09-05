@@ -12,8 +12,9 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { IconDefinition, faCheckCircle, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { IconDefinition, faCheckCircle, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
@@ -37,17 +38,18 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lecture: Lecture;
     isLoading = false;
     updateOrderSubject: Subject<any>;
+    viewButtonAvailable: Record<number, boolean> = {};
+
     updateOrderSubjectSubscription: Subscription;
     navigationEndSubscription: Subscription;
+
     readonly LectureUnitType = LectureUnitType;
     readonly ActionType = ActionType;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
     private profileInfoSubscription: Subscription;
     irisEnabled = false;
     lectureIngestionEnabled = false;
-
     routerEditLinksBase: { [key: string]: string } = {
         [LectureUnitType.ATTACHMENT]: 'attachment-units',
         [LectureUnitType.VIDEO]: 'video-units',
@@ -58,11 +60,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     // Icons
     readonly faTrash = faTrash;
     readonly faPencilAlt = faPencilAlt;
+    faEye = faEye;
     readonly faFileExport = faFileExport;
     readonly faRepeat = faRepeat;
     readonly faCheckCircle = faCheckCircle;
     readonly faSpinner = faSpinner;
-
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
@@ -103,6 +105,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
     loadData() {
         this.isLoading = true;
+        // TODO: we actually would like to have the lecture with all units! Posts and competencies are not required here
+        // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
             .findWithDetails(this.lectureId!)
             .pipe(
@@ -115,7 +119,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 next: (lecture) => {
                     this.lecture = lecture;
                     if (lecture?.lectureUnits) {
-                        this.lectureUnits = lecture.lectureUnits;
+                        this.lectureUnits = lecture?.lectureUnits;
+                        this.lectureUnits.forEach((lectureUnit) => {
+                            this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
+                        });
                         this.initializeProfileInfo();
                         this.updateIngestionStates();
                     } else {
@@ -138,7 +145,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
-
     initializeProfileInfo() {
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
@@ -149,7 +155,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             }
         });
     }
-
     drop(event: CdkDragDrop<LectureUnit[]>) {
         moveItemInArray(this.lectureUnits, event.previousIndex, event.currentIndex);
         this.updateOrderSubject.next('');
@@ -209,6 +214,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
+        switch (lectureUnit!.type) {
+            case LectureUnitType.ATTACHMENT: {
+                const attachmentUnit = <AttachmentUnit>lectureUnit;
+                return attachmentUnit.attachment?.link?.endsWith('.pdf') ?? false;
+            }
+            default:
+                return false;
+        }
     }
 
     editButtonAvailable(lectureUnit: LectureUnit) {
