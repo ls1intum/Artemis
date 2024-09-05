@@ -1,6 +1,6 @@
 <div>
-    <div class="form-group">
-        @if (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.title) {
+    @if (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.title) {
+        <div class="form-group">
             @if (!hideTitleLabel) {
                 <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.title" for="field_title"></label>
             }
@@ -16,9 +16,9 @@
                 [ngModel]="title"
                 (ngModelChange)="updateTitle($event)"
             />
-        }
-    </div>
-    @if (!hideChannelName && (!isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.title)) {
+        </div>
+    }
+    @if (!hideChannelName && (!isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.channelName)) {
         <div class="form-group">
             <div>
                 <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name"
