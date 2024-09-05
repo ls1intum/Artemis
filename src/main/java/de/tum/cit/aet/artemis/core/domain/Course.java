@@ -263,7 +263,7 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("course")
     private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<Faq> faqs = new HashSet<>();
 
