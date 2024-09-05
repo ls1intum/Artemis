@@ -4,6 +4,7 @@
             <span class="d-inline-flex align-items-start gap-2 flex-wrap">
                 @if (posting.author.imageUrl === undefined) {
                     <strong
+                        id="post-default-profile-picture"
                         class="post-profile-picture rounded-3"
                         [ngStyle]="{ 'background-color': userProfilePictureBackgroundColor }"
                         [ngClass]="'post-profile-picture-' + userAuthority"
@@ -11,6 +12,7 @@
                     >
                 } @else {
                     <img
+                        id="post-profile-picture"
                         [alt]="'Profile picture of ' + posting.author?.name"
                         class="post-profile-picture rounded-3"
                         [src]="posting.author.imageUrl"

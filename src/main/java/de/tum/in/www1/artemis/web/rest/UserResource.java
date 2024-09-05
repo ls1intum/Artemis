@@ -126,10 +126,23 @@ public class UserResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * PUT users/profile-picture : upload a profile picture
+     *
+     * @param file the image file that is being uploaded
+     * @return the ResponseEntity with status 200 (OK) and with body of current user
+     */
     @PutMapping("users/profile-picture")
     @EnforceAtLeastStudent
     public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) throws URISyntaxException {
         log.debug("REST request to update profile picture for logged-in user");
+        String contentType = file.getContentType();
+
+        // Check if the content type is either image/png or image/jpeg, else return 400
+        if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg") && !contentType.equals("image/*"))) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+
         User user = userRepository.getUser();
         Path basePath = FilePathService.getProfilePictureFilePath();
 
@@ -145,6 +158,11 @@ public class UserResource {
         return ResponseEntity.ok(new UserDTO(user));
     }
 
+    /**
+     * DELETE users/profile-picture : remove current users profile picture
+     *
+     * @return the ResponseEntity with status 200 (OK)
+     */
     @DeleteMapping("users/profile-picture")
     @EnforceAtLeastStudent
     public ResponseEntity<Void> removeProfilePicture() throws URISyntaxException {

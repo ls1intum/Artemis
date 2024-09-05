@@ -80,6 +80,11 @@ describe('AnswerPostHeaderComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should display default profile picture', () => {
+        fixture.detectChanges();
+        expect(getElement(debugElement, '#post-default-profile-picture')).not.toBeNull();
+    });
+
     it('should set author information correctly', () => {
         fixture.detectChanges();
         const headerAuthorAndDate = getElement(debugElement, '#header-author-date');

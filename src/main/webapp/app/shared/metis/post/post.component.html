@@ -10,7 +10,7 @@
             [lastReadDate]="lastReadDate"
         />
     </div>
-    <div class="align-items-center">
+    <div class="align-items-center post-content-margin">
         <div class="col">
             <div class="mb-1">
                 @if (showAnnouncementIcon) {
@@ -64,9 +64,11 @@
         </div>
     </div>
     @if (displayInlineInput && !readOnlyMode) {
-        <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
+        <div class="post-content-margin">
+            <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
+        </div>
     }
-    <div class="me-0 mt-2 justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
+    <div class="post-content-margin me-0 mt-2 justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
         <!-- Post reactions -->
         @if (!previewMode) {
             <jhi-post-reactions-bar

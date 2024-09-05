@@ -66,6 +66,11 @@ describe('PostHeaderComponent', () => {
         expect(getElement(debugElement, '#today-flag')).toBeDefined();
     });
 
+    it('should display default profile picture', () => {
+        fixture.detectChanges();
+        expect(getElement(debugElement, '#post-default-profile-picture')).not.toBeNull();
+    });
+
     it('should display resolved icon on resolved post header', () => {
         component.posting = metisPostExerciseUser1;
         component.posting.resolved = true;
@@ -135,9 +140,9 @@ describe('PostHeaderComponent', () => {
 
     it.each`
         input                  | expect
-        ${UserRole.INSTRUCTOR} | ${'badge-instructor'}
-        ${UserRole.TUTOR}      | ${'badge-tutor'}
-        ${UserRole.USER}       | ${'badge-student'}
+        ${UserRole.INSTRUCTOR} | ${'post-authority-icon-instructor'}
+        ${UserRole.TUTOR}      | ${'post-authority-icon-tutor'}
+        ${UserRole.USER}       | ${'post-authority-icon-student'}
     `('should display relevant icon and tooltip for author authority', (param: { input: UserRole; expect: string }) => {
         component.posting = metisAnnouncement;
         component.posting.authorRole = param.input;

@@ -70,8 +70,8 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
         const roleBadgeTranslationPath = 'artemisApp.metis.userRoles.';
         this.userProfilePictureInitials = this.posting.author?.name === undefined ? 'NA' : this.getInitials(this.posting.author?.name);
         this.userProfilePictureBackgroundColor = this.getBackgroundColor(this.posting.author?.id?.toString());
+        this.userAuthorityIcon = faUser;
         if (this.posting.authorRole === UserRole.USER) {
-            this.userAuthorityIcon = faUser;
             this.userAuthority = 'student';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
@@ -88,6 +88,10 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
         }
     }
 
+    /**
+     * Returns a pseudo-random numeric value for a given string using a simple hash function.
+     * @param {string} str - The string used for the hash function.
+     */
     private deterministicRandomValueFromString(str: string): number {
         let seed = 0;
         for (let i = 0; i < str.length; i++) {
@@ -102,6 +106,10 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
         return seed / (m - 1);
     }
 
+    /**
+     * Returns a background color hue for a given string.
+     * @param {string | undefined} seed - The string used to determine the random value.
+     */
     private getBackgroundColor(seed: string | undefined): string {
         if (seed === undefined) {
             seed = Math.random().toString();
@@ -110,6 +118,13 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
         return `hsl(${hue}, 50%, 50%)`; // Return an HSL color string
     }
 
+    /**
+     * Returns 2 capitalized initials of a given string.
+     * If it has multiple names, it takes the first and last (Albert Berta Muster -> AM)
+     * If it has one name, it'll return a deterministic random other string (Albert -> AB)
+     * If it consists of a single letter it will return the single letter.
+     * @param {string} username - The string used to generate the initials.
+     */
     private getInitials(username: string): string {
         const parts = username.trim().split(/\s+/);
 
