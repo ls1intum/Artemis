@@ -47,10 +47,11 @@ export class AccountInformationComponent implements OnInit {
             const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
             modalRef.componentInstance.roundCropper = false;
             modalRef.componentInstance.uploadFile = element.files[0];
+            const mimeType = element.files[0].type;
             modalRef.result.then((result: any) => {
                 if (result) {
                     const base64Data = result.replace('data:image/png;base64,', '');
-                    const fileToUpload = base64StringToBlob(base64Data, 'image/*');
+                    const fileToUpload = base64StringToBlob(base64Data, mimeType);
                     this.subscribeToUpdateProfilePictureResponse(this.userSettingsService.updateProfilePicture(fileToUpload));
                 }
             });

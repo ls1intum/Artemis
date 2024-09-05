@@ -139,7 +139,7 @@ public class UserResource {
         String contentType = file.getContentType();
 
         // Check if the content type is either image/png or image/jpeg, else return 400
-        if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg") && !contentType.equals("image/*"))) {
+        if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg"))) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
 
