@@ -9,7 +9,7 @@ export enum ProgrammingExerciseInputField {
     difficulty = 'difficulty',
     participationMode = 'participationMode',
     allowOfflineIde = 'allowOfflineIde',
-    allowOnlineEditor = 'allowOnlineEditor',
+    allowOnlineIde = 'allowOnlineIde',
 
     // Language section
     programmingLanguage = 'programmingLanguage',
@@ -80,7 +80,7 @@ export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
     allowOfflineIde: {
         editModesToBeDisplayed: ['ADVANCED'],
     },
-    allowOnlineEditor: {
+    allowOnlineIde: {
         editModesToBeDisplayed: ['ADVANCED'],
     },
     // Language section

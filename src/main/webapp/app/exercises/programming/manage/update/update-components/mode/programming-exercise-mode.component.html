@@ -46,7 +46,7 @@
                 </label>
             </div>
         }
-        @if (ProjectType.XCODE !== programmingExerciseCreationConfig.selectedProjectType && isEditFieldDisplayedRecord().allowOnlineEditor) {
+        @if (ProjectType.XCODE !== programmingExerciseCreationConfig.selectedProjectType && isEditFieldDisplayedRecord().allowOnlineIde) {
             <div class="form-check">
                 <label [class]="!programmingExerciseCreationConfig.validIdeSelection() ? 'form-check-label text-danger' : 'form-check-label'" for="field_allowOnlineEditor">
                     <input
