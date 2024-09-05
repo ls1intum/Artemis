@@ -118,16 +118,14 @@ class LtiServiceTest {
         verify(response).addHeader(any(), any());
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
-        String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
         assertThat(initialize).isEmpty();
-        assertThat(ltiSuccessLoginRequired).isNull();
     }
 
     @Test
     void addLtiQueryParamsExistingUser() {
         when(userRepository.getUser()).thenReturn(user);
         user.setActivated(true);
-        when(jwtCookieService.buildLogoutCookie()).thenReturn(mock(ResponseCookie.class));
+        when(jwtCookieService.buildLoginCookie(true)).thenReturn(mock(ResponseCookie.class));
 
         UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.newInstance();
         HttpServletResponse response = mock(HttpServletResponse.class);
@@ -136,12 +134,10 @@ class LtiServiceTest {
 
         UriComponents uriComponents = uriComponentsBuilder.build();
 
-        verify(jwtCookieService).buildLogoutCookie();
+        verify(jwtCookieService).buildLoginCookie(true);
         verify(response).addHeader(any(), any());
 
         String initialize = uriComponents.getQueryParams().getFirst("initialize");
-        String ltiSuccessLoginRequired = uriComponents.getQueryParams().getFirst("ltiSuccessLoginRequired");
-        assertThat(ltiSuccessLoginRequired).isEqualTo(user.getLogin());
         assertThat(initialize).isNull();
     }
 
