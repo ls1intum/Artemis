@@ -317,7 +317,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
 
-        verify(gitService, never()).combineAllCommitsOfRepositoryIntoOne(any());
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam1.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
     }
 
