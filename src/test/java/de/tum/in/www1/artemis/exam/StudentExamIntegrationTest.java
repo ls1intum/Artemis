@@ -125,7 +125,6 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
-import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
@@ -463,12 +462,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             registeredStudents.add(userUtilService.getUserByLogin(TEST_PREFIX + "student" + i));
         }
         return registeredStudents;
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testStartExercises_testExam() throws Exception {
-        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/start-exercises", null, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -2850,8 +2843,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             assertThat(studentExams).hasSize(exam1.getExamUsers().size());
             assertThat(studentExamRepository.findByExamId(exam1.getId())).hasSize(1);
 
-            // Prepare student exam
-            ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
             StudentExam studentExam = studentExams.getFirst();
             userUtilService.changeUser(studentExam.getUser().getLogin());
             studentExamForConduction = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/" + studentExam.getId() + "/conduction",

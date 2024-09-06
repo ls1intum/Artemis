@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -146,7 +147,6 @@ import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseClea
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserFactory;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUri;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -1968,7 +1968,7 @@ public class ProgrammingExerciseTestService {
         }
 
         final var course = courseUtilService.addEmptyCourse();
-        var exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
+        Exam exam = examUtilService.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = examUtilService.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register users
@@ -2015,10 +2015,10 @@ public class ProgrammingExerciseTestService {
             }
         }
 
-        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-        // await().timeout(Duration.ofSeconds(5)).until(() -> participationRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == 12);
-        assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
-
+        participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
+        Exam finalExam = exam;
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(finalExam.getId()).size() == registeredStudents.size()
+                * finalExam.getExerciseGroups().size());
         mockDelegate.resetMockProvider();
 
         return studentExams;

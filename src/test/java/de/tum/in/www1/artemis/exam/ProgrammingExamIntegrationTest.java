@@ -44,7 +44,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepositor
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
-import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 
 class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -319,10 +318,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
                 StudentExam.class, HttpStatus.OK);
 
         verify(gitService, never()).combineAllCommitsOfRepositoryIntoOne(any());
-
-        // invoke prepare exercise start
-        ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam1, course1);
-
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam1.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
     }
 
