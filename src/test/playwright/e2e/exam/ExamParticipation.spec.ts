@@ -60,7 +60,6 @@ test.describe('Exam participation', () => {
             await examAPIRequests.registerStudentForExam(exam, studentThree);
             await examAPIRequests.registerStudentForExam(exam, studentFour);
             await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
         test('Participates as a student in a registered exam', async ({ login, examParticipation, examNavigation, examStartEnd, examManagement }) => {
@@ -135,7 +134,6 @@ test.describe('Exam participation', () => {
             await examAPIRequests.registerStudentForExam(exam, studentThree);
             await examAPIRequests.registerStudentForExam(exam, studentFour);
             await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
         test('Participates in the exam, hand-in early, but instead continues', async ({
@@ -236,7 +234,6 @@ test.describe('Exam participation', () => {
 
             await examAPIRequests.registerStudentForExam(exam, studentFour);
             await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
         test('Participates as a student in a registered exam', async ({ login, examParticipation, examNavigation, examStartEnd, examManagement }) => {
@@ -273,7 +270,6 @@ test.describe('Exam participation', () => {
             }
 
             await examAPIRequests.generateMissingIndividualExams(exam);
-            await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
         test('Instructor sends an announcement message and all participants receive it', async ({ browser, login, navigationBar, courseManagement, examManagement }) => {

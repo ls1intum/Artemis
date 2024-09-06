@@ -84,7 +84,6 @@ test.describe('Exam Results', () => {
                     await examAPIRequests.registerStudentForExam(exam, studentOne);
                     const studentExams = await examAPIRequests.generateMissingIndividualExams(exam);
                     studentExam = studentExams[0];
-                    await examAPIRequests.prepareExerciseStartForExam(exam);
                 });
 
                 test.beforeEach('Participate in exam', async ({ login, examParticipation, examNavigation, examStartEnd }) => {

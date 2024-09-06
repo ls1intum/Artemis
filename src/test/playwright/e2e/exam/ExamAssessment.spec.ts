@@ -245,7 +245,6 @@ test.describe('Exam statistics', () => {
         await examAPIRequests.registerStudentForExam(exam, studentThree);
         await examAPIRequests.registerStudentForExam(exam, studentFour);
         await examAPIRequests.generateMissingIndividualExams(exam);
-        await examAPIRequests.prepareExerciseStartForExam(exam);
     });
 
     test.beforeEach('Set exam grading', async ({ examAPIRequests, login }) => {
@@ -348,7 +347,7 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
 
     const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, exerciseType, additionalData);
     await examAPIRequests.generateMissingIndividualExams(exam);
-    await examAPIRequests.prepareExerciseStartForExam(exam);
+
     exercise.additionalData = additionalData;
     await makeExamSubmission(course, exam, exercise, page, examParticipation, examNavigation, examStartEnd);
     return exam;

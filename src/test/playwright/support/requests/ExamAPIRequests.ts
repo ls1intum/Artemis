@@ -166,14 +166,6 @@ export class ExamAPIRequests {
     }
 
     /**
-     * Prepares individual exercises for exam start
-     * @param exam the exam for which the exercises are prepared
-     */
-    async prepareExerciseStartForExam(exam: Exam) {
-        await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/start-exercises`);
-    }
-
-    /**
      * Gets the exam scores
      * @param exam the exam to get the scores for
      */
