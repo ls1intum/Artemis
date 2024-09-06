@@ -8,6 +8,7 @@ import { TableEditableFieldComponent } from 'app/shared/table/table-editable-fie
 import { every } from 'lodash-es';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { removeSpecialCharacters } from 'app/shared/util/utils';
 
 @Component({
     selector: 'jhi-programming-exercise-info',
@@ -40,7 +41,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
     exerciseTitle = signal<string | undefined>(undefined);
-    shortNameRandomPart = signal<string>(this.appendRandomLetters(''));
+    shortNameRandomPart = signal<string>(this.generateRandomShortNameLetters());
 
     constructor() {
         effect(
@@ -50,23 +51,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 }
                 const newShortName = this.exerciseTitle();
                 if (newShortName && newShortName.length > 3) {
-                    const sanitizedShortName = this.removeSpecialCharacters(newShortName ?? '').substring(0, 6);
+                    const sanitizedShortName = removeSpecialCharacters(newShortName ?? '').substring(0, 6);
                     // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
                     const shortnameWithRandomness = sanitizedShortName + this.shortNameRandomPart();
                     this.programmingExercise.shortName = shortnameWithRandomness;
                 }
             }.bind(this),
         );
-    }
-
-    removeSpecialCharacters(input: string): string {
-        return input.replace(/[^a-zA-Z0-9]/g, '');
-    }
-
-    appendRandomLetters(shortName: string): string {
-        const letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        const randomLetters = Array.from({ length: 3 }, () => letters.charAt(Math.floor(Math.random() * letters.length))).join('');
-        return `${shortName}${randomLetters}`;
     }
 
     ngAfterViewInit() {
@@ -150,5 +141,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 !this.programmingExercise.programmingLanguage ||
                 !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
         );
+    }
+
+    private generateRandomShortNameLetters(): string {
+        const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+        const NUMBER_OF_RANDOM_LETTERS = 3;
+        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
+        const randomLetters = Array.from({ length: NUMBER_OF_RANDOM_LETTERS }, () => alphabet.charAt(Math.floor(Math.random() * alphabet.length))).join('');
+        return randomLetters;
     }
 }

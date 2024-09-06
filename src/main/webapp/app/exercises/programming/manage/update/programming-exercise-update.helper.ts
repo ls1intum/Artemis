@@ -4,11 +4,13 @@ export type ProgrammingExerciseInputField =
     | 'channelName'
     | 'shortName'
     | 'categories'
+
     // mode section
     | 'difficulty'
     | 'participationMode'
     | 'allowOfflineIde'
     | 'allowOnlineIde'
+
     // language section
     | 'programmingLanguage'
     | 'projectType'
@@ -17,9 +19,11 @@ export type ProgrammingExerciseInputField =
     | 'enableStaticCodeAnalysis'
     | 'sequentialTestRuns'
     | 'customizeBuildScript'
+
     // problem section
     | 'problemStatement'
     | 'linkedCompetencies'
+
     // grading section
     | 'includeExerciseInCourseScoreCalculation'
     | 'points'
@@ -60,6 +64,7 @@ export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
     categories: {
         editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
     },
+
     // Mode section
     difficulty: {
         editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
@@ -73,6 +78,7 @@ export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
     allowOnlineIde: {
         editModesToBeDisplayed: ['ADVANCED'],
     },
+
     // Language section
     programmingLanguage: {
         editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
@@ -96,6 +102,7 @@ export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
     customizeBuildScript: {
         editModesToBeDisplayed: ['ADVANCED'],
     },
+
     // Problem section
     problemStatement: {
         editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
@@ -103,6 +110,7 @@ export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
     linkedCompetencies: {
         editModesToBeDisplayed: ['ADVANCED'],
     },
+
     // Grading section
     includeExerciseInCourseScoreCalculation: {
         editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
