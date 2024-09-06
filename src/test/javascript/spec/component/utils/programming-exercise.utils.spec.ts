@@ -1,6 +1,6 @@
 import { SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import {
     createBuildPlanUrl,
