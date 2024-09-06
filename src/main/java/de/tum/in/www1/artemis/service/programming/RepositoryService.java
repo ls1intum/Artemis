@@ -61,11 +61,11 @@ public class RepositoryService {
 
     private final ProfileService profileService;
 
-    private final VcsAccessLogService vcsAccessLogService;
+    private final Optional<VcsAccessLogService> vcsAccessLogService;
 
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, ProfileService profileService, VcsAccessLogService vcsAccessLogService) {
+    public RepositoryService(GitService gitService, ProfileService profileService, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.gitService = gitService;
         this.profileService = profileService;
         this.vcsAccessLogService = vcsAccessLogService;
@@ -479,7 +479,9 @@ public class RepositoryService {
     public void commitChanges(Repository repository, User user, Long domainId) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
-        vcsAccessLogService.storeCodeEditorAccessLog(repository, user, domainId);
+        if (vcsAccessLogService.isPresent()) {
+            vcsAccessLogService.get().storeCodeEditorAccessLog(repository, user, domainId);
+        }
     }
 
     /**

@@ -57,7 +57,7 @@ export class VcsRepositoryAccessLogViewComponent implements OnInit, OnDestroy {
         this.extractEntries(accessLogEntries);
     }
 
-    public loadVcsAccessLog(exerciseId: number, repositoryType: any) {
+    public loadVcsAccessLog(exerciseId: number, repositoryType: string) {
         const accessLogEntries: Observable<VcsAccessLogDTO[] | undefined> = this.programmingExerciseParticipationService.getVcsAccessLogForRepository(exerciseId, repositoryType);
         this.extractEntries(accessLogEntries);
     }

@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_SCHEDULING;
-
 import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
@@ -14,7 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.repository.VcsAccessLogRepository;
 
 @Service
-@Profile(PROFILE_SCHEDULING)
+@Profile("scheduling & localvc")
 public class AutomaticVcsAccessLogCleanupService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticVcsAccessLogCleanupService.class);

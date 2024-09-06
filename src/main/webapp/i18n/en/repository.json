@@ -27,7 +27,7 @@
                 "userId": "User Id",
                 "author": "Author",
                 "actionType": "Action Type",
-                "authMechanism": "Accesstype",
+                "authMechanism": "Access Type",
                 "commitHash": "Commit Hash",
                 "timeStamp": "Timestamp",
                 "error": "VCS Access log could not be retrieved"
