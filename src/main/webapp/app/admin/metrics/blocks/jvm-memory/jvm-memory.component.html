@@ -1,5 +1,5 @@
 <h4 jhiTranslate="metrics.jvm.memory.title"></h4>
-@if (!updating && jvmMemoryMetrics && Object.keys(this.jvmMemoryMetrics!).length > 0) {
+@if (!updating && jvmMemoryMetrics) {
     <div>
         @for (entry of jvmMemoryMetrics | keyvalue; track entry) {
             <div>

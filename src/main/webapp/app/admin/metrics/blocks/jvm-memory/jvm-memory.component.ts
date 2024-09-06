@@ -16,6 +16,4 @@ export class JvmMemoryComponent {
      * boolean field saying if the metrics are in the process of being updated
      */
     @Input() updating?: boolean;
-
-    protected readonly Object = Object;
 }
