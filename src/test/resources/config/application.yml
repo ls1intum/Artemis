@@ -251,6 +251,7 @@ info:
     # default value set to true for tests
     text-assessment-analytics-enabled: true
     student-exam-store-session-data: true
+    contact: contactEmail@contact.de
 
 jhipster:
     clientApp:
