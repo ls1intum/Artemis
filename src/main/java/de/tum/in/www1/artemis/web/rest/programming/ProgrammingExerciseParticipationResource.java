@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ResultService;
@@ -432,7 +433,7 @@ public class ProgrammingExerciseParticipationResource {
      * @throws BadRequestAlertException if the repository type is invalid
      */
     @GetMapping("programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForExerciseRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) {
         if (vcsAccessLogRepository.isEmpty()) {
             return ResponseEntity.badRequest().build();
