@@ -35,9 +35,9 @@ public class AdminOldDataCleanUpResource {
 
     @PostMapping("delete-orphans")
     @EnforceAdmin
-    public ResponseEntity<Void> deleteOrphans(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
+    public ResponseEntity<Void> deleteOrphans() {
         log.debug("REST request to delete orphaned data in Artemis database");
-        // oldDataCleanupService.deleteOrphans(deleteFrom, deleteTo);
+        oldDataCleanupService.deleteOrphans();
         return ResponseEntity.ok().build();
     }
 
@@ -45,7 +45,7 @@ public class AdminOldDataCleanUpResource {
     @EnforceAdmin
     public ResponseEntity<Void> deletePlagiarismComparisons(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.debug("REST request to delete plagiarism comparisons between {} and {}", deleteFrom, deleteTo);
-        // oldDataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo);
+        oldDataCleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo);
         return ResponseEntity.ok().build();
     }
 
@@ -53,7 +53,7 @@ public class AdminOldDataCleanUpResource {
     @EnforceAdmin
     public ResponseEntity<Void> deleteNonRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.debug("REST request to delete non-rated results between {} and {}", deleteFrom, deleteTo);
-        // oldDataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo);
+        oldDataCleanupService.deleteNonRatedResults(deleteFrom, deleteTo);
         return ResponseEntity.ok().build();
     }
 
@@ -61,7 +61,7 @@ public class AdminOldDataCleanUpResource {
     @EnforceAdmin
     public ResponseEntity<Void> deleteOldRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.debug("REST request to delete old rated results between {} and {}", deleteFrom, deleteTo);
-        // oldDataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo);
+        oldDataCleanupService.deleteOldRatedResults(deleteFrom, deleteTo);
         return ResponseEntity.ok().build();
     }
 
@@ -69,7 +69,7 @@ public class AdminOldDataCleanUpResource {
     @EnforceAdmin
     public ResponseEntity<Void> deleteOldSubmissionVersions(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.debug("REST request to delete old submission versions between {} and {}", deleteFrom, deleteTo);
-        // oldDataCleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo);
+        oldDataCleanupService.deleteSubmissionVersions(deleteFrom, deleteTo);
         return ResponseEntity.ok().build();
     }
 
@@ -77,15 +77,7 @@ public class AdminOldDataCleanUpResource {
     @EnforceAdmin
     public ResponseEntity<Void> deleteOldFeedback(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
         log.debug("REST request to delete old feedback between {} and {}", deleteFrom, deleteTo);
-        // oldDataCleanupService.deleteOldFeedback(deleteFrom, deleteTo);
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("delete-all-old-data")
-    @EnforceAdmin
-    public ResponseEntity<Void> deleteOldData(@RequestParam("deleteFrom") ZonedDateTime deleteFrom, @RequestParam("deleteTo") ZonedDateTime deleteTo) {
-        log.debug("REST request to clean up Artemis database for data between {} and {}", deleteFrom, deleteTo);
-        // oldDataCleanupService.cleanupOldData(deleteFrom, deleteTo);
+        oldDataCleanupService.deleteOldFeedback(deleteFrom, deleteTo);
         return ResponseEntity.ok().build();
     }
 }

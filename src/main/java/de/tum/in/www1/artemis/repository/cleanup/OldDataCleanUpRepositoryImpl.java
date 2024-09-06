@@ -8,7 +8,6 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-// TODO Dmytro: modify queries to use deleteFrom and deleteTo
 @Repository
 public class OldDataCleanUpRepositoryImpl implements OldDataCleanUpRepository {
 
@@ -19,134 +18,135 @@ public class OldDataCleanUpRepositoryImpl implements OldDataCleanUpRepository {
 
     @Override
     @Transactional
-    public void deleteOrphans(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+    public void deleteOrphans() {
         entityManager.createQuery("DELETE FROM Feedback f WHERE f.result IS NULL").executeUpdate();
         entityManager.createQuery("DELETE FROM LongFeedbackText lft WHERE lft.feedback IS NULL").executeUpdate();
-        entityManager.createQuery("DELETE FROM ParticipantScore ps WHERE ps.team IS NULL AND ps.user IS NULL").executeUpdate();
-        entityManager.createQuery("DELETE FROM ResultRating rr WHERE rr.result IS NULL").executeUpdate();
-        entityManager.createQuery("DELETE FROM AssessmentNote an WHERE an.result IS NULL").executeUpdate();
+        entityManager.createQuery("DELETE FROM StudentScore ps WHERE ps.user IS NULL").executeUpdate();
+        entityManager.createQuery("DELETE FROM TeamScore ps WHERE ps.team IS NULL").executeUpdate();
+        entityManager.createQuery("DELETE FROM Rating rr WHERE rr.result IS NULL").executeUpdate();
         entityManager.createQuery("DELETE FROM Result r WHERE r.participation IS NULL AND r.submission IS NULL").executeUpdate();
-        entityManager.createQuery("DELETE FROM PlagiarismComparison pc WHERE pc.submissionA IS NULL AND pc.submissionB IS NULL").executeUpdate();
+        entityManager.createQuery("DELETE FROM PlagiarismComparison pc WHERE pc.submissionA IS NULL OR pc.submissionB IS NULL").executeUpdate();
     }
 
     @Override
     @Transactional
     public void deletePlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        entityManager
-                .createQuery("DELETE FROM PlagiarismComparison pc " + "WHERE pc.id IN (" + "    SELECT pc.id " + "    FROM PlagiarismComparison pc " + "    JOIN pc.submissionA s1 "
-                        + "    JOIN pc.submissionB s2 " + "    JOIN s1.participation p1 " + "    JOIN s2.participation p2 " + "    JOIN p1.exercise e1 "
-                        + "    JOIN p2.exercise e2 " + "    JOIN e1.course c1 " + "    JOIN e2.course c2 " + "    WHERE GREATEST(c1.endDate, c2.endDate) < :deleteFrom" + ")")
-                .setParameter("deleteFrom", deleteFrom).executeUpdate();
+        entityManager.createQuery("""
+                    DELETE FROM PlagiarismComparison pc
+                    WHERE pc.status = de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.NONE
+                    AND pc.id IN (
+                        SELECT pc.id
+                        FROM PlagiarismComparison pc
+                        JOIN Submission s1 ON pc.submissionA.submissionId = s1.id
+                        JOIN Submission s2 ON pc.submissionB.submissionId = s2.id
+                        JOIN Participation p1 ON s1.participation.id = p1.id
+                        JOIN Participation p2 ON s2.participation.id = p2.id
+                        JOIN Exercise e1 ON p1.exercise.id = e1.id
+                        JOIN Exercise e2 ON p2.exercise.id = e2.id
+                        JOIN Course c1 ON e1.course.id = c1.id
+                        JOIN Course c2 ON e2.course.id = c2.id
+                        WHERE LEAST(c1.endDate, c2.endDate) < :deleteTo AND
+                        GREATEST(c1.startDate, c2.startDate) > :deleteFrom
+                    )
+                """).setParameter("deleteTo", deleteTo).setParameter("deleteFrom", deleteFrom).executeUpdate();
     }
 
     @Override
     @Transactional
     public void deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        entityManager.createQuery("DELETE FROM Result r " + "WHERE r.rated = false " + "AND r.participation.exercise.course.endDate < :deleteFrom")
-                .setParameter("deleteFrom", deleteFrom).executeUpdate();
+        // delete all non-related results for all courses that were conducted withing a specific date range
+        entityManager.createQuery("""
+                DELETE FROM Result r
+                WHERE r.rated = false
+                AND r.participation IS NOT NULL
+                AND r.participation.exercise IS NOT NULL
+                AND r.participation.exercise.course IS NOT NULL
+                AND r.participation.exercise.course.endDate IS NOT NULL
+                AND r.participation.exercise.course.endDate < :deleteTo
+                AND r.participation.exercise.course.startDate > :deleteFrom
+                   """).setParameter("deleteTo", deleteTo).setParameter("deleteFrom", deleteFrom).executeUpdate();
     }
 
     @Override
     @Transactional
-    public void deleteOldRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        entityManager
-                .createQuery("DELETE FROM Result r " + "WHERE r.id IN (" + "    SELECT r.id " + "    FROM Result r " + "    WHERE r.rated = true "
-                        + "    AND r.participation.exercise.course.endDate < :deleteFrom " + "    AND r.id NOT IN (" + "        SELECT r1.id " + "        FROM Result r1 "
-                        + "        WHERE r1.participation = r.participation " + "        ORDER BY r1.completionDate DESC " + "        LIMIT 1" + "    )" + ")")
-                .setParameter("deleteFrom", deleteFrom).executeUpdate();
+    public void deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+        // delete all rated results that are not latest rated for a participation for courses conducted within a specific date range
+        entityManager.createQuery("""
+                DELETE FROM Result r
+                    WHERE r.rated = true
+                      AND r.participation IS NOT NULL
+                      AND r.participation.exercise IS NOT NULL
+                      AND r.participation.exercise.course IS NOT NULL
+                      AND r.participation.exercise.course.endDate IS NOT NULL
+                      AND r.participation.exercise.course.endDate < :deleteTo
+                      AND r.participation.exercise.course.startDate > :deleteFrom
+                      AND r.id NOT IN (
+                          SELECT MAX(r2.id)
+                          FROM Result r2
+                          WHERE r2.participation = r.participation
+                            AND r2.rated = true
+                      )
+                    """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
     }
 
     @Override
     @Transactional
-    public void deleteOldSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        entityManager
-                .createQuery("DELETE FROM SubmissionVersion sv " + "WHERE sv.submission.id IN (" + "    SELECT s.id " + "    FROM Submission s " + "    JOIN s.participation p "
-                        + "    JOIN p.exercise e " + "    JOIN e.exerciseGroup eg " + "    JOIN eg.exam ex " + "    JOIN ex.course c " + "    WHERE c.endDate < :deleteFrom" + ")")
-                .setParameter("deleteFrom", deleteFrom).executeUpdate();
+    public void deleteSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+        // delete old submission versions for exams
+        entityManager.createQuery("""
+                    DELETE FROM SubmissionVersion sv
+                    WHERE sv.submission.id IS NOT NULL
+                      AND sv.submission.participation.id IS NOT NULL
+                      AND sv.submission.participation.exercise.id IS NOT NULL
+                      AND sv.submission.participation.exercise.exerciseGroup.id IS NOT NULL
+                      AND sv.submission.participation.exercise.exerciseGroup.exam.id IS NOT NULL
+                      AND sv.submission.participation.exercise.exerciseGroup.exam.course.id IS NOT NULL
+                      AND sv.submission.participation.exercise.exerciseGroup.exam.course.endDate IS NOT NULL
+                      AND sv.submission.participation.exercise.exerciseGroup.exam.course.endDate < :deleteTo
+                      AND sv.submission.participation.exercise.exerciseGroup.exam.course.endDate > :deleteFrom
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
     }
 
     @Override
     @Transactional
-    public void deleteOldFeedback(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        entityManager
-                .createQuery("DELETE FROM Feedback f " + "WHERE f.result.id NOT IN (" + "    SELECT MAX(r.id) " + "    FROM Result r "
-                        + "    WHERE r.participation = f.result.participation" + ") " + "AND f.result.participation.exercise.course.endDate < :deleteFrom")
-                .setParameter("deleteFrom", deleteFrom).executeUpdate();
-    }
+    public void deleteFeedback(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+        // old feedback items that are not part of latest results
+        entityManager.createQuery("""
+                    DELETE FROM Feedback f
+                    WHERE f.result.id IN (
+                        SELECT r.id
+                        FROM Result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE r.id NOT IN (
+                            SELECT MAX(r2.id)
+                            FROM Result r2
+                            WHERE r2.participation.id = p.id
+                        ) AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
 
-    @Override
-    @Transactional
-    public boolean existsDataForCleanup(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        Long count = (Long) entityManager.createQuery("""
-                SELECT
-                    CASE
-                        WHEN (SELECT COUNT(f) FROM Feedback f WHERE f.result IS NULL) > 0 THEN 1
-                        WHEN (SELECT COUNT(lft) FROM LongFeedbackText lft WHERE lft.feedback IS NULL) > 0 THEN 1
-                        WHEN (SELECT COUNT(ps) FROM ParticipantScore ps WHERE ps.team IS NULL AND ps.user IS NULL) > 0 THEN 1
-                        WHEN (SELECT COUNT(rr) FROM ResultRating rr WHERE rr.result IS NULL) > 0 THEN 1
-                        WHEN (SELECT COUNT(an) FROM AssessmentNote an WHERE an.result IS NULL) > 0 THEN 1
-                        WHEN (SELECT COUNT(r) FROM Result r WHERE r.participation IS NULL AND r.submission IS NULL) > 0 THEN 1
-                        WHEN (SELECT COUNT(pc) FROM PlagiarismComparison pc WHERE pc.submissionA IS NULL AND pc.submissionB IS NULL) > 0 THEN 1
-                        WHEN (
-                            SELECT COUNT(pc)
-                            FROM PlagiarismComparison pc
-                            JOIN pc.submissionA s1
-                            JOIN pc.submissionB s2
-                            JOIN s1.participation p1
-                            JOIN s2.participation p2
-                            JOIN p1.exercise e1
-                            JOIN p2.exercise e2
-                            JOIN e1.course c1
-                            JOIN e2.course c2
-                            WHERE GREATEST(c1.endDate, c2.endDate) < :deleteFrom
-                        ) > 0 THEN 1
-                        WHEN (
-                            SELECT COUNT(r)
-                            FROM Result r
-                            WHERE r.rated = false
-                            AND r.participation.exercise.course.endDate < :deleteFrom
-                        ) > 0 THEN 1
-                        WHEN (
-                            SELECT COUNT(r.id)
-                            FROM Result r
-                            WHERE r.rated = true
-                            AND r.participation.exercise.course.endDate < :deleteFrom
-                            AND r.id NOT IN (
-                                SELECT r1.id
-                                FROM Result r1
-                                WHERE r1.participation = r.participation
-                                ORDER BY r1.completionDate DESC
-                                LIMIT 1
-                            )
-                        ) > 0 THEN 1
-                        WHEN (
-                            SELECT COUNT(sv)
-                            FROM SubmissionVersion sv
-                            WHERE sv.submission.id IN (
-                                SELECT s.id
-                                FROM Submission s
-                                JOIN s.participation p
-                                JOIN p.exercise e
-                                JOIN e.exerciseGroup eg
-                                JOIN eg.exam ex
-                                JOIN ex.course c
-                                WHERE c.endDate < :deleteFrom
-                            )
-                        ) > 0 THEN 1
-                        WHEN (
-                            SELECT COUNT(f)
-                            FROM Feedback f
-                            WHERE f.result.id NOT IN (
-                                SELECT MAX(r.id)
-                                FROM Result r
-                                WHERE r.participation = f.result.participation
-                            )
-                            AND f.result.participation.exercise.course.endDate < :deleteFrom
-                        ) > 0 THEN 1
-                        ELSE 0
-                    END
-                """).setParameter("deleteFrom", deleteFrom).getSingleResult();
-        return count != null && count > 0;
+        // old long feedback text that is not part of latest results
+        entityManager.createQuery("""
+                    DELETE FROM LongFeedbackText lft
+                    WHERE lft.feedback.id IN (
+                        SELECT f.id
+                        FROM Feedback f
+                        JOIN f.result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE f.result.id NOT IN (
+                            SELECT MAX(r2.id)
+                            FROM Result r2
+                            WHERE r2.participation.id = p.id
+                        )
+                        AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
     }
 
 }

@@ -1,0 +1,70 @@
+package de.tum.in.www1.artemis.domain.cleanup;
+
+import java.time.ZonedDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotNull;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.enumeration.CleanupJobType;
+
+@Entity
+@Table(name = "cleanup_job_execution")
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public class CleanupJobExecution extends DomainObject {
+
+    @Column(name = "delete_from")
+    private ZonedDateTime deleteFrom;
+
+    @Column(name = "delete_to")
+    private ZonedDateTime deleteTo;
+
+    @Column(name = "deleted_at")
+    @NotNull
+    private ZonedDateTime deletion_timestamp;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "operation_type")
+    private CleanupJobType cleanupJobType;
+
+    public CleanupJobExecution() {
+    }
+
+    public ZonedDateTime getDeleteFrom() {
+        return deleteFrom;
+    }
+
+    public void setDeleteFrom(ZonedDateTime deleteFrom) {
+        this.deleteFrom = deleteFrom;
+    }
+
+    public ZonedDateTime getDeleteTo() {
+        return deleteTo;
+    }
+
+    public void setDeleteTo(ZonedDateTime deleteTo) {
+        this.deleteTo = deleteTo;
+    }
+
+    public ZonedDateTime getDeletion_timestamp() {
+        return deletion_timestamp;
+    }
+
+    public void setDeletion_timestamp(ZonedDateTime deletion_timestamp) {
+        this.deletion_timestamp = deletion_timestamp;
+    }
+
+    public CleanupJobType getCleanupJobType() {
+        return cleanupJobType;
+    }
+
+    public void setCleanupJobType(CleanupJobType cleanupJobType) {
+        this.cleanupJobType = cleanupJobType;
+    }
+}

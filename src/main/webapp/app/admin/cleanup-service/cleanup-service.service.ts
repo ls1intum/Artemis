@@ -10,12 +10,9 @@ export class DataCleanupService {
 
     /**
      * Send POST request to delete orphaned data within a specific date range.
-     * @param deleteFrom the start date from which orphaned data should be deleted
-     * @param deleteTo the end date until which orphaned data should be deleted
      */
-    deleteOrphans(deleteFrom: string, deleteTo: string): Observable<HttpResponse<void>> {
+    deleteOrphans(): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.adminResourceUrl}/delete-orphans`, null, {
-            params: { deleteFrom, deleteTo },
             observe: 'response',
         });
     }
