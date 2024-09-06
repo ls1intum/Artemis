@@ -116,7 +116,14 @@
             }
         </div>
     </div>
-    @if (!readOnly) {
+    @if (
+        !readOnly &&
+        (!isEditFieldDisplayedRecord() ||
+            isEditFieldDisplayedRecord()?.complaintOnAutomaticAssessment ||
+                isEditFieldDisplayedRecord()?.manualFeedbackRequests ||
+                isEditFieldDisplayedRecord()?.showTestNamesToStudents ||
+                isEditFieldDisplayedRecord()?.includeTestsIntoExampleSolution)
+    ) {
         <h6 jhiTranslate="artemisApp.assessment.assessment"></h6>
         @if ((isEditFieldDisplayedRecord()?.complaintOnAutomaticAssessment || !isEditFieldDisplayedRecord()) && (isExamMode || exercise.course?.complaintsEnabled)) {
             <div class="form-check">

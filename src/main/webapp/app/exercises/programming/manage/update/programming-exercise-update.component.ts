@@ -265,7 +265,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.selectedProgrammingLanguageValue = language;
 
         const programmingLanguageFeature = this.programmingLanguageFeatureService.getProgrammingLanguageFeature(language);
-        this.packageNameRequired = programmingLanguageFeature.packageNameRequired;
+        this.packageNameRequired = programmingLanguageFeature?.packageNameRequired;
         this.staticCodeAnalysisAllowed = programmingLanguageFeature.staticCodeAnalysis;
         this.checkoutSolutionRepositoryAllowed = programmingLanguageFeature.checkoutSolutionRepositoryAllowed;
         this.sequentialTestRunsAllowed = programmingLanguageFeature.sequentialTestRuns;
