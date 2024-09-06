@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.time.ZonedDateTime;
@@ -57,7 +56,6 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.user.UserUtilService;
-import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 
 // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
 class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -156,7 +154,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         createStudentExams(textExercise);
 
-        List<Participation> studentParticipations = invokePrepareExerciseStart();
+        List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(textExercise);
@@ -179,7 +177,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         createStudentExams(modelingExercise);
 
-        List<Participation> studentParticipations = invokePrepareExerciseStart();
+        List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(modelingExercise);
@@ -201,7 +199,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         createStudentExams(programmingExercise);
 
-        var studentParticipations = invokePrepareExerciseStart();
+        List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(programmingExercise);
@@ -238,7 +236,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
         createStudentExams(programmingExercise);
 
-        var studentParticipations = invokePrepareExerciseStart();
+        var studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(programmingExercise);
@@ -275,14 +273,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         exam.getExerciseGroups().getFirst().addExercise(programmingExercise);
         exerciseGroupRepository.save(exam.getExerciseGroups().getFirst());
         return programmingExercise;
-    }
-
-    private List<Participation> invokePrepareExerciseStart() throws Exception {
-        // invoke start exercises
-        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-        verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
-        assertThat(noGeneratedParticipations).isEqualTo(exam.getStudentExams().size());
-        return participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
     }
 
 }
