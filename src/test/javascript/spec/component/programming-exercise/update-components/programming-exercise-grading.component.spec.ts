@@ -23,6 +23,7 @@ import { NgbAlertsMocksModule } from '../../../helpers/mocks/directive/ngbAlerts
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -48,6 +49,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 MockComponent(PresentationScoreComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
+                MockComponent(GradingInstructionsDetailsComponent),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -194,37 +196,106 @@ describe('ProgrammingExerciseGradingComponent', () => {
     });
 
     describe('should display correct fields:', () => {
+        const checkFieldVisibility = (selector: string, isVisible: boolean) => {
+            fixture.detectChanges();
+            const field = fixture.debugElement.nativeElement.querySelector(selector);
+            if (isVisible) {
+                expect(field).not.toBeNull();
+            } else {
+                expect(field).toBeNull();
+            }
+        };
+
         describe('jhi-included-in-overall-score-picker', () => {
-            const scorePickerSelector = 'jhi-included-in-overall-score-picker';
+            const selector = 'jhi-included-in-overall-score-picker';
 
             it('should be displayed', () => {
-                fixture.detectChanges();
-                const includedInOverallScorePicker = fixture.debugElement.nativeElement.querySelector(scorePickerSelector);
-                expect(includedInOverallScorePicker).not.toBeNull();
+                checkFieldVisibility(selector, true);
             });
 
             it('should NOT be displayed', () => {
                 comp.isEditFieldDisplayedRecord().includeExerciseInCourseScoreCalculation = false;
-                fixture.detectChanges();
-                const includedInOverallScorePicker = fixture.debugElement.nativeElement.querySelector(scorePickerSelector);
-                expect(includedInOverallScorePicker).toBeNull();
+                checkFieldVisibility(selector, false);
             });
         });
 
         describe('points field', () => {
-            const pointsFieldSelector = '#field_points';
+            const selector = '#field_points';
 
             it('should be displayed', () => {
-                fixture.detectChanges();
-                const pointsInputField = fixture.debugElement.nativeElement.querySelector(pointsFieldSelector);
-                expect(pointsInputField).not.toBeNull();
+                checkFieldVisibility(selector, true);
             });
 
             it('should NOT be displayed', () => {
                 comp.isEditFieldDisplayedRecord().points = false;
-                fixture.detectChanges();
-                const pointsInputField = fixture.debugElement.nativeElement.querySelector(pointsFieldSelector);
-                expect(pointsInputField).toBeNull();
+                checkFieldVisibility(selector, false);
+            });
+        });
+
+        describe('bonusPoints field', () => {
+            const selector = '#field_bonusPoints';
+
+            it('should be displayed', () => {
+                checkFieldVisibility(selector, true);
+            });
+
+            it('should NOT be displayed', () => {
+                comp.isEditFieldDisplayedRecord().bonusPoints = false;
+                checkFieldVisibility(selector, false);
+            });
+        });
+
+        describe('submission policy field', () => {
+            const selector = 'jhi-submission-policy-update';
+
+            it('should be displayed', () => {
+                checkFieldVisibility(selector, true);
+            });
+
+            it('should NOT be displayed', () => {
+                comp.isEditFieldDisplayedRecord().submissionPolicy = false;
+                checkFieldVisibility(selector, false);
+            });
+        });
+
+        describe('timeline', () => {
+            const selector = 'jhi-programming-exercise-lifecycle';
+
+            it('should be displayed', () => {
+                checkFieldVisibility(selector, true);
+            });
+
+            it('should NOT be displayed', () => {
+                comp.isEditFieldDisplayedRecord().timeline = false;
+                checkFieldVisibility(selector, false);
+            });
+        });
+
+        describe('assessment instructions', () => {
+            const selector = 'jhi-grading-instructions-details';
+
+            it('should be displayed', () => {
+                comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+                checkFieldVisibility(selector, true);
+            });
+
+            it('should NOT be displayed', () => {
+                comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
+                comp.isEditFieldDisplayedRecord().assessmentInstructions = false;
+                checkFieldVisibility(selector, false);
+            });
+        });
+
+        describe('presentation score', () => {
+            const selector = 'jhi-presentation-score-checkbox';
+
+            it('should be displayed', () => {
+                checkFieldVisibility(selector, true);
+            });
+
+            it('should NOT be displayed', () => {
+                comp.isEditFieldDisplayedRecord().presentationScore = false;
+                checkFieldVisibility(selector, false);
             });
         });
     });
