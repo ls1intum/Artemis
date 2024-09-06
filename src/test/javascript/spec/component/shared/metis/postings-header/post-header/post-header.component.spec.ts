@@ -17,6 +17,8 @@ import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-
 import { metisAnnouncement, metisPostExerciseUser1, metisPostInChannel, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { UserRole } from 'app/shared/metis/metis.util';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;
@@ -30,7 +32,7 @@ describe('PostHeaderComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip), MockModule(MetisModule)],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: AccountService, useClass: MockAccountService }],
             declarations: [
                 PostHeaderComponent,
                 FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
