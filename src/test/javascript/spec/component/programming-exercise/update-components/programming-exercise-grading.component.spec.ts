@@ -192,4 +192,40 @@ describe('ProgrammingExerciseGradingComponent', () => {
 
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
     });
+
+    describe('should display correct fields:', () => {
+        describe('jhi-included-in-overall-score-picker', () => {
+            const scorePickerSelector = 'jhi-included-in-overall-score-picker';
+
+            it('should be displayed', () => {
+                fixture.detectChanges();
+                const includedInOverallScorePicker = fixture.debugElement.nativeElement.querySelector(scorePickerSelector);
+                expect(includedInOverallScorePicker).not.toBeNull();
+            });
+
+            it('should NOT be displayed', () => {
+                comp.isEditFieldDisplayedRecord().includeExerciseInCourseScoreCalculation = false;
+                fixture.detectChanges();
+                const includedInOverallScorePicker = fixture.debugElement.nativeElement.querySelector(scorePickerSelector);
+                expect(includedInOverallScorePicker).toBeNull();
+            });
+        });
+
+        describe('points field', () => {
+            const pointsFieldSelector = '#field_points';
+
+            it('should be displayed', () => {
+                fixture.detectChanges();
+                const pointsInputField = fixture.debugElement.nativeElement.querySelector(pointsFieldSelector);
+                expect(pointsInputField).not.toBeNull();
+            });
+
+            it('should NOT be displayed', () => {
+                comp.isEditFieldDisplayedRecord().points = false;
+                fixture.detectChanges();
+                const pointsInputField = fixture.debugElement.nativeElement.querySelector(pointsFieldSelector);
+                expect(pointsInputField).toBeNull();
+            });
+        });
+    });
 });
