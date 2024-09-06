@@ -71,6 +71,7 @@ import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/e
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -134,6 +135,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ModePickerComponent),
                 MockComponent(ExerciseUpdateNotificationComponent),
                 MockComponent(ExerciseUpdatePlagiarismComponent),
+                MockComponent(SwitchEditModeButtonComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -141,7 +143,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
                 { provide: NgbModal, useClass: MockNgbModalService },
-                { provide: AlertService, useValue: { addAlert: () => {} } },
+                {
+                    provide: AlertService,
+                    useValue: {
+                        addAlert: () => {},
+                    },
+                },
             ],
         })
             .compileComponents()
@@ -160,6 +167,8 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 const newProfileInfo = new ProfileInfo();
                 newProfileInfo.activeProfiles = [];
                 getProfileInfoSub.mockReturnValue(of(newProfileInfo));
+
+                comp.isSimpleMode.set(false);
             });
     });
 
@@ -256,7 +265,11 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
             // THEN
             expect(comp.isSaving).toBeFalse();
-            expect(alertSpy).toHaveBeenCalledWith({ type: AlertType.DANGER, message: 'error-message', disableTranslation: true });
+            expect(alertSpy).toHaveBeenCalledWith({
+                type: AlertType.DANGER,
+                message: 'error-message',
+                disableTranslation: true,
+            });
         });
     });
 
@@ -1043,16 +1056,28 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     it('should validate form sections', () => {
         const calculateFormValidSectionsSpy = jest.spyOn(comp, 'calculateFormStatusSections');
         comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
-        comp.exerciseInfoComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseInformationComponent;
+        comp.exerciseInfoComponent = {
+            formValidChanges: new Subject(),
+            formValid: true,
+        } as ProgrammingExerciseInformationComponent;
         comp.exerciseDifficultyComponent = {
             teamConfigComponent: {
                 formValidChanges: new Subject(),
                 formValid: true,
             },
         } as ProgrammingExerciseModeComponent;
-        comp.exerciseLanguageComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseLanguageComponent;
-        comp.exerciseGradingComponent = { formValidChanges: new Subject(), formValid: true } as ProgrammingExerciseGradingComponent;
-        comp.exercisePlagiarismComponent = { formValidChanges: new Subject(), formValid: true } as ExerciseUpdatePlagiarismComponent;
+        comp.exerciseLanguageComponent = {
+            formValidChanges: new Subject(),
+            formValid: true,
+        } as ProgrammingExerciseLanguageComponent;
+        comp.exerciseGradingComponent = {
+            formValidChanges: new Subject(),
+            formValid: true,
+        } as ProgrammingExerciseGradingComponent;
+        comp.exercisePlagiarismComponent = {
+            formValidChanges: new Subject(),
+            formValid: true,
+        } as ExerciseUpdatePlagiarismComponent;
 
         comp.ngAfterViewInit();
         expect(comp.inputFieldSubscriptions).toHaveLength(5);
