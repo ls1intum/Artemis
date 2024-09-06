@@ -193,6 +193,7 @@ public class PublicPyrisStatusUpdateResource {
      * IN_PROGRESS, DONE, ERROR).
      * </p>
      *
+     * @param courseId      the ID of the lecture the unit belongs to
      * @param lectureId     the ID of the lecture the unit belongs to
      * @param lectureUnitId the ID of the lecture unit for which the ingestion state is being requested
      * @return a {@link ResponseEntity} containing the {@link IngestionState} of the lecture unit,

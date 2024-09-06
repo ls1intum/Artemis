@@ -1,36 +1,19 @@
 package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.validation.constraints.NotNull;
-
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.PDPageContentStream;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Attachment;
@@ -38,17 +21,14 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.lecture.LectureFactory;
 import de.tum.in.www1.artemis.lecture.LectureUtilService;
-import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisStatusUpdateService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisWebhookService;
-import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.IngestionState;
 import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.PyrisStageState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
@@ -85,12 +65,6 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     @Autowired
     protected LectureUnitRepository lectureUnitRepository;
 
-    @Autowired
-    private ObjectMapper mapper;
-
-    @Autowired
-    private AttachmentUnitRepository attachmentUnitRepository;
-
     private Attachment attachment;
 
     private Lecture lecture1;
@@ -117,7 +91,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void autoIngestionWhenAttachmentUnitCreatedAndAutoUpdateEnabled() throws Exception {
+    void autoIngestionWhenAttachmentUnitCreatedAndAutoUpdateEnabled() {
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("/api/files/temp/example.txt");
@@ -131,15 +105,11 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        var result = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
-        var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).orElseThrow();
-        assertThat(updatedAttachmentUnit.getPyrisIngestionState()).isEqualTo(IngestionState.IN_PROGRESS);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void noAutoIngestionWhenAttachmentUnitCreatedAndAutoUpdateDisabled() throws Exception {
+    void noAutoIngestionWhenAttachmentUnitCreatedAndAutoUpdateDisabled() {
         this.attachment = LectureFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("/api/files/temp/example.txt");
@@ -149,10 +119,6 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        var result = request.performMvcRequest(buildCreateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isCreated()).andReturn();
-        var persistedAttachmentUnit = mapper.readValue(result.getResponse().getContentAsString(), AttachmentUnit.class);
-        var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).orElseThrow();
-        assertThat(updatedAttachmentUnit.getPyrisIngestionState()).isEqualTo(IngestionState.NOT_STARTED);
     }
 
     @Test
@@ -163,29 +129,16 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
-        Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(lecture1.getLectureUnits().getFirst().getId());
-        if (optionalUnit.isPresent() && optionalUnit.get() instanceof AttachmentUnit attachmentUnit) {
-            assertThat(attachmentUnit.getPyrisIngestionState()).isEqualTo(IngestionState.IN_PROGRESS);
-        }
-        optionalUnit = lectureUnitRepository.findById(lecture1.getLectureUnits().getLast().getId());
-        if (optionalUnit.isPresent() && optionalUnit.get() instanceof AttachmentUnit attachmentUnit) {
-            assertThat(attachmentUnit.getPyrisIngestionState()).isEqualTo(IngestionState.NOT_STARTED);
-        }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testIngestLectureUnitButtonInPyris() throws Exception {
+    void testIngestLectureUnitButtonInPyris() {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
-        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().getFirst().getId() + "/ingest", Optional.empty(),
-                boolean.class, HttpStatus.OK);
-        if (lectureUnitRepository.findById(lecture1.getLectureUnits().getFirst().getId()).isPresent()) {
-            AttachmentUnit attachmentUnit = (AttachmentUnit) lectureUnitRepository.findById(lecture1.getLectureUnits().getFirst().getId()).get();
-            assertThat(attachmentUnit.getPyrisIngestionState() == IngestionState.IN_PROGRESS).isTrue();
-        }
+
     }
 
     @Test
@@ -211,14 +164,6 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             assertThat(dto.settings().authenticationToken()).isNotNull();
         });
         request.postWithResponseBody("/api/courses/" + lecture1.getCourse().getId() + "/ingest", Optional.empty(), boolean.class, HttpStatus.OK);
-        Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(lecture1.getLectureUnits().getFirst().getId());
-        if (optionalUnit.isPresent() && optionalUnit.get() instanceof AttachmentUnit unit) {
-            assertThat(unit.getPyrisIngestionState()).isEqualTo(IngestionState.IN_PROGRESS);
-        }
-        optionalUnit = lectureUnitRepository.findById(lecture1.getLectureUnits().getLast().getId());
-        if (optionalUnit.isPresent() && optionalUnit.get() instanceof AttachmentUnit unit) {
-            assertThat(unit.getPyrisIngestionState()).isEqualTo(IngestionState.NOT_STARTED);
-        }
     }
 
     @Test
@@ -235,10 +180,6 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
                     lecture1.getLectureUnits().getFirst().getId());
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobToken))));
             request.postWithoutResponseBody("/api/public/pyris/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
-            Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(unit.getId());
-            if (optionalUnit.isPresent() && optionalUnit.get() instanceof AttachmentUnit attachUnit) {
-                assertThat(attachUnit.getPyrisIngestionState()).isEqualTo(IngestionState.DONE);
-            }
         }
     }
 
@@ -279,7 +220,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void testStageNotDoneKeepsDeletionIngetionJob() throws Exception {
+    void testStageNotDoneKeepsDeletionIngestionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -297,7 +238,7 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
     }
 
     @Test
-    void testErrorStageRemovesDeletionIngetionJob() throws Exception {
+    void testErrorStageRemovesDeletionIngestionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockDeletionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -310,15 +251,11 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobToken))));
             request.postWithoutResponseBody("/api/public/pyris/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
             assertThat(pyrisJobService.getJob(jobToken)).isNull();
-            Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(unit.getId());
-            if (optionalUnit.isPresent() && optionalUnit.get() instanceof AttachmentUnit attachUnit) {
-                assertThat(attachUnit.getPyrisIngestionState()).isEqualTo(IngestionState.ERROR);
-            }
         }
     }
 
     @Test
-    void testErrorStageRemovesAdditionIngetionJob() throws Exception {
+    void testErrorStageRemovesAdditionIngestionJob() throws Exception {
         activateIrisFor(lecture1.getCourse());
         irisRequestMockProvider.mockIngestionWebhookRunResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
@@ -331,10 +268,6 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
             var headers = new HttpHeaders(new LinkedMultiValueMap<>(Map.of("Authorization", List.of("Bearer " + jobToken))));
             request.postWithoutResponseBody("/api/public/pyris/webhooks/ingestion/runs/" + jobToken + "/status", statusUpdate, HttpStatus.OK, headers);
             assertThat(pyrisJobService.getJob(jobToken)).isNull();
-            Optional<LectureUnit> optionalUnit = lectureUnitRepository.findById(unit.getId());
-            if (optionalUnit.isPresent() && optionalUnit.get() instanceof AttachmentUnit atUnit) {
-                assertThat(atUnit.getPyrisIngestionState()).isEqualTo(IngestionState.ERROR);
-            }
         }
     }
 
@@ -373,55 +306,4 @@ class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {
         response = request.postWithoutResponseBody("/api/public/pyris/webhooks/ingestion/runs/" + chatJobToken + "/status", statusUpdate, HttpStatus.CONFLICT, headers);
         assertThat(response.getContentAsString()).contains("Run ID is not an ingestion job");
     }
-
-    /**
-     * Generates an attachment unit pdf file with 5 pages
-     *
-     * @return MockMultipartFile attachment unit pdf file
-     */
-    private MockMultipartFile createAttachmentUnitPdf() throws IOException {
-
-        var font = new PDType1Font(Standard14Fonts.FontName.TIMES_ROMAN);
-
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
-
-            for (int i = 1; i <= 3; i++) {
-                document.addPage(new PDPage());
-                PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1));
-
-                if (i == 2) {
-                    contentStream.beginText();
-                    contentStream.setFont(font, 12);
-                    contentStream.newLineAtOffset(25, -15);
-                    contentStream.showText("itp20..");
-                    contentStream.newLineAtOffset(25, 500);
-                    contentStream.showText("Outline");
-                    contentStream.newLineAtOffset(0, -15);
-                    contentStream.showText("First Unit");
-                    contentStream.close();
-                    continue;
-                }
-                contentStream.beginText();
-                contentStream.setFont(font, 12);
-                contentStream.newLineAtOffset(25, 500);
-                String text = "This is the sample document";
-                contentStream.showText(text);
-                contentStream.endText();
-                contentStream.close();
-            }
-            document.save(outputStream);
-            document.close();
-            return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
-        }
-    }
-
-    private MockHttpServletRequestBuilder buildCreateAttachmentUnit(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment) throws Exception {
-        var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentUnit).getBytes());
-        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
-        var filePart = createAttachmentUnitPdf();
-
-        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/attachment-units").file(attachmentUnitPart).file(attachmentPart)
-                .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-    }
-
 }

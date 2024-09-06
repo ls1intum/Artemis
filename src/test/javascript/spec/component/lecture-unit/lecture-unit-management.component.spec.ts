@@ -34,6 +34,10 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
+import { IrisLectureIngestionSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {

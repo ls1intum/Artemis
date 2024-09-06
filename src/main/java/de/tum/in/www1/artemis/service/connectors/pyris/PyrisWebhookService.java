@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisSettingsRepository;
 import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.connectors.pyris.domain.status.IngestionState;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
@@ -82,7 +81,6 @@ public class PyrisWebhookService {
         String courseTitle = attachmentUnit.getLecture().getCourse().getTitle();
         String courseDescription = attachmentUnit.getLecture().getCourse().getDescription() == null ? "" : attachmentUnit.getLecture().getCourse().getDescription();
         String base64EncodedPdf = attachmentToBase64(attachmentUnit);
-        attachmentUnit.setPyrisIngestionState(IngestionState.IN_PROGRESS);
         lectureUnitRepository.save(attachmentUnit);
         return new PyrisLectureUnitWebhookDTO(base64EncodedPdf, lectureUnitId, lectureUnitName, lectureId, lectureTitle, courseId, courseTitle, courseDescription);
     }
@@ -148,10 +146,6 @@ public class PyrisWebhookService {
             }
             catch (Exception e) {
                 log.error("Error occurred while sending lecture unit {} to Pyris", attachmentUnit.getId(), e);
-                if (attachmentUnit.getAttachment().getAttachmentType() == AttachmentType.FILE && attachmentUnit.getAttachment().getLink().endsWith(".pdf")) {
-                    attachmentUnit.setPyrisIngestionState(IngestionState.ERROR);
-                    lectureUnitRepository.save(attachmentUnit);
-                }
             }
         }
         return null;

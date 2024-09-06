@@ -124,18 +124,27 @@ public class PyrisConnectorService {
         }
     }
 
+    /**
+     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
+     *
+     * @param courseId  id of the course
+     * @param lectureId id of the lecture
+     */
     public IngestionState getLectureIngestionState(long courseId, long lectureId) {
         try {
             List<LectureUnit> lectureunits = lectureRepository.findByIdWithLectureUnitsAndAttachments(lectureId).get().getLectureUnits();
             var states = lectureunits.stream().filter(lectureUnit -> lectureUnit instanceof AttachmentUnit)
                     .map(unit -> getLectureUnitIngestionState(courseId, lectureId, unit.getId())).collect(Collectors.toSet());
 
-            if (states.equals(Set.of(IngestionState.DONE)))
+            if (states.equals(Set.of(IngestionState.DONE))) {
                 return IngestionState.DONE;
-            if (states.equals(Set.of(IngestionState.NOT_STARTED)))
+            }
+            if (states.equals(Set.of(IngestionState.NOT_STARTED))) {
                 return IngestionState.NOT_STARTED;
-            if (states.equals(Set.of(IngestionState.ERROR)))
+            }
+            if (states.equals(Set.of(IngestionState.ERROR))) {
                 return IngestionState.ERROR;
+            }
             if (states.contains(IngestionState.DONE) || states.contains(IngestionState.IN_PROGRESS)) {
                 return IngestionState.PARTIALLY_INGESTED;
             }
@@ -149,6 +158,13 @@ public class PyrisConnectorService {
         }
     }
 
+    /**
+     * uses send an api call to get the ingestion state in Pyris
+     *
+     * @param courseId      id of the course
+     * @param lectureId     id of the lecture
+     * @param lectureUnitId id of the lectureUnit to check in the Pyris vector database
+     */
     public IngestionState getLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId) {
         try {
             String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);

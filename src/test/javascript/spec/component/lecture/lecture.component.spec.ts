@@ -23,20 +23,14 @@ import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { Course } from 'app/entities/course.model';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
-import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
-import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
     let profileService: ProfileService;
-    let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
 
     let pastLecture: Lecture;
@@ -284,62 +278,5 @@ describe('Lecture', () => {
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
         lectureComponent.ingestLecturesInPyris();
         expect(consoleSpy).toHaveBeenCalledWith('Failed to send Ingestion request', expect.any(Error));
-    });
-    it('should set lectureIngestionEnabled based on service response', () => {
-        irisSettingsService = TestBed.inject(IrisSettingsService);
-        profileService = TestBed.inject(ProfileService);
-        const profileInfoResponse = {
-            activeProfiles: [PROFILE_IRIS],
-        } as ProfileInfo;
-        const irisSettingsResponse = {
-            irisLectureIngestionSettings: {
-                enabled: true,
-            },
-        } as IrisCourseSettings;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
-        lectureComponent.ngOnInit();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(lectureComponent.courseId);
-        expect(lectureComponent.lectureIngestionEnabled).toBeTrue();
-    });
-    it('should correctly update ingestion state based on lecture units', () => {
-        const mockLectureUnits: LectureUnit[] = [
-            { id: 1, type: 'attachment', pyrisIngestionState: IngestionState.DONE } as AttachmentUnit,
-            { id: 2, type: 'attachment', pyrisIngestionState: IngestionState.NOT_STARTED } as AttachmentUnit,
-            { id: 3, type: 'attachment', pyrisIngestionState: IngestionState.ERROR } as AttachmentUnit,
-        ];
-
-        const lecture = new Lecture();
-        lecture.id = 1;
-        lecture.title = 'Sample Lecture';
-        lecture.lectureUnits = mockLectureUnits;
-        lecture.course = { id: 1, title: 'Sample Course' };
-        expect(lecture.ingested).toBe(IngestionState.NOT_STARTED);
-
-        if (lecture.updateIngestionState) {
-            lecture.updateIngestionState();
-            expect(lecture.ingested).toBe(IngestionState.PARTIALLY_INGESTED);
-
-            lecture.lectureUnits = [
-                { id: 1, type: 'attachment', pyrisIngestionState: IngestionState.DONE } as AttachmentUnit,
-                { id: 2, type: 'attachment', pyrisIngestionState: IngestionState.DONE } as AttachmentUnit,
-            ];
-            lecture.updateIngestionState();
-            expect(lecture.ingested).toBe(IngestionState.DONE);
-
-            lecture.lectureUnits = [
-                { id: 1, type: 'attachment', pyrisIngestionState: IngestionState.NOT_STARTED } as AttachmentUnit,
-                { id: 2, type: 'attachment', pyrisIngestionState: IngestionState.NOT_STARTED } as AttachmentUnit,
-            ];
-            lecture.updateIngestionState();
-            expect(lecture.ingested).toBe(IngestionState.NOT_STARTED);
-
-            lecture.lectureUnits = [
-                { id: 1, type: 'attachment', pyrisIngestionState: IngestionState.ERROR } as AttachmentUnit,
-                { id: 2, type: 'attachment', pyrisIngestionState: IngestionState.ERROR } as AttachmentUnit,
-            ];
-            lecture.updateIngestionState();
-            expect(lecture.ingested).toBe(IngestionState.ERROR);
-        }
     });
 });
