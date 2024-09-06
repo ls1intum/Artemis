@@ -50,7 +50,12 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 if (shouldNotGenerateShortName) {
                     return;
                 }
-                const newShortName = this.exerciseTitle();
+                let newShortName = this.exerciseTitle();
+                const isImport = this.programmingExerciseCreationConfig.isImportFromFile || this.programmingExerciseCreationConfig.isImportFromExistingExercise;
+                if (isImport) {
+                    newShortName = this.programmingExercise.shortName;
+                }
+
                 if (newShortName && newShortName.length > 3) {
                     const sanitizedShortName = removeSpecialCharacters(newShortName ?? '').substring(0, 6);
                     // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
