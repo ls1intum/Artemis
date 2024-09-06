@@ -129,11 +129,14 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      * to get the newest values in the editor to update the question attributes
      */
     prepareForSave(): void {
-        this.cleanupQuestion();
         if (this.markdownEditor.inVisualMode) {
-            // In the visual mode, the latest question values come from the visual tab, not the markdown editor.
+            /*
+             * In the visual mode, the latest question values come from the visual tab, not the markdown editor.
+             * We update the markdown editor, which triggers the parsing of the visual tab content.
+             */
             this.markdownEditor.markdown = this.visualChild.parseQuestion();
         } else {
+            this.cleanupQuestion();
             this.markdownEditor.parseMarkdown();
         }
     }
