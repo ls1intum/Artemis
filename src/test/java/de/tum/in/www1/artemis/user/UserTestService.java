@@ -733,13 +733,10 @@ public class UserTestService {
 
         MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/users/profile-picture").file(mockImageFile)           // Add the file
-                .with(request -> {
-                    request.setMethod("PUT");  // Change the method to PUT
-                    return request;
-                })).andExpect(status().isOk());
-
-        // request.putWithMultipartFile("/api/users/profile-picture", null, "file", mockImageFile, User.class, HttpStatus.OK, null);
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
+            request.setMethod("PUT");
+            return request;
+        })).andExpect(status().isOk());
 
         userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNotNull();
@@ -752,15 +749,14 @@ public class UserTestService {
 
         MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
 
-        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/users/profile-picture").file(mockImageFile)           // Add the file
-                .with(request -> {
-                    request.setMethod("PUT");  // Change the method to PUT
-                    return request;
-                })).andExpect(status().isOk());
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
+            request.setMethod("PUT");
+            return request;
+        })).andExpect(status().isOk());
         userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNotNull();
 
-        request.delete("/api/users/profile-picture", HttpStatus.OK);
+        request.delete("/api/account/profile-picture", HttpStatus.OK);
         userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getImageUrl()).isNull();
     }

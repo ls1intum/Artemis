@@ -2,9 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -17,15 +14,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -33,8 +27,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiService;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
@@ -73,18 +65,15 @@ public class UserResource {
 
     private final UserCreationService userCreationService;
 
-    private final FileService fileService;
-
     private final Optional<LtiService> ltiService;
 
     private final UserRepository userRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiService> ltiService, FileService fileService) {
+    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, Optional<LtiService> ltiService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.ltiService = ltiService;
         this.userCreationService = userCreationService;
-        this.fileService = fileService;
     }
 
     /**
@@ -123,55 +112,6 @@ public class UserResource {
         log.debug("REST request to update notification date for logged-in user");
         User user = userRepository.getUser();
         userRepository.updateUserNotificationReadDate(user.getId());
-        return ResponseEntity.ok().build();
-    }
-
-    /**
-     * PUT users/profile-picture : upload a profile picture
-     *
-     * @param file the image file that is being uploaded
-     * @return the ResponseEntity with status 200 (OK) and with body of current user
-     */
-    @PutMapping("users/profile-picture")
-    @EnforceAtLeastStudent
-    public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) throws URISyntaxException {
-        log.debug("REST request to update profile picture for logged-in user");
-        String contentType = file.getContentType();
-
-        // Check if the content type is either image/png or image/jpeg, else return 400
-        if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg"))) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
-        }
-
-        User user = userRepository.getUser();
-        Path basePath = FilePathService.getProfilePictureFilePath();
-
-        // Delete existing
-        if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(user.getImageUrl())), 0);
-        }
-
-        Path savePath = fileService.saveFile(file, basePath, false);
-        String publicPath = FilePathService.publicPathForActualPathOrThrow(savePath, user.getId()).toString();
-        userRepository.updateUserImageUrl(user.getId(), publicPath);
-        user.setImageUrl(publicPath);
-        return ResponseEntity.ok(new UserDTO(user));
-    }
-
-    /**
-     * DELETE users/profile-picture : remove current users profile picture
-     *
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("users/profile-picture")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Void> removeProfilePicture() throws URISyntaxException {
-        log.debug("REST request to remove profile picture for logged-in user");
-        User user = userRepository.getUser();
-        if (user.getImageUrl() != null) {
-            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(user.getImageUrl())), 0);
-            userRepository.updateUserImageUrl(user.getId(), null);
-        }
         return ResponseEntity.ok().build();
     }
 

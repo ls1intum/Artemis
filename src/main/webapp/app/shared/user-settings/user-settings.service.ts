@@ -11,7 +11,7 @@ import { User } from 'app/core/user/user.model';
 export class UserSettingsService {
     public notificationSettingsResourceUrl = 'api/notification-settings';
     public scienceSettingsResourceUrl = 'api/science-settings';
-    public profilePictureResourceUrl = 'api/users/profile-picture';
+    public profilePictureResourceUrl = 'api/account/profile-picture';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
