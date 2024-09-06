@@ -320,13 +320,13 @@ public class ProgrammingExerciseParticipationResource {
      * Here we check if the user is least an instructor for the exercise. If true the user can have access to the vcs access log of any participation of the exercise.
      *
      * @param participationId the id of the participation for which to retrieve the vcs access log
-     * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the participation
+     * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the participation, or 400 (Bad request) if localVC is not enabled.
      */
     @GetMapping("programming-exercise-participations/{participationId}/vcs-access-log")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForParticipationRepo(@PathVariable long participationId) {
         if (vcsAccessLogRepository.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().build();
         }
         ProgrammingExerciseStudentParticipation participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
@@ -428,15 +428,14 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @param exerciseId     the ID of the programming exercise
      * @param repositoryType the type of repository (either TEMPLATE or SOLUTION) for which to retrieve the logs.
-     * @return a {@link ResponseEntity} containing a list of {@link VcsAccessLogDTO} objects representing
-     *         the VCS access logs.
+     * @return the ResponseEntity with status 200 (OK) and with body containing a list of vcsAccessLogDTOs of the participation, or 400 (Bad request) if localVC is not enabled.
      * @throws BadRequestAlertException if the repository type is invalid
      */
     @GetMapping("programming-exercise/{exerciseId}/vcs-access-log/{repositoryType}")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<VcsAccessLogDTO>> getVcsAccessLogForExerciseRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) {
         if (vcsAccessLogRepository.isEmpty()) {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.badRequest().build();
         }
         if (repositoryType != RepositoryType.TEMPLATE && repositoryType != RepositoryType.SOLUTION) {
             throw new BadRequestAlertException("Can only get vcs access log from template and assignment repositories", ENTITY_NAME, "incorrect repositoryType");
