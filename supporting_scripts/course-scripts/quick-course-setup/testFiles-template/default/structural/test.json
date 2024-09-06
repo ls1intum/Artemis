@@ -1,0 +1,81 @@
+[ {
+  "class" : {
+    "name" : "MergeSort",
+    "package" : "${packageName}",
+    "interfaces" : [ "SortStrategy" ]
+  }
+}, {
+  "class" : {
+    "name" : "Context",
+    "package" : "${packageName}"
+  },
+  "methods" : [ {
+    "name" : "getDates",
+    "modifiers" : [ "public" ],
+    "returnType" : "List<Date>"
+  }, {
+    "name" : "setDates",
+    "modifiers" : [ "public" ],
+    "parameters" : [ "List" ],
+    "returnType" : "void"
+  }, {
+    "name" : "setSortAlgorithm",
+    "modifiers" : [ "public" ],
+    "parameters" : [ "SortStrategy" ],
+    "returnType" : "void"
+  }, {
+    "name" : "getSortAlgorithm",
+    "modifiers" : [ "public" ],
+    "returnType" : "SortStrategy"
+  }, {
+    "name" : "sort",
+    "modifiers" : [ "public" ],
+    "returnType" : "void"
+  } ],
+  "attributes" : [ {
+    "name" : "sortAlgorithm",
+    "modifiers" : [ "private" ],
+    "type" : "SortStrategy"
+  }, {
+    "name" : "dates",
+    "modifiers" : [ "private" ],
+    "type" : "List<Date>"
+  } ]
+}, {
+  "class" : {
+    "name" : "Policy",
+    "package" : "${packageName}"
+  },
+  "methods" : [ {
+    "name" : "configure",
+    "modifiers" : [ "public" ],
+    "returnType" : "void"
+  } ],
+  "attributes" : [ {
+    "name" : "context",
+    "modifiers" : [ "private", "optional: final" ],
+    "type" : "Context"
+  } ],
+  "constructors" : [ {
+    "modifiers" : [ "public" ],
+    "parameters" : [ "Context" ]
+  } ]
+}, {
+  "class" : {
+    "name" : "SortStrategy",
+    "package" : "${packageName}",
+    "isInterface" : true
+  },
+  "methods" : [ {
+    "name" : "performSort",
+    "modifiers" : [ "public", "abstract" ],
+    "parameters" : [ "List" ],
+    "returnType" : "void"
+  } ]
+}, {
+  "class" : {
+    "name" : "BubbleSort",
+    "package" : "${packageName}",
+    "interfaces" : [ "SortStrategy" ]
+  }
+} ]
