@@ -21,7 +21,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Competency } from 'app/entities/competency.model';
@@ -38,6 +38,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisLectureIngestionSubSettings } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { Course } from 'app/entities/course.model';
 
 @Component({ selector: 'jhi-competencies-popover', template: '' })
 class CompetenciesPopoverStubComponent {

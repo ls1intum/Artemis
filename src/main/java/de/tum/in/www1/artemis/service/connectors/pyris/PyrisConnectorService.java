@@ -129,6 +129,8 @@ public class PyrisConnectorService {
      *
      * @param courseId  id of the course
      * @param lectureId id of the lecture
+     * @return The ingestion state of the lecture
+     *
      */
     public IngestionState getLectureIngestionState(long courseId, long lectureId) {
         try {
@@ -164,6 +166,8 @@ public class PyrisConnectorService {
      * @param courseId      id of the course
      * @param lectureId     id of the lecture
      * @param lectureUnitId id of the lectureUnit to check in the Pyris vector database
+     * @return The ingestion state of the lecture Unit
+     *
      */
     public IngestionState getLectureUnitIngestionState(long courseId, long lectureId, long lectureUnitId) {
         try {
