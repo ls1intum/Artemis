@@ -30,6 +30,7 @@ import { ProblemStatementComponent } from 'app/overview/exercise-details/problem
 import { ArtemisFeedbackModule } from 'app/exercises/shared/feedback/feedback.module';
 import { ArtemisExerciseInfoModule } from 'app/exercises/shared/exercise-info/exercise-info.module';
 import { IrisModule } from 'app/iris/iris.module';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 
 const routes: Routes = [
     {
@@ -41,13 +42,6 @@ const routes: Routes = [
         },
         pathMatch: 'full',
         canActivate: [UserRouteAccessService],
-        children: [
-            {
-                path: '',
-                pathMatch: 'full',
-                loadChildren: () => import('../discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
-            },
-        ],
     },
 ];
 
@@ -76,6 +70,7 @@ const routes: Routes = [
         ArtemisFeedbackModule,
         ArtemisExerciseInfoModule,
         IrisModule,
+        DiscussionSectionComponent,
     ],
     declarations: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, LtiInitializerComponent, LtiInitializerModalComponent, ProblemStatementComponent],
     exports: [CourseExerciseDetailsComponent, OrionCourseExerciseDetailsComponent, ProblemStatementComponent],
