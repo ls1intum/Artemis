@@ -374,6 +374,8 @@ public final class Constants {
 
     public static final String ASSIGNMENT_REPO_PARENT_PLACEHOLDER = "${studentParentWorkingDirectoryName}";
 
+    public static final String ASSIGNMENT_REPO_GRADLE_PLACEHOLDER = "${studentWorkingDirectoryGradle}";
+
     public static final Pattern ALLOWED_CHECKOUT_DIRECTORY = Pattern.compile("[\\w-]+(/[\\w-]+)*$");
 
     private Constants() {
