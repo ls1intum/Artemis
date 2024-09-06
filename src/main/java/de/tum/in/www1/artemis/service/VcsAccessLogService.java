@@ -60,7 +60,7 @@ public class VcsAccessLogService {
      * @param commitHash    The newest commit hash which should get set for the access log entry
      */
     public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
-        vcsAccessLogRepository.findByParticipationIdWhereCommitHashIsNull(participation.getId()).ifPresent(entry -> {
+        vcsAccessLogRepository.findNewestByParticipationIdWhereCommitHashIsNull(participation.getId()).ifPresent(entry -> {
             entry.setCommitHash(commitHash);
             vcsAccessLogRepository.save(entry);
         });

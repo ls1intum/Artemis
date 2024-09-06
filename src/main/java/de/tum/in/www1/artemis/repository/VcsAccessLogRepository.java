@@ -37,8 +37,10 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
             FROM VcsAccessLog vcsAccessLog
             WHERE vcsAccessLog.participation.id = :participationId
                 AND vcsAccessLog.commitHash IS NULL
+            ORDER BY vcsAccessLog.timestamp DESC
+            LIMIT 1
             """)
-    Optional<VcsAccessLog> findByParticipationIdWhereCommitHashIsNull(@Param("participationId") long participationId);
+    Optional<VcsAccessLog> findNewestByParticipationIdWhereCommitHashIsNull(@Param("participationId") long participationId);
 
     /**
      * Retrieves a list of {@link VcsAccessLog} entities associated with the specified participation ID.
