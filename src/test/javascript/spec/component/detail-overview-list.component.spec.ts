@@ -1,9 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
-import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
-import { MockNgbModalService } from '../helpers/mocks/service/mock-ngb-modal.service';
-import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../helpers/mocks/service/mock-alert.service';
@@ -16,6 +12,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../helpers/mocks/service/mock-profile.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { ExerciseDetailDirective } from 'app/detail-overview-list/exercise-detail.directive';
+import { TranslatePipeMock } from '../helpers/mocks/service/mock-translate.service';
 
 const sections: DetailOverviewSection[] = [
     {
@@ -34,7 +31,6 @@ const sections: DetailOverviewSection[] = [
 describe('DetailOverviewList', () => {
     let component: DetailOverviewListComponent;
     let fixture: ComponentFixture<DetailOverviewListComponent>;
-    let modalService: NgbModal;
     let modelingService: ModelingExerciseService;
     let alertService: AlertService;
 
@@ -43,7 +39,6 @@ describe('DetailOverviewList', () => {
             imports: [ExerciseDetailDirective],
             declarations: [DetailOverviewListComponent, TranslatePipeMock],
             providers: [
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -52,7 +47,6 @@ describe('DetailOverviewList', () => {
         })
             .compileComponents()
             .then(() => {
-                modalService = fixture.debugElement.injector.get(NgbModal);
                 modelingService = fixture.debugElement.injector.get(ModelingExerciseService);
                 alertService = fixture.debugElement.injector.get(AlertService);
             });
@@ -97,18 +91,6 @@ describe('DetailOverviewList', () => {
         expect(titleDetailValue).toBeDefined();
         expect(titleDetailTitle.textContent).toContain('title');
         expect(titleDetailValue.textContent).toContain('A Title');
-    });
-
-    it('should open git diff modal', () => {
-        const modalSpy = jest.spyOn(modalService, 'open');
-        component.showGitDiff({} as unknown as ProgrammingExerciseGitDiffReport);
-        expect(modalSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should not open git diff modal', () => {
-        const modalSpy = jest.spyOn(modalService, 'open');
-        component.showGitDiff(undefined);
-        expect(modalSpy).not.toHaveBeenCalled();
     });
 
     it('should download apollon Diagram', () => {
