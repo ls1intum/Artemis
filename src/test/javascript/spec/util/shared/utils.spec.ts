@@ -2,6 +2,7 @@ import {
     average,
     getAsMutableObject,
     isExamExercise,
+    removeSpecialCharacters,
     round,
     roundScorePercentSpecifiedByCourseSettings,
     roundToNextMultiple,
@@ -140,5 +141,13 @@ describe('roundUpToNextMultiple', () => {
 
     it('should round up to multiple of 1', () => {
         expect(roundToNextMultiple(8.2, 1, true)).toBe(9);
+    });
+});
+
+describe('removeSpecialCharacters', () => {
+    it('should remove special characters', () => {
+        expect(removeSpecialCharacters('Hello, World!')).toBe('HelloWorld');
+        expect(removeSpecialCharacters('Hello, World! 123')).toBe('HelloWorld123');
+        expect(removeSpecialCharacters('Hello, World! 123$%')).toBe('HelloWorld123');
     });
 });
