@@ -54,6 +54,16 @@ describe('ProgrammingExerciseLanguageComponent', () => {
                 comp = fixture.componentInstance;
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    programmingLanguage: true,
+                    projectType: true,
+                    withExemplaryDependency: true,
+                    packageName: true,
+                    enableStaticCodeAnalysis: true,
+                    sequentialTestRuns: true,
+                    customizeBuildScript: true,
+                });
             });
     });
 

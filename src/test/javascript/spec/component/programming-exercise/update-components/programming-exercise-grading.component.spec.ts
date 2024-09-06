@@ -64,6 +64,15 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 comp = fixture.componentInstance;
 
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    includeExerciseInCourseScoreCalculation: true,
+                    points: true,
+                    bonusPoints: true,
+                    submissionPolicy: true,
+                    timeline: true,
+                    assessmentInstructions: true,
+                    presentationScore: true,
+                });
 
                 const exercise = new ProgrammingExercise(undefined, undefined);
                 exercise.maxPoints = 10;
@@ -110,7 +119,11 @@ describe('ProgrammingExerciseGradingComponent', () => {
     it('should create a grading summary with exceeding penalty', fakeAsync(() => {
         fixture.detectChanges();
 
-        comp.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.SUBMISSION_PENALTY, exceedingPenalty: 10, submissionLimit: 5 };
+        comp.programmingExercise.submissionPolicy = {
+            type: SubmissionPolicyType.SUBMISSION_PENALTY,
+            exceedingPenalty: 10,
+            submissionLimit: 5,
+        };
         comp.programmingExercise.maxStaticCodeAnalysisPenalty = 5;
 
         fixture.whenStable().then(() => {

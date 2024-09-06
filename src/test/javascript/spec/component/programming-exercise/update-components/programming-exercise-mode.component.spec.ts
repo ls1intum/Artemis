@@ -14,8 +14,9 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ArtemisTestModule } from '../../../test.module';
+import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 
-describe('ProgrammingExerciseDifficultyComponent', () => {
+describe('ProgrammingExerciseModeComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseModeComponent>;
     let comp: ProgrammingExerciseModeComponent;
     let debugElement: DebugElement;
@@ -35,6 +36,7 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
                 MockComponent(DifficultyPickerComponent),
                 MockComponent(TeamConfigFormGroupComponent),
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(ProgrammingExerciseDifficultyComponent),
             ],
             providers: [
                 {
@@ -51,10 +53,22 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
 
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    difficulty: true,
+                    participationMode: true,
+                    allowOfflineIde: true,
+                    allowOnlineIde: true,
+                });
+
                 debugElement = fixture.debugElement;
                 profileService = debugElement.injector.get(ProfileService);
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
+                getProfileInfoSub.mockReturnValue(
+                    of({
+                        inProduction: false,
+                        sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+                    } as ProfileInfo),
+                );
             });
     });
 

@@ -113,7 +113,7 @@ export class ProgrammingExerciseLifecycleComponent implements AfterViewInit, OnD
             if (picker instanceof ProgrammingExerciseTestScheduleDatePickerComponent) {
                 return picker.selectedDate;
             }
-            return true;
+            return false;
         });
         this.formValidChanges.next(this.formValid);
     }

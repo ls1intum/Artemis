@@ -49,8 +49,13 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 comp = fixture.componentInstance;
 
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
+
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    shortName: true,
+                    categories: true,
+                });
+                fixture.componentRef.setInput('isSimpleMode', false);
             });
     });
 
@@ -65,8 +70,18 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
     it('should should calculate Form Sections correctly', () => {
         const calculateFormValidSpy = jest.spyOn(comp, 'calculateFormValid');
-        const editableField = { editingInput: { valueChanges: new Subject(), valid: true } } as any as TableEditableFieldComponent;
-        comp.exerciseTitleChannelComponent = { titleChannelNameComponent: { formValidChanges: new Subject(), formValid: true } } as ExerciseTitleChannelNameComponent;
+        const editableField = {
+            editingInput: {
+                valueChanges: new Subject(),
+                valid: true,
+            },
+        } as any as TableEditableFieldComponent;
+        comp.exerciseTitleChannelComponent = {
+            titleChannelNameComponent: {
+                formValidChanges: new Subject(),
+                formValid: true,
+            },
+        } as ExerciseTitleChannelNameComponent;
         comp.shortNameField = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as any as NgModel;

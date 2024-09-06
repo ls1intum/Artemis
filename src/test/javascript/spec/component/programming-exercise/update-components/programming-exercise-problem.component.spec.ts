@@ -38,6 +38,11 @@ describe('ProgrammingExerciseProblemComponent', () => {
                 fixture = TestBed.createComponent(ProgrammingExerciseProblemComponent);
                 comp = fixture.componentInstance;
 
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    problemStatement: true,
+                    linkedCompetencies: true,
+                });
+
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
             });
