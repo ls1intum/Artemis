@@ -196,7 +196,14 @@ describe('ProgrammingExerciseGradingComponent', () => {
         expect(calculateFormStatusSpy).toHaveBeenCalledTimes(2);
     });
 
-    describe('should display correct fields', () => {
+    const generateFieldVisibilityTests = (
+        testCases: {
+            name: string;
+            selector: string;
+            field: ProgrammingExerciseInputField;
+            extraCondition?: () => void;
+        }[],
+    ) => {
         const checkFieldVisibility = (selector: string, isVisible: boolean) => {
             fixture.detectChanges();
             const field = fixture.debugElement.nativeElement.querySelector(selector);
@@ -207,6 +214,23 @@ describe('ProgrammingExerciseGradingComponent', () => {
             }
         };
 
+        testCases.forEach(({ name, selector, field, extraCondition }) => {
+            describe('should handle input field ' + name + ' properly', () => {
+                it('should be displayed', () => {
+                    extraCondition?.();
+                    checkFieldVisibility(selector, true);
+                });
+
+                it('should NOT be displayed', () => {
+                    extraCondition?.();
+                    comp.isEditFieldDisplayedRecord()[field] = false;
+                    checkFieldVisibility(selector, false);
+                });
+            });
+        });
+    };
+
+    describe('should handle field visibility', () => {
         const testCases: {
             name: string;
             selector: string;
@@ -231,19 +255,6 @@ describe('ProgrammingExerciseGradingComponent', () => {
             { name: 'presentation score', selector: 'jhi-presentation-score-checkbox', field: 'presentationScore' },
         ];
 
-        testCases.forEach(({ name, selector, field, extraCondition }) => {
-            describe('should handle input field ' + name + ' properly', () => {
-                it('should be displayed', () => {
-                    extraCondition?.();
-                    checkFieldVisibility(selector, true);
-                });
-
-                it('should NOT be displayed', () => {
-                    extraCondition?.();
-                    comp.isEditFieldDisplayedRecord()[field] = false;
-                    checkFieldVisibility(selector, false);
-                });
-            });
-        });
+        generateFieldVisibilityTests(testCases);
     });
 });
