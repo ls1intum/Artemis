@@ -213,9 +213,14 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
         return results.stream().filter(result -> result != null && !result.isAutomatic() && !result.isAthenaAutomatic()).collect(Collectors.toCollection(ArrayList::new));
     }
 
+    /**
+     * This method is necessary to ignore Athena results in the assessment view
+     *
+     * @return non athena automatic results including null results
+     */
     @JsonIgnore
     public List<Result> getNonAthenaResults() {
-        return results.stream().filter(result -> result != null && !result.isAthenaAutomatic()).collect(Collectors.toCollection(ArrayList::new));
+        return results.stream().filter(result -> result == null || !result.isAthenaAutomatic()).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
