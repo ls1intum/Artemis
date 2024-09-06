@@ -82,7 +82,6 @@ import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.service.quiz.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.team.TeamUtilService;
-import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
@@ -215,8 +214,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentExams).hasSize(3);
         assertThat(exam.getExamUsers()).hasSize(3);
 
-        int numberOfGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-        assertThat(numberOfGeneratedParticipations).isEqualTo(12);
+        var generatedParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
+        assertThat(generatedParticipations.size()).isEqualTo(12);
 
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // Fetch student exams
@@ -264,10 +263,10 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentExams).hasSize(3);
         assertThat(exam.getExamUsers()).hasSize(3);
 
-        int numberOfGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
-        assertThat(numberOfGeneratedParticipations).isEqualTo(12);
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == 12);
         // Fetch student exams
+
         List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(3);
         List<StudentParticipation> participationList = new ArrayList<>();
@@ -328,9 +327,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
                 Optional.empty(), StudentExam.class, HttpStatus.OK);
         assertThat(generatedStudentExams).hasSize(storedExam.getExamUsers().size());
 
-        // Start the exam to create participations
-        ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
-
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // Get the student exam of student2
         Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student2)).findFirst();
@@ -373,26 +369,17 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.OK);
 
-        List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
-        assertThat(studentParticipations).isEmpty();
-
-        // invoke start exercises
-        // studentExamService.startExercises(exam.getId()).join();
-
-        studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
-        assertThat(studentParticipations).hasSize(12);
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == 12);
+        List<Participation> oldStudentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
 
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.OK);
 
-        studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
-        assertThat(studentParticipations).isEmpty();
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == 12);
+        List<Participation> newStudentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
 
-        // invoke start exercises
-        // studentExamService.startExercises(exam.getId()).join();
-
-        studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
-        assertThat(studentParticipations).hasSize(12);
+        // Ensure the lists are NOT equal
+        assertThat(oldStudentParticipations).doesNotContainAnyElementsOf(newStudentParticipations);
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
@@ -414,8 +401,6 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(optionalStudent1Exam.orElseThrow()).isNotNull();
         var studentExam1 = optionalStudent1Exam.get();
 
-        // Start the exam to create participations
-        ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course1);
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
@@ -521,7 +506,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         // generate individual student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
-        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
+
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
@@ -541,7 +526,8 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
             exercise.setStudentParticipations(new HashSet<>(participations));
             participationCounter += exercise.getStudentParticipations().size();
         }
-        assertThat(noGeneratedParticipations).isEqualTo(participationCounter);
+        var generatedParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
+        assertThat(generatedParticipations.size()).isEqualTo(participationCounter);
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 6 done");
 
