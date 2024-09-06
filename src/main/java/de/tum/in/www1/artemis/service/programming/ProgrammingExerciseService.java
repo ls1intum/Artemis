@@ -434,12 +434,22 @@ public class ProgrammingExerciseService {
 
     private void validateCustomCheckoutPaths(ProgrammingExercise programmingExercise) {
         var buildConfig = programmingExercise.getBuildConfig();
-        Matcher ciCheckoutAssignmentDirectoryMatcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(buildConfig.getAssignmentCheckoutPath());
-        Matcher ciCheckoutSolutionDirectoryMatcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(buildConfig.getSolutionCheckoutPath());
-        Matcher ciCheckoutTestDirectoryMatcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(buildConfig.getTestCheckoutPath());
-        if (!ciCheckoutAssignmentDirectoryMatcher.matches() || !ciCheckoutSolutionDirectoryMatcher.matches() || !ciCheckoutTestDirectoryMatcher.matches()) {
-            throw new BadRequestAlertException("The custom checkout paths are invalid!", "programmingExercise", "checkoutDirectoriesInvalid");
+
+        boolean assignmentCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getAssignmentCheckoutPath());
+        boolean solutionCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getSolutionCheckoutPath());
+        boolean testCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getTestCheckoutPath());
+
+        if (!assignmentCheckoutPathIsValid || !solutionCheckoutPathIsValid || !testCheckoutPathIsValid) {
+            throw new BadRequestAlertException("The custom checkout paths are invalid", "Exercise", "checkoutDirectoriesInvalid");
         }
+    }
+
+    private boolean isValidCheckoutPath(String checkoutPath) {
+        if (checkoutPath == null) {
+            return true;
+        }
+        Matcher matcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(checkoutPath);
+        return matcher.matches();
     }
 
     /**

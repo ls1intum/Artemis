@@ -289,7 +289,9 @@ public class BuildJobContainerService {
 
         assignmentCheckoutPath = (assignmentCheckoutPath != null && !assignmentCheckoutPath.isEmpty()) ? assignmentCheckoutPath
                 : RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
-        testCheckoutPath = (testCheckoutPath != null && !testCheckoutPath.isEmpty()) ? testCheckoutPath : RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+
+        String defaultTestCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+        testCheckoutPath = (!defaultTestCheckoutPath.isEmpty() && testCheckoutPath != null && !testCheckoutPath.isEmpty()) ? testCheckoutPath : defaultTestCheckoutPath;
 
         // Make sure to create the working directory in case it does not exist.
         // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
