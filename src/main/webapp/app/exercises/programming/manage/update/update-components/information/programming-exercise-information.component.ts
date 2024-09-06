@@ -46,7 +46,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     constructor() {
         effect(
             function generateShortNameWhenInSimpleMode() {
-                if (!this.isSimpleMode()) {
+                const shouldNotGenerateShortName = !this.isSimpleMode() || this.programmingExerciseCreationConfig.isEdit;
+                if (shouldNotGenerateShortName) {
                     return;
                 }
                 const newShortName = this.exerciseTitle();
