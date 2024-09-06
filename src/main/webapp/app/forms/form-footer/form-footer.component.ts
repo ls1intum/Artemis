@@ -14,19 +14,18 @@ export class FormFooterComponent {
     protected readonly faBan = faBan;
     protected readonly faExclamationCircle = faExclamationCircle;
 
-    @Output() save = new EventEmitter<void>();
-    @Output() cancel = new EventEmitter<void>();
-
     @Input() isSaving: boolean = false;
     @Input() isDisabled: boolean = false;
-
     @Input() invalidReasons: ValidationReason[] = [];
-
     @Input() notificationText?: string;
-    @Output() notificationTextChange = new EventEmitter<string>();
-
+    @Input() switchEditMode?: () => void;
     isImport = input<boolean>();
     isCreation = input<boolean>();
+    isSimpleMode = input<boolean>();
+
+    @Output() notificationTextChange = new EventEmitter<string>();
+    @Output() save = new EventEmitter<void>();
+    @Output() cancel = new EventEmitter<void>();
 
     saveTitle = computed<string>(() => (this.isImport() ? 'entity.action.import' : this.isCreation() ? 'entity.action.generate' : 'entity.action.save'));
 }
