@@ -12,6 +12,8 @@ import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 describe('VcsRepositoryAccessLogViewComponent', () => {
     let component: VcsRepositoryAccessLogViewComponent;
@@ -55,6 +57,7 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
