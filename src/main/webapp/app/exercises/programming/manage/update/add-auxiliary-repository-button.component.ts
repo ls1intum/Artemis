@@ -17,15 +17,13 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
     `,
 })
 export class AddAuxiliaryRepositoryButtonComponent {
-    ButtonType = ButtonType;
-    ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly faPlus = faPlus;
 
     @Input() programmingExercise: ProgrammingExercise;
 
     @Output() onRefresh: EventEmitter<any> = new EventEmitter<any>();
-
-    // Icons
-    faPlus = faPlus;
 
     /**
      * Adds a new auxiliary repository, which is displayed as a new row, to the respective programming exercise and activates the angular change detection.
