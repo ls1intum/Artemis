@@ -1,4 +1,7 @@
-<button type="button" class="btn btn-primary" (click)="switchEditMode()">
-    <fa-icon [icon]="faHandShakeAngle" />
-    <span [jhiTranslate]="isSimpleMode() ? 'artemisApp.programmingExercise.home.switchToAdvancedMode' : 'artemisApp.programmingExercise.home.switchToSimpleMode'"></span>
-</button>
+<jhi-button
+    [btnType]="ButtonType.PRIMARY"
+    [btnSize]="buttonSize()"
+    [icon]="faHandShakeAngle"
+    [title]="isSimpleMode() ? 'artemisApp.programmingExercise.home.switchToAdvancedMode' : 'artemisApp.programmingExercise.home.switchToSimpleMode'"
+    (onClick)="switchEditMode()"
+/>
