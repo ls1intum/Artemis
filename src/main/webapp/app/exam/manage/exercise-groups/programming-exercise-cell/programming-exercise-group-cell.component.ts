@@ -9,7 +9,7 @@ import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { AlertService } from 'app/core/util/alert.service';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-group-cell',
@@ -22,6 +22,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
 
     localVCEnabled = false;
+    onlineIdeEnabled = false;
 
     @Input()
     displayShortName = false;
@@ -48,6 +49,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
+            this.onlineIdeEnabled = profileInfo.activeProfiles.includes(PROFILE_THEIA);
             if (this.programmingExercise.projectKey) {
                 if (this.programmingExercise.solutionParticipation?.buildPlanId) {
                     this.programmingExercise.solutionParticipation!.buildPlanUrl = createBuildPlanUrl(
