@@ -115,6 +115,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -270,6 +271,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ParticipationTestRepository participationTestRepository;
 
     public Course course;
 
@@ -2012,6 +2016,7 @@ public class ProgrammingExerciseTestService {
         }
 
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
+        // await().timeout(Duration.ofSeconds(5)).until(() -> participationRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == 12);
         assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
 
         mockDelegate.resetMockProvider();

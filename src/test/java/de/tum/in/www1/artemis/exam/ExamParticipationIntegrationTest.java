@@ -214,8 +214,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentExams).hasSize(3);
         assertThat(exam.getExamUsers()).hasSize(3);
 
-        var generatedParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
-        assertThat(generatedParticipations.size()).isEqualTo(12);
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == 12);
 
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
         // Fetch student exams
@@ -402,9 +401,11 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         var studentExam1 = optionalStudent1Exam.get();
 
         verify(gitService, times(examUtilService.getNumberOfProgrammingExercises(exam.getId()))).combineAllCommitsOfRepositoryIntoOne(any());
-        List<StudentParticipation> participationsStudent1 = studentParticipationRepository
-                .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
-        assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
+
+        await().timeout(Duration.ofSeconds(5))
+                .until(() -> studentParticipationRepository
+                        .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises())
+                        .size() == studentExam1.getExercises().size());
 
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -429,7 +430,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
         assertThat(studentExams).hasSameSizeAs(storedExam.getExamUsers()).doesNotContain(studentExam1);
 
         // Ensure that the participations of student1 were deleted
-        participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
+        var participationsStudent1 = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
                 studentExam1.getExercises());
         assertThat(participationsStudent1).isEmpty();
 
