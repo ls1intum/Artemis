@@ -86,17 +86,17 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isSimpleMode = signal<boolean>(true);
 
     isEditFieldDisplayedRecord = computed(() => {
-        const mapping = INPUT_FIELD_EDIT_MODE_MAPPING;
+        const inputFieldEditModeMapping = INPUT_FIELD_EDIT_MODE_MAPPING;
 
-        const booleanMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
-        Object.keys(mapping).forEach((key) => {
+        const isEditFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
+        Object.keys(inputFieldEditModeMapping).forEach((key) => {
             const modeToBeIncluded = this.isSimpleMode() ? 'SIMPLE' : 'ADVANCED';
             // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-            const isDisplayed = mapping[key as ProgrammingExerciseInputField].editModesToBeDisplayed.includes(modeToBeIncluded);
-            booleanMapping[key as ProgrammingExerciseInputField] = isDisplayed;
+            const isDisplayed = inputFieldEditModeMapping[key as ProgrammingExerciseInputField].editModesToBeDisplayed.includes(modeToBeIncluded);
+            isEditFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
         });
 
-        return booleanMapping;
+        return isEditFieldDisplayedMapping;
     });
 
     private translationBasePath = 'artemisApp.programmingExercise.';
