@@ -1,54 +1,44 @@
-export enum ProgrammingExerciseInputField {
-    // General section
-    title = 'title',
-    channelName = 'channelName',
-    shortName = 'shortName',
-    categories = 'categories',
-
-    // Mode section
-    difficulty = 'difficulty',
-    participationMode = 'participationMode',
-    allowOfflineIde = 'allowOfflineIde',
-    allowOnlineIde = 'allowOnlineIde',
-
-    // Language section
-    programmingLanguage = 'programmingLanguage',
-    projectType = 'projectType',
-    withExemplaryDependency = 'withExemplaryDependency',
-    packageName = 'packageName',
-    enableStaticCodeAnalysis = 'enableStaticCodeAnalysis',
-    sequentialTestRuns = 'sequentialTestRuns',
-    customizeBuildScript = 'customizeBuildScript',
-
-    // Problem section
-    problemStatement = 'problemStatement',
-    linkedCompetencies = 'linkedCompetencies',
-
-    // Grading section
-    includeExerciseInCourseScoreCalculation = 'includeExerciseInCourseScoreCalculation',
-    points = 'points',
-    bonusPoints = 'bonusPoints',
-    submissionPolicy = 'submissionPolicy',
-    // timeline
-    timeline = 'timeline',
-    releaseDate = 'releaseDate',
-    startDate = 'startDate',
-    dueDate = 'dueDate',
-    runTestsAfterDueDate = 'runTestsAfterDueDate',
-    assessmentDueDate = 'assessmentDueDate',
-    exampleSolutionPublicationDate = 'exampleSolutionPublicationDate',
-    // assessment
-    complaintOnAutomaticAssessment = 'complaintOnAutomaticAssessment',
-    manualFeedbackRequests = 'manualFeedbackRequests',
-    showTestNamesToStudents = 'showTestNamesToStudents',
-    includeTestsIntoExampleSolution = 'includeTestsIntoExampleSolution',
-    // assessment instructions
-    assessmentInstructions = 'assessmentInstructions',
-    presentationScore = 'presentationScore',
-    plagiarismControl = 'plagiarismControl',
-}
-
-// export type ProgrammingExerciseInputField = 'title' | 'channelName' | 'shortName';
+export type ProgrammingExerciseInputField =
+    // general section
+    | 'title'
+    | 'channelName'
+    | 'shortName'
+    | 'categories'
+    // mode section
+    | 'difficulty'
+    | 'participationMode'
+    | 'allowOfflineIde'
+    | 'allowOnlineIde'
+    // language section
+    | 'programmingLanguage'
+    | 'projectType'
+    | 'withExemplaryDependency'
+    | 'packageName'
+    | 'enableStaticCodeAnalysis'
+    | 'sequentialTestRuns'
+    | 'customizeBuildScript'
+    // problem section
+    | 'problemStatement'
+    | 'linkedCompetencies'
+    // grading section
+    | 'includeExerciseInCourseScoreCalculation'
+    | 'points'
+    | 'bonusPoints'
+    | 'submissionPolicy'
+    | 'timeline'
+    | 'releaseDate'
+    | 'startDate'
+    | 'dueDate'
+    | 'runTestsAfterDueDate'
+    | 'assessmentDueDate'
+    | 'exampleSolutionPublicationDate'
+    | 'complaintOnAutomaticAssessment'
+    | 'manualFeedbackRequests'
+    | 'showTestNamesToStudents'
+    | 'includeTestsIntoExampleSolution'
+    | 'assessmentInstructions'
+    | 'presentationScore'
+    | 'plagiarismControl';
 
 export type EditMode = 'SIMPLE' | 'ADVANCED';
 
@@ -94,6 +84,7 @@ export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
         editModesToBeDisplayed: ['ADVANCED'],
     },
     packageName: {
+        // if this field was removed from a mode, a reasonable default value would need to be set
         editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
     },
     enableStaticCodeAnalysis: {
@@ -117,6 +108,7 @@ export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
         editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
     },
     points: {
+        // if this field was removed from a mode, a reasonable default value would need to be set
         editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
     },
     bonusPoints: {
