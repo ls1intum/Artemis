@@ -431,6 +431,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     tap((segments) => {
                         this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
                         this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                        this.isEdit = segments.some((segment) => segment.path === 'edit');
                     }),
                     switchMap(() => this.activatedRoute.params),
                     tap((params) => {
@@ -530,7 +531,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
                 valid: (this.exerciseLanguageComponent?.formValid && this.validOnlineIdeSelection()) ?? false,
             },
-            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle', valid: true, empty: !this.programmingExercise.problemStatement },
+            {
+                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
+                valid: true,
+                empty: !this.programmingExercise.problemStatement,
+            },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),

@@ -970,6 +970,30 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             route.data = of({ programmingExercise: comp.programmingExercise });
         });
 
+        describe('should initialize isEdit variable based on url', () => {
+            it('should be false if edit is in url', fakeAsync(() => {
+                jest.spyOn(comp, 'selectedProgrammingLanguage', 'set').mockImplementation(() => {});
+
+                fixture.detectChanges();
+                tick();
+
+                expect(comp.isEdit).toBeTrue();
+            }));
+
+            it('should be true if edit is in url', fakeAsync(() => {
+                jest.spyOn(comp, 'selectedProgrammingLanguage', 'set').mockImplementation(() => {});
+                const route = TestBed.inject(ActivatedRoute);
+                route.params = of({ courseId });
+                route.url = of([{ path: 'notEdit' } as UrlSegment]);
+                route.data = of({ programmingExercise: comp.programmingExercise });
+
+                fixture.detectChanges();
+                tick();
+
+                expect(comp.isEdit).toBeFalse();
+            }));
+        });
+
         it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
             const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
             getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
