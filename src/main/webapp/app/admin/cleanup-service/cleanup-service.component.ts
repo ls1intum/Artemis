@@ -1,5 +1,4 @@
 import { Component, OnInit } from '@angular/core';
-import { faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/cleanup-service.service';
@@ -12,9 +11,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
     templateUrl: './cleanup-service.component.html',
 })
 export class CleanupServiceComponent implements OnInit {
-    faSync = faSync;
-    faTrash = faTrash;
-
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
