@@ -7,6 +7,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { DataCleanupService } from 'app/admin/cleanup-service/cleanup-service.service';
 import { CleanupServiceExecutionRecordDTO } from 'app/admin/cleanup-service/cleanup-service.service';
+import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 
 describe('CleanupServiceComponent', () => {
     let comp: CleanupServiceComponent;
@@ -88,14 +89,14 @@ describe('CleanupServiceComponent', () => {
     });
 
     it('should validate date ranges correctly', () => {
-        const validOperation = {
+        const validOperation: CleanupOperation = {
             name: 'deleteOrphans',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
         };
 
-        const invalidOperation = {
+        const invalidOperation: CleanupOperation = {
             name: 'deleteOrphans',
             deleteFrom: dayjs(),
             deleteTo: dayjs().subtract(6, 'months'),
