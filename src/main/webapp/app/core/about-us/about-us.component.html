@@ -68,8 +68,35 @@
     <div class="mt-5 ms-2 me-2">
         <h3 class="font-weight-bold" jhiTranslate="artemisApp.git.title"></h3>
         <div>
-            {{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranchName }}<br />
-            {{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }}
+            <div class="inline-block fixed-width" jhiTranslate="artemisApp.git.branch"></div>
+            <div class="inline-block">{{ gitBranchName }}</div>
         </div>
+        <div>
+            <div class="inline-block fixed-width" jhiTranslate="artemisApp.git.commit"></div>
+            <div class="inline-block">{{ gitCommitId }}</div>
+        </div>
+    </div>
+    <div class="mt-5 ms-2 me-2">
+        <h3 class="font-weight-bold" jhiTranslate="artemisApp.operatorInfo.title"></h3>
+        <div>
+            <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.name"></div>
+            <div class="inline-block">{{ operatorName }}</div>
+        </div>
+        @if (operatorAdminName) {
+            <div>
+                <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.admin"></div>
+                <div class="inline-block">{{ operatorAdminName }}</div>
+            </div>
+        }
+        @if (operatorContactEmail) {
+            <div>
+                <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.adminEmail"></div>
+                <div class="inline-block">
+                    <a [href]="email" class="footer-text" target="_top">
+                        {{ operatorContactEmail }}
+                    </a>
+                </div>
+            </div>
+        }
     </div>
 </div>

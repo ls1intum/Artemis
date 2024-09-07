@@ -45,12 +45,14 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.ResultService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -275,5 +277,19 @@ public class ResultResource {
 
         return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, savedResult.getId().toString())).body(savedResult);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/feedback-details : Retrieves all aggregated feedback details for a given exercise.
+     * The feedback details include counts and relative counts of feedback occurrences, along with associated test case names and task numbers.
+     *
+     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
+     * @return A ResponseEntity containing a list of {@link FeedbackDetailDTO}s
+     */
+    @GetMapping("exercises/{exerciseId}/feedback-details")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<List<FeedbackDetailDTO>> getAllFeedbackDetailsForExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get all Feedback details for Exercise {}", exerciseId);
+        return ResponseEntity.ok(resultService.findAggregatedFeedbackByExerciseId(exerciseId));
     }
 }
