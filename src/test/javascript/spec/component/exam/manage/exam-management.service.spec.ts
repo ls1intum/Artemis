@@ -497,24 +497,6 @@ describe('Exam Management Service Tests', () => {
         tick();
     }));
 
-    it('should start exercises', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockStudentExams: StudentExam[] = [{ exam: mockExam, id: 1, numberOfExamSessions: 0 }];
-        const expected: StudentExam[] = [{ exam: mockExam, id: 1, numberOfExamSessions: 0 }];
-
-        // WHEN
-        service.startExercises(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockStudentExams));
-
-        // THEN
-        const req = httpMock.expectOne({
-            method: 'POST',
-            url: `${service.resourceUrl}/${course.id}/exams/${mockExam.id}/student-exams/start-exercises`,
-        });
-        req.flush(expected);
-        tick();
-    }));
-
     it('should evaluate quiz exercises', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
