@@ -718,7 +718,6 @@ public class StudentExamService {
      *
      * @param exam                  exam to which the generated student exams belong
      * @param generatedStudentExams list of student exams generated for this exam
-     * @return a future that will yield the number of generated participations
      */
     public void startExercises(Exam exam, List<StudentExam> generatedStudentExams) {
 
