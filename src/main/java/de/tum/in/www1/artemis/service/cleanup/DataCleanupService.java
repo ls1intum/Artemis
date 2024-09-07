@@ -1,9 +1,12 @@
 package de.tum.in.www1.artemis.service.cleanup;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.cleanup.CleanupJobExecution;
@@ -12,6 +15,7 @@ import de.tum.in.www1.artemis.repository.cleanup.CleanupJobExecutionRepository;
 import de.tum.in.www1.artemis.repository.cleanup.DataCleanupRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CleanupServiceExecutionRecordDTO;
 
+@Profile(PROFILE_CORE)
 @Service
 public class DataCleanupService {
 

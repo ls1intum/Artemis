@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.repository.cleanup;
 
+import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+
 import java.time.ZonedDateTime;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+@Profile(PROFILE_CORE)
 @Repository
 public class DataCleanupRepositoryImpl implements DataCleanupRepository {
 
