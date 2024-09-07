@@ -463,6 +463,12 @@ public class ProgrammingExerciseService {
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
     }
 
+    /**
+     * Validates the settings of an updated programming exercise. Checks if the custom checkout paths have changed.
+     *
+     * @param originalProgrammingExercise The original programming exercise
+     * @param updatedProgrammingExercise  The updated programming exercise
+     */
     public void validateCheckoutDirectoriesUnchanged(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise updatedProgrammingExercise) {
         var originalBuildConfig = originalProgrammingExercise.getBuildConfig();
         var updatedBuildConfig = updatedProgrammingExercise.getBuildConfig();
