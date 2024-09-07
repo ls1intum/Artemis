@@ -1,12 +1,12 @@
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
-import { BuildLogStatisticsDTO } from 'app/entities/build-log-statistics-dto';
+import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
@@ -97,7 +97,7 @@ export interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase 
     data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number };
 }
 
-interface ProgrammingTestStatusDetail extends DetailBase {
+export interface ProgrammingTestStatusDetail extends DetailBase {
     type: DetailType.ProgrammingTestStatus;
     data: {
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
@@ -108,7 +108,7 @@ interface ProgrammingTestStatusDetail extends DetailBase {
         submissionRouterLink?: (string | number | undefined)[];
     };
 }
-interface ProgrammingDiffReportDetail extends DetailBase {
+export interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
     data: { addedLineCount: number; removedLineCount: number; isLoadingDiffReport?: boolean; gitDiffReport?: ProgrammingExerciseGitDiffReport };
 }

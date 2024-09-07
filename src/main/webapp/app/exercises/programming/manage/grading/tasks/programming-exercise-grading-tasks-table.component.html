@@ -126,9 +126,7 @@
             <fa-icon [icon]="getSortIcon('type')" class="ms-2" />
             <fa-icon [icon]="faQuestionCircle" class="text-secondary ms-2" />
         </button>
-        <div class="task__row__cell">
-            {{ 'artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent' | artemisTranslate }}
-        </div>
+        <div class="task__row__cell" jhiTranslate="artemisApp.programmingExercise.configureGrading.gradingTableHeader.passedPercent"></div>
     </div>
     @for (task of tasks; track task; let i = $index) {
         <jhi-programming-exercise-task [index]="i" [task]="task" [openSubject]="allTasksExpandedSubject" (updateTasksEvent)="updateTasks()" [isExamExercise]="isExamExercise" />

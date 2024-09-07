@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { throwError } from 'rxjs';
-import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/build-job.model';
+import { BuildJob, BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
 import { createNestedRequestOption } from 'app/shared/util/request.util';
 import { HttpResponse } from '@angular/common/http';
 import { FinishedBuildJobFilter } from 'app/localci/build-queue/build-queue.component';

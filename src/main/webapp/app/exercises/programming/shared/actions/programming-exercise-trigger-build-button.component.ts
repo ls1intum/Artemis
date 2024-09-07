@@ -10,7 +10,7 @@ import { hasDueDatePassed } from 'app/exercises/programming/shared/utils/program
 import { Result } from 'app/entities/result.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SubmissionType } from 'app/entities/submission.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 

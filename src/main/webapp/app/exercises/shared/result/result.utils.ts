@@ -4,9 +4,9 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
@@ -16,7 +16,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
-import { TestCaseResult } from 'app/entities/test-case-result.model';
+import { TestCaseResult } from 'app/entities/programming/test-case-result.model';
 
 /**
  * Enumeration object representing the possible options that

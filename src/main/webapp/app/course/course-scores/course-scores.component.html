@@ -149,13 +149,11 @@
                             <th jhiSortBy="overallPoints"><span jhiTranslate="artemisApp.instructorDashboard.overallScore"></span> <fa-icon [icon]="faSort" /></th>
                             @if (gradingScaleExists) {
                                 <th jhiSortBy="overallPoints">
-                                    <span>
-                                        {{
-                                            isBonus
-                                                ? ('artemisApp.courseScoreCalculation.gradingSystemBonus' | artemisTranslate)
-                                                : ('artemisApp.courseScoreCalculation.gradingSystemGrade' | artemisTranslate)
-                                        }}
-                                    </span>
+                                    <span
+                                        jhiTranslate="{{
+                                            isBonus ? 'artemisApp.courseScoreCalculation.gradingSystemBonus' : 'artemisApp.courseScoreCalculation.gradingSystemGrade'
+                                        }}"
+                                    ></span>
                                     <fa-icon [icon]="faSort" />
                                 </th>
                             }

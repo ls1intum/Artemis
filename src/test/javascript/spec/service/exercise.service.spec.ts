@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import type { EntityResponseType, ExerciseDetailsType } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
@@ -15,7 +15,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';

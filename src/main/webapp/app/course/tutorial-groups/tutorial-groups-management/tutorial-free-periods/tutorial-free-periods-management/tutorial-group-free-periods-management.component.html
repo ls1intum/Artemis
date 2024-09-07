@@ -3,19 +3,21 @@
         <div class="row">
             <div class="col-12">
                 <div class="d-flex justify-content-between">
-                    <h4>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.title' | artemisTranslate }}</h4>
+                    <h4 jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.title"></h4>
                     <div>
                         <button type="button" class="btn btn-primary" id="create-tutorial-free-day" (click)="openCreateFreePeriodDialog($event)">
                             <fa-icon [icon]="faPlus" />
-                            <span>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton"></span>
                         </button>
                     </div>
                 </div>
             </div>
             <div class="col-12 mb-2">
-                <div class="alert alert-info">
-                    {{ 'artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation' | artemisTranslate: { timeZone: course.timeZone } }}
-                </div>
+                <div
+                    class="alert alert-info"
+                    jhiTranslate="artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation"
+                    [translateValues]="{ timeZone: course.timeZone }"
+                ></div>
             </div>
 
             <!-- List of free Periods -->
