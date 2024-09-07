@@ -126,6 +126,7 @@
                                 [participations]="exercise.studentParticipations!"
                                 [exercise]="exercise"
                                 [routerLinkForRepositoryView]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
+                                [useParticipationVcsAccessToken]="true"
                             />
                         }
                         @if (theiaEnabled) {

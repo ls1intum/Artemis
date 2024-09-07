@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextBlock } from 'app/entities/text/text-block.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { wordSelection } from 'app/exercises/text/shared/manual-text-selection/manual-text-selection.component';
 

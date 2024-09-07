@@ -7,7 +7,7 @@ import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
 import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
@@ -20,8 +20,8 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { ArtemisTestModule } from '../../../test.module';
 import { UsersImportButtonComponent } from 'app/shared/user-import/users-import-button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
-import { ExamUser } from 'app/entities/exam-user.model';
+import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
+import { ExamUser } from 'app/entities/exam/exam-user.model';
 
 describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;

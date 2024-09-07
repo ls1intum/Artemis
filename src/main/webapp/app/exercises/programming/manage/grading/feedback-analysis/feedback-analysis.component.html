@@ -1,0 +1,27 @@
+<div class="m-3">
+    <h2 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle }"></h2>
+    <table class="table table-striped mb-3">
+        <thead>
+            <tr>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.occurrence"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedback"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.task"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.testcase"></th>
+                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.errorCategory"></th>
+            </tr>
+        </thead>
+        <tbody class="table-group-divider">
+            @for (item of feedbackDetails; track item) {
+                <tr>
+                    <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
+                    <td>{{ item.detailText }}</td>
+                    <td class="text-center">{{ item.taskNumber }}</td>
+                    <td>{{ item.testCaseName }}</td>
+                    <td>Student Error</td>
+                    <!-- This is a placeholder, will be covered in follow up PRs -->
+                </tr>
+            }
+        </tbody>
+    </table>
+    <div jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.totalItems" [translateValues]="{ count: feedbackDetails.length }"></div>
+</div>

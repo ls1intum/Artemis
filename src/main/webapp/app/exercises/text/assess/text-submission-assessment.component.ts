@@ -6,8 +6,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -34,9 +34,9 @@ import { Course } from 'app/entities/course.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
-import { TextBlockRef } from 'app/entities/text-block-ref.model';
+import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { AthenaService } from 'app/assessment/athena.service';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock } from 'app/entities/text/text-block.model';
 import { Subscription } from 'rxjs';
 
 @Component({

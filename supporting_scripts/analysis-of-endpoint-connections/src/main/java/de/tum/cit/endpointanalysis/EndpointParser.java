@@ -36,7 +36,7 @@ public class EndpointParser {
 
     static final String REST_CALL_PARSING_RESULT_PATH = "restCalls.json";
 
-    private static final Logger logger = LoggerFactory.getLogger(EndpointParser.class);
+    private static final Logger log = LoggerFactory.getLogger(EndpointParser.class);
 
     public static void main(String[] args) {
         final Path absoluteDirectoryPath = Path.of("../../src/main/java").toAbsolutePath().normalize();
@@ -48,7 +48,7 @@ public class EndpointParser {
             filesToParse = paths.filter(Files::isRegularFile).filter(path -> path.toString().endsWith(".java")).map(Path::toString).toArray(String[]::new);
         }
         catch (IOException e) {
-            logger.error("Error reading files from directory: {}", absoluteDirectoryPath, e);
+            log.error("Error reading files from directory: {}", absoluteDirectoryPath, e);
         }
 
         parseServerEndpoints(filesToParse);
@@ -190,9 +190,9 @@ public class EndpointParser {
      */
     private static void printFilesFailedToParse(List<String> filesFailedToParse) {
         if (!filesFailedToParse.isEmpty()) {
-            logger.warn("Files failed to parse:", filesFailedToParse);
+            log.warn("Files failed to parse:", filesFailedToParse);
             for (String file : filesFailedToParse) {
-                logger.warn(file);
+                log.warn(file);
             }
         }
     }
@@ -211,7 +211,7 @@ public class EndpointParser {
             new ObjectMapper().writeValue(new File(ENDPOINT_PARSING_RESULT_PATH), endpointClasses);
         }
         catch (IOException e) {
-            logger.error("Failed to write endpoint information to file", e);
+            log.error("Failed to write endpoint information to file", e);
         }
     }
 }

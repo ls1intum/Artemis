@@ -7,10 +7,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { IssuesMap, ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { IssuesMap, ProgrammingExerciseGradingStatistics } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
 import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 import { ProgrammingExerciseGradingService, StaticCodeAnalysisCategoryUpdate } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -56,8 +56,7 @@ const DefaultFieldValues: { [key: string]: number } = {
     [EditableField.MAX_PENALTY]: 0,
 };
 
-export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy';
-
+export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy' | 'feedback-analysis';
 export type Table = 'testCases' | 'codeAnalysis';
 
 @Component({
@@ -232,7 +231,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.isLoading = false;
             }
 
-            if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis' || params['tab'] === 'submission-policy') {
+            const gradingTabs: GradingTab[] = ['test-cases', 'code-analysis', 'submission-policy', 'feedback-analysis'];
+            if (gradingTabs.includes(params['tab'])) {
                 this.selectTab(params['tab']);
             } else {
                 this.selectTab('test-cases');

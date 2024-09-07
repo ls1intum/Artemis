@@ -35,13 +35,14 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
 import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
-describe('QuizExercise Update Detail Component', () => {
+describe('QuizExerciseUpdateComponent', () => {
     let comp: QuizExerciseUpdateComponent;
     let exerciseGroupService: ExerciseGroupService;
     let courseManagementService: CourseManagementService;
@@ -447,7 +448,7 @@ describe('QuizExercise Update Detail Component', () => {
         it('should updateCategories properly by making category available for selection again when removing it', () => {
             comp.quizExercise = quizExercise;
             comp.exerciseCategories = [];
-            const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+            const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
             comp.updateCategories(newCategories);
 
@@ -583,8 +584,8 @@ describe('QuizExercise Update Detail Component', () => {
             it('should update categories to given categories', () => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
-                const exerciseCategory1 = { exerciseId: 1, category: 'category1', color: 'color1' };
-                const exerciseCategory2 = { exerciseId: 1, category: 'category1', color: 'color1' };
+                const exerciseCategory1 = new ExerciseCategory('category1', 'color1');
+                const exerciseCategory2 = new ExerciseCategory('category1', 'color1');
                 const expected = [exerciseCategory1, exerciseCategory2];
                 comp.updateCategories([exerciseCategory1, exerciseCategory2]);
                 expect(comp.quizExercise.categories).toEqual(expected);
