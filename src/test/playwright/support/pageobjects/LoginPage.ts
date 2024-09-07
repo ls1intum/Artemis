@@ -12,19 +12,33 @@ export class LoginPage {
     }
 
     /**
-     * Enters the specified username into the username input field.
-     * @param name - The username to be entered.
+     * Enters the specified value into the input field with the specified selector, then blurs the input field.
+     * This is necessary because the username and password fields are only validated on blur, e.g. when the user clicks
+     * elsewhere on the page or presses the Tab key.
+     * @param selector The selector of the input field.
+     * @param value The value to be entered.
+     * @private
      */
-    async enterUsername(name: string) {
-        await this.page.fill('#username', name);
+    private async fillThenBlurInput(selector: string, value: string) {
+        const locator = this.page.locator(selector);
+        await locator.fill(value);
+        await locator.blur();
     }
 
     /**
-     * Enters the specified password into the password input field.
+     * Enters the specified username into the username input field, then blurs the input field.
+     * @param name - The username to be entered.
+     */
+    async enterUsername(name: string) {
+        await this.fillThenBlurInput('#username', name);
+    }
+
+    /**
+     * Enters the specified password into the password input field, then blurs the input field.
      * @param password - The password to be entered.
      */
     async enterPassword(password: string) {
-        await this.page.fill('#password', password);
+        await this.fillThenBlurInput('#password', password);
     }
 
     /**

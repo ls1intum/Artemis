@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -93,6 +93,7 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {}
 
     get editType(): EditType {
@@ -243,6 +244,9 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
                         !this.modelingExercise.releaseDate?.isValid()),
             },
         ];
+
+        // otherwise the change detection does not work on the initial load
+        this.changeDetectorRef.detectChanges();
     }
 
     /**

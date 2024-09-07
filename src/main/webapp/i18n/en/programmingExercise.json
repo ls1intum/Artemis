@@ -275,6 +275,7 @@
                     "settingNegative": "Test case {{testCase}} must not have settings set to negative values."
                 },
                 "categories": {
+                    "titleHeader": "Code Analysis",
                     "title": "Code Analysis Categories",
                     "notGraded": "Not graded.",
                     "noFeedback": "No visible feedback.",
@@ -320,6 +321,17 @@
                     "resultingPoints": "Resulting Points",
                     "testType": "Type",
                     "passedPercent": "Passed %"
+                },
+                "feedbackAnalysis": {
+                    "titleHeader": "Feedback Analysis",
+                    "title": "Feedback Analysis for {{exerciseTitle}}",
+                    "occurrence": "Occurrence",
+                    "feedback": "Feedback",
+                    "task": "Task",
+                    "testcase": "Test Case",
+                    "errorCategory": "Error Category",
+                    "totalItems": "In total {{count}} items",
+                    "error": "An error occurred while loading the feedback."
                 },
                 "help": {
                     "name": "Task names are written in bold whereas Test names are normal. Task or test name depending on whether the row is a task or test.",

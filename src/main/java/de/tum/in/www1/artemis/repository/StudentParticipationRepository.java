@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.participation.IdToPresentationScoreSum;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -1230,4 +1231,53 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.presentationScore IS NOT NULL
             """)
     double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Retrieves aggregated feedback details for a given exercise, including the count of each unique feedback detail text and test case name.
+     * <br>
+     * The relative count and task number are initially set to 0 and are calculated in a separate step in the service layer.
+     *
+     * @param exerciseId Exercise ID.
+     * @return a list of {@link FeedbackDetailDTO} objects, with the relative count and task number set to 0.
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO(
+                COUNT(f.id),
+                0,
+                f.detailText,
+                f.testCase.testName,
+                0
+                )
+            FROM StudentParticipation p
+                 JOIN p.results r
+                 JOIN r.feedbacks f
+                    WHERE p.exercise.id = :exerciseId
+                        AND p.testRun = FALSE
+                        AND r.id = (
+                            SELECT MAX(pr.id)
+                            FROM p.results pr
+                            )
+                        AND f.positive = FALSE
+                        GROUP BY f.detailText, f.testCase.testName
+            """)
+    List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.
+     *
+     * @param exerciseId Exercise ID.
+     * @return The count of distinct latest results for the exercise.
+     */
+    @Query("""
+                SELECT COUNT(DISTINCT r.id)
+                FROM StudentParticipation p
+                    JOIN p.results r
+                WHERE p.exercise.id = :exerciseId
+                      AND p.testRun = FALSE
+                      AND r.id = (
+                          SELECT MAX(pr.id)
+                          FROM p.results pr
+                      )
+            """)
+    long countDistinctResultsByExerciseId(@Param("exerciseId") long exerciseId);
 }
