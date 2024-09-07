@@ -22,9 +22,9 @@ import de.tum.in.www1.artemis.web.rest.dto.CleanupServiceExecutionRecordDTO;
  * REST controller for managing old data cleanup operations in Artemis.
  * Provides endpoints for administrators to clean up old or orphaned data in the database.
  */
+@Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/admin/")
-@Profile(PROFILE_CORE)
 public class AdminOldDataCleanupResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminOldDataCleanupResource.class);
