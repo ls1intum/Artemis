@@ -2,10 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
-import {
-    CleanupServiceExecutionRecordDTO,
-    DataCleanupService
-} from 'app/admin/cleanup-service/cleanup-service.service';
+import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/cleanup-service.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';

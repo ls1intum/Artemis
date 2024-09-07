@@ -11,7 +11,6 @@ export interface CleanupServiceExecutionRecordDTO {
 export class DataCleanupService {
     private readonly adminResourceUrl = 'api/admin';
 
-
     constructor(private http: HttpClient) {}
 
     /**
@@ -85,7 +84,7 @@ export class DataCleanupService {
 
     getLastExecutions(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO[]>> {
         return this.http.post<CleanupServiceExecutionRecordDTO[]>(`${this.adminResourceUrl}/get-last-executions`, null, {
-            observe: 'response'
+            observe: 'response',
         });
     }
 }
