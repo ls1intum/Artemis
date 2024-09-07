@@ -60,10 +60,10 @@ export class CleanupServiceComponent implements OnInit {
     ];
 
     ngOnInit(): void {
-        this.refresh();
+        this.loadLastExecutions();
     }
 
-    refresh(): void {
+    loadLastExecutions(): void {
         this.cleanupService.getLastExecutions().subscribe((executionRecordsBody: HttpResponse<CleanupServiceExecutionRecordDTO[]>) => {
             const executionRecords = executionRecordsBody.body!;
             if (executionRecords && executionRecords.length > 0) {
