@@ -180,6 +180,10 @@ python3 large_course_main.py
 4.  Make sure to revert these changes after running the script. You can copy the original test case files from the [default](./testFiles-template/default) folder back into the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and delete the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file that was copied to [testFiles](../../../src/main/resources/templates/java/test/testFiles) in Step 1.
     Otherwise, you risk breaking the real template of the programming exercise if these changes are pushed.
 
+### Optional: Using an Existing Programming Exercise (Can also be done on Test Server)
+Alternatively, you can use an existing programming exercise and push the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file to the test repository of the programming exercise. 
+Make sure to adjust the [config.ini](./config.ini) file to use the existing programming exercise with the corresponding exercise ID, allowing the script to push with the created students to this existing programming exercise.
+
 ### Optional: Deleting All Created Students
 
 If you want to delete all the students created by the script:
