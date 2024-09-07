@@ -70,8 +70,7 @@ export class CleanupServiceComponent implements OnInit {
                 this.cleanupOperations.forEach((operation, index) => {
                     const executionRecord = executionRecords[index];
                     if (executionRecord && executionRecord.executionDate) {
-                        const executionDateFromServer = convertDateFromServer(executionRecord.executionDate);
-                        operation.lastExecuted = executionDateFromServer;
+                        operation.lastExecuted = convertDateFromServer(executionRecord.executionDate);
                     }
                 });
             }
@@ -79,7 +78,6 @@ export class CleanupServiceComponent implements OnInit {
     }
 
     executeCleanupOperation(operation: CleanupOperation): void {
-        console.log(`Executing cleanup operation: ${operation.name}`);
         const deleteFrom = convertDateFromClient(operation.deleteFrom)!;
         const deleteTo = convertDateFromClient(operation.deleteTo)!;
 
