@@ -157,7 +157,7 @@ export class UserSettingsService {
 
     public updateProfilePicture(file: Blob) {
         const formData = new FormData();
-        formData.append('file', file, 'placeholderName.png');
+        formData.append('file', file, 'placeholderName.jpeg');
 
         return this.http.put<User>(`${this.profilePictureResourceUrl}`, formData, { observe: 'response' });
     }

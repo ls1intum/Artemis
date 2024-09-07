@@ -14,6 +14,7 @@ import static de.tum.in.www1.artemis.security.Role.STUDENT;
 import static org.apache.commons.lang3.StringUtils.lowerCase;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -483,6 +484,15 @@ public class UserService {
         final String userImageString = user.getImageUrl();
         final String anonymizedLogin = lowerCase(RandomUtil.generateRandomAlphanumericString(), Locale.ENGLISH);
 
+        // Clean up users profile image if exists
+        if (user.getImageUrl() != null) {
+            try {
+                fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(user.getImageUrl())), 0);
+            }
+            catch (URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        }
         user.setFirstName(USER_FIRST_NAME_AFTER_SOFT_DELETE);
         user.setLastName(USER_LAST_NAME_AFTER_SOFT_DELETE);
         user.setLogin(anonymizedLogin);

@@ -19,7 +19,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,6 +56,8 @@ import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsExcept
 @RequestMapping("api/")
 public class AccountResource {
 
+    public static final String ENTITY_NAME = "user";
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -71,6 +72,8 @@ public class AccountResource {
     private final AccountService accountService;
 
     private final FileService fileService;
+
+    private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
 
     public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService,
             FileService fileService) {
@@ -259,7 +262,11 @@ public class AccountResource {
 
         // Check if the content type is either image/png or image/jpeg, else return 400
         if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg"))) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+            throw new BadRequestAlertException("The file format is not supported, please make sure to upload a .png or .jpg file.", ENTITY_NAME,
+                    "profilePictureFileFormatNotSupported", true);
+        }
+        else if (file.getSize() > Math.floor(MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES * 1024 * 1024)) {
+            throw new BadRequestAlertException("The filesize of your image is too big, please upload a smaller one.", ENTITY_NAME, "profilePictureFilesizeTooBig", true);
         }
 
         User user = userRepository.getUser();
