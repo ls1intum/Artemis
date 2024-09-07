@@ -2,7 +2,7 @@ import { isExamResultPublished } from 'app/exam/participate/exam.utils';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
 import { TestBed } from '@angular/core/testing';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 
 let artemisServerDateService: ArtemisServerDateService;

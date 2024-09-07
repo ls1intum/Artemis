@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ImportComponent } from 'app/shared/import/import.component';
 import { BaseEntity } from 'app/shared/model/base-entity';
