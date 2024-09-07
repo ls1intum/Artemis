@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.UserNotActivatedException;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
@@ -103,10 +104,10 @@ public class PublicUserJwtResource {
      * Sends the token back as either a cookie or a bearer token
      *
      * @param response HTTP response
-     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized)
      */
     @PostMapping("re-key")
-    @EnforceNothing
+    @EnforceAtLeastStudent
     public ResponseEntity<String> reKey(@RequestParam(value = "as-bearer", defaultValue = "false") boolean asBearer, HttpServletResponse response) {
         ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
         if (asBearer) {

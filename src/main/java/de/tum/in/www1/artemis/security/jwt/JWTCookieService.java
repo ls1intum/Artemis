@@ -63,7 +63,7 @@ public class JWTCookieService {
 
         // TODO - Remove cypress workaround once cypress uses https and find a better solution for testing locally in Safari
         Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-        boolean isSecure = !activeProfiles.contains(CYPRESS_PROFILE) && !activeProfiles.contains(DEVELOPMENT_PROFILE);
+        boolean isSecure = !activeProfiles.contains(CYPRESS_PROFILE);
 
         return ResponseCookie.from(JWT_COOKIE_NAME, jwt).httpOnly(true) // Must be httpOnly
                 .sameSite("None") // Must be None to allow cross-site requests to Artemis from the VS Code plugin

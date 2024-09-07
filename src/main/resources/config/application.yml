@@ -282,10 +282,13 @@ jhipster:
     cors:
         allowed-methods: "*"
         allowed-headers: "*"
-        exposed-headers: "Authorization,Link,X-Total-Count"
-        allow-credentials: true
+        exposed-headers: "Authorization,Link,X-Total-Count,Set-Cookie"
+        allow-credentials: false
         max-age: 1800
-        allowed-origins: "vscode-file://vscode-app"
+        allowed-origin-patterns:
+          - "vscode-file://vscode-app"
+          - "vscode-webview://*"
+
     mail:
         from: artemis@localhost
     registry:
