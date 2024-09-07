@@ -27,7 +27,7 @@ public class CleanupJobExecution extends DomainObject {
 
     @Column(name = "deleted_at")
     @NotNull
-    private ZonedDateTime deletion_timestamp;
+    private ZonedDateTime deletionTimestamp;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "operation_type")
@@ -52,12 +52,12 @@ public class CleanupJobExecution extends DomainObject {
         this.deleteTo = deleteTo;
     }
 
-    public ZonedDateTime getDeletion_timestamp() {
-        return deletion_timestamp;
+    public ZonedDateTime getDeletionTimestamp() {
+        return deletionTimestamp;
     }
 
-    public void setDeletion_timestamp(ZonedDateTime deletion_timestamp) {
-        this.deletion_timestamp = deletion_timestamp;
+    public void setDeletionTimestamp(ZonedDateTime deletionTimestamp) {
+        this.deletionTimestamp = deletionTimestamp;
     }
 
     public CleanupJobType getCleanupJobType() {

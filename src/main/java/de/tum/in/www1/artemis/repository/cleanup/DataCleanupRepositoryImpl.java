@@ -9,7 +9,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-public class OldDataCleanUpRepositoryImpl implements OldDataCleanUpRepository {
+public class DataCleanupRepositoryImpl implements DataCleanupRepository {
 
     // transactinal ok, because of delete statements
 
@@ -54,17 +54,19 @@ public class OldDataCleanUpRepositoryImpl implements OldDataCleanUpRepository {
     @Override
     @Transactional
     public void deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        // delete all non-related results for all courses that were conducted withing a specific date range
         entityManager.createQuery("""
-                DELETE FROM Result r
-                WHERE r.rated = false
-                AND r.participation IS NOT NULL
-                AND r.participation.exercise IS NOT NULL
-                AND r.participation.exercise.course IS NOT NULL
-                AND r.participation.exercise.course.endDate IS NOT NULL
-                AND r.participation.exercise.course.endDate < :deleteTo
-                AND r.participation.exercise.course.startDate > :deleteFrom
-                   """).setParameter("deleteTo", deleteTo).setParameter("deleteFrom", deleteFrom).executeUpdate();
+                    DELETE FROM Result r
+                    WHERE r.rated = false
+                      AND r.participation IS NOT NULL
+                      AND EXISTS (
+                          SELECT 1
+                          FROM Course c
+                          JOIN Exercise e ON e.course = c
+                          WHERE e = r.participation.exercise
+                            AND c.endDate < :deleteTo
+                            AND c.startDate > :deleteFrom
+                      )
+                """).setParameter("deleteTo", deleteTo).setParameter("deleteFrom", deleteFrom).executeUpdate();
     }
 
     @Override
@@ -72,38 +74,43 @@ public class OldDataCleanUpRepositoryImpl implements OldDataCleanUpRepository {
     public void deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         // delete all rated results that are not latest rated for a participation for courses conducted within a specific date range
         entityManager.createQuery("""
-                DELETE FROM Result r
+                    DELETE FROM Result r
                     WHERE r.rated = true
                       AND r.participation IS NOT NULL
                       AND r.participation.exercise IS NOT NULL
-                      AND r.participation.exercise.course IS NOT NULL
-                      AND r.participation.exercise.course.endDate IS NOT NULL
-                      AND r.participation.exercise.course.endDate < :deleteTo
-                      AND r.participation.exercise.course.startDate > :deleteFrom
+                      AND EXISTS (
+                          SELECT 1
+                          FROM Course c
+                          JOIN Exercise e ON e.course = c
+                          WHERE e = r.participation.exercise
+                            AND c.endDate < :deleteTo
+                            AND c.startDate > :deleteFrom
+                      )
                       AND r.id NOT IN (
                           SELECT MAX(r2.id)
                           FROM Result r2
                           WHERE r2.participation = r.participation
                             AND r2.rated = true
                       )
-                    """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
     }
 
     @Override
     @Transactional
     public void deleteSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        // delete old submission versions for exams
         entityManager.createQuery("""
                     DELETE FROM SubmissionVersion sv
                     WHERE sv.submission.id IS NOT NULL
-                      AND sv.submission.participation.id IS NOT NULL
-                      AND sv.submission.participation.exercise.id IS NOT NULL
-                      AND sv.submission.participation.exercise.exerciseGroup.id IS NOT NULL
-                      AND sv.submission.participation.exercise.exerciseGroup.exam.id IS NOT NULL
-                      AND sv.submission.participation.exercise.exerciseGroup.exam.course.id IS NOT NULL
-                      AND sv.submission.participation.exercise.exerciseGroup.exam.course.endDate IS NOT NULL
-                      AND sv.submission.participation.exercise.exerciseGroup.exam.course.endDate < :deleteTo
-                      AND sv.submission.participation.exercise.exerciseGroup.exam.course.endDate > :deleteFrom
+                      AND EXISTS (
+                          SELECT 1
+                          FROM Exam ex
+                          JOIN Course c ON ex.course = c
+                          JOIN ExerciseGroup eg ON eg.exam = ex
+                          JOIN Exercise e ON e.exerciseGroup = eg
+                          WHERE e = sv.submission.participation.exercise
+                            AND c.endDate < :deleteTo
+                            AND c.endDate > :deleteFrom
+                      )
                 """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
     }
 

@@ -12,5 +12,5 @@ export interface CleanupOperation {
     name: OperationName;
     deleteFrom: dayjs.Dayjs;
     deleteTo: dayjs.Dayjs;
-    lastExecuted: dayjs.Dayjs;
+    lastExecuted: dayjs.Dayjs | undefined;
 }

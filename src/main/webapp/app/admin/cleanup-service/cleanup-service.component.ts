@@ -2,10 +2,13 @@ import { Component, OnInit } from '@angular/core';
 import { faSync, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { DataCleanupService } from 'app/admin/cleanup-service/cleanup-service.service';
-import { convertDateFromClient } from 'app/utils/date.utils';
+import {
+    CleanupServiceExecutionRecordDTO,
+    DataCleanupService
+} from 'app/admin/cleanup-service/cleanup-service.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { Subject } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-cleanup-service',
@@ -20,43 +23,42 @@ export class CleanupServiceComponent implements OnInit {
 
     constructor(private cleanupService: DataCleanupService) {}
 
-    // TODO Michal Kawka replace with API call fetching operations from the DB
     cleanupOperations: CleanupOperation[] = [
         {
             name: 'deleteOrphans',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
-            lastExecuted: dayjs().subtract(1, 'days'),
+            lastExecuted: undefined,
         },
         {
             name: 'deletePlagiarismComparisons',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
-            lastExecuted: dayjs().subtract(2, 'days'),
+            lastExecuted: undefined,
         },
         {
             name: 'deleteNonRatedResults',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
-            lastExecuted: dayjs().subtract(3, 'days'),
+            lastExecuted: undefined,
         },
         {
             name: 'deleteOldRatedResults',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
-            lastExecuted: dayjs().subtract(4, 'days'),
+            lastExecuted: undefined,
         },
         {
             name: 'deleteOldSubmissionVersions',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
-            lastExecuted: dayjs().subtract(5, 'days'),
+            lastExecuted: undefined,
         },
         {
             name: 'deleteOldFeedback',
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
-            lastExecuted: dayjs().subtract(1, 'days'),
+            lastExecuted: undefined,
         },
     ];
 
@@ -64,7 +66,20 @@ export class CleanupServiceComponent implements OnInit {
         this.refresh();
     }
 
-    refresh(): void {}
+    refresh(): void {
+        this.cleanupService.getLastExecutions().subscribe((executionRecordsBody: HttpResponse<CleanupServiceExecutionRecordDTO[]>) => {
+            const executionRecords = executionRecordsBody.body!;
+            if (executionRecords && executionRecords.length > 0) {
+                this.cleanupOperations.forEach((operation, index) => {
+                    const executionRecord = executionRecords[index];
+                    if (executionRecord && executionRecord.executionDate) {
+                        const executionDateFromServer = convertDateFromServer(executionRecord.executionDate);
+                        operation.lastExecuted = executionDateFromServer;
+                    }
+                });
+            }
+        });
+    }
 
     executeCleanupOperation(operation: CleanupOperation): void {
         console.log(`Executing cleanup operation: ${operation.name}`);
@@ -75,7 +90,7 @@ export class CleanupServiceComponent implements OnInit {
 
         switch (operation.name) {
             case 'deleteOrphans':
-                this.cleanupService.deleteOrphans(deleteFrom, deleteTo).subscribe(subscriptionHandler);
+                this.cleanupService.deleteOrphans().subscribe(subscriptionHandler);
                 break;
             case 'deletePlagiarismComparisons':
                 this.cleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo).subscribe(subscriptionHandler);
@@ -97,9 +112,10 @@ export class CleanupServiceComponent implements OnInit {
 
     private handleResponse(operation: CleanupOperation) {
         return {
-            next: () => {
+            next: (response: HttpResponse<CleanupServiceExecutionRecordDTO>) => {
                 this.dialogErrorSource.next('');
-                operation.lastExecuted = dayjs();
+                const executionDateFromServer = convertDateFromServer(response.body!.executionDate);
+                operation.lastExecuted = executionDateFromServer;
             },
             error: (error: HttpErrorResponse) => {
                 this.dialogErrorSource.next(error.message);

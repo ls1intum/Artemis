@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.repository.cleanup;
 
 import java.time.ZonedDateTime;
 
-public interface OldDataCleanUpRepository {
+public interface DataCleanupRepository {
 
     void deleteOrphans();
 
