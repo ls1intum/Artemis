@@ -58,5 +58,4 @@ export class MetricsComponent implements OnInit {
     metricsKeyExistsAndObjectNotEmpty(key: keyof Metrics): boolean {
         return Boolean(this.metrics?.[key] && JSON.stringify(this.metrics[key]) !== '{}');
     }
-
 }
