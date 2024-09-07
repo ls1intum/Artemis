@@ -1,0 +1,38 @@
+@if (detail.data.participation) {
+    <div class="d-flex align-items-center">
+        @if (!detail.data.loading) {
+            <jhi-updating-result
+                [exercise]="detail.data.exercise"
+                [participation]="detail.data.participation"
+                [showUngradedResults]="true"
+                [personalParticipation]="false"
+                [short]="false"
+                (onParticipationChange)="detail.data.onParticipationChange()"
+                class="me-2"
+            />
+        }
+        @if (detail.data.participation.results?.length) {
+            <jhi-programming-exercise-instructor-status
+                class="repository-status-icon me-2"
+                [participationType]="detail.data.type"
+                [participation]="detail.data.participation"
+                [exercise]="detail.data.exercise"
+            />
+            @if (detail.data.exercise.isAtLeastEditor) {
+                <jhi-programming-exercise-instructor-trigger-build-button [exercise]="detail.data.exercise" [participation]="detail.data.participation" />
+            }
+        }
+        @if (detail.data.exercise.isAtLeastEditor && detail.data.participation.id) {
+            <a [routerLink]="detail.data.submissionRouterLink" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }" class="ms-2">
+                @switch (detail.data.type) {
+                    @case (ProgrammingExerciseParticipationType.TEMPLATE) {
+                        <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions"></span>
+                    }
+                    @case (ProgrammingExerciseParticipationType.SOLUTION) {
+                        <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions"></span>
+                    }
+                }
+            </a>
+        }
+    </div>
+}
