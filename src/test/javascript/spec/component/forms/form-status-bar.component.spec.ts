@@ -30,10 +30,6 @@ describe('FormStatusBarComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initializes', () => {
-        expect(comp).toBeDefined();
-    });
-
     it('should scroll to correct headline', () => {
         const mockDOMElement = { scrollIntoView: jest.fn(), style: {} };
         const getElementSpy = jest.spyOn(document, 'getElementById').mockReturnValue(mockDOMElement as any as HTMLElement);
