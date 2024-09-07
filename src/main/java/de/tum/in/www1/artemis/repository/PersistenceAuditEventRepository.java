@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -52,6 +53,7 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
             return Page.empty(pageable);
         }
         List<PersistentAuditEvent> result = findWithDataByIdIn(ids);
+        result.sort(Comparator.comparing(event -> ids.indexOf(event.getId())));
         return new PageImpl<>(result, pageable, countByAuditEventDateBetween(fromDate, toDate));
     }
 
@@ -73,6 +75,7 @@ public interface PersistenceAuditEventRepository extends ArtemisJpaRepository<Pe
             return Page.empty(pageable);
         }
         List<PersistentAuditEvent> result = findWithDataByIdIn(ids);
+        result.sort(Comparator.comparing(event -> ids.indexOf(event.getId())));
         return new PageImpl<>(result, pageable, count());
     }
 
