@@ -9,7 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam/exam.model';
-import { ChecklistCheckComponent } from 'app/shared/components/checklist-check.component';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ExamChecklistComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.component';
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';

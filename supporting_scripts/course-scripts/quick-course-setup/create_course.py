@@ -1,43 +1,42 @@
+import sys
 import requests
 import configparser
 import json
 import urllib3
 import re
-import logging
-
+from logging_config import logging
+from requests import Session
 from utils import login_as_admin
 from add_users_to_course import add_users_to_groups_of_course
 
+# Load configuration
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-server_url = config.get('Settings', 'server_url')
-is_local_course = config.get('CourseSettings', 'is_local_course')
-is_local_course = is_local_course.lower() == 'true'  # convert to boolean
-course_name = config.get('CourseSettings', 'course_name')
+# Constants from config file
+SERVER_URL: str = config.get('Settings', 'server_url')
+IS_LOCAL_COURSE: bool = config.get('CourseSettings', 'is_local_course').lower() == 'true'  # Convert to boolean
+COURSE_NAME: str = config.get('CourseSettings', 'course_name')
+SPECIAL_CHARACTERS_REGEX: str = config.get('Settings', 'special_character_regex')
 
-special_characters_reg_ex = r'[^a-zA-Z0-9_]'
+def parse_course_name_to_short_name() -> str:
+    """Parse course name to create a short name, removing special characters."""
+    short_name = COURSE_NAME.strip()
+    short_name = re.sub(SPECIAL_CHARACTERS_REGEX, '', short_name.replace(' ', ''))
 
-
-def parse_course_name_to_short_name(course_name):
-    short_name = course_name.strip()
-    short_name = short_name.replace(' ', '')
-    short_name = re.sub(special_characters_reg_ex, '', short_name)
-
-    short_name_does_not_start_with_letter = len(short_name) > 0 and not short_name[0].isalpha()
-    if short_name_does_not_start_with_letter:
+    if len(short_name) > 0 and not short_name[0].isalpha():
         short_name = 'a' + short_name
 
     return short_name
 
+def create_course(session: Session) -> requests.Response:
+    """Create a course using the given session."""
+    url = f"{SERVER_URL}/admin/courses"
+    course_short_name = parse_course_name_to_short_name()
 
-def create_course(session):
-    url = f"{server_url}/api/admin/courses"
-
-    course_short_name = parse_course_name_to_short_name(course_name)
     default_course = {
         "id": None,
-        "title": str(course_name),
+        "title": str(COURSE_NAME),
         "shortName": str(course_short_name),
         "customizeGroupNames": False,
         "studentGroupName": None,
@@ -68,9 +67,8 @@ def create_course(session):
         "enrollmentEnabled": False
     }
 
-    if is_local_course:
+    if IS_LOCAL_COURSE:
         default_course["customizeGroupNames"] = True
-        # If it's a local course, use the original group names without the prefix
         default_course["studentGroupName"] = "students"
         default_course["teachingAssistantGroupName"] = "tutors"
         default_course["editorGroupName"] = "editors"
@@ -88,25 +86,29 @@ def create_course(session):
     response = session.post(url, data=body, headers=headers)
 
     if response.status_code == 201:
-        logging.info(f"Created course {course_name} with shortName {course_short_name} \n {response.json()}")
+        logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name} \n {response.json()}")
+    elif response.status_code == 400:
+        logging.info(f"Course with shortName {course_short_name} already exists. Please provide the course ID in the config file and set create_course to FALSE if you intend to add programming exercises to this course.")
+        sys.exit(0)
     else:
-        logging.error("Problem with the group 'students' and interacting with a test server? Is 'is_local_course' in "
-                      "'config.ini' set to 'False'?")
+        logging.error("Problem with the group 'students' and interacting with a test server? "
+                      "Is 'is_local_course' in 'config.ini' set to 'False'?")
         raise Exception(
-            f"Could not create course {course_name}; Status code: {response.status_code}\n Double check whether the courseShortName {course_short_name} is not already used for another course!\nResponse content: {response.text}")
-    return response
+            f"Could not create course {COURSE_NAME}; Status code: {response.status_code}\n"
+            f"Double check whether the courseShortName {course_short_name} is valid (e.g. no special characters such as '-')!\n"
+            f"Response content: {response.text}")
 
+    return response.json()
 
-def main():
+def main() -> None:
+    """Main function to create a course and add users."""
     session = requests.session()
     login_as_admin(session)
-    created_course_response = create_course(session)
 
-    response_data = created_course_response.json()  # This will parse the response content as JSON
+    response_data = create_course(session)
     course_id = response_data["id"]
 
     add_users_to_groups_of_course(session, course_id)
-
 
 if __name__ == "__main__":
     main()
