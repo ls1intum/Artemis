@@ -1,24 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { Participation } from 'app/entities/participation/participation.model';
-import { BuildLogEntryArray } from 'app/entities/build-log.model';
+import { BuildLogEntryArray } from 'app/entities/programming/build-log.model';
 import { CodeEditorBuildLogService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Result } from 'app/entities/result.model';
-import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { StaticCodeAnalysisIssue } from 'app/entities/programming/static-code-analysis-issue.model';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { CodeEditorSubmissionService } from 'app/exercises/programming/shared/code-editor/service/code-editor-submission.service';
@@ -82,7 +81,7 @@ describe('CodeEditorBuildOutputComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule],
+            imports: [ArtemisTestModule],
             declarations: [CodeEditorBuildOutputComponent, MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: ResultService, useClass: MockResultService },

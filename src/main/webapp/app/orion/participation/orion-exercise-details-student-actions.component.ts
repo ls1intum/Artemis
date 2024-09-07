@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';

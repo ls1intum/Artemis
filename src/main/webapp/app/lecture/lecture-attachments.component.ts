@@ -8,7 +8,7 @@ import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { LectureService } from 'app/lecture/lecture.service';
 
@@ -31,6 +31,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     notificationText?: string;
     erroredFile?: File;
     errorMessage?: string;
+    viewButtonAvailable: Record<number, boolean> = {};
 
     // A human-readable list of allowed file extensions
     readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
@@ -47,6 +48,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     faPaperclip = faPaperclip;
     faQuestionCircle = faQuestionCircle;
+    faEye = faEye;
 
     constructor(
         protected activatedRoute: ActivatedRoute,
@@ -75,11 +77,18 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     loadAttachments(): void {
         this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
             this.attachments = attachmentsResponse.body!;
+            this.attachments.forEach((attachment) => {
+                this.viewButtonAvailable[attachment.id!] = this.isViewButtonAvailable(attachment.link!);
+            });
         });
     }
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    isViewButtonAvailable(attachmentLink: string): boolean {
+        return attachmentLink.endsWith('.pdf') ?? false;
     }
 
     get isSubmitPossible(): boolean {
@@ -130,9 +139,13 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             this.attachmentService.create(this.attachmentToBeCreated!, this.attachmentFile!).subscribe({
                 next: (attachmentRes: HttpResponse<Attachment>) => {
                     this.attachments.push(attachmentRes.body!);
+                    this.lectureService.findWithDetails(this.lecture.id!).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+                        this.lecture = lectureResponse.body!;
+                    });
                     this.attachmentFile = undefined;
                     this.attachmentToBeCreated = undefined;
                     this.attachmentBackup = undefined;
+                    this.loadAttachments();
                 },
                 error: (error: HttpErrorResponse) => this.handleFailedUpload(error),
             });

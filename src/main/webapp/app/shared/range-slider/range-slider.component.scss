@@ -1,0 +1,65 @@
+$height: 0.5rem;
+$border-radius: 0.5rem;
+
+$slider-thumb-size: 1.2rem;
+$slider-thumb-border-radius: 50%;
+$slider-thumb-color: var(--primary);
+
+.slider {
+    height: $height;
+    border-radius: $border-radius;
+    background: var(--gray-400);
+}
+
+.slider .progress {
+    height: $height;
+    border-radius: $border-radius;
+    position: absolute;
+    background: var(--primary);
+}
+
+.range-input {
+    position: relative;
+}
+
+.range-input input {
+    height: $height;
+    position: absolute;
+    width: 100%;
+    background: none;
+    pointer-events: none;
+    -webkit-appearance: none;
+}
+
+/* Covers Chrome and Safari */
+[type='range']::-webkit-slider-thumb {
+    height: $slider-thumb-size;
+    width: $slider-thumb-size;
+    border-radius: $slider-thumb-border-radius;
+    background: $slider-thumb-color;
+    pointer-events: auto;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+/* covers Mozilla Firefox */
+[type='range']::-moz-range-thumb {
+    height: $slider-thumb-size;
+    width: $slider-thumb-size;
+    border-radius: $slider-thumb-border-radius;
+    background: $slider-thumb-color;
+    pointer-events: auto;
+    -moz-appearance: none;
+    cursor: pointer;
+}
+
+.slider-value {
+    position: absolute;
+    bottom: -2.2rem;
+    pointer-events: none; // we do not want to click the label but the range-thumb
+    color: var(--secondary);
+    text-align: center;
+    justify-content: center;
+    align-content: center;
+    display: flex;
+}

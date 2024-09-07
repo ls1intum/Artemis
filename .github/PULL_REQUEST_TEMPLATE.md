@@ -13,7 +13,8 @@
 
 
 #### Server
-- [ ] **Important**: I implemented the changes with a very good performance and prevented too many (unnecessary) database calls.
+- [ ] **Important**: I implemented the changes with a [very good performance](https://docs.artemis.cit.tum.de/dev/guidelines/performance/) and prevented too many (unnecessary) and too complex database calls.
+- [ ] I **strictly** followed the principle of **data economy** for all database calls.
 - [ ] I **strictly** followed the [server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
 - [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/#rest-endpoint-best-practices-for-authorization) and checked the course groups for all new REST Calls (security).
@@ -21,7 +22,8 @@
 
 
 #### Client
-- [ ] **Important**: I implemented the changes with a very good performance, prevented too many (unnecessary) REST calls and made sure the UI is responsive, even with large data.
+- [ ] **Important**: I implemented the changes with a very good performance, prevented too many (unnecessary) REST calls and made sure the UI is responsive, even with large data (e.g. using paging).
+- [ ] I **strictly** followed the principle of **data economy** for all client-server REST calls.
 - [ ] I **strictly** followed the [client coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/).
 - [ ] Following the [theming guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client-design/), I specified colors only in the theming variable files and checked that the changes look consistent in both the light and the dark theme.
 - [ ] I added multiple integration tests (Jest) related to the features (with a high test coverage), while following the [test guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client-tests/).
@@ -92,8 +94,9 @@ Prerequisites:
 <!-- All PRs that might affect the exam mode (e.g. change a client component that is also used in the exam mode) need an additional verification that the exam mode still works. -->
 
 #### Performance Review
-- [ ] I (as a reviewer) confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance 
-- [ ] I (as a reviewer) confirm that the server changes (in particular related to database calls) are implemented with a very good performance
+<!-- See [Large Course Setup](https://github.com/ls1intum/Artemis/tree/develop/supporting_scripts/course-scripts/quick-course-setup) for the automation script that handles large course setup. -->
+- [ ] I (as a reviewer) confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance even for very large courses with more than 2000 students.
+- [ ] I (as a reviewer) confirm that the server changes (in particular related to database calls) are implemented with a very good performance even for very large courses with more than 2000 students.
 #### Code Review
 - [ ] Code Review 1
 - [ ] Code Review 2
@@ -101,6 +104,9 @@ Prerequisites:
 - [ ] Test 1
 - [ ] Test 2
 #### Exam Mode Test
+- [ ] Test 1
+- [ ] Test 2
+#### Performance Tests
 - [ ] Test 1
 - [ ] Test 2
 

@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-grading.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
@@ -22,6 +22,7 @@ import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.d
 import { NgbAlertsMocksModule } from '../../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { programmingExerciseCreationConfigMock } from './programming-exercise-creation-config-mock';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ProgrammingExerciseGradingComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseGradingComponent>;
@@ -46,6 +47,7 @@ describe('ProgrammingExerciseGradingComponent', () => {
                 MockComponent(SubmissionPolicyUpdateComponent),
                 MockComponent(PresentationScoreComponent),
                 MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },

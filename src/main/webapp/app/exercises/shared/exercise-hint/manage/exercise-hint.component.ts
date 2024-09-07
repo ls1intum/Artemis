@@ -11,7 +11,7 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { faArrowsRotate, faCode, faEye, faFont, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-hint',

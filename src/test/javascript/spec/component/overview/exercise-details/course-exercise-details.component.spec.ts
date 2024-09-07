@@ -9,7 +9,7 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
@@ -45,15 +45,15 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { LtiInitializerComponent } from 'app/overview/exercise-details/lti-initializer.component';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
@@ -71,6 +71,8 @@ import { MockScienceService } from '../../../helpers/mocks/service/mock-science-
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -92,7 +94,15 @@ describe('CourseExerciseDetailsComponent', () => {
     let scienceService: ScienceService;
     let logEventStub: jest.SpyInstance;
 
-    const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [], course: {} } as unknown as Exercise;
+    const exercise = {
+        id: 42,
+        type: ExerciseType.TEXT,
+        studentParticipations: [],
+        course: {
+            id: 1,
+            courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+        },
+    } as unknown as Exercise;
 
     const textExercise = {
         id: 24,
@@ -119,11 +129,15 @@ describe('CourseExerciseDetailsComponent', () => {
 
     const parentParams = { courseId: 1 };
     const parentRoute = { parent: { parent: { params: of(parentParams) } } } as any as ActivatedRoute;
-    const route = { params: of({ exerciseId: exercise.id }), parent: parentRoute, queryParams: of({ welcome: '' }) } as any as ActivatedRoute;
+    const route = {
+        params: of({ exerciseId: exercise.id }),
+        parent: parentRoute,
+        queryParams: of({ welcome: '' }),
+    } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [MockComponent(DiscussionSectionComponent)],
             declarations: [
                 CourseExerciseDetailsComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -152,6 +166,8 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ExerciseInfoComponent),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 { provide: ProfileService, useClass: MockProfileService },
@@ -195,7 +211,11 @@ describe('CourseExerciseDetailsComponent', () => {
 
                 // mock teamService, needed for team assignment
                 teamService = fixture.debugElement.injector.get(TeamService);
-                const teamAssignmentPayload = { exerciseId: 2, teamId: 2, studentParticipations: [] } as TeamAssignmentPayload;
+                const teamAssignmentPayload = {
+                    exerciseId: 2,
+                    teamId: 2,
+                    studentParticipations: [],
+                } as TeamAssignmentPayload;
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(teamAssignmentPayload)));
 
                 // mock participationService, needed for team assignment
@@ -313,14 +333,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exampleSolutionCollapsed).toBeFalse();
     });
 
-    it('should store a reference to child component', () => {
-        comp.exercise = exercise;
-
-        const childComponent = {} as DiscussionSectionComponent;
-        comp.onChildActivate(childComponent);
-        expect(childComponent.exercise).toEqual(exercise);
-    });
-
     it('should activate hint', () => {
         comp.availableExerciseHints = [{ id: 1 }, { id: 2 }];
         comp.activatedExerciseHints = [];
@@ -331,10 +343,47 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.activatedExerciseHints).toContain(activatedHint);
     });
 
-    it('should handle new programming exercise', () => {
-        const childComponent = {} as DiscussionSectionComponent;
-        comp.onChildActivate(childComponent);
+    it('should sort results by completion date in ascending order', () => {
+        const result1 = { completionDate: dayjs().subtract(2, 'days') } as Result;
+        const result2 = { completionDate: dayjs().subtract(1, 'day') } as Result;
+        const result3 = { completionDate: dayjs() } as Result;
 
+        const results = [result3, result1, result2];
+        results.sort((a, b) => comp['resultSortFunction'](a, b));
+
+        expect(results).toEqual([result1, result2, result3]);
+    });
+
+    it('should handle results with undefined completion dates', () => {
+        const result1 = { completionDate: dayjs().subtract(2, 'days') } as Result;
+        const result2 = { completionDate: undefined } as Result;
+        const result3 = { completionDate: dayjs() } as Result;
+
+        const results = [result3, result1, result2];
+        results.sort((a, b) => comp['resultSortFunction'](a, b));
+
+        expect(results).toEqual([result1, result3, result2]);
+    });
+
+    it('should handle empty results array', () => {
+        const results: Result[] = [];
+        results.sort((a, b) => comp['resultSortFunction'](a, b));
+
+        expect(results).toEqual([]);
+    });
+
+    it('should handle results with same completion dates', () => {
+        const date = dayjs();
+        const result1 = { completionDate: date } as Result;
+        const result2 = { completionDate: date } as Result;
+
+        const results = [result2, result1];
+        results.sort((a, b) => comp['resultSortFunction'](a, b));
+
+        expect(results).toEqual([result2, result1]);
+    });
+
+    it('should handle new programming exercise', () => {
         const courseId = programmingExercise.course!.id!;
 
         comp.courseId = courseId;
@@ -343,7 +392,6 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
-        expect(childComponent.exercise).toEqual(programmingExercise);
     });
 
     it('should handle error when getting latest rated result', fakeAsync(() => {
@@ -432,4 +480,25 @@ describe('CourseExerciseDetailsComponent', () => {
         fixture.detectChanges();
         expect(logEventStub).toHaveBeenCalledExactlyOnceWith(ScienceEventType.EXERCISE__OPEN, exercise.id);
     });
+
+    it('should not show discussion section when communication is disabled', fakeAsync(() => {
+        const newExercise = {
+            ...exercise,
+            course: { id: 1, courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
+        };
+        getExerciseDetailsMock.mockReturnValue(of({ body: newExercise }));
+
+        comp.handleNewExercise({ exercise });
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeFalsy();
+    }));
+
+    it('should show discussion section when communication is enabled', fakeAsync(() => {
+        fixture.detectChanges();
+        tick(500);
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeTruthy();
+    }));
 });

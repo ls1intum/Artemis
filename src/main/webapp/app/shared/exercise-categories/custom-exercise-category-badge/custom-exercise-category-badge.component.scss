@@ -1,0 +1,18 @@
+.remove-button {
+    color: var(--white);
+    background: transparent !important;
+    border: none !important;
+
+    &:hover {
+        opacity: 0.8;
+    }
+}
+
+/** category options should be consistent with the type CategoryFontSize */
+.category-small {
+    font-size: 0.85rem;
+}
+
+.category-default {
+    font-size: 1rem;
+}

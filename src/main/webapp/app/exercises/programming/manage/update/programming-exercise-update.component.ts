@@ -2,9 +2,10 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { Observable, Subject, Subscription } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExercise, ProgrammingExerciseBuildConfig, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType, resetProgrammingForImport } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from '../services/programming-exercise.service';
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,7 +14,6 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
@@ -23,14 +23,14 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { faExclamationCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { loadCourseExerciseCategories } from 'app/exercises/shared/course-exercises/course-utils';
-import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
+import { PROFILE_AEOLUS, PROFILE_LOCALCI, PROFILE_THEIA } from 'app/app.constants';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
 import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.component';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
@@ -85,7 +85,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     notificationText?: string;
     courseId: number;
 
-    EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     rerenderSubject = new Subject<void>();
     // This is used to revert the select if the user cancels to override the new selected programming language.
@@ -136,6 +135,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     public auxiliaryRepositoriesSupported = false;
     public auxiliaryRepositoriesValid = true;
     public customBuildPlansSupported: string = '';
+    public theiaEnabled = false;
 
     // Additional options for import
     // This is a wrapper to allow modifications from the other subcomponents
@@ -265,7 +265,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.withDependenciesValue = false;
             this.buildPlanLoaded = false;
             if (this.programmingExercise.buildConfig) {
-                this.programmingExercise.buildConfig.windFile = undefined;
+                this.programmingExercise.buildConfig.windfile = undefined;
                 this.programmingExercise.buildConfig.buildPlanConfiguration = undefined;
             } else {
                 this.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
@@ -390,7 +390,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.activatedRoute.data.subscribe(({ programmingExercise }) => {
             this.programmingExercise = programmingExercise;
             if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
-                this.programmingExercise.buildConfig!.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
+                this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig!.buildPlanConfiguration);
             }
             this.backupExercise = cloneDeep(this.programmingExercise);
             this.selectedProgrammingLanguageValue = this.programmingExercise.programmingLanguage!;
@@ -404,50 +404,52 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         });
 
         // If it is an import from this instance, just get the course, otherwise handle the edit and new cases
-        this.activatedRoute.url
-            .pipe(
-                tap((segments) => {
-                    this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
-                    this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
-                }),
-                switchMap(() => this.activatedRoute.params),
-                tap((params) => {
-                    if (this.isImportFromFile) {
-                        this.createProgrammingExerciseForImportFromFile();
-                    }
-                    if (this.isImportFromExistingExercise) {
-                        this.createProgrammingExerciseForImport(params);
-                    } else {
-                        if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
-                            this.isExamMode = true;
-                            this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
-                                this.programmingExercise.exerciseGroup = res.body!;
-                                if (!params['exerciseId'] && this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
-                                    this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
-                                }
-                            });
-                            // we need the course id  to make the request to the server if it's an import from file
-                            if (this.isImportFromFile) {
-                                this.courseId = params['courseId'];
-                                this.loadCourseExerciseCategories(params['courseId']);
-                            }
-                        } else if (params['courseId']) {
-                            this.courseId = params['courseId'];
-                            this.isExamMode = false;
-                            this.courseService.find(this.courseId).subscribe((res) => {
-                                this.programmingExercise.course = res.body!;
-                                if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
-                                    this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
-                                }
-                                this.exerciseCategories = this.programmingExercise.categories || [];
-
-                                this.loadCourseExerciseCategories(this.programmingExercise.course!.id!);
-                            });
+        if (this.activatedRoute && this.activatedRoute.url) {
+            this.activatedRoute.url
+                .pipe(
+                    tap((segments) => {
+                        this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
+                        this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                    }),
+                    switchMap(() => this.activatedRoute.params),
+                    tap((params) => {
+                        if (this.isImportFromFile) {
+                            this.createProgrammingExerciseForImportFromFile();
                         }
-                    }
-                }),
-            )
-            .subscribe();
+                        if (this.isImportFromExistingExercise) {
+                            this.createProgrammingExerciseForImport(params);
+                        } else {
+                            if (params['courseId'] && params['examId'] && params['exerciseGroupId']) {
+                                this.isExamMode = true;
+                                this.exerciseGroupService.find(params['courseId'], params['examId'], params['exerciseGroupId']).subscribe((res) => {
+                                    this.programmingExercise.exerciseGroup = res.body!;
+                                    if (!params['exerciseId'] && this.programmingExercise.exerciseGroup.exam?.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                        this.selectedProgrammingLanguage = this.programmingExercise.exerciseGroup.exam.course.defaultProgrammingLanguage;
+                                    }
+                                });
+                                // we need the course id  to make the request to the server if it's an import from file
+                                if (this.isImportFromFile) {
+                                    this.courseId = params['courseId'];
+                                    this.loadCourseExerciseCategories(params['courseId']);
+                                }
+                            } else if (params['courseId']) {
+                                this.courseId = params['courseId'];
+                                this.isExamMode = false;
+                                this.courseService.find(this.courseId).subscribe((res) => {
+                                    this.programmingExercise.course = res.body!;
+                                    if (!params['exerciseId'] && this.programmingExercise.course?.defaultProgrammingLanguage && !this.isImportFromFile) {
+                                        this.selectedProgrammingLanguage = this.programmingExercise.course.defaultProgrammingLanguage!;
+                                    }
+                                    this.exerciseCategories = this.programmingExercise.categories || [];
+
+                                    this.loadCourseExerciseCategories(this.programmingExercise.course!.id!);
+                                });
+                            }
+                        }
+                    }),
+                )
+                .subscribe();
+        }
 
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
@@ -471,6 +473,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             }
             if (profileInfo?.activeProfiles.includes(PROFILE_AEOLUS)) {
                 this.customBuildPlansSupported = PROFILE_AEOLUS;
+            }
+            if (profileInfo?.activeProfiles.includes(PROFILE_THEIA)) {
+                this.theiaEnabled = true;
             }
         });
         this.defineSupportedProgrammingLanguages();
@@ -502,13 +507,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.languageStepTitle',
-                valid: this.exerciseLanguageComponent?.formValid ?? false,
+                valid: (this.exerciseLanguageComponent?.formValid && this.validOnlineIdeSelection()) ?? false,
             },
-            {
-                title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle',
-                valid: true,
-                empty: !this.programmingExercise.problemStatement,
-            },
+            { title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.problemStepTitle', valid: true, empty: !this.programmingExercise.problemStatement },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
                 valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),
@@ -615,15 +616,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
      */
     saveExercise() {
         // trim potential whitespaces that can lead to issues
-        if (this.programmingExercise.buildConfig!.windFile?.metadata?.docker?.image) {
-            this.programmingExercise.buildConfig!.windFile.metadata.docker.image = this.programmingExercise.buildConfig!.windFile.metadata.docker.image.trim();
+        if (this.programmingExercise.buildConfig!.windfile?.metadata?.docker?.image) {
+            this.programmingExercise.buildConfig!.windfile.metadata.docker.image = this.programmingExercise.buildConfig!.windfile.metadata.docker.image.trim();
         }
 
-        if (this.programmingExercise.customizeBuildPlanWithAeolus) {
-            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windFile!);
+        if (this.programmingExercise.customizeBuildPlanWithAeolus || this.isImportFromFile) {
+            this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
         } else {
             this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
-            this.programmingExercise.buildConfig!.windFile = undefined;
+            this.programmingExercise.buildConfig!.windfile = undefined;
         }
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
@@ -678,8 +679,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe({
-            next: (response: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(response.body!),
-            error: (error: HttpErrorResponse) => this.onSaveError(error),
+            next: (response: HttpResponse<ProgrammingExercise>) => {
+                this.onSaveSuccess(response.body!);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.onSaveError(error);
+            },
         });
     }
 
@@ -823,10 +828,21 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     /**
-     * checking if at least one of Online Editor or Offline Ide is selected
+     * checking if at least one of Online Editor, Offline Ide, or Online Ide is selected
      */
     validIdeSelection = () => {
-        return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde;
+        if (this.theiaEnabled) {
+            return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde || this.programmingExercise?.allowOnlineIde;
+        } else {
+            return this.programmingExercise?.allowOnlineEditor || this.programmingExercise?.allowOfflineIde;
+        }
+    };
+
+    /**
+     * Checking if the online IDE is selected and a valid image is selected
+     */
+    validOnlineIdeSelection = () => {
+        return !this.programmingExercise?.allowOnlineIde || this.programmingExercise?.buildConfig!.theiaImage !== undefined;
     };
 
     isEventInsideTextArea(event: Event): boolean {
@@ -848,6 +864,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseAuxiliaryRepositories(validationErrorReasons);
         this.validateExercisePackageName(validationErrorReasons);
         this.validateExerciseIdeSelection(validationErrorReasons);
+        this.validateExerciseOnlineIdeSelection(validationErrorReasons);
         this.validateExercisePoints(validationErrorReasons);
         this.validateExerciseBonusPoints(validationErrorReasons);
         this.validateExerciseSCAMaxPenalty(validationErrorReasons);
@@ -1046,8 +1063,18 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     private validateExerciseIdeSelection(validationErrorReasons: ValidationReason[]): void {
         if (!this.validIdeSelection()) {
+            const translateKey = this.theiaEnabled ? 'artemisApp.programmingExercise.allowOnlineEditor.alert' : 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia';
             validationErrorReasons.push({
-                translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                translateKey: translateKey,
+                translateValues: {},
+            });
+        }
+    }
+
+    private validateExerciseOnlineIdeSelection(validationErrorReasons: ValidationReason[]): void {
+        if (!this.validOnlineIdeSelection()) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.theiaImage.alert',
                 translateValues: {},
             });
         }
@@ -1112,6 +1139,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             hasUnsavedChanges: this.hasUnsavedChanges,
             rerenderSubject: this.rerenderSubject.asObservable(),
             validIdeSelection: this.validIdeSelection,
+            validOnlineIdeSelection: this.validOnlineIdeSelection,
             inProductionEnvironment: this.inProductionEnvironment,
             recreateBuildPlans: this.importOptions.recreateBuildPlans,
             onRecreateBuildPlanOrUpdateTemplateChange: this.onRecreateBuildPlanOrUpdateTemplateChange,

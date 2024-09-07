@@ -30,6 +30,8 @@
             "addMappingsInstructions": "Drag items onto drop locations to define correct solutions.",
             "addDragItemPicture": "Add Picture Drag Item",
             "addDragItemText": "Add Text Drag Item",
+            "cutImagesFromDropLocation": "Cut Images from Drop Locations",
+            "cutImagesFromDropLocationTip": "The background image will be modified. This cannot be undone.",
             "studentInstructions": "Drag & Drop: Place the suitable items on the correct areas.",
             "showingYourAnswer": "Your Submission:",
             "showingSampleSolution": "Sample Solution:",

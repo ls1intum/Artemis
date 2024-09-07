@@ -14,7 +14,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';

@@ -9,7 +9,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -58,6 +58,7 @@ describe('Test Run Management Component', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
+                MockDirective(TranslateDirective),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

@@ -4,7 +4,7 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { Component } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
-import { ChecklistCheckComponent } from 'app/shared/components/checklist-check.component';
+import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';

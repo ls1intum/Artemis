@@ -1,5 +1,5 @@
 import { AfterViewInit, Component, Input, OnDestroy, ViewChild } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { TranslateService } from '@ngx-translate/core';

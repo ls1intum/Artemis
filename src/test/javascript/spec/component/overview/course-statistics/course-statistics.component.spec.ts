@@ -14,7 +14,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
@@ -29,6 +29,7 @@ import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
 import { ArtemisTestModule } from '../../../test.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -336,6 +337,7 @@ describe('CourseStatisticsComponent', () => {
                 MockComponent(DocumentationButtonComponent),
                 MockTranslateValuesDirective,
                 ArtemisTranslatePipe,
+                TranslateDirective,
             ],
             providers: [
                 MockProvider(ArtemisNavigationUtilService),
@@ -376,11 +378,11 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         expect(comp.ngxExerciseGroups.size).toBe(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
-        expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.exerciseCount ');
-        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.yourPoints ');
-        expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.reachablePoints ');
-        expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.totalPoints ');
-        expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.presentationScore ');
+        expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.exerciseCount');
+        expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
+        expect(modelingWrapper.query(By.css('#reachable-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.reachablePoints');
+        expect(modelingWrapper.query(By.css('#max-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.totalPoints');
+        expect(fixture.debugElement.query(By.css('#presentation-score')).nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.presentationScore');
 
         const programming: NgxExercise = comp.ngxExerciseGroups.get(ExerciseType.PROGRAMMING)![0];
         expect(programming.series).toHaveLength(6);
@@ -444,11 +446,11 @@ describe('CourseStatisticsComponent', () => {
 
         // check that html file displays the correct elements
         let debugElement = fixture.debugElement.query(By.css('#absolute-course-score'));
-        expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.yourPoints ');
+        expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.yourPoints');
         debugElement = fixture.debugElement.query(By.css('#reachable-course-score'));
-        expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.reachablePoints ');
+        expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.reachablePoints');
         debugElement = fixture.debugElement.query(By.css('#max-course-score'));
-        expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.totalPoints ');
+        expect(debugElement.nativeElement.textContent).toBe('artemisApp.courseOverview.statistics.totalPoints');
     });
 
     it('should set the course after being notified about a course update', () => {
