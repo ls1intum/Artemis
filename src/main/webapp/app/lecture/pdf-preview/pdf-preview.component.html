@@ -11,11 +11,6 @@
                     }
                 </h4>
                 <div class="d-flex-end text-end">
-                    <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
-                    <button (click)="triggerFileInput()" class="btn btn-primary text-truncate">
-                        <fa-icon [icon]="faFileImport" />
-                        <span>Merge File</span>
-                    </button>
                     <button
                         type="button"
                         class="btn btn-danger"
@@ -27,7 +22,12 @@
                         [disabled]="isDeleteDisabled()"
                     >
                         <fa-icon [icon]="faTrash" />
-                        <span jhiTranslate="entity.action.delete"></span>
+                        <span>Remove Page(s)</span>
+                    </button>
+                    <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
+                    <button (click)="triggerFileInput()" class="btn btn-primary text-truncate">
+                        <fa-icon [icon]="faFileImport" />
+                        <span>Append File</span>
                     </button>
                 </div>
             </div>
