@@ -1994,6 +1994,12 @@ public class ProgrammingExerciseTestService {
         assertThat(studentExams).hasSize(exam.getExamUsers().size());
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
 
+        // Exercises are started asynchronously when student exams are generated. We need to wait for the process to complete.
+
+        Long examId = exam.getId();
+        int numberOfParticipations = registeredStudents.size() * exam.getExerciseGroups().size();
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(examId).size() == numberOfParticipations);
+
         // start exercises
         Set<Long> peIds = exam.getExerciseGroups().get(6).getExercises().stream().map(Exercise::getId).collect(Collectors.toSet());
         List<ProgrammingExercise> programmingExercises = programmingExerciseTestRepository.findAllWithTemplateAndSolutionParticipationByIdIn(peIds);
@@ -2015,10 +2021,6 @@ public class ProgrammingExerciseTestService {
             }
         }
 
-        participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
-        Exam finalExam = exam;
-        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(finalExam.getId()).size() == registeredStudents.size()
-                * finalExam.getExerciseGroups().size());
         mockDelegate.resetMockProvider();
 
         return studentExams;

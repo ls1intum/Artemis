@@ -10,6 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.within;
+import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
@@ -113,6 +114,7 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExamSessionRepository;
 import de.tum.in.www1.artemis.repository.ExamUserRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.ParticipationTestRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
@@ -201,6 +203,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
+
+    @Autowired
+    private ParticipationTestRepository participationTestRepository;
 
     private User student1;
 
@@ -2840,8 +2845,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             // Generate student exam
             List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/generate-student-exams",
                     Optional.empty(), StudentExam.class, HttpStatus.OK);
+
             assertThat(studentExams).hasSize(exam1.getExamUsers().size());
             assertThat(studentExamRepository.findByExamId(exam1.getId())).hasSize(1);
+            int numberOfParticipations = exam1.getRegisteredUsers().size() * exam1.getExerciseGroups().size();
+            await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam1.getId()).size() == numberOfParticipations);
 
             StudentExam studentExam = studentExams.getFirst();
             userUtilService.changeUser(studentExam.getUser().getLogin());
