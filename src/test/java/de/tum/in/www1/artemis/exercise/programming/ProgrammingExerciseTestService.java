@@ -1995,7 +1995,6 @@ public class ProgrammingExerciseTestService {
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
 
         // Exercises are started asynchronously when student exams are generated. We need to wait for the process to complete.
-
         Long examId = exam.getId();
         int numberOfParticipations = registeredStudents.size() * exam.getExerciseGroups().size();
         await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(examId).size() == numberOfParticipations);
