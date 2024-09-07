@@ -11,11 +11,10 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ActivatedRoute } from '@angular/router';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -25,6 +24,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('ExerciseHint Management Update Component', () => {
     let comp: ExerciseHintUpdateComponent;
@@ -52,7 +52,7 @@ describe('ExerciseHint Management Update Component', () => {
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
-            declarations: [ExerciseHintUpdateComponent, MockComponent(MarkdownEditorComponent), MockComponent(HelpIconComponent)],
+            declarations: [ExerciseHintUpdateComponent, MockComponent(MarkdownEditorMonacoComponent), MockComponent(HelpIconComponent)],
             providers: [
                 FormBuilder,
                 MockProvider(ProgrammingExerciseService),

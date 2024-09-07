@@ -4,10 +4,10 @@
             <div>
                 <h2 id="exam-detail-title">
                     @if (!exam.testExam) {
-                        <span class="badge bg-success">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</span>
+                        <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
                     }
                     @if (exam.testExam) {
-                        <span class="badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
+                        <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
                     }
                     {{ exam.title }}
                 </h2>
@@ -16,50 +16,50 @@
                     <div>
                         <a id="exercises-button-groups" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary mt-1">
                             <fa-icon [icon]="faListAlt" />
-                            <span>{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.examManagement.exerciseGroups"></span>
                         </a>
                         <!-- Remove ngIf when Quiz Exam feature is fully implemented -->
                         @if (false) {
                             <a id="quiz-pool" type="submit" [routerLink]="getExamRoutesByIdentifier('quiz-pool')" class="btn btn-primary mt-1">
                                 <fa-icon [icon]="faListAlt" />
-                                <span>{{ 'artemisApp.examManagement.quizPool' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.examManagement.quizPool"></span>
                             </a>
                         }
                         @if (!exam.testExam) {
                             <a id="students-button" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
                                 <fa-icon [icon]="faUser" />
-                                <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.examManagement.students"></span>
                             </a>
                         }
                         <a id="studentExamsButton" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info mt-1">
                             <fa-icon [icon]="faEye" />
-                            <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.studentExams"></span>
                         </a>
                         <a id="testrun-button" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info mt-1">
                             <fa-icon [icon]="faFlaskVial" />
-                            <span>{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.examManagement.testRun.testRun"></span>
                         </a>
                         @if (!exam.testExam) {
                             <a id="assessment-dashboard-button" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary mt-1">
                                 <fa-icon [icon]="faThList" />
-                                <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.examManagement.assessmentDashboard"></span>
                             </a>
                         }
                         @if (!exam.testExam) {
                             <a [routerLink]="getExamRoutesByIdentifier('grading-system')" class="btn btn-info mt-1">
                                 <fa-icon [icon]="faClipboard" />
-                                <span>{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.examManagement.gradingSystem"></span>
                             </a>
                         }
                         @if (canHaveBonus) {
                             <a [routerLink]="getExamRoutesByIdentifier('bonus')" class="btn btn-info mt-1">
                                 <fa-icon [icon]="faAward" />
-                                <span>{{ 'artemisApp.examManagement.bonus' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.examManagement.bonus"></span>
                             </a>
                         }
                         <a id="scores-button" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
                             <fa-icon [icon]="faEye" />
-                            <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
+                            <span jhiTranslate="entity.action.scores"></span>
                         </a>
                         <a [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" class="tab-item btn btn-info btn-md mt-1">
                             <fa-icon [icon]="faHeartBroken" />

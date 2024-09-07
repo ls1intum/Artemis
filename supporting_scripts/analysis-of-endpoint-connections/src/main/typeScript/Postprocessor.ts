@@ -5,7 +5,7 @@ interface RestCall {
     method: string;
     url: string;
     line: number;
-    fileName: string;
+    filePath: string;
 }
 
 enum ParsingResultType {
@@ -43,13 +43,13 @@ export class Postprocessor {
     private readonly filePath: string;
     private readonly ast: TSESTree.Program;
 
-    constructor(filePath: string) {
+    /**
+     * @param filePath - The path of the file being processed.
+     * @param ast - The abstract syntax tree (AST) of the processed file.
+     */
+    constructor(filePath: string, ast: TSESTree.Program) {
         this.filePath = filePath;
-        this.ast = Preprocessor.parseTypeScriptFile(Preprocessor.pathPrefix + filePath)
-    }
-
-    extractRestCalls() {
-        this.extractRestCallsFromProgram();
+        this.ast = ast;
     }
 
     extractRestCallsFromProgram() {
@@ -61,7 +61,7 @@ export class Postprocessor {
             }
         });
         if (this.restCalls.length > 0) {
-            Postprocessor.filesWithRestCalls.push( {filePath: this.filePath, restCalls: this.restCalls} );
+            Postprocessor.filesWithRestCalls.push({ filePath: this.filePath, restCalls: this.restCalls });
         }
     }
 
@@ -108,10 +108,10 @@ export class Postprocessor {
                                         urlEvaluationResult = this.evaluateUrl(node.arguments[0], methodDefinition, node, classBody);
                                     }
 
-                                    const fileName = this.filePath;
+                                    const filePath = this.filePath;
                                     if (urlEvaluationResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
-                                        for (let url of urlEvaluationResult.result) {
-                                            this.restCalls.push({ method, url, line, fileName });
+                                        for (const url of urlEvaluationResult.result) {
+                                            this.restCalls.push({ method, url, line, filePath });
                                         }
                                     }
                                 }
@@ -175,6 +175,7 @@ export class Postprocessor {
     }
 
     /**
+     * Evaluates a template literal AST node to determine its URL value.
      * Evaluates a template literal AST node to determine its URL value.
      *
      * This method evaluates the provided template literal node by calling `evaluateTemplateLiteralExpression`.
@@ -541,7 +542,7 @@ export class Postprocessor {
         simpleTraverse(methodDefinition, {
             enter: (node) => {
                 if (node.type === 'VariableDeclaration') {
-                    for (let decl of node.declarations) {
+                    for (const decl of node.declarations) {
                         if (decl.id.type === 'Identifier' && decl.id.name === name && decl.init) {
                             const tempResult = this.evaluateUrl(decl.init, methodDefinition, restCall, classBody);
                             if (tempResult.resultType === ParsingResultType.EVALUATE_URL_SUCCESS) {
@@ -587,7 +588,7 @@ export class Postprocessor {
      * @returns An array of AST nodes representing the parameters of the constructor.
      */
     getConstructorArgumentsFromClassBody(classBody: TSESTree.ClassBody): TSESTree.Parameter[] {
-        for (let node of classBody.body) {
+        for (const node of classBody.body) {
             if (node.type === 'MethodDefinition' && node.key.type === 'Identifier' && node.key.name === 'constructor') {
                 return node.value.params;
             }
@@ -615,11 +616,11 @@ export class Postprocessor {
         const superClass = Preprocessor.PREPROCESSING_RESULTS.get(this.getClassNameFromClassBody(classBody));
         if (superClass) {
             const constructorArguments = this.getConstructorArgumentsFromClassBody(classBody.body);
-            for (let superConstructorCallArguments of superClass.superConstructorCalls) {
+            for (const superConstructorCallArguments of superClass.superConstructorCalls) {
                 for (let i = 0; i < superConstructorCallArguments.arguments.length; i++) {
-                    let constructorArgument = constructorArguments[i];
+                    const constructorArgument = constructorArguments[i];
                     if (superConstructorCallArguments.arguments[i] !== '' && constructorArgument.type === 'TSParameterProperty'
-                    && constructorArgument.parameter.type === 'Identifier' && constructorArgument.parameter.name === memberExprKey) {
+                        && constructorArgument.parameter.type === 'Identifier' && constructorArgument.parameter.name === memberExprKey) {
                         memberExpressionResult.push(superConstructorCallArguments.arguments[i]);
                         resultType = ParsingResultType.EVALUATE_MEMBER_EXPRESSION_SUCCESS;
                     }

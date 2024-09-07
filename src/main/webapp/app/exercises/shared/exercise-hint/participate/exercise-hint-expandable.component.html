@@ -21,12 +21,12 @@
         </mat-panel-description>
     </mat-expansion-panel-header>
     <mat-action-row>
-        <button type="button" [ngClass]="'btn btn-secondary'" (click)="collapseContent()">{{ 'artemisApp.exerciseHint.studentDialog.collapse' | artemisTranslate }}</button>
+        <button type="button" [ngClass]="'btn btn-secondary'" (click)="collapseContent()" jhiTranslate="artemisApp.exerciseHint.studentDialog.collapse"></button>
     </mat-action-row>
     @if (isLoading) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
-                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
     } @else {

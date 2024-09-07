@@ -110,9 +110,9 @@
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                     <select class="form-select" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
-                        <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
-                        <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
-                        <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
+                        <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
+                        <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
+                        <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
                     </select>
                     <jhi-quiz-scoring-info-modal />
                 </div>
@@ -144,9 +144,9 @@
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                         <select class="form-select" [(ngModel)]="question.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
-                            <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
-                            <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
-                            <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
+                            <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
+                            <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
+                            <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
                         </select>
                         <jhi-quiz-scoring-info-modal />
                     </div>
@@ -200,29 +200,28 @@
         <div class="markupEditorArea">
             @if (!reEvaluationInProgress) {
                 <div class="question-content">
-                    <jhi-markdown-editor
+                    <jhi-markdown-editor-monaco
                         #markdownEditor
                         [markdown]="questionEditorText"
                         [showPreviewButton]="false"
-                        [domainCommands]="dragAndDropQuestionDomainCommands"
+                        [domainActions]="dragAndDropDomainActions"
                         (markdownChange)="changesInMarkdown($event)"
-                        (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                        (textWithDomainActionsFound)="domainActionsFound($event)"
                         class="h-auto"
                     />
                 </div>
-            }
-            @if (reEvaluationInProgress) {
+            } @else {
                 <div class="markupEditorArea">
                     <div class="question-content row">
                         <div class="col-10 col-lg-11">
                             <!-- TODO: Fix file upload    -->
-                            <jhi-markdown-editor
+                            <jhi-markdown-editor-monaco
                                 #markdownEditor
                                 [markdown]="questionEditorText"
                                 [showPreviewButton]="false"
-                                [domainCommands]="dragAndDropQuestionDomainCommands"
+                                [domainActions]="dragAndDropDomainActions"
                                 (markdownChange)="changesInMarkdown($event)"
-                                (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                                (textWithDomainActionsFound)="domainActionsFound($event)"
                                 [enableFileUpload]="false"
                                 class="h-auto"
                             />
@@ -459,9 +458,18 @@
                         }
                     </button>
                     <input #dragItemFileInput id="dragItemFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
-                    <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
+                    <button class="btn btn-outline-secondary me-2" id="add-text-drag-item" (click)="addTextDragItem()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
+                    </button>
+                    <button
+                        class="btn btn-outline-secondary"
+                        id="crop-drag-item"
+                        [ngbTooltip]="'artemisApp.dragAndDropQuestion.cutImagesFromDropLocationTip' | artemisTranslate"
+                        (click)="getImagesFromDropLocations()"
+                    >
+                        <fa-icon [icon]="faScissors" />
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.cutImagesFromDropLocation"></span>
                     </button>
                 </div>
             </div>

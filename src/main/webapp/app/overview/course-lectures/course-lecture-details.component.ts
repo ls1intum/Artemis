@@ -9,7 +9,6 @@ import { Attachment } from 'app/entities/attachment.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, tap } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
@@ -39,7 +38,6 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
     lecture?: Lecture;
     isDownloadingLink?: string;
     lectureUnits: LectureUnit[] = [];
-    discussionComponent?: DiscussionSectionComponent;
     hasPdfLectureUnit: boolean;
 
     paramsSubscription: Subscription;
@@ -107,10 +105,6 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
                                     (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
                                 ).length > 0;
                         }
-                        if (this.discussionComponent) {
-                            // We need to manually update the lecture property of the student questions component
-                            this.discussionComponent.lecture = this.lecture;
-                        }
                         this.endsSameDay = !!this.lecture?.startDate && !!this.lecture.endDate && dayjs(this.lecture.startDate).isSame(this.lecture.endDate, 'day');
                     },
                     error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -158,18 +152,6 @@ export class CourseLectureDetailsComponent extends AbstractScienceComponent impl
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
         this.lectureUnitService.completeLectureUnit(this.lecture!, event);
-    }
-
-    /**
-     * This function gets called if the router outlet gets activated. This is
-     * used only for the DiscussionComponent
-     * @param instance The component instance
-     */
-    onChildActivate(instance: DiscussionSectionComponent) {
-        this.discussionComponent = instance; // save the reference to the component instance
-        if (this.lecture) {
-            instance.lecture = this.lecture;
-        }
     }
 
     ngOnDestroy() {

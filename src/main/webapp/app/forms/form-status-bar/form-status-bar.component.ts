@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, HostListener, Input } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild } from '@angular/core';
+import { updateHeaderHeight } from 'app/shared/util/navbar.util';
 
 export type FormSectionStatus = {
     title: string;
@@ -15,23 +16,28 @@ export class FormStatusBarComponent implements AfterViewInit {
     @Input()
     formStatusSections: FormSectionStatus[];
 
+    @ViewChild('statusBar', { static: false }) statusBar?: ElementRef;
+
     @HostListener('window:resize')
-    onResize() {
-        setTimeout(() => {
-            const headerHeight = (document.querySelector('jhi-navbar') as HTMLElement).offsetHeight;
-            document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
-        });
+    onResizeAddDistanceFromStatusBarToNavbar() {
+        updateHeaderHeight();
     }
 
     ngAfterViewInit() {
-        this.onResize();
+        this.onResizeAddDistanceFromStatusBarToNavbar();
     }
 
     scrollToHeadline(id: string) {
         const element = document.getElementById(id);
         if (element) {
-            element.style.scrollMarginTop = 'calc(2rem + 78px)';
-            element.scrollIntoView();
+            const navbarHeight = (document.querySelector('jhi-navbar') as HTMLElement)?.getBoundingClientRect().height;
+            const statusBarHeight = this.statusBar?.nativeElement.getBoundingClientRect().height;
+
+            /** Needs to be applied to the scrollMarginTop to ensure that the scroll to element is not hidden behind header elements */
+            const scrollOffsetInPx = navbarHeight + statusBarHeight;
+
+            element.style.scrollMarginTop = `${scrollOffsetInPx}px`;
+            element.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'start' });
         }
     }
 }

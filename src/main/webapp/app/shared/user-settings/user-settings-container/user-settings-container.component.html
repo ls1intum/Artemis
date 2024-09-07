@@ -16,26 +16,23 @@
             </div>
             <!-- links to the different settings -->
             <section id="navigation-bar" class="list-group d-block pt-2">
-                <span class="list-group-item disabled fw-bold">
-                    <!--User Settings Menu Title-->
-                    {{ 'artemisApp.userSettings.userSettings' | artemisTranslate }}
-                </span>
-                <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active">
-                    <!--Account Information-->
-                    {{ 'artemisApp.userSettings.accountInformation' | artemisTranslate }}
-                </a>
-                <a class="list-group-item btn btn-outline-primary" routerLink="notifications" routerLinkActive="active">
-                    <!--Notification Settings-->
-                    {{ 'artemisApp.userSettings.notificationSettings' | artemisTranslate }}
-                </a>
-                <a class="list-group-item btn btn-outline-primary" routerLink="science" routerLinkActive="active">
-                    <!--Science Settings-->
-                    {{ 'artemisApp.userSettings.scienceSettings' | artemisTranslate }}
-                </a>
+                <span class="list-group-item disabled fw-bold" jhiTranslate="artemisApp.userSettings.userSettings"></span>
+                <a class="list-group-item btn btn-outline-primary" routerLink="account" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.accountInformation"></a>
+                <a
+                    class="list-group-item btn btn-outline-primary"
+                    routerLink="notifications"
+                    routerLinkActive="active"
+                    jhiTranslate="artemisApp.userSettings.notificationSettings"
+                ></a>
+                <a class="list-group-item btn btn-outline-primary" routerLink="science" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.scienceSettings"></a>
                 @if (localVCEnabled) {
-                    <a class="list-group-item btn btn-outline-primary" routerLink="sshSettings" routerLinkActive="active">
-                        <!--Account Information-->
-                        {{ 'artemisApp.userSettings.sshSettings' | artemisTranslate }}
+                    <a class="list-group-item btn btn-outline-primary" routerLink="ssh" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.sshSettings"></a>
+                    <a
+                        class="list-group-item btn btn-outline-primary"
+                        routerLink="vcs-token"
+                        routerLinkActive="active"
+                        jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"
+                    >
                     </a>
                 }
             </section>

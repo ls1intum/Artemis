@@ -19,6 +19,7 @@ import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-po
 import { ProgrammingExerciseGradingTasksTableComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-grading-tasks-table.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { ProgrammingExerciseTaskComponent } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task/programming-exercise-task.component';
+import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 
 @NgModule({
     imports: [
@@ -33,6 +34,7 @@ import { ProgrammingExerciseTaskComponent } from 'app/exercises/programming/mana
         ArtemisProgrammingExerciseActionsModule,
         SubmissionPolicyUpdateModule,
         BarChartModule,
+        FeedbackAnalysisComponent,
     ],
     declarations: [
         ProgrammingExerciseConfigureGradingComponent,

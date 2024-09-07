@@ -30,12 +30,7 @@
                     <jhi-lecture-title-channel-name [lecture]="lecture" />
                     <div class="form-group" id="field_description">
                         <label class="form-control-label" jhiTranslate="artemisApp.lecture.description" for="field_description"></label>
-                        <jhi-markdown-editor
-                            class="markdown-editor"
-                            [domainCommands]="domainCommandsDescription"
-                            [(markdown)]="lecture.description"
-                            [editorMode]="EditorMode.LATEX"
-                        />
+                        <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="lecture.description" />
                     </div>
                     <div class="d-flex">
                         <div class="form-group flex-grow-1">
@@ -77,22 +72,22 @@
                 </div>
                 <div class="py-2">
                     <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
-                    <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.processAutomatically' | artemisTranslate }}</span>
+                    <span class="px-1" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processAutomatically"></span>
                     <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate" />
                 </div>
                 @if (processUnitMode) {
                     <div class="alert alert-warning mt-3">
                         <ul class="informative-text">
-                            <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.firstLine' | artemisTranslate }}</li>
-                            <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.secondLine' | artemisTranslate }}</li>
-                            <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.note' | artemisTranslate }}</li>
+                            <li jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.informativeText.firstLine"></li>
+                            <li jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.informativeText.secondLine"></li>
+                            <li jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.informativeText.note"></li>
                         </ul>
                     </div>
                 }
                 @if (processUnitMode) {
                     <div class="form-group">
                         <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
-                        <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
+                        <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation"></small>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
@@ -112,9 +107,7 @@
                             </div>
                         </div>
                         @if (!fileName && fileInputTouched) {
-                            <div class="alert alert-danger">
-                                {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError' | artemisTranslate }}
-                            </div>
+                            <div class="alert alert-danger" jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError"></div>
                         }
                     </div>
                 }
