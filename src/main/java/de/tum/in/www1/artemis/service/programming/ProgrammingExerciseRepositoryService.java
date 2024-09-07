@@ -666,6 +666,8 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put("${packaging}", programmingExercise.getBuildConfig().hasSequentialTestRuns() ? "pom" : "jar");
 
         var buildConfig = programmingExercise.getBuildConfig();
+
+        // replace checkout directory placeholders
         String studentWorkingDirectory = buildConfig.getAssignmentCheckoutPath() != null && !buildConfig.getAssignmentCheckoutPath().isBlank()
                 ? buildConfig.getAssignmentCheckoutPath()
                 : Constants.ASSIGNMENT_REPO_NAME;
@@ -686,8 +688,8 @@ public class ProgrammingExerciseRepositoryService {
         replacements.put(Constants.ASSIGNMENT_REPO_PLACEHOLDER, "/" + studentWorkingDirectory + "/src");
         replacements.put(Constants.TEST_REPO_PLACEHOLDER, testWorkingDirectory);
         replacements.put(Constants.SOLUTION_REPO_PLACEHOLDER, solutionWorkingDirectory);
-        if (programmingLanguage == ProgrammingLanguage.JAVA && programmingExercise.getProjectType().isGradle()) {
-            replacements.put(Constants.ASSIGNMENT_REPO_GRADLE_PLACEHOLDER, studentWorkingDirectory + "/src");
+        if ((programmingLanguage == ProgrammingLanguage.JAVA && programmingExercise.getProjectType().isGradle()) || programmingLanguage == ProgrammingLanguage.RUST) {
+            replacements.put(Constants.ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH, studentWorkingDirectory + "/src");
         }
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }

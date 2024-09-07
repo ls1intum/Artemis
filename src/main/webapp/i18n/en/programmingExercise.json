@@ -136,7 +136,8 @@
                 "assignment": "Assignment Repository Checkout Path",
                 "solution": "Solution Repository Checkout Path",
                 "tests": "Tests Repository Checkout Path",
-                "invalid": "Invalid checkout paths"
+                "invalid": "Invalid checkout paths",
+                "warning": "Modifying checkout paths may result in build failures. Some programming languages rely on Docker images that assume specific directory structures for the code."
             },
             "timeout": {
                 "title": "Timeout",

@@ -15,7 +15,7 @@
         />
     }
     @if (isTestRepositoryEditable) {
-        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.test"></label>
+        <label jhiTranslate="artemisApp.programmingExercise.checkoutPath.tests"></label>
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutPath.customize" />
         <input
             #field_testRepositoryCheckoutPath="ngModel"
@@ -49,4 +49,7 @@
             <strong jhiTranslate="artemisApp.programmingExercise.checkoutPath.alert"></strong>
         </div>
     }
+    <div class="warning alert-warning mt-2" role="alert">
+        <strong jhiTranslate="artemisApp.programmingExercise.checkoutPath.warning"></strong>
+    </div>
 </div>
