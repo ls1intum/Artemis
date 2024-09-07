@@ -1315,15 +1315,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         final List<ProgrammingExercise> exercisesToBeLocked = new ArrayList<>();
         final List<ProgrammingExerciseStudentParticipation> studentProgrammingParticipations = new ArrayList<>();
 
-        for (var exercise : studentExamResponse.getExercises()) {
-            var participation = exercise.getStudentParticipations().iterator().next();
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                studentProgrammingParticipations.add((ProgrammingExerciseStudentParticipation) participation);
-                exercisesToBeLocked.add(programmingExercise);
-                mockLockRepository(programmingExercise, participation);
-            }
-        }
-
         // submit early
         request.postWithoutResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.OK);
         var submittedStudentExam = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamResponse.getId() + "/summary",
