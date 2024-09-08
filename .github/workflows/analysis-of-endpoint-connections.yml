@@ -100,8 +100,18 @@ jobs:
 
       - name: Check if any step failed
         run: |
-          if [ "${{ steps.endpointAnalysis.outcome }}" != "success" ] ||
+          if [ "${{ steps.endpointAnalysis.outcome }}" != "success" ] &&
              [ "${{ steps.restCallAnalysis.outcome }}" != "success" ]; then
-            echo "One or more steps failed."
+            echo "Endpoints and REST calls could not be matched."
+            exit 1
+          fi
+          if [ "${{ steps.endpointAnalysis.outcome }}" == "success" ] &&
+             [ "${{ steps.restCallAnalysis.outcome }}" != "success" ]; then
+            echo "REST calls could not be matched."
+            exit 1
+          fi
+          if [ "${{ steps.endpointAnalysis.outcome }}" != "success" ] &&
+             [ "${{ steps.restCallAnalysis.outcome }}" == "success" ]; then
+            echo "Endpoints could not be matched."
             exit 1
           fi
