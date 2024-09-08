@@ -14,6 +14,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { jsPDF } from 'jspdf';
+import dayjs from 'dayjs/esm';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -41,6 +43,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachmentUnitSub: Subscription;
     selectedPages: Set<number> = new Set();
     isMergedPdfLoading = false;
+    attachmentToBeEdited?: Attachment;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -464,6 +467,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             orientation: 'landscape',
             unit: 'px',
             format: this.DEFAULT_GENERATED_SLIDE_FORMAT,
+            compress: true,
         });
 
         const canvasElements = this.pdfContainer.nativeElement.querySelectorAll('canvas');
@@ -477,6 +481,44 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
         });
 
-        doc.save('modified_document.pdf');
+        return doc.output('blob');
+    }
+
+    updateAttachmentWithFile(): void {
+        const pdfBlob = this.generatePdfFromCanvases();
+        const pdfFile = new File([pdfBlob], 'updatedAttachment.pdf', { type: 'application/pdf' });
+
+        if (this.attachment) {
+            this.attachmentToBeEdited = this.attachment;
+            this.attachmentToBeEdited!.version!++;
+            this.attachmentToBeEdited!.uploadDate = dayjs();
+
+            this.attachmentService.update(this.attachmentToBeEdited!.id!, this.attachmentToBeEdited!, pdfFile).subscribe({
+                next: () => {
+                    this.alertService.success('Attachment updated successfully!');
+                },
+                error: (error) => {
+                    this.alertService.error('Failed to update attachment: ' + error.message);
+                },
+            });
+        } else if (this.attachmentUnit) {
+            this.attachmentToBeEdited = this.attachmentUnit;
+            this.attachmentToBeEdited!.version!++;
+            this.attachmentToBeEdited!.uploadDate = dayjs();
+
+            const formData = new FormData();
+            formData.append('file', pdfFile);
+            formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited));
+            formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit));
+
+            this.attachmentUnitService.update(this.attachmentUnit!.lecture!.id!, this.attachmentToBeEdited!.id!, formData).subscribe({
+                next: () => {
+                    this.alertService.success('Attachment updated successfully!');
+                },
+                error: (error) => {
+                    this.alertService.error('Failed to update attachment: ' + error.message);
+                },
+            });
+        }
     }
 }
