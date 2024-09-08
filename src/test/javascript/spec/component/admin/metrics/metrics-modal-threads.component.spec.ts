@@ -14,8 +14,7 @@ describe('MetricsModalThreadsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [MetricsModalThreadsComponent],
+            imports: [ArtemisTestModule, MetricsModalThreadsComponent],
         })
             .overrideTemplate(MetricsModalThreadsComponent, '')
             .compileComponents()
@@ -46,9 +45,9 @@ describe('MetricsModalThreadsComponent', () => {
             blockedCount: -1,
             waitedTime: -1,
             waitedCount: -1,
-            lockName: null,
+            lockName: undefined,
             lockOwnerId: -1,
-            lockOwnerName: null,
+            lockOwnerName: undefined,
             daemon: false,
             inNative: false,
             suspended: false,
@@ -57,7 +56,7 @@ describe('MetricsModalThreadsComponent', () => {
             stackTrace: [],
             lockedMonitors: [],
             lockedSynchronizers: [],
-            lockInfo: null,
+            lockInfo: undefined,
         };
     }
 
