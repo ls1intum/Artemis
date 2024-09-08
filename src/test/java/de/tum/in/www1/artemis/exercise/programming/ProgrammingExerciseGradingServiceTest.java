@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,6 +37,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -51,6 +51,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
 import de.tum.in.www1.artemis.exercise.ExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -60,6 +61,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.user.UserUtilService;
@@ -125,6 +127,9 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @Autowired
     private ExamUtilService examUtilService;
 
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
     private ProgrammingExercise programmingExerciseSCAEnabled;
 
     private ProgrammingExercise programmingExercise;
@@ -155,11 +160,15 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExerciseUtilService.addTestCasesToProgrammingExercise(programmingExerciseSCAEnabled);
 
         ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student1);
+        Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        submission = submissionRepository.save(submission);
+
         if (programmingExercise.isExamExercise()) {
             createStudentExam(programmingExercise, student1);
         }
         result = new Result();
-        result.setParticipation(participation);
+        result.setSubmission(submission);
     }
 
     /**
@@ -385,39 +394,42 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         testCaseRepository.saveAll(testCases.values());
 
         Participation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        submission = submissionRepository.save(submission);
 
         var result1 = new Result();
-        result1.setParticipation(participation);
+        result1.setSubmission(submission);
         result1 = updateAndSaveAutomaticResult(result1, false, false, true);
 
         var result2 = new Result();
-        result2.setParticipation(participation);
+        result2.setSubmission(submission);
         result2 = updateAndSaveAutomaticResult(result2, true, false, false);
 
         var result3 = new Result();
-        result3.setParticipation(participation);
+        result3.setSubmission(submission);
         result3 = updateAndSaveAutomaticResult(result3, false, true, false);
 
         var result4 = new Result();
-        result4.setParticipation(participation);
+        result4.setSubmission(submission);
         result4 = updateAndSaveAutomaticResult(result4, false, true, true);
 
         var result5 = new Result();
-        result5.setParticipation(participation);
+        result5.setSubmission(submission);
         result5 = updateAndSaveAutomaticResult(result5, true, true, true);
 
         var result6 = new Result();
-        result6.setParticipation(participation);
+        result6.setSubmission(submission);
         result6 = updateAndSaveAutomaticResult(result6, false, false, false);
 
         // Build failure
         var resultBF = new Result().feedbacks(List.of()).rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
-        resultBF.setParticipation(participation);
+        resultBF.setSubmission(submission);
         gradingService.calculateScoreForResult(resultBF, programmingExercise, true);
 
         // Missing feedback
         var resultMF = new Result();
-        resultMF.setParticipation(participation);
+        resultMF.setSubmission(submission);
         var feedbackMF = new Feedback().result(result).testCase(testCases.get("test3")).positive(true).type(FeedbackType.AUTOMATIC).result(resultMF);
         resultMF.feedbacks(new ArrayList<>(List.of(feedbackMF))) // List must be mutable
                 .rated(true).score(0D).completionDate(ZonedDateTime.now()).assessmentType(AssessmentType.AUTOMATIC);
@@ -480,21 +492,24 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExerciseRepository.save(programmingExercise);
 
         Participation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        submission = submissionRepository.save(submission);
 
         var result1 = new Result();
-        result1.setParticipation(participation);
+        result1.setSubmission(submission);
         result1 = updateAndSaveAutomaticResult(result1, false, false, true);
 
         var result2 = new Result();
-        result2.setParticipation(participation);
+        result2.setSubmission(submission);
         result2 = updateAndSaveAutomaticResult(result2, true, false, true);
 
         var result3 = new Result();
-        result3.setParticipation(participation);
+        result3.setSubmission(submission);
         result3 = updateAndSaveAutomaticResult(result3, true, true, false);
 
         var result4 = new Result();
-        result4.setParticipation(participation);
+        result4.setSubmission(submission);
         result4 = updateAndSaveAutomaticResult(result4, false, true, true);
 
         // Assertions result1 - calculated
@@ -628,26 +643,22 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultFeedbackTestCasesElseThrow(programmingExercise.getId());
 
         // template 0 %
-        {
-            var participation = programmingExercise.getTemplateParticipation();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 0D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
-        }
+        assertUtilityParticipationScore(programmingExercise.getTemplateParticipation(), 0D, 3);
 
         // solution 100 %
-        {
-            var participation = programmingExercise.getSolutionParticipation();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 100D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
-        }
+        assertUtilityParticipationScore(programmingExercise.getSolutionParticipation(), 100D, 3);
 
         verifyStudentScoreCalculations(testParticipations);
+    }
+
+    private void assertUtilityParticipationScore(Participation participation, Double expectedScore, int feedbackSize) {
+        assertThat(participation.getSubmissions()).hasSize(1);
+        var submission = participation.getSubmissions().iterator().next();
+        var results = submission.getResults();
+        assertThat(results).hasSize(1);
+        var singleResult = results.getFirst();
+        testParticipationResult(singleResult, expectedScore, feedbackSize, AssessmentType.AUTOMATIC);
+        assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
     }
 
     @ValueSource(booleans = { false, true })
@@ -689,24 +700,10 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         // the invisible test case should however be visible for the template and solution repos
 
         // template 0 %
-        {
-            var participation = programmingExercise.getTemplateParticipation();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 0D, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
-        }
+        assertUtilityParticipationScore(programmingExercise.getTemplateParticipation(), 0D, 4);
 
         // solution 100 %
-        {
-            var participation = programmingExercise.getSolutionParticipation();
-            var results = participation.getResults();
-            assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
-            testParticipationResult(singleResult, 100D, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
-        }
+        assertUtilityParticipationScore(programmingExercise.getSolutionParticipation(), 100D, 4);
 
         verifyStudentScoreCalculations(testParticipations);
     }
@@ -872,23 +869,28 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     private void verifyStudentScoreCalculation(final Participation[] testParticipations, int student) {
         var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(testParticipations[student - 1].getId()).orElseThrow();
-        var results = participation.getResults();
+        var results = participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).toList();
 
         if (student == 1) {
             // student1 25 %
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, 25D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(participation.findLatestSubmission()).isPresent();
+            var submission = participation.findLatestSubmission().orElseThrow();
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
         else if (student == 2) {
             // student2 61% % / 75 %
             assertThat(results).hasSize(2);
+            assertThat(participation.getSubmissions()).hasSize(1);
 
             var manualResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.SEMI_AUTOMATIC).findAny();
             assertThat(manualResultOptional).isPresent();
             testParticipationResult(manualResultOptional.get(), 86D, 6, AssessmentType.SEMI_AUTOMATIC);
-            assertThat(manualResultOptional).contains(participation.findLatestLegalResult());
+            assertThat(participation.findLatestSubmission()).isPresent();
+            var submission = participation.findLatestSubmission().orElseThrow();
+            assertThat(manualResultOptional).contains(submission.findLatestLegalResult());
 
             var automaticResultOptional = results.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC).findAny();
             assertThat(automaticResultOptional).isPresent();
@@ -897,21 +899,25 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         else if (student == 3) {
             // student3 no result
             assertThat(results).isNullOrEmpty();
-            assertThat(participation.findLatestLegalResult()).isNull();
+            assertThat(participation.findLatestSubmission()).isEmpty();
         }
         else if (student == 4) {
             // student4 100%
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, 100D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(participation.findLatestSubmission()).isPresent();
+            var submission = participation.findLatestSubmission().orElseThrow();
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
         else if (student == 5) {
             // student5 Build failed
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, 0D, 0, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(participation.findLatestSubmission()).isPresent();
+            var submission = participation.findLatestSubmission().orElseThrow();
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
     }
 
@@ -933,48 +939,60 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // template does not pass any tests
         var participationTemplate = programmingExercise.getTemplateParticipation();
+        var templateSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        templateSubmission.setParticipation(participationTemplate);
+        templateSubmission = submissionRepository.save(templateSubmission);
         {
             // score 0 %
-            var resultTemplate = new Result().participation(participationTemplate).successful(false).rated(true).score(100D);
-            participationTemplate.setResults(Set.of(resultTemplate));
+            var resultTemplate = new Result().submission(templateSubmission).successful(false).rated(true).score(100D);
+            templateSubmission.setResults(List.of(resultTemplate));
             updateAndSaveAutomaticResult(resultTemplate, false, false, false);
         }
 
         // solution passes most tests but is still faulty
         var participationSolution = programmingExercise.getSolutionParticipation();
+        var solutionSubmission = ParticipationFactory.generateProgrammingSubmission(true);
+        solutionSubmission.setParticipation(participationSolution);
+        solutionSubmission = submissionRepository.save(solutionSubmission);
         {
             // score 75 %
-            var resultSolution = new Result().participation(participationSolution).successful(false).rated(true).score(100D);
-            participationSolution.setResults(Set.of(resultSolution));
+            var resultSolution = new Result().submission(solutionSubmission).successful(false).rated(true).score(100D);
+            solutionSubmission.setResults(List.of(resultSolution));
             updateAndSaveAutomaticResult(resultSolution, false, true, true);
         }
 
         // student1 only has one automatic result
         var participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student1);
+        var submission1 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission1.setParticipation(participation1);
+        submission1 = submissionRepository.save(submission1);
         {
             if (programmingExercise.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // score 50 %
-            var result1 = new Result().participation(participation1).successful(false).rated(true).score(100D);
-            participation1.setResults(Set.of(result1));
+            var result1 = new Result().submission(submission1).successful(false).rated(true).score(100D);
+            submission1.setResults(List.of(result1));
             updateAndSaveAutomaticResult(result1, true, true, false);
         }
         testParticipations[0] = participation1;
 
         // student2 has an automatic result and a manual result as well
         var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student2);
+        var submission2 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission2.setParticipation(participation2);
+        submission2 = submissionRepository.save(submission2);
         {
             if (programmingExercise.isExamExercise()) {
                 createStudentExam(programmingExercise, student2);
             }
             // score 75 %
-            var result2a = new Result().participation(participation2).successful(false).rated(true).score(100D);
+            var result2a = new Result().submission(submission2).successful(false).rated(true).score(100D);
             result2a = updateAndSaveAutomaticResult(result2a, true, false, true);
 
             // score 61 %
             var tests = getTestCases(programmingExercise);
-            var result2b = new Result().participation(participation2).score(61D).successful(false).rated(true).completionDate(ZonedDateTime.now())
+            var result2b = new Result().submission(submission2).score(61D).successful(false).rated(true).completionDate(ZonedDateTime.now())
                     .assessmentType(AssessmentType.SEMI_AUTOMATIC);
             result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test1")).positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
             result2b.addFeedback(new Feedback().result(result2b).testCase(tests.get("test2")).positive(false).type(FeedbackType.AUTOMATIC).credits(0.00));
@@ -986,7 +1004,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             gradingService.calculateScoreForResult(result2b, programmingExercise, true);
             assertThat(result2b.getScore()).isEqualTo(61);
             result2b = resultRepository.save(result2b);
-            participation2.setResults(Set.of(result2a, result2b));
+            submission2.setResults(List.of(result2a, result2b));
         }
         testParticipations[1] = participation2;
 
@@ -999,26 +1017,32 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // student4 only has one automatic result
         var participation4 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student4);
+        var submission4 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission4.setParticipation(participation4);
+        submission4 = submissionRepository.save(submission4);
         {
             if (programmingExercise.isExamExercise()) {
                 createStudentExam(programmingExercise, student4);
             }
             // score 100 %
-            var result4 = new Result().participation(participation4).successful(false).rated(true).score(100D);
+            var result4 = new Result().submission(submission4).successful(false).rated(true).score(100D);
             result4 = updateAndSaveAutomaticResult(result4, true, true, true);
-            participation4.setResults(Set.of(result4));
+            submission4.setResults(List.of(result4));
         }
         testParticipations[3] = participation4;
 
         // student5 has a build failure
         var participation5 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student5);
+        var submission5 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission5.setParticipation(participation5);
+        submission5 = submissionRepository.save(submission5);
         {
             if (programmingExercise.isExamExercise()) {
                 createStudentExam(programmingExercise, student5);
             }
             // Build Failed
             // @formatter:off
-            var result5 = new Result().participation(participation5)
+            var result5 = new Result().submission(submission5)
                     .feedbacks(List.of())
                     .score(0D)
                     .rated(true)
@@ -1028,7 +1052,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             // @formatter:on
             gradingService.calculateScoreForResult(result5, programmingExercise, true);
             result5 = resultRepository.save(result5);
-            participation5.setResults(Set.of(result5));
+            submission5.setResults(List.of(result5));
         }
         testParticipations[4] = participation5;
 
@@ -1039,10 +1063,13 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() {
         var participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student1");
+        var submission1 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission1.setParticipation(participation1);
+        submission1 = submissionRepository.save(submission1);
         if (programmingExerciseSCAEnabled.isExamExercise()) {
             createStudentExam(programmingExerciseSCAEnabled, student1);
         }
-        var result1 = new Result().participation(participation1).successful(false).rated(true).score(100D);
+        var result1 = new Result().submission(submission1).successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute
         result1.addFeedback(new Feedback().result(result1).text("test1").positive(true).type(FeedbackType.AUTOMATIC));
         // Add feedback which belongs to INACTIVE category
@@ -1075,41 +1102,51 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // create results for tests without category penalty limits
         var participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student1);
+        var submission1 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission1.setParticipation(participation1);
+        submission1 = submissionRepository.save(submission1);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // Capped by limit for exercise -> Score 60
-            var result1 = new Result().participation(participation1);
-            participation1.setResults(Set.of(result1));
+            var result1 = new Result().submission(submission1);
+            submission1.setResults(List.of(result1));
             updateAndSaveAutomaticResult(result1, true, true, true, 10, 10);
         }
         var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student2);
+        var submission2 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission2.setParticipation(participation2);
+        submission2 = submissionRepository.save(submission2);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student2);
             }
             // Testcase points: 42; Penalty: 4*3 = 12; Score: 71
-            var result2 = new Result().participation(participation2);
-            participation1.setResults(Set.of(result2));
+            var result2 = new Result().submission(submission2);
+            submission2.setResults(List.of(result2));
             updateAndSaveAutomaticResult(result2, true, true, true, 4, 0);
         }
         // check results without category penalty limits
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).orElseThrow();
-            var results = participation.getResults();
+            assertThat(participation.getSubmissions()).hasSize(1);
+            var submission = participation.findLatestSubmission().orElseThrow();
+            var results = submission.getResults();
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, 60D, 24, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).orElseThrow();
-            var results = participation.getResults();
+            assertThat(participation.getSubmissions()).hasSize(1);
+            var submission = participation.findLatestSubmission().orElseThrow();
+            var results = submission.getResults();
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, 71.4, 8, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
 
         // Also remove max penalty from exercise
@@ -1118,41 +1155,49 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // create results for tests without any limits
         var participation3 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student3);
+        var submission3 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission3.setParticipation(participation3);
+        submission3 = submissionRepository.save(submission3);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student3);
             }
             // Penalty will be higher than points -> score 0
-            var result3 = new Result().participation(participation3);
-            participation3.setResults(Set.of(result3));
+            var result3 = new Result().submission(submission3);
+            submission3.setResults(List.of(result3));
             updateAndSaveAutomaticResult(result3, true, true, true, 10, 10);
         }
         var participation4 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student4);
+        var submission4 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission4.setParticipation(participation4);
+        submission4 = submissionRepository.save(submission4);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student4);
             }
             // Testcase points: 35; Penalty: 5*3 + 3*5 = 30; Score: 11
-            var result4 = new Result().participation(participation4);
-            participation4.setResults(Set.of(result4));
+            var result4 = new Result().submission(submission4);
+            submission4.setResults(List.of(result4));
             updateAndSaveAutomaticResult(result4, false, true, true, 5, 3);
         }
         // check results without any limits
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation3.getId()).orElseThrow();
-            var results = participation.getResults();
+            var submission = participation.findLatestSubmission().orElseThrow();
+            var results = submission.getResults();
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, 0D, 24, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation4.getId()).orElseThrow();
-            var results = participation.getResults();
+            var submission = participation.findLatestSubmission().orElseThrow();
+            var results = submission.getResults();
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, 11.9, 12, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
     }
 
@@ -1167,24 +1212,28 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // create results
         var participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student1);
+        var submission1 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission1.setParticipation(participation1);
+        submission1 = submissionRepository.save(submission1);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
-            // Test case points are capped at 50 first, then the penalty of 19 is calculated but capped at at 40 percent of the maxScore -> score = (50-16.8)/42
-            var result1 = new Result().participation(participation1);
-            participation1.setResults(Set.of(result1));
+            // Test case points are capped at 50 first, then the penalty of 19 is calculated but capped at 40 percent of the maxScore -> score = (50-16.8)/42
+            var result1 = new Result().submission(submission1);
+            submission1.setResults(List.of(result1));
             updateAndSaveAutomaticResult(result1, true, true, true, 3, 2);
         }
 
         // check results
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation1.getId()).orElseThrow();
-            var results = participation.getResults();
+            var submission = participation.findLatestSubmission().orElseThrow();
+            var results = submission.getResults();
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, 79.0, 9, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
 
         // Remove max penalty from exercise
@@ -1198,25 +1247,29 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // create result without limits
         var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student2);
+        var submission2 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission2.setParticipation(participation2);
+        submission2 = submissionRepository.save(submission2);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student2);
             }
-            // Test case points are capped at 50 first, then the penalty of 55 is calculated but capped at at 100 percent of the maxScore, which means only the achieved bonus
+            // Test case points are capped at 50 first, then the penalty of 55 is calculated but capped at 100 percent of the maxScore, which means only the achieved bonus
             // points remain
-            var result2 = new Result().participation(participation2);
-            participation2.setResults(Set.of(result2));
+            var result2 = new Result().submission(submission2);
+            submission2.setResults(List.of(result2));
             updateAndSaveAutomaticResult(result2, true, true, true, 10, 5);
         }
 
         // check result without limits
         {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participation2.getId()).orElseThrow();
-            var results = participation.getResults();
+            var submission = participation.findLatestSubmission().orElseThrow();
+            var results = submission.getResults();
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, 19.0, 19, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
     }
 
@@ -1262,11 +1315,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     private void testResultScores(List<Participation> participations, double[] expectedScores, int[] expectedFeedbackSize, AssessmentType assessmentType) {
         for (int i = 0; i < participations.size(); i++) {
             var participation = studentParticipationRepository.findWithEagerResultsAndFeedbackById(participations.get(i).getId()).orElseThrow();
-            var results = participation.getResults();
+            var submission = participation.findLatestSubmission().orElseThrow();
+            var results = submission.getResults();
             assertThat(results).hasSize(1);
-            var singleResult = results.iterator().next();
+            var singleResult = results.getFirst();
             testParticipationResult(singleResult, expectedScores[i], expectedFeedbackSize[i], assessmentType);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
+            assertThat(singleResult).isEqualTo(submission.findLatestLegalResult());
         }
     }
 
@@ -1339,53 +1393,68 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // create results
         var participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student1);
+        var submission1 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission1.setParticipation(participation1);
+        submission1 = submissionRepository.save(submission1);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // Testcases: 1/6 * 42 = 7; Penalty: min(5, 0.2 * 42) = 5; Score: (int) ((7-5) / 42) = 4
-            var result1 = new Result().participation(participation1);
-            participation1.setResults(Set.of(result1));
+            var result1 = new Result().submission(submission1);
+            submission1.setResults(List.of(result1));
             updateAndSaveAutomaticResult(result1, true, false, false, 0, 1);
         }
         var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student2);
+        var submission2 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission2.setParticipation(participation2);
+        submission2 = submissionRepository.save(submission2);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student2);
             }
             // Testcases: 4/6 * 42 = 28; Penalty: 11; Score: (int) ((28-11) / 42)) = 40
-            var result2 = new Result().participation(participation2);
-            participation2.setResults(Set.of(result2));
+            var result2 = new Result().submission(submission2);
+            submission2.setResults(List.of(result2));
             updateAndSaveAutomaticResult(result2, true, false, true, 2, 1);
         }
         var participation3 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student3);
+        var submission3 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission3.setParticipation(participation3);
+        submission3 = submissionRepository.save(submission3);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student3);
             }
             // Points capped at zero, score can't be negative
-            var result3 = new Result().participation(participation3);
-            participation3.setResults(Set.of(result3));
+            var result3 = new Result().submission(submission3);
+            submission3.setResults(List.of(result3));
             updateAndSaveAutomaticResult(result3, true, false, false, 5, 1);
         }
         var participation4 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student4);
+        var submission4 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission4.setParticipation(participation4);
+        submission4 = submissionRepository.save(submission4);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student4);
             }
             // Run into category cap of 10: -> Testcases: 3/6 * 42 = 21; Penalty: 10; Score: (int) ((21-10) / 42)) = 26
-            var result4 = new Result().participation(participation4);
-            participation4.setResults(Set.of(result4));
+            var result4 = new Result().submission(submission4);
+            submission4.setResults(List.of(result4));
             updateAndSaveAutomaticResult(result4, true, true, false, 5, 0);
         }
         var participation5 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student5);
+        var submission5 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission5.setParticipation(participation5);
+        submission5 = submissionRepository.save(submission5);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student5);
             }
             // Run into max exercise penalty cap of 40 percent and all test cases pass -> score 60 percent
-            var result5 = new Result().participation(participation5);
-            participation5.setResults(Set.of(result5));
+            var result5 = new Result().submission(submission5);
+            submission5.setResults(List.of(result5));
             updateAndSaveAutomaticResult(result5, true, true, true, 5, 5);
         }
 
@@ -1396,55 +1465,70 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
         // create results
         var participation1 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student1);
+        var submission1 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission1.setParticipation(participation1);
+        submission1 = submissionRepository.save(submission1);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student1);
             }
             // Testcases: 1/6 * 42 = 7; Penalty: min(5, 0.2 * 42) = 5; Score: (int) ((7-5) / 42) = 4
-            var result11 = new Result().participation(participation1);
-            var result1 = new Result().participation(participation1);
-            participation1.setResults(Set.of(result11, result1));
+            var result11 = new Result().submission(submission1);
+            var result1 = new Result().submission(submission1);
+            submission1.setResults(List.of(result11, result1));
             updateAndSaveAutomaticResult(result11, false, false, false, 0, 1, ZonedDateTime.now().minusMinutes(1));
             updateAndSaveAutomaticResult(result1, true, false, false, 0, 1);
         }
         var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student2);
+        var submission2 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission2.setParticipation(participation2);
+        submission2 = submissionRepository.save(submission2);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student2);
             }
             // Testcases: 4/6 * 42 = 28; Penalty: 11; Score: (int) ((28-11) / 42)) = 40
-            var result2 = new Result().participation(participation2);
-            participation2.setResults(Set.of(result2));
+            var result2 = new Result().submission(submission2);
+            submission2.setResults(List.of(result2));
             updateAndSaveAutomaticResult(result2, true, false, true, 2, 1);
         }
         var participation3 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student3);
+        var submission3 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission3.setParticipation(participation3);
+        submission3 = submissionRepository.save(submission3);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student3);
             }
             // Points capped at zero, score can't be negative
-            var result3 = new Result().participation(participation3);
-            participation3.setResults(Set.of(result3));
+            var result3 = new Result().submission(submission3);
+            submission3.setResults(List.of(result3));
             updateAndSaveAutomaticResult(result3, true, false, false, 5, 1);
         }
         var participation4 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student4);
+        var submission4 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission4.setParticipation(participation4);
+        submission4 = submissionRepository.save(submission4);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student4);
             }
             // Run into category cap of 10: -> Testcases: 3/6 * 42 = 21; Penalty: 10; Score: (int) ((21-10) / 42)) = 26
-            var result4 = new Result().participation(participation4);
-            participation4.setResults(Set.of(result4));
+            var result4 = new Result().submission(submission4);
+            submission4.setResults(List.of(result4));
             updateAndSaveAutomaticResult(result4, true, true, false, 5, 0);
         }
         var participation5 = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, student5);
+        var submission5 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission5.setParticipation(participation5);
+        submission5 = submissionRepository.save(submission5);
         {
             if (programmingExerciseSCAEnabled.isExamExercise()) {
                 createStudentExam(programmingExerciseSCAEnabled, student5);
             }
             // Run into max exercise penalty cap of 40 percent and all test cases pass -> score 60 percent
-            var result5 = new Result().participation(participation5);
-            participation5.setResults(Set.of(result5));
+            var result5 = new Result().submission(submission5);
+            submission5.setResults(List.of(result5));
             updateAndSaveAutomaticResult(result5, true, true, true, 5, 5);
         }
 

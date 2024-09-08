@@ -761,7 +761,7 @@ public class ProgrammingExerciseUtilService {
         submission.setParticipation(participation);
         submission = programmingSubmissionRepo.save(submission);
 
-        return programmingSubmissionRepo.findWithEagerResultsById(submission.getId()).orElseThrow().getLastResult();
+        return programmingSubmissionRepo.findWithEagerResultsFeedbacksTestCasesAssessorById(submission.getId()).orElseThrow().getLastResult();
     }
 
     /**
@@ -779,7 +779,7 @@ public class ProgrammingExerciseUtilService {
         submission.addResult(result);
         submission.setParticipation(templateParticipation);
         submission = programmingSubmissionRepo.save(submission);
-        return programmingSubmissionRepo.findWithEagerResultsById(submission.getId()).orElseThrow().getLastResult();
+        return programmingSubmissionRepo.findWithEagerResultsFeedbacksTestCasesAssessorById(submission.getId()).orElseThrow().getLastResult();
     }
 
     /**

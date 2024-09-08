@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -533,10 +534,12 @@ public class ProgrammingExerciseGradingService {
      */
     private Optional<Result> updateLatestResult(ProgrammingExercise exercise, Participation participation, Set<ProgrammingExerciseTestCase> allTestCases,
             Set<ProgrammingExerciseTestCase> testCasesBeforeDueDate, Set<ProgrammingExerciseTestCase> testCasesAfterDueDate, boolean applySubmissionPolicy) {
-        final Result result = participation.findLatestLegalResult();
-        if (result == null) {
+        final Optional<Submission> submission = participation.findLatestSubmission();
+        final Optional<Result> resultOpt = submission.map(Submission::findLatestLegalResult);
+        if (resultOpt.isEmpty()) {
             return Optional.empty();
         }
+        final Result result = resultOpt.get();
 
         boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
         final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate = isBeforeDueDate ? testCasesBeforeDueDate : testCasesAfterDueDate;
