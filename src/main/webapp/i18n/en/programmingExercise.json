@@ -133,15 +133,15 @@
                 "customize": "You can customize the checkout path where the repositories are cloned inside the Docker container. Make sure to provide a valid absolute UNIX path. The default path is /var/tmp.",
                 "alert": "Checkout paths must only contain words, '_', '-', and '/' characters, but must not start nor end with a '/' character. The paths must be different for each repository.",
                 "edit": "Edit repositories checkout path",
-                "assignment": "Assignment Repository Checkout Path",
-                "solution": "Solution Repository Checkout Path",
-                "tests": "Tests Repository Checkout Path",
+                "assignment": "Assignment Repository Checkout Path. This can't be edited after creation.",
+                "solution": "Solution Repository Checkout Path. This can't be edited after creation.",
+                "tests": "Tests Repository Checkout Path. This can't be edited after creation.",
                 "invalid": "Invalid checkout paths",
                 "warning": "Modifying checkout paths may result in build failures. Some programming languages rely on Docker images that assume specific directory structures for the code."
             },
             "timeout": {
                 "title": "Timeout",
-                "customize": "You can customize the timeout for the build. Make sure to provide a valid integer value. The unit is seconds. The default value is 240 seconds.",
+                "customize": "You can customize the timeout for the build. Make sure to provide a valid integer value. The unit is seconds. Note that this value may be overridden by the maximum limit set by the administrators.",
                 "alert": "The timeout must be a valid integer value."
             },
             "allowOnlineEditor": {

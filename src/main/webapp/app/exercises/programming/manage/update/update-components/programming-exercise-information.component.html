@@ -59,7 +59,7 @@
                 (submissionBuildPlanEvent)="updateSubmissionBuildPlanCheckoutDirectories($event)"
                 [isEdit]="true"
             />
-            @if (editRepositoryCheckoutPath && isLocal) {
+            @if (editRepositoryCheckoutPath && isLocal && !isImport && !programmingExerciseCreationConfig.isEdit) {
                 <jhi-programming-exercise-edit-checkout-directories
                     [programmingExercise]="programmingExercise"
                     [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
@@ -140,7 +140,7 @@
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </ngb-alert>
                     }
-                    @if (isLocal) {
+                    @if (isLocal && !isImport && !programmingExerciseCreationConfig.isEdit) {
                         <jhi-button
                             [btnType]="ButtonType.WARNING"
                             [btnSize]="ButtonSize.SMALL"

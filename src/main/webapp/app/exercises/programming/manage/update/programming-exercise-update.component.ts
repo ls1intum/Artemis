@@ -410,6 +410,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     tap((segments) => {
                         this.isImportFromExistingExercise = segments.some((segment) => segment.path === 'import');
                         this.isImportFromFile = segments.some((segment) => segment.path === 'import-from-file');
+                        this.isEdit = segments.some((segment) => segment.path === 'edit');
                     }),
                     switchMap(() => this.activatedRoute.params),
                     tap((params) => {
