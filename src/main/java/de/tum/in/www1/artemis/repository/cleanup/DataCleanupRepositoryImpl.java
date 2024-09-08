@@ -1,17 +1,16 @@
 package de.tum.in.www1.artemis.repository.cleanup;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
-
 import java.time.ZonedDateTime;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 
-import org.springframework.context.annotation.Profile;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-@Profile(PROFILE_CORE)
+import de.tum.in.www1.artemis.repository.TextBlockRepository;
+
 @Repository
 public class DataCleanupRepositoryImpl implements DataCleanupRepository {
 
@@ -20,16 +19,53 @@ public class DataCleanupRepositoryImpl implements DataCleanupRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
+    @Autowired
+    private TextBlockRepository textBlockRepository;
+
     @Override
     @Transactional
     public void deleteOrphans() {
+        // long text feedback and text block entities reference feedback
+        // can be deleted for feedback without result
+        entityManager.createQuery("""
+                    DELETE FROM LongFeedbackText lft
+                    WHERE lft.feedback IN (
+                        SELECT f
+                        FROM Feedback f
+                        WHERE f.result IS NULL
+                    )
+                """).executeUpdate();
+        entityManager.createQuery("""
+                    DELETE FROM TextBlock tb
+                    WHERE tb.feedback IN (SELECT f FROM Feedback f JOIN f.result WHERE f.result IS NULL)
+                """).executeUpdate();
         entityManager.createQuery("DELETE FROM Feedback f WHERE f.result IS NULL").executeUpdate();
-        entityManager.createQuery("DELETE FROM LongFeedbackText lft WHERE lft.feedback IS NULL").executeUpdate();
         entityManager.createQuery("DELETE FROM StudentScore ps WHERE ps.user IS NULL").executeUpdate();
         entityManager.createQuery("DELETE FROM TeamScore ps WHERE ps.team IS NULL").executeUpdate();
-        entityManager.createQuery("DELETE FROM Rating rr WHERE rr.result IS NULL").executeUpdate();
+        // all long feedback text records that are part of feedback that is part of an orphan result
+        entityManager.createQuery("""
+                    DELETE FROM LongFeedbackText lft
+                    WHERE lft.feedback.id IN (
+                        SELECT f.id
+                        FROM Feedback f
+                        WHERE f.result.participation IS NULL AND f.result.submission IS NULL
+                    )
+                """).executeUpdate();
+        // we cannot delete feedbacks that are part of orphan results because of text block relation
+        entityManager.createQuery("""
+                    DELETE FROM TextBlock tb
+                    WHERE tb.feedback IN (SELECT f FROM Feedback f JOIN f.result r WHERE r.submission IS NULL AND r.participation IS NULL)
+                """).executeUpdate();
+        // finally, we can delete feedbacks that are connected to orphan results
+        entityManager.createQuery("""
+                    DELETE FROM Feedback f
+                    WHERE f.result IN (SELECT r FROM Result r WHERE r.submission IS NULL AND r.participation IS NULL)
+                """).executeUpdate();
+        entityManager.createQuery("""
+                    DELETE FROM Rating rt
+                    WHERE rt.result IN (SELECT r FROM Result r where r.submission IS NULL AND r.participation IS NULL)
+                """).executeUpdate();
         entityManager.createQuery("DELETE FROM Result r WHERE r.participation IS NULL AND r.submission IS NULL").executeUpdate();
-        entityManager.createQuery("DELETE FROM PlagiarismComparison pc WHERE pc.submissionA IS NULL OR pc.submissionB IS NULL").executeUpdate();
     }
 
     @Override
@@ -143,6 +179,26 @@ public class DataCleanupRepositoryImpl implements DataCleanupRepository {
         entityManager.createQuery("""
                     DELETE FROM LongFeedbackText lft
                     WHERE lft.feedback.id IN (
+                        SELECT f.id
+                        FROM Feedback f
+                        JOIN f.result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE f.result.id NOT IN (
+                            SELECT MAX(r2.id)
+                            FROM Result r2
+                            WHERE r2.participation.id = p.id
+                        )
+                        AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
+        // old text block that is not part of latest results
+        entityManager.createQuery("""
+                    DELETE FROM TextBlock tb
+                    WHERE tb.feedback.id IN (
                         SELECT f.id
                         FROM Feedback f
                         JOIN f.result r

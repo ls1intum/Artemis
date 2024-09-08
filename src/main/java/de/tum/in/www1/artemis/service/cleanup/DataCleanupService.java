@@ -30,32 +30,32 @@ public class DataCleanupService {
 
     public CleanupServiceExecutionRecordDTO deleteOrphans() {
         dataCleanUpRepository.deleteOrphans();
-        return new CleanupServiceExecutionRecordDTO(this.createDBEntry(CleanupJobType.ORPHANS, null, null).getDeletionTimestamp());
+        return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.ORPHANS, null, null));
     }
 
     public CleanupServiceExecutionRecordDTO deletePlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         dataCleanUpRepository.deletePlagiarismComparisons(deleteFrom, deleteTo);
-        return new CleanupServiceExecutionRecordDTO(this.createDBEntry(CleanupJobType.PLAGIARISM_COMPARISONS, deleteFrom, deleteTo).getDeletionTimestamp());
+        return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.PLAGIARISM_COMPARISONS, deleteFrom, deleteTo));
     }
 
     public CleanupServiceExecutionRecordDTO deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         dataCleanUpRepository.deleteNonRatedResults(deleteFrom, deleteTo);
-        return new CleanupServiceExecutionRecordDTO(this.createDBEntry(CleanupJobType.NON_RATED_RESULTS, deleteFrom, deleteTo).getDeletionTimestamp());
+        return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.NON_RATED_RESULTS, deleteFrom, deleteTo));
     }
 
     public CleanupServiceExecutionRecordDTO deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         dataCleanUpRepository.deleteRatedResults(deleteFrom, deleteTo);
-        return new CleanupServiceExecutionRecordDTO(this.createDBEntry(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo).getDeletionTimestamp());
+        return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo));
     }
 
     public CleanupServiceExecutionRecordDTO deleteSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         dataCleanUpRepository.deleteSubmissionVersions(deleteFrom, deleteTo);
-        return new CleanupServiceExecutionRecordDTO(this.createDBEntry(CleanupJobType.SUBMISSION_VERSIONS, deleteFrom, deleteTo).getDeletionTimestamp());
+        return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.SUBMISSION_VERSIONS, deleteFrom, deleteTo));
     }
 
     public CleanupServiceExecutionRecordDTO deleteFeedback(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         dataCleanUpRepository.deleteFeedback(deleteFrom, deleteTo);
-        return new CleanupServiceExecutionRecordDTO(this.createDBEntry(CleanupJobType.FEEDBACK, deleteFrom, deleteTo).getDeletionTimestamp());
+        return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.FEEDBACK, deleteFrom, deleteTo));
     }
 
     public List<CleanupServiceExecutionRecordDTO> getLastExecutions() {
@@ -64,11 +64,11 @@ public class DataCleanupService {
         for (CleanupJobType jobType : CleanupJobType.values()) {
             CleanupJobExecution lastExecution = cleanupJobExecutionRepository.findTopByCleanupJobTypeOrderByDeletionTimestampDesc(jobType);
             if (lastExecution != null) {
-                executionRecords.add(new CleanupServiceExecutionRecordDTO(lastExecution.getDeletionTimestamp()));
+                executionRecords.add(CleanupServiceExecutionRecordDTO.of(lastExecution));
             }
             else {
-                // Если задание еще ни разу не выполнялось, нужно добавить null
-                executionRecords.add(new CleanupServiceExecutionRecordDTO(null));
+                // for jobs that have not been run yet
+                executionRecords.add(new CleanupServiceExecutionRecordDTO(null, jobType.getName()));
             }
         }
 

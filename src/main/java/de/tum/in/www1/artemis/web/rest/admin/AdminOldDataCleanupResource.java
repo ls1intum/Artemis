@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -88,7 +89,7 @@ public class AdminOldDataCleanupResource {
         return ResponseEntity.ok().body(result);
     }
 
-    @PostMapping("get-last-executions")
+    @GetMapping("get-last-executions")
     @EnforceAdmin
     public ResponseEntity<List<CleanupServiceExecutionRecordDTO>> getLastExecutions() {
         List<CleanupServiceExecutionRecordDTO> result = dataCleanupService.getLastExecutions();
