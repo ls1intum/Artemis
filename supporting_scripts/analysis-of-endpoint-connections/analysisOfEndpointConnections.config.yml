@@ -182,6 +182,7 @@ excludedEndpoints:
   - 'api/programming-exercises/{exerciseId}/submission-policy'
   - 'api/data-exports/{dataExportId}'
 
+  - 'api/repository/{participationId}/files'
 
 
 endpointsParsedIncorrectly:
@@ -261,6 +262,8 @@ excludedRestCalls:
   - 'api/exercises'
   - 'api/results/${resultId}'
   - 'api/attachments'
+
+  - 'api/repository/${participationId}/file'
 
 restCallsParsedIncorrectly:
   -

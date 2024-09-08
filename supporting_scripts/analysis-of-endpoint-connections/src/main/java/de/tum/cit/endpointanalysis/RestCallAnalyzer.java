@@ -167,7 +167,7 @@ public class RestCallAnalyzer {
 
         log.info("Number of REST calls without matching endpoints: {}", restCallsAndMatchingEndpoints.restCallsWithoutMatchingEndpoints().size());
 
-        if (restCallsAndMatchingEndpoints.restCallsWithMatchingEndpoints().isEmpty()) {
+        if (!restCallsAndMatchingEndpoints.restCallsWithMatchingEndpoints().isEmpty()) {
             System.exit(1);
         }
     }
