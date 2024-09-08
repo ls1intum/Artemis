@@ -170,15 +170,21 @@ The script will automatically perform all the necessary steps:
 
 If you want to generate different results for all the students created by the script:
 
-1.	Navigate to the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and copy the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file into it.
-    If you want, you can delete the existing folders (behavior and structural) from the programming exercise’s test case template. The new test cases will randomly pass or fail, causing different results for each student.
-2.	Rebuild Artemis to apply the changes.
+1.	Run the following Script which will navigate to the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and copy the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file into it.
+    It will delete the existing folders (behavior and structural) from the programming exercise’s test case template. The new test cases will randomly pass or fail, causing different results for each student.
+```shell
+python3 randomize_results_before.py
+```
+2.  Rebuild Artemis to apply the changes.
 3.	Run the main method in large_course_main.py. Now, all created students should have varying results in the programming exercise.
 ```shell
 python3 large_course_main.py
 ```
-4.  Make sure to revert these changes after running the script. You can copy the original test case files from the [default](./testFiles-template/default) folder back into the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and delete the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file that was copied to [testFiles](../../../src/main/resources/templates/java/test/testFiles) in Step 1.
-    Otherwise, you risk breaking the real template of the programming exercise if these changes are pushed.
+4.  Make sure to revert these changes after running the script. The following script copies the original test case files from the [default](./testFiles-template/default) folder back into the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and deletes the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file that was copied to [testFiles](../../../src/main/resources/templates/java/test/testFiles) in Step 1.
+    If you don't run this script after running the script in Step 1, you risk breaking the real template of the programming exercise if these changes are pushed and merged.
+```shell
+python3 randomize_results_after.py
+```
 
 ### Optional: Using an Existing Programming Exercise (Can also be done on Test Server)
 Alternatively, you can use an existing programming exercise and push the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file to the test repository of the programming exercise. 
