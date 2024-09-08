@@ -97,7 +97,7 @@ export interface ProgrammingAuxiliaryRepositoryButtonsDetail extends DetailBase 
     data: { auxiliaryRepositories: AuxiliaryRepository[]; exerciseId?: number };
 }
 
-interface ProgrammingTestStatusDetail extends DetailBase {
+export interface ProgrammingTestStatusDetail extends DetailBase {
     type: DetailType.ProgrammingTestStatus;
     data: {
         participation?: TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation;
@@ -108,7 +108,7 @@ interface ProgrammingTestStatusDetail extends DetailBase {
         submissionRouterLink?: (string | number | undefined)[];
     };
 }
-interface ProgrammingDiffReportDetail extends DetailBase {
+export interface ProgrammingDiffReportDetail extends DetailBase {
     type: DetailType.ProgrammingDiffReport;
     data: { addedLineCount: number; removedLineCount: number; isLoadingDiffReport?: boolean; gitDiffReport?: ProgrammingExerciseGitDiffReport };
 }

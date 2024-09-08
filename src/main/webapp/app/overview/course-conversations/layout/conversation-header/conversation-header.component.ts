@@ -27,6 +27,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
 
     @Output() collapseSearch = new EventEmitter<void>();
+    @Output() onUpdateSidebar = new EventEmitter<void>();
 
     INFO = ConversationDetailTabs.INFO;
     MEMBERS = ConversationDetailTabs.MEMBERS;
@@ -107,6 +108,7 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {},
                 });
+                this.onUpdateSidebar.emit();
             });
     }
 

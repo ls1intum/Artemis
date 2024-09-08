@@ -47,7 +47,7 @@
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
                 "login": "Login",
-                "email": "Email",
+                "email": "E-Mail",
                 "joinedArtemis": "Artemis beigetreten am",
                 "sshKey": "Öffentlicher SSH Schlüssel"
             },
