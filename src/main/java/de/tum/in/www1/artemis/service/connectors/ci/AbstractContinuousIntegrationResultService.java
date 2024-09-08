@@ -7,10 +7,9 @@ import java.util.function.Predicate;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
@@ -42,8 +41,8 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
     }
 
     @Override
-    public Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation) {
-        ProgrammingExercise exercise = participation.getProgrammingExercise();
+    public Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingSubmission submission) {
+        ProgrammingExercise exercise = (ProgrammingExercise) submission.getParticipation().getExercise();
 
         final var result = new Result();
         result.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -51,7 +50,9 @@ public abstract class AbstractContinuousIntegrationResultService implements Cont
         result.setCompletionDate(buildResult.getBuildRunDate());
         // this only sets the score to a temporary value, the real score is calculated in the grading service
         result.setScore(buildResult.getBuildScore(), exercise.getCourseViaExerciseGroupOrCourseMember());
-        result.setParticipation((Participation) participation);
+
+        // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
+        result.setSubmission(submission);
 
         addFeedbackToResult(result, buildResult);
         return result;

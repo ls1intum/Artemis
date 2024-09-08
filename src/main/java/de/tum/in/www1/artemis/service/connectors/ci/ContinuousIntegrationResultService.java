@@ -7,7 +7,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 /**
@@ -26,11 +25,11 @@ public interface ContinuousIntegrationResultService {
     /**
      * Generate an Artemis result object from the CI build result. Will use the test case results and issues in static code analysis as result feedback.
      *
-     * @param buildResult   Build result data provided by build notification (already converted into a DTO)
-     * @param participation to attach result to.
+     * @param buildResult Build result data provided by build notification (already converted into a DTO)
+     * @param submission  to attach result to.
      * @return the created Artemis result with a score, completion date, etc.
      */
-    Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingExerciseParticipation participation);
+    Result createResultFromBuildResult(AbstractBuildResultNotificationDTO buildResult, ProgrammingSubmission submission);
 
     /**
      * Extract the build log statistics from the BuildLogEntries and persist a BuildLogStatisticsEntry.

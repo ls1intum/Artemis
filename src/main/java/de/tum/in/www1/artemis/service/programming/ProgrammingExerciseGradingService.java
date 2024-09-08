@@ -173,10 +173,10 @@ public class ProgrammingExerciseGradingService {
                 feedbackCreationService.extractTestCasesFromResultAndBroadcastUpdates(buildResult, exercise);
             }
 
-            Result newResult = ciResultService.createResultFromBuildResult(buildResult, participation);
-
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
+
+            Result newResult = ciResultService.createResultFromBuildResult(buildResult, latestSubmission);
 
             // Artemis considers a build as failed if no tests have been executed (e.g. due to a compile failure in the student code)
             final var buildFailed = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
@@ -200,8 +200,6 @@ public class ProgrammingExerciseGradingService {
                 }
             }
 
-            // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
-            newResult.setSubmission(latestSubmission);
             newResult.setRatedIfNotAfterDueDate();
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
             return processNewProgrammingExerciseResult(participation, newResult);
@@ -342,14 +340,6 @@ public class ProgrammingExerciseGradingService {
 
         // Finally, save the new result once and make sure the order column between submission and result is maintained
 
-        // workaround to avoid org.hibernate.HibernateException: null index column for collection: de.tum.in.www1.artemis.domain.Submission.results
-        processedResult.setSubmission(null);
-        // workaround to avoid scheduling the participant score update twice. The update will only run when a participation is present.
-        processedResult.setParticipation(null);
-
-        processedResult = resultRepository.save(processedResult);
-        processedResult.setSubmission(programmingSubmission);
-        processedResult.setParticipation((Participation) participation);
         programmingSubmission.addResult(processedResult);
         programmingSubmissionRepository.save(programmingSubmission);
 
