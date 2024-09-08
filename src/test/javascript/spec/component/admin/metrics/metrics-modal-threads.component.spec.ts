@@ -12,25 +12,19 @@ describe('MetricsModalThreadsComponent', () => {
     let fixture: ComponentFixture<MetricsModalThreadsComponent>;
     let activeModal: NgbActiveModal;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MetricsModalThreadsComponent],
         })
             .overrideTemplate(MetricsModalThreadsComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(MetricsModalThreadsComponent);
-                comp = fixture.componentInstance;
-                activeModal = TestBed.inject(NgbActiveModal);
+            .compileComponents();
 
-                runnableThreads = [createThread(1, ThreadState.Runnable), createThread(2, ThreadState.Runnable), createThread(3, ThreadState.Runnable)];
-                waitingThreads = [
-                    createThread(4, ThreadState.Waiting),
-                    createThread(5, ThreadState.Waiting),
-                    createThread(6, ThreadState.Waiting),
-                    createThread(7, ThreadState.Waiting),
-                ];
-            });
+        fixture = TestBed.createComponent(MetricsModalThreadsComponent);
+        comp = fixture.componentInstance;
+        activeModal = TestBed.inject(NgbActiveModal);
+
+        runnableThreads = [createThread(1, ThreadState.Runnable), createThread(2, ThreadState.Runnable), createThread(3, ThreadState.Runnable)];
+        waitingThreads = [createThread(4, ThreadState.Waiting), createThread(5, ThreadState.Waiting), createThread(6, ThreadState.Waiting), createThread(7, ThreadState.Waiting)];
     });
 
     afterEach(() => {
