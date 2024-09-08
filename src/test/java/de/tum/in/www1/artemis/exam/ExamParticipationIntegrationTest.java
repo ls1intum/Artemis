@@ -585,12 +585,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
                     result.setRated(true);
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                result.setParticipation(participation);
                 result.setAssessor(examTutor1);
-                result = resultRepository.save(result);
-                result.setSubmission(submission);
                 submission.addResult(result);
-                submissionRepository.save(submission);
+                resultRepository.save(result);
             }
         }
         log.debug("testGetStatsForExamAssessmentDashboard: step 8 done");
@@ -680,12 +677,9 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
                     result.completionDate(ZonedDateTime.now().minusMinutes(3));
                 }
                 result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-                result.setParticipation(participation);
                 result.setAssessor(examInstructor);
-                result = resultRepository.save(result);
-                result.setSubmission(submission);
                 submission.addResult(result);
-                submissionRepository.save(submission);
+                resultRepository.save(result);
             }
         }
         // check the stats again
@@ -854,19 +848,16 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
                 // Create results
                 if (withSecondCorrectionAndStarted) {
                     var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
-                    firstResult.setParticipation(participation);
                     firstResult.setAssessor(instructor);
-                    firstResult = resultRepository.save(firstResult);
                     firstResult.setSubmission(submission);
                     submission.addResult(firstResult);
+                    resultRepository.save(firstResult);
                 }
 
                 var finalResult = new Result().score(resultScore).rated(true).completionDate(ZonedDateTime.now().minusMinutes(5));
-                finalResult.setParticipation(participation);
                 finalResult.setAssessor(instructor);
-                finalResult = resultRepository.save(finalResult);
-                finalResult.setSubmission(submission);
                 submission.addResult(finalResult);
+                resultRepository.save(finalResult);
 
                 submission.submitted(true);
                 submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(6));

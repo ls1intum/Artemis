@@ -1668,7 +1668,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         // check that all relevant information is visible to the student
         for (final var exercise : studentExamSummary.getExercises()) {
-            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
+            var participation = exercise.getStudentParticipations().iterator().next();
+            assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
 
@@ -1707,8 +1708,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 });
             }
             else {
-                var participation = exercise.getStudentParticipations().iterator().next();
-                assertThat(participation.getResults()).isEmpty();
                 assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
             }
         }
@@ -1727,13 +1726,13 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         // check that all relevant information is visible to the student
         for (final var exercise : studentExamSummary.getExercises()) {
-            assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isNotEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
 
             if (exercise instanceof QuizExercise quizExercise) {
                 assertThat(quizExercise.getQuizQuestions()).hasSize(3);
                 QuizSubmission submission = (QuizSubmission) exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next();
+                assertThat(submission.getResults()).isNotEmpty();
                 assertThat(submission.getScoreInPoints()).isNotNull();
                 submission.getSubmittedAnswers().forEach(submittedAnswer -> {
                     assertThat(submittedAnswer.getScoreInPoints()).isNotNull();
@@ -1767,8 +1766,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             }
             else {
                 var participation = exercise.getStudentParticipations().iterator().next();
-                assertThat(participation.getResults()).hasSize(1);
-                var result = participation.getResults().iterator().next();
+                var submission = participation.getSubmissions().iterator().next();
+                assertThat(submission.getResults()).hasSize(1);
+                var result = submission.getResults().getFirst();
                 assertThat(result.getAssessor()).as("no sensitive inforation get leaked").isNull();
             }
         }
@@ -2146,7 +2146,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         StudentParticipation participationWithLatestResult = studentParticipationRepository
                 .findByExerciseIdAndStudentIdAndTestRunWithLatestResult(finalStudentExam.getExercises().getFirst().getId(), finalStudentExam.getUser().getId(), false)
                 .orElseThrow();
-        Result result = participationWithLatestResult.getResults().iterator().next();
+        assertThat(participationWithLatestResult.getSubmissions()).hasSize(1);
+        var submission = participationWithLatestResult.getSubmissions().iterator().next();
+        Result result = submission.getResults().getFirst();
         result.setScore(0.0); // To reduce grade to a grade lower than the max grade.
         resultRepository.save(result);
         return finalExam;
