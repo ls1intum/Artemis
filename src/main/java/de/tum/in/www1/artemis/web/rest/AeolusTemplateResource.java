@@ -79,8 +79,8 @@ public class AeolusTemplateResource {
     }
 
     /**
-     * GET /api/aeolus/templates/:language/:projectType : Get the aeolus template file with the given filename<br/>
-     * GET /api/aeolus/templates/:language : Get the aeolus template file with the given filename
+     * GET /api/aeolus/template-scripts/:language/:projectType : Get the aeolus template file with the given filename<br/>
+     * GET /api/aeolus/template-scripts/:language : Get the aeolus template file with the given filename
      * <p>
      * The windfile contains the default build plan configuration for new programming exercises.
      *
