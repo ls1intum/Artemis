@@ -55,6 +55,7 @@
         "interactjs": "1.10.27",
         "ismobilejs-es5": "0.0.1",
         "js-video-url-parser": "0.5.1",
+        "jspdf": "^2.5.1",
         "jszip": "3.10.1",
         "lodash-es": "4.17.21",
         "mobile-drag-drop": "3.0.0-rc.0",

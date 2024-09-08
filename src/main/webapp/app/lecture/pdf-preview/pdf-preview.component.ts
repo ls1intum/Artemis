@@ -13,6 +13,7 @@ import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { jsPDF } from 'jspdf';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -29,6 +30,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
 
     readonly DEFAULT_SLIDE_WIDTH = 250;
+    readonly DEFAULT_GENERATED_SLIDE_FORMAT = [1920, 1080]; //Represents 16:9 aspect ratio
     course?: Course;
     attachment?: Attachment;
     attachmentUnit?: AttachmentUnit;
@@ -455,5 +457,26 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             overlay!.innerHTML = `<span>${pageIndex}</span>`;
             checkbox!.id = String(pageIndex);
         });
+    }
+
+    generatePdfFromCanvases() {
+        const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'px',
+            format: this.DEFAULT_GENERATED_SLIDE_FORMAT,
+        });
+
+        const canvasElements = this.pdfContainer.nativeElement.querySelectorAll('canvas');
+        const scaleFactor = 1;
+        Array.from(canvasElements).forEach((canvas, index) => {
+            if (index > 0) doc.addPage();
+            const imgData = canvas.toDataURL('image/jpeg', scaleFactor);
+            const imgProps = doc.getImageProperties(imgData);
+            const pdfWidth = doc.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        });
+
+        doc.save('modified_document.pdf');
     }
 }
