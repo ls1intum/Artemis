@@ -18,12 +18,12 @@ import { removeSpecialCharacters } from 'app/shared/util/utils';
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnChanges, OnDestroy {
     protected readonly ProjectType = ProjectType;
 
-    @Input() isImport: boolean;
-    @Input() isExamMode: boolean;
-    @Input() programmingExercise: ProgrammingExercise;
-    @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
-    @Input() isLocal: boolean;
-    @Input() importOptions: ImportOptions;
+    @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
+    isImport = input.required<boolean>();
+    isExamMode = input.required<boolean>();
+    programmingExercise = input.required<ProgrammingExercise>();
+    isLocal = input.required<boolean>();
+    importOptions = input.required<ImportOptions>();
     isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
@@ -53,14 +53,14 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 let newShortName = this.exerciseTitle();
                 const isImport = this.programmingExerciseCreationConfig.isImportFromFile || this.programmingExerciseCreationConfig.isImportFromExistingExercise;
                 if (isImport) {
-                    newShortName = this.programmingExercise.shortName;
+                    newShortName = this.programmingExercise().shortName;
                 }
 
                 if (newShortName && newShortName.length > 3) {
                     const sanitizedShortName = removeSpecialCharacters(newShortName ?? '').substring(0, 6);
                     // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
                     const shortnameWithRandomness = sanitizedShortName + this.shortNameRandomPart();
-                    this.programmingExercise.shortName = shortnameWithRandomness;
+                    this.programmingExercise().shortName = shortnameWithRandomness;
                 }
             }.bind(this),
         );
@@ -89,7 +89,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.programmingExercise) {
-            this.exerciseTitle.set(this.programmingExercise.title);
+            this.exerciseTitle.set(this.programmingExercise().title);
         }
     }
 
@@ -123,7 +123,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             ) &&
                 !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateDirectories &&
                 !this.programmingExerciseCreationConfig.auxiliaryRepositoryDuplicateNames) ||
-            !this.programmingExercise.auxiliaryRepositories?.length
+            !this.programmingExercise().auxiliaryRepositories?.length
         );
     }
 
@@ -131,8 +131,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         return (
             this.updateTemplateFilesField?.valid ||
             !this.programmingExerciseCreationConfig.isImportFromExistingExercise ||
-            this.programmingExercise.projectType === ProjectType.PLAIN_GRADLE ||
-            this.programmingExercise.projectType === ProjectType.GRADLE_GRADLE
+            this.programmingExercise().projectType === ProjectType.PLAIN_GRADLE ||
+            this.programmingExercise().projectType === ProjectType.GRADLE_GRADLE
         );
     }
 
@@ -143,8 +143,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isCheckoutSolutionRepositoryValid(): boolean {
         return Boolean(
             this.checkoutSolutionRepositoryField?.valid ||
-                this.programmingExercise.id ||
-                !this.programmingExercise.programmingLanguage ||
+                this.programmingExercise().id ||
+                !this.programmingExercise().programmingLanguage ||
                 !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
         );
     }
