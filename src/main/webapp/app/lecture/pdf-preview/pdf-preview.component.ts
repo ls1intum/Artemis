@@ -79,8 +79,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Handles keyboard events for navigation within the PDF viewer.
-     * @param event The keyboard event captured.
+     * Handles navigation within the PDF viewer using keyboard arrow keys.
+     * @param event - The keyboard event captured for navigation.
      */
     @HostListener('document:keydown', ['$event'])
     handleKeyboardEvents(event: KeyboardEvent) {
@@ -101,7 +101,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.adjustCanvasSize();
     }
 
-    isDeleteDisabled(): boolean {
+    /**
+     * Determines if the delete action is disabled based on the selection of pages.
+     * @returns True if no pages are selected, false otherwise.
+     */
+    isRemovePagesDisabled(): boolean {
         return this.selectedPages.size === 0;
     }
 
@@ -109,6 +113,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Loads or appends a PDF from a provided URL.
      * @param fileUrl The URL of the file to load or append.
      * @param append Whether the document should be appended to the existing one.
+     * @returns A promise that resolves when the PDF is loaded.
      */
     async loadOrAppendPdf(fileUrl: string, append: boolean = false): Promise<void> {
         if (append) {
@@ -120,21 +125,18 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const numPages = pdf.numPages;
             const initialPageCount = this.totalPages;
 
-            this.totalPages += numPages;
-
             for (let i = 1; i <= numPages; i++) {
                 const page = await pdf.getPage(i);
                 const viewport = page.getViewport({ scale: 2 });
                 const canvas = this.createCanvas(viewport, initialPageCount + i);
                 const context = canvas.getContext('2d');
-                if (context) {
-                    await page.render({ canvasContext: context, viewport }).promise;
-                }
+                await page.render({ canvasContext: context!, viewport }).promise;
 
-                const container = this.createContainer(canvas, initialPageCount + i);
-                this.pdfContainer.nativeElement.appendChild(container);
+                const canvasContainer = this.createCanvasContainer(canvas, initialPageCount + i);
+                this.pdfContainer.nativeElement.appendChild(canvasContainer);
             }
 
+            this.totalPages += numPages;
             URL.revokeObjectURL(fileUrl);
 
             if (append) {
@@ -149,6 +151,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Scrolls the PDF container to the bottom after appending new pages.
+     */
     scrollToBottom(): void {
         const scrollOptions: ScrollToOptions = {
             top: this.pdfContainer.nativeElement.scrollHeight,
@@ -186,13 +191,13 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param pageIndex The index of the page within the PDF document.
      * @returns A configured div element that includes the canvas and interactive overlays.
      */
-    createContainer(canvas: HTMLCanvasElement, pageIndex: number): HTMLDivElement {
+    createCanvasContainer(canvas: HTMLCanvasElement, pageIndex: number): HTMLDivElement {
         const container = document.createElement('div');
         /* Dynamically created elements are not detected by DOM, that is why we need to set the styles manually.
          * See: https://stackoverflow.com/a/70911189
          */
         container.id = `pdf-page-${pageIndex}`;
-        container.classList.add('pdf-page-container');
+        container.classList.add('pdf-canvas-container');
         container.style.cssText = `position: relative; display: inline-block; width: ${canvas.style.width}; height: ${canvas.style.height}; margin: 20px; box-shadow: 0 2px 6px var(--pdf-preview-canvas-shadow);`;
 
         const overlay = this.createOverlay(pageIndex);
@@ -235,7 +240,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         checkbox.checked = this.selectedPages.has(pageIndex);
         checkbox.addEventListener('change', () => {
             if (checkbox.checked) {
-                console.log('Adding page', checkbox.id);
                 this.selectedPages.add(Number(checkbox.id));
             } else {
                 this.selectedPages.delete(Number(checkbox.id));
@@ -249,7 +253,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     adjustCanvasSize = () => {
         if (this.isEnlargedView) {
-            const canvasElements = this.pdfContainer.nativeElement.querySelectorAll('.pdf-page-container canvas');
+            const canvasElements = this.pdfContainer.nativeElement.querySelectorAll('.pdf-canvas-container canvas');
             if (this.currentPage - 1 < canvasElements.length) {
                 const canvas = canvasElements[this.currentPage - 1] as HTMLCanvasElement;
                 this.updateEnlargedCanvas(canvas);
@@ -273,7 +277,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * ensuring the content is centered and displayed appropriately within the available space.
      * It is called within an animation frame to synchronize updates with the browser's render cycle for smooth visuals.
      *
-     * @param {HTMLCanvasElement} originalCanvas - The source canvas element used to extract image data for resizing and redrawing.
+     * @param originalCanvas - The source canvas element used to extract image data for resizing and redrawing.
      */
     updateEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         requestAnimationFrame(() => {
@@ -290,8 +294,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Calculates the scaling factor to adjust the canvas size based on the dimensions of the container.
      * This method ensures that the canvas is scaled to fit within the container without altering the aspect ratio.
      *
-     * @param {HTMLCanvasElement} originalCanvas - The original canvas element representing the PDF page.
-     * @returns {number} The scaling factor used to resize the original canvas to fit within the container dimensions.
+     * @param originalCanvas - The original canvas element representing the PDF page.
+     * @returns The scaling factor used to resize the original canvas to fit within the container dimensions.
      */
     calculateScaleFactor(originalCanvas: HTMLCanvasElement): number {
         const containerWidth = this.pdfContainer.nativeElement.clientWidth;
@@ -306,8 +310,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * This method updates the dimensions of the enlarged canvas element to ensure that the entire PDF page
      * is visible and properly scaled within the viewer.
      *
-     * @param {HTMLCanvasElement} originalCanvas - The canvas element from which the image is scaled.
-     * @param {number} scaleFactor - The factor by which the canvas is resized.
+     * @param originalCanvas - The canvas element from which the image is scaled.
+     * @param scaleFactor - The factor by which the canvas is resized.
      */
     resizeCanvas(originalCanvas: HTMLCanvasElement, scaleFactor: number): void {
         const enlargedCanvas = this.enlargedCanvas.nativeElement;
@@ -319,7 +323,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Redraws the original canvas content onto the enlarged canvas at the updated scale.
      * This method ensures that the image is rendered clearly and correctly positioned on the enlarged canvas.
      *
-     * @param {HTMLCanvasElement} originalCanvas - The original canvas containing the image to be redrawn.
+     * @param originalCanvas - The original canvas containing the image to be redrawn.
      */
     redrawCanvas(originalCanvas: HTMLCanvasElement): void {
         const enlargedCanvas = this.enlargedCanvas.nativeElement;
@@ -394,11 +398,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         const nextPageIndex = direction === 'next' ? this.currentPage + 1 : this.currentPage - 1;
         if (nextPageIndex > 0 && nextPageIndex <= this.totalPages) {
             this.currentPage = nextPageIndex;
-            const canvas = this.pdfContainer.nativeElement.querySelectorAll('.pdf-page-container canvas')[this.currentPage - 1] as HTMLCanvasElement;
+            const canvas = this.pdfContainer.nativeElement.querySelectorAll('.pdf-canvas-container canvas')[this.currentPage - 1] as HTMLCanvasElement;
             this.updateEnlargedCanvas(canvas);
         }
     }
 
+    /**
+     * Deletes selected slides from the PDF viewer.
+     */
     deleteSelectedSlides() {
         this.selectedPages.forEach((page) => {
             const pageElement = this.pdfContainer.nativeElement.querySelector(`#pdf-page-${page}`);
@@ -412,10 +419,17 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.next('');
     }
 
+    /**
+     * Triggers the file input to select files.
+     */
     triggerFileInput(): void {
         this.fileInput.nativeElement.click();
     }
 
+    /**
+     * Adds a selected PDF file at the end of the current PDF document.
+     * @param event - The event containing the file input.
+     */
     mergePDF(event: Event): void {
         const file = (event.target as HTMLInputElement).files?.[0];
         if (file) {
@@ -424,8 +438,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Updates the IDs of remaining pages after some have been removed.
+     */
     updatePageIDs() {
-        const remainingPages = this.pdfContainer.nativeElement.querySelectorAll('.pdf-page-container');
+        const remainingPages = this.pdfContainer.nativeElement.querySelectorAll('.pdf-canvas-container');
         remainingPages.forEach((container, index) => {
             const pageIndex = index + 1;
             container.id = `pdf-page-${pageIndex}`;
