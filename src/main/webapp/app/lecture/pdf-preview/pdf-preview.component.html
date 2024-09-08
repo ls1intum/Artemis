@@ -47,10 +47,19 @@
         </div>
         <div class="d-flex justify-content-between">
             <div>
-                <button type="submit" class="btn btn-default">
+                <a
+                    type="button"
+                    class="btn btn-default"
+                    [routerLink]="
+                        attachment
+                            ? ['/course-management', course!.id, 'lectures', attachment.lecture!.id, 'attachments']
+                            : ['/course-management', course!.id, 'lectures', attachmentUnit!.lecture!.id, 'unit-management']
+                    "
+                    [ngbTooltip]="'entity.action.view' | artemisTranslate"
+                >
                     <fa-icon [icon]="faTimes"></fa-icon>
                     <span jhiTranslate="entity.action.cancel"></span>
-                </button>
+                </a>
             </div>
             <div>
                 <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary">
