@@ -840,7 +840,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     protected switchEditMode = () => {
-        this.isSimpleMode.set(!this.isSimpleMode());
+        this.isSimpleMode.update((isSimpleMode) => !isSimpleMode);
     };
 
     /**
