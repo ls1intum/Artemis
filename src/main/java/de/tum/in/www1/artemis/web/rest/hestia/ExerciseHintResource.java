@@ -201,6 +201,7 @@ public class ExerciseHintResource {
         return ResponseEntity.ok().body(exerciseHint);
     }
 
+    //TODO: Demo
     /**
      * {@code GET programming-exercises/:exerciseId/exercise-hints} : get the exerciseHints of a provided exercise.
      *

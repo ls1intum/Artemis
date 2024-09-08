@@ -640,6 +640,7 @@ export class ProgrammingExerciseService {
         return this.http.get<string[]>(`${this.resourceUrl}/${exerciseId}/file-names`);
     }
 
+    //TODO: Demo
     getCodeHintsForExercise(exerciseId: number): Observable<ExerciseHint[]> {
         return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`);
     }
