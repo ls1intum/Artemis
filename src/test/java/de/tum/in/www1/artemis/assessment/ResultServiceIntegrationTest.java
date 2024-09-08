@@ -751,7 +751,10 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     void testGetAllFeedbackDetailsForExercise() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
+        Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        submission = submissionRepository.save(submission);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         testCase.setId(1L);
 
@@ -778,8 +781,14 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
         StudentParticipation participation2 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
-        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation2);
+        Submission submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        submission = submissionRepository.save(submission);
+        Submission submission2 = ParticipationFactory.generateProgrammingSubmission(true);
+        submission2.setParticipation(participation2);
+        submission2 = submissionRepository.save(submission2);
+        Result result = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission);
+        Result result2 = participationUtilService.addResultToSubmission(AssessmentType.AUTOMATIC, null, submission2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         testCase.setId(1L);
 
