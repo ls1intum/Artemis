@@ -55,9 +55,9 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationIndependent
         TextSubmission submission = ParticipationFactory.generateTextSubmission("example text", Language.ENGLISH, true);
         submission = textExerciseUtilService.saveTextSubmission(exercise, submission, student1.getLogin());
         submission = (TextSubmission) participationUtilService.addResultToSubmission(submission, null, null, 0D, true);
-        result = submission.getLatestResult();
+        result = submission.getLastResult();
         rating = new Rating();
-        rating.setResult(submission.getLatestResult());
+        rating.setResult(submission.getLastResult());
         rating.setRating(2);
 
         // add instructor of other course

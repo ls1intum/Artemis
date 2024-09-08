@@ -400,15 +400,15 @@ public class ResultService {
             }
 
             Submission relevantSubmissionWithResult = exercise.findLatestSubmissionWithRatedResultWithCompletionDate(participation, true);
-            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getLatestResult() == null) {
+            if (relevantSubmissionWithResult == null || relevantSubmissionWithResult.getLastResult() == null) {
                 continue;
             }
 
             participation.setSubmissionCount(participation.getSubmissions().size());
             if (withSubmissions) {
-                relevantSubmissionWithResult.getLatestResult().setSubmission(relevantSubmissionWithResult);
+                relevantSubmissionWithResult.getLastResult().setSubmission(relevantSubmissionWithResult);
             }
-            results.add(relevantSubmissionWithResult.getLatestResult());
+            results.add(relevantSubmissionWithResult.getLastResult());
         }
 
         if (withSubmissions) {

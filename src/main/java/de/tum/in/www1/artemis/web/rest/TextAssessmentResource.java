@@ -221,7 +221,7 @@ public class TextAssessmentResource extends AssessmentResource {
         textBlockService.deleteForSubmission((TextSubmission) submission);
 
         // 2. Delete feedback and example assessment
-        final var latestResult = submission.getLatestResult();
+        final var latestResult = submission.getLastResult();
         if (latestResult != null) {
             latestResult.getFeedbacks().clear();
             resultService.deleteResult(latestResult, true);
@@ -295,7 +295,7 @@ public class TextAssessmentResource extends AssessmentResource {
         long exerciseId = studentParticipation.getExercise().getId();
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(textExercise, user);
-        Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLatestResult(), textExercise, assessmentUpdate);
+        Result result = textAssessmentService.updateAssessmentAfterComplaint(textSubmission.getLastResult(), textExercise, assessmentUpdate);
         saveTextBlocks(assessmentUpdate.textBlocks(), textSubmission, result.getFeedbacks());
 
         if (result.getSubmission() != null && result.getSubmission().getParticipation() != null
@@ -456,7 +456,7 @@ public class TextAssessmentResource extends AssessmentResource {
             textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(textSubmission);
         }
 
-        var result = textSubmission.getLatestResult();
+        var result = textSubmission.getLastResult();
         if (result != null) {
             final List<Feedback> assessments = feedbackRepository.findByResult(result);
             result.setFeedbacks(assessments);

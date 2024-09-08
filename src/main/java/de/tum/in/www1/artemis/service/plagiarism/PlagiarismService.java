@@ -204,8 +204,7 @@ public class PlagiarismService {
      * @return a predicate that can be used in streams for filtering
      */
     public static boolean hasMinimumScore(Submission submission, int minimumScore) {
-        return minimumScore == 0
-                || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore;
+        return minimumScore == 0 || submission.getLastResult() != null && submission.getLastResult().getScore() != null && submission.getLastResult().getScore() >= minimumScore;
     }
 
     /**

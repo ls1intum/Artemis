@@ -859,8 +859,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         List<Result> results = new ArrayList<>();
         for (ExampleSubmission exampleSubmission : exampleSubmissions) {
             Submission submission = exampleSubmission.getSubmission();
-            if (!submission.isEmpty() && submission.getLatestResult() != null) {
-                Result result = findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(submission.getLatestResult().getId());
+            if (!submission.isEmpty() && submission.getLastResult() != null) {
+                Result result = findWithSubmissionAndFeedbackAndTeamStudentsByIdElseThrow(submission.getLastResult().getId());
                 results.add(result);
             }
         }

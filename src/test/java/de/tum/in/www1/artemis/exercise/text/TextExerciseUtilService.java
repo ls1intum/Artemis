@@ -387,7 +387,7 @@ public class TextExerciseUtilService {
     public TextSubmission addTextSubmissionWithResultAndAssessorAndFeedbacks(TextExercise exercise, TextSubmission submission, String studentLogin, String assessorLogin,
             List<Feedback> feedbacks) {
         submission = saveTextSubmissionWithResultAndAssessor(exercise, submission, studentLogin, null, assessorLogin);
-        Result result = submission.getLatestResult();
+        Result result = submission.getLastResult();
         for (Feedback feedback : feedbacks) {
             // Important note to prevent 'JpaSystemException: null index column for collection':
             // 1) save the child entity (without connection to the parent entity) and make sure to re-assign the return value

@@ -155,8 +155,8 @@ public class ModelingExerciseImportService extends ExerciseImportService {
             newSubmission.setExplanationText(((ModelingSubmission) originalSubmission).getExplanationText());
             newSubmission.setModel(((ModelingSubmission) originalSubmission).getModel());
 
-            if (originalSubmission.getLatestResult() != null) {
-                Result resultCopy = copyExampleResult(originalSubmission.getLatestResult(), gradingInstructionCopyTracker);
+            if (originalSubmission.getLastResult() != null) {
+                Result resultCopy = copyExampleResult(originalSubmission.getLastResult(), gradingInstructionCopyTracker);
                 newSubmission.addResult(resultCopy);
             }
             newSubmission = submissionRepository.saveAndFlush(newSubmission);

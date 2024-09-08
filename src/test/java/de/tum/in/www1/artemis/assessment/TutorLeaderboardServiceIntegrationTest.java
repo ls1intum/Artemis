@@ -65,11 +65,11 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIn
         exercise = course.getExercises().iterator().next();
 
         var modelingSubmission = modelingExerciseUtilService.addModelingSubmissionWithEmptyResult((ModelingExercise) exercise, "", student1.getLogin());
-        var result = participationUtilService.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, tutor1, 40.0, true).getLatestResult();
+        var result = participationUtilService.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, tutor1, 40.0, true).getLastResult();
         participationUtilService.addRatingToResult(result, 2);
 
         modelingSubmission = modelingExerciseUtilService.addModelingSubmissionWithEmptyResult((ModelingExercise) exercise, "", student1.getLogin());
-        result = participationUtilService.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, tutor1, 60.0, true).getLatestResult();
+        result = participationUtilService.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, tutor1, 60.0, true).getLastResult();
         participationUtilService.addRatingToResult(result, 5);
     }
 

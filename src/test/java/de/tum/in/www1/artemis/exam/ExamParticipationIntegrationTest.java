@@ -632,7 +632,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
                 Submission submission;
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
-                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
+                var result = submission.getLastResult().completionDate(ZonedDateTime.now().minusMinutes(5));
                 result.setRated(true);
                 resultRepository.save(result);
             }
@@ -724,7 +724,7 @@ class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsG
                 Submission submission;
                 assertThat(participation.getSubmissions()).hasSize(1);
                 submission = participation.getSubmissions().iterator().next();
-                var result = submission.getLatestResult().completionDate(ZonedDateTime.now().minusMinutes(5));
+                var result = submission.getLastResult().completionDate(ZonedDateTime.now().minusMinutes(5));
                 result.setRated(true);
                 resultRepository.save(result);
             }

@@ -298,7 +298,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(submission, feedbacks, "/assessment", HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
         assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
@@ -327,7 +327,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
@@ -349,7 +349,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
@@ -366,7 +366,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
     }
@@ -382,7 +382,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
@@ -399,7 +399,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(submission, feedbacks, "/assessment", HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentNotFinished(storedResult, assessor);
 
@@ -407,7 +407,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
 
         storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
         participationUtilService.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         checkAssessmentFinished(storedResult, assessor);
         assertThat(storedResult.getSubmission().getParticipation()).isNotNull();
@@ -445,7 +445,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
         assertThat(storedResult.getScore()).isEqualTo(expectedScore, Offset.offset(offsetByTenThousandth));
     }
 
@@ -464,7 +464,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
 
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        Result storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
 
         assertThat(storedResult.getScore()).isEqualTo(105);
 
@@ -474,7 +474,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
 
         storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElseThrow();
-        storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLatestResult().getId()).orElseThrow();
+        storedResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(storedSubmission.getLastResult().getId()).orElseThrow();
 
         assertThat(storedResult.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
     }
@@ -982,7 +982,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         assertThat(submissionWithAutomaticAssessment.getId()).isEqualTo(storedSubmission.getId());
 
-        Result resultWithFeedback = submissionWithAutomaticAssessment.getLatestResult();
+        Result resultWithFeedback = submissionWithAutomaticAssessment.getLastResult();
         List<Feedback> existingFeedback = resultWithFeedback.getFeedbacks();
         Feedback feedback = existingFeedback.getFirst();
         existingFeedback.set(0, feedback.credits(feedback.getCredits() + 0.5));
@@ -1304,9 +1304,9 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         // verify that no new submission was created
         assertThat(submissionWithoutFirstAssessment).isEqualTo(submission);
         // verify that the lock has been set
-        assertThat(submissionWithoutFirstAssessment.getLatestResult()).isNotNull();
-        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
-        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        assertThat(submissionWithoutFirstAssessment.getLastResult()).isNotNull();
+        assertThat(submissionWithoutFirstAssessment.getLastResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(submissionWithoutFirstAssessment.getLastResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // make sure that new result correctly appears inside the continue box
         LinkedMultiValueMap<String, String> paramsGetAssessedCR1Tutor1 = new LinkedMultiValueMap<>();
@@ -1317,7 +1317,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.getFirst().getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
-        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
+        assertThat(assessedSubmissionList.getFirst().getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLastResult());
 
         // assess submission and submit
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).toList();
@@ -1347,8 +1347,9 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
+        var latestSubmission = fetchedParticipation.findLatestSubmission();
+        assertThat(latestSubmission).contains(submissionWithoutFirstAssessment);
+        assertThat(latestSubmission.get().findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
@@ -1358,7 +1359,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         // it should contain the lock for the manual result
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLastResult()).isEqualTo(firstSubmittedManualResult);
 
         // SECOND ROUND OF CORRECTION
 
@@ -1373,9 +1374,11 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         // verify that the submission is not new
         assertThat(submissionWithoutSecondAssessment).isEqualTo(submission);
         // verify that the lock has been set
-        assertThat(submissionWithoutSecondAssessment.getLatestResult()).isNotNull();
-        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor2");
-        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
+        var latestResult = submissionWithoutSecondAssessment.findLatestResult();
+        assertThat(latestResult).isNotNull();
+        assertThat(latestResult.getAssessor()).isNotNull();
+        assertThat(latestResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor2");
+        assertThat(latestResult.getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // verify that the relationship between student participation,
         databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
@@ -1383,8 +1386,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
-        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
-        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst()).contains(submissionWithoutSecondAssessment.getLatestResult());
+        var latestSubmissionOfParticipation = fetchedParticipation.findLatestSubmission();
+        assertThat(latestSubmissionOfParticipation).contains(submissionWithoutSecondAssessment);
+        assertThat(latestSubmissionOfParticipation.orElseThrow().getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst())
+                .contains(submissionWithoutSecondAssessment.getLastResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
@@ -1392,7 +1397,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
         assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
         assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getResults()).hasSize(2);
-        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.findLatestSubmission().orElseThrow().getLastResult()).isEqualTo(submissionWithoutSecondAssessment.getLastResult());
 
         // assess submission and submit
         feedbacks = ParticipationFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).toList();
@@ -1433,13 +1438,13 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     private void overrideAssessment(String student, String originalAssessor, HttpStatus httpStatus, String submit, boolean originalAssessmentSubmitted) throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, student, originalAssessor);
-        submission.getLatestResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
-        resultRepository.save(submission.getLatestResult());
+        submission.getLastResult().setCompletionDate(originalAssessmentSubmitted ? ZonedDateTime.now() : null);
+        resultRepository.save(submission.getLastResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         ModelingAssessmentDTO body = new ModelingAssessmentDTO(feedbacks, "text");
-        request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + submission.getLatestResult().getId() + "/assessment", body, Result.class,
+        request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + submission.getLastResult().getId() + "/assessment", body, Result.class,
                 httpStatus, params);
     }
 
@@ -1455,9 +1460,9 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         submission = modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, student, originalAssessor);
 
         Result newResult = participationUtilService
-                .addResultToSubmission(submission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"), null, true, null).getLatestResult();
+                .addResultToSubmission(submission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "tutor2"), null, true, null).getLastResult();
 
-        resultRepository.save(submission.getLatestResult());
+        resultRepository.save(submission.getLastResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
@@ -1497,11 +1502,9 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         Result firstResult = ParticipationFactory.generateResult(true, 50);
         firstResult.setAssessor(tutor1);
         firstResult.setHasComplaint(true);
-        firstResult.setParticipation(studentParticipation);
-        firstResult = resultRepository.saveAndFlush(firstResult);
-
-        submission.addResult(firstResult);
         firstResult.setSubmission(submission);
+        firstResult = resultRepository.saveAndFlush(firstResult);
+        submission.addResult(firstResult);
         submission = submissionRepository.saveAndFlush(submission);
 
         // creating complaint by student 1
@@ -1523,14 +1526,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         // could throw exception
         List<Feedback> feedbacks = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");  // 1,5/10 points
         final var assessmentUpdate = new AssessmentUpdateDTO(feedbacks, complaintResponse, null);
-        Result resultAfterComplaint = assessmentService.updateAssessmentAfterComplaint(submission.getLatestResult(), modelingExercise, assessmentUpdate);
+        Result resultAfterComplaint = assessmentService.updateAssessmentAfterComplaint(submission.getLastResult(), modelingExercise, assessmentUpdate);
 
         List<Feedback> overrideFeedback = participationUtilService.loadAssessmentFomResources("test-data/model-assessment/assessment.54745.json"); // 4/10 points
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         ModelingAssessmentDTO body = new ModelingAssessmentDTO(overrideFeedback, "text");
         Result overwrittenResult = request.putWithResponseBodyAndParams(
-                API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + submission.getLatestResult().getId() + "/assessment", body, Result.class, HttpStatus.OK, params);
+                API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + submission.getLastResult().getId() + "/assessment", body, Result.class, HttpStatus.OK, params);
 
         assertThat(firstResult.getScore()).isEqualTo(50L); // first result was instantiated with a score of 50%
         assertThat(resultAfterComplaint.getScore()).isEqualTo(15L); // score after complaint evaluation got changed to 15%
@@ -1540,9 +1543,9 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         // Also check that it's correctly saved in the database
         ModelingSubmission savedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElse(null);
         assertThat(savedSubmission).isNotNull();
-        assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(40L);
+        assertThat(savedSubmission.getLastResult().getScore()).isEqualTo(40L);
         assertThat(savedSubmission.getFirstResult().hasComplaint()).isTrue();
-        assertThat(savedSubmission.getLatestResult().hasComplaint()).isFalse();
+        assertThat(savedSubmission.getLastResult().hasComplaint()).isFalse();
 
     }
 
@@ -1583,7 +1586,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         Submission submission = submissions.getFirst();
         assertThat(submission.getResults()).hasSize(2);
         Result firstResult = submission.getResults().getFirst();
-        Result lastResult = submission.getLatestResult();
+        Result lastResult = submission.getLastResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/modeling-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
                 HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());

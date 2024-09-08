@@ -86,7 +86,7 @@ public class ModelingSubmissionService extends SubmissionService {
     public ModelingSubmission lockAndGetModelingSubmission(Long submissionId, ModelingExercise modelingExercise, int correctionRound) {
         ModelingSubmission modelingSubmission = modelingSubmissionRepository.findByIdWithEagerResultAndFeedbackAndAssessorAndAssessmentNoteElseThrow(submissionId);
 
-        if (modelingSubmission.getLatestResult() == null || modelingSubmission.getLatestResult().getAssessor() == null) {
+        if (modelingSubmission.getLastResult() == null || modelingSubmission.getLastResult().getAssessor() == null) {
             checkSubmissionLockLimit(modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
             if (compassService.isSupported(modelingExercise) && correctionRound == 0L) {
                 modelingSubmission = assignResultWithFeedbackSuggestionsToSubmission(modelingSubmission, modelingExercise);
@@ -218,7 +218,7 @@ public class ModelingSubmissionService extends SubmissionService {
      * @return the updated modeling submission
      */
     private ModelingSubmission assignResultWithFeedbackSuggestionsToSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
-        var existingResult = modelingSubmission.getLatestResult();
+        var existingResult = modelingSubmission.getLastResult();
         if (existingResult != null && existingResult.getAssessmentType() != null && existingResult.getAssessmentType() == AssessmentType.MANUAL) {
             return modelingSubmission;
         }

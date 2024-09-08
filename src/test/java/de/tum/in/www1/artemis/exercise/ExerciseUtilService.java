@@ -276,12 +276,9 @@ public class ExerciseUtilService {
         participations.forEach(participation -> {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).getFirst();
             submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
-            participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
-            Result result = participationUtilService.generateResult(submission, null);
+            Result result = participationUtilService.generateAndSaveResult(submission, null);
             result.setAssessmentType(AssessmentType.AUTOMATIC);
             submission.addResult(result);
-            participation.addResult(result);
-            studentParticipationRepo.save(participation);
             submissionRepository.save(submission);
         });
     }
@@ -297,11 +294,8 @@ public class ExerciseUtilService {
         participations.forEach(participation -> {
             Submission submission = submissionRepository.findAllByParticipationId(participation.getId()).getFirst();
             submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submission.getId());
-            participation = studentParticipationRepo.findWithEagerResultsById(participation.getId()).orElseThrow();
-            Result result = participationUtilService.generateResult(submission, assessor);
+            Result result = participationUtilService.generateAndSaveResult(submission, assessor);
             submission.addResult(result);
-            participation.addResult(result);
-            studentParticipationRepo.save(participation);
             submissionRepository.save(submission);
         });
     }

@@ -357,7 +357,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 ? programmingSubmissionRepository.findGradedByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId, PageRequest.of(0, 1)).stream().findFirst()
                 : programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId);
 
-        if (optionalSubmission.isEmpty() || optionalSubmission.get().getLatestResult() != null) {
+        if (optionalSubmission.isEmpty() || optionalSubmission.get().getLastResult() != null) {
             // This is not an error case, it is very likely that there is no pending submission for a participation.
             return Optional.empty();
         }
@@ -476,7 +476,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         // strip away all automatic results from the submissions list
         submissions.forEach(Submission::removeAutomaticResults);
         submissions.forEach(submission -> {
-            var latestResult = submission.getLatestResult();
+            var latestResult = submission.getLastResult();
             if (latestResult != null) {
                 latestResult.setSubmission(null);
             }
@@ -594,10 +594,10 @@ public class ProgrammingSubmissionService extends SubmissionService {
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
     public Result lockSubmission(Submission submission, int correctionRound) {
         Optional<Result> optionalExistingResult;
-        if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
-            optionalExistingResult = Optional.of(submission.getLatestResult());
+        if (correctionRound == 0 && submission.getLastResult() != null && AssessmentType.AUTOMATIC == submission.getLastResult().getAssessmentType()) {
+            optionalExistingResult = Optional.of(submission.getLastResult());
         }
-        else if (correctionRound == 0 && submission.getLatestResult() == null) {
+        else if (correctionRound == 0 && submission.getLastResult() == null) {
             // Older programming Exercises have only one result in each submission. One submission for the automatic result, another one for the manual one.
             // When the assessment of such a submission is cancelled, this leaves behind a programming-submission without any results.
             // We still want to be able to assess the result-less submission again, so we need to avoid the below else branch, and the following out of bounds Exception.

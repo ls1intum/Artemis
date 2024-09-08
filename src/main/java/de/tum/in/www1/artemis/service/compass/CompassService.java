@@ -143,7 +143,7 @@ public class CompassService {
      * @return the result of the given submission either obtained from the submission or the semi-automatic result map, or a newly created one if it does not exist already
      */
     private Result getAutomaticResultForSubmission(ModelingSubmission modelingSubmission) {
-        Result result = modelingSubmission.getLatestResult();
+        Result result = modelingSubmission.getLastResult();
 
         if (result == null || AssessmentType.MANUAL != result.getAssessmentType()) {
             if (result == null) {

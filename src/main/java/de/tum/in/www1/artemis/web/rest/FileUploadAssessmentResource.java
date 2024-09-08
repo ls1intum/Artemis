@@ -90,7 +90,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
             @RequestBody FileUploadAssessmentDTO fileUploadAssessment) {
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(submissionId);
         // if a result exists, we want to override it, otherwise create a new one
-        var resultId = submission.getLatestResult() != null ? submission.getLatestResult().getId() : null;
+        var resultId = submission.getLastResult() != null ? submission.getLastResult().getId() : null;
         return super.saveAssessment(submission, submit, fileUploadAssessment.feedbacks(), resultId, fileUploadAssessment.assessmentNote());
     }
 
@@ -113,7 +113,7 @@ public class FileUploadAssessmentResource extends AssessmentResource {
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(fileUploadExercise, user);
 
-        Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLatestResult(), fileUploadExercise, assessmentUpdate);
+        Result result = assessmentService.updateAssessmentAfterComplaint(fileUploadSubmission.getLastResult(), fileUploadExercise, assessmentUpdate);
 
         if (result.getSubmission() != null && result.getSubmission().getParticipation() != null
                 && result.getSubmission().getParticipation() instanceof StudentParticipation studentParticip

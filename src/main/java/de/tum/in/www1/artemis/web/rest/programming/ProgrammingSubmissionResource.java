@@ -329,7 +329,7 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
             // As no manual result is present we need to lock the submission for assessment
-            Result latestAutomaticResult = programmingSubmission.getLatestResult();
+            Result latestAutomaticResult = programmingSubmission.getLastResult();
             if (latestAutomaticResult == null) {
                 // if the participation does not have a result we want to create a new result for the submission of the participation.
                 // If there isn't a submission either, we should not create any result.

@@ -88,7 +88,7 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             throw new AccessForbiddenException();
         }
 
-        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLatestResult(), programmingExercise, assessmentUpdate);
+        Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLastResult(), programmingExercise, assessmentUpdate);
         // make sure the submission is reconnected with the result to prevent problems when the object is used for other calls in the client
         result.setSubmission(programmingSubmission);
 

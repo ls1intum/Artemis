@@ -584,7 +584,7 @@ public class LocalVCLocalCITestService {
             // get the latest valid submission (!ILLEGAL and with results) of the participation
             SecurityContextHolder.getContext().setAuthentication(auth);
             var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId);
-            return submission.orElseThrow().getLatestResult() != null;
+            return submission.orElseThrow().getLastResult() != null;
         });
         // get the latest valid submission (!ILLEGAL and with results) of the participation
         ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(participationId)
@@ -593,7 +593,7 @@ public class LocalVCLocalCITestService {
             assertThat(programmingSubmission.getCommitHash()).isEqualTo(expectedCommitHash);
         }
         assertThat(programmingSubmission.isBuildFailed()).isEqualTo(buildFailed);
-        Result result = programmingSubmission.getLatestResult();
+        Result result = programmingSubmission.getLastResult();
         assertThat(result).isNotNull();
         int expectedTestCaseCount = buildFailed ? 0 : 13;
         assertThat(result.getTestCaseCount()).isEqualTo(expectedTestCaseCount);

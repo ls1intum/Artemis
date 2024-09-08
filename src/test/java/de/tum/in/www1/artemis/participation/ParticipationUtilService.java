@@ -609,15 +609,14 @@ public class ParticipationUtilService {
      * @param assessor   The assessor of the Result
      * @return The created Result
      */
-    public Result generateResult(Submission submission, User assessor) {
+    public Result generateAndSaveResult(Submission submission, User assessor) {
         Result result = new Result();
-        result = resultRepo.save(result);
         result.setSubmission(submission);
         result.completionDate(pastTimestamp);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         result.setAssessor(assessor);
         result.setRated(true);
-        return result;
+        return resultRepo.save(result);
     }
 
     /**
@@ -629,7 +628,7 @@ public class ParticipationUtilService {
      * @return The created Result
      */
     public Result generateResultWithScore(Submission submission, User assessor, Double score) {
-        Result result = generateResult(submission, assessor);
+        Result result = generateAndSaveResult(submission, assessor);
         result.setScore(score);
         return result;
     }

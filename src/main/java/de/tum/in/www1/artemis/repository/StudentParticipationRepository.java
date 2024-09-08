@@ -964,7 +964,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     // Get the results over the participation or over submissions
                     Set<Result> resultsOfParticipation;
                     if (resultInSubmission) {
-                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLatestResult).collect(Collectors.toSet());
+                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLastResult).collect(Collectors.toSet());
                     }
                     else {
                         resultsOfParticipation = participation.getResults();

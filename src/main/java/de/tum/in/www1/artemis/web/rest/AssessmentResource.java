@@ -73,7 +73,7 @@ public abstract class AssessmentResource {
         StudentParticipation participation = (StudentParticipation) submission.getParticipation();
         Exercise exercise = participation.getExercise();
 
-        Result result = submission.getLatestResult();
+        Result result = submission.getLastResult();
         if (result == null) {
             throw new EntityNotFoundException("Result with submission", submissionId);
         }
@@ -109,7 +109,7 @@ public abstract class AssessmentResource {
         checkAuthorization(exercise, user);
 
         final var isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLatestResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
+        if (!assessmentService.isAllowedToCreateOrOverrideResult(submission.getLastResult(), exercise, studentParticipation, user, isAtLeastInstructor)) {
             log.debug("The user {} is not allowed to override the assessment for the submission {}", user.getLogin(), submission.getId());
             throw new AccessForbiddenException("The user is not allowed to override the assessment");
         }
@@ -137,11 +137,11 @@ public abstract class AssessmentResource {
         checkAuthorization(exercise, user);
         // as parameter resultId is not set, we use the latest Result, if no latest Result exists, we use null
         Result result;
-        if (submission.getLatestResult() == null) {
+        if (submission.getLastResult() == null) {
             result = assessmentService.saveManualAssessment(submission, feedbacks, null, null);
         }
         else {
-            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLatestResult().getId(), null);
+            result = assessmentService.saveManualAssessment(submission, feedbacks, submission.getLastResult().getId(), null);
         }
         return resultRepository.submitResult(result, exercise);
     }
@@ -205,7 +205,7 @@ public abstract class AssessmentResource {
     protected ResponseEntity<Void> cancelAssessment(long submissionId) { // TODO: Add correction round !
         log.debug("REST request to cancel assessment of submission: {}", submissionId);
         Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        if (submission.getLatestResult() == null) {
+        if (submission.getLastResult() == null) {
             // if there is no result everything is fine
             return ResponseEntity.ok().build();
         }
@@ -215,7 +215,7 @@ public abstract class AssessmentResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
-        if (!(isAtLeastInstructor || userRepository.getUser().getId().equals(submission.getLatestResult().getAssessor().getId()))) {
+        if (!(isAtLeastInstructor || userRepository.getUser().getId().equals(submission.getLastResult().getAssessor().getId()))) {
             // tutors cannot cancel the assessment of other tutors (only instructors can)
             throw new AccessForbiddenException();
         }

@@ -74,9 +74,9 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         submission = submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
 
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
+        assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLastResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
-        assertThat(submission.getLatestResult()).isEqualTo(result2);
+        assertThat(submission.getLastResult()).isEqualTo(result2);
 
     }
 
@@ -104,9 +104,9 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
+        assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLastResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
-        assertThat(submission.getLatestResult()).isEqualTo(result2);
+        assertThat(submission.getLastResult()).isEqualTo(result2);
 
     }
 
@@ -140,9 +140,9 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
         assertThat(submission.getResults()).hasSize(2);
-        assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
+        assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLastResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
-        assertThat(submission.getLatestResult()).isEqualTo(result2);
+        assertThat(submission.getLastResult()).isEqualTo(result2);
 
     }
 

@@ -149,7 +149,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         ProgrammingSubmission submission = submissions.getFirst();
         var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
         assertThat(optionalSubmission).isPresent();
-        assertThat(optionalSubmission.get().getLatestResult()).isNull();
+        assertThat(optionalSubmission.get().getLastResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.MANUAL);
     }
@@ -188,7 +188,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         ProgrammingSubmission submission = submissions.getFirst();
         var optionalSubmission = submissionRepository.findWithEagerResultsById(submission.getId());
         assertThat(optionalSubmission).isPresent();
-        assertThat(optionalSubmission.get().getLatestResult()).isNull();
+        assertThat(optionalSubmission.get().getLastResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getType()).isEqualTo(SubmissionType.INSTRUCTOR);
 
@@ -680,15 +680,15 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         submission = submissionRepository.save(submission);
 
         // Make sure that there are no results on the current submission
-        assertThat(submission.getLatestResult()).isNull();
+        assertThat(submission.getLastResult()).isNull();
 
         String url = "/api/programming-submissions/" + submission.getId() + "/lock";
         var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         // Make sure that the stored submission has a semi-automatic assessment by tutor 1
-        assertThat(storedSubmission.getLatestResult()).isNotNull();
-        assertThat(storedSubmission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        assertThat(storedSubmission.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(storedSubmission.getLastResult()).isNotNull();
+        assertThat(storedSubmission.getLastResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(storedSubmission.getLastResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
     }
 
     @Test
@@ -712,16 +712,16 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         submission = submissionRepository.save(submission);
 
         // Make sure that there is one automatic result on the current submission
-        assertThat(submission.getLatestResult()).isNotNull();
-        assertThat(submission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
+        assertThat(submission.getLastResult()).isNotNull();
+        assertThat(submission.getLastResult().getAssessmentType()).isEqualTo(AssessmentType.AUTOMATIC);
 
         String url = "/api/programming-submissions/" + submission.getId() + "/lock?correction-round=0";
         var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
         // Make sure that the stored submission has a latest manual assessment by tutor 1
-        assertThat(storedSubmission.getLatestResult()).isNotNull();
-        assertThat(storedSubmission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        assertThat(storedSubmission.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
+        assertThat(storedSubmission.getLastResult()).isNotNull();
+        assertThat(storedSubmission.getLastResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        assertThat(storedSubmission.getLastResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
     }
 
     @Test
@@ -756,7 +756,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         final String[] ignoringFields = { "results", "submissionDate", "participation" };
         assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(submission);
         assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
-        assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
+        assertThat(storedSubmission.getLastResult()).as("result is not set").isNull();
     }
 
     @Test
@@ -773,12 +773,12 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenk
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
 
-        assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
-        assertThat(storedSubmission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
-        var automaticResults = storedSubmission.getLatestResult().getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).toList();
-        assertThat(storedSubmission.getLatestResult().getFeedbacks()).hasSameSizeAs(automaticResults);
-        assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
-        assertThat(submission.getLatestResult()).isNotNull();
+        assertThat(storedSubmission.getLastResult()).as("result is set").isNotNull();
+        assertThat(storedSubmission.getLastResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
+        var automaticResults = storedSubmission.getLastResult().getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).toList();
+        assertThat(storedSubmission.getLastResult().getFeedbacks()).hasSameSizeAs(automaticResults);
+        assertThat(storedSubmission.getLastResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        assertThat(submission.getLastResult()).isNotNull();
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId());

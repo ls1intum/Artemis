@@ -72,8 +72,8 @@ public class ExampleSubmissionService {
         if (submission != null) {
             submission.setExampleSubmission(true);
             // Rebuild connection between result and submission, if it has been lost, because hibernate needs it
-            if (submission.getLatestResult() != null && submission.getLatestResult().getSubmission() == null) {
-                submission.getLatestResult().setSubmission(submission);
+            if (submission.getLastResult() != null && submission.getLastResult().getSubmission() == null) {
+                submission.getLastResult().setSubmission(submission);
             }
             submissionRepository.save(submission);
         }

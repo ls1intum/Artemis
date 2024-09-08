@@ -193,7 +193,7 @@ public class TutorParticipationService {
      * Validates the tutor example submission. If invalid, throw bad request exception with information which feedback are incorrect.
      */
     private void validateTutorialExampleSubmission(ExampleSubmission tutorExampleSubmission) {
-        var latestResult = tutorExampleSubmission.getSubmission().getLatestResult();
+        var latestResult = tutorExampleSubmission.getSubmission().getLastResult();
         if (latestResult == null) {
             throw new BadRequestAlertException("The training does not contain an assessment", ENTITY_NAME, "invalid_assessment");
         }
@@ -282,8 +282,8 @@ public class TutorParticipationService {
                 // Otherwise, the tutor could not reach the total number of example submissions, if there are example submissions without assessment.
                 // In this case the tutor could not reach status "TRAINED" in the if statement below and would not be allowed
                 // to assess student submissions in the assessment dashboard.
-                .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getLatestResult() != null
-                        && Boolean.TRUE.equals(exSub.getSubmission().getLatestResult().isExampleResult()))
+                .filter(exSub -> exSub.getSubmission() != null && exSub.getSubmission().getLastResult() != null
+                        && Boolean.TRUE.equals(exSub.getSubmission().getLastResult().isExampleResult()))
                 .count();
         int numberOfAlreadyAssessedSubmissions = alreadyAssessedSubmissions.size() + 1;  // +1 because we haven't added yet the one we just did
 

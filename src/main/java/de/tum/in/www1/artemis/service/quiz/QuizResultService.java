@@ -144,8 +144,8 @@ public class QuizResultService {
                 // Only create Results once after the first evaluation
                 if (!resultExisting) {
                     // delete result from quizSubmission, to be able to set a new one
-                    if (quizSubmission.getLatestResult() != null) {
-                        resultService.deleteResult(quizSubmission.getLatestResult(), true);
+                    if (quizSubmission.getLastResult() != null) {
+                        resultService.deleteResult(quizSubmission.getLastResult(), true);
                     }
                     result.setRated(true);
                     result.setAssessmentType(AssessmentType.AUTOMATIC);

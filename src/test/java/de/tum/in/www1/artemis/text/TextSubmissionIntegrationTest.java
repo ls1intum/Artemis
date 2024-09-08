@@ -263,8 +263,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         final String[] ignoringFields = { "results", "submissionDate", "blocks", "participation" };
         assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(textSubmission);
         assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(textSubmission.getSubmissionDate(), HalfSecond());
-        assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
-        assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
+        assertThat(storedSubmission.getLastResult()).as("result is set").isNotNull();
+        assertThat(storedSubmission.getLastResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -501,7 +501,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private void checkDetailsHidden(TextSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getResults()).as("results are hidden in participation").isNullOrEmpty();
         if (isStudent) {
-            assertThat(submission.getLatestResult()).as("result is hidden").isNull();
+            assertThat(submission.getLastResult()).as("result is hidden").isNull();
         }
         else {
             assertThat(((StudentParticipation) submission.getParticipation()).getStudent()).as(TEST_PREFIX + "student of participation is hidden").isEmpty();

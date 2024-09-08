@@ -239,7 +239,7 @@ public class ExerciseResource {
 
         Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exerciseId);
         // Do not provide example submissions without any assessment
-        exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getLatestResult() == null);
+        exampleSubmissions.removeIf(exampleSubmission -> exampleSubmission.getSubmission().getLastResult() == null);
         exercise.setExampleSubmissions(exampleSubmissions);
 
         Set<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);

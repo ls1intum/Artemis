@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -129,11 +130,42 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @Nullable
     @JsonIgnore
-    public Result getLatestResult() {
+    public Result getLastResult() {
         if (results != null && !results.isEmpty()) {
             return results.getLast();
         }
         return null;
+    }
+
+    @Nullable
+    private Result findLatestResult(boolean filterIllegalResults) {
+        List<Result> results = this.results;
+        if (results == null || results.isEmpty()) {
+            return null;
+        }
+
+        if (filterIllegalResults) {
+            // Filter out results that belong to an illegal submission (if the submission exists).
+            results = results.stream().filter(result -> result.getSubmission() == null || !SubmissionType.ILLEGAL.equals(result.getSubmission().getType())).toList();
+        }
+
+        List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
+                .sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
+
+        if (sortedResultsWithCompletionDate.isEmpty()) {
+            return null;
+        }
+        return sortedResultsWithCompletionDate.getFirst();
+    }
+
+    @Nullable
+    public Result findLatestLegalResult() {
+        return findLatestResult(true);
+    }
+
+    @Nullable
+    public Result findLatestResult() {
+        return findLatestResult(false);
     }
 
     /**

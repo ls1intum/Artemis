@@ -438,7 +438,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
             var submissionOptional = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderByLegalSubmissionDateDesc(studentParticipation.getId());
 
-            Result result = submissionOptional.map(ProgrammingSubmission::getLatestResult).orElseThrow(() -> new AssertionError("Submission has no results"));
+            Result result = submissionOptional.map(ProgrammingSubmission::getLastResult).orElseThrow(() -> new AssertionError("Submission has no results"));
 
             BuildJob buildJob = buildJobRepository.findBuildJobByResult(result).orElseThrow();
 

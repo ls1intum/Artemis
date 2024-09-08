@@ -143,7 +143,7 @@ class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
         var submissions = exercise.getStudentParticipations().iterator().next().getSubmissions();
         // We should only get the one relevant submission to send to the client
         assertThat(submissions).hasSize(1);
-        Result result = submissions.iterator().next().getLatestResult();
+        Result result = submissions.iterator().next().getLastResult();
         assertThat(result).isNotNull();
         assertThat(result.getAssessor()).isNull();
     }

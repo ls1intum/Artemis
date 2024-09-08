@@ -371,7 +371,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             }
             // we get the results over the submissions
             for (var submission : participation.getSubmissions()) {
-                var result = submission.getLatestResult();
+                var result = submission.getLastResult();
                 if (result == null) {
                     continue;
                 }
@@ -380,7 +380,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
                     // or
                     // take newer results and thus disregard older ones
                     // this should actually not be the case for quiz exercises, because they only should have one rated result
-                    if (latestSubmission == null || latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                    if (latestSubmission == null || latestSubmission.getLastResult().getCompletionDate().isBefore(result.getCompletionDate())) {
                         latestSubmission = submission;
                     }
                 }

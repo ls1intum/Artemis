@@ -195,8 +195,8 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
 
-            if (originalSubmission.getLatestResult() != null) {
-                Result resultCopy = copyExampleResult(originalSubmission.getLatestResult(), gradingInstructionCopyTracker);
+            if (originalSubmission.getLastResult() != null) {
+                Result resultCopy = copyExampleResult(originalSubmission.getLastResult(), gradingInstructionCopyTracker);
                 newSubmission.addResult(resultCopy);
             }
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
@@ -217,7 +217,7 @@ public class TextExerciseImportService extends ExerciseImportService {
      * @param newSubmission      The submission which has newly created text blocks
      */
     private void updateFeedbackReferencesWithNewTextBlockIds(Set<TextBlock> originalTextBlocks, TextSubmission newSubmission) {
-        Result newResult = newSubmission.getLatestResult();
+        Result newResult = newSubmission.getLastResult();
         List<Feedback> newFeedbackList = newResult.getFeedbacks();
         Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();
 

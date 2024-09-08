@@ -1056,79 +1056,61 @@ public class ExamUtilService {
         studentExam.addExercise(exercise);
         exercise.addParticipation(participation);
         participation.addSubmission(submission);
-        submission.setParticipation(participation);
         studentParticipationRepo.save(participation);
-        submissionRepository.save(submission);
         Result result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
-        studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
-
         exerciseRepo.save(exercise);
+
         // quiz exercise
         exercise = exerciseGroups.get(1).getExercises().iterator().next();
         participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, user);
         submission = ParticipationFactory.generateQuizSubmission(true);
+        studentExam.addExercise(exercise);
         exercise.addParticipation(participation);
         participation.addSubmission(submission);
-        submission.setParticipation(participation);
-        studentExam.addExercise(exercise);
         studentParticipationRepo.save(participation);
-        submissionRepository.save(submission);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
-        studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         exerciseRepo.save(exercise);
+
         // file upload
         exercise = exerciseGroups.get(2).getExercises().iterator().next();
         participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, user);
         submission = ParticipationFactory.generateFileUploadSubmission(true);
+        studentExam.addExercise(exercise);
         exercise.addParticipation(participation);
         participation.addSubmission(submission);
-        submission.setParticipation(participation);
-        studentExam.addExercise(exercise);
         studentParticipationRepo.save(participation);
-        submissionRepository.save(submission);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
-        studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         exerciseRepo.save(exercise);
+
         // modeling
         exercise = exerciseGroups.get(3).getExercises().iterator().next();
         participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise, user);
         submission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        studentExam.addExercise(exercise);
         exercise.addParticipation(participation);
         participation.addSubmission(submission);
-        submission.setParticipation(participation);
-        studentExam.addExercise(exercise);
         studentParticipationRepo.save(participation);
-        submissionRepository.save(submission);
-        exerciseRepo.save(exercise);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
-        studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
+        exerciseRepo.save(exercise);
+
         // programming
         exercise = exerciseGroups.get(6).getExercises().iterator().next();
         participation = participationUtilService.addStudentParticipationForProgrammingExerciseForLocalRepo((ProgrammingExercise) exercise, user.getLogin(), localRepoPath);
         submission = ParticipationFactory.generateProgrammingSubmission(true, "abc123", SubmissionType.MANUAL);
+        studentExam.addExercise(exercise);
         exercise.addParticipation(participation);
         participation.addSubmission(submission);
-        submission.setParticipation(participation);
-        studentExam.addExercise(exercise);
-
         studentParticipationRepo.save(participation);
-        submissionRepository.save(submission);
         result = participationUtilService.generateResultWithScore(submission, studentExam.getUser(), 3.0);
         submission.addResult(result);
-        participation.addResult(result);
-        studentParticipationRepo.save(participation);
         submissionRepository.save(submission);
         exerciseRepo.save(exercise);
 

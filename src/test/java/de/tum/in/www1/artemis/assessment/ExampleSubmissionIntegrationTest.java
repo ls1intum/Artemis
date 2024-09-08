@@ -340,17 +340,17 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
         feedback.setCredits(1.0);
         feedback.setReference(textBlocks.getFirst().getId());
-        participationUtilService.addFeedbackToResult(feedback, submission.getLatestResult());
+        participationUtilService.addFeedbackToResult(feedback, submission.getLastResult());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(textExercise.getId(), submission.getId(), HttpStatus.OK);
         List<TextBlock> copiedTextBlocks = new ArrayList<>(((TextSubmission) exampleSubmission.getSubmission()).getBlocks());
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((TextSubmission) exampleSubmission.getSubmission()).getText()).isEqualTo(submission.getText());
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks()).isNotEmpty();
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getCredits()).isEqualTo(feedback.getCredits());
+        assertThat(exampleSubmission.getSubmission().getLastResult().getFeedbacks()).isNotEmpty();
+        assertThat(exampleSubmission.getSubmission().getLastResult().getFeedbacks().getFirst().getCredits()).isEqualTo(feedback.getCredits());
         assertThat(copiedTextBlocks).isNotEmpty();
         assertThat(copiedTextBlocks.getFirst().getText()).isEqualTo(textBlock.getText());
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getReference()).isEqualTo(copiedTextBlocks.getFirst().getId());
+        assertThat(exampleSubmission.getSubmission().getLastResult().getFeedbacks().getFirst().getReference()).isEqualTo(copiedTextBlocks.getFirst().getId());
     }
 
     @Test
@@ -363,7 +363,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         ExampleSubmission exampleSubmission = importExampleSubmission(modelingExercise.getId(), submission.getId(), HttpStatus.OK);
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((ModelingSubmission) exampleSubmission.getSubmission()).getModel()).isEqualTo(submission.getModel());
-        assertThat(exampleSubmission.getSubmission().getLatestResult().getScore()).isEqualTo(submission.getLatestResult().getScore());
+        assertThat(exampleSubmission.getSubmission().getLastResult().getScore()).isEqualTo(submission.getLastResult().getScore());
     }
 
     @Test

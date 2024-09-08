@@ -277,13 +277,33 @@ public abstract class Participation extends DomainObject implements Participatio
      * participation has results. This might not be high-performance, so use it at your own risk.
      *
      * @return the latest result or null
+     * @deprecated: Will be removed for 8.0, please use {@link Submission#findLatestLegalResult()} ()} instead
+     *              <p>
+     *              Results are not cascaded through the participation because ideally we want the relationship between participations, submissions and results as follows: each
+     *              participation
+     *              has multiple submissions. For each submission there can be a result. Therefore, the result is persisted with the submission. Refer to {@link Submission#results}
+     *              for
+     *              cascading
+     *              settings.
      */
     @Nullable
+    @Deprecated
     public Result findLatestLegalResult() {
         return findLatestResult(true);
     }
 
+    /**
+     * @deprecated: Will be removed for 8.0, please use {@link Submission#findLatestResult()} instead
+     *              <p>
+     *              Results are not cascaded through the participation because ideally we want the relationship between participations, submissions and results as follows: each
+     *              participation
+     *              has multiple submissions. For each submission there can be a result. Therefore, the result is persisted with the submission. Refer to {@link Submission#results}
+     *              for
+     *              cascading
+     *              settings.
+     */
     @Nullable
+    @Deprecated
     public Result findLatestResult() {
         return findLatestResult(false);
     }
@@ -293,8 +313,17 @@ public abstract class Participation extends DomainObject implements Participatio
      *
      * @param filterIllegalResults should illegal submissions be excluded in the search
      * @return the latest result or null
+     * @deprecated: Will be removed for 8.0, please use {@link Submission#findLatestResult(boolean)} instead
+     *              <p>
+     *              Results are not cascaded through the participation because ideally we want the relationship between participations, submissions and results as follows: each
+     *              participation
+     *              has multiple submissions. For each submission there can be a result. Therefore, the result is persisted with the submission. Refer to {@link Submission#results}
+     *              for
+     *              cascading
+     *              settings.
      */
     @Nullable
+    @Deprecated(since = "7.5", forRemoval = true)
     private Result findLatestResult(boolean filterIllegalResults) {
         Set<Result> results = this.results;
         if (results == null || results.isEmpty()) {

@@ -420,7 +420,7 @@ public class TextExerciseResource {
                 textSubmission.setResults(Collections.emptyList());
             }
 
-            Result result = textSubmission.getLatestResult();
+            Result result = textSubmission.getLastResult();
             if (result != null) {
                 // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
                 final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());

@@ -168,7 +168,7 @@ public class ExerciseHintService {
             return new HashSet<>();
         }
 
-        var latestResult = submissions.getFirst().getLatestResult();
+        var latestResult = submissions.getFirst().getLastResult();
 
         // latest submissions has no result or latest result has no feedback (most commonly due to a build error)
         if (latestResult == null || latestResult.getFeedbacks().isEmpty()) {
@@ -226,7 +226,7 @@ public class ExerciseHintService {
     }
 
     private boolean isTaskSuccessfulInSubmission(ProgrammingExerciseTask task, Submission submission) {
-        var result = submission.getLatestResult();
+        var result = submission.getLastResult();
         if (result == null || result.getFeedbacks().isEmpty()) {
             return false;
         }

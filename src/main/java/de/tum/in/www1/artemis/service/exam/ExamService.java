@@ -658,7 +658,7 @@ public class ExamService {
             var lastSubmission = latestSubmission.get();
             if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
                 // Also set the latest result into the participation as the client expects it there for programming exercises
-                Result latestResult = lastSubmission.getLatestResult();
+                Result latestResult = lastSubmission.getLastResult();
                 if (latestResult != null) {
                     latestResult.setSubmission(lastSubmission);
                     latestResult.filterSensitiveInformation();

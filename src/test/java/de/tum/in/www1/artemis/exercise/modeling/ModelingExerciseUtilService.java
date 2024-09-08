@@ -241,14 +241,10 @@ public class ModelingExerciseUtilService {
         var user = userUtilService.getUserByLogin(login);
         submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
         Result result = new Result();
-        result = resultRepo.save(result);
-        result.setSubmission(submission);
         submission.addResult(result);
-        participation.addResult(result);
-        studentParticipationRepo.save(participation);
+        submission.setParticipation(participation);
         modelingSubmissionRepo.save(submission);
-        resultRepo.save(result);
-        return submission;
+        return modelingSubmissionRepo.findByIdWithEagerResult(submission.getId()).orElseThrow();
     }
 
     /**
@@ -299,24 +295,14 @@ public class ModelingExerciseUtilService {
 
         StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
-        submission = modelingSubmissionRepo.save(submission);
 
         Result result = new Result();
-
         result.setAssessor(userUtilService.getUserByLogin(assessorLogin));
         result.setAssessmentType(AssessmentType.MANUAL);
-        result = resultRepo.save(result);
-        submission = modelingSubmissionRepo.save(submission);
-        studentParticipationRepo.save(participation);
-        result = resultRepo.save(result);
-
-        result.setSubmission(submission);
-        submission.setParticipation(participation);
         submission.addResult(result);
-        submission.getParticipation().addResult(result);
-        submission = modelingSubmissionRepo.save(submission);
-        studentParticipationRepo.save(participation);
-        return submission;
+        modelingSubmissionRepo.save(submission);
+
+        return modelingSubmissionRepo.findByIdWithEagerResult(submission.getId()).orElseThrow();
     }
 
     /**
@@ -390,7 +376,6 @@ public class ModelingExerciseUtilService {
     public Result addModelingAssessmentForSubmission(ModelingExercise exercise, ModelingSubmission submission, String path, String login, boolean submit) throws Exception {
         List<Feedback> feedbackList = participationUtilService.loadAssessmentFomResources(path);
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbackList, null, null, submit);
-        result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
         return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());
@@ -413,7 +398,6 @@ public class ModelingExerciseUtilService {
         feedbacks.add(feedback2);
 
         Result result = assessmentService.saveAndSubmitManualAssessment(exercise, submission, feedbacks, null, null, submit);
-        result.setParticipation(submission.getParticipation().results(null));
         result.setAssessor(userUtilService.getUserByLogin(login));
         resultRepo.save(result);
         return resultRepo.findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(result.getId());

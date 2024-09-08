@@ -1192,7 +1192,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         exampleSubmission = participationUtilService.addExampleSubmission(exampleSubmission);
         TextSubmission textSubmission = (TextSubmission) participationUtilService.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         textSubmission.setExampleSubmission(true);
-        Result result = textSubmission.getLatestResult();
+        Result result = textSubmission.getLastResult();
         result.setExampleResult(true);
         textSubmission.addResult(result);
         textSubmissionRepository.save(textSubmission);
@@ -1328,7 +1328,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
 
         Feedback feedback = ParticipationFactory.generateFeedback().getFirst();
         feedback.setGradingInstruction(gradingInstruction);
-        participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLatestResult()));
+        participationUtilService.addFeedbackToResult(feedback, Objects.requireNonNull(submission.getLastResult()));
 
         textExercise.setCourse(course2);
         textExercise.setChannelName("test" + UUID.randomUUID().toString().substring(0, 8));
@@ -1337,7 +1337,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(textExerciseRepository.findById(importedTextExercise.getId())).isPresent();
 
         var importedExampleSubmission = importedTextExercise.getExampleSubmissions().stream().findFirst().orElseThrow();
-        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLatestResult().getFeedbacks().getFirst().getGradingInstruction();
+        GradingInstruction importedFeedbackGradingInstruction = importedExampleSubmission.getSubmission().getLastResult().getFeedbacks().getFirst().getGradingInstruction();
         assertThat(importedFeedbackGradingInstruction).isNotNull();
 
         // Copy and original should have the same data but not the same ids.
@@ -1350,7 +1350,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
         assertThat(importedFeedbackGradingInstruction.getUsageCount()).isEqualTo(gradingInstruction.getUsageCount());
 
         var importedTextExerciseFromDB = textExerciseRepository.findWithExampleSubmissionsAndResultsById(importedTextExercise.getId()).orElseThrow();
-        var importedFeedbackGradingInstructionFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLatestResult()
+        var importedFeedbackGradingInstructionFromDb = importedTextExerciseFromDB.getExampleSubmissions().stream().findFirst().orElseThrow().getSubmission().getLastResult()
                 .getFeedbacks().getFirst().getGradingInstruction();
 
         assertThat(importedFeedbackGradingInstructionFromDb.getGradingCriterion().getId()).isNotEqualTo(gradingInstruction.getGradingCriterion().getId());

@@ -1088,7 +1088,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
-                    var result = studentParticipation.findLatestSubmission().get().getLatestResult();
+                    var result = studentParticipation.findLatestSubmission().get().getLastResult();
                     assertThat(result).isNotNull();
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
@@ -1166,7 +1166,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     exercisesOfUser.get(user));
             for (final var studentParticipation : studentParticipations) {
                 if (studentParticipation.findLatestSubmission().isPresent()) {
-                    var result = studentParticipation.findLatestSubmission().get().getLatestResult();
+                    var result = studentParticipation.findLatestSubmission().get().getLastResult();
                     assertThat(result).isNotNull();
                     assertThat(result.getScore()).isZero();
                     assertThat(result.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
@@ -1284,7 +1284,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
             var iterator = participation.getSubmissions().iterator();
             if (iterator.hasNext()) {
                 var submission = iterator.next();
-                assertThat(submission.getLatestResult()).isNull();
+                assertThat(submission.getLastResult()).isNull();
             }
         }
         deleteExamWithInstructor(exam1);
@@ -2050,7 +2050,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
         List<StudentParticipation> participations = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
-        var latestResults = participations.stream().flatMap(participation -> participation.getSubmissions().stream().map(Submission::getLatestResult)).toList();
+        var latestResults = participations.stream().flatMap(participation -> participation.getSubmissions().stream().map(Submission::getLastResult)).toList();
         for (var result : latestResults) {
             // First set all results to 0 since we don't want any additions to affect the manually assigned results below.
             result.setScore(0.0);

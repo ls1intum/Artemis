@@ -327,7 +327,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         final String[] ignoringFields = { "results", "submissionDate", "fileService", "filePathService", "entityFileService", "participation" };
         assertThat(storedSubmission).as("in-time submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(submission);
         assertThat(storedSubmission.getSubmissionDate()).as("submission date is correct").isCloseTo(submission.getSubmissionDate(), HalfSecond());
-        assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
+        assertThat(storedSubmission.getLastResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -348,7 +348,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
 
         final String[] ignoringFields = { "results", "submissionDate", "fileService", "filePathService", "entityFileService", "participation" };
         assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(lateSubmission);
-        assertThat(storedSubmission.getLatestResult()).as("result is not set").isNull();
+        assertThat(storedSubmission.getLastResult()).as("result is not set").isNull();
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -370,7 +370,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
 
         final String[] ignoringFields = { "results", "submissionDate", "fileService", "filePathService", "entityFileService", "participation" };
         assertThat(storedSubmission).as("submission was found").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(lateSubmission);
-        assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
+        assertThat(storedSubmission.getLastResult()).as("result is set").isNotNull();
         checkDetailsHidden(storedSubmission, false);
     }
 
@@ -424,7 +424,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
         assertThat(submission).isNotNull();
-        assertThat(submission.getLatestResult()).isNull();
+        assertThat(submission.getLastResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getParticipation().getResults()).isEmpty();
     }
@@ -440,7 +440,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         participation.setResults(null);
         FileUploadSubmission submission = request.get("/api/participations/" + participation.getId() + "/file-upload-editor", HttpStatus.OK, FileUploadSubmission.class);
         assertThat(submission).isNotNull();
-        assertThat(submission.getLatestResult()).isNull();
+        assertThat(submission.getLastResult()).isNull();
         assertThat(submission.isSubmitted()).isTrue();
         assertThat(submission.getParticipation().getResults()).isEmpty();
     }
@@ -452,11 +452,11 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         List<Feedback> feedbacks = ParticipationFactory.generateFeedback();
         fileUploadSubmission = fileUploadExerciseUtilService.saveFileUploadSubmissionWithResultAndAssessorFeedback(finishedFileUploadExercise, fileUploadSubmission,
                 TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", feedbacks);
-        exerciseUtilService.updateResultCompletionDate(fileUploadSubmission.getLatestResult().getId(), null);
+        exerciseUtilService.updateResultCompletionDate(fileUploadSubmission.getLastResult().getId(), null);
 
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
-        assertThat(submission.getLatestResult()).isNull();
+        assertThat(submission.getLastResult()).isNull();
         assertThat(submission.getParticipation().getResults()).isEmpty();
     }
 
@@ -509,10 +509,10 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadSubmission submission = request.get("/api/participations/" + fileUploadSubmission.getParticipation().getId() + "/file-upload-editor", HttpStatus.OK,
                 FileUploadSubmission.class);
         assertThat(submission).isNotNull();
-        assertThat(submission.getLatestResult()).isNotNull();
+        assertThat(submission.getLastResult()).isNotNull();
         assertThat(submission.isSubmitted()).isTrue();
-        assertThat(submission.getLatestResult().getFeedbacks()).isEqualTo(feedbacks);
-        assertThat(submission.getLatestResult().getAssessor()).as("students should not see the assessor information").isNull();
+        assertThat(submission.getLastResult().getFeedbacks()).isEqualTo(feedbacks);
+        assertThat(submission.getLastResult().getAssessor()).as("students should not see the assessor information").isNull();
     }
 
     @Test
@@ -631,7 +631,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
     private void checkDetailsHidden(FileUploadSubmission submission, boolean isStudent) {
         assertThat(submission.getParticipation().getResults()).isNullOrEmpty();
         if (isStudent) {
-            assertThat(submission.getLatestResult()).isNull();
+            assertThat(submission.getLastResult()).isNull();
         }
     }
 
@@ -659,7 +659,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(receivedSubmission.getId()).isEqualTo(submissionID);
-        assertThat(receivedSubmission.getLatestResult()).as("submission has latest result").isEqualTo(result);
+        assertThat(receivedSubmission.getLastResult()).as("submission has latest result").isEqualTo(result);
     }
 
     @Test
@@ -690,7 +690,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationIndep
         FileUploadSubmission receivedSubmission = request.get("/api/file-upload-submissions/" + submissionID, HttpStatus.OK, FileUploadSubmission.class);
 
         assertThat(receivedSubmission.getId()).isEqualTo(submissionID);
-        assertThat(receivedSubmission.getLatestResult().getAssessor()).as("latest result has assessor").isEqualTo(assessor);
+        assertThat(receivedSubmission.getLastResult().getAssessor()).as("latest result has assessor").isEqualTo(assessor);
     }
 
     @Test

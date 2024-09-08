@@ -341,13 +341,13 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         participation.setSubmissions(null);
 
         // do not send the result to the client if the assessment is not finished
-        if (modelingSubmission.getLatestResult() != null
-                && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
+        if (modelingSubmission.getLastResult() != null
+                && (modelingSubmission.getLastResult().getCompletionDate() == null || modelingSubmission.getLastResult().getAssessor() == null)) {
             modelingSubmission.setResults(new ArrayList<>());
         }
 
-        if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
-            modelingSubmission.getLatestResult().filterSensitiveInformation();
+        if (modelingSubmission.getLastResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {
+            modelingSubmission.getLastResult().filterSensitiveInformation();
         }
 
         // make sure sensitive information are not sent to the client

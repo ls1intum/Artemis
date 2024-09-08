@@ -541,7 +541,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             return null;
         }
         for (var submission : participation.getSubmissions()) {
-            var result = submission.getLatestResult();
+            var result = submission.getLastResult();
             // If not the result does not exist or is not assessed yet, we can skip it
             if (result == null || result.getCompletionDate() == null) {
                 continue;
@@ -558,7 +558,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 // take the first found result that fulfills the above requirements
                 // or
                 // take newer results and thus disregard older ones
-                if (latestSubmission == null || latestSubmission.getLatestResult().getCompletionDate().isBefore(result.getCompletionDate())) {
+                if (latestSubmission == null || latestSubmission.getLastResult().getCompletionDate().isBefore(result.getCompletionDate())) {
                     latestSubmission = submission;
                 }
             }
@@ -626,7 +626,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         List<Submission> submissionsWithoutResult = new ArrayList<>();
 
         for (Submission submission : submissions) {
-            Result result = submission.getLatestResult();
+            Result result = submission.getLastResult();
             if (result != null) {
                 if (Boolean.TRUE.equals(result.isRated())) {
                     submissionsWithRatedResult.add(submission);

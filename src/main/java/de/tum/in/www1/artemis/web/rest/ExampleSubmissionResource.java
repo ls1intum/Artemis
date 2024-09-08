@@ -136,7 +136,7 @@ public class ExampleSubmissionResource {
         // Prepare text blocks for fresh assessment
         if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
             Optional<TextSubmission> textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(exampleSubmission.getSubmission().getId());
-            if (textSubmission.isPresent() && textSubmission.get().getLatestResult() == null
+            if (textSubmission.isPresent() && textSubmission.get().getLastResult() == null
                     && (textSubmission.get().getBlocks() == null || textSubmission.get().getBlocks().isEmpty())) {
                 TextSubmission submission = textSubmission.get();
                 textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(submission);

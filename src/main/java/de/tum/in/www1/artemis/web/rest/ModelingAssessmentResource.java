@@ -161,7 +161,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
         checkAuthorization(modelingExercise, user);
 
-        Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getLatestResult(), modelingExercise, assessmentUpdate);
+        Result result = assessmentService.updateAssessmentAfterComplaint(modelingSubmission.getLastResult(), modelingExercise, assessmentUpdate);
 
         var participation = result.getSubmission().getParticipation();
         if (participation instanceof StudentParticipation studentParticipation && !authCheckService.isAtLeastInstructorForExercise(modelingExercise, user)) {

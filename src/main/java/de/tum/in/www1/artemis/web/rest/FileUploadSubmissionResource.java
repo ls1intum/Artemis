@@ -326,10 +326,10 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
 
-        if (fileUploadSubmission.getLatestResult() != null) {
+        if (fileUploadSubmission.getLastResult() != null) {
             // do not send the feedback to the client
             // if the assessment is not finished
-            boolean assessmentUnfinished = fileUploadSubmission.getLatestResult().getCompletionDate() == null || fileUploadSubmission.getLatestResult().getAssessor() == null;
+            boolean assessmentUnfinished = fileUploadSubmission.getLastResult().getCompletionDate() == null || fileUploadSubmission.getLastResult().getAssessor() == null;
             // or the assessment due date isn't over yet
             boolean assessmentDueDateNotOver = !ExerciseDateService.isAfterAssessmentDueDate(fileUploadExercise);
 
@@ -339,8 +339,8 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         // do not send the assessor information to students
-        if (fileUploadSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
-            fileUploadSubmission.getLatestResult().filterSensitiveInformation();
+        if (fileUploadSubmission.getLastResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(fileUploadExercise)) {
+            fileUploadSubmission.getLastResult().filterSensitiveInformation();
         }
 
         return ResponseEntity.ok(fileUploadSubmission);

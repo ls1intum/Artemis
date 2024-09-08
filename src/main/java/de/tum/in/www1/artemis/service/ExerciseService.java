@@ -475,17 +475,17 @@ public class ExerciseService {
 
             Set<Result> results = Set.of();
 
-            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getLatestResult() != null) {
-                results = Set.of(latestSubmissionWithRatedResult.getLatestResult());
+            if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getLastResult() != null) {
+                results = Set.of(latestSubmissionWithRatedResult.getLastResult());
                 // filter sensitive information about the assessor if the current user is a student
                 if (isStudent) {
-                    latestSubmissionWithRatedResult.getLatestResult().filterSensitiveInformation();
+                    latestSubmissionWithRatedResult.getLastResult().filterSensitiveInformation();
                 }
             }
 
             // filter sensitive information in submission's result
-            if (isStudent && submission != null && submission.getLatestResult() != null) {
-                submission.getLatestResult().filterSensitiveInformation();
+            if (isStudent && submission != null && submission.getLastResult() != null) {
+                submission.getLastResult().filterSensitiveInformation();
             }
 
             // add submission to participation or set it to null

@@ -1298,7 +1298,7 @@ public class CourseTestService {
         int[] ratings = { 3, 4, 5 };
         for (int i = 0; i < ratings.length; i++) {
             var submission = textExerciseUtilService.createSubmissionForTextExercise(exercise, userUtilService.getUserByLogin(userPrefix + "student" + (i + 1)), "text");
-            var assessment = participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, null, 0.0, true).getLatestResult();
+            var assessment = participationUtilService.addResultToSubmission(submission, AssessmentType.MANUAL, null, 0.0, true).getLastResult();
             participationUtilService.addRatingToResult(assessment, ratings[i]);
         }
 

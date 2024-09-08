@@ -181,7 +181,7 @@ public class AssessmentService {
         StudentParticipation participation = studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
         // cancel is only possible for the latest result.
-        Result result = submission.getLatestResult();
+        Result result = submission.getLastResult();
 
         // We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
         if (result != null && result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
@@ -221,7 +221,7 @@ public class AssessmentService {
     public Result getExampleAssessment(long submissionId) {
         Optional<Submission> optionalSubmission = submissionRepository.findExampleSubmissionByIdWithEagerResult(submissionId);
         Submission submission = optionalSubmission.orElseThrow(() -> new EntityNotFoundException("Example Submission with id \"" + submissionId + "\" does not exist"));
-        return submission.getLatestResult();
+        return submission.getLastResult();
     }
 
     /**

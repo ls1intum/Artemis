@@ -196,7 +196,7 @@ public class SubmissionService {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
         }
 
-        submissions.forEach(submission -> submission.getLatestResult().setSubmission(null));
+        submissions.forEach(submission -> submission.getLastResult().setSubmission(null));
         return submissions;
     }
 
@@ -268,7 +268,7 @@ public class SubmissionService {
             if (athenaSubmissionId.isPresent()) {
                 var submission = findSubmissionById.apply(athenaSubmissionId.get());
                 // Test again if it is still assessable (Athena might have taken some time to respond and another assessment might have started in the meantime):
-                if (submission.isPresent() && (submission.get().getLatestResult() == null || !submission.get().getLatestResult().isManual())) {
+                if (submission.isPresent() && (submission.get().getLastResult() == null || !submission.get().getLastResult().isManual())) {
                     return submission;
                 }
                 else {
@@ -454,7 +454,7 @@ public class SubmissionService {
      */
     public Result createResultAfterComplaintResponse(Submission submission, Result oldResult, List<Feedback> feedbacks, String assessmentNoteText) {
         Result newResult = new Result();
-        updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLatestResult().getAssessor());
+        updateAssessmentNoteAfterComplaintResponse(newResult, assessmentNoteText, submission.getLastResult().getAssessor());
         newResult.setSubmission(submission);
         submission.addResult(newResult);
         copyFeedbackToResult(newResult, feedbacks);
@@ -552,8 +552,8 @@ public class SubmissionService {
      */
     public Result prepareTestRunSubmissionForAssessment(Submission submission) {
         Optional<Result> existingAutomaticResult = Optional.empty();
-        if (submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
-            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(submission.getLatestResult().getId());
+        if (submission.getLastResult() != null && AssessmentType.AUTOMATIC == submission.getLastResult().getAssessmentType()) {
+            existingAutomaticResult = resultRepository.findByIdWithEagerFeedbacks(submission.getLastResult().getId());
         }
 
         // we only support one correction round for test runs
@@ -609,7 +609,7 @@ public class SubmissionService {
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
             if (optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())) {
                 var submission = optionalSubmission.get();
-                var latestResult = submission.getLatestResult();
+                var latestResult = submission.getLastResult();
                 submission.setResults(latestResult != null ? List.of(latestResult) : List.of());
                 participation.setSubmissions(Set.of(submission));
 

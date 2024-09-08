@@ -228,9 +228,9 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         assertThat(resultOfComplaint.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
         assertThat(resultOfComplaint).isEqualTo(modelingAssessment);
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedbackAndAssessmentNote(modelingAssessment.getSubmission().getId());
-        assertThat(submission.getLatestResult()).isNotNull();
+        assertThat(submission.getLastResult()).isNotNull();
         assertThat(submission.getFirstResult()).isNotNull();
-        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, submission.getLatestResult().getFeedbacks(), FeedbackType.MANUAL);
+        participationUtilService.checkFeedbackCorrectlyStored(feedbacks, submission.getLastResult().getFeedbacks(), FeedbackType.MANUAL);
         assertThat(submission.getFirstResult().getAssessor()).as("assessor is still the original one").isEqualTo(modelingAssessment.getAssessor());
     }
 

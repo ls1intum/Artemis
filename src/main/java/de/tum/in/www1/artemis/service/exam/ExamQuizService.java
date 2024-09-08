@@ -77,7 +77,7 @@ public class ExamQuizService {
                 participation.setExercise(quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId()));
                 quizExercise = (QuizExercise) participation.getExercise();
                 Result result;
-                if (quizSubmission.getLatestResult() == null) {
+                if (quizSubmission.getLastResult() == null) {
                     result = new Result();
                     result.setAssessmentType(AssessmentType.AUTOMATIC);
                     // set submission to calculate scores
@@ -94,7 +94,7 @@ public class ExamQuizService {
                     result = resultRepository.save(result);
                 }
                 else {
-                    result = quizSubmission.getLatestResult();
+                    result = quizSubmission.getLastResult();
                     // set submission to calculate scores
                     result.setSubmission(quizSubmission);
                     // calculate scores and update result and submission accordingly

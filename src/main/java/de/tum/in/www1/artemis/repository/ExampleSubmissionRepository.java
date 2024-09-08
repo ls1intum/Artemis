@@ -74,7 +74,7 @@ public interface ExampleSubmissionRepository extends ArtemisJpaRepository<Exampl
             return List.of();
         }
 
-        Result result = submission.getLatestResult();
+        Result result = submission.getLastResult();
 
         // result.isExampleResult() can have 3 values: null, false, true. We return if it is not true
         if (result == null || !Boolean.TRUE.equals(result.isExampleResult())) {

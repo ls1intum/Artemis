@@ -138,8 +138,8 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
         submission.setSubmissionId(modelingSubmission.getId());
         submission.setStudentLogin(((StudentParticipation) modelingSubmission.getParticipation()).getParticipantIdentifier());
 
-        if (modelingSubmission.getLatestResult() != null) {
-            submission.setScore(modelingSubmission.getLatestResult().getScore());
+        if (modelingSubmission.getLastResult() != null) {
+            submission.setScore(modelingSubmission.getLastResult().getScore());
         }
 
         return submission;

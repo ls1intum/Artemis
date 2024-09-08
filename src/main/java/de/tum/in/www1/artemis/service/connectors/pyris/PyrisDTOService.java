@@ -104,7 +104,7 @@ public class PyrisDTOService {
      * @return the PyrisResultDTO or null if the submission has no result
      */
     private PyrisResultDTO getLatestResult(ProgrammingSubmission submission) {
-        var latestResult = submission.getLatestResult();
+        var latestResult = submission.getLastResult();
         if (latestResult == null) {
             return null;
         }
