@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -49,11 +50,15 @@ import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.in.www1.artemis.service.connectors.lti.LtiNewResultService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
@@ -99,6 +104,10 @@ public class ResultService {
 
     private final BuildLogEntryService buildLogEntryService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ProgrammingExerciseTaskService programmingExerciseTaskService;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
@@ -106,7 +115,8 @@ public class ResultService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
-            BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService) {
+            BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -125,6 +135,8 @@ public class ResultService {
         this.studentExamRepository = studentExamRepository;
         this.buildJobRepository = buildJobRepository;
         this.buildLogEntryService = buildLogEntryService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseTaskService = programmingExerciseTaskService;
     }
 
     /**
@@ -506,5 +518,34 @@ public class ResultService {
         else {
             return result;
         }
+    }
+
+    /**
+     * Retrieves aggregated feedback details for a given exercise, calculating relative counts based on the total number of distinct results.
+     * The task numbers are assigned based on the associated test case names, using the set of tasks fetched from the database.
+     * <br>
+     * For each feedback detail:
+     * 1. The relative count is calculated as a percentage of the total number of distinct results for the exercise.
+     * 2. The task number is determined by matching the test case name with the tasks.
+     *
+     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
+     * @return A list of FeedbackDetailDTO objects, each containing:
+     *         - feedback count,
+     *         - relative count (as a percentage of distinct results),
+     *         - detail text,
+     *         - test case name,
+     *         - determined task number (based on the test case name).
+     */
+    public List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(long exerciseId) {
+        long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
+        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
+        List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
+
+        return feedbackDetails.stream().map(detail -> {
+            double relativeCount = (detail.count() * 100.0) / distinctResultCount;
+            int taskNumber = tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(detail.testCaseName()))).findFirst()
+                    .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
+            return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);
+        }).toList();
     }
 }

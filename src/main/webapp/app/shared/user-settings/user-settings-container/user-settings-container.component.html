@@ -26,7 +26,14 @@
                 ></a>
                 <a class="list-group-item btn btn-outline-primary" routerLink="science" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.scienceSettings"></a>
                 @if (localVCEnabled) {
-                    <a class="list-group-item btn btn-outline-primary" routerLink="sshSettings" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.sshSettings"></a>
+                    <a class="list-group-item btn btn-outline-primary" routerLink="ssh" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.sshSettings"></a>
+                    <a
+                        class="list-group-item btn btn-outline-primary"
+                        routerLink="vcs-token"
+                        routerLinkActive="active"
+                        jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"
+                    >
+                    </a>
                 }
             </section>
         </div>

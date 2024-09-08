@@ -1,10 +1,10 @@
 import { Component, Input } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { TextResultBlock } from './text-result-block';
 import { TranslateService } from '@ngx-translate/core';
-import { TextBlock } from 'app/entities/text-block.model';
+import { TextBlock } from 'app/entities/text/text-block.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { Course } from 'app/entities/course.model';

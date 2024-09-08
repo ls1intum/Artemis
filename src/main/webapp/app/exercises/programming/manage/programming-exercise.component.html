@@ -139,12 +139,16 @@
                         }
                         <td class="d-md-table-cell">
                             <div class="d-flex justify-content-between">
-                                {{ 'artemisApp.programmingExercise.offlineIde' | artemisTranslate }}:
-                                {{ programmingExercise.allowOfflineIde ? ('artemisApp.exercise.yes' | artemisTranslate) : ('artemisApp.exercise.no' | artemisTranslate) }}
+                                <span [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>:
+                                <span [jhiTranslate]="programmingExercise.allowOfflineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
                             </div>
                             <div class="d-flex justify-content-between">
-                                {{ 'artemisApp.programmingExercise.onlineEditor' | artemisTranslate }}:
-                                {{ programmingExercise.allowOnlineEditor ? ('artemisApp.exercise.yes' | artemisTranslate) : ('artemisApp.exercise.no' | artemisTranslate) }}
+                                <span [jhiTranslate]="'artemisApp.programmingExercise.onlineEditor'"></span>:
+                                <span [jhiTranslate]="programmingExercise.allowOnlineEditor ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>:
+                                <span [jhiTranslate]="programmingExercise.allowOnlineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
                             </div>
                         </td>
                         @if (course.presentationScore !== 0) {

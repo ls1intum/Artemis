@@ -58,7 +58,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
     /**
      * Find all exams for multiple courses that are already visible to the user (either registered, at least tutor or the exam is a test exam)
      *
-     * @param courseIds  set of courseIds that the exams should be retreived
+     * @param courseIds  set of courseIds that the exams should be retrieved
      * @param userId     the id of the user requesting the exams
      * @param groupNames the groups of the user requesting the exams
      * @param now        the current date, typically ZonedDateTime.now()

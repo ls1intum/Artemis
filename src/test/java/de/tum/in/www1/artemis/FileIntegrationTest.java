@@ -68,7 +68,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void initTestCase() {
-        userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
     }
 
     @Test
@@ -305,6 +305,43 @@ class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         return request.postWithMultipartFiles("/api/lectures/" + lecture.getId() + "/attachment-units", attachmentUnit, "attachmentUnit", List.of(attachmentFile, file),
                 AttachmentUnit.class, expectedStatus);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetAttachmentFileAsEditor() throws Exception {
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+
+        Attachment attachment = LectureFactory.generateAttachmentWithFile(ZonedDateTime.now(), lecture.getId(), false);
+        attachment.setId(1L);
+        attachment.setLecture(lecture);
+
+        Long courseId = lecture.getCourse().getId();
+        Long attachmentId = attachment.getId();
+
+        lectureRepo.save(lecture);
+        attachmentRepo.save(attachment);
+
+        request.get("/api/files/courses/" + courseId + "/attachments/" + attachmentId, HttpStatus.OK, byte[].class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetAttachmentUnitFileAsEditor() throws Exception {
+        Lecture lecture = lectureUtilService.createCourseWithLecture(true);
+
+        AttachmentUnit attachmentUnit = lectureUtilService.createAttachmentUnit(true);
+        attachmentUnit.setLecture(lecture);
+        Attachment attachment = attachmentUnit.getAttachment();
+
+        lectureRepo.save(lecture);
+        attachmentRepo.save(attachment);
+        attachmentUnitRepo.save(attachmentUnit);
+
+        Long courseId = lecture.getCourse().getId();
+        Long attachmentUnitId = attachmentUnit.getId();
+
+        request.get("/api/files/courses/" + courseId + "/attachment-units/" + attachmentUnitId, HttpStatus.OK, byte[].class);
     }
 
 }

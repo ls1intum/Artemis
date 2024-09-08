@@ -6,7 +6,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { map } from 'rxjs/operators';
 import { Submission } from 'app/entities/submission.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 

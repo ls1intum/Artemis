@@ -1,0 +1,89 @@
+.pdf-container {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 30px;
+    max-height: 60vh;
+    height: 60vh;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    margin: 10px;
+    width: 95%;
+    box-shadow: 0 2px 5px var(--pdf-preview-pdf-container-shadow);
+    align-items: start;
+    z-index: 0;
+
+    @media (max-width: 800px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 500px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.enlarged-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--pdf-preview-enlarged-container-overlay);
+    z-index: 2;
+
+    .btn-close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        color: var(--bs-body-color);
+    }
+}
+
+.nav-button {
+    position: absolute;
+    transform: translateY(-50%);
+    cursor: pointer;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    z-index: 3;
+}
+
+.nav-button.left {
+    left: calc(5% + 10px);
+
+    @media (max-width: 1200px) {
+        left: 10px;
+    }
+}
+
+.nav-button.right {
+    right: calc(5% + 10px);
+
+    @media (max-width: 1200px) {
+        right: 10px;
+    }
+}
+
+.page-number-display {
+    position: absolute;
+    bottom: 10px;
+    right: calc(5% + 10px);
+    font-size: 18px;
+    color: var(--bs-body-color);
+    z-index: 2;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+
+    @media (max-width: 1200px) {
+        right: 10px;
+    }
+}

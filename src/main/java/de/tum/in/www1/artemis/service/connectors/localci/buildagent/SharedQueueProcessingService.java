@@ -32,7 +32,6 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.cp.lock.FencedLock;
 import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
@@ -64,11 +63,6 @@ public class SharedQueueProcessingService {
     private final AtomicInteger localProcessingJobs = new AtomicInteger(0);
 
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
-
-    /**
-     * Lock to prevent multiple nodes from processing the same build job.
-     */
-    private FencedLock sharedLock;
 
     private IQueue<BuildJobQueueItem> queue;
 
@@ -104,7 +98,6 @@ public class SharedQueueProcessingService {
     public void init() {
         this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
         this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        this.sharedLock = this.hazelcastInstance.getCPSubsystem().getLock("buildJobQueueLock");
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
@@ -176,14 +169,8 @@ public class SharedQueueProcessingService {
                 return;
             }
 
-            // Lock the queue to prevent multiple nodes from processing the same build job
-            sharedLock.lock();
-            try {
-                buildJob = addToProcessingJobs();
-            }
-            finally {
-                sharedLock.unlock();
-            }
+            buildJob = addToProcessingJobs();
+
             processBuild(buildJob);
         }
         catch (RejectedExecutionException e) {

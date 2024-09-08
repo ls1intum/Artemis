@@ -12,10 +12,10 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
@@ -347,7 +347,7 @@ export class ExerciseService {
      * @param exercise the exercise
      */
     static stringifyExerciseCategories(exercise: Exercise) {
-        return exercise.categories?.map((category) => JSON.stringify(category) as ExerciseCategory);
+        return exercise.categories?.map((category) => JSON.stringify(category) as unknown as ExerciseCategory);
     }
 
     /**
@@ -362,12 +362,15 @@ export class ExerciseService {
     }
 
     /**
-     * Parses the exercise categories JSON string into ExerciseCategory objects.
+     * Parses the exercise categories JSON string into {@link ExerciseCategory} objects.
      * @param exercise - the exercise
      */
     static parseExerciseCategories(exercise?: Exercise) {
         if (exercise?.categories) {
-            exercise.categories = exercise.categories.map((category) => JSON.parse(category as string) as ExerciseCategory);
+            exercise.categories = exercise.categories.map((category) => {
+                const categoryObj = JSON.parse(category as unknown as string);
+                return new ExerciseCategory(categoryObj.category, categoryObj.color);
+            });
         }
     }
 
