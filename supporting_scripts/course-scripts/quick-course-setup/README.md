@@ -8,7 +8,7 @@ This project contains Python scripts that automate the setup and management of c
 
 - Ensure that Python (preferably version 3.12) is installed on your system.
 ```shell
-python3.12 --version
+python3 --version
 ```
 - Install the [Python Plugin for IntelliJ](https://plugins.jetbrains.com/plugin/631-python).
 - Enable Python support in IntelliJ:
@@ -26,12 +26,12 @@ It is recommended to use a virtual environment to manage dependencies in isolati
 
 - Install `virtualenv` if it's not already installed:
 ```shell
-python3.12 -m pip install virtualenv
+python3 -m pip install virtualenv
 ```
 
 - Create a virtual environment in your project folder:
 ```shell
-python3.12 -m virtualenv venv
+python3 -m virtualenv venv
 ```
 
 - Activate the virtual environment:
@@ -56,7 +56,7 @@ To install any packages into this virtual environment, proceed with the same ste
 - If packages are missing when running the script, install the necessary Python packages using the following command (replace `<packageName>` with the actual package name and the python version with your used python version):
 
 ```shell
-python3.12 -m pip install <packageName>
+python3 -m pip install <packageName>
 ```
 # Usage
 
@@ -173,4 +173,17 @@ If you want to delete all the students created by the script:
 1.	Run the main in delete_students.py.
 ```shell
 python3 delete_students.py
+```
+
+### Dependency management
+
+Find outdated dependencies using the following command:
+```
+pip list --outdated
+```
+
+Find unused dependencies using the following command:
+```
+pip install deptry
+deptry .
 ```
