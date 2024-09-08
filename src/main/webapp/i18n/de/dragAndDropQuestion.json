@@ -30,6 +30,8 @@
             "addMappingsInstructions": "Ziehe Drag Items auf Drop Locations, um korrekte Zuordnungen zu definieren.",
             "addDragItemPicture": "Drag Item mit Bild Hinzufügen",
             "addDragItemText": "Drag Item mit Text Hinzufügen",
+            "cutImagesFromDropLocation": "Bilder aus Drop Locations ausschneiden",
+            "cutImagesFromDropLocationTip": "Das Hintergrundbild wird verändert. Dies kann nicht rückgängig gemacht werden.",
             "studentInstructions": "Drag & Drop: Platziere die passenden Elemente auf die zugehörigen Flächen.",
             "showingYourAnswer": "Deine Abgabe:",
             "showingSampleSolution": "Musterlösung:",
