@@ -23,7 +23,6 @@ import { OrganizationManagementComponent } from './organization-management/organ
 import { OrganizationManagementDetailComponent } from './organization-management/organization-management-detail.component';
 import { OrganizationManagementUpdateComponent } from './organization-management/organization-management-update.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { MetricsModule } from 'app/admin/metrics/metrics.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -57,7 +56,6 @@ const ENTITY_STATES = [...adminState];
         FormDateTimePickerModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
-        MetricsModule,
         ArtemisChartsModule,
         MatChipsModule,
         MatAutocompleteModule,
