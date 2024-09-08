@@ -356,7 +356,6 @@ public class SubmissionService {
         // do not send old submissions or old results to the client
         if (submission.getParticipation() != null) {
             submission.getParticipation().setSubmissions(null);
-            submission.getParticipation().setResults(null);
 
             Exercise exercise = submission.getParticipation().getExercise();
             if (exercise != null) {
@@ -609,8 +608,11 @@ public class SubmissionService {
             participation.getExercise().setStudentParticipations(null);
             Optional<Submission> optionalSubmission = participation.findLatestSubmission();
             if (optionalSubmission.isPresent() && (!submittedOnly || optionalSubmission.get().isSubmitted())) {
-                participation.setSubmissions(Set.of(optionalSubmission.get()));
-                Optional.ofNullable(optionalSubmission.get().getLatestResult()).ifPresent(result -> participation.setResults(Set.of(result)));
+                var submission = optionalSubmission.get();
+                var latestResult = submission.getLatestResult();
+                submission.setResults(latestResult != null ? List.of(latestResult) : List.of());
+                participation.setSubmissions(Set.of(submission));
+
             }
             else {
                 participation.setSubmissions(Set.of());

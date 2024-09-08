@@ -477,8 +477,6 @@ public class ExerciseService {
 
             if (latestSubmissionWithRatedResult != null && latestSubmissionWithRatedResult.getLatestResult() != null) {
                 results = Set.of(latestSubmissionWithRatedResult.getLatestResult());
-                // remove inner participation from result
-                latestSubmissionWithRatedResult.getLatestResult().setParticipation(null);
                 // filter sensitive information about the assessor if the current user is a student
                 if (isStudent) {
                     latestSubmissionWithRatedResult.getLatestResult().filterSensitiveInformation();
@@ -493,7 +491,6 @@ public class ExerciseService {
             // add submission to participation or set it to null
             participation.setSubmissions(submission != null ? Set.of(submission) : null);
 
-            participation.setResults(results);
             if (submission != null) {
                 submission.setResults(new ArrayList<>(results));
             }

@@ -616,10 +616,6 @@ public class ExamService {
                     quizSubmission.filterForExam(studentExam.areResultsPublishedYet(), isAtLeastInstructor);
                 }
             }
-            else {
-                // To prevent LazyInitializationException.
-                participation.setResults(Set.of());
-            }
             // add participation into an array
             exercise.setStudentParticipations(Set.of(participation));
         }
@@ -658,20 +654,14 @@ public class ExamService {
         boolean isStudentAllowedToSeeResult = shouldStudentSeeResult(studentExam, participation);
         Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
-        // To prevent LazyInitializationException.
-        participation.setResults(Set.of());
         if (latestSubmission.isPresent()) {
             var lastSubmission = latestSubmission.get();
             if (isStudentAllowedToSeeResult || isAtLeastInstructor) {
                 // Also set the latest result into the participation as the client expects it there for programming exercises
                 Result latestResult = lastSubmission.getLatestResult();
                 if (latestResult != null) {
-                    latestResult.setParticipation(null);
                     latestResult.setSubmission(lastSubmission);
                     latestResult.filterSensitiveInformation();
-                    // to avoid cycles and support certain use cases on the client, only the last result + submission inside the participation are relevant, i.e. participation ->
-                    // lastResult -> lastSubmission
-                    participation.setResults(Set.of(latestResult));
                 }
                 participation.setSubmissions(Set.of(lastSubmission));
             }
@@ -881,7 +871,8 @@ public class ExamService {
             PlagiarismCase plagiarismCase = plagiarismMapping.getPlagiarismCase(participation.getStudent().orElseThrow().getId(), participation.getExercise().getId());
             double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
 
-            return calculateAchievedPoints(participation.getExercise(), participation.getResults().stream().findFirst().orElse(null), course, plagiarismPointDeductionPercentage);
+            return calculateAchievedPoints(participation.getExercise(), participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).findFirst().orElse(null),
+                    course, plagiarismPointDeductionPercentage);
         }));
     }
 

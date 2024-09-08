@@ -79,7 +79,6 @@ public class ExamQuizService {
                 Result result;
                 if (quizSubmission.getLatestResult() == null) {
                     result = new Result();
-                    result.setParticipation(participation);
                     result.setAssessmentType(AssessmentType.AUTOMATIC);
                     // set submission to calculate scores
                     result.setSubmission(quizSubmission);
@@ -91,11 +90,8 @@ public class ExamQuizService {
                     if (studentExam.isTestExam()) {
                         result.rated(true);
                     }
-                    result = resultRepository.save(result);
-                    participation.setResults(Set.of(result));
-                    studentParticipationRepository.save(participation);
-                    result.setSubmission(quizSubmission);
                     quizSubmission.addResult(result);
+                    result = resultRepository.save(result);
                 }
                 else {
                     result = quizSubmission.getLatestResult();
@@ -104,7 +100,6 @@ public class ExamQuizService {
                     // calculate scores and update result and submission accordingly
                     quizSubmission.calculateAndUpdateScores(quizExercise.getQuizQuestions());
                     // prevent a lazy exception in the evaluateQuizSubmission method
-                    result.setParticipation(participation);
                     result.evaluateQuizSubmission(quizExercise);
                     if (studentExam.isTestExam()) {
                         result.rated(true);

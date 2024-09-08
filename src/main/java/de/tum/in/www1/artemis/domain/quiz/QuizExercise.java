@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.CascadeType;
@@ -395,7 +396,7 @@ public class QuizExercise extends Exercise implements QuizConfiguration {
             return null;
         }
         else {
-            return participation.getResults();
+            return participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).collect(Collectors.toSet());
         }
     }
 

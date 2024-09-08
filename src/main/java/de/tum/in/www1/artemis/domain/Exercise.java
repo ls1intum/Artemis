@@ -574,28 +574,31 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * @return latest result or null
      */
     public Result findLatestResultWithCompletionDate(Participation participation) {
-        if (participation.getResults() == null) {
+        if (participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
             return null;
         }
-        Optional<Result> latestResult = participation.getResults().stream().filter(result -> result.getCompletionDate() != null).max((result1, result2) -> {
-            ZonedDateTime resultDate1 = result1.getCompletionDate();
-            ZonedDateTime resultDate2 = result2.getCompletionDate();
-            if (resultDate1.equals(resultDate2)) {
-                return 0;
-            }
-            else if (resultDate1.isAfter(resultDate2)) {
-                return 1;
-            }
-            else {
-                return -1;
-            }
-        });
+        Optional<Result> latestResult = participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).filter(result -> result.getCompletionDate() != null)
+                .max((result1, result2) -> {
+                    ZonedDateTime resultDate1 = result1.getCompletionDate();
+                    ZonedDateTime resultDate2 = result2.getCompletionDate();
+                    if (resultDate1.equals(resultDate2)) {
+                        return 0;
+                    }
+                    else if (resultDate1.isAfter(resultDate2)) {
+                        return 1;
+                    }
+                    else {
+                        return -1;
+                    }
+                });
         return latestResult.orElse(null);
     }
 
     /**
-     * Returns all results of an exercise for give participation that have a completion date. If the exercise is restricted like {@link QuizExercise} please override this function
-     * with the respective filter. (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
+     * Returns all results of an exercise for give participation that have a completion date. If the exercise is
+     * restricted like {@link QuizExercise} please override this function
+     * with the respective filter. (relevancy depends on Exercise type => this should be overridden by subclasses if
+     * necessary)
      *
      * @param participation the participation whose results we are considering
      * @return all results of given participation, or null, if none exist
@@ -605,7 +608,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         if (!isAssessmentOver) {
             return Set.of();
         }
-        return participation.getResults().stream().filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
+        return participation.getSubmissions().stream().flatMap(sub -> sub.getResults().stream()).filter(result -> result.getCompletionDate() != null).collect(Collectors.toSet());
     }
 
     /**
@@ -643,13 +646,15 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             }
             else {
                 // this means we have more than one submission, we want the one with the last submission date
-                // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+                // make sure that submissions without submission date do not lead to null pointer exception in the
+                // comparison
                 return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
         else if (!submissionsWithUnratedResult.isEmpty()) {
             if (this instanceof ProgrammingExercise) {
-                // this is an edge case that is treated differently: the student has not submitted before the due date and the client would otherwise think
+                // this is an edge case that is treated differently: the student has not submitted before the due
+                // date and the client would otherwise think
                 // that there is no result for the submission and would display a red trigger button.
                 return null;
             }
@@ -657,7 +662,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 return submissionsWithUnratedResult.getFirst();
             }
             else { // this means with have more than one submission, we want the one with the last submission date
-                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+                   // make sure that submissions without submission date do not lead to null pointer exception in the
+                   // comparison
                 return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
@@ -666,7 +672,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
                 return submissionsWithoutResult.getFirst();
             }
             else { // this means with have more than one submission, we want the one with the last submission date
-                   // make sure that submissions without submission date do not lead to null pointer exception in the comparison
+                   // make sure that submissions without submission date do not lead to null pointer exception in the
+                   // comparison
                 return submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
@@ -756,7 +763,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.studentAssignedTeamIdTransient = studentAssignedTeamIdTransient;
     }
 
-    // TODO: do we really need this information in all places in the client? I doubt this, we should probably JsonIgnore this in most cases
+    // TODO: do we really need this information in all places in the client? I doubt this, we should probably
+    // JsonIgnore this in most cases
     public boolean isStudentAssignedTeamIdComputed() {
         return studentAssignedTeamIdComputedTransient;
     }
@@ -765,7 +773,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         this.studentAssignedTeamIdComputedTransient = studentAssignedTeamIdComputedTransient;
     }
 
-    // TODO: do we really need this information in all places in the client? I doubt this, we should probably JsonIgnore this in most cases
+    // TODO: do we really need this information in all places in the client? I doubt this, we should probably
+    // JsonIgnore this in most cases
     public boolean isGradingInstructionFeedbackUsed() {
         return isGradingInstructionFeedbackUsedTransient;
     }
@@ -872,7 +881,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * <p>
      * Currently, exercise start dates are the same for all users
      *
-     * @return the time from which on access to the participation is allowed, for exercises that are not part of an exam, this is just the release date or start date.
+     * @return the time from which on access to the participation is allowed, for exercises that are not part of an
+     *         exam, this is just the release date or start date.
      */
     @JsonIgnore
     @Nullable
@@ -886,7 +896,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
-     * returns the number of correction rounds for an exercise. For course exercises this is 1, for exam exercises this must get fetched
+     * returns the number of correction rounds for an exercise. For course exercises this is 1, for exam exercises
+     * this must get fetched
      *
      * @return the number of correctionRounds
      */
@@ -904,7 +915,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      * Helper method which does a hard copy of the Grading Criteria
      * Also fills {@code gradingInstructionCopyTracker}.
      *
-     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new
+     *                                          GradingInstruction instances.
      * @return A clone of the grading criteria list
      */
     public Set<GradingCriterion> copyGradingCriteria(Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
@@ -925,7 +937,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
      *
      * @param originalGradingCriterion      The original grading criterion which contains the grading instructions
      * @param newGradingCriterion           The cloned grading criterion in which we insert the grading instructions
-     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new
+     *                                          GradingInstruction instances.
      * @return A clone of the grading instruction list of the grading criterion
      */
     private Set<GradingInstruction> copyGradingInstruction(GradingCriterion originalGradingCriterion, GradingCriterion newGradingCriterion,
@@ -958,7 +971,8 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
     }
 
     /**
-     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
+     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or
+     * assessmentDueDateError
      *
      * @throws BadRequestAlertException if the dates are not valid
      */
