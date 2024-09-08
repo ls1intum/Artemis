@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal, viewChild } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -33,7 +33,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
-    @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
+    titleComponent = viewChild(ExerciseTitleChannelNameComponent);
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
@@ -76,7 +76,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
 
-        this.titleComponent?.titleChannelNameComponent?.field_title?.valueChanges?.subscribe((newTitle: string) => {
+        this.titleComponent()?.titleChannelNameComponent?.field_title?.valueChanges?.subscribe((newTitle: string) => {
             if (this.isSimpleMode()) {
                 this.updateShortName(newTitle);
             }
