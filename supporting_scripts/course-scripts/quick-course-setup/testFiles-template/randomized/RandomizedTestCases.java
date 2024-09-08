@@ -22,105 +22,64 @@ class RandomizedTestCases {
     @Test
     @StrictTimeout(1)
     void testCase1() {
-        Random random = new Random();
-        boolean shouldFail = random.nextBoolean();
-
-        if (shouldFail) {
-            fail(String.format("Different error: %s, %s", System.currentTimeMillis(), random.nextInt(Integer.MAX_VALUE)));
-        }
+        randomTest();
     }
 
     @Test
     @StrictTimeout(1)
     void testCase2() {
-        Random random = new Random();
-        boolean shouldFail = random.nextBoolean();
-
-        if (shouldFail) {
-            fail(String.format("Different error: %s, %s", System.currentTimeMillis(), random.nextInt(Integer.MAX_VALUE)));
-        }
+        randomTest();
     }
 
     @Test
     @StrictTimeout(1)
     void testCase3() {
-        Random random = new Random();
-        boolean shouldFail = random.nextBoolean();
-
-        if (shouldFail) {
-            fail(String.format("Different error: %s, %s", System.currentTimeMillis(), random.nextInt(Integer.MAX_VALUE)));
-        }
+        randomTest();
     }
 
     @Test
     @StrictTimeout(1)
     void testCase4() {
-        Random random = new Random();
-        boolean shouldFail = random.nextBoolean();
-
-        if (shouldFail) {
-            fail(String.format("Different error: %s, %s", System.currentTimeMillis(), random.nextInt(Integer.MAX_VALUE)));
-        }
+        randomTest();
     }
 
     @Test
     @StrictTimeout(1)
     void testCase5() {
-        Random random = new Random();
-        boolean shouldFail = random.nextBoolean();
-
-        if (shouldFail) {
-            fail(String.format("Different error: %s, %s", System.currentTimeMillis(), random.nextInt(Integer.MAX_VALUE)));
-        }
+        randomTest();
     }
 
     @Test
     @StrictTimeout(1)
     void testCase6() {
-        Random random = new Random();
-        boolean shouldFail = random.nextBoolean();
-
-        if (shouldFail) {
-            fail(String.format("Different error: %s, %s", System.currentTimeMillis(), random.nextInt(Integer.MAX_VALUE)));
-        }
+        randomTest();
     }
 
     @Test
     @StrictTimeout(1)
     void testCase7() {
-        Random random = new Random();
-        boolean shouldFail = random.nextBoolean();
-
-        if (shouldFail) {
-            fail(String.format("Different error: %s, %s", System.currentTimeMillis(), random.nextInt(Integer.MAX_VALUE)));
-        }
+        randomTest();
     }
 
     @Test
     @StrictTimeout(1)
     void testCase8() {
-        Random random = new Random();
-        boolean shouldFail = random.nextBoolean();
-
-        if (shouldFail) {
-            fail(String.format("Different error: %s, %s", System.currentTimeMillis(), random.nextInt(Integer.MAX_VALUE)));
-        }
+        randomTest();
     }
 
     @Test
     @StrictTimeout(1)
     void testCase9() {
-        Random random = new Random();
-        boolean shouldFail = random.nextBoolean();
-
-        if (shouldFail) {
-            fail(String.format("Different error: %s, %s", System.currentTimeMillis(), random.nextInt(Integer.MAX_VALUE)));
-        }
+        randomTest();
     }
 
     @Test
     @StrictTimeout(1)
     void testCase10() {
+        randomTest();
+    }
+
+    private void randomTest() {
         Random random = new Random();
         boolean shouldFail = random.nextBoolean();
 
