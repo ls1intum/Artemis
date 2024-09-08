@@ -642,7 +642,7 @@ export class ProgrammingExerciseService {
 
     //TODO: Demo
     getCodeHintsForExercise(exerciseId: number): Observable<ExerciseHint[]> {
-        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints-good`);
+        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`);
     }
 
     createStructuralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
