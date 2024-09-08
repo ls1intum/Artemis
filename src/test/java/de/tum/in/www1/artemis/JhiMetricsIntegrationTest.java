@@ -17,7 +17,7 @@ class JhiMetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getMetricsTest() throws Exception {
+    void getMetricsTest() throws Exception {
         var result = request.get("/management/jhimetrics", HttpStatus.OK, String.class);
 
         JsonNode rootNode = objectMapper.readTree(result);
