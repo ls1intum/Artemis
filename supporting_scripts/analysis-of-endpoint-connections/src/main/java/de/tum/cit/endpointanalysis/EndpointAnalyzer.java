@@ -166,5 +166,9 @@ public class EndpointAnalyzer {
         });
 
         log.info("Number of endpoints without matching REST calls: {}", endpointsAndMatchingRestCalls.unusedEndpoints().size());
+
+        if (!endpointsAndMatchingRestCalls.unusedEndpoints().isEmpty()) {
+            System.exit(1);
+        }
     }
 }

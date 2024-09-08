@@ -79,12 +79,14 @@ jobs:
           path: supporting_scripts/analysis-of-endpoint-connections/
 
       - name: Analyze endpoints
-        run:
+        run: |
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runEndpointAnalysis
+        continue-on-error: true
 
       - name: Analyze rest calls
-        run:
+        run: |
           ./gradlew :supporting_scripts:analysis-of-endpoint-connections:runRestCallAnalysis
+        continue-on-error: true
 
       - name: Upload analysis results
         uses: actions/upload-artifact@v4
