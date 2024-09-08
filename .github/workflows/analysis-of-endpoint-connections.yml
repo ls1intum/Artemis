@@ -95,3 +95,11 @@ jobs:
           path: |
             supporting_scripts/analysis-of-endpoint-connections/endpointAnalysisResult.json
             supporting_scripts/analysis-of-endpoint-connections/restCallAnalysisResult.json
+
+      - name: Check for failures
+        run: |
+          if [ -f "$GITHUB_WORKSPACE/failed" ]; then
+            echo "One or more steps failed."
+            exit 1
+          fi
+        continue-on-error: false
