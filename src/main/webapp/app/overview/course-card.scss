@@ -63,6 +63,10 @@
             align-items: center;
             justify-content: center;
 
+            .chart-text {
+                position: absolute;
+            }
+
             .chart-level {
                 z-index: 2;
                 cursor: pointer;

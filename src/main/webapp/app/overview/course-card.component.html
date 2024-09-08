@@ -35,7 +35,6 @@
                                         [translateValues]="{
                                             totalAbsoluteScore: totalAbsoluteScore,
                                             totalReachableScore: totalReachableScore,
-                                            totalRelativeScore: totalRelativeScore,
                                         }"
                                     ></div>
                                 </div>
@@ -59,7 +58,10 @@
                         }
                     </div>
                     @if (exerciseCount && (totalReachableScore || totalAbsoluteScore)) {
-                        <div class="align-self-center chart-container col-5">
+                        <div class="align-self-center chart-container col-5 mb-2">
+                            <div class="chart-text">
+                                <h4 class="mb-0">{{ totalRelativeScore }}%</h4>
+                            </div>
                             <ngx-charts-pie-chart
                                 id="score-chart"
                                 class="chart-level"

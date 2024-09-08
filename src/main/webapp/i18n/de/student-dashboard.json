@@ -12,7 +12,7 @@
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung",
-            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Punkte ({{ totalRelativeScore }}%)",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Punkte",
             "cardScore": "Punktzahl",
             "cardManageCourse": "Kurs Verwalten",
             "enroll": {
