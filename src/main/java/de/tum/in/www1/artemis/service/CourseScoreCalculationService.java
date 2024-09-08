@@ -253,14 +253,10 @@ public class CourseScoreCalculationService {
         // Get participation results (used in course-statistics.component).
         Set<ParticipationResultDTO> participationResults = new HashSet<>();
         for (StudentParticipation studentParticipation : gradedStudentParticipations) {
-            if (studentParticipation.getResults() != null && !studentParticipation.getResults().isEmpty()) {
-                Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
+            Result result = getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate());
+            if (result != null) {
                 var participationResult = new ParticipationResultDTO(result.getScore(), result.isRated(), studentParticipation.getId());
                 participationResults.add(participationResult);
-                // this line is an important workaround. It prevents that the whole tree
-                // "result -> participation -> exercise -> course -> exercises -> studentParticipations -> submissions -> results" is sent again to the client which is useless
-                // TODO: in the future, we need a better solution to prevent this
-                studentParticipation.setExercise(null);
             }
         }
 
@@ -389,12 +385,12 @@ public class CourseScoreCalculationService {
      * @param dueDate       the due date of the exercise.
      * @return the result that should be used for the score calculation.
      */
-    // TODO: This connection between participations and results will not be used in the future. This should be refactored to take the latest rated result from the submissions.
     public Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
-        if (participation == null) {
+        if (participation == null || participation.getSubmissions() == null || participation.getSubmissions().isEmpty()) {
             return null;
         }
-        var resultsSet = participation.getResults();
+        var submission = participation.findLatestSubmission().orElseThrow();
+        var resultsSet = submission.getResults();
 
         Result emptyResult = new Result();
         // TODO: Check if you can just instantiate Result.score with 0.0.

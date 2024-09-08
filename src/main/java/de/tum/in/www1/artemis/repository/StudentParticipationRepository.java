@@ -7,7 +7,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,7 +28,6 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -918,7 +916,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
         var participations = findByExamIdWithEagerLegalSubmissionsRatedResults(examId); // without test run participations
         // filter out the participations of test runs which can only be made by instructors
         participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).toList();
-        return filterParticipationsWithRelevantResults(participations, true);
+        return filterParticipationsWithRelevantResults(participations);
     }
 
     /**
@@ -930,7 +928,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default List<StudentParticipation> findByCourseIdAndStudentIdWithRelevantResult(long courseId, long studentId) {
         List<StudentParticipation> participations = findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
-        return filterParticipationsWithRelevantResults(participations, false);
+        return filterParticipationsWithRelevantResults(participations);
     }
 
     /**
@@ -941,17 +939,16 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default List<StudentParticipation> findByCourseIdWithRelevantResult(long courseId) {
         List<StudentParticipation> participations = findByCourseIdWithEagerRatedResults(courseId);
-        return filterParticipationsWithRelevantResults(participations, false);
+        return filterParticipationsWithRelevantResults(participations);
     }
 
     /**
-     * filters the relevant results by removing all irrelevant ones
+     * filters the relevant results by removing all irrelevant ones and irrelevant submissions
      *
-     * @param participations     the participations to get filtered
-     * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
+     * @param participations the participations to get filtered
      * @return an unmodifiable list of filtered participations
      */
-    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
+    private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations) {
         return participations.stream()
                 // Filter out participations without Students
                 // These participations are used e.g. to store template and solution build plans in programming exercises
@@ -961,36 +958,25 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 .peek(participation -> {
                     List<Result> relevantResults = new ArrayList<>();
 
-                    // Get the results over the participation or over submissions
-                    Set<Result> resultsOfParticipation;
-                    if (resultInSubmission) {
-                        resultsOfParticipation = participation.getSubmissions().stream().map(Submission::getLastResult).collect(Collectors.toSet());
-                    }
-                    else {
-                        resultsOfParticipation = participation.getResults();
-                    }
-                    // search for the relevant result by filtering out irrelevant results using the continue keyword
-                    // this for loop is optimized for performance and thus not very easy to understand ;)
-                    for (Result result : resultsOfParticipation) {
+                    participation.getSubmissions().forEach(submission -> {
+                        var lastResult = submission.getLastResult();
+                        submission.setResults(lastResult != null ? List.of(submission.getLastResult()) : List.of());
+                    });
+                    // this should not happen because the database call above only retrieves rated results
+                    // we are only interested in results with completion date and with score
+                    var submission = participation.getSubmissions().stream().filter(sub -> {
+                        if (sub.getResults().size() != 1) {
+                            return false;
+                        }
+                        var result = sub.getResults().getFirst();
                         // this should not happen because the database call above only retrieves rated results
                         if (Boolean.FALSE.equals(result.isRated())) {
-                            continue;
+                            return false;
                         }
-                        if (result.getCompletionDate() == null || result.getScore() == null) {
-                            // we are only interested in results with completion date and with score
-                            continue;
-                        }
-                        relevantResults.add(result);
-                    }
-                    // we take the last rated result
-                    if (!relevantResults.isEmpty()) {
-                        // make sure to take the latest result
-                        relevantResults.sort((r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-                        Result correctResult = relevantResults.getFirst();
-                        relevantResults.clear();
-                        relevantResults.add(correctResult);
-                    }
-                    participation.setResults(new HashSet<>(relevantResults));
+                        // we are only interested in results with completion date and with score
+                        return result.getCompletionDate() != null && result.getScore() != null;
+                    }).min((s1, s2) -> s2.getResults().getFirst().getCompletionDate().compareTo(s1.getResults().getFirst().getCompletionDate()));
+                    participation.submissions(submission.map(Set::of).orElseGet(Set::of));
                 }).toList();
     }
 
