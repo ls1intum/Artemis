@@ -125,7 +125,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             for (let i = 1; i <= numPages; i++) {
                 const page = await pdf.getPage(i);
                 const viewport = page.getViewport({ scale: 2 });
-                const canvas = this.createCanvas(viewport);
+                const canvas = this.createCanvas(viewport, initialPageCount + i);
                 const context = canvas.getContext('2d');
                 if (context) {
                     await page.render({ canvasContext: context, viewport }).promise;
@@ -161,10 +161,12 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Creates a canvas for each page of the PDF to allow for individual page rendering.
      * @param viewport The viewport settings used for rendering the page.
+     * @param pageIndex The index of the page within the PDF document.
      * @returns A new HTMLCanvasElement configured for the PDF page.
      */
-    private createCanvas(viewport: PDFJS.PageViewport): HTMLCanvasElement {
+    private createCanvas(viewport: PDFJS.PageViewport, pageIndex: number): HTMLCanvasElement {
         const canvas = document.createElement('canvas');
+        canvas.id = `${pageIndex}`;
         /* Canvas styling is predefined because Canvas tags do not support CSS classes
          * as they are not HTML elements but rather a bitmap drawing surface.
          * See: https://stackoverflow.com/a/29675448
@@ -205,7 +207,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         container.addEventListener('mouseleave', () => {
             overlay.style.opacity = '0';
         });
-        overlay.addEventListener('click', () => this.displayEnlargedCanvas(canvas, pageIndex));
+        overlay.addEventListener('click', () => this.displayEnlargedCanvas(canvas));
 
         return container;
     }
@@ -228,13 +230,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     private createCheckbox(pageIndex: number): HTMLDivElement {
         const checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
+        checkbox.id = String(pageIndex);
         checkbox.style.cssText = `position: absolute; top: -5px; right: -5px; z-index: 4;`;
         checkbox.checked = this.selectedPages.has(pageIndex);
         checkbox.addEventListener('change', () => {
             if (checkbox.checked) {
-                this.selectedPages.add(pageIndex);
+                console.log('Adding page', checkbox.id);
+                this.selectedPages.add(Number(checkbox.id));
             } else {
-                this.selectedPages.delete(pageIndex);
+                this.selectedPages.delete(Number(checkbox.id));
             }
         });
         return checkbox;
@@ -256,11 +260,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Displays a canvas in an enlarged view for detailed examination.
      * @param originalCanvas The original canvas element displaying the page.
-     * @param pageIndex The index of the page being displayed.
      */
-    displayEnlargedCanvas(originalCanvas: HTMLCanvasElement, pageIndex: number) {
+    displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.isEnlargedView = true;
-        this.currentPage = pageIndex;
+        this.currentPage = Number(originalCanvas.id);
         this.updateEnlargedCanvas(originalCanvas);
         this.toggleBodyScroll(true);
     }
@@ -403,6 +406,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 this.pdfContainer.nativeElement.removeChild(pageElement);
             }
         });
+        this.totalPages -= this.selectedPages.size;
+        this.updatePageIDs();
         this.selectedPages.clear();
         this.dialogErrorSource.next('');
     }
@@ -417,5 +422,19 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const fileUrl = URL.createObjectURL(file);
             this.loadOrAppendPdf(fileUrl, true);
         }
+    }
+
+    updatePageIDs() {
+        const remainingPages = this.pdfContainer.nativeElement.querySelectorAll('.pdf-page-container');
+        remainingPages.forEach((container, index) => {
+            const pageIndex = index + 1;
+            container.id = `pdf-page-${pageIndex}`;
+            const canvas = container.querySelector('canvas');
+            const overlay = container.querySelector('div');
+            const checkbox = container.querySelector('input[type="checkbox"]');
+            canvas!.id = String(pageIndex);
+            overlay!.innerHTML = `<span>${pageIndex}</span>`;
+            checkbox!.id = String(pageIndex);
+        });
     }
 }
