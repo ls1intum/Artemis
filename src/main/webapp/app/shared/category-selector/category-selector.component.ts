@@ -53,14 +53,14 @@ export class CategorySelectorComponent implements OnChanges {
         if (!this.categories) {
             return [];
         }
-        return this.categories.map((exerciseCategory) => exerciseCategory.category!.toLowerCase());
+        return this.categories.map((exerciseCategory) => exerciseCategory.category?.toLowerCase() ?? '');
     }
 
     private existingCategoriesAsStringArray(): string[] {
         if (!this.existingCategories) {
             return [];
         }
-        return this.existingCategories.map((exerciseCategory) => exerciseCategory.category!.toLowerCase());
+        return this.existingCategories.map((exerciseCategory) => exerciseCategory.category?.toLowerCase() ?? '');
     }
 
     // if the user types in something, we need to filter for the matching categories
