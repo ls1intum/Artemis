@@ -10,7 +10,6 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -123,13 +122,14 @@ public class ComplaintUtilService {
      * Creates and saves a given number of complaints for the given team and participation.
      *
      * @param team               The team to create the complaints for.
-     * @param participation      The participation to create the complaints for.
+     * @param submission         The submission to create the complaints for.
      * @param numberOfComplaints The number of complaints to create.
      * @param complaintType      The type of the complaints to create.
      */
-    public void addTeamComplaints(Team team, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
+    public void addTeamComplaints(Team team, Submission submission, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
-            Result dummyResult = new Result().participation(participation);
+            Result dummyResult = new Result();
+            submission.addResult(dummyResult);
             dummyResult = resultRepo.save(dummyResult);
             Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);

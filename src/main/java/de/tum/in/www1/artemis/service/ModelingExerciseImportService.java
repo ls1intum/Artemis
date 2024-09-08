@@ -138,7 +138,7 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     /**
      * This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
-     * To copy the submission results this function calls {@link ExerciseImportService#copyExampleResult(Result, Submission, Map)} respectively.
+     * To copy the submission results this function calls {@link #copyExampleResult(Result, Map)} respectively.
      *
      * @param originalSubmission            The original submission to be copied.
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
@@ -155,9 +155,9 @@ public class ModelingExerciseImportService extends ExerciseImportService {
             newSubmission.setExplanationText(((ModelingSubmission) originalSubmission).getExplanationText());
             newSubmission.setModel(((ModelingSubmission) originalSubmission).getModel());
 
-            newSubmission = submissionRepository.saveAndFlush(newSubmission);
             if (originalSubmission.getLatestResult() != null) {
-                newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, gradingInstructionCopyTracker));
+                Result resultCopy = copyExampleResult(originalSubmission.getLatestResult(), gradingInstructionCopyTracker);
+                newSubmission.addResult(resultCopy);
             }
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
         }

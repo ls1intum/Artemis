@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +13,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.GradingInstruction;
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
@@ -85,11 +86,10 @@ public abstract class ExerciseImportService {
      * To copy the feedback, it calls {@link #copyFeedback(List, Result, Map)}
      *
      * @param originalResult                The original result to be copied
-     * @param newSubmission                 The submission in which we link the result clone
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned result
      */
-    Result copyExampleResult(Result originalResult, Submission newSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
+    Result copyExampleResult(@NotNull Result originalResult, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         Result newResult = new Result();
         newResult.setAssessmentType(originalResult.getAssessmentType());
         newResult.setAssessor(originalResult.getAssessor());
@@ -99,13 +99,6 @@ public abstract class ExerciseImportService {
         newResult.setScore(originalResult.getScore());
         newResult.copyProgrammingExerciseCounters(originalResult);
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult, gradingInstructionCopyTracker));
-        // Cut relationship to parent because result is an ordered collection
-        newResult.setSubmission(null);
-
-        newResult = resultRepository.save(newResult);
-
-        // Restore relationship to parent.
-        newResult.setSubmission(newSubmission);
 
         return newResult;
     }

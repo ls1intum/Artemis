@@ -178,7 +178,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     /**
      * This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
      * To copy the TextBlocks and the submission results this function calls {@link #copyTextBlocks(Set, TextSubmission)} and
-     * {@link ExerciseImportService#copyExampleResult(Result, Submission, Map)} respectively.
+     * {@link #copyExampleResult(Result, Map)} respectively.
      *
      * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @param originalSubmission            The original submission to be copied.
@@ -194,10 +194,13 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setType(originalSubmission.getType());
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
+
+            if (originalSubmission.getLatestResult() != null) {
+                Result resultCopy = copyExampleResult(originalSubmission.getLatestResult(), gradingInstructionCopyTracker);
+                newSubmission.addResult(resultCopy);
+            }
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
-            newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, gradingInstructionCopyTracker));
-            newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(newSubmission.getId());
 
             updateFeedbackReferencesWithNewTextBlockIds(((TextSubmission) originalSubmission).getBlocks(), newSubmission);

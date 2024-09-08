@@ -136,9 +136,9 @@ public class RatingResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         List<Rating> responseRatings = ratingService.getAllRatingsByCourse(courseId);
         responseRatings.forEach(rating -> {
-            rating.getResult().setSubmission(null);
             rating.getResult().getSubmission().getParticipation().getExercise().setCourse(null);
             rating.getResult().getSubmission().getParticipation().getExercise().setExerciseGroup(null);
+            rating.getResult().getSubmission().setResults(null);
         });
         return ResponseEntity.ok(responseRatings);
     }

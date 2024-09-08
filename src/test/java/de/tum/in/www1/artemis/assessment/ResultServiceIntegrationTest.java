@@ -388,6 +388,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
                 participationUtilService.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
             }
             else if (i % 4 == 0) {
+                // TODO: fix or remove. Right now this branch never gets accessed.
                 participationUtilService.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
             }
             submissionRepository.save(fileUploadSubmission);

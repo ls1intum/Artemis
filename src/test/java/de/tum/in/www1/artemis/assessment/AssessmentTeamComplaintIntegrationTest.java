@@ -72,10 +72,6 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
 
     private ComplaintRequestDTO complaintRequest;
 
-    private Complaint moreFeedbackRequest;
-
-    private Course course;
-
     private Team team;
 
     private final String resourceUrl = "/api/complaints";
@@ -84,7 +80,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     void initTestCase() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 2, 0, 1);
         // Initialize with 3 max team complaints and 7 days max complaint due date
-        course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
+        Course course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         modelingExercise.setMode(ExerciseMode.TEAM);
         modelingExercise = exerciseRepository.save(modelingExercise);
@@ -92,7 +88,6 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         complaintRequest = new ComplaintRequestDTO(complaint.getResult().getId(), complaint.getComplaintText(), complaint.getComplaintType(), Optional.empty());
-        moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
@@ -102,7 +97,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
         // 2 complaints are allowed, the course is created with 3 max team complaints
-        complaintUtilService.addTeamComplaints(team, modelingAssessment.getSubmission().getParticipation(), 2, ComplaintType.COMPLAINT);
+        complaintUtilService.addTeamComplaints(team, modelingAssessment.getSubmission(), 2, ComplaintType.COMPLAINT);
 
         request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
@@ -114,7 +109,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     @Test
     @WithMockUser(username = "team1" + TEST_PREFIX + "1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        complaintUtilService.addTeamComplaints(team, modelingAssessment.getSubmission().getParticipation(), 3, ComplaintType.COMPLAINT);
+        complaintUtilService.addTeamComplaints(team, modelingAssessment.getSubmission(), 3, ComplaintType.COMPLAINT);
 
         request.post(resourceUrl, complaintRequest, HttpStatus.BAD_REQUEST);
 
@@ -128,7 +123,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIn
     void requestMoreFeedbackAboutModelingAssessment_noLimit() throws Exception {
         exerciseUtilService.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         exerciseUtilService.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
-        complaintUtilService.addTeamComplaints(team, modelingAssessment.getSubmission().getParticipation(), 5, ComplaintType.MORE_FEEDBACK);
+        complaintUtilService.addTeamComplaints(team, modelingAssessment.getSubmission(), 5, ComplaintType.MORE_FEEDBACK);
 
         request.post(resourceUrl, complaintRequest, HttpStatus.CREATED);
 
