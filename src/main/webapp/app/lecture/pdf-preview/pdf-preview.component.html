@@ -1,52 +1,62 @@
 <div class="row justify-content-center">
     <div class="col-12">
-        <div>
-            <div class="d-flex justify-content-between align-items-center">
-                <h4>
-                    <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
-                    @if (attachment) {
-                        {{ attachment.id }}: {{ attachment.name }}
-                    } @else if (attachmentUnit) {
-                        {{ attachmentUnit.id }}: {{ attachmentUnit.name }}
-                    }
-                </h4>
-                <div class="d-flex-end text-end">
-                    <button
-                        type="button"
-                        class="btn btn-danger"
-                        jhiDeleteButton
-                        [renderButtonStyle]="false"
-                        [renderButtonText]="false"
-                        (delete)="deleteSelectedSlides()"
-                        [dialogError]="dialogError$"
-                        [disabled]="isRemovePagesDisabled()"
-                    >
-                        <fa-icon [icon]="faTrash" />
-                        <span>Remove Page(s)</span>
-                    </button>
-                    <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
-                    <button (click)="triggerFileInput()" class="btn btn-primary text-truncate">
-                        <fa-icon [icon]="faFileImport" />
-                        <span>Append File</span>
-                    </button>
-                </div>
+        <div class="d-flex justify-content-between align-items-center">
+            <h4>
+                <span jhiTranslate="artemisApp.attachment.pdfPreview.title"></span>
+                @if (attachment) {
+                    {{ attachment.id }}: {{ attachment.name }}
+                } @else if (attachmentUnit) {
+                    {{ attachmentUnit.id }}: {{ attachmentUnit.name }}
+                }
+            </h4>
+            <div class="d-flex-end text-end">
+                <button
+                    type="button"
+                    class="btn btn-danger"
+                    jhiDeleteButton
+                    [renderButtonStyle]="false"
+                    [renderButtonText]="false"
+                    (delete)="deleteSelectedSlides()"
+                    [dialogError]="dialogError$"
+                    [disabled]="isRemovePagesDisabled()"
+                >
+                    <fa-icon [icon]="faTrash" />
+                    <span>Remove Page(s)</span>
+                </button>
+                <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
+                <button (click)="triggerFileInput()" class="btn btn-primary text-truncate">
+                    <fa-icon [icon]="faFileImport" />
+                    <span>Append File</span>
+                </button>
             </div>
-            <div class="row">
-                <div class="pdf-container" #pdfContainer>
-                    @if (isEnlargedView) {
-                        <div class="enlarged-container" (click)="closeIfOutside($event)">
-                            <canvas #enlargedCanvas></canvas>
-                            <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
-                            @if (currentPage !== 1) {
-                                <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)">←</button>
-                            }
-                            @if (currentPage !== totalPages) {
-                                <button class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)">→</button>
-                            }
-                            <div class="page-number-display">{{ currentPage }}</div>
-                        </div>
+        </div>
+        <div class="pdf-container" #pdfContainer>
+            @if (isEnlargedView) {
+                <div class="enlarged-container" (click)="closeIfOutside($event)">
+                    <canvas #enlargedCanvas></canvas>
+                    <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
+                    @if (currentPage !== 1) {
+                        <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)">←</button>
                     }
+                    @if (currentPage !== totalPages) {
+                        <button class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)">→</button>
+                    }
+                    <div class="page-number-display">{{ currentPage }}</div>
                 </div>
+            }
+        </div>
+        <div class="d-flex justify-content-between">
+            <div>
+                <button type="submit" class="btn btn-default">
+                    <fa-icon [icon]="faTimes"></fa-icon>
+                    <span jhiTranslate="entity.action.cancel"></span>
+                </button>
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary">
+                    <fa-icon [icon]="faSave"></fa-icon>
+                    <span jhiTranslate="entity.action.save"></span>
+                </button>
             </div>
         </div>
     </div>

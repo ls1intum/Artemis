@@ -12,7 +12,7 @@ import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { faFileImport, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -45,6 +45,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     // Icons
     faFileImport = faFileImport;
+    faSave = faSave;
+    faTimes = faTimes;
     faTrash = faTrash;
 
     constructor(
@@ -115,7 +117,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param append Whether the document should be appended to the existing one.
      * @returns A promise that resolves when the PDF is loaded.
      */
-    async loadOrAppendPdf(fileUrl: string, append: boolean = false): Promise<void> {
+    async loadOrAppendPdf(fileUrl: string, append = false): Promise<void> {
         if (append) {
             this.isMergedPdfLoading = true;
         }
