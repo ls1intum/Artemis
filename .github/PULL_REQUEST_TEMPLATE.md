@@ -94,6 +94,7 @@ Prerequisites:
 <!-- All PRs that might affect the exam mode (e.g. change a client component that is also used in the exam mode) need an additional verification that the exam mode still works. -->
 
 #### Performance Review
+<!-- See [Large Course Setup](https://github.com/ls1intum/Artemis/tree/develop/supporting_scripts/course-scripts/quick-course-setup) for the automation script that handles large course setup. -->
 - [ ] I (as a reviewer) confirm that the client changes (in particular related to REST calls and UI responsiveness) are implemented with a very good performance even for very large courses with more than 2000 students.
 - [ ] I (as a reviewer) confirm that the server changes (in particular related to database calls) are implemented with a very good performance even for very large courses with more than 2000 students.
 #### Code Review

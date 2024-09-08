@@ -8,7 +8,7 @@ import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTo
 import { ExerciseNodeDetailsComponent } from 'app/course/learning-paths/learning-path-graph/node-details/exercise-node-details.component';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 
 describe('ExerciseNodeDetailsComponent', () => {
     let fixture: ComponentFixture<ExerciseNodeDetailsComponent>;

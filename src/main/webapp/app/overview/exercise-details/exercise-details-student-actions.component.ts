@@ -7,7 +7,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
@@ -64,14 +64,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     theiaPortalURL: string;
 
     // Icons
-    faFolderOpen = faFolderOpen;
-    faUsers = faUsers;
-    faEye = faEye;
-    faPlayCircle = faPlayCircle;
-    faRedo = faRedo;
-    faCodeBranch = faCodeBranch;
-    faDesktop = faDesktop;
-    faPenSquare = faPenSquare;
+    readonly faFolderOpen = faFolderOpen;
+    readonly faUsers = faUsers;
+    readonly faEye = faEye;
+    readonly faPlayCircle = faPlayCircle;
+    readonly faRedo = faRedo;
+    readonly faCodeBranch = faCodeBranch;
+    readonly faDesktop = faDesktop;
+    readonly faPenSquare = faPenSquare;
 
     private feedbackSent = false;
 
@@ -111,7 +111,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
                 // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
-                if (profileInfo.activeProfiles?.includes(PROFILE_THEIA)) {
+                if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.programmingExercise) {
                     this.theiaEnabled = true;
 
                     // Set variables now, sanitize later on
@@ -119,6 +119,16 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
                     // Verify that Theia's portal URL is set
                     if (this.theiaPortalURL === '') {
+                        this.theiaEnabled = false;
+                    }
+
+                    // Verify that the exercise allows the online IDE
+                    if (!this.programmingExercise.allowOnlineIde) {
+                        this.theiaEnabled = false;
+                    }
+
+                    // Verify that the exercise has a theia blueprint configured
+                    if (!this.programmingExercise.buildConfig?.theiaImage) {
                         this.theiaEnabled = false;
                     }
                 }

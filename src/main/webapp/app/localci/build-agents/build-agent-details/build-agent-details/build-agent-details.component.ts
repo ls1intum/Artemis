@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { BuildAgent } from 'app/entities/build-agent.model';
+import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
 import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';

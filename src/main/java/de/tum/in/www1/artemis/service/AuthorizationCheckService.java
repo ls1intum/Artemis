@@ -10,14 +10,14 @@ import java.util.regex.Pattern;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
-import javax.annotation.CheckReturnValue;
-
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.google.errorprone.annotations.CheckReturnValue;
 
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;

@@ -2,7 +2,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { CoverageGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/coverage-generation-step/coverage-generation-step.component';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 

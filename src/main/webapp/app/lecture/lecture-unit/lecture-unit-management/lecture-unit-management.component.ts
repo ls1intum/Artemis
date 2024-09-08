@@ -12,7 +12,7 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPencilAlt, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
@@ -34,8 +34,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     lecture: Lecture;
     isLoading = false;
     updateOrderSubject: Subject<any>;
+    viewButtonAvailable: Record<number, boolean> = {};
+
     updateOrderSubjectSubscription: Subscription;
     navigationEndSubscription: Subscription;
+
     readonly LectureUnitType = LectureUnitType;
     readonly ActionType = ActionType;
     private dialogErrorSource = new Subject<string>();
@@ -51,6 +54,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     // Icons
     faTrash = faTrash;
     faPencilAlt = faPencilAlt;
+    faEye = faEye;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -104,6 +108,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                     this.lecture = lecture;
                     if (lecture?.lectureUnits) {
                         this.lectureUnits = lecture?.lectureUnits;
+                        this.lectureUnits.forEach((lectureUnit) => {
+                            this.viewButtonAvailable[lectureUnit.id!] = this.isViewButtonAvailable(lectureUnit);
+                        });
                     } else {
                         this.lectureUnits = [];
                     }
@@ -184,6 +191,17 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    isViewButtonAvailable(lectureUnit: LectureUnit): boolean {
+        switch (lectureUnit!.type) {
+            case LectureUnitType.ATTACHMENT: {
+                const attachmentUnit = <AttachmentUnit>lectureUnit;
+                return attachmentUnit.attachment?.link?.endsWith('.pdf') ?? false;
+            }
+            default:
+                return false;
+        }
     }
 
     editButtonAvailable(lectureUnit: LectureUnit) {
