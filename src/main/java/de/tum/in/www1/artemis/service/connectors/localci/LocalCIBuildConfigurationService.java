@@ -3,16 +3,15 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 import static de.tum.in.www1.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALCI;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.exception.LocalCIException;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.ScriptAction;
 import de.tum.in.www1.artemis.service.connectors.aeolus.Windfile;
@@ -23,8 +22,11 @@ public class LocalCIBuildConfigurationService {
 
     private final AeolusTemplateService aeolusTemplateService;
 
-    public LocalCIBuildConfigurationService(AeolusTemplateService aeolusTemplateService) {
+    private final BuildScriptProviderService buildScriptProviderService;
+
+    public LocalCIBuildConfigurationService(AeolusTemplateService aeolusTemplateService, BuildScriptProviderService buildScriptProviderService) {
         this.aeolusTemplateService = aeolusTemplateService;
+        this.buildScriptProviderService = buildScriptProviderService;
     }
 
     /**
@@ -73,38 +75,7 @@ public class LocalCIBuildConfigurationService {
             });
 
         }
-        return replacePlaceholders(buildScriptBuilder.toString(), programmingExercise.getBuildConfig());
+        return buildScriptProviderService.replacePlaceholders(buildScriptBuilder.toString(), programmingExercise.getBuildConfig().getAssignmentCheckoutPath(),
+                programmingExercise.getBuildConfig().getSolutionCheckoutPath(), programmingExercise.getBuildConfig().getTestCheckoutPath());
     }
-
-    /**
-     * Replaces placeholders in the given result paths with the actual paths.
-     *
-     * @param resultPaths the result paths to replace the placeholders in
-     * @param buildConfig the build configuration containing the actual paths
-     * @return the result paths with the placeholders replaced
-     */
-    public List<String> replaceResultPathsPlaceholders(List<String> resultPaths, ProgrammingExerciseBuildConfig buildConfig) {
-        List<String> replacedResultPaths = new ArrayList<>();
-        for (String resultPath : resultPaths) {
-            String replacedResultPath = replacePlaceholders(resultPath, buildConfig);
-            replacedResultPaths.add(replacedResultPath);
-        }
-        return replacedResultPaths;
-    }
-
-    private String replacePlaceholders(String originalString, ProgrammingExerciseBuildConfig buildConfig) {
-        String assignmentRepo = buildConfig.getAssignmentCheckoutPath();
-        assignmentRepo = assignmentRepo != null && !assignmentRepo.isBlank() ? assignmentRepo : Constants.ASSIGNMENT_REPO_NAME;
-        String solutionRepo = buildConfig.getSolutionCheckoutPath();
-        solutionRepo = solutionRepo != null && !solutionRepo.isBlank() ? solutionRepo : Constants.SOLUTION_REPO_NAME;
-        String testRepo = buildConfig.getTestCheckoutPath();
-        testRepo = testRepo != null && !testRepo.isBlank() ? testRepo : Constants.TEST_REPO_NAME;
-
-        String replacedResultPath = originalString.replace(Constants.ASSIGNMENT_REPO_PARENT_PLACEHOLDER, assignmentRepo);
-        replacedResultPath = replacedResultPath.replace(Constants.ASSIGNMENT_REPO_PLACEHOLDER, "/" + assignmentRepo + "/src");
-        replacedResultPath = replacedResultPath.replace(Constants.SOLUTION_REPO_PLACEHOLDER, solutionRepo);
-        replacedResultPath = replacedResultPath.replace(Constants.TEST_REPO_PLACEHOLDER, testRepo);
-        return replacedResultPath;
-    }
-
 }

@@ -38,6 +38,7 @@ import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
+import de.tum.in.www1.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusResult;
 import de.tum.in.www1.artemis.service.connectors.aeolus.AeolusTemplateService;
@@ -75,6 +76,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
 
     private final AeolusTemplateService aeolusTemplateService;
 
+    private final BuildScriptProviderService buildScriptProviderService;
+
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -102,7 +105,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             LocalCIProgrammingLanguageFeatureService programmingLanguageFeatureService, Optional<VersionControlService> versionControlService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             LocalCIBuildConfigurationService localCIBuildConfigurationService, GitService gitService, ExerciseDateService exerciseDateService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, BuildScriptProviderService buildScriptProviderService) {
         this.hazelcastInstance = hazelcastInstance;
         this.aeolusTemplateService = aeolusTemplateService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -114,6 +117,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         this.gitService = gitService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.exerciseDateService = exerciseDateService;
+        this.buildScriptProviderService = buildScriptProviderService;
     }
 
     @PostConstruct
@@ -302,7 +306,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
 
         List<String> resultPaths = getTestResultPaths(windfile);
-        resultPaths = localCIBuildConfigurationService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
+        resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
         programmingExercise.setBuildConfig(buildConfig);

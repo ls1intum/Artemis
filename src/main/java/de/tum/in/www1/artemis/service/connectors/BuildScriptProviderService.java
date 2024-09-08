@@ -18,6 +18,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseBuildConfig;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -62,19 +63,20 @@ public class BuildScriptProviderService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void cacheOnBoot() {
-        String templateDirectory = profileService.isLocalCiActive() ? "local" : "aeolus";
-        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", templateDirectory));
+        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
                 if (filename == null || filename.endsWith(".yaml")) {
                     continue;
                 }
-                String pathPrefix = "templates/" + templateDirectory + "/";
-                String directory = resource.getURL().getPath().split(pathPrefix)[1].split("/")[0];
+                String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);
+                if (!profileService.isLocalCiActive()) {
+                    script = replacePlaceholders(script, null, null, null);
+                }
                 scriptCache.put(uniqueKey, script);
             }
             catch (IOException e) {
@@ -118,6 +120,9 @@ public class BuildScriptProviderService {
         }
         byte[] fileContent = IOUtils.toByteArray(fileResource.getInputStream());
         String script = new String(fileContent, StandardCharsets.UTF_8);
+        if (!profileService.isLocalCiActive()) {
+            script = replacePlaceholders(script, null, null, null);
+        }
         scriptCache.put(uniqueKey, script);
         log.debug("Caching script for {}", uniqueKey);
         return script;
@@ -171,5 +176,43 @@ public class BuildScriptProviderService {
             fileNameComponents.add("coverage");
         }
         return String.join("_", fileNameComponents) + "." + fileExtension;
+    }
+
+    /**
+     * Replaces placeholders in the given result paths with the actual paths.
+     *
+     * @param resultPaths the result paths to replace the placeholders in
+     * @param buildConfig the build configuration containing the actual paths
+     * @return the result paths with the placeholders replaced
+     */
+    public List<String> replaceResultPathsPlaceholders(List<String> resultPaths, ProgrammingExerciseBuildConfig buildConfig) {
+        List<String> replacedResultPaths = new ArrayList<>();
+        for (String resultPath : resultPaths) {
+            String replacedResultPath = replacePlaceholders(resultPath, buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
+                    buildConfig.getTestCheckoutPath());
+            replacedResultPaths.add(replacedResultPath);
+        }
+        return replacedResultPaths;
+    }
+
+    /**
+     * Replaces placeholders in the given original string with the actual paths.
+     *
+     * @param originalString the original string to replace the placeholders in
+     * @param assignmentRepo the assignment repository name
+     * @param solutionRepo   the solution repository name
+     * @param testRepo       the test repository name
+     * @return the original string with the placeholders replaced
+     */
+    public String replacePlaceholders(String originalString, String assignmentRepo, String solutionRepo, String testRepo) {
+        assignmentRepo = assignmentRepo != null && !assignmentRepo.isBlank() ? assignmentRepo : Constants.ASSIGNMENT_REPO_NAME;
+        solutionRepo = solutionRepo != null && !solutionRepo.isBlank() ? solutionRepo : Constants.SOLUTION_REPO_NAME;
+        testRepo = testRepo != null && !testRepo.isBlank() ? testRepo : Constants.TEST_REPO_NAME;
+
+        String replacedResultPath = originalString.replace(Constants.ASSIGNMENT_REPO_PARENT_PLACEHOLDER, assignmentRepo);
+        replacedResultPath = replacedResultPath.replace(Constants.ASSIGNMENT_REPO_PLACEHOLDER, "/" + assignmentRepo + "/src");
+        replacedResultPath = replacedResultPath.replace(Constants.SOLUTION_REPO_PLACEHOLDER, solutionRepo);
+        replacedResultPath = replacedResultPath.replace(Constants.TEST_REPO_PLACEHOLDER, testRepo);
+        return replacedResultPath;
     }
 }

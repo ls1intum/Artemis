@@ -67,20 +67,21 @@ public class AeolusTemplateService {
     @EventListener(ApplicationReadyEvent.class)
     public void cacheOnBoot() {
         // load all scripts into the cache
-        String templateDirectory = profileService.isLocalCiActive() ? "local" : "aeolus";
-        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", templateDirectory));
+        var resources = this.resourceLoaderService.getFileResources(Path.of("templates", "aeolus"));
         for (var resource : resources) {
             try {
                 String filename = resource.getFilename();
                 if (filename == null || !filename.endsWith(".yaml")) {
                     continue;
                 }
-                String pathPrefix = "templates/" + templateDirectory + "/";
-                String directory = resource.getURL().getPath().split(pathPrefix)[1].split("/")[0];
+                String directory = resource.getURL().getPath().split("templates/aeolus/")[1].split("/")[0];
                 Optional<ProjectType> optionalProjectType = extractProjectType(filename);
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);
+                if (!profileService.isLocalCiActive()) {
+                    script = buildScriptProviderService.replacePlaceholders(script, null, null, null);
+                }
                 Windfile windfile = readWindfile(script);
                 this.addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
                 templateCache.put(uniqueKey, windfile);
@@ -144,6 +145,9 @@ public class AeolusTemplateService {
         if (scriptCache == null) {
             log.error("No windfile found for key {}", uniqueKey);
             return null;
+        }
+        if (!profileService.isLocalCiActive()) {
+            scriptCache = buildScriptProviderService.replacePlaceholders(scriptCache, null, null, null);
         }
         Windfile windfile = readWindfile(scriptCache);
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
