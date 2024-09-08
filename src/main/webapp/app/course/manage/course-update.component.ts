@@ -21,7 +21,7 @@ import { OrganizationSelectorComponent } from 'app/shared/organization-selector/
 import { faBan, faExclamationTriangle, faPen, faQuestionCircle, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { AccountService } from 'app/core/auth/account.service';

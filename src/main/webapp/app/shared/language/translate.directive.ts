@@ -9,6 +9,7 @@ import { takeUntil } from 'rxjs/operators';
  */
 @Directive({
     selector: '[jhiTranslate]',
+    standalone: true,
 })
 export class TranslateDirective implements OnChanges, OnInit, OnDestroy {
     @Input() jhiTranslate!: string;

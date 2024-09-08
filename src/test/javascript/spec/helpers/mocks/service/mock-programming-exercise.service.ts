@@ -1,7 +1,7 @@
 import { of } from 'rxjs';
 import { ProgrammingExerciseInstructorRepositoryType } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Participation } from 'app/entities/participation/participation.model';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 
 export class MockProgrammingExerciseService {
     updateProblemStatement = (exerciseId: number, problemStatement: string) => of();

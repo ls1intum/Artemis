@@ -111,6 +111,13 @@
             }
         </div>
     }
+
+    <!-- Theia Image Selection -->
+    @if (programmingExercise.allowOnlineIde && programmingExercise.programmingLanguage) {
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.theiaImage.title"></label>
+        <jhi-programming-exercise-theia [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="programmingExerciseCreationConfig" />
+    }
+
     <!-- Static code analysis checkbox -->
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed) {
         <div>

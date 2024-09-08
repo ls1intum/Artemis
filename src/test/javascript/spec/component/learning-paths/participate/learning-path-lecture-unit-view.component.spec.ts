@@ -10,7 +10,6 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
-import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
@@ -104,18 +103,5 @@ describe('LearningPathLectureUnitViewComponent', () => {
         comp.completeLectureUnit(event);
         expect(setCompletionStub).toHaveBeenCalledOnce();
         expect(setCompletionStub).toHaveBeenCalledWith(attachment.id, lecture.id, event.completed);
-    });
-
-    it('should set properties of child on activate', () => {
-        const attachment = new AttachmentUnit();
-        attachment.id = 3;
-        lecture.lectureUnits = [attachment];
-        comp.lecture = lecture;
-        comp.lectureUnit = attachment;
-        lecture.course = new Course();
-        fixture.detectChanges();
-        const instance = { lecture: undefined } as DiscussionSectionComponent;
-        comp.onChildActivate(instance);
-        expect(instance.lecture).toEqual(lecture);
     });
 });

@@ -3,9 +3,9 @@ import { faCircleNotch, faPlayCircle } from '@fortawesome/free-solid-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { BuildPlanService } from 'app/exercises/programming/manage/services/build-plan.service';
-import { BuildPlan } from 'app/entities/build-plan.model';
+import { BuildPlan } from 'app/entities/programming/build-plan.model';
 import { ActivatedRoute } from '@angular/router';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 

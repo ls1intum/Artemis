@@ -4,7 +4,7 @@ import { SuspiciousSessionsComponent } from 'app/exam/manage/suspicious-behavior
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam-session.model';
+import { SuspiciousExamSessions, SuspiciousSessionReason } from 'app/entities/exam/exam-session.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTestModule } from '../../../../test.module';
 

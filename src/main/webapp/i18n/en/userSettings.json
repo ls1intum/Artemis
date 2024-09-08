@@ -5,7 +5,8 @@
             "saveChanges": "Save Changes",
             "saveSettingsSuccessAlert": "Your Settings have been successfully saved.",
             "userSettings": "User Settings",
-            "sshSettings": "SSH Settings",
+            "sshSettings": "SSH",
+            "vcsAccessTokenSettings": "VCS Token",
             "accountInformation": "Account Information",
             "notificationSettings": "Notifications",
             "notificationSettingsFilterInfo": "These settings also filter the notification sidebar",
@@ -27,6 +28,21 @@
                 "sshKeyDisplayedInformation": "This is your currently configured SSH key:",
                 "key": "SSH Key"
             },
+            "vcsAccessTokensSettingsPage": {
+                "addTokenTitle": "Add personal access token",
+                "infoText": "You can generate a personal access token to interact with the Artemis Local Version Control System. You can use it to authenticate to Git over HTTP.",
+                "deleteVcsAccessTokenQuestion": "Do you really want to delete your version control system access token? You will not be able to authenticate to local repositories cloned with this token any more.",
+                "createAccessToken": "Create new VCS access token",
+                "noTokenSet": "You do not have any user tokens",
+                "addToken": "Add new token",
+                "deleteFailure": "Deleting the VCS access token failed",
+                "deleteSuccess": "Successfully deleted the VCS access token",
+                "addFailure": "Failed to set new VCS access token",
+                "addSuccess": "Successfully created a new VCS access token",
+                "vcsAccessToken": "VCS Access Token",
+                "expiryDate": "Expiry Date",
+                "actions": "Actions"
+            },
             "accountInformationPage": {
                 "registrationNumber": "Registration Number",
                 "fullName": "Full Name",
@@ -38,7 +54,8 @@
             "categories": {
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
-                "SSH_SETTINGS": "SSH"
+                "SSH_SETTINGS": "SSH Settings",
+                "VCS_TOKEN_SETTINGS": "VCS Token Settings"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",

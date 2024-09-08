@@ -11,8 +11,8 @@ import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
