@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
@@ -91,6 +92,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         Result result = programmingAssessmentService.updateAssessmentAfterComplaint(programmingSubmission.getLastResult(), programmingExercise, assessmentUpdate);
         // make sure the submission is reconnected with the result to prevent problems when the object is used for other calls in the client
         result.setSubmission(programmingSubmission);
+
+        if (programmingSubmission.getParticipation() != null && programmingSubmission.getParticipation() instanceof StudentParticipation studentParticipation
+                && !authCheckService.isAtLeastInstructorForExercise(programmingExercise, user)) {
+            studentParticipation.filterSensitiveInformation();
+        }
 
         return ResponseEntity.ok(result);
     }
@@ -171,6 +177,11 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
         }
 
         newManualResult = programmingAssessmentService.saveAndSubmitManualAssessment(participation, newManualResult, existingManualResult, user, submit);
+
+        if (!isAtLeastInstructor) {
+            // remove information about the student from the response
+            newManualResult.getSubmission().getParticipation().filterSensitiveInformation();
+        }
 
         return ResponseEntity.ok(newManualResult);
     }

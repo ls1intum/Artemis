@@ -158,7 +158,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
-        complaint.getResult().setParticipation(null); // Break infinite reference chain
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
@@ -189,7 +188,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
-        complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         final var assessmentUpdate = new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
@@ -207,7 +205,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
-        complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected");
         final var assessmentUpdate = new AssessmentUpdateDTO(new ArrayList<>(), complaintResponse, null);
@@ -223,7 +220,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
         complaintRepo.save(complaint);
-        complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
@@ -479,7 +475,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
-        manualResult.setParticipation(participation);
+        var submission = ParticipationFactory.generateProgrammingSubmission(true);
+        submission.setParticipation(participation);
+        submission = programmingSubmissionRepository.save(submission);
+        manualResult.setSubmission(submission);
 
         request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class, HttpStatus.FORBIDDEN);
     }
@@ -521,7 +520,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         resultRepository.save(manualResult);
 
-        manualResult.setParticipation(participation);
         manualResult.setSubmission(programmingSubmission);
         programmingSubmission.addResult(manualResult);
 
@@ -553,7 +551,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
 
-        manualResult.setParticipation(programmingExerciseStudentParticipation);
         manualResult.setSubmission(programmingSubmission);
 
         // Remove feedbacks, change text and score.
@@ -645,7 +642,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
 
         resultRepository.save(manualResult);
 
-        manualResult.setParticipation(participation);
         manualResult.setSubmission(programmingSubmission);
         programmingSubmission.addResult(manualResult);
 
@@ -716,7 +712,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
                 .collect(Collectors.toCollection(ArrayList::new));
         result.setCompletionDate(ZonedDateTime.now());
         result.setFeedbacks(feedbacks);
-        result.setParticipation(participation);
         result.setSubmission(programmingSubmission);
         request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, httpStatus);
     }
@@ -840,8 +835,9 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
-        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutFirstAssessment);
-        assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
+        var latestSubmission = fetchedParticipation.findLatestSubmission();
+        assertThat(latestSubmission).contains(submissionWithoutFirstAssessment);
+        assertThat(latestSubmission.orElseThrow().findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
                 .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
@@ -876,8 +872,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
-        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
-        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst()).contains(submissionWithoutSecondAssessment.getLastResult());
+        latestSubmission = fetchedParticipation.findLatestSubmission();
+        assertThat(latestSubmission).contains(submissionWithoutSecondAssessment);
+        assertThat(latestSubmission.orElseThrow().getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst())
+                .contains(submissionWithoutSecondAssessment.getLastResult());
 
         databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
@@ -947,17 +945,15 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         initialResult.setAssessor(tutor1);
         initialResult.setHasComplaint(true);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-        initialResult.setParticipation(participation);
+        initialResult.setSubmission(programmingSubmission);
         initialResult = resultRepository.save(initialResult);
 
         programmingSubmission.addResult(initialResult);
-        initialResult.setSubmission(programmingSubmission);
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // complaining
         Complaint complaint = new Complaint().result(initialResult).complaintText("This is not fair");
         complaint = complaintRepo.save(complaint);
-        complaint.getResult().setParticipation(null); // Break infinite reference chain
 
         // Creating complaint response
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
@@ -1015,7 +1011,8 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
         studentParticipationRepository.save(participation);
 
-        Result result = participation.getResults().stream().findFirst().orElseThrow();
+        Result result = participation.getSubmissions().iterator().next().getFirstResult();
+        assertThat(result).isNotNull();
         result.setScore(100D);
         resultRepository.save(result);
 
