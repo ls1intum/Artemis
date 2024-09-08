@@ -72,6 +72,12 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         // creating participation of student1 by starting the exercise
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         StudentParticipation studentParticipation = participationService.startExercise(textExercise, student1, false);
+        // creating assessment by tutor1
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        Result result = ParticipationFactory.generateResult(true, 50D);
+        result.setAssessor(tutor1);
+        result.setHasComplaint(true);
+
         // creating submission of student1
         TextSubmission submission = new TextSubmission();
         submission.setType(SubmissionType.MANUAL);
@@ -79,18 +85,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         submission.setSubmitted(Boolean.TRUE);
         submission.setSubmissionDate(ZonedDateTime.now());
         submission.text("hello world");
-        submission = submissionRepository.saveAndFlush(submission);
-        // creating assessment by tutor1
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
-        Result result = ParticipationFactory.generateResult(true, 50D);
-        result.setAssessor(tutor1);
-        result.setHasComplaint(true);
-        result.setParticipation(studentParticipation);
-        result = resultRepository.saveAndFlush(result);
-
         submission.addResult(result);
-        result.setSubmission(submission);
-        submissionRepository.save(submission);
+        submissionRepository.saveAndFlush(submission);
 
         log.debug("3 Test setup submissions done");
 
