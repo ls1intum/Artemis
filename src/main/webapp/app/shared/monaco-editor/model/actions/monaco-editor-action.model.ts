@@ -11,6 +11,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     keybindings?: number[];
 
     icon?: IconDefinition;
+    readonly hideInEditor: boolean;
 
     /**
      * The disposable action that is returned by `editor.addAction`. This is required to unregister the action from the editor.
@@ -28,12 +29,14 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      * @param translationKey The translation key of the action label.
      * @param icon The icon to display in the editor toolbar, if any.
      * @param keybindings The keybindings to trigger the action, if any.
+     * @param hideInEditor Whether to hide the action in the editor toolbar. Defaults to false.
      */
-    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[]) {
+    constructor(id: string, translationKey: string, icon?: IconDefinition, keybindings?: number[], hideInEditor?: boolean) {
         this.id = id;
         this.translationKey = translationKey;
         this.icon = icon;
         this.keybindings = keybindings;
+        this.hideInEditor = hideInEditor ?? false;
     }
 
     /**
@@ -61,6 +64,7 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
      */
     dispose(): void {
         this.disposableAction?.dispose();
+        this.disposableAction = undefined;
         this._editor = undefined;
     }
 
@@ -321,6 +325,10 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
         }
     }
 
+    getPosition(editor: monaco.editor.ICodeEditor): monaco.IPosition {
+        return editor.getPosition() ?? { lineNumber: 1, column: 1 };
+    }
+
     /**
      * Sets the selection of the given editor to the given range and reveals it in the center of the editor.
      * @param editor The editor to set the selection in.
@@ -329,6 +337,24 @@ export abstract class MonacoEditorAction implements monaco.editor.IActionDescrip
     setSelection(editor: monaco.editor.ICodeEditor, selection: monaco.IRange): void {
         editor.setSelection(selection);
         editor.revealRangeInCenter(selection);
+    }
+
+    /**
+     * Clears the current selection in the given editor, but preserves the cursor position.
+     * @param editor The editor to clear the selection in.
+     */
+    clearSelection(editor: monaco.editor.ICodeEditor): void {
+        const position = this.getPosition(editor);
+        this.setSelection(editor, new monaco.Range(position.lineNumber, position.column, position.lineNumber, position.column));
+    }
+
+    /**
+     * Adjusts the cursor position so it is at the end of the current line.
+     * @param editor The editor to adjust the cursor position in.
+     */
+    moveCursorToEndOfLine(editor: monaco.editor.ICodeEditor): void {
+        const position: monaco.IPosition = { ...this.getPosition(editor), column: Number.POSITIVE_INFINITY };
+        this.setPosition(editor, position);
     }
 
     /**

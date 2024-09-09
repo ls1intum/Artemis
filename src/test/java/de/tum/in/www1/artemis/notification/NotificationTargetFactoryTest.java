@@ -58,8 +58,6 @@ class NotificationTargetFactoryTest {
 
     private static final String BASE_URL = "https://artemistest.ase.in.tum.de";
 
-    private static final String MESSAGES_CONVERSATION = "messages?conversationId=";
-
     private String resultingURL;
 
     private static final String PROBLEM_STATEMENT = "problem statement";
@@ -74,8 +72,8 @@ class NotificationTargetFactoryTest {
 
     // expected/correct URLs
 
-    // e.g. https://artemistest.ase.in.tum.de/courses/477/discussion?searchText=%232000
-    private static final String EXPECTED_POST_URL = BASE_URL_COURSES_COURSE_ID + "/" + MESSAGES_CONVERSATION + CHANNEL_ID;
+    // e.g. https://artemistest.ase.in.tum.de/courses/477/communication?conversationId=2000
+    private static final String EXPECTED_POST_URL = BASE_URL_COURSES_COURSE_ID + "/" + "communication?conversationId=" + CHANNEL_ID;
 
     // e.g. https://artemistest.ase.in.tum.de/courses/477/lectures/199
     private static final String EXPECTED_ATTACHMENT_CHANGED_URL = BASE_URL_COURSES_COURSE_ID + "/" + LECTURES_TEXT + "/" + LECTURE_ID;

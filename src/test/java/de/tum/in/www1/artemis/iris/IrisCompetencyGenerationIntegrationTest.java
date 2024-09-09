@@ -1,23 +1,34 @@
 package de.tum.in.www1.artemis.iris;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.competency.Competency;
 import de.tum.in.www1.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
+import de.tum.in.www1.artemis.service.iris.IrisCompetencyGenerationService;
 
 class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iriscompetencyintegration";
+
+    @Autowired
+    IrisCompetencyGenerationService irisCompetencyGenerationService;
 
     private Course course;
 
@@ -31,34 +42,43 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     @Test
-    @Disabled // TODO: Enable this test again!
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void generateCompetencies_asEditor_shouldSucceed() throws Exception {
-        final String courseDescription = "Any description";
-        Competency expected = new Competency();
-        expected.setTitle("title");
-        expected.setDescription("description");
-        expected.setTaxonomy(CompetencyTaxonomy.ANALYZE);
-        // var competencyMap1 = Map.of("title", expected.getTitle(), "description", expected.getDescription(), "taxonomy", expected.getTaxonomy());
-        // // empty or malformed competencies are ignored
-        // var competencyMap2 = Map.of("title", "!done");
-        // var competencyMap3 = Map.of("malformed", "any content");
-        // var responseMap = Map.of("competencies", List.of(competencyMap1, competencyMap2, competencyMap3));
+        String courseDescription = "Cool course description";
+        var currentCompetencies = new PyrisCompetencyRecommendationDTO[] { new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND), };
 
-        /*
-         * irisRequestMockProvider.mockRunResponse(dto -> {
-         * assertThat(dto.settings().authenticationToken()).isNotNull();
-         * pipelineDone.set(true);
-         * });
-         */
-        fail("This test is not yet implemented. Implement it and remove the fail call.");
+        // Expect that a request is sent to Pyris having the following characteristics
+        irisRequestMockProvider.mockRunCompetencyExtractionResponseAnd(dto -> {
+            var token = dto.execution().settings().authenticationToken();
+            assertThat(token).isNotNull();
+            assertThat(dto.courseDescription()).contains(courseDescription);
+            assertThat(dto.currentCompetencies()).containsExactly(currentCompetencies);
+            assertThat(dto.taxonomyOptions()).isNotEmpty();
+            assertThat(dto.maxN()).isPositive();
+        });
 
-        List<Competency> competencies = request.postListWithResponseBody("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", courseDescription,
-                Competency.class, HttpStatus.OK);
-        Competency actualCompetency = competencies.getFirst();
+        // Send a request to the Artemis server as if the user had clicked the button in the UI
+        request.postWithoutResponseBody("/api/courses/" + course.getId() + "/course-competencies/generate-from-description",
+                new PyrisCompetencyExtractionInputDTO(courseDescription, currentCompetencies), HttpStatus.ACCEPTED);
 
-        assertThat(competencies.size()).isEqualTo(1);
-        assertThat(actualCompetency).usingRecursiveComparison().comparingOnlyFields("title", "description", "taxonomy").isEqualTo(expected);
+        PyrisCompetencyRecommendationDTO expected = new PyrisCompetencyRecommendationDTO("test title", "test description", CompetencyTaxonomy.UNDERSTAND);
+        List<PyrisCompetencyRecommendationDTO> recommendations = List.of(expected, expected, expected);
+        List<PyrisStageDTO> stages = List.of(new PyrisStageDTO("Generating Competencies", 10, PyrisStageState.DONE, null));
+
+        // In the real system, this would be triggered by Pyris via a REST call to the Artemis server
+        irisCompetencyGenerationService.handleStatusUpdate(TEST_PREFIX + "editor1", course.getId(), new PyrisCompetencyStatusUpdateDTO(stages, recommendations));
+
+        ArgumentCaptor<PyrisCompetencyStatusUpdateDTO> argumentCaptor = ArgumentCaptor.forClass(PyrisCompetencyStatusUpdateDTO.class);
+        verify(websocketMessagingService, timeout(200).times(3)).sendMessageToUser(eq(TEST_PREFIX + "editor1"), eq("/topic/iris/competencies/" + course.getId()),
+                argumentCaptor.capture());
+
+        List<PyrisCompetencyStatusUpdateDTO> allValues = argumentCaptor.getAllValues();
+        assertThat(allValues.get(0).stages()).hasSize(2);
+        assertThat(allValues.get(0).result()).isNull();
+        assertThat(allValues.get(1).stages()).hasSize(2);
+        assertThat(allValues.get(1).result()).isNull();
+        assertThat(allValues.get(2).stages()).hasSize(1);
+        assertThat(allValues.get(2).result()).isEqualTo(recommendations);
     }
 
     @Test
@@ -74,6 +94,7 @@ class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTes
     }
 
     void testAllPreAuthorize() throws Exception {
-        request.post("/api/courses/" + course.getId() + "/course-competencies/generate-from-description", "a", HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course.getId() + "/course-competencies/generate-from-description",
+                new PyrisCompetencyExtractionInputDTO("a", new PyrisCompetencyRecommendationDTO[] {}), HttpStatus.FORBIDDEN);
     }
 }

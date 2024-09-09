@@ -11,24 +11,20 @@ export const THEME_OVERRIDE_ID = 'artemis-theme-override';
  * If you add new themes, make sure to adapt the theme switch component which currently only supports two themes.
  */
 export class Theme {
-    public static readonly LIGHT = new Theme('LIGHT', true, undefined, faSun, 'chrome', 'dreamweaver');
-    public static readonly DARK = new Theme('DARK', false, 'theme-dark.css', faMoon, 'dracula', 'dracula');
+    public static readonly LIGHT = new Theme('LIGHT', true, undefined, faSun);
+    public static readonly DARK = new Theme('DARK', false, 'theme-dark.css', faMoon);
 
-    private constructor(identifier: string, isDefault: boolean, fileName: string | undefined, icon: IconDefinition, markdownAceTheme: string, codeAceTheme: string) {
+    private constructor(identifier: string, isDefault: boolean, fileName: string | undefined, icon: IconDefinition) {
         this.identifier = identifier;
         this.isDefault = isDefault;
         this.fileName = fileName;
         this.icon = icon;
-        this.markdownAceTheme = markdownAceTheme;
-        this.codeAceTheme = codeAceTheme;
     }
 
     public readonly identifier: string;
     public readonly isDefault: boolean;
     public readonly fileName: string | undefined;
     public readonly icon: IconDefinition;
-    public readonly markdownAceTheme: string;
-    public readonly codeAceTheme: string;
 
     /**
      * Returns an array with all available themes.

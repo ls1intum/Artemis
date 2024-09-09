@@ -11,16 +11,16 @@ interface SuperClass {
 interface ChildClass {
     superClass: string;
     name: string;
-    memberVariables: Map<string, MemberVariable>;
+    memberVariables: Map<string, Attribute>;
     parentMethodCalls: ParentMethodCalls[];
 }
 
 interface ParentMethodCalls {
     name: string;
-    parameters: MemberVariable[];
+    parameters: Attribute[];
 }
 
-interface MemberVariable {
+interface Attribute {
     name: string;
     type: string;
     value?: string;
@@ -28,16 +28,16 @@ interface MemberVariable {
 
 export class Preprocessor {
     public static PREPROCESSING_RESULTS = new Map<string, SuperClass>();
-    public static readonly pathPrefix = ''
     private readonly directoryPrefix = 'src/main/webapp/';
-    private readonly fileToPreprocess: string;
     private ast: TSESTree.Program;
 
-    private memberVariables: Map<string, MemberVariable> = new Map<string, MemberVariable>();
+    private memberVariables: Map<string, Attribute> = new Map<string, Attribute>();
 
-    constructor(fileToPreprocess: string) {
-        this.fileToPreprocess = fileToPreprocess;
-        this.ast = Preprocessor.parseTypeScriptFile(Preprocessor.pathPrefix + this.fileToPreprocess);
+    /**
+     * @param ast - The abstract syntax tree (AST) of the processed file.
+     */
+    constructor(ast: TSESTree.Program) {
+        this.ast = ast;
     }
 
     /**
@@ -48,10 +48,6 @@ export class Preprocessor {
      * It also handles named exports that are class declarations.
      */
     preprocessFile() {
-        if (this.ast.type !== 'Program') {
-            return;
-        }
-
         this.ast.body.forEach((node) => {
             if (node.type === 'ClassDeclaration') {
                 this.preprocessClass(node);
@@ -254,11 +250,11 @@ export class Preprocessor {
      * which scans the class body for a property matching the parameter name and returns its value.
      *
      * @param parameterName - The name of the parameter whose value is to be found.
-     * @param filePath - The path to the TypeScript file (relative to the base directory set in `pathPrefix` and `directoryPrefix`) where the parameter value is to be searched.
+     * @param filePath - The path to the TypeScript file (relative to the base directory set in `directoryPrefix`) where the parameter value is to be searched.
      * @returns The value of the parameter if found; otherwise, an empty string.
      */
     findParameterValueByParameterNameAndFilePath (parameterName: string, filePath: string): string {
-        const targetAST = Preprocessor.parseTypeScriptFile(`${Preprocessor.pathPrefix}${this.directoryPrefix}${filePath}.ts`);
+        const targetAST = Preprocessor.parseTypeScriptFile(`${this.directoryPrefix}${filePath}.ts`);
 
         for (const node of targetAST.body) {
             if (node.type === 'ExportNamedDeclaration' && node.declaration?.type === 'ClassDeclaration') {

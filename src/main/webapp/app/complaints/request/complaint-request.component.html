@@ -7,18 +7,13 @@
         }}
         <span [ngbTooltip]="complaint.submittedTime | artemisDate">{{ complaint.submittedTime | artemisTimeAgo }}</span>
         @if (complaint.accepted === true) {
-            <span class="badge bg-success">
-                {{
-                    complaint.complaintType === ComplaintType.COMPLAINT
-                        ? ('artemisApp.complaint.acceptedLong' | artemisTranslate)
-                        : ('artemisApp.moreFeedback.acceptedLong' | artemisTranslate)
-                }}
-            </span>
+            <span
+                class="badge bg-success"
+                [jhiTranslate]="complaint.complaintType === ComplaintType.COMPLAINT ? 'artemisApp.complaint.acceptedLong' : 'artemisApp.moreFeedback.acceptedLong'"
+            ></span>
         }
         @if (complaint.accepted === false) {
-            <span class="badge bg-danger">
-                {{ 'artemisApp.complaint.rejectedLong' | artemisTranslate }}
-            </span>
+            <span class="badge bg-danger" jhiTranslate="artemisApp.complaint.rejectedLong"></span>
         }
     </p>
     <textarea

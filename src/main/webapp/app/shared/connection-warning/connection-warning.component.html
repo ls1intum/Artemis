@@ -1,8 +1,6 @@
 <ng-template #popContent class="connection-warning-popover">
     <fa-icon [icon]="faExclamationCircle" size="2x" />
-    <div>
-        {{ 'artemisApp.disconnectedAlert' | artemisTranslate }}
-    </div>
+    <div jhiTranslate="artemisApp.disconnectedAlert"></div>
     <jhi-close-circle (click)="popover.close()" />
 </ng-template>
 <div

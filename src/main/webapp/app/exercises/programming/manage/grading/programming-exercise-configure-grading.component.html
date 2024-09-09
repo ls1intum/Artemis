@@ -1,3 +1,8 @@
+<ng-template #tabTemplate let-type="type" let-translation="translation">
+    <div class="tab-item" (click)="selectTab(type)" [ngClass]="activeTab === type ? 'active' : ''">
+        <b [jhiTranslate]="translation"></b>
+    </div>
+</ng-template>
 <div>
     <div class="d-flex align-content-center mb-2">
         <h3 class="fw-medium" jhiTranslate="artemisApp.programmingExercise.configureGrading.title"></h3>
@@ -5,23 +10,31 @@
     @if (!isLoading) {
         <div class="top-bar">
             <div class="d-flex align-items-center">
-                <div class="tab-item test-cases" (click)="selectTab('test-cases')" [ngClass]="activeTab === 'test-cases' ? 'active' : ''">
-                    <b>Test Cases</b>
-                </div>
+                <ng-container
+                    *ngTemplateOutlet="tabTemplate; context: { type: 'test-cases', translation: 'artemisApp.programmingExercise.configureGrading.testCases.title' }"
+                ></ng-container>
                 @if (programmingExercise.staticCodeAnalysisEnabled) {
-                    <div class="tab-item code-analysis" (click)="selectTab('code-analysis')" [ngClass]="activeTab === 'code-analysis' ? 'active' : ''">
-                        <b>Code Analysis</b>
-                    </div>
+                    <ng-container
+                        *ngTemplateOutlet="tabTemplate; context: { type: 'code-analysis', translation: 'artemisApp.programmingExercise.configureGrading.categories.titleHeader' }"
+                    ></ng-container>
                 }
-                <div class="tab-item submission-policy" (click)="selectTab('submission-policy')" [ngClass]="activeTab === 'submission-policy' ? 'active' : ''">
-                    <b>Submission Policy</b>
-                </div>
+                <ng-container
+                    *ngTemplateOutlet="tabTemplate; context: { type: 'submission-policy', translation: 'artemisApp.programmingExercise.submissionPolicy.title' }"
+                ></ng-container>
+                @if (programmingExercise.isAtLeastEditor) {
+                    <ng-container
+                        *ngTemplateOutlet="
+                            tabTemplate;
+                            context: { type: 'feedback-analysis', translation: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.titleHeader' }
+                        "
+                    ></ng-container>
+                }
             </div>
             <ng-template>
                 <div></div>
             </ng-template>
             <div class="d-flex align-items-center">
-                @if (activeTab !== 'submission-policy') {
+                @if (activeTab === 'test-cases' || activeTab === 'code-analysis') {
                     <jhi-programming-exercise-configure-grading-status
                         [exerciseIsReleasedAndHasResults]="isReleasedAndHasResults"
                         [hasUnsavedTestCaseChanges]="hasUnsavedChanges"
@@ -29,7 +42,7 @@
                         [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
                     />
                 }
-                @if (programmingExercise.isAtLeastInstructor) {
+                @if (programmingExercise.isAtLeastInstructor && activeTab !== 'feedback-analysis') {
                     <jhi-programming-exercise-configure-grading-actions
                         [exercise]="programmingExercise"
                         [hasUpdatedGradingConfig]="hasUpdatedGradingConfig"
@@ -52,7 +65,7 @@
                     <jhi-submission-policy-update #policyUpdate [programmingExercise]="programmingExercise" [editable]="programmingExercise.isAtLeastInstructor!" />
                     @if (programmingExercise.isAtLeastEditor && programmingExercise.submissionPolicy !== undefined) {
                         <ngb-alert [dismissible]="false" [type]="'info'">
-                            <span>{{ 'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.triggerAllInformation"></span>
                         </ngb-alert>
                     }
                 </div>
@@ -71,7 +84,7 @@
                         </div>
                         <div class="col-5">
                             <h2 class="mb-5 fw-medium">
-                                <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
                                 @if (!!changedTestCaseIds.length) {
                                     <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                                 }
@@ -239,7 +252,7 @@
                         </div>
                         <div class="col-5">
                             <h2 class="mb-5 fw-medium">
-                                <span>{{ 'artemisApp.programmingExercise.configureGrading.charts.title' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.title"></span>
                                 @if (!!changedCategoryIds.length) {
                                     <span class="badge bg-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.charts.preview"></span>
                                 }
@@ -254,6 +267,11 @@
                         </div>
                     </div>
                 </div>
+            }
+        </div>
+        <div class="grading-body-container mt-3">
+            @if (programmingExercise.isAtLeastEditor && activeTab === 'feedback-analysis') {
+                <jhi-feedback-analysis [exerciseTitle]="programmingExercise.title!" [exerciseId]="programmingExercise.id!"></jhi-feedback-analysis>
             }
         </div>
     }

@@ -10,7 +10,7 @@
                     "headline": "Klassendatei",
                     "content": "Klick hier auf die Klassendatei, damit sie sich im Programmiereditor öffnet."
                 },
-                "aceEditor": {
+                "monacoEditor": {
                     "headline": "Programmiereditor",
                     "content": "Nun wird dir der Quellcode im Programmiereditor angezeigt. Du kannst dir das <tt>TODO</tt> durchlesen und bereits versuchen, dieses zu lösen. Alternativ kannst du auch in dieser Demo schon beliebigen Code einfügen. Wenn du damit fertig bist, dann klicke auf weiter."
                 },

@@ -79,6 +79,17 @@
                                                 </td>
                                                 <td class="text-end">
                                                     <div class="flex-btn-group-container">
+                                                        @if (viewButtonAvailable[attachment.id!]) {
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-primary btn-sm me-1"
+                                                                [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'attachments', attachment.id]"
+                                                                [ngbTooltip]="'entity.action.view' | artemisTranslate"
+                                                            >
+                                                                <fa-icon [icon]="faEye" />
+                                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
+                                                            </button>
+                                                        }
                                                         <button
                                                             [disabled]="attachmentToBeCreated?.id === attachment?.id"
                                                             type="submit"
@@ -103,9 +114,7 @@
                                                     </div>
                                                 </td>
                                                 @if (attachmentToBeCreated?.id === attachment?.id) {
-                                                    <div class="edit-overlay">
-                                                        {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
-                                                    </div>
+                                                    <div class="edit-overlay" jhiTranslate="artemisApp.lecture.attachments.isBeingEdited"></div>
                                                 }
                                             </tr>
                                         }
@@ -140,7 +149,7 @@
                                         jhiTranslate="artemisApp.lecture.attachments.file"
                                         >File</label
                                     >
-                                    <small id="fileHelp" class="form-text text-body-secondary">{{ 'artemisApp.lecture.attachments.fileLimitation' | artemisTranslate }} </small>
+                                    <small id="fileHelp" class="form-text text-body-secondary" jhiTranslate="artemisApp.lecture.attachments.fileLimitation"></small>
                                     <fa-icon
                                         [icon]="faQuestionCircle"
                                         [ngbTooltip]="'artemisApp.lecture.attachments.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"

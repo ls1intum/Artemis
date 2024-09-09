@@ -53,22 +53,68 @@ Artemis brings interactive learning to life with instant, individual feedback on
 
 ## Roadmap
 
-The Artemis development team prioritizes the following issues in the future. We welcome feature requests from students, tutors, instructors, and administrators. We are happy to discuss any suggestions for improvements.
+The Artemis development team prioritizes the following areas in the future. We welcome feature requests from students, tutors, instructors, and administrators. We are happy to discuss any suggestions for improvements.
 
 * **Short term**: Further improve the communication features with mobile apps for iOS and Android
-* **Short term**: Improve the REST API of the server application
+* **Short term**: Add the possibility to use Iris for questions on all exercise types and lectures (partly done)
+* **Short term**: Provide GenAI based automatic feedback to modeling, text and programming exercise with Athena
+* **Short term**: Improve the LTI integration with Moodle
+* **Medium term**: Improve the REST API of the server application
+* **Medium term**: Integrate an online IDE (e.g. Eclipse Theia) into Artemis for enhanced user experience
 * **Medium term**: Add more learning analytics features while preserving data privacy
 * **Medium term**: Improve the user experience, usability and navigation
 * **Medium term**: Add automatic generation of hints for programming exercises
 * **Medium term**: Add GenAI support for reviewing exercises for instructors
-* **Medium term**: Add GenAI support for learning analytics
-* **Medium term**: Add the possibility to use Iris for questions on all exercise types and lectures
+* **Medium term**: Add GenAI support for learning analytics (partly done)
 * **Long term**: Explore the possibilities of microservices, Kubernetes based deployment, and micro frontends
-* **Long term**: Integrated on online IDE (e.g. Eclipse Theia) into Artemis for enhanced user experience
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
 * **Long term**: Develop an exchange platform for exercises
 
-## Setup, guides, and contributing
+## Contributing to This Project
+
+We welcome contributions from both members of our organization and external contributors. To maintain transparency and trust:
+
+- **Members**: Must use their full real names and upload a professional and authentic profile picture. Members can directly create branches and PRs in the repository.
+- **External Contributors**: Must adhere to our identity guidelines, using real names and authentic profile pictures. Contributions will only be considered if these guidelines are followed.
+
+We adhere to best practices as recommended by [GitHub's Open Source Guides](https://opensource.guide/) and their [Acceptable Use Policies](https://docs.github.com/en/site-policy/acceptable-use-policies). Thank you for helping us create a respectful and professional environment for everyone involved.
+
+We follow a pull request contribution model. For detailed guidelines, please refer to our [CONTRIBUTING.md](./CONTRIBUTING.md). Once your pull request is ready to merge, notify the responsible feature maintainer on Slack:
+
+#### Maintainers
+
+The following members of the project management team are responsible for specific feature areas in Artemis. Contact them if you have questions or if you want to develop new features in this area.
+
+| Feature / Aspect               | Responsible maintainer                                                             |
+|--------------------------------|------------------------------------------------------------------------------------|
+| Programming exercises          | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Integrated code lifecycle      | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Quiz exercises                 | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
+| Modeling exercises (+ Apollon) | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Text exercises                 | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| File upload exercises          | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| Exam mode                      | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Grading                        | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| Assessment                     | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| Communication                  | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
+| Notifications                  | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
+| Team Exercises                 | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Lectures                       | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Integrated Markdown Editor     | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
+| Plagiarism checks              | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
+| Learning analytics             | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Adaptive learning              | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Learning paths                 | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Tutorial Groups                | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
+| Iris                           | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
+| Scalability                    | Matthias Linhuber ([@mtze](https://github.com/mtze))                               |
+| Usability                      | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
+| Performance                    | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
+| Infrastructure                 | Matthias Linhuber ([@mtze](https://github.com/mtze))                               |
+| Development process            | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
+| Mobile apps (iOS + Android)    | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+
+## Setup and guidelines
 
 ### Development setup, coding, and design guidelines
 
@@ -76,6 +122,7 @@ The Artemis development team prioritizes the following issues in the future. We 
 * [Server coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/server/)
 * [Client coding and design guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/client/)
 * [Code Review Guidelines](https://docs.artemis.cit.tum.de/dev/development-process/#review)
+* [Performance Guidelines](https://docs.artemis.cit.tum.de/dev/guidelines/performance/)
 
 ### Documentation
 
@@ -95,46 +142,6 @@ Artemis uses these external tools for user management and the configuration of p
 ### Administration setup
 
 If needed, you can configure self service [user registration](https://docs.artemis.cit.tum.de/admin/registration).
-
-### Contributing
-
-Please read the guide on [how to contribute](CONTRIBUTING.md) to Artemis.
-
-Once your PR is ready to merge, notify the responsible feature maintainer on Slack:
-
-#### Maintainers
-
-The following members of the project management team are responsible for specific feature areas in Artemis. Contact them if you have questions or if you want to develop new features in this area.
-
-| Feature / Aspect               | Maintainer                                                                                          |
-|--------------------------------|-----------------------------------------------------------------------------------------------------|
-| Programming exercises          | [@krusche](https://github.com/krusche)                                                              |
-| Integrated code lifecycle      | [@krusche](https://github.com/krusche)                                                              |
-| Quiz exercises                 | [@FelixTJDietrich](https://github.com/FelixTJDietrich)                                                          |
-| Modeling exercises (+ Apollon) | [@krusche](https://github.com/krusche)                                                              |
-| Text exercises                 | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
-| File upload exercises          | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
-| Exam mode                      | [@krusche](https://github.com/krusche)                                                              |
-| Grading                        | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
-| Assessment                     | [@maximiliansoelch](https://github.com/maximiliansoelch)                                            |
-| Communication                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
-| Notifications                  | [@rabeatwork](https://github.com/rabeatwork)                                                        |
-| Team Exercises                 | [@krusche](https://github.com/krusche)                                                              |
-| Lectures                       | [@maximiliananzinger](https://github.com/maximiliananzinger)     |
-| Integrated Markdown Editor     | [@maximiliansoelch](https://github.com/maximiliansoelch) [@bassner](https://github.com/bassner)     |
-| Plagiarism checks              | [@MarkusPaulsen](https://github.com/MarkusPaulsen)                                                  |
-| Learning analytics             | [@bassner](https://github.com/bassner)                                                              |
-| Adaptive learning              | [@bassner](https://github.com/bassner) [@maximiliananzinger](https://github.com/maximiliananzinger) |
-| Learning paths                 | [@maximiliananzinger](https://github.com/maximiliananzinger)                                        |
-| Tutorial Groups                | [@FelixTJDietrich](https://github.com/FelixTJDietrich)                                                          |
-| Iris                           | [@bassner](https://github.com/bassner)                                                              |
-| Scalability                    | [@mtze](https://github.com/mtze)                                                                    |
-| Usability                      | [@rabeatwork](https://github.com/rabeatwork)                                                        |
-| Performance                    | [@rabeatwork](https://github.com/rabeatwork)                                                        |
-| Infrastructure                 | [@mtze](https://github.com/mtze)                                                                    |
-| Development process            | [@FelixTJDietrich](https://github.com/FelixTJDietrich) |
-| Mobile apps (iOS + Android)    | [@krusche](https://github.com/krusche) [@maximiliansoelch](https://github.com/maximiliansoelch)     |
-
 
 ### Building for production
 
@@ -159,7 +166,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.5.1.war
+./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.5.2.war
 ```
 
 ## Architecture

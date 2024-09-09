@@ -6,7 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseInformationComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-information.component';
 import { DefaultValueAccessor, NgModel } from '@angular/forms';
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CategorySelectorComponent } from 'app/shared/category-selector/category-selector.component';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';

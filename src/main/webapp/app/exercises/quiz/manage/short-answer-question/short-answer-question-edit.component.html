@@ -118,14 +118,14 @@
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                     <select class="form-select" [(ngModel)]="shortAnswerQuestion.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
-                        <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
-                        <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
-                        <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
+                        <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
+                        <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
+                        <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
                     </select>
                     <jhi-quiz-scoring-info-modal />
                 </div>
                 <div class="form-group match-percentage-container">
-                    <span class="colon-suffix no-flex-shrink">{{ 'artemisApp.quizExercise.answerMatching.title' | artemisTranslate }}</span>
+                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.quizExercise.answerMatching.title"></span>
                     <div class="slider-container">
                         <div class="slider-with-label">
                             <input
@@ -152,9 +152,11 @@
                             [checked]="shortAnswerQuestion.similarityValue === 100"
                             (change)="toggleExactMatchCheckbox(inputElement.checked)"
                         />
-                        <label class="form-check-label custom-control-label" for="{{ 'cbMatchAnswersExactly' + questionIndex }}">{{
-                            'artemisApp.quizExercise.matchPercentage.title' | artemisTranslate
-                        }}</label>
+                        <label
+                            class="form-check-label custom-control-label"
+                            for="{{ 'cbMatchAnswersExactly' + questionIndex }}"
+                            jhiTranslate="artemisApp.quizExercise.matchPercentage.title"
+                        ></label>
                     </div>
                     <div class="form-group form-check custom-control custom-checkbox">
                         <input
@@ -164,9 +166,11 @@
                             [(ngModel)]="shortAnswerQuestion.matchLetterCase"
                             (ngModelChange)="questionUpdated.emit()"
                         />
-                        <label class="form-check-label custom-control-label" for="{{ 'cbMatchLetterCase' + questionIndex }}">{{
-                            'artemisApp.quizExercise.matchLetterCase.title' | artemisTranslate
-                        }}</label>
+                        <label
+                            class="form-check-label custom-control-label"
+                            for="{{ 'cbMatchLetterCase' + questionIndex }}"
+                            jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"
+                        ></label>
                     </div>
                 </div>
                 @if (!reEvaluationInProgress) {
@@ -184,9 +188,9 @@
                     <div class="form-group">
                         <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                         <select class="form-select" [(ngModel)]="shortAnswerQuestion.scoringType" (ngModelChange)="questionUpdated.emit()" title="scoring type">
-                            <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
-                            <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
-                            <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
+                            <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
+                            <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
+                            <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
                         </select>
                         <jhi-quiz-scoring-info-modal />
                     </div>
@@ -221,7 +225,7 @@
                 <div class="col-12 row align-items-center justify-content-center justify-content-lg-start">
                     <div class="col-lg-6 row">
                         <div class="col-12 col-lg-4 form-group mt-1">
-                            <span class="colon-suffix no-flex-shrink">{{ 'artemisApp.quizExercise.answerMatching.title' | artemisTranslate }}</span>
+                            <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.quizExercise.answerMatching.title"></span>
                         </div>
                         <div class="col-12 col-lg-7">
                             <div class="slider-container">
@@ -254,9 +258,11 @@
                                 [checked]="shortAnswerQuestion.similarityValue === 100"
                                 (change)="toggleExactMatchCheckbox(inputElement.checked)"
                             />
-                            <label class="form-check-label custom-control-label" for="{{ 'cbMatchAnswersExactly' + questionIndex }}">{{
-                                'artemisApp.quizExercise.matchPercentage.title' | artemisTranslate
-                            }}</label>
+                            <label
+                                class="form-check-label custom-control-label"
+                                for="{{ 'cbMatchAnswersExactly' + questionIndex }}"
+                                jhiTranslate="artemisApp.quizExercise.matchPercentage.title"
+                            ></label>
                         </div>
                     </div>
                     <div class="col-12 col-lg-3" style="padding: 0 0.5rem">
@@ -268,9 +274,11 @@
                                 [(ngModel)]="shortAnswerQuestion.matchLetterCase"
                                 (ngModelChange)="questionUpdated.emit()"
                             />
-                            <label class="form-check-label custom-control-label" for="{{ 'cbMatchLetterCase' + questionIndex }}">{{
-                                'artemisApp.quizExercise.matchLetterCase.title' | artemisTranslate
-                            }}</label>
+                            <label
+                                class="form-check-label custom-control-label"
+                                for="{{ 'cbMatchLetterCase' + questionIndex }}"
+                                jhiTranslate="artemisApp.quizExercise.matchLetterCase.title"
+                            ></label>
                         </div>
                     </div>
                 </div>
@@ -287,6 +295,7 @@
                         [defaultActions]="markdownActions"
                         [colorAction]="undefined"
                         [initialEditorHeight]="'external'"
+                        [useDefaultMarkdownEditorOptions]="false"
                         [(markdown)]="questionEditorText"
                         (markdownChange)="onTextChange($event)"
                     />

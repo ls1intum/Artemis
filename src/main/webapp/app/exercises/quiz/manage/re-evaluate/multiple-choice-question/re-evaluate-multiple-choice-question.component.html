@@ -1,3 +1,4 @@
+<!-- TODO for a follow-up: This template relies on method calls to ensure the drag/drop of answer options works. We should avoid this for performance reasons -->
 <div class="edit-mc-question">
     <div class="card-header">
         <div class="row">
@@ -79,9 +80,9 @@
                 <div class="form-group">
                     <span jhiTranslate="artemisApp.quizQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
                     <select class="form-select" [(ngModel)]="question.scoringType" title="scoring type">
-                        <option value="ALL_OR_NOTHING">{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</option>
-                        <option value="PROPORTIONAL_WITH_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</option>
-                        <option value="PROPORTIONAL_WITHOUT_PENALTY">{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</option>
+                        <option value="ALL_OR_NOTHING" jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></option>
+                        <option value="PROPORTIONAL_WITH_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></option>
+                        <option value="PROPORTIONAL_WITHOUT_PENALTY" jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></option>
                     </select>
                 </div>
             </div>
@@ -135,17 +136,17 @@
                 <div class="row">
                     <div class="col-10 col-lg-11">
                         <!-- TODO: Fix file upload    -->
-                        <jhi-markdown-editor
-                            [markdown]="getQuestionText(question)"
-                            [editorMode]="editorMode"
-                            [metaCommands]="[]"
-                            [defaultCommands]="[]"
-                            [headerCommands]="[]"
-                            [domainCommands]="[]"
-                            [colorCommands]="[]"
+                        <jhi-markdown-editor-monaco
+                            [markdown]="questionText"
+                            [metaActions]="[]"
+                            [defaultActions]="[]"
+                            [headerActions]="undefined"
+                            [domainActions]="[]"
+                            [colorAction]="undefined"
                             [showEditButton]="false"
                             [showPreviewButton]="false"
                             (markdownChange)="onQuestionChange($event)"
+                            (onBlurEditor)="questionText = getQuestionText(question)"
                             [enableFileUpload]="false"
                             class="editor col"
                             style="width: 90%"
@@ -177,18 +178,18 @@
                         </div>
                         <div class="col-9 col-lg-7 option-text">
                             <!-- TODO: Fix file upload -->
-                            <jhi-markdown-editor
+                            <jhi-markdown-editor-monaco
                                 [markdown]="markdownMap.get(answer.id!)"
-                                [editorMode]="editorMode"
-                                [metaCommands]="[]"
-                                [defaultCommands]="[]"
-                                [headerCommands]="[]"
-                                [domainCommands]="[]"
-                                [colorCommands]="[]"
+                                [metaActions]="[]"
+                                [defaultActions]="[]"
+                                [headerActions]="undefined"
+                                [domainActions]="[]"
+                                [colorAction]="undefined"
                                 [showEditButton]="false"
                                 [showPreviewButton]="false"
                                 (markdownChange)="onAnswerOptionChange($event, answer)"
                                 [enableFileUpload]="false"
+                                [enableResize]="false"
                                 class="editor"
                                 style="width: 65%"
                             />

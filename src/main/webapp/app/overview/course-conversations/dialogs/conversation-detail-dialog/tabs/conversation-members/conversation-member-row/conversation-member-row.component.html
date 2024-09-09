@@ -15,19 +15,28 @@
             }
             <div ngbDropdownMenu>
                 @if (canBeRemovedFromConversation) {
-                    <button ngbDropdownItem class="text-danger remove-member" (click)="openRemoveFromConversationDialog($event)">
-                        {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.removeUser' | artemisTranslate }}
-                    </button>
+                    <button
+                        ngbDropdownItem
+                        class="text-danger remove-member"
+                        (click)="openRemoveFromConversationDialog($event)"
+                        jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.memberRow.removeUser"
+                    ></button>
                 }
                 @if (canBeGrantedChannelModeratorRole) {
-                    <button ngbDropdownItem class="text-danger grant-moderator" (click)="openGrantChannelModeratorRoleDialog($event)">
-                        {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.grantModeratorRole' | artemisTranslate }}
-                    </button>
+                    <button
+                        ngbDropdownItem
+                        class="text-danger grant-moderator"
+                        (click)="openGrantChannelModeratorRoleDialog($event)"
+                        jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.memberRow.grantModeratorRole"
+                    ></button>
                 }
                 @if (canBeRevokedChannelModeratorRole) {
-                    <button ngbDropdownItem class="text-danger revoke-moderator" (click)="openRevokeChannelModeratorRoleDialog($event)">
-                        {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.revokeModeratorRole' | artemisTranslate }}
-                    </button>
+                    <button
+                        ngbDropdownItem
+                        class="text-danger revoke-moderator"
+                        (click)="openRevokeChannelModeratorRoleDialog($event)"
+                        jhiTranslate="artemisApp.dialogs.conversationDetail.memberTab.memberRow.revokeModeratorRole"
+                    ></button>
                 }
             </div>
         </div>

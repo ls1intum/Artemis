@@ -3,7 +3,7 @@
         <div class="case-header">
             <div class="row">
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
-                    <h1 class="h2">{{ 'artemisApp.plagiarism.plagiarismCases.plagiarismCase' | artemisTranslate }}</h1>
+                    <h1 class="h2" jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></h1>
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
                     <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" class="my-2" />
@@ -34,20 +34,20 @@
                 <section>
                     @if (plagiarismCase.verdict === plagiarismVerdict.POINT_DEDUCTION) {
                         <div class="alert alert-danger">
-                            <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction' | artemisTranslate }}</h5>
+                            <h5 jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"></h5>
                             <p class="mb-0">{{ plagiarismCase.verdictPointDeduction }}&nbsp;&percnt;</p>
                         </div>
                     }
                     @if (plagiarismCase.verdict === plagiarismVerdict.WARNING) {
                         <div class="alert alert-danger">
-                            <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warning' | artemisTranslate }}</h5>
+                            <h5 jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning"></h5>
                             <p class="mb-0">{{ plagiarismCase.verdictMessage }}</p>
                         </div>
                     }
                 </section>
             }
             <section>
-                <h3>{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h3>
+                <h3 jhiTranslate="artemisApp.plagiarism.plagiarismCases.conversation"></h3>
                 <div class="row">
                     @if (posts && posts.length > 0) {
                         <div class="row mb-2 col-12">
@@ -97,7 +97,7 @@
                 </div>
             </section>
             <section>
-                <h3 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h3>
+                <h3 class="mt-5" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
                 <div class="container-fluid">
                     <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="true" />
                 </div>

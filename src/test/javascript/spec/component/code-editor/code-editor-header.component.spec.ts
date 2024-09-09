@@ -2,7 +2,8 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { ArtemisTestModule } from '../../test.module';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { MAX_TAB_SIZE } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
+
+import { MAX_TAB_SIZE } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('CodeEditorHeaderComponent', () => {
     let fixture: ComponentFixture<CodeEditorHeaderComponent>;

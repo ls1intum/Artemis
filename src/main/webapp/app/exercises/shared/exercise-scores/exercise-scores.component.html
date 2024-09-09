@@ -12,7 +12,7 @@
             <h4 class="d-flex align-items-center">
                 <span class="me-2">
                     <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
-                    <span class="ms-1">{{ 'artemisApp.exercise.showingOnlyInRange' | artemisTranslate: { range: this.rangeFilter.toString() } }}</span>
+                    <span class="ms-1" jhiTranslate="artemisApp.exercise.showingOnlyInRange" [translateValues]="{ range: this.rangeFilter.toString() }"></span>
                 </span>
                 <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter"></button>
             </h4>
@@ -46,17 +46,14 @@
                     </ul>
                 </div>
                 @if (filteredParticipations.length && participationsPerFilter.get(resultCriteria.filterProp) !== filteredParticipations.length) {
-                    <span>
-                        {{
-                            'artemisApp.exercise.showingOfResults'
-                                | artemisTranslate
-                                    : {
-                                          filtered: participationsPerFilter.get(resultCriteria.filterProp),
-                                          total: filteredParticipations.length,
-                                          percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1',
-                                      }
-                        }}
-                    </span>
+                    <span
+                        jhiTranslate="artemisApp.exercise.showingOfResults"
+                        [translateValues]="{
+                            filtered: participationsPerFilter.get(resultCriteria.filterProp),
+                            total: filteredParticipations.length,
+                            percent: ((participationsPerFilter.get(resultCriteria.filterProp) ?? 0) * 100) / filteredParticipations.length | number: '1.0-1',
+                        }"
+                    ></span>
                 }
             </div>
             <div class="p-2">
@@ -158,7 +155,7 @@
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="180">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort(exercise.teamMode ? 'team.name' : 'student.name')">
-                                <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.name' | artemisTranslate }}</span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.name"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField(exercise.teamMode ? 'team.name' : 'student.name')" />
                             </span>
                         </ng-template>
@@ -181,12 +178,12 @@
                         <ng-template ngx-datatable-header-template>
                             @if (exercise.teamMode) {
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('team.shortName')">
-                                    <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.teamShortName' | artemisTranslate }}</span>
+                                    <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.teamShortName"></span>
                                     <fa-icon [icon]="controls.iconForSortPropField('team.shortName')" />
                                 </span>
                             } @else {
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('student.login')">
-                                    <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.studentId' | artemisTranslate }}</span>
+                                    <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.studentId"></span>
                                     <fa-icon [icon]="controls.iconForSortPropField('student.login')" />
                                 </span>
                             }
@@ -204,7 +201,7 @@
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="130" [width]="140">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.completionDate')">
-                                <span class="datatable-header-cell-label bold sortable">{{ 'artemisApp.exercise.completionDate' | artemisTranslate }}</span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.exercise.completionDate"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.completionDate')" />
                             </span>
                         </ng-template>
@@ -215,7 +212,7 @@
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="250" [width]="260">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.score')">
-                                <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.lastResult' | artemisTranslate }}</span>
+                                <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exercise.lastResult"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.score')" />
                             </span>
                         </ng-template>
@@ -229,7 +226,7 @@
                         <ngx-datatable-column prop="" [sortable]="true" [minWidth]="130" [width]="140">
                             <ng-template ngx-datatable-header-template>
                                 <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last().assessmentType')">
-                                    <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.type' | artemisTranslate }}</span>
+                                    <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exercise.type"></span>
                                     <fa-icon [icon]="controls.iconForSortPropField('results?.last().assessmentType')" />
                                 </span>
                             </ng-template>
@@ -277,7 +274,7 @@
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="100" [width]="110">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper d-inline-block w-100 text-center" (click)="controls.onSort('submissionCount')">
-                                <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.submissionCount' | artemisTranslate }}</span>
+                                <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exercise.submissionCount"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('submissionCount')" />
                             </span>
                         </ng-template>
@@ -296,7 +293,7 @@
                     <ngx-datatable-column prop="" [sortable]="true" [minWidth]="80" [width]="90">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('results?.last()?.durationInMinutes')">
-                                <span class="datatable-header-cell-label bold">{{ 'artemisApp.exercise.duration' | artemisTranslate }}</span>
+                                <span class="datatable-header-cell-label bold" jhiTranslate="artemisApp.exercise.duration"></span>
                                 <fa-icon [icon]="controls.iconForSortPropField('results?.last()?.durationInMinutes')" />
                             </span>
                         </ng-template>

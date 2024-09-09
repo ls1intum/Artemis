@@ -246,7 +246,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'instructor');
         } else if (this.conversationMember.isEditor || this.conversationMember.isTeachingAssistant) {
             this.userIcon = faUserCheck;
-            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'ta');
+            this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'tutor');
         } else {
             this.userIcon = faUser;
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'student');

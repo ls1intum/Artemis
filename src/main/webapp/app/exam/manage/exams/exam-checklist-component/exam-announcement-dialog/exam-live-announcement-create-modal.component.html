@@ -9,15 +9,14 @@
         <div class="modal-body">
             <div class="form-group">
                 <div class="mb-4" jhiTranslate="artemisApp.examManagement.announcementCreate.task"></div>
-                <jhi-markdown-editor
-                    #markdownEditor
+                <jhi-markdown-editor-monaco
                     class="markdown-editor"
                     [markdown]="textContent"
                     [showPreviewButton]="false"
                     [showEditButton]="false"
                     [enableFileUpload]="false"
-                    [colorCommands]="[]"
-                    [defaultCommands]="COMMANDS"
+                    [colorAction]="undefined"
+                    [defaultActions]="actions"
                     (markdownChange)="textContentChanged($event)"
                 />
             </div>

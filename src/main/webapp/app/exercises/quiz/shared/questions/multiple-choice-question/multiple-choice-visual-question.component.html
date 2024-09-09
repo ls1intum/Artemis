@@ -1,5 +1,5 @@
 <div class="markdown-preview visual-mode">
-    <h4>{{ 'artemisApp.multipleChoiceQuestion.visualEditor.questionTitle' | artemisTranslate }}</h4>
+    <h4 jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.questionTitle"></h4>
     <textarea
         id="mc-question"
         class="form-control form-group-narrow"
@@ -30,7 +30,7 @@
             placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate }}"
         />
     </div>
-    <h4>{{ 'artemisApp.multipleChoiceQuestion.visualEditor.answersTitle' | artemisTranslate }}</h4>
+    <h4 jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.answersTitle"></h4>
     @for (answerOption of question.answerOptions; track answerOption; let i = $index) {
         <div id="answer-option-{{ i }}" class="visual-answer-option form-group-narrow">
             <div class="form-group-narrow visual-answer-question-container">

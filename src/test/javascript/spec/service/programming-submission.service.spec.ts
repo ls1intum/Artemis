@@ -10,7 +10,7 @@ import {
 } from 'app/exercises/programming/participate/programming-submission.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { Result } from 'app/entities/result.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { MockParticipationWebsocketService } from '../helpers/mocks/service/mock-participation-websocket.service';

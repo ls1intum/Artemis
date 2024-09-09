@@ -1,0 +1,25 @@
+<ul>
+    @for (auxiliaryRepository of detail.data.auxiliaryRepositories; track auxiliaryRepository) {
+        @if (auxiliaryRepository.id && auxiliaryRepository.repositoryUri && detail.data.exerciseId) {
+            <li class="mt-2">
+                <span>Repository: {{ auxiliaryRepository.name }}</span>
+                <jhi-code-button class="ms-2" [smallButtons]="true" [repositoryUri]="auxiliaryRepository.repositoryUri" />
+                <jhi-programming-exercise-instructor-repo-download
+                    class="ms-2"
+                    [exerciseId]="detail.data.exerciseId"
+                    [repositoryType]="'AUXILIARY'"
+                    [auxiliaryRepositoryId]="auxiliaryRepository.id"
+                />
+                <div class="auxiliaryRepositoryDescription">
+                    @if (!auxiliaryRepository.checkoutDirectory) {
+                        <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
+                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet"></span>
+                    }
+                    <ng-template #noCheckoutDirectorySetTooltip>
+                        <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
+                    </ng-template>
+                </div>
+            </li>
+        }
+    }
+</ul>

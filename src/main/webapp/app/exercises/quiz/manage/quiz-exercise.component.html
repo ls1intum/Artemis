@@ -19,7 +19,7 @@
                     <th jhiSortBy="duration"><span jhiTranslate="artemisApp.quizExercise.duration"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="maxPoints"><span jhiTranslate="artemisApp.exercise.points"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
                     <th jhiSortBy="includedInOverallScore"><span jhiTranslate="artemisApp.exercise.includedCompletely"></span>&nbsp;<fa-icon [icon]="faSort" /></th>
-                    <th>{{ 'artemisApp.quizExercise.quizLifecycle' | artemisTranslate }}</th>
+                    <th jhiTranslate="artemisApp.quizExercise.quizLifecycle"></th>
                     <th class="d-md-table-cell"><span jhiTranslate="artemisApp.exercise.categories"></span></th>
                     <th></th>
                 </tr>
@@ -47,19 +47,19 @@
                         }
                         <td>
                             @if (quizExercise.status === QuizStatus.CLOSED) {
-                                <span>{{ 'artemisApp.quizExercise.quizStatus.closed' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.quizExercise.quizStatus.closed"></span>
                             }
                             @if (quizExercise.status === QuizStatus.INVISIBLE) {
-                                <span>{{ 'artemisApp.quizExercise.quizStatus.invisible' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.quizExercise.quizStatus.invisible"></span>
                             }
                             @if (quizExercise.status === QuizStatus.VISIBLE) {
-                                <span>{{ 'artemisApp.quizExercise.quizStatus.visible' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.quizExercise.quizStatus.visible"></span>
                             }
                             @if (quizExercise.status === QuizStatus.ACTIVE) {
-                                <span>{{ 'artemisApp.quizExercise.quizStatus.active' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.quizExercise.quizStatus.active"></span>
                             }
                             @if (quizExercise.status === QuizStatus.OPEN_FOR_PRACTICE) {
-                                <span>{{ 'artemisApp.quizExercise.quizStatus.openForPractice' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.quizExercise.quizStatus.openForPractice"></span>
                             }
                         </td>
                         <td>{{ quizExercise.releaseDate ? (quizExercise.releaseDate | artemisDate: 'long' : true) : '-' }}</td>

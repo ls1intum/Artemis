@@ -8,7 +8,7 @@
             <ng-template ngbNavContent>
                 <dt></dt>
                 <dt style="display: flex; align-items: center">
-                    <h4 class="modal-title">{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</h4>
+                    <h4 class="modal-title" jhiTranslate="artemisApp.lti.dynamicRegistrationUrl"></h4>
                     <jhi-help-icon text="artemisApp.lti.dynamicRegistrationTooltip" />
                 </dt>
                 <dd>
@@ -17,7 +17,7 @@
                 </dd>
                 <dt style="display: flex; align-items: center; justify-content: space-between; width: 100%">
                     <div class="modal-header" style="margin-bottom: 20px">
-                        <h4 class="modal-title" style="margin-right: 2px">{{ 'artemisApp.lti.configuredPlatforms' | artemisTranslate }}</h4>
+                        <h4 class="modal-title" style="margin-right: 2px" jhiTranslate="artemisApp.lti.configuredPlatforms"></h4>
                         <jhi-help-icon text="artemisApp.lti.configuredPlatformsTooltip" />
                     </div>
                     <div class="modal-header" style="margin-bottom: 20px">
@@ -130,35 +130,35 @@
             <a ngbNavLink jhiTranslate="artemisApp.lti.serviceUrls"></a>
             <ng-template ngbNavContent>
                 <dt>
-                    <span>{{ 'artemisApp.lti.deepLinkingUrl' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.lti.deepLinkingUrl"></span>
                 </dt>
                 <dd>
                     <span>{{ getDeepLinkingUrl() }}</span>
                     <jhi-copy-icon-button [copyText]="getDeepLinkingUrl()" />
                 </dd>
                 <dt>
-                    <span>{{ 'artemisApp.lti.toolUrl' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.lti.toolUrl"></span>
                 </dt>
                 <dd>
                     <span>{{ getToolUrl() }}</span>
                     <jhi-copy-icon-button [copyText]="getToolUrl()" />
                 </dd>
                 <dt>
-                    <span>{{ 'artemisApp.lti.keysetUrl' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.lti.keysetUrl"></span>
                 </dt>
                 <dd>
                     <span>{{ getKeysetUrl() }}</span>
                     <jhi-copy-icon-button [copyText]="getKeysetUrl()" />
                 </dd>
                 <dt>
-                    <span>{{ 'artemisApp.lti.initiateLoginUrl' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.lti.initiateLoginUrl"></span>
                 </dt>
                 <dd>
                     <span>{{ getInitiateLoginUrl() }}</span>
                     <jhi-copy-icon-button [copyText]="getInitiateLoginUrl()" />
                 </dd>
                 <dt>
-                    <span>{{ 'artemisApp.lti.redirectUri' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.lti.redirectUri"></span>
                 </dt>
                 <dd>
                     <span>{{ getRedirectUri() }}</span>

@@ -2,12 +2,10 @@
     {{ 'artemisApp.examManagement.suspiciousBehavior.title' | artemisTranslate }}
     <jhi-documentation-button [type]="documentationType" />
 </h5>
-<p>
-    {{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionDescription' | artemisTranslate }}
-</p>
+<p jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionDescription"></p>
 <div>
     <input class="form-check-input" type="checkbox" id="different-student-exams-same-ip" [(ngModel)]="checkboxCriterionDifferentStudentExamsSameIPAddressChecked" />
-    <label for="different-student-exams-same-ip">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpAddress' | artemisTranslate }}</label>
+    <label for="different-student-exams-same-ip" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpAddress"></label>
 </div>
 <div>
     <input
@@ -16,13 +14,11 @@
         id="different-student-exams-same-fingerprints"
         [(ngModel)]="checkboxCriterionDifferentStudentExamsSameBrowserFingerprintChecked"
     />
-    <label for="different-student-exams-same-fingerprints">{{
-        'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint' | artemisTranslate
-    }}</label>
+    <label for="different-student-exams-same-fingerprints" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionBrowserFingerprint"></label>
 </div>
 <div>
     <input class="form-check-input" type="checkbox" id="same-student-exam-different-ips" [(ngModel)]="checkboxCriterionSameStudentExamDifferentIPAddressesChecked" />
-    <label for="same-student-exam-different-ips">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentIpAddress' | artemisTranslate }}</label>
+    <label for="same-student-exam-different-ips" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentIpAddress"></label>
 </div>
 <div>
     <input
@@ -31,18 +27,16 @@
         id="same-student-exam-different-fingerprints"
         [(ngModel)]="checkboxCriterionSameStudentExamDifferentBrowserFingerprintsChecked"
     />
-    <label for="same-student-exam-different-fingerprints">{{
-        'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentBrowserFingerprint' | artemisTranslate
-    }}</label>
+    <label for="same-student-exam-different-fingerprints" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionDifferentBrowserFingerprint"></label>
 </div>
 <div>
     <input class="form-check-input" type="checkbox" id="ip-outside-of-range" [(ngModel)]="checkboxCriterionIPOutsideOfASpecificRangeChecked" />
-    <label for="ip-outside-of-range">{{ 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpOutsideOfRange' | artemisTranslate }}</label>
+    <label for="ip-outside-of-range" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.suspiciousSessionCriterionIpOutsideOfRange"></label>
 </div>
 @if (checkboxCriterionIPOutsideOfASpecificRangeChecked) {
     <div class="form-group col-6">
         <div class="d-flex">
-            <label for="ip-subnet" class="me-2">{{ 'artemisApp.examManagement.suspiciousBehavior.subnet' | artemisTranslate }}</label>
+            <label for="ip-subnet" class="me-2" jhiTranslate="artemisApp.examManagement.suspiciousBehavior.subnet"></label>
             <jhi-help-icon text="artemisApp.examManagement.suspiciousBehavior.subnetHelp" />
         </div>
         <input type="text" class="form-control" id="ip-subnet" [(ngModel)]="ipSubnet" [pattern]="ipSubnetRegexPattern" required />

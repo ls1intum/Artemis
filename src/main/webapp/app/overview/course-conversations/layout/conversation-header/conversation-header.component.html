@@ -19,9 +19,13 @@
             @if (activeConversationAsChannel) {
                 @if (activeConversationAsChannel.tutorialGroupId && activeConversationAsChannel.tutorialGroupTitle) {
                     <div class="p-2">
-                        <a class="btn btn-info" [routerLink]="['/courses', course.id, 'tutorial-groups', activeConversationAsChannel.tutorialGroupId]" role="button">{{
-                            'artemisApp.entities.tutorialGroup.channelReverse' | artemisTranslate: { title: activeConversationAsChannel.tutorialGroupTitle }
-                        }}</a>
+                        <a
+                            class="btn btn-info"
+                            [routerLink]="['/courses', course.id, 'tutorial-groups', activeConversationAsChannel.tutorialGroupId]"
+                            role="button"
+                            jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
+                            [translateValues]="{ title: activeConversationAsChannel.tutorialGroupTitle }"
+                        ></a>
                     </div>
                 }
             }

@@ -27,12 +27,12 @@ plugins {
     id "com.github.ben-manes.versions" version "0.51.0"
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.gorylenko.gradle-git-properties" version "2.4.2"
-    id "org.owasp.dependencycheck" version "10.0.3"
+    id "org.owasp.dependencycheck" version "10.0.4"
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
 group = "de.tum.in.www1.artemis"
-version = "7.5.1"
+version = "7.5.2"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -284,12 +284,12 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.6"
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.5"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
         version {
-            strictly "2.2"
+            strictly "2.3"
             // needed to reduce the number of vulnerabilities, also see https://mvnrepository.com/artifact/org.yaml/snakeyaml
         }
     }
@@ -322,7 +322,7 @@ dependencies {
     implementation "com.github.docker-java:docker-java-transport-httpclient5:${docker_java_version}"
 
     // use newest version of commons-compress to avoid security issues through outdated dependencies
-    implementation "org.apache.commons:commons-compress:1.27.0"
+    implementation "org.apache.commons:commons-compress:1.27.1"
 
 
     // import JHipster dependencies BOM
@@ -330,7 +330,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.12.6"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.13.3"
     implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -358,11 +358,16 @@ dependencies {
 
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
+
     implementation "com.zaxxer:HikariCP:5.1.0"
+
     implementation "org.apache.commons:commons-text:1.12.0"
     implementation "org.apache.commons:commons-math3:3.6.1"
+
     implementation "javax.transaction:javax.transaction-api:1.3"
+
     implementation "org.liquibase:liquibase-core:${liquibase_version}"
+
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
@@ -380,8 +385,8 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
-    implementation "org.springframework.ldap:spring-ldap-core:3.2.4"
-    implementation "org.springframework.data:spring-data-ldap:3.3.2"
+    implementation "org.springframework.ldap:spring-ldap-core:3.2.6"
+    implementation "org.springframework.data:spring-data-ldap:3.3.3"
 
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.3") {
         // NOTE: these modules contain security vulnerabilities and are not needed
@@ -392,9 +397,9 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.4"
 
     implementation "io.netty:netty-all:4.1.112.Final"
-    implementation "io.projectreactor.netty:reactor-netty:1.1.21"
-    implementation "org.springframework:spring-messaging:6.1.11"
-    implementation "org.springframework.retry:spring-retry:2.0.7"
+    implementation "io.projectreactor.netty:reactor-netty:1.1.22"
+    implementation "org.springframework:spring-messaging:6.1.12"
+    implementation "org.springframework.retry:spring-retry:2.0.8"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -428,13 +433,13 @@ dependencies {
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "com.mysql:mysql-connector-j:9.0.0"
-    implementation "org.postgresql:postgresql:42.7.3"
+    implementation "org.postgresql:postgresql:42.7.4"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     implementation "com.ibm.icu:icu4j-charset:75.1"
-    implementation "com.github.seancfoley:ipaddress:5.5.0"
-    implementation "org.apache.maven:maven-model:3.9.8"
+    implementation "com.github.seancfoley:ipaddress:5.5.1"
+    implementation "org.apache.maven:maven-model:3.9.9"
     // NOTE: 3.0.2 is broken for splitting lecture specific PDFs
     implementation "org.apache.pdfbox:pdfbox:3.0.1"
     implementation "org.apache.commons:commons-csv:1.11.0"
@@ -443,11 +448,14 @@ dependencies {
     implementation "net.lingala.zip4j:zip4j:2.11.5"
     implementation "org.jgrapht:jgrapht-core:1.5.2"
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.2.1-jre"
+    implementation "com.google.guava:guava:33.3.0-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.11.0"
+
+
+    implementation "com.google.errorprone:error_prone_annotations:2.31.0"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
@@ -477,11 +485,11 @@ dependencies {
     testImplementation "org.assertj:assertj-core:3.26.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.174"
+    testImplementation "io.github.classgraph:classgraph:4.8.175"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.9"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.3.1"
+    testImplementation "org.gradle:gradle-tooling-api:8.10"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.0"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
         exclude group: "org.testcontainers", module: "mariadb"
@@ -493,7 +501,7 @@ dependencies {
     }
     testImplementation("net.bytebuddy:byte-buddy") {
         version {
-            strictly "1.14.18"
+            strictly "1.15.1"
         }
     }
     // cannot update due to "Syntax error in SQL statement "WITH ids_to_delete"
@@ -565,7 +573,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.9"
+    gradleVersion = "8.10"
 }
 
 tasks.register("stage") {

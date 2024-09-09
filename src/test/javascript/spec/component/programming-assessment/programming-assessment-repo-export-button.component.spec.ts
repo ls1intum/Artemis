@@ -1,7 +1,7 @@
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';

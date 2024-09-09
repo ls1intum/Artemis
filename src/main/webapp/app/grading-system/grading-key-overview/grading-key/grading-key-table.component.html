@@ -1,15 +1,15 @@
 <div>
     @if (!isExam) {
-        <h6>{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
+        <h6 jhiTranslate="artemisApp.gradingSystem.overview.info"></h6>
     }
     <div>
         <table class="table table-striped w-auto">
             <thead>
                 <tr>
-                    <th>{{ isBonus ? ('artemisApp.exam.examSummary.bonus' | artemisTranslate) : ('artemisApp.exam.examSummary.grade' | artemisTranslate) }}</th>
-                    <th>{{ 'artemisApp.exam.examSummary.interval' | artemisTranslate }}</th>
+                    <th jhiTranslate="{{ isBonus ? 'artemisApp.exam.examSummary.bonus' : 'artemisApp.exam.examSummary.grade' }}"></th>
+                    <th jhiTranslate="artemisApp.exam.examSummary.interval"></th>
                     @if (hasPointsSet) {
-                        <th>{{ 'artemisApp.exam.examSummary.intervalPoints' | artemisTranslate }}</th>
+                        <th jhiTranslate="artemisApp.exam.examSummary.intervalPoints"></th>
                     }
                 </tr>
             </thead>
@@ -57,7 +57,7 @@
         </table>
     </div>
     <div>
-        <h6>{{ 'artemisApp.gradingSystem.overview.intervals.title' | artemisTranslate }}</h6>
+        <h6 jhiTranslate="artemisApp.gradingSystem.overview.intervals.title"></h6>
         <ul>
             <li><span style="font-weight: bold">[a, b)</span>: {{ 'artemisApp.gradingSystem.overview.intervals.leftInclusiveRightExclusive' | artemisTranslate }}</li>
             <li><span style="font-weight: bold">(a, b]</span>: {{ 'artemisApp.gradingSystem.overview.intervals.leftExclusiveRightInclusive' | artemisTranslate }}</li>

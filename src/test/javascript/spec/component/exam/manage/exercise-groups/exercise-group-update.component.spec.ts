@@ -6,19 +6,20 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityResponseType } from 'app/complaints/complaint.service';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupUpdateComponent } from 'app/exam/manage/exercise-groups/exercise-group-update.component';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of, throwError } from 'rxjs';
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { NgbAlertsMocksModule } from '../../../../helpers/mocks/directive/ngbAlertsMocks.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ExerciseGroupUpdateComponent', () => {
     const course = { id: 456 } as Course;
@@ -43,7 +44,7 @@ describe('ExerciseGroupUpdateComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientModule, FormsModule, NgbAlertsMocksModule],
-            declarations: [ExerciseGroupUpdateComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            declarations: [ExerciseGroupUpdateComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

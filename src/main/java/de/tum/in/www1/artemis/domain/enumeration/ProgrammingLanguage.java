@@ -47,7 +47,8 @@ public enum ProgrammingLanguage {
         VHDL,
         ASSEMBLER,
         SWIFT,
-        OCAML
+        OCAML,
+        RUST
     );
     // @formatter:on
 

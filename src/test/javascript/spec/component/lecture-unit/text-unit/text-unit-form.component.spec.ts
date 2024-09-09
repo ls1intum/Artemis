@@ -12,7 +12,7 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CompetencySelectionComponent } from 'app/shared/competency-selection/competency-selection.component';
 
-@Component({ selector: 'jhi-markdown-editor', template: '' })
+@Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
     @Input() markdown: string;
     @Input() enableResize = false;

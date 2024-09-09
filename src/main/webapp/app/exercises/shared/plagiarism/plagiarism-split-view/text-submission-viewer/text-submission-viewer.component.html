@@ -8,9 +8,12 @@
     </div>
 }
 @if (!loading && !binaryFile!! && !cannotLoadFiles) {
-    <div class="text-submission-viewer" [innerHTML]="fileContent || ' '" [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }">
-        {{ 'artemisApp.plagiarism.noFileSelected' | artemisTranslate }}
-    </div>
+    <div
+        class="text-submission-viewer"
+        [innerHTML]="fileContent || ' '"
+        [ngClass]="{ 'no-file': !fileContent, 'is-code': isProgrammingExercise }"
+        jhiTranslate="artemisApp.plagiarism.noFileSelected"
+    ></div>
 }
 @if (loading && !cannotLoadFiles) {
     <div class="plagiarism-submission-loader">
@@ -21,7 +24,7 @@
 }
 @if (binaryFile && !cannotLoadFiles) {
     <div class="binaryFileDialogue">
-        <span class="me-1">{{ 'artemisApp.plagiarism.binaryFileNotRendered' | artemisTranslate }}</span>
-        <a class="text-primary" (click)="downloadCurrentFile()">{{ 'entity.action.download' | artemisTranslate }}</a>
+        <span class="me-1" jhiTranslate="artemisApp.plagiarism.binaryFileNotRendered"></span>
+        <a class="text-primary" (click)="downloadCurrentFile()" jhiTranslate="entity.action.download"></a>
     </div>
 }

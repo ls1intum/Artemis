@@ -4,14 +4,12 @@ import { ActivatedRoute } from '@angular/router';
 import { Observable, Subscription, filter, switchMap } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHintService } from '../shared/exercise-hint.service';
-import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCircleNotch, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/programming/hestia/generation-overview/manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -23,13 +21,14 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 const DEFAULT_DISPLAY_THRESHOLD = 3;
 
 @Component({
     selector: 'jhi-exercise-hint-update',
     templateUrl: './exercise-hint-update.component.html',
-    styleUrls: ['./exercise-hint.scss'],
 })
 export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     MarkdownEditorHeight = MarkdownEditorHeight;
@@ -47,8 +46,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     isGeneratingDescription: boolean;
     paramSub: Subscription;
 
-    domainCommands = [new KatexCommand()];
-    editorMode = EditorMode.LATEX;
+    domainActions = [new MonacoFormulaAction()];
 
     // Icons
     faCircleNotch = faCircleNotch;

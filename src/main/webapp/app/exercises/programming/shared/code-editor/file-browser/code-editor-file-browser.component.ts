@@ -515,8 +515,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
                 fromPairs(
                     toPairs(files)
                         .filter(([fileName, fileType]) => this.allowHiddenFiles || CodeEditorFileBrowserComponent.shouldDisplayFile(fileName, fileType))
-                        // Filter Readme file that was historically in the student's assignment repo
-                        .filter(([value]) => !value.includes('README.md'))
                         // Filter root folder
                         .filter(([value]) => value),
                 ),
@@ -527,14 +525,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
 
     loadFilesWithInformationAboutChange(): Observable<{ [fileName: string]: boolean }> {
         return this.repositoryFileService.getFilesWithInformationAboutChange().pipe(
-            rxMap((files) =>
-                fromPairs(
-                    toPairs(files)
-                        .filter(([filename]) => this.allowHiddenFiles || CodeEditorFileBrowserComponent.shouldDisplayFile(filename, FileType.FILE))
-                        // Filter Readme file that was historically in the student's assignment repo
-                        .filter(([value]) => !value.includes('README.md')),
-                ),
-            ),
+            rxMap((files) => fromPairs(toPairs(files).filter(([filename]) => this.allowHiddenFiles || CodeEditorFileBrowserComponent.shouldDisplayFile(filename, FileType.FILE)))),
             catchError(() => throwError(() => new Error('couldNotBeRetrieved'))),
         );
     }

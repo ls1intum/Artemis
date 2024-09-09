@@ -9,7 +9,7 @@
         <jhi-detail-overview-list [sections]="tutorialDetailSections" />
     }
     <div class="mt-1">
-        <strong>{{ 'artemisApp.entities.tutorialGroup.sessions' | artemisTranslate }}</strong>
+        <strong jhiTranslate="artemisApp.entities.tutorialGroup.sessions"></strong>
     </div>
     @if (sessions && sessions.length) {
         <div class="scrollbar table-wrapper-scroll-y border border-lightgrey p-3">
