@@ -91,7 +91,7 @@ public class AeolusTemplateResource {
      * @param testCoverage   Whether the test coverage template should be used
      * @return The requested file, or 404 if the file doesn't exist
      */
-    @GetMapping({ "template-scripts/{language}/{projectType}", "templateScripts/{language}" })
+    @GetMapping({ "template-scripts/{language}/{projectType}", "template-scripts/{language}" })
     @EnforceAtLeastEditor
     public ResponseEntity<String> getAeolusTemplateScript(@PathVariable ProgrammingLanguage language, @PathVariable Optional<ProjectType> projectType,
             @RequestParam(value = "staticAnalysis", defaultValue = "false") boolean staticAnalysis,
