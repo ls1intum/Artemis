@@ -35,6 +35,7 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -94,6 +95,7 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
+import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 class ParticipationIntegrationTest extends AbstractAthenaTest {
 
@@ -155,6 +157,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
+
+    @SpyBean
+    protected ResultWebsocketService resultWebsocketService;
 
     private Course course;
 
@@ -587,6 +592,41 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestTextFeedbackSuccess_withAthenaSuccess() throws Exception {
+
+        var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        textCourse.setRestrictedAthenaModulesAccess(true);
+        this.courseRepository.save(textCourse);
+
+        this.textExercise.setFeedbackSuggestionModule("module_text_test");
+        this.exerciseRepository.save(textExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        participationRepo.save(textParticipation);
+
+        Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, true);
+        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
+        resultText2.setAssessmentType(AssessmentType.MANUAL);
+        resultText2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(resultText2);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
+
+        verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
+
+        Result invokedTextResult = resultCaptor.getAllValues().get(1);
+        assertThat(invokedTextResult).isNotNull();
+        assertThat(invokedTextResult.getId()).isNotNull();
+        assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedTextResult.getFeedbacks()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackSuccess_withAthenaFailure() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -629,6 +669,40 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.getFeedbacks()).hasSize(0);
 
         localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestTextFeedbackSuccess_withAthenaFailure() throws Exception {
+
+        var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        textCourse.setRestrictedAthenaModulesAccess(true);
+        this.courseRepository.save(textCourse);
+
+        this.textExercise.setFeedbackSuggestionModule("module_text_test");
+        this.exerciseRepository.save(textExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("text");
+
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        participationRepo.save(textParticipation);
+
+        Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, false);
+        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
+        resultText2.setAssessmentType(AssessmentType.MANUAL);
+        resultText2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(resultText2);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
+
+        verify(resultWebsocketService, timeout(2000).times(1)).broadcastNewResult(any(), resultCaptor.capture());
+
+        Result invokedTextResult = resultCaptor.getAllValues().getFirst();
+        assertThat(invokedTextResult).isNotNull();
+        assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedTextResult.getFeedbacks()).hasSize(0);
     }
 
     @Test
