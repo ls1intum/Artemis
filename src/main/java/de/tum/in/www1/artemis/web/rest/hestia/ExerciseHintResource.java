@@ -201,7 +201,7 @@ public class ExerciseHintResource {
         return ResponseEntity.ok().body(exerciseHint);
     }
 
-    //TODO: Demo
+    // TODO: Demo
     /**
      * {@code GET programming-exercises/:exerciseId/exercise-hints} : get the exerciseHints of a provided exercise.
      *
@@ -210,7 +210,7 @@ public class ExerciseHintResource {
      *         or with status {@code 404 (Not Found)},
      *         or with status {@code 409 (Conflict)} if the exerciseId is not valid.
      */
-    @GetMapping("programming-exercises/{exerciseId}/exercise-hints")
+    @GetMapping("programming-exercises/{exerciseId}/exercise-hints-good")
     @EnforceAtLeastTutorInExercise
     public ResponseEntity<Set<ExerciseHint>> getExerciseHintsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ExerciseHints : {}", exerciseId);
