@@ -89,15 +89,63 @@ public class DataCleanupRepositoryImpl implements DataCleanupRepository {
                         GREATEST(c1.startDate, c2.startDate) > :deleteFrom
                     )
                 """).setParameter("deleteTo", deleteTo).setParameter("deleteFrom", deleteFrom).executeUpdate();
+        // todo delete plagiarism matches and submissions
     }
 
     @Override
     @Transactional
     public void deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+        // old long feedback text that is not part of latest rated results
+        entityManager.createQuery("""
+                    DELETE FROM LongFeedbackText lft
+                    WHERE lft.feedback IN (
+                        SELECT f
+                        FROM Feedback f
+                        JOIN f.result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE r.rated=false
+                        AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
+        // old text block that is not part of latest rated results
+        entityManager.createQuery("""
+                    DELETE FROM TextBlock tb
+                    WHERE tb.feedback IN (
+                        SELECT f
+                        FROM Feedback f
+                        JOIN f.result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE r.rated=false
+                        AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
+        // old feedback items that are not part of latest rated results
+        entityManager.createQuery("""
+                    DELETE FROM Feedback f
+                    WHERE f.result IN (
+                        SELECT r
+                        FROM Result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE r.rated=false AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
         entityManager.createQuery("""
                     DELETE FROM Result r
                     WHERE r.rated = false
                       AND r.participation IS NOT NULL
+                      AND r.participation.exercise IS NOT NULL
                       AND EXISTS (
                           SELECT 1
                           FROM Course c
@@ -112,7 +160,66 @@ public class DataCleanupRepositoryImpl implements DataCleanupRepository {
     @Override
     @Transactional
     public void deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        // delete all rated results that are not latest rated for a participation for courses conducted within a specific date range
+        // delete all rated results that are not latest rated for a participation for courses conducted within a specific date range, also delete all related feedback entities beforehand
+        // old long feedback text that is not part of latest rated results
+        entityManager.createQuery("""
+                    DELETE FROM LongFeedbackText lft
+                    WHERE lft.feedback IN (
+                        SELECT f
+                        FROM Feedback f
+                        JOIN f.result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE f.result.id NOT IN (
+                            SELECT MAX(r2.id)
+                            FROM Result r2
+                            WHERE r2.participation.id = p.id AND r2.rated=true
+                        )
+                        AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
+        // old text block that is not part of latest rated results
+        entityManager.createQuery("""
+                    DELETE FROM TextBlock tb
+                    WHERE tb.feedback IN (
+                        SELECT f
+                        FROM Feedback f
+                        JOIN f.result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE f.result.id NOT IN (
+                            SELECT MAX(r2.id)
+                            FROM Result r2
+                            WHERE r2.participation.id = p.id AND r2.rated=true
+                        )
+                        AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
+        // old feedback items that are not part of latest rated results
+        entityManager.createQuery("""
+                    DELETE FROM Feedback f
+                    WHERE f.result IN (
+                        SELECT r
+                        FROM Result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE r.id NOT IN (
+                            SELECT MAX(r2.id)
+                            FROM Result r2
+                            WHERE r2.participation.id = p.id AND r2.rated=true
+                        ) AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
+        // exercise is fetched eagerly for participations
         entityManager.createQuery("""
                     DELETE FROM Result r
                     WHERE r.rated = true
@@ -153,67 +260,4 @@ public class DataCleanupRepositoryImpl implements DataCleanupRepository {
                       )
                 """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
     }
-
-    @Override
-    @Transactional
-    public void deleteFeedback(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        // old feedback items that are not part of latest results
-        entityManager.createQuery("""
-                    DELETE FROM Feedback f
-                    WHERE f.result.id IN (
-                        SELECT r.id
-                        FROM Result r
-                        JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
-                        WHERE r.id NOT IN (
-                            SELECT MAX(r2.id)
-                            FROM Result r2
-                            WHERE r2.participation.id = p.id
-                        ) AND c.endDate < :deleteTo
-                        AND c.startDate > :deleteFrom
-                    )
-                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
-
-        // old long feedback text that is not part of latest results
-        entityManager.createQuery("""
-                    DELETE FROM LongFeedbackText lft
-                    WHERE lft.feedback.id IN (
-                        SELECT f.id
-                        FROM Feedback f
-                        JOIN f.result r
-                        JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
-                        WHERE f.result.id NOT IN (
-                            SELECT MAX(r2.id)
-                            FROM Result r2
-                            WHERE r2.participation.id = p.id
-                        )
-                        AND c.endDate < :deleteTo
-                        AND c.startDate > :deleteFrom
-                    )
-                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
-
-        // old text block that is not part of latest results
-        entityManager.createQuery("""
-                    DELETE FROM TextBlock tb
-                    WHERE tb.feedback.id IN (
-                        SELECT f.id
-                        FROM Feedback f
-                        JOIN f.result r
-                        JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
-                        WHERE f.result.id NOT IN (
-                            SELECT MAX(r2.id)
-                            FROM Result r2
-                            WHERE r2.participation.id = p.id
-                        )
-                        AND c.endDate < :deleteTo
-                        AND c.startDate > :deleteFrom
-                    )
-                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
-    }
-
 }
