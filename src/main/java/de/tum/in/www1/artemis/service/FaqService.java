@@ -5,12 +5,16 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.repository.FaqRepository;
+
 @Profile(PROFILE_CORE)
 @Service
 public class FaqService {
 
-    public FaqService() {
+    private final FaqRepository faqRepository;
 
+    public FaqService(FaqRepository faqRepository) {
+        this.faqRepository = faqRepository;
     }
 
     /**
@@ -18,7 +22,9 @@ public class FaqService {
      *
      * @param faqId the faqId of to be deleted faq
      */
-    public void delete(long faqId) {
+    public void deleteById(long faqId) {
+        faqRepository.deleteById(faqId);
+
     }
 
 }

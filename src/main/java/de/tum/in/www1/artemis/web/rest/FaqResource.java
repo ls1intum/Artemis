@@ -78,7 +78,6 @@ public class FaqResource {
         if (faq.getId() != null) {
             throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        System.out.println("Test");
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, faq.getCourse(), null);
 
         Faq savedFaq = faqRepository.save(faq);
@@ -105,6 +104,37 @@ public class FaqResource {
     }
 
     /**
+     * GET /faqs/:faqId : get the "faqId" faq.
+     *
+     * @param faqId the faqId of the faq to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the faq, or with status 404 (Not Found)
+     */
+    @GetMapping("faqs/{faqId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Faq> getFaq(@PathVariable Long faqId) {
+        log.debug("REST request to get faq {}", faqId);
+        Faq faq = faqRepository.findById(faqId).orElseThrow();
+        System.out.println(faq.getCategories());
+        return ResponseEntity.ok(faq);
+    }
+
+    /**
+     * DELETE /faqs/:faqId : delete the "id" faq.
+     *
+     * @param faqId the id of the faq to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("faqs/{faqId}")
+    @EnforceAtLeastInstructor
+    public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId) {
+
+        log.debug("REST request to delete faq {}", faqId);
+        faqService.deleteById(faqId);
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
+    }
+
+    /**
      * GET /courses/:courseId/faqs : get all the faqs of a course
      *
      * @param courseId the courseId of the course for which all faqs should be returned
@@ -119,36 +149,20 @@ public class FaqResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
+        return ResponseEntity.ok().body(faqs);
+    }
+
+    @GetMapping("courses/{courseId}/faq-categories")
+    @EnforceAtLeastEditor
+    public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Faqs for the course with id : {}", courseId);
+
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+
+        Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
 
         return ResponseEntity.ok().body(faqs);
     }
 
-    /**
-     * GET /faqs/:faqId : get the "faqId" faq.
-     *
-     * @param faqId the faqId of the faq to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the faq, or with status 404 (Not Found)
-     */
-    @GetMapping("faqs/{faqId}")
-    @EnforceAtLeastStudent
-    public ResponseEntity<Faq> getFaq(@PathVariable Long faqId) {
-        log.debug("REST request to get faq {}", faqId);
-        Faq faq = faqRepository.findById(faqId).orElseThrow();
-
-        return ResponseEntity.ok(faq);
-    }
-
-    /**
-     * DELETE /faqs/:faqId : delete the "id" faq.
-     *
-     * @param faqId the id of the faq to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("faqs/{faqId}")
-    @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId) {
-        log.debug("REST request to delete faq {}", faqId);
-        faqService.delete(faqId);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
-    }
 }
