@@ -35,7 +35,7 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -158,7 +158,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    @SpyBean
+    @MockBean
     protected ResultWebsocketService resultWebsocketService;
 
     private Course course;
