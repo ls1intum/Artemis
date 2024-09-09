@@ -40,15 +40,18 @@ public class BuildLogEntryService {
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
+    private final ProfileService profileService;
+
     @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
     private int expiryDays;
 
     @Value("${artemis.build-logs-path:./build-logs}")
     private Path buildLogsPath;
 
-    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository) {
+    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository, ProfileService profileService) {
         this.buildLogEntryRepository = buildLogEntryRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
+        this.profileService = profileService;
     }
 
     /**
@@ -331,10 +334,30 @@ public class BuildLogEntryService {
     }
 
     /**
-     * Deletes all build log files that are older than {@link #expiryDays} days on a schedule
+     * Scheduled task that deletes old build log files from the continuous integration system.
+     * <p>
+     * This method runs based on the cron schedule defined in the application properties, with
+     * a default value of 3:00 AM every day if no custom schedule is provided.
+     * The task will only execute if scheduling is active, which is checked via the {@code profileService}.
+     * </p>
+     * <p>
+     * The method iterates through the files in the configured build logs directory and deletes
+     * files that were last modified before the configured expiry period (in days). The expiration
+     * period is specified by the {@code expiryDays} variable, and files older than this period are deleted.
+     * </p>
+     * <p>
+     * In case of an error during file deletion, it logs the error and continues processing.
+     * </p>
+     *
+     * @throws IOException if an I/O error occurs while accessing the build log files directory or
+     *                         deleting files.
      */
-    @Scheduled(cron = "${artemis.continuous-integration.build-log.cleanup-schedule:0 0 3 1 * ?}")
+    @Scheduled(cron = "${artemis.continuous-integration.build-log.cleanup-schedule:0 0 3 * * ?}")
     public void deleteOldBuildLogsFiles() {
+        // only execute this if scheduling is active
+        if (!profileService.isSchedulingActive()) {
+            return;
+        }
         log.info("Deleting old build log files");
         ZonedDateTime now = ZonedDateTime.now();
 
