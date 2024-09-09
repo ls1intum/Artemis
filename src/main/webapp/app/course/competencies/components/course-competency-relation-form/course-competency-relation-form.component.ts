@@ -141,11 +141,16 @@ export class CourseCompetencyRelationFormComponent {
      */
     private getAdjacencyMap(): Map<number, number[]> {
         const adjacencyMap: Map<number, number[]> = new Map();
+        const matchesRelations: CompetencyRelationDTO[] = [];
         this.relations().forEach((relation) => {
-            if (!adjacencyMap.has(relation.headCompetencyId!)) {
-                adjacencyMap.set(relation.headCompetencyId!, []);
+            if (relation.relationType == CompetencyRelationType.MATCHES) {
+                matchesRelations.push(relation);
+            } else {
+                if (!adjacencyMap.has(relation.headCompetencyId!)) {
+                    adjacencyMap.set(relation.headCompetencyId!, []);
+                }
+                adjacencyMap.get(relation.headCompetencyId!)!.push(relation.tailCompetencyId!);
             }
-            adjacencyMap.get(relation.headCompetencyId!)!.push(relation.tailCompetencyId!);
         });
         return adjacencyMap;
     }
