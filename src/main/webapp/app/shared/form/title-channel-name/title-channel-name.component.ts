@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, input } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild, computed, effect, input, signal, viewChild } from '@angular/core';
 import { ControlContainer, NgForm, NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
@@ -15,23 +15,39 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     @Input() titlePattern: string;
     @Input() hideTitleLabel: boolean;
     @Input() emphasizeLabels = false;
-    @Input() hideChannelName?: boolean;
     @Input() minTitleLength: number;
     @Input() initChannelName = true;
+    hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
 
     @ViewChild('field_title') field_title: NgModel;
-    @ViewChild('field_channel_name') field_channel_name?: NgModel;
+    field_channel_name = viewChild<NgModel>('field_channel_name');
 
     @Output() titleChange = new EventEmitter<string>();
     @Output() channelNameChange = new EventEmitter<string>();
 
+    formValidSignal = signal<boolean>(false);
     formValid: boolean;
     formValidChanges = new Subject();
 
     // subscriptions
     fieldTitleSubscription?: Subscription;
     fieldChannelNameSubscription?: Subscription;
+
+    isChannelFieldDisplayed = computed(() => {
+        return !this.hideChannelName() && (!this.isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.channelName);
+    });
+
+    constructor() {
+        effect(() => {
+            console.log(this.isEditFieldDisplayedRecord()?.channelName);
+            this.registerChangeListeners();
+        });
+    }
+
+    ngAfterViewInit() {
+        this.registerChangeListeners();
+    }
 
     ngOnInit(): void {
         if (!this.channelNamePrefix) {
@@ -48,9 +64,9 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
         }
     }
 
-    ngAfterViewInit() {
+    private registerChangeListeners() {
         this.fieldTitleSubscription = this.field_title.valueChanges?.subscribe(() => this.calculateFormValid());
-        this.fieldChannelNameSubscription = this.field_channel_name?.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldChannelNameSubscription = this.field_channel_name()?.valueChanges?.subscribe(() => this.calculateFormValid());
     }
 
     ngOnDestroy() {
@@ -59,7 +75,9 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     calculateFormValid(): void {
-        this.formValid = Boolean(this.field_title.valid && (this.hideChannelName || this.field_channel_name?.valid));
+        const updatedFormValidValue = Boolean(this.field_title.valid && (!this.isChannelFieldDisplayed() || this.field_channel_name()?.valid));
+        this.formValidSignal.set(updatedFormValidValue);
+        this.formValid = updatedFormValidValue;
         this.formValidChanges.next(this.formValid);
     }
 

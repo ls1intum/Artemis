@@ -18,7 +18,7 @@
             />
         </div>
     }
-    @if (!hideChannelName && (!isEditFieldDisplayedRecord() || this.isEditFieldDisplayedRecord()?.channelName)) {
+    @if (isChannelFieldDisplayed()) {
         <div class="form-group">
             <div>
                 <label [class]="'form-control-label' + (emphasizeLabels ? ' emphasized-label' : '')" jhiTranslate="artemisApp.lecture.channelName" for="field_channel_name"

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal, viewChild } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -27,7 +27,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
-    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
+    exerciseTitleChannelComponent = viewChild<ExerciseTitleChannelNameComponent>(ExerciseTitleChannelNameComponent);
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
     @ViewChild('shortName') shortNameField: NgModel;
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
@@ -67,7 +67,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     ngAfterViewInit() {
-        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.shortNameField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
@@ -105,8 +105,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const isUpdateTemplateFilesValid = this.isUpdateTemplateFilesValid();
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         this.formValid = Boolean(
-            this.exerciseTitleChannelComponent.titleChannelNameComponent?.formValid &&
-                !this.shortNameField.invalid &&
+            this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidSignal() &&
+                !this.shortNameField?.invalid &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
                 isUpdateTemplateFilesValid &&
