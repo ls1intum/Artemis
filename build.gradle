@@ -78,7 +78,8 @@ spotless {
                         "**/src/main/resources/templates/**",
                         "/docker/**",
                         "checked-out-repos/**",
-                        "**/src/main/java/org/eclipse/**"
+                        "**/src/main/java/org/eclipse/**",
+                        "supporting_scripts/**"
                 )
             }
         }
