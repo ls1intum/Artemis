@@ -44,7 +44,6 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
         const isProgrammingLanguageUpdated = changes.programmingLanguage?.currentValue !== changes.programmingLanguage?.previousValue;
         const isCheckoutSolutionRepositoryUpdated = changes.checkoutSolutionRepository?.currentValue !== changes.checkoutSolutionRepository?.previousValue;
         if (this.isLocal && (isProgrammingLanguageUpdated || isCheckoutSolutionRepositoryUpdated)) {
-            console.log('Updating checkout directories after programming language or checkout solution repository change');
             if (this.isEdit) {
                 this.resetProgrammingExerciseBuildCheckoutPaths();
             }
@@ -53,7 +52,6 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
         const isBuildConfigChanged = this.isBuildConfigAvailable(this.programmingExercise.buildConfig);
         if (this.isLocal && this.isEdit && isBuildConfigChanged) {
-            console.log('Updating checkout directories after build config change');
             this.checkoutDirectories = this.setCheckoutDirectoriesFromBuildConfig(this.checkoutDirectories);
         }
     }
@@ -84,9 +82,6 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
 
     private setCheckoutDirectoriesFromBuildConfig(checkoutDirectories?: CheckoutDirectoriesDto): CheckoutDirectoriesDto | undefined {
         if (this.programmingExercise.buildConfig || checkoutDirectories) {
-            console.log('Setting checkout directories from build config');
-            console.log(this.programmingExercise.buildConfig);
-            console.log(checkoutDirectories);
             checkoutDirectories = {
                 solutionBuildPlanCheckoutDirectories: {
                     solutionCheckoutDirectory:
