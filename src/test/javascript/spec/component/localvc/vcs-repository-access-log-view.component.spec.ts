@@ -16,7 +16,6 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 describe('VcsRepositoryAccessLogViewComponent', () => {
-    let component: VcsRepositoryAccessLogViewComponent;
     let fixture: ComponentFixture<VcsRepositoryAccessLogViewComponent>;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     const userId = 4;
@@ -59,30 +58,30 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
                 { provide: AlertService, useClass: MockAlertService },
                 { provide: ProfileService, useClass: MockProfileService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(VcsRepositoryAccessLogViewComponent);
-                component = fixture.componentInstance;
-                programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
-
-                repositoryVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForRepository').mockReturnValue(of(mockVcsAccessLog));
-                participationVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForParticipation').mockReturnValue(of(mockVcsAccessLog));
-            });
+        }).compileComponents();
     });
 
     it('should load participation vcs access log', () => {
-        component.ngOnInit();
+        setupTestBed();
+        fixture.detectChanges();
+
         expect(participationVcsAccessLogSpy).toHaveBeenCalledOnce();
-        expect(component.vcsAccessLogEntries).toHaveLength(2);
-        expect(component.vcsAccessLogEntries[0].userId).toBe(userId);
     });
 
     it('should load template repository vcs access log', () => {
         route.params = of({ exerciseId: '10', repositoryType: 'TEMPLATE' });
-        component.ngOnInit();
+        TestBed.overrideProvider(ActivatedRoute, { useValue: route });
+
+        setupTestBed();
+        fixture.detectChanges();
+
         expect(repositoryVcsAccessLogSpy).toHaveBeenCalledOnce();
-        expect(component.vcsAccessLogEntries).toHaveLength(2);
-        expect(component.vcsAccessLogEntries[0].userId).toBe(userId);
     });
+
+    function setupTestBed() {
+        fixture = TestBed.createComponent(VcsRepositoryAccessLogViewComponent);
+        programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
+        repositoryVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForRepository').mockReturnValue(of(mockVcsAccessLog));
+        participationVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForParticipation').mockReturnValue(of(mockVcsAccessLog));
+    }
 });

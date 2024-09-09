@@ -16,7 +16,7 @@ export class VcsRepositoryAccessLogViewComponent {
     private readonly programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private readonly alertService = inject(AlertService);
 
-    protected readonly vcsAccessLogEntries = signal<VcsAccessLogDTO[]>([]);
+    private readonly vcsAccessLogEntries = signal<VcsAccessLogDTO[]>([]);
 
     private readonly params = toSignal(this.route.params, { requireSync: true });
     private readonly participationId = computed(() => {
@@ -54,7 +54,6 @@ export class VcsRepositoryAccessLogViewComponent {
         try {
             const accessLogEntries = await lastValueFrom(fun());
             if (accessLogEntries) {
-                console.log(accessLogEntries);
                 this.vcsAccessLogEntries.set(accessLogEntries);
             }
         } catch (error) {
