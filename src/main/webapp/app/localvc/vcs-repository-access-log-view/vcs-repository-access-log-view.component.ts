@@ -8,13 +8,11 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',
     templateUrl: './vcs-repository-access-log-view.component.html',
     standalone: true,
-    imports: [ArtemisSharedCommonModule],
 })
 export class VcsRepositoryAccessLogViewComponent implements OnInit, OnDestroy {
     participationId: number;
