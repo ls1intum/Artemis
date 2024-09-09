@@ -17,7 +17,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (entry of vcsAccessLogEntries; track entry; let i = $index) {
+                @for (entry of vcsAccessLogEntries(); track entry; let i = $index) {
                     <tr class="w-25">
                         <td class="p-2">{{ i }}</td>
                         <td class="p-2">{{ entry.userId }}</td>

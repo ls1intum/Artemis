@@ -1,77 +1,64 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Observable, Subject, Subscription } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Observable, lastValueFrom } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
-import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',
     templateUrl: './vcs-repository-access-log-view.component.html',
     standalone: true,
 })
-export class VcsRepositoryAccessLogViewComponent implements OnInit, OnDestroy {
-    participationId: number;
-    vcsAccessLogEntries: VcsAccessLogDTO[];
-    protected dialogErrorSource = new Subject<string>();
+export class VcsRepositoryAccessLogViewComponent {
+    private readonly route = inject(ActivatedRoute);
+    private readonly programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private readonly alertService = inject(AlertService);
 
-    paramSub: Subscription;
-    routeVcsAccessLog: string;
-    participation: ProgrammingExerciseStudentParticipation;
-    exercise: ProgrammingExercise;
+    protected readonly vcsAccessLogEntries = signal<VcsAccessLogDTO[]>([]);
 
-    constructor(
-        public domainService: DomainService,
-        private route: ActivatedRoute,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private router: Router,
-        private alertService: AlertService,
-    ) {}
+    private readonly params = toSignal(this.route.params, { requireSync: true });
+    private readonly participationId = computed(() => {
+        const participationId = this.params().participationId;
+        if (participationId) {
+            return Number(participationId);
+        }
+        return undefined;
+    });
+    private readonly exerciseId = computed(() => Number(this.params().exerciseId));
+    private readonly repositoryType = computed(() => String(this.params().repositoryType));
 
-    ngOnInit(): void {
-        this.routeVcsAccessLog = this.router.url + '/vcs-access-log';
-        this.paramSub = this.route.params.subscribe((params) => {
-            const participationId = Number(params['participationId']);
-            const exerciseId = Number(params['exerciseId']);
-            const repositoryType = params['repositoryType'];
-            if (participationId) {
-                this.loadVcsAccessLogForParticipation(participationId);
-            } else {
-                this.loadVcsAccessLog(exerciseId, repositoryType);
-            }
-        });
-    }
-
-    ngOnDestroy(): void {
-        this.paramSub.unsubscribe();
-    }
-
-    public loadVcsAccessLogForParticipation(participationId: number) {
-        const accessLogEntries: Observable<VcsAccessLogDTO[] | undefined> = this.programmingExerciseParticipationService.getVcsAccessLogForParticipation(participationId);
-        this.extractEntries(accessLogEntries);
-    }
-
-    public loadVcsAccessLog(exerciseId: number, repositoryType: string) {
-        const accessLogEntries: Observable<VcsAccessLogDTO[] | undefined> = this.programmingExerciseParticipationService.getVcsAccessLogForRepository(exerciseId, repositoryType);
-        this.extractEntries(accessLogEntries);
-    }
-
-    private extractEntries(accessLogEntries: Observable<VcsAccessLogDTO[] | undefined>) {
-        accessLogEntries.subscribe({
-            next: (next: VcsAccessLogDTO[] | undefined) => {
-                if (next) {
-                    this.vcsAccessLogEntries = next;
-                    this.dialogErrorSource.next('');
+    constructor() {
+        effect(
+            async () => {
+                if (this.participationId()) {
+                    await this.loadVcsAccessLogForParticipation(this.participationId()!);
+                } else {
+                    await this.loadVcsAccessLog(this.exerciseId(), this.repositoryType());
                 }
             },
-            error: (error: HttpErrorResponse) => {
-                this.dialogErrorSource.next(error.message);
-                this.alertService.error('artemisApp.repository.vcsAccessLog.error');
-            },
-        });
+            { allowSignalWrites: true },
+        );
+    }
+
+    public async loadVcsAccessLogForParticipation(participationId: number) {
+        await this.extractEntries(() => this.programmingExerciseParticipationService.getVcsAccessLogForParticipation(participationId));
+    }
+
+    public async loadVcsAccessLog(exerciseId: number, repositoryType: string) {
+        await this.extractEntries(() => this.programmingExerciseParticipationService.getVcsAccessLogForRepository(exerciseId, repositoryType));
+    }
+
+    private async extractEntries(fun: () => Observable<VcsAccessLogDTO[] | undefined>) {
+        try {
+            const accessLogEntries = await lastValueFrom(fun());
+            if (accessLogEntries) {
+                console.log(accessLogEntries);
+                this.vcsAccessLogEntries.set(accessLogEntries);
+            }
+        } catch (error) {
+            this.alertService.error('artemisApp.repository.vcsAccessLog.error');
+        }
     }
 }
