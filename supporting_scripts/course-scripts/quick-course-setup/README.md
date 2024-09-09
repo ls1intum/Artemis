@@ -180,11 +180,6 @@ python3 randomize_results_before.py
 ```shell
 python3 large_course_main.py
 ```
-4.  Make sure to revert these changes after running the script. The following script copies the original test case files from the [default](./testFiles-template/default) folder back into the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and deletes the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file that was copied to [testFiles](../../../src/main/resources/templates/java/test/testFiles) in Step 1.
-    If you don't run this script after running the script in Step 1, you risk breaking the real template of the programming exercise if these changes are pushed and merged.
-```shell
-python3 randomize_results_after.py
-```
 
 ### Optional: Using an Existing Programming Exercise (Can also be done on Test Server)
 Alternatively, you can use an existing programming exercise and push the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file to the test repository of the programming exercise. 

@@ -21,6 +21,10 @@ def copy_default_folders() -> None:
             shutil.copytree(src_folder_path, dest_folder_path)
             logging.info(f"Copied folder {src_folder_path} to {dest_folder_path}")
 
+def run_cleanup() -> None:
+    delete_random_test_case()
+    copy_default_folders()
+
 if __name__ == "__main__":
     # Run this after running the script
     delete_random_test_case()
