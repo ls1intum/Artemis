@@ -83,6 +83,7 @@ describe('CodeButtonComponent', () => {
             },
         },
         theiaPortalURL: 'https://theia-test.k8s.ase.cit.tum.de',
+        operatorName: 'TUM',
     };
 
     let participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();

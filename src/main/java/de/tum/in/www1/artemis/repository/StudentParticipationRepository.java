@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.domain.participation.IdToPresentationScoreSum;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -703,18 +704,38 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Retrieves all distinct `StudentParticipation` entities for a specific exercise,
+     * including their latest non-illegal submission and the latest rated result for each submission.
+     * The method fetches related submissions, results, student, and team data to avoid the N+1 select problem.
+     *
+     * <p>
+     * The method ensures that:
+     * <ul>
+     * <li>Only participations belonging to the specified exercise are retrieved.</li>
+     * <li>Participations marked as a test run are excluded.</li>
+     * <li>Only the latest non-illegal submission for each participation is considered.</li>
+     * <li>Only the latest rated result for each submission is considered.</li>
+     * </ul>
+     *
+     * @param exerciseId the ID of the exercise for which to retrieve participations.
+     * @return a list of distinct `StudentParticipation` entities matching the criteria.
+     */
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
-                LEFT JOIN FETCH p.results r
-                LEFT JOIN FETCH r.submission rs
                 LEFT JOIN FETCH p.submissions s
-                LEFT JOIN FETCH s.results sr
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.team
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
-                AND p.submissions IS NOT EMPTY
-                AND (s.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
-                AND (rs.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR rs.type IS NULL)
+                AND s.id = (SELECT MAX(s2.id)
+                            FROM p.submissions s2
+                            WHERE s2.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s2.type IS NULL)
+                AND r.id = (SELECT MAX(r2.id)
+                            FROM s.results r2
+                            WHERE r2.rated = TRUE)
             """)
     List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
 
@@ -1210,4 +1231,53 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND p.presentationScore IS NOT NULL
             """)
     double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
+
+    /**
+     * Retrieves aggregated feedback details for a given exercise, including the count of each unique feedback detail text and test case name.
+     * <br>
+     * The relative count and task number are initially set to 0 and are calculated in a separate step in the service layer.
+     *
+     * @param exerciseId Exercise ID.
+     * @return a list of {@link FeedbackDetailDTO} objects, with the relative count and task number set to 0.
+     */
+    @Query("""
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.feedback.FeedbackDetailDTO(
+                COUNT(f.id),
+                0,
+                f.detailText,
+                f.testCase.testName,
+                0
+                )
+            FROM StudentParticipation p
+                 JOIN p.results r
+                 JOIN r.feedbacks f
+                    WHERE p.exercise.id = :exerciseId
+                        AND p.testRun = FALSE
+                        AND r.id = (
+                            SELECT MAX(pr.id)
+                            FROM p.results pr
+                            )
+                        AND f.positive = FALSE
+                        GROUP BY f.detailText, f.testCase.testName
+            """)
+    List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.
+     *
+     * @param exerciseId Exercise ID.
+     * @return The count of distinct latest results for the exercise.
+     */
+    @Query("""
+                SELECT COUNT(DISTINCT r.id)
+                FROM StudentParticipation p
+                    JOIN p.results r
+                WHERE p.exercise.id = :exerciseId
+                      AND p.testRun = FALSE
+                      AND r.id = (
+                          SELECT MAX(pr.id)
+                          FROM p.results pr
+                      )
+            """)
+    long countDistinctResultsByExerciseId(@Param("exerciseId") long exerciseId);
 }

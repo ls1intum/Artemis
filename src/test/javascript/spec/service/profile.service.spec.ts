@@ -145,6 +145,7 @@ describe('ProfileService', () => {
                 },
             },
         },
+        operatorName: 'TUM',
         theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
     };
 
@@ -261,6 +262,7 @@ describe('ProfileService', () => {
             },
         },
         theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        operatorName: 'TUM',
     };
 
     beforeEach(() => {
