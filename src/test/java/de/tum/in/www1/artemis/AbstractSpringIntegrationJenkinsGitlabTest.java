@@ -71,10 +71,10 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
 
     @SpyBean
     protected ProgrammingMessagingService programmingMessagingService;
-    
+
     @SpyBean
     protected ResultWebsocketService resultWebsocketService;
-    
+
     @Autowired
     protected JenkinsRequestMockProvider jenkinsRequestMockProvider;
 
