@@ -5,18 +5,20 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 import { VcsAccessLogDTO } from 'app/entities/vcs-access-log-entry.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-vcs-repository-access-log-view',
     templateUrl: './vcs-repository-access-log-view.component.html',
     standalone: true,
+    imports: [TranslateDirective],
 })
 export class VcsRepositoryAccessLogViewComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private readonly alertService = inject(AlertService);
 
-    private readonly vcsAccessLogEntries = signal<VcsAccessLogDTO[]>([]);
+    protected readonly vcsAccessLogEntries = signal<VcsAccessLogDTO[]>([]);
 
     private readonly params = toSignal(this.route.params, { requireSync: true });
     private readonly participationId = computed(() => {
@@ -50,9 +52,9 @@ export class VcsRepositoryAccessLogViewComponent {
         await this.extractEntries(() => this.programmingExerciseParticipationService.getVcsAccessLogForRepository(exerciseId, repositoryType));
     }
 
-    private async extractEntries(fun: () => Observable<VcsAccessLogDTO[] | undefined>) {
+    private async extractEntries(fetchVcsAccessLogs: () => Observable<VcsAccessLogDTO[] | undefined>) {
         try {
-            const accessLogEntries = await lastValueFrom(fun());
+            const accessLogEntries = await lastValueFrom(fetchVcsAccessLogs());
             if (accessLogEntries) {
                 this.vcsAccessLogEntries.set(accessLogEntries);
             }
