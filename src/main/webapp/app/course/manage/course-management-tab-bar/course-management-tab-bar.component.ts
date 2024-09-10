@@ -25,6 +25,7 @@ import {
     faTrash,
     faUserCheck,
     faWrench,
+    faQuestion
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
@@ -73,6 +74,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     faRobot = faRobot;
     faPuzzlePiece = faPuzzlePiece;
     faList = faList;
+    faQuestion = faQuestion
 
     isCommunicationEnabled = false;
 
