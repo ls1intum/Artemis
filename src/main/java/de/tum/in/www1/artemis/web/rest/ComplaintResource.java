@@ -353,14 +353,17 @@ public class ComplaintResource {
         Submission originalSubmission = complaint.getResult().getSubmission();
         if (originalSubmission != null) {
             Submission submissionWithOnlyId;
-            switch (originalSubmission) {
-                case TextSubmission ignored -> submissionWithOnlyId = new TextSubmission();
-                case ModelingSubmission ignored -> submissionWithOnlyId = new ModelingSubmission();
-                case FileUploadSubmission ignored -> submissionWithOnlyId = new FileUploadSubmission();
-                case ProgrammingSubmission ignored -> submissionWithOnlyId = new ProgrammingSubmission();
-                default -> {
-                    return;
-                }
+            Submission submissionWithOnlyId = switch (originalSubmission) {
+                case TextSubmission ignored -> new TextSubmission();
+                case ModelingSubmission ignored -> new ModelingSubmission();
+                case FileUploadSubmission ignored -> new FileUploadSubmission();
+                case ProgrammingSubmission ignored -> new ProgrammingSubmission();
+                default -> null;
+            };
+
+            if (submissionWithOnlyId == null) {
+                return;
+            }
             }
             submissionWithOnlyId.setId(originalSubmission.getId());
             complaint.getResult().setSubmission(submissionWithOnlyId);
