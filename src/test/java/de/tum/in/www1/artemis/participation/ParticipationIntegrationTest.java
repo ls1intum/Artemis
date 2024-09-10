@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.participation;
 
 import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
-import static de.tum.in.www1.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static de.tum.in.www1.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -36,7 +35,6 @@ import org.mockito.Captor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -96,7 +94,6 @@ import de.tum.in.www1.artemis.service.quiz.QuizBatchService;
 import de.tum.in.www1.artemis.service.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
-import de.tum.in.www1.artemis.web.websocket.ResultWebsocketService;
 
 class ParticipationIntegrationTest extends AbstractAthenaTest {
 
@@ -158,9 +155,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
-
-    @SpyBean
-    protected ResultWebsocketService resultWebsocketService;
 
     private Course course;
 
@@ -599,7 +593,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(textCourse);
 
-        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        this.textExercise.setFeedbackSuggestionModule("module_text_test");
         this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
@@ -680,7 +674,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(textCourse);
 
-        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
+        this.textExercise.setFeedbackSuggestionModule("module_text_test");
         this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("text");
