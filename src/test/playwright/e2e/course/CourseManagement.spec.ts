@@ -2,10 +2,9 @@ import { test } from '../../support/fixtures';
 import dayjs from 'dayjs';
 import { Course } from 'app/entities/course.model';
 import { admin, studentOne } from '../../support/users';
-import { convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
+import { base64StringToBlob, convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
-import { base64StringToBlob } from '../../support/utils';
 
 // Common primitives
 const courseData = {

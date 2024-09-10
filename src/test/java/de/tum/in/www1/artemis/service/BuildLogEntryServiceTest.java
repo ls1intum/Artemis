@@ -350,10 +350,6 @@ class BuildLogEntryServiceTest extends AbstractSpringIntegrationIndependentTest 
         assertThat(result).isEmpty();
     }
 
-    private List<BuildLogEntry> convertToBuildLogs(List<String> content) {
-        return convertToBuildLogs(content.stream());
-    }
-
     private List<BuildLogEntry> convertToBuildLogs(String... content) {
         return convertToBuildLogs(Arrays.stream(content));
     }

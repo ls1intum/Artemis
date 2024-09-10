@@ -1,6 +1,6 @@
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { ConsistencyCheckError, ErrorType } from 'app/entities/consistency-check-result.model';
 import { ArtemisTestModule } from '../../test.module';

@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,6 +11,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
+import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 
@@ -26,6 +27,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     @Input()
     loading = false;
     @Input()
+    useParticipationVcsAccessToken = false;
+    @Input()
     smallButtons: boolean;
     @Input()
     repositoryUri?: string;
@@ -38,15 +41,23 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
     useSsh = false;
     useToken = false;
-    setupSshKeysUrl?: string;
+    tokenExpired = false;
+    tokenMissing = false;
     sshEnabled = false;
     sshTemplateUrl?: string;
+    sshSettingsUrl?: string;
+    vcsTokenSettingsUrl?: string;
     repositoryPassword?: string;
     versionControlUrl: string;
-    useVersionControlAccessToken?: boolean;
+    accessTokensEnabled?: boolean;
     localVCEnabled = false;
     gitlabVCEnabled = false;
     showCloneUrlWithoutToken = true;
+    copyEnabled? = true;
+
+    sshKeyMissingTip: string;
+    tokenMissingTip: string;
+    tokenExpiredTip: string;
 
     user: User;
     cloneHeadline: string;
@@ -73,32 +84,47 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             .identity()
             .then((user) => {
                 this.user = user!;
+                this.refreshTokenState();
+
+                this.copyEnabled = true;
+                this.useSsh = this.localStorage.retrieve('useSsh') || false;
+                this.useToken = this.localStorage.retrieve('useToken') || false;
+                this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+                this.localStorage.observe('useToken').subscribe((useToken) => (this.useToken = useToken || false));
+
+                if (this.useSsh) {
+                    this.useSshUrl();
+                }
+                if (this.useToken) {
+                    this.useHttpsUrlWithToken();
+                }
             })
-            .then(() => this.loadVcsAccessTokens());
+            .then(() => this.loadParticipationVcsAccessTokens());
 
         // Get ssh information from the user
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            this.setupSshKeysUrl = profileInfo.sshKeysURL;
+            this.sshSettingsUrl = profileInfo.sshKeysURL;
             this.sshTemplateUrl = profileInfo.sshCloneURLTemplate;
 
             this.sshEnabled = !!this.sshTemplateUrl;
             if (profileInfo.versionControlUrl) {
                 this.versionControlUrl = profileInfo.versionControlUrl;
             }
-            this.useVersionControlAccessToken = profileInfo.useVersionControlAccessToken ?? false;
+            this.accessTokensEnabled = profileInfo.useVersionControlAccessToken ?? false;
             this.showCloneUrlWithoutToken = profileInfo.showCloneUrlWithoutToken ?? true;
             this.useToken = !this.showCloneUrlWithoutToken;
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
             this.gitlabVCEnabled = profileInfo.activeProfiles.includes(PROFILE_GITLAB);
             if (this.localVCEnabled) {
-                this.setupSshKeysUrl = `${window.location.origin}/user-settings/sshSettings`;
+                this.sshSettingsUrl = `${window.location.origin}/user-settings/ssh`;
+                this.vcsTokenSettingsUrl = `${window.location.origin}/user-settings/vcs-token`;
+                this.tokenMissingTip = this.formatTip('artemisApp.exerciseActions.vcsTokenTip', this.vcsTokenSettingsUrl);
+                this.tokenExpiredTip = this.formatTip('artemisApp.exerciseActions.vcsTokenExpiredTip', this.vcsTokenSettingsUrl);
             } else {
-                this.setupSshKeysUrl = profileInfo.sshKeysURL;
+                this.sshSettingsUrl = profileInfo.sshKeysURL;
             }
+            this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
         });
-
-        this.useSsh = this.localStorage.retrieve('useSsh') || false;
-        this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
     }
 
     ngOnChanges() {
@@ -112,25 +138,47 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         } else if (this.repositoryUri) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
-        this.loadVcsAccessTokens();
+        this.loadParticipationVcsAccessTokens();
     }
 
     public useSshUrl() {
         this.useSsh = true;
         this.useToken = false;
-        this.localStorage.store('useSsh', this.useSsh);
+        this.copyEnabled = this.useSsh && (!!this.user.sshPublicKey || this.gitlabVCEnabled);
+        this.storeToLocalStorage();
     }
 
     public useHttpsUrlWithToken() {
         this.useSsh = false;
         this.useToken = true;
-        this.localStorage.store('useSsh', this.useSsh);
+        this.copyEnabled = !!(this.accessTokensEnabled && this.useToken && ((!!this.user.vcsAccessToken && !this.isTokenExpired()) || this.useParticipationVcsAccessToken));
+        this.refreshTokenState();
+        this.storeToLocalStorage();
     }
 
     public useHttpsUrlWithoutToken() {
         this.useSsh = false;
         this.useToken = false;
+        this.copyEnabled = true;
+        this.storeToLocalStorage();
+    }
+
+    public storeToLocalStorage() {
         this.localStorage.store('useSsh', this.useSsh);
+        this.localStorage.store('useToken', this.useToken);
+    }
+
+    public refreshTokenState() {
+        this.tokenMissing = !this.user.vcsAccessToken;
+        this.tokenExpired = this.isTokenExpired();
+    }
+
+    public formatTip(translationKey: string, url: string): string {
+        return this.translateService.instant(translationKey).replace(/{link:(.*)}/, `<a href="${url}" target="_blank">$1</a>`);
+    }
+
+    public isTokenExpired(): boolean {
+        return dayjs().isAfter(dayjs(this.user.vcsAccessTokenExpiryDate));
     }
 
     private getRepositoryUri() {
@@ -147,8 +195,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         return this.addCredentialsToHttpUrl(this.getRepositoryUri(), insertPlaceholder);
     }
 
-    loadVcsAccessTokens() {
-        if (this.useVersionControlAccessToken && this.localVCEnabled) {
+    loadParticipationVcsAccessTokens() {
+        if (this.accessTokensEnabled && this.localVCEnabled && this.useParticipationVcsAccessToken) {
             this.participations?.forEach((participation) => {
                 if (participation?.id && !participation.vcsAccessToken) {
                     this.loadVcsAccessToken(participation);
@@ -208,7 +256,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
     private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
-        const includeToken = this.useVersionControlAccessToken && this.user.vcsAccessToken && this.useToken;
+        const includeToken = this.accessTokensEnabled && this.user.vcsAccessToken && this.useToken;
         const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
         const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
@@ -242,13 +290,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      */
     private getSshCloneUrl(url?: string) {
         return url?.replace(/^\w*:\/\/[^/]*?\/(scm\/)?(.*)$/, this.sshTemplateUrl + '$2');
-    }
-
-    /**
-     * Inserts the correct link to the translated ssh tip.
-     */
-    getSshKeyTip() {
-        return this.translateService.instant('artemisApp.exerciseActions.sshKeyTip').replace(/{link:(.*)}/, '<a href="' + this.setupSshKeysUrl + '" target="_blank">$1</a>');
     }
 
     /**

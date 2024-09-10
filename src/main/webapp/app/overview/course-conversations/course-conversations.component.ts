@@ -260,9 +260,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser);
-        this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.conversationsOfUser, this.messagingEnabled);
-        this.updateSidebarData();
+        this.metisConversationService.forceRefresh().subscribe({
+            complete: () => {
+                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser);
+                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.conversationsOfUser, this.messagingEnabled);
+                this.updateSidebarData();
+            },
+        });
     }
 
     updateSidebarData() {
@@ -308,9 +312,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             .subscribe((chatPartners: UserPublicInfoDTO[]) => {
                 this.metisConversationService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
                     complete: () => {
-                        this.metisConversationService.forceRefresh().subscribe({
-                            complete: () => {},
-                        });
                         this.prepareSidebarData();
                     },
                 });
@@ -330,9 +331,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 if (chatPartner?.login) {
                     this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
                         complete: () => {
-                            this.metisConversationService.forceRefresh().subscribe({
-                                complete: () => {},
-                            });
                             this.prepareSidebarData();
                         },
                     });

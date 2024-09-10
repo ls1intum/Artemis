@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { TestCaseStats } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { round } from 'app/shared/util/utils';
 
 @Component({

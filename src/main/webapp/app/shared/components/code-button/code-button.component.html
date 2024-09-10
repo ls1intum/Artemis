@@ -14,8 +14,14 @@
         container="body"
     ></button>
     <ng-template #popContent>
-        @if (useSsh && (!user.sshPublicKey || gitlabVCEnabled)) {
-            <div class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
+        @if (useSsh && !copyEnabled) {
+            <div class="alert alert-warning" [innerHTML]="sshKeyMissingTip"></div>
+        }
+        @if (useToken && !copyEnabled && tokenMissing) {
+            <div class="alert alert-warning" [innerHTML]="tokenMissingTip"></div>
+        }
+        @if (useToken && !copyEnabled && tokenExpired) {
+            <div class="alert alert-warning" [innerHTML]="tokenExpiredTip"></div>
         }
         @if (participations && participations.length > 1) {
             <div class="form-check form-switch">
@@ -34,7 +40,7 @@
                         @if (showCloneUrlWithoutToken) {
                             <a (click)="useHttpsUrlWithoutToken()" class="dropdown-item {{ !useToken && !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
                         }
-                        @if (useVersionControlAccessToken && participations) {
+                        @if (accessTokensEnabled && (!useParticipationVcsAccessToken || participations)) {
                             <a (click)="useHttpsUrlWithToken()" class="dropdown-item {{ useToken && !useSsh ? 'active' : '' }}" id="useHTTPSWithTokenButton">Token</a>
                         }
                         <a (click)="useSshUrl()" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
@@ -50,7 +56,7 @@
                     'url-box-remove-line-right': !localVCEnabled || !!routerLinkForRepositoryView,
                 }"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
-                (cdkCopyToClipboardCopied)="onCopyFinished($event)"
+                (cdkCopyToClipboardCopied)="copyEnabled ? onCopyFinished($event) : null"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
             <div class="d-flex align-items-center">
@@ -86,6 +92,7 @@
         <button
             [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
             (cdkCopyToClipboardCopied)="onCopyFinished($event)"
+            [disabled]="!copyEnabled"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm me-2"
             type="button"
