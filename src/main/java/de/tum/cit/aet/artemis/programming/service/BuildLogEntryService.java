@@ -289,10 +289,19 @@ public class BuildLogEntryService {
     }
 
     /**
-     * Save the build logs for a given submission to a file
+     * Saves a list of build log entries to a file for a specific build job.
      *
-     * @param buildLogEntries the build logs to save
-     * @param buildJobId      the id of the build job for which to save the build logs
+     * <p>
+     * The log file path is constructed based on the course's short name, the exercise's short name,
+     * and the build job ID. If the directory structure for the logs does not already exist, it is created.
+     * Each log entry is written to the log file in the format of "time\tlog message".
+     *
+     * @param buildLogEntries     A list of {@link BuildLogEntry} objects containing the build log information to be saved.
+     * @param buildJobId          The unique identifier of the build job whose logs are being saved.
+     * @param programmingExercise The programming exercise associated with the build job, used to
+     *                                retrieve the course and exercise short names.
+     * @throws IllegalStateException If the directory for storing the logs could not be created.
+     * @throws RuntimeException      If an I/O error occurs while writing the log file.
      */
     public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
         String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
@@ -324,10 +333,15 @@ public class BuildLogEntryService {
     }
 
     /**
-     * Retrieves the build logs for a given submission from a file.
+     * Retrieves the build logs for a specific build job from the file system as a {@link FileSystemResource}.
      *
-     * @param buildJobId the id of the build job for which to retrieve the build logs
-     * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
+     * <p>
+     * The method first attempts to locate the log file in the directory corresponding to the course
+     * and exercise short names. If the file is not found, it will attempt to retrieve the log from a
+     * parent directory for backward compatibility.
+     *
+     * @param buildJobId The unique identifier of the build job whose logs are being retrieved.
+     * @return A {@link FileSystemResource} representing the log file if it exists, or {@code null} if the log file cannot be found.
      */
     public FileSystemResource retrieveBuildLogsFromFileForBuildJob(String buildJobId) {
         ProgrammingExercise programmingExercise = retrieveProgrammingExerciseByBuildJobId(buildJobId);
@@ -401,6 +415,19 @@ public class BuildLogEntryService {
         }
     }
 
+    /**
+     * Checks if the log file for a specific build job exists in the file system.
+     *
+     * <p>
+     * The log file path is constructed based on the course's short name, the exercise's short name,
+     * and the build job ID. The file is expected to be located at:
+     * {@code buildLogsPath/<courseShortName>/<exerciseShortName>/<buildJobId>.log}.
+     *
+     * @param buildJobId          The unique identifier of the build job whose log file is being checked.
+     * @param programmingExercise The programming exercise associated with the build job, used to
+     *                                retrieve the course and exercise short names.
+     * @return {@code true} if the log file exists, otherwise {@code false}.
+     */
     public boolean buildJobHasLogFile(String buildJobId, ProgrammingExercise programmingExercise) {
         String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
