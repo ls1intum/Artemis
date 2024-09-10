@@ -101,21 +101,23 @@ public class DataExportQuizExerciseCreationService {
                 var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
                 // if this question wasn't answered, the submitted answer is null
                 if (submittedAnswer != null) {
-                    if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
-                        try {
-                            dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
+                    switch (submittedAnswer) {
+                        case DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer -> {
+                            try {
+                                dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
+                            }
+                            catch (IOException e) {
+                                errorOccurred = true;
+                                exportErrors.ifPresent(errors -> errors.add("Failed to export drag and drop answers for quiz submission " + submission.getId()
+                                        + " of quiz exercise " + quizExercise.getTitle() + " with id " + quizExercise.getId()));
+                            }
                         }
-                        catch (IOException e) {
-                            errorOccurred = true;
-                            exportErrors.ifPresent(errors -> errors.add("Failed to export drag and drop answers for quiz submission " + submission.getId() + " of quiz exercise "
-                                    + quizExercise.getTitle() + " with id " + quizExercise.getId()));
+                        case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer ->
+                            shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer, includeResults));
+                        case MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer ->
+                            multipleChoiceQuestionsSubmissions.add(createExportForMultipleChoiceAnswerQuestion(multipleChoiceSubmittedAnswer, includeResults));
+                        default -> {
                         }
-                    }
-                    else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
-                        shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer, includeResults));
-                    }
-                    else if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) {
-                        multipleChoiceQuestionsSubmissions.add(createExportForMultipleChoiceAnswerQuestion(multipleChoiceSubmittedAnswer, includeResults));
                     }
                 }
             }
