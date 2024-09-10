@@ -284,46 +284,50 @@ public class StudentExamService {
                 submissionFromClient.setParticipation(studentParticipationFromClient);
                 submissionFromClient.submissionDate(ZonedDateTime.now());
                 submissionFromClient.submitted(true);
-                if (exercise instanceof QuizExercise) {
-                    // recreate pointers back to submission in each submitted answer
-                    for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submissionFromClient).getSubmittedAnswers()) {
-                        submittedAnswer.setSubmission(((QuizSubmission) submissionFromClient));
-                        if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                            ((DragAndDropSubmittedAnswer) submittedAnswer).getMappings()
-                                    .forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(((DragAndDropSubmittedAnswer) submittedAnswer)));
+                switch (exercise) {
+                    case QuizExercise ignored -> {
+                        // recreate pointers back to submission in each submitted answer
+                        for (SubmittedAnswer submittedAnswer : ((QuizSubmission) submissionFromClient).getSubmittedAnswers()) {
+                            submittedAnswer.setSubmission(((QuizSubmission) submissionFromClient));
+                            if (submittedAnswer instanceof DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
+                                dragAndDropSubmittedAnswer.getMappings()
+                                        .forEach(dragAndDropMapping -> dragAndDropMapping.setSubmittedAnswer(((DragAndDropSubmittedAnswer) submittedAnswer)));
+                            }
+                            else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer) {
+                                shortAnswerSubmittedAnswer.getSubmittedTexts()
+                                        .forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
+                            }
                         }
-                        else if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
-                            ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts()
-                                    .forEach(submittedText -> submittedText.setSubmittedAnswer(((ShortAnswerSubmittedAnswer) submittedAnswer)));
+
+                        // load quiz submissions for existing participation to be able to compare them in saveSubmission
+                        // 5. DB Call: read
+                        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(List.of(existingParticipationInDatabase));
+
+                        QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
+                        QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
+
+                        if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
+                            quizSubmissionRepository.save(quizSubmissionFromClient);
+                            saveSubmissionVersion(currentUser, submissionFromClient);
                         }
                     }
-
-                    // load quiz submissions for existing participation to be able to compare them in saveSubmission
-                    // 5. DB Call: read
-                    submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(List.of(existingParticipationInDatabase));
-
-                    QuizSubmission existingSubmissionInDatabase = (QuizSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
-                    QuizSubmission quizSubmissionFromClient = (QuizSubmission) submissionFromClient;
-
-                    if (!isContentEqualTo(existingSubmissionInDatabase, quizSubmissionFromClient)) {
-                        quizSubmissionRepository.save(quizSubmissionFromClient);
-                        saveSubmissionVersion(currentUser, submissionFromClient);
+                    case TextExercise ignored -> {
+                        TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
+                        TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
+                        if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
+                            textSubmissionRepository.save(textSubmissionFromClient);
+                            saveSubmissionVersion(currentUser, submissionFromClient);
+                        }
                     }
-                }
-                else if (exercise instanceof TextExercise) {
-                    TextSubmission existingSubmissionInDatabase = (TextSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
-                    TextSubmission textSubmissionFromClient = (TextSubmission) submissionFromClient;
-                    if (!isContentEqualTo(existingSubmissionInDatabase, textSubmissionFromClient)) {
-                        textSubmissionRepository.save(textSubmissionFromClient);
-                        saveSubmissionVersion(currentUser, submissionFromClient);
+                    case ModelingExercise ignored -> {
+                        ModelingSubmission existingSubmissionInDatabase = (ModelingSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
+                        ModelingSubmission modelingSubmissionFromClient = (ModelingSubmission) submissionFromClient;
+                        if (!isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
+                            modelingSubmissionRepository.save(modelingSubmissionFromClient);
+                            saveSubmissionVersion(currentUser, submissionFromClient);
+                        }
                     }
-                }
-                else if (exercise instanceof ModelingExercise) {
-                    ModelingSubmission existingSubmissionInDatabase = (ModelingSubmission) existingParticipationInDatabase.findLatestSubmission().orElse(null);
-                    ModelingSubmission modelingSubmissionFromClient = (ModelingSubmission) submissionFromClient;
-                    if (!isContentEqualTo(existingSubmissionInDatabase, modelingSubmissionFromClient)) {
-                        modelingSubmissionRepository.save(modelingSubmissionFromClient);
-                        saveSubmissionVersion(currentUser, submissionFromClient);
+                    default -> {
                     }
                 }
             }
