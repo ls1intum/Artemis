@@ -131,14 +131,12 @@ public class QuizExerciseImportService extends ExerciseImportService {
         for (QuizQuestion quizQuestion : sourceExercise.getQuizQuestions()) {
             quizQuestion.setId(null);
             quizQuestion.setQuizQuestionStatistic(null);
-            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                setUpMultipleChoiceQuestionForImport(mcQuestion);
-            }
-            else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                setUpDragAndDropQuestionForImport(dndQuestion);
-            }
-            else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
-                setUpShortAnswerQuestionForImport(saQuestion);
+            switch (quizQuestion) {
+                case MultipleChoiceQuestion mcQuestion -> setUpMultipleChoiceQuestionForImport(mcQuestion);
+                case DragAndDropQuestion dndQuestion -> setUpDragAndDropQuestionForImport(dndQuestion);
+                case ShortAnswerQuestion saQuestion -> setUpShortAnswerQuestionForImport(saQuestion);
+                default -> {
+                }
             }
             quizQuestion.setExercise(newExercise);
         }
