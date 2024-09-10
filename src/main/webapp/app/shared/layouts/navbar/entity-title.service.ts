@@ -1,6 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { captureException } from '@sentry/angular';
+import { Exercise } from 'app/entities/exercise.model';
 import { EMPTY, Observable, ReplaySubject, Subject } from 'rxjs';
 
 export enum EntityType {
@@ -85,6 +86,16 @@ export class EntityTitleService {
             }
         } catch (e) {
             captureException(e);
+        }
+    }
+
+    public setExerciseTitle(exercise: Exercise) {
+        // we only want to show the exercise group name as exercise name to the students for exam exercises.
+        // for tutors and more privileged users, we want to show the exercise title
+        if (exercise.exerciseGroup && !exercise?.isAtLeastTutor) {
+            this.setTitle(EntityType.EXERCISE, [exercise.id], exercise.exerciseGroup.title);
+        } else {
+            this.setTitle(EntityType.EXERCISE, [exercise.id], exercise.title);
         }
     }
 
