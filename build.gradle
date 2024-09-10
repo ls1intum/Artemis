@@ -533,10 +533,9 @@ dependencies {
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20240303"
 
-    testRuntimeOnly "org.junit.platform:junit-platform-launcher:1.11.0"
+    // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
 }
-
-ext["junit-jupiter.version"] = junit_version
 
 dependencyManagement {
     imports {
