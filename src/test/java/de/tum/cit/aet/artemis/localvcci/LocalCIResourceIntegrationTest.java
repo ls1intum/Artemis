@@ -54,6 +54,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     protected BuildJob finishedJob3;
 
+    protected BuildJob finishedJobForLogs;
+
     @Autowired
     @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
@@ -95,17 +97,22 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
                 buildConfig, null);
         BuildJobQueueItem finishedJobQueueItem3 = new BuildJobQueueItem("5", "job5", "address1", 5, course.getId() + 2, 1, 1, 1, BuildStatus.FAILED, repositoryInfo, jobTimingInfo3,
                 buildConfig, null);
+        BuildJobQueueItem finishedJobQueueItemForLogs = new BuildJobQueueItem("6", "job5", "address1", 5, course.getId(), programmingExercise.getId(), 1, 1, BuildStatus.FAILED,
+                repositoryInfo, jobTimingInfo3, buildConfig, null);
         var result1 = new Result().successful(true).rated(true).score(100D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result2 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
         var result3 = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
+        var resultForLogs = new Result().successful(false).rated(true).score(0D).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now());
 
         resultRepository.save(result1);
         resultRepository.save(result2);
         resultRepository.save(result3);
+        resultRepository.save(resultForLogs);
 
         finishedJob1 = new BuildJob(finishedJobQueueItem1, BuildStatus.SUCCESSFUL, result1);
         finishedJob2 = new BuildJob(finishedJobQueueItem2, BuildStatus.FAILED, result2);
         finishedJob3 = new BuildJob(finishedJobQueueItem3, BuildStatus.FAILED, result3);
+        finishedJobForLogs = new BuildJob(finishedJobQueueItemForLogs, BuildStatus.FAILED, resultForLogs);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");
@@ -321,14 +328,15 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildLogsForResult() throws Exception {
         try {
-            buildJobRepository.save(finishedJob1);
+            buildJobRepository.save(finishedJobForLogs);
             BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Dummy log");
-            buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "3", programmingExercise);
-            var response = request.get("/api/build-log/3", HttpStatus.OK, String.class);
+            buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "6", programmingExercise);
+            var response = request.get("/api/build-log/6", HttpStatus.OK, String.class);
             assertThat(response).contains("Dummy log");
         }
         finally {
-            Path buildLogFile = Path.of("build-logs", "0.log");
+            Path buildLogFile = Path.of("build-logs").resolve(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName())
+                    .resolve(programmingExercise.getShortName()).resolve("6.log");
             Files.deleteIfExists(buildLogFile);
         }
     }
