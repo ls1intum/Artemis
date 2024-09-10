@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { createRequestOption } from 'app/shared/util/request.util';
@@ -82,7 +83,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     sendTitlesToEntityTitleService(participation: Participation | undefined) {
         if (participation?.exercise) {
             const exercise = participation.exercise;
-            this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise.id], exercise.title);
+            this.entityTitleService.setExerciseTitle(exercise);
 
             if (exercise.course) {
                 const course = exercise.course;
