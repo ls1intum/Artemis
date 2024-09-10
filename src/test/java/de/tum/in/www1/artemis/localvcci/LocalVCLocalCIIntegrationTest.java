@@ -33,6 +33,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -67,6 +69,8 @@ import de.tum.in.www1.artemis.util.LocalRepository;
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
+
+    private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
     @Autowired
     private ExamUtilService examUtilService;
@@ -211,8 +215,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         });
 
         // Assert that the build job for the solution was completed before the build job for the template participation has started
-        var solutionBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(solutionParticipation.getId()).get();
-        var templateBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId()).get();
+        var solutionBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(solutionParticipation.getId()).orElseThrow();
+        var templateBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId()).orElseThrow();
         assertThat(solutionBuildJob.getBuildCompletionDate()).isBefore(templateBuildJob.getBuildStartDate());
 
     }
@@ -976,15 +980,16 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
+        programmingExercise.setCourse(null);
         programmingExercise.setExerciseGroup(exerciseGroup);
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // Exam is running
         var now = ZonedDateTime.now();
         exam.setStartDate(now.minusHours(1));
         exam.setEndDate(now.plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
-        examRepository.save(exam);
+        exam = examRepository.save(exam);
 
         // Create StudentExam.
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student1);
@@ -1009,15 +1014,19 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
         localCITriggerService.triggerBuild(studentParticipation, false);
+        log.info("Trigger build done");
+
+        localCITriggerService.triggerBuild(studentParticipation, false);
         await().until(() -> {
             BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
             return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
         });
-
         BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+
+        BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
+        assertThat(buildJob.getPriority()).isEqualTo(expectedPriority);
 
         assertThat(buildJobQueueItem).isNotNull();
         assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
-
     }
 }
