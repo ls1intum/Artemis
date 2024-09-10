@@ -29,7 +29,7 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
     Set<Faq> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT distinct faq.categories
+            SELECT DISTINCT faq.categories
             FROM Faq faq
             WHERE faq.course.id = :courseId
             """)
