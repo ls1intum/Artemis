@@ -344,6 +344,11 @@ public class BuildLogEntryService {
      * @return A {@link FileSystemResource} representing the log file if it exists, or {@code null} if the log file cannot be found.
      */
     public FileSystemResource retrieveBuildLogsFromFileForBuildJob(String buildJobId) {
+        if (buildJobId.contains("/") || buildJobId.contains("\\") || buildJobId.contains("..")) {
+            log.warn("Invalid build job ID: {}", buildJobId);
+            throw new IllegalArgumentException("Invalid build job ID");
+        }
+
         ProgrammingExercise programmingExercise = retrieveProgrammingExerciseByBuildJobId(buildJobId);
         String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
