@@ -21,6 +21,8 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DataExport;
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -363,14 +365,18 @@ public class MailService implements InstantNotificationService {
      *
      * @param notificationType that needs to be EXERCISE_SUBMISSION_ASSESSED
      * @param context          that should be updated with the score property
-     * @param exercise         that holds the needed information: exercise -> studentParticipation -> results (this information was loaded in previous steps)
+     * @param exercise         that holds the needed information: exercise -> studentParticipation -> submission -> results (this information was loaded in previous steps)
      * @param recipientStudent who will receive the email
      */
     private void checkAndPrepareExerciseSubmissionAssessedCase(NotificationType notificationType, Context context, Exercise exercise, User recipientStudent) {
         if (notificationType.equals(EXERCISE_SUBMISSION_ASSESSED)) {
-            StudentParticipation studentParticipation = exercise.getStudentParticipations().stream()
+            final StudentParticipation studentParticipation = exercise.getStudentParticipations().stream()
                     .filter(participation -> participation.getStudent().orElseThrow().equals(recipientStudent)).findFirst().orElseThrow();
-            Double score = studentParticipation.findLatestResult().getScore();
+
+            // can't throw as this is only run if an assessment for a submission exists, i.e. a submission does also exist
+            final Result result = studentParticipation.findLatestSubmission().map(Submission::findLatestResult).orElseThrow();
+
+            final Double score = result.getScore();
             context.setVariable(ASSESSED_SCORE, score);
             context.setVariable(RELATIVE_SCORE, exercise.getMaxPoints() / score);
         }
