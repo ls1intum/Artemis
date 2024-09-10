@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.UriService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.ci.AbstractContinuousIntegrationService;
@@ -100,6 +101,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
@@ -119,13 +122,15 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private String gitlabToken;
 
     public GitLabCIService(GitLabApi gitlab, UriService uriService, BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService,
-            ProgrammingLanguageConfiguration programmingLanguageConfiguration, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository) {
+            ProgrammingLanguageConfiguration programmingLanguageConfiguration, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.gitlab = gitlab;
         this.uriService = uriService;
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @Override
@@ -290,7 +295,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        setupGitLabCIConfigurationForRepository(participation.getVcsRepositoryUri(), participation.getProgrammingExercise(), participation.getBuildPlanId());
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithBuildConfigElseThrow(participation.getProgrammingExercise().getId());
+        setupGitLabCIConfigurationForRepository(participation.getVcsRepositoryUri(), programmingExercise, participation.getBuildPlanId());
     }
 
     @Override
