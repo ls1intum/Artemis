@@ -1372,59 +1372,59 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     continue;
                 }
                 var submission = participation.getSubmissions().iterator().next();
-                if (exercise instanceof ModelingExercise modelingExercise) {
-                    // check that the submission was saved and that a submitted version was created
-                    String newModel = "This is a new model";
-                    String newExplanation = "This is an explanation";
-                    var modelingSubmission = (ModelingSubmission) submission;
-                    modelingSubmission.setModel(newModel);
-                    modelingSubmission.setExplanationText(newExplanation);
-                    request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
-                    var savedModelingSubmission = request.get(
-                            "/api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
-                            ModelingSubmission.class);
-                    // check that the submission was saved
-                    assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
-                    assertSensitiveInformationWasFilteredModelingExercise(modelingExercise);
-                    // check that a submitted version was created
-                    assertVersionedSubmission(modelingSubmission);
-                }
-                else if (exercise instanceof TextExercise textExercise) {
-                    var textSubmission = (TextSubmission) submission;
-                    final var newText = "New Text";
-                    textSubmission.setText(newText);
-                    request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
-                    var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
-                    // check that the submission was saved
-                    assertThat(newText).isEqualTo(savedTextSubmission.getText());
-                    // check that a submitted version was created
-                    assertVersionedSubmission(textSubmission);
-                    assertSensitiveInformationWasFilteredTextExercise(textExercise);
-                }
-                else if (exercise instanceof QuizExercise quizExercise) {
-                    // TODO: move into its own function
-                    assertThat(quizExercise.getQuizQuestions()).hasSize(3);
-                    quizExercise.getQuizQuestions().forEach(quizQuestion -> {
-                        assertThat(quizQuestion.getQuizQuestionStatistic()).isNull();
-                        assertThat(quizQuestion.getExplanation()).isNull();
-                        if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                            mcQuestion.getAnswerOptions().forEach(answerOption -> {
-                                assertThat(answerOption.getExplanation()).isNull();
-                                assertThat(answerOption.isIsCorrect()).isNull();
-                            });
-                        }
-                        else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                            assertThat(dndQuestion.getCorrectMappings()).isNullOrEmpty();
-                        }
-                        else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
-                            assertThat(saQuestion.getCorrectMappings()).isNullOrEmpty();
-                        }
-                    });
+                switch (exercise) {
+                    case ModelingExercise modelingExercise -> {
+                        // check that the submission was saved and that a submitted version was created
+                        String newModel = "This is a new model";
+                        String newExplanation = "This is an explanation";
+                        var modelingSubmission = (ModelingSubmission) submission;
+                        modelingSubmission.setModel(newModel);
+                        modelingSubmission.setExplanationText(newExplanation);
+                        request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+                        var savedModelingSubmission = request.get(
+                                "/api/participations/" + exercise.getStudentParticipations().iterator().next().getId() + "/latest-modeling-submission", HttpStatus.OK,
+                                ModelingSubmission.class);
+                        // check that the submission was saved
+                        assertThat(newModel).isEqualTo(savedModelingSubmission.getModel());
+                        assertSensitiveInformationWasFilteredModelingExercise(modelingExercise);
+                        // check that a submitted version was created
+                        assertVersionedSubmission(modelingSubmission);
+                    }
+                    case TextExercise textExercise -> {
+                        var textSubmission = (TextSubmission) submission;
+                        final var newText = "New Text";
+                        textSubmission.setText(newText);
+                        request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                        var savedTextSubmission = (TextSubmission) submissionRepository.findById(textSubmission.getId()).orElseThrow();
+                        // check that the submission was saved
+                        assertThat(newText).isEqualTo(savedTextSubmission.getText());
+                        // check that a submitted version was created
+                        assertVersionedSubmission(textSubmission);
+                        assertSensitiveInformationWasFilteredTextExercise(textExercise);
+                    }
+                    case QuizExercise quizExercise -> {
+                        // TODO: move into its own function
+                        assertThat(quizExercise.getQuizQuestions()).hasSize(3);
+                        quizExercise.getQuizQuestions().forEach(quizQuestion -> {
+                            assertThat(quizQuestion.getQuizQuestionStatistic()).isNull();
+                            assertThat(quizQuestion.getExplanation()).isNull();
+                            switch (quizQuestion) {
+                                case MultipleChoiceQuestion mcQuestion -> mcQuestion.getAnswerOptions().forEach(answerOption -> {
+                                    assertThat(answerOption.getExplanation()).isNull();
+                                    assertThat(answerOption.isIsCorrect()).isNull();
+                                });
+                                case DragAndDropQuestion dndQuestion -> assertThat(dndQuestion.getCorrectMappings()).isNullOrEmpty();
+                                case ShortAnswerQuestion saQuestion -> assertThat(saQuestion.getCorrectMappings()).isNullOrEmpty();
+                                default -> {
+                                }
+                            }
+                        });
 
-                    submitQuizInExam(quizExercise, (QuizSubmission) submission);
-                }
-                else if (exercise instanceof FileUploadExercise fileUploadExercise) {
-                    assertSensitiveInformationWasFilteredFileUploadExercise(fileUploadExercise);
+                        submitQuizInExam(quizExercise, (QuizSubmission) submission);
+                    }
+                    case FileUploadExercise fileUploadExercise -> assertSensitiveInformationWasFilteredFileUploadExercise(fileUploadExercise);
+                    default -> {
+                    }
                 }
             }
 
@@ -1474,34 +1474,38 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
                 var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
 
-                if (exercise instanceof ModelingExercise) {
-                    var modelingSubmissionAfterFinish = (ModelingSubmission) submissionAfterFinish;
-                    var modelingSubmissionAfterStart = (ModelingSubmission) submissionAfterStart;
-                    assertThat(modelingSubmissionAfterFinish).isEqualTo(modelingSubmissionAfterStart);
-                    assertVersionedSubmission(modelingSubmissionAfterStart);
-                    assertVersionedSubmission(modelingSubmissionAfterFinish);
-                }
-                else if (exercise instanceof TextExercise) {
-                    var textSubmissionAfterFinish = (TextSubmission) submissionAfterFinish;
-                    var textSubmissionAfterStart = (TextSubmission) submissionAfterStart;
-                    assertThat(textSubmissionAfterFinish).isEqualTo(textSubmissionAfterStart);
-                    assertVersionedSubmission(textSubmissionAfterStart);
-                    assertVersionedSubmission(textSubmissionAfterFinish);
-                }
-                else if (exercise instanceof QuizExercise) {
-                    var quizSubmissionAfterFinish = (QuizSubmission) submissionAfterFinish;
-                    var quizSubmissionAfterStart = (QuizSubmission) submissionAfterStart;
-                    assertThat(quizSubmissionAfterFinish).isEqualTo(quizSubmissionAfterStart);
-                    assertVersionedSubmission(quizSubmissionAfterStart);
-                    assertVersionedSubmission(quizSubmissionAfterFinish);
-                }
-                else if (exercise instanceof ProgrammingExercise) {
-                    var programmingSubmissionAfterStart = (ProgrammingSubmission) submissionAfterStart;
-                    var programmingSubmissionAfterFinish = (ProgrammingSubmission) submissionAfterFinish;
-                    // assert that we did not update the submission prematurely
-                    assertThat(programmingSubmissionAfterStart.getCommitHash()).isEqualTo(COMMIT_HASH_STRING);
-                    // assert that we get the correct commit hash after submit
-                    assertThat(programmingSubmissionAfterFinish.getCommitHash()).isEqualTo(newCommitHash);
+                switch (exercise) {
+                    case ModelingExercise ignored -> {
+                        var modelingSubmissionAfterFinish = (ModelingSubmission) submissionAfterFinish;
+                        var modelingSubmissionAfterStart = (ModelingSubmission) submissionAfterStart;
+                        assertThat(modelingSubmissionAfterFinish).isEqualTo(modelingSubmissionAfterStart);
+                        assertVersionedSubmission(modelingSubmissionAfterStart);
+                        assertVersionedSubmission(modelingSubmissionAfterFinish);
+                    }
+                    case TextExercise ignored -> {
+                        var textSubmissionAfterFinish = (TextSubmission) submissionAfterFinish;
+                        var textSubmissionAfterStart = (TextSubmission) submissionAfterStart;
+                        assertThat(textSubmissionAfterFinish).isEqualTo(textSubmissionAfterStart);
+                        assertVersionedSubmission(textSubmissionAfterStart);
+                        assertVersionedSubmission(textSubmissionAfterFinish);
+                    }
+                    case QuizExercise ignored -> {
+                        var quizSubmissionAfterFinish = (QuizSubmission) submissionAfterFinish;
+                        var quizSubmissionAfterStart = (QuizSubmission) submissionAfterStart;
+                        assertThat(quizSubmissionAfterFinish).isEqualTo(quizSubmissionAfterStart);
+                        assertVersionedSubmission(quizSubmissionAfterStart);
+                        assertVersionedSubmission(quizSubmissionAfterFinish);
+                    }
+                    case ProgrammingExercise ignored -> {
+                        var programmingSubmissionAfterStart = (ProgrammingSubmission) submissionAfterStart;
+                        var programmingSubmissionAfterFinish = (ProgrammingSubmission) submissionAfterFinish;
+                        // assert that we did not update the submission prematurely
+                        assertThat(programmingSubmissionAfterStart.getCommitHash()).isEqualTo(COMMIT_HASH_STRING);
+                        // assert that we get the correct commit hash after submit
+                        assertThat(programmingSubmissionAfterFinish.getCommitHash()).isEqualTo(newCommitHash);
+                    }
+                    default -> {
+                    }
                 }
 
             }
@@ -1585,35 +1589,32 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
         var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
         assertThat(versionedSubmission).isPresent();
-        if (submission instanceof TextSubmission) {
-            assertThat(((TextSubmission) submission).getText()).isEqualTo(versionedSubmission.get().getContent());
-        }
-        else if (submission instanceof ModelingSubmission modelingSubmission) {
-            assertThat("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText()).isEqualTo(versionedSubmission.get().getContent());
-        }
-        else if (submission instanceof FileUploadSubmission) {
-            assertThat(((FileUploadSubmission) submission).getFilePath()).isEqualTo(versionedSubmission.get().getContent());
-        }
-        else {
-            assertThat(submission).isInstanceOf(QuizSubmission.class);
+        switch (submission) {
+            case TextSubmission textSubmission -> assertThat(textSubmission.getText()).isEqualTo(versionedSubmission.get().getContent());
+            case ModelingSubmission modelingSubmission -> assertThat("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText())
+                    .isEqualTo(versionedSubmission.get().getContent());
+            case FileUploadSubmission fileUploadSubmission -> assertThat(fileUploadSubmission.getFilePath()).isEqualTo(versionedSubmission.get().getContent());
+            default -> {
+                assertThat(submission).isInstanceOf(QuizSubmission.class);
 
-            /*
-             * When comparing the JSON of the submitted answers to the versioned submission,
-             * a direct string comparison may not always be accurate due to the following reasons:
-             * 1. The order of the submitted answers can change since they are stored as sets.
-             * 2. Data fetched from the server might occasionally contain IDs, while the data returned directly might not.
-             * To account for these discrepancies, we perform a non-strict (= order-agnostic) deep JSON comparison after removing any IDs.
-             * This ensures that the content is accurately matched, irrespective of the order or the presence of IDs.
-             */
-            try {
-                var submittedAnswersAsJson = removeIdFieldsFromJSONString(objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers()));
-                var versionedSubmissionAsJson = removeIdFieldsFromJSONString(versionedSubmission.get().getContent());
-                JSONAssert.assertEquals(versionedSubmissionAsJson, submittedAnswersAsJson, false);
+                /*
+                 * When comparing the JSON of the submitted answers to the versioned submission,
+                 * a direct string comparison may not always be accurate due to the following reasons:
+                 * 1. The order of the submitted answers can change since they are stored as sets.
+                 * 2. Data fetched from the server might occasionally contain IDs, while the data returned directly might not.
+                 * To account for these discrepancies, we perform a non-strict (= order-agnostic) deep JSON comparison after removing any IDs.
+                 * This ensures that the content is accurately matched, irrespective of the order or the presence of IDs.
+                 */
+                try {
+                    var submittedAnswersAsJson = removeIdFieldsFromJSONString(objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers()));
+                    var versionedSubmissionAsJson = removeIdFieldsFromJSONString(versionedSubmission.get().getContent());
+                    JSONAssert.assertEquals(versionedSubmissionAsJson, submittedAnswersAsJson, false);
+                }
+                catch (JsonProcessingException | JSONException e) {
+                    fail("Exception thrown while serializing submitted answers", e);
+                }
+                assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());
             }
-            catch (JsonProcessingException | JSONException e) {
-                fail("Exception thrown while serializing submitted answers", e);
-            }
-            assertThat(submission).isEqualTo(versionedSubmission.get().getSubmission());
         }
     }
 
@@ -1930,21 +1931,23 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                 continue;
             }
             var submission = participation.getSubmissions().iterator().next();
-            if (exercise instanceof ModelingExercise) {
-                // check that the submission was saved and that a submitted version was created
-                String newModel = "This is a new model";
-                var modelingSubmission = (ModelingSubmission) submission;
-                modelingSubmission.setModel(newModel);
-                request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
-            }
-            else if (exercise instanceof TextExercise) {
-                var textSubmission = (TextSubmission) submission;
-                final var newText = "New Text";
-                textSubmission.setText(newText);
-                request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
-            }
-            else if (exercise instanceof QuizExercise quizExercise) {
-                submitQuizInExam(quizExercise, (QuizSubmission) submission);
+            switch (exercise) {
+                case ModelingExercise ignored -> {
+                    // check that the submission was saved and that a submitted version was created
+                    String newModel = "This is a new model";
+                    var modelingSubmission = (ModelingSubmission) submission;
+                    modelingSubmission.setModel(newModel);
+                    request.put("/api/exercises/" + exercise.getId() + "/modeling-submissions", modelingSubmission, HttpStatus.OK);
+                }
+                case TextExercise ignored -> {
+                    var textSubmission = (TextSubmission) submission;
+                    final var newText = "New Text";
+                    textSubmission.setText(newText);
+                    request.put("/api/exercises/" + exercise.getId() + "/text-submissions", textSubmission, HttpStatus.OK);
+                }
+                case QuizExercise quizExercise -> submitQuizInExam(quizExercise, (QuizSubmission) submission);
+                default -> {
+                }
             }
         }
         return studentExamFromServer;
