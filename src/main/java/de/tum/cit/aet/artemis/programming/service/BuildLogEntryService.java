@@ -398,20 +398,59 @@ public class BuildLogEntryService {
         if (!profileService.isSchedulingActive()) {
             return;
         }
-        log.info("Deleting old build log files");
-        ZonedDateTime now = ZonedDateTime.now();
 
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(buildLogsPath)) {
-            for (Path file : stream) {
-                ZonedDateTime lastModified = ZonedDateTime.ofInstant(Files.getLastModifiedTime(file).toInstant(), now.getZone());
-                if (lastModified.isBefore(now.minusDays(expiryDays))) {
-                    Files.deleteIfExists(file);
-                    log.info("Deleted old build log file {}", file);
-                }
-            }
+        log.info("Deleting old build log files");
+
+        try {
+            deleteRecursively(buildLogsPath);
         }
         catch (IOException e) {
             log.error("Error occurred while trying to delete old build log files", e);
+        }
+    }
+
+    private void deleteRecursively(Path path) throws IOException {
+        if (!Files.isDirectory(path)) {
+            deleteFileIfExpired(path);
+            return;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
+            for (Path subPath : stream) {
+                deleteRecursively(subPath);
+            }
+        }
+        catch (IOException e) {
+            log.error("Error occurred while processing directory: {}", path, e);
+        }
+
+        if (!path.equals(buildLogsPath)) {
+            deleteDirectoryIfEmpty(path);
+        }
+    }
+
+    private void deleteFileIfExpired(Path file) throws IOException {
+        ZonedDateTime now = ZonedDateTime.now();
+
+        ZonedDateTime lastModified = ZonedDateTime.ofInstant(Files.getLastModifiedTime(file).toInstant(), now.getZone());
+        if (Files.isRegularFile(file) && lastModified.isBefore(now.minusDays(expiryDays))) {
+            Files.deleteIfExists(file);
+            log.info("Deleted old build log file {}", file);
+        }
+
+    }
+
+    private void deleteDirectoryIfEmpty(Path directory) {
+        if (Files.isDirectory(directory)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+                if (!stream.iterator().hasNext()) {
+                    Files.deleteIfExists(directory);
+                    log.info("Deleted empty directory {}", directory);
+                }
+            }
+            catch (IOException e) {
+                log.error("Error occurred while trying to delete empty directory {}", directory, e);
+            }
         }
     }
 
