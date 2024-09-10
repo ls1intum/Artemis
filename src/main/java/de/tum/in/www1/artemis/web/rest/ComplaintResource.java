@@ -352,7 +352,6 @@ public class ComplaintResource {
 
         Submission originalSubmission = complaint.getResult().getSubmission();
         if (originalSubmission != null) {
-            Submission submissionWithOnlyId;
             Submission submissionWithOnlyId = switch (originalSubmission) {
                 case TextSubmission ignored -> new TextSubmission();
                 case ModelingSubmission ignored -> new ModelingSubmission();
@@ -363,7 +362,6 @@ public class ComplaintResource {
 
             if (submissionWithOnlyId == null) {
                 return;
-            }
             }
             submissionWithOnlyId.setId(originalSubmission.getId());
             complaint.getResult().setSubmission(submissionWithOnlyId);
