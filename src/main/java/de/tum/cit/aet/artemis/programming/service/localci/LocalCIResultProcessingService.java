@@ -124,13 +124,12 @@ public class LocalCIResultProcessingService {
 
         SecurityUtils.setAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
-        ProgrammingExerciseParticipation participation = null;
 
         if (buildResult != null) {
             Result result = null;
             try {
                 if (participationOptional.isPresent()) {
-                    participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
 
                     // In case the participation does not contain the exercise, we have to load it from the database
                     if (participation.getProgrammingExercise() == null) {
@@ -159,8 +158,9 @@ public class LocalCIResultProcessingService {
                 }
 
                 if (participationOptional.isPresent()) {
-                    if (participation == null) {
-                        participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    if (participation.getExercise() == null) {
+                        participation.setExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation));
                     }
 
                     if (result != null) {
