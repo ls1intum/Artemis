@@ -432,6 +432,13 @@ public class BuildLogEntryService {
         String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String exerciseShortName = programmingExercise.getShortName();
         Path logPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName).resolve(buildJobId + ".log");
+        boolean existsInExerciseFolder = Files.exists(logPath);
+        if (existsInExerciseFolder) {
+            return true;
+        }
+
+        // Check parent folder for backwards compatibility
+        logPath = buildLogsPath.resolve(buildJobId + ".log");
         return Files.exists(logPath);
     }
 
