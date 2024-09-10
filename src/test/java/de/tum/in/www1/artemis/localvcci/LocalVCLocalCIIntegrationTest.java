@@ -14,6 +14,7 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -1001,7 +1002,10 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         testPriority(student1Login, PRIORITY_EXAM_CONDUCTION);
 
         queuedJobs.clear();
+        log.info("Clear queued jobs done");
+
         sharedQueueProcessingService.init();
+        log.info("Cleanup queue processing service done");
     }
 
     private void testPriority(String login, int expectedPriority) throws Exception {
@@ -1016,13 +1020,18 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localCITriggerService.triggerBuild(studentParticipation, false);
         log.info("Trigger build done");
 
-        await().until(() -> {
+        await().atMost(Duration.ofSeconds(15)).pollInterval(Duration.ofSeconds(1)).until(() -> {
             BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+            log.info("Poll queue jobs: is null %s".formatted(buildJobQueueItem == null ? "true" : "false"));
+
             return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
         });
         BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+        log.info("Polled queue item");
 
         assertThat(buildJobQueueItem).isNotNull();
         assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
+        log.info("Assertions done");
+
     }
 }
