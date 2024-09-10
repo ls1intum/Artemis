@@ -84,14 +84,19 @@
     @if (displayEditorModus) {
         <div>
             <div class="d-flex justify-content-between">
-                <span jhiTranslate="'artemisApp.programmingExercise.offlineIde'">: {{ programmingExercise.allowOfflineIde || false }}</span>
+                <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.offlineIde'"></span>
+                <span [jhiTranslate]="programmingExercise.allowOfflineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
             </div>
             <div class="d-flex justify-content-between">
-                <span jhiTranslate="'artemisApp.programmingExercise.onlineEditor'">: {{ programmingExercise.allowOnlineEditor || false }}</span>
+                <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineEditor'"></span>
+                <span [jhiTranslate]="programmingExercise.allowOnlineEditor ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
             </div>
-            <div class="d-flex justify-content-between">
-                <span jhiTranslate="'artemisApp.programmingExercise.onlineIde'">: {{ programmingExercise.allowOnlineIde || false }}</span>
-            </div>
+            @if (onlineIdeEnabled) {
+                <div class="d-flex justify-content-between">
+                    <span class="colon-suffix" [jhiTranslate]="'artemisApp.programmingExercise.onlineIde'"></span>
+                    <span [jhiTranslate]="programmingExercise.allowOnlineIde ? 'artemisApp.exercise.yes' : 'artemisApp.exercise.no'"></span>
+                </div>
+            }
         </div>
     }
 }

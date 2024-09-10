@@ -12,6 +12,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -27,7 +28,6 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
-import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildAgentInformation;
@@ -55,6 +55,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     protected BuildJob finishedJob3;
 
     @Autowired
+    @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
 
     @Autowired
@@ -68,9 +69,6 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     protected IMap<String, BuildJobQueueItem> processingJobs;
 
     protected IMap<String, BuildAgentInformation> buildAgentInformation;
-
-    @Autowired
-    protected BuildJobRepository buildJobRepository;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
