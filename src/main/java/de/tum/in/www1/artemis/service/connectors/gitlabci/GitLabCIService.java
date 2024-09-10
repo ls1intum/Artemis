@@ -295,15 +295,14 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void deleteProject(String projectKey) {
-        log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
-        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
+        log.debug("Unsupported action: GitLabCIService.deleteBuildPlan()");
+        log.debug("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
     }
 
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
-        log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
-        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
-        // TODO
+        log.debug("Unsupported action: GitLabCIService.deleteBuildPlan()");
+        log.debug("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
     }
 
     @Override
@@ -327,7 +326,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private BuildStatus convertPipelineStatusToBuildStatus(PipelineStatus status) {
-        // TODO
         return switch (status) {
             case CREATED, WAITING_FOR_RESOURCE, PREPARING, PENDING -> BuildStatus.QUEUED;
             case RUNNING -> BuildStatus.BUILDING;
@@ -347,46 +345,46 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
-        log.error("Unsupported action: GitLabCIService.checkIfBuildPlanExists()");
+        log.debug("Unsupported action: GitLabCIService.checkIfBuildPlanExists()");
         return true;
     }
 
     @Override
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
-        log.error("Unsupported action: GitLabCIService.retrieveLatestArtifact()");
+        log.debug("Unsupported action: GitLabCIService.retrieveLatestArtifact()");
         return null;
     }
 
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
-        log.error("Unsupported action: GitLabCIService.checkIfProjectExists()");
+        log.debug("Unsupported action: GitLabCIService.checkIfProjectExists()");
         return null;
     }
 
     @Override
     public void enablePlan(String projectKey, String planKey) {
-        log.error("Unsupported action: GitLabCIService.enablePlan()");
+        log.debug("Unsupported action: GitLabCIService.enablePlan()");
     }
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUri, String existingRepoUri,
             String newDefaultBranch) {
-        log.error("Unsupported action: GitLabCIService.updatePlanRepository()");
+        log.debug("Unsupported action: GitLabCIService.updatePlanRepository()");
     }
 
     @Override
     public void giveProjectPermissions(String projectKey, List<String> groups, List<CIPermission> permissions) {
-        log.error("Unsupported action: GitLabCIService.giveProjectPermissions()");
+        log.debug("Unsupported action: GitLabCIService.giveProjectPermissions()");
     }
 
     @Override
     public void givePlanPermissions(ProgrammingExercise programmingExercise, String planName) {
-        log.error("Unsupported action: GitLabCIService.givePlanPermissions()");
+        log.debug("Unsupported action: GitLabCIService.givePlanPermissions()");
     }
 
     @Override
     public void removeAllDefaultProjectPermissions(String projectKey) {
-        log.error("Unsupported action: GitLabCIService.removeAllDefaultProjectPermissions()");
+        log.debug("Unsupported action: GitLabCIService.removeAllDefaultProjectPermissions()");
     }
 
     @Override
@@ -396,12 +394,12 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws ContinuousIntegrationException {
-        log.error("Unsupported action: GitLabCIService.createProjectForExercise()");
+        log.debug("Unsupported action: GitLabCIService.createProjectForExercise()");
     }
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
+        log.debug("Unsupported action: GitLabCIService.getWebHookUrl()");
         return Optional.empty();
     }
 
