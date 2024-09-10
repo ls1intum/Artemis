@@ -6,7 +6,6 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
@@ -36,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.ogparser.LinkPreviewResource;
 
 class ResourceArchitectureTest extends AbstractArchitectureTest {
 
-    private static final Pattern KEBAB_CASE_OR_PATH_VARIABLE_PATTERN = Pattern.compile("^(\\.?([a-z0-9]+(-[a-z0-9]+)*|\\{[^}]+\\}|[a-z0-9]+\\.json|\\*))$");
+    private static final Pattern KEBAB_CASE_PATH_PATTERN = Pattern.compile("^\\.?([a-z0-9]+(?:-[a-z0-9]+)*|\\{[^}]+})(/([a-z0-9]+(?:-[a-z0-9]+)*|\\{[^}]+}))*/?(\\*)?(\\.json)?$");
 
     @Test
     void shouldBeNamedResource() {
@@ -89,10 +88,9 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
                         .filter(annotation -> ((JavaClass) annotation.getType()).getSimpleName().equals(annotationClass.getSimpleName())).findFirst();
 
                 if (restMappingAnnotation.isPresent()) {
-                    boolean satisfied = Arrays.stream(((String[]) restMappingAnnotation.get().tryGetExplicitlyDeclaredProperty("value").get())[0].split("/"))
-                            .allMatch(part -> KEBAB_CASE_OR_PATH_VARIABLE_PATTERN.matcher(part).matches());
-                    if (!satisfied) {
-                        events.add(violated(item, String.format("%s violates rule to use kebab case for rest call annotations", item.getFullName())));
+                    String restURL = ((String[]) restMappingAnnotation.get().tryGetExplicitlyDeclaredProperty("value").get())[0];
+                    if (!KEBAB_CASE_PATH_PATTERN.matcher(restURL).matches()) {
+                        events.add(violated(item, String.format("\"%s\" violates rule to only use kebab case for REST annotations in %s", restURL, item.getFullName())));
                     }
                 }
             }
