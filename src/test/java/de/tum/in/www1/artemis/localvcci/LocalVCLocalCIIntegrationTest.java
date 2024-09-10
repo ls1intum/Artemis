@@ -1022,10 +1022,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         });
         BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
 
-        // uncommenting these two lines not only breaks this test, but also leads to timeout in several other tests (10s)
-        // BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
-        // assertThat(buildJob.getPriority()).isEqualTo(expectedPriority);
-
         assertThat(buildJobQueueItem).isNotNull();
         assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
     }
