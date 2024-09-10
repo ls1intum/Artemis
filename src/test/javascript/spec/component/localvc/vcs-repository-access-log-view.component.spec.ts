@@ -47,6 +47,13 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
 
     const route = { params: of({ participationId: '5' }) } as any as ActivatedRoute;
 
+    function setupTestBed() {
+        fixture = TestBed.createComponent(VcsRepositoryAccessLogViewComponent);
+        programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
+        repositoryVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForRepository').mockReturnValue(of(mockVcsAccessLog));
+        participationVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForParticipation').mockReturnValue(of(mockVcsAccessLog));
+    }
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [VcsRepositoryAccessLogViewComponent],
@@ -77,11 +84,4 @@ describe('VcsRepositoryAccessLogViewComponent', () => {
 
         expect(repositoryVcsAccessLogSpy).toHaveBeenCalledOnce();
     });
-
-    function setupTestBed() {
-        fixture = TestBed.createComponent(VcsRepositoryAccessLogViewComponent);
-        programmingExerciseParticipationService = fixture.debugElement.injector.get(ProgrammingExerciseParticipationService);
-        repositoryVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForRepository').mockReturnValue(of(mockVcsAccessLog));
-        participationVcsAccessLogSpy = jest.spyOn(programmingExerciseParticipationService, 'getVcsAccessLogForParticipation').mockReturnValue(of(mockVcsAccessLog));
-    }
 });
