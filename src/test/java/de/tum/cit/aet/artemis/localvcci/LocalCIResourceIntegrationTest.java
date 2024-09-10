@@ -321,9 +321,10 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBuildLogsForResult() throws Exception {
         try {
+            buildJobRepository.save(finishedJob1);
             BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Dummy log");
-            buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "0");
-            var response = request.get("/api/build-log/0", HttpStatus.OK, String.class);
+            buildLogEntryService.saveBuildLogsToFile(List.of(buildLogEntry), "3", programmingExercise);
+            var response = request.get("/api/build-log/3", HttpStatus.OK, String.class);
             assertThat(response).contains("Dummy log");
         }
         finally {

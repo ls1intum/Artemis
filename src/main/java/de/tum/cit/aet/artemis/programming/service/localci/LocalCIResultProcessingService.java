@@ -124,12 +124,13 @@ public class LocalCIResultProcessingService {
 
         SecurityUtils.setAuthorizationObject();
         Optional<Participation> participationOptional = participationRepository.findWithProgrammingExerciseWithBuildConfigById(buildJob.participationId());
+        ProgrammingExerciseParticipation participation = null;
 
         if (buildResult != null) {
             Result result = null;
             try {
                 if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    participation = (ProgrammingExerciseParticipation) participationOptional.get();
 
                     // In case the participation does not contain the exercise, we have to load it from the database
                     if (participation.getProgrammingExercise() == null) {
@@ -158,7 +159,9 @@ public class LocalCIResultProcessingService {
                 }
 
                 if (participationOptional.isPresent()) {
-                    ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    if (participation == null) {
+                        participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    }
 
                     if (result != null) {
                         programmingMessagingService.notifyUserAboutNewResult(result, participation);
@@ -168,15 +171,15 @@ public class LocalCIResultProcessingService {
                         programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
                                 new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
                     }
-                }
-            }
 
-            if (!buildLogs.isEmpty()) {
-                if (savedBuildJob != null) {
-                    buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId());
-                }
-                else {
-                    log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
+                    if (!buildLogs.isEmpty()) {
+                        if (savedBuildJob != null) {
+                            buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId(), participation.getProgrammingExercise());
+                        }
+                        else {
+                            log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
+                        }
+                    }
                 }
             }
 

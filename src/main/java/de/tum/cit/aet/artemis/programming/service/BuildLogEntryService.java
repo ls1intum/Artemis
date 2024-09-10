@@ -43,16 +43,23 @@ public class BuildLogEntryService {
 
     private final ProfileService profileService;
 
+    private final BuildJobRepository buildJobRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     @Value("${artemis.continuous-integration.build-log.file-expiry-days:30}")
     private int expiryDays;
 
     @Value("${artemis.build-logs-path:./build-logs}")
     private Path buildLogsPath;
 
-    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository, ProfileService profileService) {
+    public BuildLogEntryService(BuildLogEntryRepository buildLogEntryRepository, ProgrammingSubmissionRepository programmingSubmissionRepository, ProfileService profileService,
+            BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.buildLogEntryRepository = buildLogEntryRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.profileService = profileService;
+        this.buildJobRepository = buildJobRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -287,18 +294,20 @@ public class BuildLogEntryService {
      * @param buildLogEntries the build logs to save
      * @param buildJobId      the id of the build job for which to save the build logs
      */
-    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String buildJobId) {
-
-        if (!Files.exists(buildLogsPath)) {
+    public void saveBuildLogsToFile(List<BuildLogEntry> buildLogEntries, String buildJobId, ProgrammingExercise programmingExercise) {
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        String exerciseShortName = programmingExercise.getShortName();
+        Path exerciseLogsPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName);
+        if (!Files.exists(exerciseLogsPath)) {
             try {
-                Files.createDirectories(buildLogsPath);
+                Files.createDirectories(exerciseLogsPath);
             }
             catch (Exception e) {
                 throw new IllegalStateException("Could not create directory for build logs", e);
             }
         }
 
-        Path logPath = buildLogsPath.resolve(buildJobId + ".log");
+        Path logPath = exerciseLogsPath.resolve(buildJobId + ".log");
 
         StringBuilder logsStringBuilder = new StringBuilder();
         for (BuildLogEntry buildLogEntry : buildLogEntries) {
@@ -321,17 +330,33 @@ public class BuildLogEntryService {
      * @return the build logs as a string or null if the file could not be found (e.g. if the build logs have been deleted)
      */
     public FileSystemResource retrieveBuildLogsFromFileForBuildJob(String buildJobId) {
-        Path logPath = buildLogsPath.resolve(buildJobId + ".log");
+        ProgrammingExercise programmingExercise = retrieveProgrammingExerciseByBuildJobId(buildJobId);
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        String exerciseShortName = programmingExercise.getShortName();
+        Path logPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName).resolve(buildJobId + ".log");
 
         FileSystemResource fileSystemResource = new FileSystemResource(logPath);
         if (fileSystemResource.exists()) {
             log.debug("Retrieved build logs for build job {} from file {}", buildJobId, logPath);
             return fileSystemResource;
         }
-        else {
-            log.warn("Could not find build logs for build job {} in file {}", buildJobId, logPath);
-            return null;
+
+        // If the file is not found in the exercise directory, try to find it in the parent directory (for backwards compatibility)
+        log.warn("Build log file for build job {} not found at path {}. Searching in Parent directory...", buildJobId, logPath);
+        logPath = buildLogsPath.resolve(buildJobId + ".log");
+        fileSystemResource = new FileSystemResource(logPath);
+        if (fileSystemResource.exists()) {
+            log.debug("Retrieved build logs for build job {} from file {}", buildJobId, logPath);
+            return fileSystemResource;
         }
+
+        log.warn("Could not find build logs for build job {} in file {}", buildJobId, logPath);
+        return null;
+    }
+
+    private ProgrammingExercise retrieveProgrammingExerciseByBuildJobId(String buildJobId) {
+        BuildJob buildJob = buildJobRepository.findBuildJobByBuildJobId(buildJobId).orElseThrow();
+        return programmingExerciseRepository.findById(buildJob.getExerciseId()).orElseThrow();
     }
 
     /**
@@ -376,8 +401,10 @@ public class BuildLogEntryService {
         }
     }
 
-    public boolean buildJobHasLogFile(String buildJobId) {
-        Path logPath = buildLogsPath.resolve(buildJobId + ".log");
+    public boolean buildJobHasLogFile(String buildJobId, ProgrammingExercise programmingExercise) {
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        String exerciseShortName = programmingExercise.getShortName();
+        Path logPath = buildLogsPath.resolve(courseShortName).resolve(exerciseShortName).resolve(buildJobId + ".log");
         return Files.exists(logPath);
     }
 
