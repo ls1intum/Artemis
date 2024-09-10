@@ -9,16 +9,10 @@ Prerequisites
 ^^^^^^^^^^^^^
 
 - A server/VM or local machine
-- Docker installed on the machine
+- Docker installed on the machine (Needed for Docker Setup)
 
 Installation Steps
 ^^^^^^^^^^^^^^^^^^
-
-Create a Directory for Pyris Deployment
-"""""""""""""""""""""""""""""""""""""""
-
-Create a directory where you will deploy Pyris. For example, you can create a directory at ``/opt/pyris`` on the machine.
-For local development, you can create a directory at ``~/pyris``.
 
 Clone the Pyris Repository
 """"""""""""""""""""""""""
@@ -31,70 +25,214 @@ E.g.: ``git clone https://github.com/ls1intum/Pyris.git Pyris``
 Create an Application Configuration File
 """"""""""""""""""""""""""""""""""""""""
 
-Create an ``application.yml`` file using the provided ``application.example.yml`` in the Pyris repository as a base.
-E.g.: ``cp Pyris/application.example.yml application.yml``
+Create an ``application.local.yml`` file using the provided ``application.example.yml`` in the Pyris repository as a base.
+E.g.: ``cp Pyris/application.example.yml application.local.yml``
 
-Now you need to configure the ``application.yml`` file. Here is an example configuration:
+Now you need to configure the ``application.local.yml`` file. Here is an example configuration:
 
 .. code-block:: yaml
 
-    pyris:
-        api_keys:
-          - comment: Artemis
-            llm_access: [AZURE_GPT35_TURBO_16K_0613, OPENAI_GPT35_TURBO_16K_0613]
-            token: super-secret
-        cache:
-            hazelcast:
-                host: cache
-                port: 5701
-        llms:
-            AZURE_GPT35_TURBO_16K_0613:
-                description: GPT-3.5 on Azure model from 2023-06-13 with 16k context length
-                name: GPT-3.5 (16k, Azure)
-                llm_credentials:
-                    api_type: azure
-                    api_base: 'https://<your-url>.azure.com/'
-                    api_version: 2023-03-15-preview
-                    deployment_id: gpt-35-16k
-                    model: gpt-3.5-turbo
-                    token: <token>
-            OPENAI_GPT35_TURBO_16K_0613:
-                description: GPT-3.5 on OpenAI from 2023-06-13 with 16k context length
-                name: GPT-3.5 Turbo (16k, OpenAI)
-                llm_credentials:
-                    chat_mode: 'True'
-                    model: gpt-3.5-turbo-16k-0613
-                    token: <token>
+    api_keys:
+      - token: "secret"
 
-Create Environment Variables File
+    weaviate:
+      host: "localhost"
+      port: "8001"
+      grpc_port: "50051"
+
+    env_vars:
+        test: "test"
+
+
+Create LLM Config File
 """""""""""""""""""""""""""""""""
+Create an ``llm_config.local.yml`` file using the provided ``llm_config.example.yml`` in the Pyris repository as a base.
+E.g.: ``cp Pyris/llm_config.example.yml llm_config.local.yml``
 
-Create a ``.env`` file containing the following variables:
+This file contains the configuration for the Large Language Model (LLM) that can be used by the pipelines in Pyris.
 
-- ``PYRIS_DOCKER_TAG``: The Docker tag to use. Ideally use ``latest`` here.
-- ``PYRIS_APPLICATION_YML_FILE``: The absolute path to the ``application.yml`` file that you created. E.g.: ``/opt/pyris/application.yml``
-- ``NGINX_PROXY_SSL_CERTIFICATE_PATH``: The absolute path to the SSL certificate to use. Defaults to self-signed certificates. For production, you should use a valid SSL certificate. For local development, you an ignore this variable.
-- ``NGINX_PROXY_SSL_CERTIFICATE_KEY_PATH``: The absolute path to the SSL certificate key to use. Defaults to self-signed certificates. For production, you should use a valid SSL certificate. For local development, you an ignore this variable.
+The capability system in Pyris will use this configuration to determine which model to use for a pipeline.
+
+Now you need to configure the ``llm_config.local.yml`` file.
+
+Example OpenAI
+**************
+.. code-block:: yaml
+
+    - api_key: <your_openai_api_key>
+      capabilities:
+        context_length: 16385
+        gpt_version_equivalent: 3.5
+        image_recognition: false
+        input_cost: 0.5
+        json_mode: true
+        output_cost: 1.5
+        privacy_compliance: false
+        self_hosted: false
+        vendor: OpenAI
+      description: GPT 3.5 16k
+      id: oai-gpt-35-turbo
+      model: gpt-3.5-turbo
+      name: GPT 3.5 Turbo
+      type: openai_chat
+
+Example Azure OpenAI
+********************
+.. code-block:: yaml
+
+      api_key: "<your_azure_api_key>"
+      tools: []
+      capabilities:
+        input_cost: 6
+        output_cost: 16
+        gpt_version_equivalent: 4.5 # This is the equivalent GPT version of the model. We use 4.5 for GPT 4 Omni model.
+        context_length: 128000
+        vendor: "OpenAI"
+        privacy_compliance: True
+        self_hosted: False
+        image_recognition: True
+        json_mode: True
+      description: "GPT 4 Omni on Azure"
+      id: "azure-gpt-4-omni"
+      name: "GPT 4 Omni"
+      type: "azure_chat"
+      endpoint: <your_azure_model_endpoint>
+      api_version: "2024-02-15-preview"
+      azure_deployment: "gpt4o"
+      model: "gpt4o"
 
 Start Pyris
 """""""""""
+Using local environment
+***********************
 
-You can now start Pyris using the following command:
+.. warning::
+    For local Weaviate vector database setup, please refer to `Weaviate Docs <https://weaviate.io/developers/weaviate/quickstart>`_.
 
-.. code-block:: bash
+=============
+Prerequisites
+=============
+- Clone the Pyris repository to your local machine.
+- Ensure you correctly configured ``llm_config.local.yml`` file.
+- Ensure you correctly configured ``application.local.yml`` file.
 
-   docker compose --project-directory "$PROJECT_DIR" -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --pull always --no-build
+=======================================================
+Setup instructions
+=======================================================
+Follow the following steps for the local Pyris setup:
 
-- ``$PROJECT_DIR`` should point to the Pyris directory you created.
-- ``$COMPOSE_FILE`` should point to the ``docker/pyris-production.yml`` file in the Pyris repository.
-- ``$ENV_FILE`` should point to the ``.env`` file you just created.
+1. **Check python version:** python --version (should be 3.12)
+2. **Install packages:** pip install -r requirements.txt
+3. **Start Pyris** using the following command:
+    .. code-block:: bash
 
-E.g.:
+      APPLICATION_YML_PATH=<path-to-your-application-yml-file> LLM_CONFIG_PATH=<path-to-your-llm-config-yml> uvicorn app.main:app --reload
 
-.. code-block:: bash
+4. **You can now access the API docs under the following link:** http://localhost:8000/docs
 
-   docker compose --project-directory "/opt/pyris" -f "/opt/pyris/Pyris/docker/pyris-production.yml" --env-file "/opt/pyris/.env" up -d --pull always --no-build
+This setup should help you run the Pyris application on your local machine.
+Ensure you modify the configuration files as per your specific requirements before deploying.
 
-This will start the Pyris application on your server/VM.
+Using Docker
+************
+
+You can run Pyris in different environments: ``development`` or ``production``. Docker Compose is used to orchestrate the different services, including ``Pyris``, ``Weaviate``, and ``Nginx``.
+
+=============
+Prerequisites
+=============
+
+-  Ensure Docker and Docker Compose are installed on your machine.
+-  Clone the Pyris repository to your local machine.
+
+=======================================================
+Setup Instructions
+=======================================================
+1. **Build and Run the Containers**
+   You can run Pyris in different environments: development or
+   production. Docker Compose is used to orchestrate the different
+   services, including Pyris, Weaviate, and Nginx.
+   -  **For Development:**
+
+      Use the following command to start the development environment:
+
+      .. code:: bash
+
+         docker-compose -f docker-compose/pyris-dev.yml up --build
+
+      This command will:
+
+      -  Build the Pyris application from the Dockerfile.
+      -  Start the Pyris application along with Weaviate in development
+         mode.
+      -  Mount the local configuration files (``application.local.yml``
+         and ``llm-config.local.yml``) for easy modification.
+
+      The application will be available at ``http://localhost:8000``.
+
+   -  **For Production:**
+
+      Use the following command to start the production environment:
+
+      .. code:: bash
+
+         docker-compose -f docker-compose/pyris-production.yml up -d
+
+      This command will:
+
+      -  Pull the latest Pyris image from the GitHub Container Registry.
+      -  Start the Pyris application along with Weaviate and Nginx in
+         production mode.
+      -  Nginx will serve as a reverse proxy, handling SSL termination
+         if certificates are provided.
+
+      The application will be available at ``https://``.
+
+2. **Configuration**
+
+   -  **Weaviate**: Weaviate is configured via the ``weaviate.yml``
+      file. By default, it runs on port 8001.
+   -  **Pyris Application**: The Pyris application configuration is
+      handled through environment variables and mounted YAML
+      configuration files.
+   -  **Nginx**: Nginx is used for handling requests in a production
+      environment and is configured via ``nginx.yml``.
+
+3. **Accessing the Application**
+
+   -  For development, access the API documentation at:
+      ``http://localhost:8000/docs``
+   -  For production, access the application at your domain (e.g.,
+      ``https://``).
+
+4. **Stopping the Containers**
+
+   To stop the running containers, use:
+
+   .. code:: bash
+
+      docker-compose -f docker-compose/pyris-dev.yml down
+
+   or
+
+   .. code:: bash
+
+      docker-compose -f docker-compose/pyris-production.yml down
+5. **Logs and Debugging**
+   -  View the logs for a specific service, e.g., Pyris:
+
+      .. code:: bash
+
+         docker-compose -f docker-compose/pyris-dev.yml logs pyris-app
+
+   -  For production, ensure that Nginx and Weaviate services are
+      running smoothly and check their respective logs if needed.
+
+
+This setup should help you run the Pyris application in both development
+and production environments with Docker. Ensure you modify the
+configuration files as per your specific requirements before deploying.
+
+---------------
 
 That's it! You've successfully installed and configured Pyris.
