@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +24,6 @@ import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.in.www1.artemis.participation.ParticipationUtilService;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseGroupRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.repository.TeamRepository;
 import de.tum.in.www1.artemis.service.StaticCodeAnalysisService;
@@ -36,9 +36,6 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     @Autowired
     protected TeamRepository teamRepository;
-
-    @Autowired
-    protected ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
     protected ExamRepository examRepository;
@@ -162,5 +159,10 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         testsRepositorySlug = localVCLocalCITestService.getRepositorySlug(projectKey1, "tests");
 
         localVCLocalCITestService.addTestCases(programmingExercise);
+    }
+
+    @AfterEach
+    void tearDown() {
+        buildJobRepository.deleteAll();
     }
 }
