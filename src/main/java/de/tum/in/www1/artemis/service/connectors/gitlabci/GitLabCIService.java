@@ -140,7 +140,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         // This method is called twice when creating an exercise. Once for the template repository and once for the solution repository.
         // The second time, we don't want to overwrite the configuration.
         setupGitLabCIConfigurationForGroup(exercise, false);
-        setupGitLabCIConfigurationForRepository(repositoryUri, exercise, planKey);
+        setupGitLabCIConfigurationForRepository(repositoryUri, exercise, generateBuildPlanId(exercise.getProjectKey(), planKey));
     }
 
     private void setupGitLabCIConfigurationForRepository(VcsRepositoryUri repositoryUri, ProgrammingExercise exercise, String buildPlanId) {
@@ -220,7 +220,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         ZonedDateTime courseEndDate = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getEndDate();
 
         Date expiryDate;
-        if (courseEndDate.isAfter(ZonedDateTime.now())) {
+        if (courseEndDate != null && courseEndDate.isAfter(ZonedDateTime.now())) {
             expiryDate = Date.from(courseEndDate.toInstant());
         }
         else {

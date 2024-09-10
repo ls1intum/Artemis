@@ -8,13 +8,14 @@ test-job:
     only:
         variables:
             - $CI_COMMIT_BRANCH == $ARTEMIS_SUBMISSION_GIT_BRANCH
-    allow_failure: true
+        refs:
+            - triggers
     variables:
         GIT_STRATEGY: none
         MAVEN_OPTS: -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=[yyyy-MM-dd'T'HH:mm:ssX] -Dorg.slf4j.simpleLogger.logFile=${ARTEMIS_BUILD_LOGS_FILE}
     script:
         - git clone --branch ${ARTEMIS_TEST_GIT_BRANCH} ${CI_SERVER_PROTOCOL}://${ARTEMIS_TEST_GIT_USER}:${ARTEMIS_TEST_GIT_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${ARTEMIS_TEST_GIT_REPOSITORY_SLUG} .
-        - git clone --branch ${ARTEMIS_SUBMISSION_GIT_BRANCH} ${CI_SERVER_PROTOCOL}://${ARTEMIS_TEST_GIT_USER}:${ARTEMIS_TEST_GIT_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME} assignment
+        - git clone --branch ${ARTEMIS_SUBMISSION_GIT_BRANCH} ${CI_SERVER_PROTOCOL}://gitlab-ci-token:${CI_JOB_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME} assignment
         - export ARTEMIS_NOTIFICATION_SECRET=[hidden] # Workaround for overwriting the secret
         - export ARTEMIS_TEST_GIT_TOKEN=[hidden]
         - mvn --version && echo "ARTEMIS_BUILD_STATUS=success" > .env || echo "ARTEMIS_BUILD_STATUS=failed" > .env
@@ -38,6 +39,8 @@ upload-job:
     only:
         variables:
             - $CI_COMMIT_BRANCH == $ARTEMIS_SUBMISSION_GIT_BRANCH
+        refs:
+          - triggers
     variables:
         GIT_STRATEGY: none
     script:
