@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
@@ -33,6 +34,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -51,7 +54,6 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
@@ -62,11 +64,10 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
-    @Autowired
-    private ExamUtilService examUtilService;
+    private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
     @Autowired
-    private BuildJobRepository buildJobRepository;
+    private ExamUtilService examUtilService;
 
     // ---- Repository handles ----
     private LocalRepository templateRepository;
@@ -192,8 +193,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         });
 
         // Assert that the build job for the solution was completed before the build job for the template participation has started
-        var solutionBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(solutionParticipation.getId()).get();
-        var templateBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId()).get();
+        var solutionBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(solutionParticipation.getId()).orElseThrow();
+        var templateBuildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(templateParticipation.getId()).orElseThrow();
         assertThat(solutionBuildJob.getBuildCompletionDate()).isBefore(templateBuildJob.getBuildStartDate());
 
     }
@@ -946,15 +947,16 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
         ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
+        programmingExercise.setCourse(null);
         programmingExercise.setExerciseGroup(exerciseGroup);
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // Exam is running
         var now = ZonedDateTime.now();
         exam.setStartDate(now.minusHours(1));
         exam.setEndDate(now.plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
-        examRepository.save(exam);
+        exam = examRepository.save(exam);
 
         // Create StudentExam.
         StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student1);
@@ -976,16 +978,22 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
         localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
 
-        await().until(() -> {
+        log.info("Push done");
+
+        await().atMost(15, TimeUnit.SECONDS).until(() -> {
+            log.info("Search for a build job for participation id: {}", studentParticipation.getId());
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
-            return buildJobOptional.isPresent();
+            if (buildJobOptional.isPresent()) {
+                return true;
+            }
+            else {
+                var allBuildJobs = buildJobRepository.findAll();
+                log.info("All found build jobs: {}", allBuildJobs);
+                return false;
+            }
         });
 
-        Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
-
-        BuildJob buildJob = buildJobOptional.orElseThrow();
-
+        BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
         assertThat(buildJob.getPriority()).isEqualTo(expectedPriority);
-
     }
 }
