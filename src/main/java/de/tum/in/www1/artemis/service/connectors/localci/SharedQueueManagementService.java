@@ -261,7 +261,7 @@ public class SharedQueueManagementService {
         sortOptions = search.pageable().getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         var pageRequest = PageRequest.of(search.pageable().getPage() - 1, search.pageable().getPageSize(), sortOptions);
 
-        Page<Long> buildJobIdsPage = buildJobRepository.findAllByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
+        Page<Long> buildJobIdsPage = buildJobRepository.findIdsByFilterCriteria(search.buildStatus(), search.buildAgentAddress(), search.startDate(), search.endDate(),
                 search.pageable().getSearchTerm(), courseId, buildDurationLower, buildDurationUpper, pageRequest);
 
         List<Long> buildJobIds = buildJobIdsPage.toList();
