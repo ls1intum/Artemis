@@ -114,7 +114,6 @@ public class FaqResource {
     public ResponseEntity<Faq> getFaq(@PathVariable Long faqId) {
         log.debug("REST request to get faq {}", faqId);
         Faq faq = faqRepository.findById(faqId).orElseThrow();
-        System.out.println(faq.getCategories());
         return ResponseEntity.ok(faq);
     }
 
