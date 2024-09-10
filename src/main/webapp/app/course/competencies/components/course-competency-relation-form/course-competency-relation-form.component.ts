@@ -4,8 +4,6 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { AlertService } from 'app/core/util/alert.service';
 
-type AdjacencyMap = Map<number, number[]>;
-
 @Component({
     selector: 'jhi-course-competency-relation-form',
     standalone: true,
@@ -122,15 +120,17 @@ export class CourseCompetencyRelationFormComponent {
      * @returns The selectable tail competencies
      */
     private getSelectableTailCompetencies(headCompetencyId: number, relationType: CompetencyRelationType): CourseCompetency[] {
-        const courseCompetencies = this.courseCompetencies();
-        const adjacencyMap = this.getAdjacencyMap();
-        return courseCompetencies
+        return this.courseCompetencies()
             .filter(({ id }) => id !== headCompetencyId) // Exclude the head itself
-            .filter(
-                ({ id }) =>
-                    // only extends and assumes relations are considered when checking for circles because only they don't make sense
-                    !this.hasRelation(adjacencyMap, id!, headCompetencyId, relationType),
-            );
+            .filter(({ id }) => {
+                const newRelation: CompetencyRelationDTO = {
+                    headCompetencyId: headCompetencyId,
+                    tailCompetencyId: id,
+                    relationType: relationType,
+                };
+                const adjacencyMap = this.getAdjacencyMap(this.relations().concat(newRelation));
+                return !this.hasCycle(adjacencyMap);
+            });
     }
 
     /**
@@ -139,48 +139,86 @@ export class CourseCompetencyRelationFormComponent {
      *
      * @returns The adjacency list for the current relations
      */
-    private getAdjacencyMap(): Map<number, number[]> {
+    private getAdjacencyMap(relations: CompetencyRelationDTO[]): Map<number, number[]> {
         const adjacencyMap: Map<number, number[]> = new Map();
         const matchesRelations: CompetencyRelationDTO[] = [];
-        this.relations().forEach((relation) => {
+        relations.forEach((relation) => {
+            if (!adjacencyMap.has(relation.headCompetencyId!)) {
+                adjacencyMap.set(relation.headCompetencyId!, []);
+            }
             if (relation.relationType == CompetencyRelationType.MATCHES) {
                 matchesRelations.push(relation);
-            } else {
-                if (!adjacencyMap.has(relation.headCompetencyId!)) {
-                    adjacencyMap.set(relation.headCompetencyId!, []);
-                }
-                adjacencyMap.get(relation.headCompetencyId!)!.push(relation.tailCompetencyId!);
             }
+            // '+' used in push() is necessary to require the value to be a number
+            adjacencyMap.get(relation.headCompetencyId!)!.push(+relation.tailCompetencyId!);
         });
+        // merge matches relations into the adjacency map
+        matchesRelations.forEach((relation) => {
+            adjacencyMap.set(relation.headCompetencyId!, this.mergeMatchesTailRelations(adjacencyMap, relation));
+        });
+        matchesRelations.forEach((relation) => {
+            const headRelations = this.relations().filter(({ tailCompetencyId }) => tailCompetencyId == relation.headCompetencyId);
+            headRelations?.forEach((headRelation) => {
+                if (headRelation.relationType != CompetencyRelationType.MATCHES) {
+                    const headRelationIds = adjacencyMap.get(headRelation.headCompetencyId!)!;
+                    adjacencyMap.get(headRelation.headCompetencyId!)!.push(...[relation.tailCompetencyId!, ...headRelationIds]);
+                }
+            });
+        });
+        console.log(adjacencyMap);
         return adjacencyMap;
     }
 
-    /**
-     * Function to check if there's a path from 'headCompetencyId' to 'tailCompetencyId' using DFS (Depth First Search)
-     * @param adjacencyMap The adjacency list for the current relations
-     * @param head The selected head competency id
-     * @param tail The selected tail competency id
-     * @param relationType The selected relation type
-     * @param visited The set of visited nodes
-     * @private
-     *
-     * @returns True if there's a path from 'headCompetencyId' to 'tailCompetencyId', false otherwise
-     */
-    private hasRelation(adjacencyMap: AdjacencyMap, head: number, tail: number, relationType: CompetencyRelationType, visited: Set<number> = new Set()): boolean {
-        if (head === tail) {
-            return true;
+    private mergeMatchesTailRelations(adjacencyMap: Map<number, number[]>, relation: CompetencyRelationDTO): number[] {
+        const existingRelations = adjacencyMap.get(relation.headCompetencyId!)!;
+        if (relation.relationType != CompetencyRelationType.MATCHES) {
+            return existingRelations;
+        } else {
+            const tailRelations = this.relations().filter(({ headCompetencyId }) => headCompetencyId == relation.tailCompetencyId);
+            if (tailRelations.length > 0) {
+                let tailRelationIds = new Set<number>();
+                tailRelations.forEach((tailRelation) => {
+                    tailRelationIds = new Set<number>([...tailRelationIds, ...this.mergeMatchesTailRelations(adjacencyMap, tailRelation)]);
+                });
+                return [...existingRelations, ...tailRelationIds];
+            }
+            return existingRelations;
         }
-        if (visited.has(head)) {
-            return false;
-        }
-        visited.add(head);
+    }
 
-        const neighbors = adjacencyMap.get(head) || [];
-        for (const neighbor of neighbors) {
-            if (this.hasRelation(adjacencyMap, neighbor, tail, relationType, visited)) {
+    private hasCycle(adjacencyMap: Map<number, number[]>): boolean {
+        const visited = new Set<number>();
+        const recursionStack = new Set<number>();
+
+        for (const [node] of adjacencyMap) {
+            if (this.hasCycleUtil(adjacencyMap, node, visited, recursionStack)) {
                 return true;
             }
         }
+        return false;
+    }
+
+    private hasCycleUtil(adjacencyMap: Map<number, number[]>, node: number, visited: Set<number>, recursionStack: Set<number>) {
+        if (recursionStack.has(node)) {
+            // Cycle detected
+            return true;
+        }
+        if (visited.has(node)) {
+            // Already visited
+            return false;
+        }
+        //mark node as visited and add to recursion stack
+        visited.add(node);
+        recursionStack.add(node);
+
+        // recur for all adjacent nodes
+        const neighbors = adjacencyMap.get(node) || [];
+        for (const neighbor of neighbors) {
+            if (this.hasCycleUtil(adjacencyMap, neighbor, visited, recursionStack)) {
+                return true;
+            }
+        }
+        recursionStack.delete(node);
         return false;
     }
 }
