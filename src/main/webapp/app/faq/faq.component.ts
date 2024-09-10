@@ -1,17 +1,6 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Faq } from 'app/entities/faq.model';
-import {
-    faEdit,
-    faFile,
-    faFileExport,
-    faFileImport,
-    faFilter,
-    faPencilAlt,
-    faPlus,
-    faPuzzlePiece,
-    faSort,
-    faTrash
-} from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
@@ -25,20 +14,18 @@ import { SortService } from 'app/shared/service/sort.service';
 
 @Component({
     selector: 'jhi-faq',
-    templateUrl: './faq.component.html'
-
+    templateUrl: './faq.component.html',
 })
-
 export class FAQComponent implements OnInit, OnDestroy {
     faqs: Faq[];
     filteredFaq: Faq[];
-    existingCategories: FaqCategory[]
+    existingCategories: FaqCategory[];
     courseId: number;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    activeFilters = new Set<String>();
+    activeFilters = new Set<string>();
     predicate: string;
     ascending: boolean;
 
@@ -68,8 +55,8 @@ export class FAQComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.loadAll()
-        this.loadCourseExerciseCategories(this.courseId)
+        this.loadAll();
+        this.loadCourseExerciseCategories(this.courseId);
     }
 
     ngOnDestroy(): void {
@@ -82,20 +69,23 @@ export class FAQComponent implements OnInit, OnDestroy {
 
     deleteFaq(faqId: number) {
         this.faqService.delete(faqId).subscribe({
-            next: () =>
-                this.handleDeleteSuccess(faqId),
+            next: () => this.handleDeleteSuccess(faqId),
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
     }
 
     private handleDeleteSuccess(faqId: number) {
-        this.faqs = this.faqs.filter(faq => faq.id !== faqId);
+        this.faqs = this.faqs.filter((faq) => faq.id !== faqId);
         this.dialogErrorSource.next('');
         this.applyFilters();
     }
 
-    toggleFilters(category: String) {
-        this.activeFilters.has(category)? this.activeFilters.delete(category) : this.activeFilters.add(category)
+    toggleFilters(category: string) {
+        if (this.activeFilters.has(category)) {
+            this.activeFilters.delete(category);
+        } else {
+            this.activeFilters.add(category);
+        }
         this.applyFilters();
     }
 
@@ -104,17 +94,16 @@ export class FAQComponent implements OnInit, OnDestroy {
     }
 
     private loadAll() {
-        this.faqService.findAllByCourseId(this.courseId)
-        .pipe(
-            map((res: HttpResponse<Faq[]>) => res.body),
-        )
-        .subscribe({
-            next: (res: Faq[]) => {
-                this.faqs = res;
-                this.applyFilters()
-            },
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
+        this.faqService
+            .findAllByCourseId(this.courseId)
+            .pipe(map((res: HttpResponse<Faq[]>) => res.body))
+            .subscribe({
+                next: (res: Faq[]) => {
+                    this.faqs = res;
+                    this.applyFilters();
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
     }
 
     private loadCourseExerciseCategories(courseId: number) {
@@ -123,7 +112,6 @@ export class FAQComponent implements OnInit, OnDestroy {
         });
     }
 
-
     private applyFilters(): void {
         if (this.activeFilters.size === 0) {
             // If no filters selected, show all faqs
@@ -131,14 +119,12 @@ export class FAQComponent implements OnInit, OnDestroy {
         } else {
             this.filteredFaq = this.faqs.filter((faq) => this.hasFilteredCategory(faq, this.activeFilters));
         }
-
     }
 
-    public hasFilteredCategory(faq: Faq, filteredCategory: Set<String>){
-        let categories = faq.categories?.map((category) => category.category)
-        if(categories){
-            return categories.some(category => filteredCategory.has(category!));
+    public hasFilteredCategory(faq: Faq, filteredCategory: Set<string>) {
+        const categories = faq.categories?.map((category) => category.category);
+        if (categories) {
+            return categories.some((category) => filteredCategory.has(category!));
         }
-
     }
 }
