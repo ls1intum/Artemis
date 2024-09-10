@@ -13,7 +13,6 @@ import {
     forwardRef,
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -26,7 +25,7 @@ import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/mo
 import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/monaco-quote.action';
 import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
 import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-channel-reference.action';
 import { MonacoUserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-user-mention.action';
 import { MonacoExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-exercise-reference.action';

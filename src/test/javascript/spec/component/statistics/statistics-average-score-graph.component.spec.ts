@@ -12,6 +12,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
@@ -28,35 +29,35 @@ describe('StatisticsAverageScoreGraphComponent', () => {
         exerciseName: 'FacadePattern',
         averageScore: 0,
         exerciseType: ExerciseType.TEXT,
-        categories: [{ color: '#347aeb', category: 'structural pattern' }],
+        categories: [new ExerciseCategory('structural pattern', '#347aeb')],
     };
     const exercise2 = {
         exerciseId: 2,
         exerciseName: 'BridgePattern',
         averageScore: 20,
         exerciseType: ExerciseType.PROGRAMMING,
-        categories: [{ color: '#347aeb', category: 'structural pattern' }],
+        categories: [new ExerciseCategory('structural pattern', '#347aeb')],
     };
     const exercise3 = {
         exerciseId: 3,
         exerciseName: 'VisitorPattern',
         averageScore: 25,
         exerciseType: ExerciseType.FILE_UPLOAD,
-        categories: [{ color: '#c034eb', category: 'behavioral pattern' }],
+        categories: [new ExerciseCategory('behavioral pattern', '#c034eb')],
     };
     const exercise4 = {
         exerciseId: 4,
         exerciseName: 'AdapterPattern',
         averageScore: 35,
         exerciseType: ExerciseType.QUIZ,
-        categories: [{ color: '#347aeb', category: 'structural pattern' }],
+        categories: [new ExerciseCategory('structural pattern', '#347aeb')],
     };
     const exercise5 = {
         exerciseId: 5,
         exerciseName: 'ProxyPattern',
         averageScore: 40,
         exerciseType: ExerciseType.MODELING,
-        categories: [{ color: '#347aeb', category: 'structural pattern' }],
+        categories: [new ExerciseCategory('structural pattern', '#347aeb')],
     };
     const exercise6 = { exerciseId: 6, exerciseName: 'BuilderPattern', averageScore: 50, exerciseType: ExerciseType.QUIZ };
     const exercise7 = { exerciseId: 7, exerciseName: 'BehaviouralPattern', averageScore: 55, exerciseType: ExerciseType.PROGRAMMING };

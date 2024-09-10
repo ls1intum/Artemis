@@ -1,5 +1,5 @@
 import { AfterViewChecked, AfterViewInit, Component, EventEmitter, Input, OnDestroy, ViewChild } from '@angular/core';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
@@ -7,6 +7,7 @@ import { NgModel } from '@angular/forms';
 import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
+import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
@@ -24,6 +25,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     @ViewChild('packageName') packageNameField?: NgModel;
     @ViewChild(ProgrammingExerciseCustomAeolusBuildPlanComponent) programmingExerciseCustomAeolusBuildPlanComponent?: ProgrammingExerciseCustomAeolusBuildPlanComponent;
     @ViewChild(ProgrammingExerciseCustomBuildPlanComponent) programmingExerciseCustomBuildPlanComponent?: ProgrammingExerciseCustomBuildPlanComponent;
+    @ViewChild(ProgrammingExerciseTheiaComponent) programmingExerciseTheiaComponent?: ProgrammingExerciseTheiaComponent;
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();

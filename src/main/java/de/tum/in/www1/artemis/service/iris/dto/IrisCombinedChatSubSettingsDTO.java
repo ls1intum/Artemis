@@ -10,6 +10,6 @@ import de.tum.in.www1.artemis.domain.iris.IrisTemplate;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisCombinedChatSubSettingsDTO(boolean enabled, Integer rateLimit, Integer rateLimitTimeframeHours, @Nullable Set<String> allowedModels,
-        @Nullable String preferredModel, @Nullable IrisTemplate template) implements IrisCombinedSubSettingsInterface {
+        @Nullable String preferredModel, @Nullable IrisTemplate template) {
 
 }

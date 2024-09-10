@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { GitDiffReportComponent } from './git-diff-report.component';
 import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
@@ -12,7 +11,7 @@ import { GitDiffFilePanelTitleComponent } from 'app/exercises/programming/hestia
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, AceEditorModule, NgbAccordionModule, MonacoEditorModule, ArtemisSharedComponentModule],
+    imports: [ArtemisSharedModule, NgbAccordionModule, MonacoEditorModule, ArtemisSharedComponentModule],
     declarations: [GitDiffFilePanelComponent, GitDiffFilePanelTitleComponent, GitDiffReportComponent, GitDiffFileComponent, GitDiffReportModalComponent, GitDiffLineStatComponent],
     exports: [GitDiffReportComponent, GitDiffReportModalComponent, GitDiffLineStatComponent],
 })

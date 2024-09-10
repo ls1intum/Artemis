@@ -7,7 +7,7 @@ import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testi
 import { FormsModule } from '@angular/forms';
 import { NgbNavModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
@@ -15,7 +15,6 @@ import { CdkDragMove, DragDropModule } from '@angular/cdk/drag-drop';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
 import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
 import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';

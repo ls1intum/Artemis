@@ -13,7 +13,6 @@ import {
     computed,
 } from '@angular/core';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { NgbNavChangeEvent } from '@ng-bootstrap/ng-bootstrap';
 import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
 import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
@@ -47,6 +46,14 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { parseMarkdownForDomainActions } from 'app/shared/markdown-editor/monaco/markdown-editor-parsing.helper';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS, DEFAULT_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
+export enum MarkdownEditorHeight {
+    INLINE = 100,
+    SMALL = 300,
+    MEDIUM = 500,
+    LARGE = 1000,
+    EXTRA_LARGE = 1500,
+}
+
 interface MarkdownActionsByGroup {
     standard: MonacoEditorAction[];
     header: MonacoHeadingAction[];
@@ -76,7 +83,7 @@ const BORDER_HEIGHT_OFFSET = 2;
 @Component({
     selector: 'jhi-markdown-editor-monaco',
     templateUrl: './markdown-editor-monaco.component.html',
-    styleUrls: ['./markdown-editor-monaco.component.scss', '../markdown-editor.component.scss'],
+    styleUrls: ['./markdown-editor-monaco.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {

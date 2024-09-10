@@ -13,7 +13,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 

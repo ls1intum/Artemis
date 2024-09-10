@@ -87,6 +87,8 @@ artemis:
                     default: "ls1tum/artemis-swift-swiftlint-docker:latest"
                 ocaml:
                     default: "ls1tum/artemis-ocaml-docker:v1"
+                rust:
+                    default: "ghcr.io/ls1intum/artemis-rust-docker:v0.9.70"
 
 management:
     endpoints:
@@ -196,6 +198,9 @@ spring:
             thread-name-prefix: artemis-scheduling-
             pool:
                 size: 2
+    threads:
+        virtual:
+            enabled: true
     thymeleaf:
         mode: HTML
     output:

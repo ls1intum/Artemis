@@ -11,7 +11,9 @@ import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monac
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 
-type EditorPosition = { row: number; column: number };
+export const MAX_TAB_SIZE = 8;
+export type EditorPosition = { lineNumber: number; column: number };
+
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
@@ -155,14 +157,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    // Workaround: The rest of the code expects { row, column } - we have { lineNumber, column }. Can be removed when Ace is removed.
     getPosition(): EditorPosition {
-        const position = this._editor.getPosition() ?? new monaco.Position(0, 0);
-        return { row: position.lineNumber, column: position.column };
+        return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
     }
 
     setPosition(position: EditorPosition) {
-        this._editor.setPosition({ lineNumber: position.row, column: position.column });
+        this._editor.setPosition(position);
     }
 
     setSelection(range: monaco.IRange): void {

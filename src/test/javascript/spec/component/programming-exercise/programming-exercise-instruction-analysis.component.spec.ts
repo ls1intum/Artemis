@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { TaskCountWarningComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/task-count-warning/task-count-warning.component';
 import { ProgrammingExerciseInstructionAnalysisComponent } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.component';
@@ -11,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;
@@ -20,8 +20,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     const testCaseOkId = 'instruction_analysis_test-case-ok';
     const testCaseIssuesId = 'instruction_analysis_test-case-issues';
 
-    const taskCommand = new TaskCommand();
-    const taskRegex = taskCommand.getTagRegex('g');
+    const taskRegex = MonacoTaskAction.GLOBAL_TASK_REGEX;
     const exerciseTestCases = ['test1', 'test2', 'test6', 'test7'];
     const problemStatement =
         '1. [task][SortStrategy Interface](test1,test2) \n 2. [task][SortStrategy Interface](test3) \n lorem ipsum \n lorem \n  3. [task][SortStrategy Interface](test2,test4)';

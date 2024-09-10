@@ -2,7 +2,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as monaco from 'monaco-editor';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MonacoEditorDomainActionWithOptions } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action-with-options.model';
-import { ValueItem } from 'app/shared/markdown-editor/command-constants';
+import { ValueItem } from 'app/shared/markdown-editor/value-item.model';
 
 /**
  * Action to insert a reference to an exercise into the editor. Users that type a / will see a list of available exercises to reference.

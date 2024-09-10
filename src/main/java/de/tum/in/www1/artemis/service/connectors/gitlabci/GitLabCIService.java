@@ -49,6 +49,9 @@ import de.tum.in.www1.artemis.service.connectors.ci.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
+// Gitlab support will be removed in 8.0.0. Please migrate to LocalVC using e.g. the PR https://github.com/ls1intum/Artemis/pull/8972
+@Deprecated(since = "7.5.0", forRemoval = true)
+
 @Profile("gitlabci")
 @Service
 public class GitLabCIService extends AbstractContinuousIntegrationService {

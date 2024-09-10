@@ -11,9 +11,7 @@
     </h4>
 }
 @for (category of exercise.categories; track category) {
-    <h4 class="fw-medium">
-        <span class="badge" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-    </h4>
+    <jhi-custom-exercise-category-badge [category]="category" />
 }
 @if (exercise.difficulty && showTags.difficulty) {
     <h4 class="fw-medium">

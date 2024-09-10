@@ -1,12 +1,12 @@
 import { Course } from 'app/entities/course.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { test } from '../../../support/fixtures';
 import { admin } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 
 test.describe('Text exercise management', () => {
     let course: Course;

@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { BuildAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction } from 'app/entities/programming-exercise.model';
+import { BuildAction, ScriptAction } from 'app/entities/programming/build.action';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';

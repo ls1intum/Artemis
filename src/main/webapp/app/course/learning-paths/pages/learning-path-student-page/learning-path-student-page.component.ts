@@ -1,4 +1,4 @@
-import { Component, OnInit, Signal, inject, signal } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { LearningObjectType } from 'app/entities/competency/learning-path.model';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -29,7 +29,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
         ArtemisSharedModule,
     ],
 })
-export class LearningPathStudentPageComponent implements OnInit {
+export class LearningPathStudentPageComponent {
     protected readonly LearningObjectType = LearningObjectType;
 
     private readonly learningApiService: LearningPathApiService = inject(LearningPathApiService);
@@ -39,12 +39,12 @@ export class LearningPathStudentPageComponent implements OnInit {
 
     readonly isLearningPathIdLoading = signal(false);
     readonly learningPathId = signal<number | undefined>(undefined);
-    readonly courseId: Signal<number> = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => params.courseId)));
+    readonly courseId = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
     readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 
-    ngOnInit(): void {
-        this.loadLearningPathId(this.courseId());
+    constructor() {
+        effect(async () => await this.loadLearningPathId(this.courseId()), { allowSignalWrites: true });
     }
 
     private async loadLearningPathId(courseId: number): Promise<void> {

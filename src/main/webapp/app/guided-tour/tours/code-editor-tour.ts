@@ -24,11 +24,11 @@ export const codeEditorTour: GuidedTour = {
         }),
         new UserInterActionTourStep({
             highlightSelector: '.guided-tour-editor',
-            headlineTranslateKey: 'tour.programmingExercise.codeEditor.aceEditor.headline',
-            contentTranslateKey: 'tour.programmingExercise.codeEditor.aceEditor.content',
+            headlineTranslateKey: 'tour.programmingExercise.codeEditor.monacoEditor.headline',
+            contentTranslateKey: 'tour.programmingExercise.codeEditor.monacoEditor.content',
             highlightPadding: 5,
             orientation: Orientation.RIGHT,
-            userInteractionEvent: UserInteractionEvent.ACE_EDITOR,
+            userInteractionEvent: UserInteractionEvent.MONACO_EDITOR,
         }),
         new UserInterActionTourStep({
             highlightSelector: '.guided-tour-save-button',
