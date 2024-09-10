@@ -35,29 +35,8 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
 
     Optional<BuildJob> findBuildJobByResult(Result result);
 
-    @Query("""
-            SELECT b.id
-            FROM BuildJob b
-            """)
-    List<Long> findAllIds(Pageable pageable);
-
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
-
-    /**
-     * Retrieves a paginated list of all {@link BuildJob} entities.
-     *
-     * @param pageable the pagination information.
-     * @return a paginated list of {@link BuildJob} entities. If no entities are found, returns an empty page.
-     */
-    default Page<BuildJob> findAllWithData(Pageable pageable) {
-        List<Long> ids = findAllIds(pageable);
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<BuildJob> result = findWithDataByIdIn(ids);
-        return new PageImpl<>(result, pageable, count());
-    }
 
     // Cast to string is necessary. Otherwise, the query will fail on PostgreSQL.
     @Query("""
@@ -74,7 +53,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
                 AND (:durationUpper IS NULL OR (b.buildCompletionDate - b.buildStartDate) <= :durationUpper)
 
             """)
-    Page<Long> findAllByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
+    Page<Long> findIdsByFilterCriteria(@Param("buildStatus") BuildStatus buildStatus, @Param("buildAgentAddress") String buildAgentAddress,
             @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("searchTerm") String searchTerm, @Param("courseId") Long courseId,
             @Param("durationLower") Duration durationLower, @Param("durationUpper") Duration durationUpper, Pageable pageable);
 

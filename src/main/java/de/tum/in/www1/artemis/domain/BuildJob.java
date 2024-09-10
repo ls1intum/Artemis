@@ -235,4 +235,12 @@ public class BuildJob extends DomainObject {
     public void setDockerImage(String dockerImage) {
         this.dockerImage = dockerImage;
     }
+
+    @Override
+    public String toString() {
+        return "BuildJob{" + "buildJobId='" + buildJobId + "'" + ", name='" + name + "'" + ", exerciseId=" + exerciseId + ", courseId=" + courseId + ", participationId="
+                + participationId + ", buildAgentAddress='" + buildAgentAddress + "'" + ", buildStartDate=" + buildStartDate + ", buildCompletionDate=" + buildCompletionDate
+                + ", repositoryType=" + repositoryType + ", repositoryName='" + repositoryName + "'" + ", commitHash='" + commitHash + "'" + ", retryCount=" + retryCount
+                + ", priority=" + priority + ", triggeredByPushTo=" + triggeredByPushTo + ", buildStatus=" + buildStatus + ", dockerImage='" + dockerImage + "'" + "}";
+    }
 }

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -14,7 +13,6 @@ import com.hazelcast.map.IMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.BuildJob;
-import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.SharedQueueManagementService;
 
 class SharedQueueManagementServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -23,16 +21,8 @@ class SharedQueueManagementServiceTest extends AbstractSpringIntegrationLocalCIL
     private SharedQueueManagementService sharedQueueManagementService;
 
     @Autowired
-    private BuildJobRepository buildJobRepository;
-
-    @Autowired
     @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
-
-    @BeforeEach
-    void clearBuildJobs() {
-        buildJobRepository.deleteAll();
-    }
 
     @Test
     void testPushDockerImageCleanupInfo() {

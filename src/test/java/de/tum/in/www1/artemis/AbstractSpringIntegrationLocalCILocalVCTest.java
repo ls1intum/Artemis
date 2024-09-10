@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.localvcci.LocalVCLocalCITestService;
 import de.tum.in.www1.artemis.localvcci.TestBuildAgentConfiguration;
+import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -102,6 +103,9 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     @Autowired
     protected UserUtilService userUtilService;
 
+    @Autowired
+    protected BuildJobRepository buildJobRepository;
+
     /**
      * This is the mock(DockerClient.class) provided by the {@link TestBuildAgentConfiguration}.
      * Subclasses can use this to dynamically mock methods of the DockerClient.
@@ -160,6 +164,11 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected void resetSpyBeans() {
         Mockito.reset(versionControlService, continuousIntegrationService, resourceLoaderService, programmingMessagingService);
         super.resetSpyBeans();
+    }
+
+    @AfterEach
+    void clearBuildJobs() {
+        buildJobRepository.deleteAll();
     }
 
     /**
