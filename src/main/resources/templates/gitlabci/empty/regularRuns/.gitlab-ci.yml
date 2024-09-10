@@ -5,10 +5,10 @@ stages:
 test-job:
     image: ${ARTEMIS_BUILD_DOCKER_IMAGE}
     stage: test
-    timeout: 30 m
     only:
         variables:
             - $CI_COMMIT_BRANCH == $ARTEMIS_SUBMISSION_GIT_BRANCH
+    allow_failure: true
     variables:
         GIT_STRATEGY: none
         MAVEN_OPTS: -Dorg.slf4j.simpleLogger.showDateTime=true -Dorg.slf4j.simpleLogger.dateTimeFormat=[yyyy-MM-dd'T'HH:mm:ssX] -Dorg.slf4j.simpleLogger.logFile=${ARTEMIS_BUILD_LOGS_FILE}
@@ -33,7 +33,6 @@ test-job:
 upload-job:
     image: ${ARTEMIS_NOTIFICATION_PLUGIN_DOCKER_IMAGE}
     stage: upload
-    timeout: 15 m
     dependencies:
         - test-job
     only:
@@ -42,4 +41,5 @@ upload-job:
     variables:
         GIT_STRATEGY: none
     script:
-        - java -jar /notification-plugin/artemis-notification-plugin.jar
+        - cp -r /notification-plugin/* .
+        - gradle run
