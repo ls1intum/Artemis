@@ -399,6 +399,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Set<Exercise> getExercisesForCourseManagementOverview(@Param("courseId") Long courseId);
 
+    @EntityGraph(attributePaths = "categories")
+    List<Exercise> findAllWithCategoriesByCourseId(Long courseId);
+
     /**
      * Fetches the exercises for a course with an assessment due date (or due date if without assessment due date) in the future
      *

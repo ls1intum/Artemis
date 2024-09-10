@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.repository.metrics.CompetencyMetricsRepository;
 import de.tum.in.www1.artemis.repository.metrics.ExerciseMetricsRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
@@ -38,14 +40,19 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ExerciseMetricsRepository exerciseMetricsRepository;
 
+    @Autowired
+    private CompetencyMetricsRepository competencyMetricsRepository;
+
     private Course course;
 
     private Course courseWithTestRuns;
 
+    private Course courseWithCompetencies;
+
     private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
 
     @BeforeEach
-    void setupTestScenario() {
+    void setupTestScenario() throws Exception {
         // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
         ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
@@ -55,6 +62,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         courseWithTestRuns = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(TEST_PREFIX, true);
+        courseWithCompetencies = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(TEST_PREFIX, true, true, 1).getFirst();
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
     }
@@ -90,6 +98,20 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             assertThat(exerciseInformation.values()).containsExactlyInAnyOrderElementsOf(expectedDTOs);
             assertThat(exerciseInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnCategories() throws Exception {
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.exerciseMetrics()).isNotNull();
+            final var categories = result.exerciseMetrics().categories();
+
+            final var exercises = exerciseRepository.findAllWithCategoriesByCourseId(course.getId());
+            final var expectedCategories = exercises.stream().collect(Collectors.toMap(Exercise::getId, Exercise::getCategories));
+
+            assertThat(categories).isEqualTo(expectedCategories);
         }
 
         @Test
@@ -192,6 +214,26 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userID);
             assertThat(result).isEqualTo(expectedSet);
+        }
+    }
+
+    @Nested
+    class CompetencyMetrics {
+
+        @Disabled
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnCompetencyInformation() throws Exception {
+            final var result = request.get("/api/metrics/course/" + courseWithCompetencies.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.competencyMetrics()).isNotNull();
+
+            final var competencyInformation = result.competencyMetrics().competencyInformation();
+
+            final var expectedDTOs = competencyMetricsRepository.findAllCompetencyInformationByCourseId(courseWithCompetencies.getId());
+
+            assertThat(competencyInformation.values()).containsExactlyInAnyOrderElementsOf(expectedDTOs);
+            assertThat(competencyInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
         }
     }
 }
