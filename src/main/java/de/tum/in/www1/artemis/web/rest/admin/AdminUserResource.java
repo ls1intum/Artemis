@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -243,6 +244,18 @@ public class AdminUserResource {
     }
 
     /**
+     * GET users/not-enrolled : get all logins of not enrolled users as a sorted list (no admins)
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body all logins of not enrolled users
+     */
+    @GetMapping("users/not-enrolled")
+    @EnforceAdmin
+    public ResponseEntity<List<String>> getNotEnrolledUsers() {
+        List<String> logins = userRepository.findAllNotEnrolledUsers();
+        return new ResponseEntity<>(logins, HttpStatus.OK);
+    }
+
+    /**
      * GET /users/authorities : get all authorities of the requesting user.
      *
      * @return the ResponseEntity with status 200 (OK) and with body a string list of the all the roles
@@ -280,13 +293,13 @@ public class AdminUserResource {
     @EnforceAdmin
     public ResponseEntity<List<String>> deleteUsers(@RequestParam(name = "login") List<String> logins) {
         log.debug("REST request to delete {} users", logins.size());
-        List<String> deletedUsers = new java.util.ArrayList<>();
+        List<String> deletedUsers = Collections.synchronizedList(new java.util.ArrayList<>());
 
         // Get current user and remove current user from list of logins
         var currentUser = userRepository.getUser();
         logins.remove(currentUser.getLogin());
 
-        for (String login : logins) {
+        logins.parallelStream().forEach(login -> {
             try {
                 if (!userRepository.isCurrentUser(login)) {
                     userService.softDeleteUser(login);
@@ -298,7 +311,7 @@ public class AdminUserResource {
                 log.error("REST request to delete user {} failed", login);
                 log.error(exception.getMessage(), exception);
             }
-        }
+        });
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.batch.deleted", String.valueOf(deletedUsers.size())))
                 .body(deletedUsers);
     }

@@ -806,6 +806,21 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     Set<User> findAllInTeam(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
     /**
+     * Get all logins of users that are not enrolled in any course,
+     * without administrators which are normally not enrolled in any course.
+     *
+     * @return all logins of not enrolled users as a sorted list (not admins)
+     */
+    @Query("""
+            SELECT user.login
+            FROM User user
+            WHERE user.groups IS EMPTY AND NOT user.isDeleted
+                AND NOT :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+            ORDER BY user.login
+            """)
+    List<String> findAllNotEnrolledUsers();
+
+    /**
      * Get all managed users
      *
      * @param userSearch used to find users
