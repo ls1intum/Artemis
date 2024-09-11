@@ -14,7 +14,6 @@ import static org.mockito.Mockito.doReturn;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -1021,7 +1020,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localCITriggerService.triggerBuild(studentParticipation, false);
         log.info("Trigger build done");
 
-        await().atMost(Duration.ofSeconds(15)).pollInterval(Duration.ofSeconds(1)).until(() -> {
+        await().until(() -> {
             BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
             log.info("Poll queue jobs: is null %s".formatted(buildJobQueueItem == null ? "true" : "false"));
 
