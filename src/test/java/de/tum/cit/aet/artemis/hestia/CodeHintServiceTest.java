@@ -18,6 +18,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -32,7 +33,6 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseS
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.CodeHintService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {

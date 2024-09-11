@@ -85,13 +85,13 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
+import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.util.GitUtilService;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 import de.tum.cit.aet.artemis.util.TestConstants;
 import de.tum.cit.aet.artemis.web.rest.dto.FileMove;
 import de.tum.cit.aet.artemis.web.rest.dto.RepositoryStatusDTO;
-import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 
 class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

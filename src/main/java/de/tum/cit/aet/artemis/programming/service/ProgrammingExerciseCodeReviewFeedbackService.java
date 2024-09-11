@@ -22,12 +22,12 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.service.SubmissionService;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * Service class for managing code review feedback on programming exercises.

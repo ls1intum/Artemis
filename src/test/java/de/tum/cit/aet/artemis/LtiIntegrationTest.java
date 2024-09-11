@@ -30,8 +30,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 
 class LtiIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

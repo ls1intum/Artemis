@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 
 @Profile(PROFILE_CORE)
 @Service

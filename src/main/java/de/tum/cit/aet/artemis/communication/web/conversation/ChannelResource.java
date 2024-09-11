@@ -40,18 +40,18 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTO
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelIdAndNameDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelIdAndNameDTO;
 
 @Profile(PROFILE_CORE)
 @RestController

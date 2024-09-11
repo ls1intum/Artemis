@@ -27,6 +27,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -34,7 +35,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.util.GitUtilService;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

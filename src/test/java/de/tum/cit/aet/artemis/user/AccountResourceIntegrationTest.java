@@ -16,15 +16,15 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.service.AccountService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.web.AccountResource;
+import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
 import de.tum.cit.aet.artemis.service.dto.PasswordChangeDTO;
 import de.tum.cit.aet.artemis.service.dto.UserDTO;
 import de.tum.cit.aet.artemis.util.ConfigUtil;
-import de.tum.cit.aet.artemis.core.web.AccountResource;
-import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
-import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
-import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 
 /**
  * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal

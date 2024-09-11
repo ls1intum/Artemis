@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -67,7 +68,6 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.SubmissionService;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 // TODO: this class has too many dependencies to other services. We should reduce this
 @Profile(PROFILE_CORE)

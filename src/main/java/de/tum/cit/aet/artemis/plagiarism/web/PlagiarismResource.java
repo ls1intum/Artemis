@@ -19,6 +19,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -34,8 +36,6 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonReposito
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismComparisonStatusDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * REST controller for managing Plagiarism Cases.

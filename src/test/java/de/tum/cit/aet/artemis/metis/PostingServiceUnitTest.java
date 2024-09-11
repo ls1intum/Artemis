@@ -24,9 +24,9 @@ import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService
 import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 class PostingServiceUnitTest {
 

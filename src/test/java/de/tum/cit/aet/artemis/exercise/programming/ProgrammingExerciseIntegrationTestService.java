@@ -2,11 +2,11 @@ package de.tum.cit.aet.artemis.exercise.programming;
 
 import static de.tum.cit.aet.artemis.programming.domain.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.BuildPlanType.TEMPLATE;
-import static de.tum.cit.aet.artemis.util.TestResourceUtils.HalfSecond;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_REPOSITORY_URL;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_REPOSITORY_URL;
+import static de.tum.cit.aet.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;

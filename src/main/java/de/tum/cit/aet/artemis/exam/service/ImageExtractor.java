@@ -25,8 +25,8 @@ import org.apache.pdfbox.pdmodel.graphics.form.PDFormXObject;
 import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.apache.pdfbox.util.Matrix;
 
-import de.tum.cit.aet.artemis.web.rest.dto.ImageDTO;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.web.rest.dto.ImageDTO;
 
 /**
  * Processor to extract images from a PDF and get information.

@@ -30,6 +30,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.service.TutorParticipationService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -59,8 +61,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * REST controller for managing Exercise.

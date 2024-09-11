@@ -29,8 +29,10 @@ import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -47,8 +49,6 @@ import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathInformationDTO
 import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.util.PageUtil;
 
 /**
  * Service Implementation for managing Learning Paths.

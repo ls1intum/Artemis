@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -32,7 +33,6 @@ import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ImageDTO;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service Implementation for managing Exam Users.

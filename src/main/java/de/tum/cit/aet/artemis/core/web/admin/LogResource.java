@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.dto.vm.LoggerVM;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 
 /**
  * Controller for view and managing Log Level at runtime.

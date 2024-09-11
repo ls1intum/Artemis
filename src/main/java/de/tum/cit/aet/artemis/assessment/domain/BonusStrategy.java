@@ -6,8 +6,8 @@ import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedB
 import org.apache.commons.lang3.NotImplementedException;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
 
 public enum BonusStrategy implements IBonusStrategy {
 

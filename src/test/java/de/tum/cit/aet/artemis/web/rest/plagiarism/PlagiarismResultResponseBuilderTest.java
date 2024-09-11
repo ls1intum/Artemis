@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Set;
 
-import de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
@@ -12,6 +11,7 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder;
 
 class PlagiarismResultResponseBuilderTest {
 

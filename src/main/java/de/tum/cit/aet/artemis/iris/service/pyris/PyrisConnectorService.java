@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.service.pyris;
 import java.util.Arrays;
 import java.util.List;
 
-import de.tum.cit.aet.artemis.lti.web.open.PublicPyrisStatusUpdateResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -23,6 +22,7 @@ import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisModelDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.lti.web.open.PublicPyrisStatusUpdateResource;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).

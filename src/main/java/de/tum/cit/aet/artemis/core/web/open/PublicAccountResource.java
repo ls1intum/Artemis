@@ -27,12 +27,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.core.service.AccountService;
-import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.service.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
@@ -40,8 +36,12 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.exception.LoginAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
-import de.tum.cit.aet.artemis.core.dto.vm.KeyAndPasswordVM;
-import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.service.AccountService;
+import de.tum.cit.aet.artemis.core.service.user.UserService;
+import de.tum.cit.aet.artemis.service.dto.UserDTO;
 
 /**
  * REST controller for public endpoints regarding the current user's account.

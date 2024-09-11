@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -30,7 +31,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
 @Service

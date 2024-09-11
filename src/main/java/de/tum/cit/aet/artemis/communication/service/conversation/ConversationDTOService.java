@@ -21,17 +21,17 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.dto.ConversationSummary;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationUserDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationUserDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.OneToOneChatDTO;
 
 @Profile(PROFILE_CORE)
 @Service

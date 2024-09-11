@@ -31,6 +31,8 @@ import de.tum.cit.aet.artemis.connector.GitlabRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -40,8 +42,6 @@ import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.tutorialgroups.TutorialGroupUtilService;
-import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
-import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 
 class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

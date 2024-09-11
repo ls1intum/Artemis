@@ -35,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;
@@ -46,7 +47,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.web.rest.dto.FileMove;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 
 /**
  * Service that provides utilities for managing files in a git repository.

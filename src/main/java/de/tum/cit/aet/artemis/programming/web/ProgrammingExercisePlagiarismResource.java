@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.jplag.exceptions.ExitException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -34,7 +35,6 @@ import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingLanguageNotSupported
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * REST controller for managing ProgrammingExercise.

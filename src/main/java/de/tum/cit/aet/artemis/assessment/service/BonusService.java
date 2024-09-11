@@ -12,8 +12,8 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.IBonusStrategy;
 import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
 
 @Profile(PROFILE_CORE)
 @Service

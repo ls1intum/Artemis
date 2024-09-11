@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -74,7 +75,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

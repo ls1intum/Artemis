@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -38,8 +40,6 @@ import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralSo
 import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.hestia.structural.StructuralSolutionEntryGenerationException;
 import de.tum.cit.aet.artemis.programming.service.hestia.structural.StructuralTestCaseService;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**

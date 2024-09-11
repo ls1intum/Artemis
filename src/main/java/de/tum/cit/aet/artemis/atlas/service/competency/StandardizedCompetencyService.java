@@ -26,13 +26,13 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service for managing {@link StandardizedCompetency} entities.

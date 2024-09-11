@@ -13,9 +13,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
  * Repository interface for managing {@link IrisExerciseChatSession} entities.

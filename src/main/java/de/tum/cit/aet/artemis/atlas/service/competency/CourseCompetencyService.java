@@ -31,7 +31,10 @@ import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetency
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
@@ -40,9 +43,6 @@ import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.util.PageUtil;
 
 /**
  * Service for managing competencies.

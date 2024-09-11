@@ -12,14 +12,14 @@ import java.util.regex.Pattern;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.Conversation
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -37,8 +39,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
 

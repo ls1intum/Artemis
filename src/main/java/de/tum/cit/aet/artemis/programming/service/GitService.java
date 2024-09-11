@@ -72,6 +72,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -88,7 +89,6 @@ import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.service.ZipFileService;
 import de.tum.cit.aet.artemis.web.rest.dto.CommitInfoDTO;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Service

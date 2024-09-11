@@ -30,7 +30,11 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService.ConversationMemberSearchFilters;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationUserDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -39,10 +43,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.service.dto.ResponsibleUserDTO;
 import de.tum.cit.aet.artemis.service.dto.UserPublicInfoDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationUserDTO;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_CORE)

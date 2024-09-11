@@ -41,9 +41,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
-import de.tum.cit.aet.artemis.user.UserFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
+import de.tum.cit.aet.artemis.user.UserFactory;
 
 class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 

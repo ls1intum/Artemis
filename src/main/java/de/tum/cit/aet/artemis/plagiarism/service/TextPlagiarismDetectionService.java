@@ -24,6 +24,7 @@ import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.jplag.text.NaturalLanguage;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
 @Service

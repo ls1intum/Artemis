@@ -23,6 +23,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildResult;
 import de.tum.cit.aet.artemis.programming.service.localci.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_LOCALCI)

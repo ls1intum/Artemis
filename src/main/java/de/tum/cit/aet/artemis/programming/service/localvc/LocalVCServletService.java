@@ -38,7 +38,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
@@ -62,10 +64,8 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * This service is responsible for authenticating and authorizing git requests as well as for retrieving the requested Git repositories from disk.

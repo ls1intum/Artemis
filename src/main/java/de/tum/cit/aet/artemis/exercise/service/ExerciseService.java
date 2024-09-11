@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
@@ -70,8 +72,6 @@ import de.tum.cit.aet.artemis.web.rest.dto.CourseManagementOverviewExerciseStati
 import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
 import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Exercise.

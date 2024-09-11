@@ -21,10 +21,10 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.web.open.PublicUserJwtResource;
-import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 
 /**
  * Tests for {@link PublicUserJwtResource} and {@link SAML2Service}.

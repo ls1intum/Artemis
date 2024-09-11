@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.service.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)

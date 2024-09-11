@@ -37,6 +37,7 @@ import de.jplag.options.JPlagOptions;
 import de.jplag.python3.PythonLanguage;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.jplag.swift.SwiftLanguage;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -53,7 +54,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportServi
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.UriService;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -21,10 +21,10 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.service.SystemNotificationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.service.SystemNotificationService;
 
 /**
  * REST controller for administrating system notifications.

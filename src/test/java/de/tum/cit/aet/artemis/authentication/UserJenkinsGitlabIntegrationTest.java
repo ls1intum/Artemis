@@ -20,6 +20,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -29,7 +30,6 @@ import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabUserManagementSer
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsUserManagementService;
 import de.tum.cit.aet.artemis.user.UserFactory;
 import de.tum.cit.aet.artemis.user.UserTestService;
-import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 
 class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

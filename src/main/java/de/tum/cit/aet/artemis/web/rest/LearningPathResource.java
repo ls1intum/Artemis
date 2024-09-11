@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendat
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -54,7 +55,6 @@ import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationObje
 import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 @Profile(PROFILE_CORE)
 @RestController

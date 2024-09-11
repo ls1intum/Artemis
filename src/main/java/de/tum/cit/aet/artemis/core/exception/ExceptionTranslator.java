@@ -33,7 +33,6 @@ import org.zalando.problem.spring.web.advice.ProblemHandling;
 import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
 
-import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabException;
 import tech.jhipster.web.util.HeaderUtil;
 

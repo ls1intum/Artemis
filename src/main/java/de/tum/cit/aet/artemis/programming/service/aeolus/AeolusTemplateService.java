@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
+import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
 import de.tum.cit.aet.artemis.service.ResourceLoaderService;
 
 /**

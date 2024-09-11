@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamQuizQuestionsGenerator;
@@ -28,8 +30,6 @@ import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizGroupRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPoolRepository;
 import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
  * This service contains the functions to manage QuizPool entity.

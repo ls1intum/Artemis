@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -62,7 +63,6 @@ import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTask
 import de.tum.cit.aet.artemis.programming.service.localci.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.websocket.ResultWebsocketService;
 
 @Profile(PROFILE_CORE)

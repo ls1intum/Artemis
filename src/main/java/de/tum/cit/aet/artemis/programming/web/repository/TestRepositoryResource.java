@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -46,7 +47,6 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.web.rest.dto.FileMove;
 import de.tum.cit.aet.artemis.web.rest.dto.RepositoryStatusDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 /**
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.

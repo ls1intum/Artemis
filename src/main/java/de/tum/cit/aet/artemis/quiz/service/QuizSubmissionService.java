@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -32,7 +33,6 @@ import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUsersNotFoundDTO;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
  * REST controller for managing ExamUser.

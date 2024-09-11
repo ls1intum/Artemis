@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
@@ -49,7 +50,6 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseDetailsDTO;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

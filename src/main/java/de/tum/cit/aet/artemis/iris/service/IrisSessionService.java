@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
@@ -19,7 +20,6 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionServic
 import de.tum.cit.aet.artemis.iris.service.session.IrisHestiaSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisRateLimitedFeatureInterface;
 import de.tum.cit.aet.artemis.iris.service.session.IrisSubFeatureInterface;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 /**
  * Service for managing Iris sessions.

@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRe
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
 import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
 import de.tum.cit.aet.artemis.competency.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -88,6 +89,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -165,8 +167,6 @@ import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.user.UserNameAndLoginDTO;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
 
 @Service
 public class CourseTestService {

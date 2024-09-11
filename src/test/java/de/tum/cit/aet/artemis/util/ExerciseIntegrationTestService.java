@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.core.util.PageUtil;
 
 /**
  * Service responsible for util methods / shared code that is helpful or common for testing all exercise types

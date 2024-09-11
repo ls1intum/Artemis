@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamRegistrationService;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
 import de.tum.cit.aet.artemis.user.UserFactory;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 class ExamRegistrationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

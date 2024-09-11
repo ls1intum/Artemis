@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
  * Spring Data repository for the Submission entity.

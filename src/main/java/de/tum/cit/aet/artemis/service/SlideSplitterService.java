@@ -23,10 +23,10 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service Implementation for managing the split of AttachmentUnit into single slides and save them as PNG.

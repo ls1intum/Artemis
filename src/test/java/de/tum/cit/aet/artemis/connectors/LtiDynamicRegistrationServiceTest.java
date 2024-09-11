@@ -20,14 +20,13 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
-import de.tum.cit.aet.artemis.core.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13PlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 
 class LtiDynamicRegistrationServiceTest {
 
@@ -41,8 +40,6 @@ class LtiDynamicRegistrationServiceTest {
     private RestTemplate restTemplate;
 
     private LtiDynamicRegistrationService ltiDynamicRegistrationService;
-
-    private Course course;
 
     private String openIdConfigurationUrl;
 
@@ -61,7 +58,7 @@ class LtiDynamicRegistrationServiceTest {
         ltiDynamicRegistrationService = new LtiDynamicRegistrationService(ltiPlatformConfigurationRepository, oAuth2JWKSService, restTemplate);
         ReflectionTestUtils.setField(ltiDynamicRegistrationService, "artemisServerUrl", "http://artemis.com");
 
-        course = new Course();
+        Course course = new Course();
         course.setOnlineCourseConfiguration(new OnlineCourseConfiguration());
         course.setOnlineCourse(true);
         course.setShortName("shortName");

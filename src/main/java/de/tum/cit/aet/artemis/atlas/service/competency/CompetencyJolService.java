@@ -19,11 +19,11 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.CompetencyJolRepository;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 /**
  * Service Implementation for managing CompetencyJol.

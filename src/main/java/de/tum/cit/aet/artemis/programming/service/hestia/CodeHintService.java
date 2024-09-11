@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisHestiaSession;
 import de.tum.cit.aet.artemis.iris.service.session.IrisHestiaSessionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -21,7 +22,6 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)
 @Service

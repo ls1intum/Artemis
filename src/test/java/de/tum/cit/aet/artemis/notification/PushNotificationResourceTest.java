@@ -17,12 +17,12 @@ import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.communication.web.push_notification.PushNotificationRegisterBody;
 import de.tum.cit.aet.artemis.communication.web.push_notification.PushNotificationRegisterDTO;
 import de.tum.cit.aet.artemis.communication.web.push_notification.PushNotificationUnregisterRequest;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.user.UserUtilService;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class PushNotificationResourceTest extends AbstractSpringIntegrationIndependentTest {

@@ -25,6 +25,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.exercise.service.IExerciseScheduleService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.service.compass.CompassService;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service

@@ -42,7 +42,11 @@ import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.AccountRegistrationBlockedException;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
 import de.tum.cit.aet.artemis.core.exception.UsernameAlreadyUsedException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
@@ -61,10 +65,6 @@ import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
 import de.tum.cit.aet.artemis.service.dto.UserDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
-import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
-import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
 
 /**

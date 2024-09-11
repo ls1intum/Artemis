@@ -32,6 +32,7 @@ import de.tum.cit.aet.artemis.communication.domain.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -39,7 +40,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 

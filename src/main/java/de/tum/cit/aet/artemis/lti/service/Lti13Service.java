@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
@@ -53,7 +54,6 @@ import de.tum.cit.aet.artemis.lti.dto.Scopes;
 import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.service.OnlineCourseConfigurationService;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @Service
 @Profile("lti")

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -38,7 +39,6 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseG
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.web.rest.GitDiffReportParserService;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * The service handling ProgrammingExerciseGitDiffReport and their ProgrammingExerciseGitDiffEntries.

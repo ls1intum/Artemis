@@ -44,13 +44,13 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.dto.UserDTO;
 import de.tum.cit.aet.artemis.service.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.UserPageableSearchDTO;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the User entity.<br>

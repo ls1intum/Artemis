@@ -29,11 +29,11 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.GroupChatService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.GroupChatAuthorizationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Profile(PROFILE_CORE)

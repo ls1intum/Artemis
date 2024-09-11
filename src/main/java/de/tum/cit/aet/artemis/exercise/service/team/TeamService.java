@@ -18,6 +18,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.StudentsAppearMultipleTimesException;
+import de.tum.cit.aet.artemis.core.exception.StudentsNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -29,9 +32,6 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.web.rest.TeamResource;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.StudentsAppearMultipleTimesException;
-import de.tum.cit.aet.artemis.core.exception.StudentsNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Service

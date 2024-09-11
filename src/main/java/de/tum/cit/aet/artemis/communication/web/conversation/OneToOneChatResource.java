@@ -24,11 +24,11 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ConversationSer
 import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.OneToOneChatAuthorizationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.OneToOneChatDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.OneToOneChatDTO;
 
 @Profile(PROFILE_CORE)
 @RestController

@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.domain.StatisticsView;
 import de.tum.cit.aet.artemis.core.dto.CourseStatisticsAverageScore;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Service
