@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.websocket;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
@@ -12,7 +14,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisChatWebsocketService {
 
     private final IrisWebsocketService websocketService;

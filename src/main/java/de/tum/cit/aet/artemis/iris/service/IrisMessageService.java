@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.time.ZonedDateTime;
 
 import jakarta.ws.rs.BadRequestException;
@@ -17,7 +19,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
  * Service for managing Iris messages.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisMessageService {
 
     private final IrisSessionRepository irisSessionRepository;

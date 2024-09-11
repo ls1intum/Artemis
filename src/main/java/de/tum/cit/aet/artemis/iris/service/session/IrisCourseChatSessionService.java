@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Objects;
@@ -36,7 +38,7 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
  * Service to handle the course chat subsystem of Iris.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisCourseChatSessionService extends AbstractIrisChatSessionService<IrisCourseChatSession> {
 
     private final IrisMessageService irisMessageService;

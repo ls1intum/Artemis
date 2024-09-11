@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.aeolus;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.SOLUTION_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import static de.tum.cit.aet.artemis.programming.domain.AeolusTarget.JENKINS;
@@ -33,15 +34,15 @@ import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.dto.AeolusGenerationResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.InternalUrlService;
-import de.tum.cit.aet.artemis.programming.service.aeolus.dto.AeolusGenerationResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 /**
  * Service for publishing custom build plans using Aeolus
  */
 @Service
-@Profile("aeolus")
+@Profile(PROFILE_AEOLUS)
 public class AeolusBuildPlanService {
 
     private static final Logger log = LoggerFactory.getLogger(AeolusBuildPlanService.class);

@@ -1,4 +1,6 @@
-package de.tum.cit.aet.artemis.core.config.auth;
+package de.tum.cit.aet.artemis.iris.config;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.io.IOException;
 
@@ -14,7 +16,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class PyrisAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.iris.secret-token}")

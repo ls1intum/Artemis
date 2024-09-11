@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +15,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisStatusDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/iris/")
 public class IrisResource {

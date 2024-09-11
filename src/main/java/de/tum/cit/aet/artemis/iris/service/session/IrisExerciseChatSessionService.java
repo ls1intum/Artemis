@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -37,7 +39,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
  * Service to handle the chat subsystem of Iris.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisExerciseChatSessionService extends AbstractIrisChatSessionService<IrisExerciseChatSession> implements IrisRateLimitedFeatureInterface {
 
     private final IrisMessageService irisMessageService;

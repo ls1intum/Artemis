@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.service.aeolus.dto;
+package de.tum.cit.aet.artemis.programming.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;

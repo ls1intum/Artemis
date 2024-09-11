@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
@@ -17,7 +19,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisModelDTO;
 /**
  * REST controller for managing the models Pyris provides.
  */
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/")
 public class IrisModelsResource {

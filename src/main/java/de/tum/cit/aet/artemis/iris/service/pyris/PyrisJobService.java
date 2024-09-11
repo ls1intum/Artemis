@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -29,7 +31,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
  * It uses Hazelcast to store the jobs in a distributed map.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class PyrisJobService {
 
     private final HazelcastInstance hazelcastInstance;

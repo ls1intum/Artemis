@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
 
@@ -25,7 +27,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisSubFeatureInterface;
  * Service for managing Iris sessions.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisSessionService {
 
     private final UserRepository userRepository;

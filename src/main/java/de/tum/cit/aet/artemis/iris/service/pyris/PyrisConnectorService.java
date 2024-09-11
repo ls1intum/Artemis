@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -30,7 +32,7 @@ import de.tum.cit.aet.artemis.iris.web.PublicPyrisStatusUpdateResource;
  * Status updates are sent to Artemis via {@link PublicPyrisStatusUpdateResource}
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class PyrisConnectorService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisConnectorService.class);

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.settings;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType.COURSE;
 import static de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType.EXERCISE;
@@ -46,7 +47,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisDefaultTemplateService;
  * See {@link IrisSubSettingsService} for more information on the handling of {@link IrisSubSettings}.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisSettingsService {
 
     private final IrisSettingsRepository irisSettingsRepository;

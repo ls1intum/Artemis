@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -21,7 +23,7 @@ import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class PyrisStatusUpdateService {
 
     private final PyrisJobService pyrisJobService;

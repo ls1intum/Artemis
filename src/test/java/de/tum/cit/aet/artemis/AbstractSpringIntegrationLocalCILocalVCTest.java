@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -57,7 +60,8 @@ import de.tum.cit.aet.artemis.user.UserUtilService;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, "localci", "localvc", PROFILE_SCHEDULING, "ldap-only", "lti", "aeolus", "iris", PROFILE_BUILDAGENT })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_SCHEDULING, "ldap-only", PROFILE_LTI, "aeolus", "iris",
+        PROFILE_BUILDAGENT })
 
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
 @TestPropertySource(properties = { "server.port=49152", "artemis.version-control.url=http://localhost:49152", "artemis.user-management.use-external=false",

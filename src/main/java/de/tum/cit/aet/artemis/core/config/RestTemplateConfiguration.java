@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
 
@@ -17,8 +18,8 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.cit.aet.artemis.core.config.auth.AthenaAuthorizationInterceptor;
-import de.tum.cit.aet.artemis.core.config.auth.PyrisAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.athena.config.AthenaAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsAuthorizationInterceptor;
 
@@ -76,7 +77,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("iris")
+    @Profile(PROFILE_IRIS)
     public RestTemplate pyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createRestTemplate());
     }
@@ -120,7 +121,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("iris")
+    @Profile(PROFILE_IRIS)
     public RestTemplate shortTimeoutPyrisRestTemplate(PyrisAuthorizationInterceptor pyrisAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(pyrisAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }

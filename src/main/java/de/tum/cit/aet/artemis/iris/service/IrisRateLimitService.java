@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
@@ -15,7 +17,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
  * Service for the rate limit of the iris chatbot.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisRateLimitService {
 
     private final IrisMessageRepository irisMessageRepository;

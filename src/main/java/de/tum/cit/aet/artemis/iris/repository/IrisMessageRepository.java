@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
@@ -8,9 +9,11 @@ import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
@@ -19,6 +22,8 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 /**
  * Spring Data repository for the IrisMessage entity.
  */
+@Repository
+@Profile(PROFILE_IRIS)
 public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage, Long> {
 
     List<IrisMessage> findAllBySessionId(long sessionId);

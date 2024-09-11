@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.net.URI;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -15,7 +17,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisHealthStatusDTO;
 
 @Component
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class PyrisHealthIndicator implements HealthIndicator {
 
     @Value("${artemis.iris.health-ttl:30000}")

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.aeolus;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 /**
  * Service for generating build scripts for programming exercises using Aeolus
  */
-@Profile("aeolus")
+@Profile(PROFILE_AEOLUS)
 @Service
 public class AeolusBuildScriptGenerationService extends BuildScriptGenerationService {
 

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -32,7 +34,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
  * See {@link PyrisJobService#getAndAuthenticateJobFromHeaderElseThrow(HttpServletRequest, Class)} for more information.
  */
 @RestController
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 @RequestMapping("api/public/pyris/")
 public class PublicPyrisStatusUpdateResource {
 

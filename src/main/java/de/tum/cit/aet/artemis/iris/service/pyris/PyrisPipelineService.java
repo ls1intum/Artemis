@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  * Uses {@link PyrisConnectorService} to execute the pipelines and {@link PyrisJobService} to manage the jobs.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class PyrisPipelineService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisPipelineService.class);

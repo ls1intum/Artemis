@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.settings;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -33,7 +35,7 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDT
  * See {@link IrisSettingsService} for more information about handling {@link IrisSettings}.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisSubSettingsService {
 
     private final AuthorizationCheckService authCheckService;

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -31,7 +33,7 @@ import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 /**
  * REST controller for managing {@link IrisMessage}.
  */
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/iris/")
 public class IrisMessageResource {

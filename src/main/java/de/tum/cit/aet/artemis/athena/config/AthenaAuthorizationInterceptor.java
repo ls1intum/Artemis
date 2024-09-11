@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config.auth;
+package de.tum.cit.aet.artemis.athena.config;
 
 import java.io.IOException;
 

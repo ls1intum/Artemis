@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,7 +28,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 /**
  * REST controller for managing {@link IrisSettings}.
  */
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/")
 public class IrisSettingsResource {

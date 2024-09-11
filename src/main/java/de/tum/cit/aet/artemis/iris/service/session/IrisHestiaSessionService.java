@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.time.ZonedDateTime;
 
 import org.slf4j.Logger;
@@ -25,12 +27,10 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
  * Service to handle the Hestia integration of Iris.
  */
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface<IrisHestiaSession, CodeHint> {
 
     private static final Logger log = LoggerFactory.getLogger(IrisHestiaSessionService.class);
-
-    private final PyrisConnectorService pyrisConnectorService;
 
     private final IrisSettingsService irisSettingsService;
 
@@ -42,7 +42,6 @@ public class IrisHestiaSessionService implements IrisButtonBasedFeatureInterface
 
     public IrisHestiaSessionService(PyrisConnectorService pyrisConnectorService, IrisSettingsService irisSettingsService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisHestiaSessionRepository irisHestiaSessionRepository) {
-        this.pyrisConnectorService = pyrisConnectorService;
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
         this.irisSessionRepository = irisSessionRepository;

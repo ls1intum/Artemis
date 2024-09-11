@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 
 import java.io.IOException;
@@ -31,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class PyrisDTOService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisDTOService.class);

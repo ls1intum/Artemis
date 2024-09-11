@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -30,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 /**
  * REST controller for managing {@link IrisExerciseChatSession}.
  */
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 @RestController
 @RequestMapping("api/iris/exercise-chat/")
 public class IrisExerciseChatSessionResource {

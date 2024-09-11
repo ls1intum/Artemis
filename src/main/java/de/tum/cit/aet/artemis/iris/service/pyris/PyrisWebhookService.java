@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
+
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -27,7 +29,7 @@ import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 
 @Service
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class PyrisWebhookService {
 
     private static final Logger log = LoggerFactory.getLogger(PyrisWebhookService.class);
