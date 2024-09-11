@@ -48,7 +48,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     }
 
     @Query(value = """
-            SELECT new de.tum.cit.aet.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(ps.id, ps.submissionDate)
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(ps.id, ps.submissionDate)
             FROM ProgrammingSubmission ps
             WHERE ps.participation.id = :participationId ORDER BY ps.submissionDate DESC
             """)
@@ -77,7 +77,7 @@ public interface ProgrammingSubmissionRepository extends ArtemisJpaRepository<Pr
     }
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(s.id, s.submissionDate)
+            SELECT new de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO(s.id, s.submissionDate)
             FROM ProgrammingSubmission s
                 JOIN s.participation p
                 JOIN p.exercise e

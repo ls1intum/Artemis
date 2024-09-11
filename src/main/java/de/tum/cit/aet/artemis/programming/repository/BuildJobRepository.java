@@ -58,7 +58,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             @Param("durationLower") Duration durationLower, @Param("durationUpper") Duration durationUpper, Pageable pageable);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.programming.service.localci.dto.DockerImageBuild(
+            SELECT new de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild(
                 b.dockerImage,
                 MAX(b.buildStartDate)
             )
@@ -93,7 +93,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     }
 
     @Query("""
-             SELECT new de.tum.cit.aet.artemis.programming.service.localci.dto.ResultBuildJob(
+             SELECT new de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob(
                  b.result.id,
                  b.buildJobId
              )
@@ -103,7 +103,7 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     Set<ResultBuildJob> findBuildJobIdsForResultIds(@Param("resultIds") List<Long> resultIds);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.service.dto.BuildJobResultCountDTO(
+            SELECT new de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO(
                 b.buildStatus,
                 COUNT(b.buildStatus)
             )

@@ -135,7 +135,7 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
      * @return a list of {@link UserRoleDTO} objects containing the user ID, user login, and role for each user
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.service.dto.UserRoleDTO(user.id, user.login,
+            SELECT new de.tum.cit.aet.artemis.core.dto.UserRoleDTO(user.id, user.login,
                    CASE
                        WHEN :#{T(de.tum.cit.aet.artemis.core.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities THEN 'INSTRUCTOR'
                        WHEN course.instructorGroupName MEMBER OF user.groups THEN 'INSTRUCTOR'

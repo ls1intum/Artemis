@@ -35,7 +35,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
     void deleteBySubmissionId(Long submissionId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.service.dto.CoverageReportAndSubmissionDateDTO(r, s.submissionDate)
+            SELECT new de.tum.cit.aet.artemis.programming.dto.CoverageReportAndSubmissionDateDTO(r, s.submissionDate)
             FROM CoverageReport r
                 JOIN r.submission s
                 JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation

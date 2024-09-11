@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 /**
  * A DTO representing a finished build job
  */
-
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record FinishedBuildJobDTO(String id, String name, String buildAgentAddress, long participationId, long courseId, long exerciseId, BuildStatus status,
         RepositoryType repositoryType, String repositoryName, RepositoryType triggeredByPushTo, ZonedDateTime buildStartDate, ZonedDateTime buildCompletionDate, String commitHash,
