@@ -376,7 +376,6 @@ public class ParticipationResource {
     }
 
     private ResponseEntity<StudentParticipation> handleExerciseFeedbackRequest(Exercise exercise, Principal principal) {
-        var nonProgrammingExercise = exercise instanceof TextExercise || exercise instanceof ModelingExercise;
 
         // Validate exercise and timing
         if (exercise.isExamExercise()) {
@@ -400,7 +399,7 @@ public class ParticipationResource {
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
 
         // Check submission requirements
-        if (nonProgrammingExercise) {
+        if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
             if (submissionRepository.findAllByParticipationId(participation.getId()).isEmpty()) {
                 throw new BadRequestAlertException("You need to submit at least once", "participation", "preconditions not met");
             }
