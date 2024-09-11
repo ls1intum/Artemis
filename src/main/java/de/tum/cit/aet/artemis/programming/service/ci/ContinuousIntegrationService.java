@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.web.rest.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 
 /**
  * Abstract service for managing entities related to continuous integration.

@@ -104,17 +104,17 @@ import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 import de.tum.cit.aet.artemis.quiz.service.QuizResultService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusResultDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusSourceResultDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamChecklistDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.StudentExamWithGradeDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
+import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 /**
  * Service Implementation for managing exams.

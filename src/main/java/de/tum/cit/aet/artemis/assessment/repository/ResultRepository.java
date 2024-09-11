@@ -36,8 +36,8 @@ import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
+import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 
 /**
  * Spring Data JPA repository for the Result entity.

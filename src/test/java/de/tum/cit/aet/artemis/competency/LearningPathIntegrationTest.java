@@ -49,17 +49,17 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
-import de.tum.cit.aet.artemis.web.rest.LearningPathResource;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyGraphNodeDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyNameDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathHealthDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import de.tum.cit.aet.artemis.atlas.web.LearningPathResource;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

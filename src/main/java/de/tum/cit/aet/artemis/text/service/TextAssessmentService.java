@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.service.SubmissionService;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.web.websocket.ResultWebsocketService;
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 
 @Profile(PROFILE_CORE)
 @Service

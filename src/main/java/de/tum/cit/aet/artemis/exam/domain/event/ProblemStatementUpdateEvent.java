@@ -4,7 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-import de.tum.cit.aet.artemis.web.rest.dto.examevent.ProblemStatementUpdateEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ProblemStatementUpdateEventDTO;
 
 /**
  * An event indicating an update of the problem statement of an exercise during an exam.

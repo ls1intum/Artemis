@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
-import de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
-import de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 
 /**
  * Service to efficiently calculate the statistics for the exercise-scores-chart.component.ts in the client

@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.repository.competency.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
 
 class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

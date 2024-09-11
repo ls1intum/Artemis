@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
 import de.tum.cit.aet.artemis.service.SubmissionService;
-import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateBaseDTO;
-import de.tum.cit.aet.artemis.web.websocket.ResultWebsocketService;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateBaseDTO;
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 
 @Profile(PROFILE_CORE)
 @Service

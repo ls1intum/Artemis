@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.web.websocket.dto.TeamAssignmentPayload;
+import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentPayload;
 
 class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest {
 

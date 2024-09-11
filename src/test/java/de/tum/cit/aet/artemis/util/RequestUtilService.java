@@ -45,7 +45,7 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 
 @Service
 public class RequestUtilService {

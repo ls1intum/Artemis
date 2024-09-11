@@ -25,12 +25,12 @@ import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseWithIdDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamSessionDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamWithIdAndCourseDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.StudentExamWithIdAndExamAndUserDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.SuspiciousExamSessionsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.UserWithIdAndLoginDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithIdAndExamAndUserDTO;
+import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
+import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 

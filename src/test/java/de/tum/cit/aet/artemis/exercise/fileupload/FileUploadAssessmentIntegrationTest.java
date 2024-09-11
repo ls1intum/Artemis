@@ -50,9 +50,9 @@ import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.FileUploadAssessmentDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

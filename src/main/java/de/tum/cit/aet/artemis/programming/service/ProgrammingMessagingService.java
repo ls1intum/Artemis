@@ -28,9 +28,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.web.rest.dto.SubmissionDTO;
-import de.tum.cit.aet.artemis.web.websocket.ResultWebsocketService;
-import de.tum.cit.aet.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.programming.exceptions.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_CORE)
 @Service

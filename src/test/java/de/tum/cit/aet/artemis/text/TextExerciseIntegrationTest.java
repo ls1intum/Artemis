@@ -80,9 +80,9 @@ import de.tum.cit.aet.artemis.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismComparisonStatusDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 
 class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -8,7 +8,7 @@ import java.util.Map;
 import org.springframework.data.util.Pair;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.web.rest.TeamResource;
+import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 
 /**
  * Exception that will be thrown if the user tries to import teams that contain students who appear in another imported team. The error response will

@@ -42,8 +42,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
+import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 
 @Profile(PROFILE_CORE)
 @Service

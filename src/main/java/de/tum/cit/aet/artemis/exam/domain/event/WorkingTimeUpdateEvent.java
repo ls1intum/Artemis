@@ -4,7 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-import de.tum.cit.aet.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.WorkingTimeUpdateEventDTO;
 
 /**
  * An event indicating an updated working time for a specific student exam.

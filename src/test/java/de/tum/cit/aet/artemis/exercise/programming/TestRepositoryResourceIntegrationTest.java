@@ -43,8 +43,8 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 import de.tum.cit.aet.artemis.util.GitUtilService;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.FileMove;
-import de.tum.cit.aet.artemis.web.rest.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
 
 class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

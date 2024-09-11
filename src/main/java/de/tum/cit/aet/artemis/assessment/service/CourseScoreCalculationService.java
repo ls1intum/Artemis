@@ -42,11 +42,11 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.service.dto.MaxAndReachablePoints;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusSourceResultDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseScoresDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ParticipationResultDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.score.StudentScoresDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 
 /**
  * Service Implementation for calculating course scores.

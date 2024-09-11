@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 
 /**
  * REST controller for managing Plagiarism Cases.

@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanCheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -30,8 +32,6 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.ci.AbstractContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIPermission;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.web.rest.dto.BuildPlanCheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 /**
  * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.

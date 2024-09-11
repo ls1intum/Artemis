@@ -7,6 +7,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.exceptions.BuildTriggerWebsocketError;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
@@ -43,8 +45,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildResult;
 import de.tum.cit.aet.artemis.programming.service.localci.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
-import de.tum.cit.aet.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_LOCALCI)
 @Service

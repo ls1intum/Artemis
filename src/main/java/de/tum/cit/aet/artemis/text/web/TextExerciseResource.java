@@ -84,10 +84,10 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 import de.tum.cit.aet.artemis.text.service.TextExerciseService;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionExportService;
-import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.SubmissionExportOptionsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 
 /**
  * REST controller for managing TextExercise.

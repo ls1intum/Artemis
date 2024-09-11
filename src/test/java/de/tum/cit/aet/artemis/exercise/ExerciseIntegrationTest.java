@@ -55,8 +55,8 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.web.rest.dto.ExerciseDetailsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 
 class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

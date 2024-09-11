@@ -74,7 +74,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 
 /**
  * An Exercise.

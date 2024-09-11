@@ -15,10 +15,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendationService.RecommendationState;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.service.LearningObjectService;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationObjectDTO.LearningObjectType;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO.LearningObjectType;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
 
 /**
  * Service for navigating through a learning path.

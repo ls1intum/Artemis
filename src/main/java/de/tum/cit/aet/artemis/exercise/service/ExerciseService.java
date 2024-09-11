@@ -68,10 +68,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
-import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
+import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 
 /**
  * Service Implementation for managing Exercise.

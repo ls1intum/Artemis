@@ -19,8 +19,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.user.UserFactory;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 
 class GroupChatIntegrationTest extends AbstractConversationTest {
 

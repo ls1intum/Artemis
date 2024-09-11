@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.web.rest.dto.score.ScoreDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
 
 class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

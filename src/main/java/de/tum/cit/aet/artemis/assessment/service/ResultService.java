@@ -62,8 +62,8 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseT
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.localci.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
-import de.tum.cit.aet.artemis.web.websocket.ResultWebsocketService;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 
 @Profile(PROFILE_CORE)
 @Service

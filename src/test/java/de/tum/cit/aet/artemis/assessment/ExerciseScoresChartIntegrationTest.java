@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 
 class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

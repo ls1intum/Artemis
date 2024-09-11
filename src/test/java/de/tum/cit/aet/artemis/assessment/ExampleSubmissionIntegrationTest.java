@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.web.rest.dto.TextAssessmentDTO;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentDTO;
 
 class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -45,9 +45,9 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.web.rest.LearningPathResource;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathHealthDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import de.tum.cit.aet.artemis.atlas.web.LearningPathResource;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
+import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 
 class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 

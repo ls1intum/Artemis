@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.service.LegalDocumentService;
-import de.tum.cit.aet.artemis.web.rest.dto.ImprintDTO;
+import de.tum.cit.aet.artemis.core.dto.ImprintDTO;
 
 /**
  * REST controller for retrieving the imprint.

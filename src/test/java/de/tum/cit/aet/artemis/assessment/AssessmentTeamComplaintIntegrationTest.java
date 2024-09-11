@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.service.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 
 class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

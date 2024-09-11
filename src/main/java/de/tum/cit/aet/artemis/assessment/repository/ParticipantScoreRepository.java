@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
+import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -107,7 +107,7 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     Optional<Instant> getLatestModifiedDate();
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresAggregatedInformation(
                 p.exercise.id,
                 AVG(p.lastRatedScore),
                 MAX(p.lastRatedScore)

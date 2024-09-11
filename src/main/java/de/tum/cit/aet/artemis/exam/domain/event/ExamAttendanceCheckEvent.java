@@ -4,7 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
 
 /**
  * An event indicating an attendance check trigger during an exam.

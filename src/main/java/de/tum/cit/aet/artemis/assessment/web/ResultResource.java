@@ -53,8 +53,8 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 
 /**
  * REST controller for managing Result.

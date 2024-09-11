@@ -60,8 +60,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

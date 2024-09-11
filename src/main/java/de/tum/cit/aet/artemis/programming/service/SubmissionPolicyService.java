@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.web.rest.SubmissionPolicyResource;
+import de.tum.cit.aet.artemis.exercise.web.SubmissionPolicyResource;
 
 @Profile(PROFILE_CORE)
 @Service

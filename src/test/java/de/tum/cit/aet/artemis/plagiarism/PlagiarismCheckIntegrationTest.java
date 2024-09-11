@@ -13,7 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 
 class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

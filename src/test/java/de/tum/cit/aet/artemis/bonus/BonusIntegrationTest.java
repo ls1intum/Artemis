@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 
 class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

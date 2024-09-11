@@ -33,8 +33,8 @@ import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 
 class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.ZipFileService;
-import de.tum.cit.aet.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 
 @Profile(PROFILE_CORE)
 @Service

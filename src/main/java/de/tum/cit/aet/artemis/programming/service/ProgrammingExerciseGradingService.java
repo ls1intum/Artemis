@@ -71,7 +71,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResult
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.service.dto.AbstractBuildResultNotificationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -4,7 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
 
 /**
  * An exam wide announcement event.

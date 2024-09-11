@@ -84,10 +84,10 @@ import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamChecklistDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
+import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 
 class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

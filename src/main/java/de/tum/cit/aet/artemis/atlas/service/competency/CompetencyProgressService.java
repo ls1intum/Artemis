@@ -38,8 +38,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseCompetencyProgressDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
 
 /**
  * Service for calculating the progress of a student in a competency.

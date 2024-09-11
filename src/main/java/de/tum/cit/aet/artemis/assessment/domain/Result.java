@@ -57,7 +57,7 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
 import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 /**
  * A Result.

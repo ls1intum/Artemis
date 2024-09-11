@@ -25,8 +25,8 @@ import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.SubmissionVersionDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

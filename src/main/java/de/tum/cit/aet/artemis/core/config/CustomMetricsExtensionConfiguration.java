@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 
-import de.tum.cit.aet.artemis.web.rest.CustomMetricsExtension;
+import de.tum.cit.aet.artemis.core.web.CustomMetricsExtension;
 import io.micrometer.core.annotation.Timed;
 import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
 

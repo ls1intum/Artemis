@@ -51,12 +51,12 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseCompetencyProgressDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyRelationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.CompetencyPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 
 @Profile(PROFILE_CORE)
 @RestController

@@ -34,9 +34,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.score.ScoreDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.score.StudentScoreSum;
-import de.tum.cit.aet.artemis.web.rest.dto.score.TeamScoreSum;
+import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum;
+import de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSum;
 
 @Profile(PROFILE_CORE)
 @Service

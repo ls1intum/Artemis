@@ -16,8 +16,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 
 class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
 

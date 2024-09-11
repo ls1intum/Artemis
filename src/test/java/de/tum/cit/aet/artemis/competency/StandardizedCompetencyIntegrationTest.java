@@ -27,12 +27,12 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.SourceDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
 class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

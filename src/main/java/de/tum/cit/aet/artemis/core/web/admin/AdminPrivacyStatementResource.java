@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.service.LegalDocumentService;
-import de.tum.cit.aet.artemis.web.rest.dto.PrivacyStatementDTO;
+import de.tum.cit.aet.artemis.core.dto.PrivacyStatementDTO;
 
 /**
  * REST controller for editing the Privacy Statement as an admin.

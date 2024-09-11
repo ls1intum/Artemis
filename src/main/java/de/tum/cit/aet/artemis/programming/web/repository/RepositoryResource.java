@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.programming.web.repository;
 
-import static de.tum.cit.aet.artemis.web.rest.dto.RepositoryStatusDTOType.CLEAN;
-import static de.tum.cit.aet.artemis.web.rest.dto.RepositoryStatusDTOType.CONFLICT;
-import static de.tum.cit.aet.artemis.web.rest.dto.RepositoryStatusDTOType.UNCOMMITTED_CHANGES;
+import static de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType.CLEAN;
+import static de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType.CONFLICT;
+import static de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType.UNCOMMITTED_CHANGES;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
@@ -46,9 +46,9 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.programming.web.repository.util.RepositoryExecutor;
 import de.tum.cit.aet.artemis.service.ProfileService;
-import de.tum.cit.aet.artemis.web.rest.dto.FileMove;
-import de.tum.cit.aet.artemis.web.rest.dto.RepositoryStatusDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.RepositoryStatusDTOType;
+import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 
 /**
  * Abstract class that can be extended to make repository endpoints available that retrieve the repository based on the implemented method getRepository. This way the retrieval of

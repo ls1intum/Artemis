@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
-import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**

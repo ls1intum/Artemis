@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 
 class ExamServiceTest extends AbstractSpringIntegrationIndependentTest {
 

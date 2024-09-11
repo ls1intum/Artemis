@@ -128,11 +128,11 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.StudentExamWithGradeDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.WorkingTimeUpdateEventDTO;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

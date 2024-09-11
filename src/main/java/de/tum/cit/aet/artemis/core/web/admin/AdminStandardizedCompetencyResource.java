@@ -28,11 +28,11 @@ import de.tum.cit.aet.artemis.atlas.service.competency.StandardizedCompetencySer
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaResultDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 
 /**
  * Admin REST controller for managing {@link StandardizedCompetency} entities.

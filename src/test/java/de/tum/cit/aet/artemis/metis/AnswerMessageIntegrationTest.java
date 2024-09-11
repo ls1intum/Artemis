@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.LectureUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 
 class AnswerMessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

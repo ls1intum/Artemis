@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.course.CourseFactory;
-import de.tum.cit.aet.artemis.web.rest.dto.OrganizationCountDTO;
+import de.tum.cit.aet.artemis.core.dto.OrganizationCountDTO;
 
 class OrganizationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

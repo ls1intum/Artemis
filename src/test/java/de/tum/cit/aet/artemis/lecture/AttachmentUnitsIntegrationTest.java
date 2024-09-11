@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
-import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitSplitDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitInformationDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
 
 class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

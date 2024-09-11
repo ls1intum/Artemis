@@ -65,8 +65,8 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 
 class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

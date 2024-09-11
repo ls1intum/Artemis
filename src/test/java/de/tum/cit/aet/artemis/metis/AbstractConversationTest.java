@@ -38,9 +38,9 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
+import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 
 /**
  * Contains useful methods for testing the conversations futures

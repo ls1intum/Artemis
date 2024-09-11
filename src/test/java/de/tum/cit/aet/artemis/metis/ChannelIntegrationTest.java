@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 import de.tum.cit.aet.artemis.tutorialgroups.TutorialGroupUtilService;
 import de.tum.cit.aet.artemis.user.UserFactory;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 
 class ChannelIntegrationTest extends AbstractConversationTest {
 

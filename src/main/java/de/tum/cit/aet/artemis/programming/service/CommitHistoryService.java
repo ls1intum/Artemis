@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.service.ProfileService;
-import de.tum.cit.aet.artemis.web.rest.GitDiffReportParserService;
+import de.tum.cit.aet.artemis.programming.web.GitDiffReportParserService;
 
 @Profile(PROFILE_CORE)
 @Service

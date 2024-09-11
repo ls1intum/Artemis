@@ -37,10 +37,10 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.service.dto.MaxAndReachablePoints;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusSourceResultDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseScoresDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.score.StudentScoresDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 
 class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentTest {
 

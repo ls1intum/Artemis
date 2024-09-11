@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.atlas.repository.competency.CompetencyJolRepositor
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
 
 /**
  * Service Implementation for managing CompetencyJol.

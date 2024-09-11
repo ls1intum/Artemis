@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 
 class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

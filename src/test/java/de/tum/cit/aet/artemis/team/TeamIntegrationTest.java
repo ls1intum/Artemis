@@ -35,8 +35,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.web.rest.dto.CoursesForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExerciseDetailsDTO;
+import de.tum.cit.aet.artemis.core.dto.CoursesForDashboardDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 
 class TeamIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -156,17 +156,17 @@ import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.util.RequestUtilService;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseForImportDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseManagementDetailViewDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CoursesForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.OnlineCourseDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.TextAssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.user.UserNameAndLoginDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewStatisticsDTO;
+import de.tum.cit.aet.artemis.core.dto.CoursesForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.OnlineCourseDTO;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 
 @Service
 public class CourseTestService {

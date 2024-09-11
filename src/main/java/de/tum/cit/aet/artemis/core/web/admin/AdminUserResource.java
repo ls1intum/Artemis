@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
 import de.tum.cit.aet.artemis.service.dto.UserDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.UserPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.UserPageableSearchDTO;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;

@@ -68,7 +68,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
-import de.tum.cit.aet.artemis.web.rest.dto.QuizBatchJoinDTO;
+import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

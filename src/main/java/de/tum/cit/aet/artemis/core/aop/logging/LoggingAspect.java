@@ -46,7 +46,8 @@ public class LoggingAspect {
     /**
      * Pointcut that matches all Spring beans in the application's main packages.
      */
-    @Pointcut("within(de.tum.cit.aet.artemis.repository..*)" + " || within(de.tum.cit.aet.artemis.service..*)" + " || within(de.tum.cit.aet.artemis.web.rest..*)")
+    // ToDo: Verify that wildcards work as expected
+    @Pointcut("within(de.tum.cit.aet.artemis..*.repository..*)" + " || within(de.tum.cit.aet.artemis..*.service..*)" + " || within(de.tum.cit.aet.artemis..*.web..*)")
     public void applicationPackagePointcut() {
         // Method is empty as this is just a Pointcut, the implementations are in the advices.
     }

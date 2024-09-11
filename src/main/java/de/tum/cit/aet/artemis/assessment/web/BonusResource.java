@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 
 /**
  * REST controller for managing bonus

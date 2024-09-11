@@ -68,10 +68,10 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingSubmissionElement;
 import de.tum.cit.aet.artemis.service.ParticipationService;
-import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ModelingAssessmentDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingAssessmentDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 
 class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

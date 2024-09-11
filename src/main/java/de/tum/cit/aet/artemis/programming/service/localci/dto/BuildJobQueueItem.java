@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.programming.domain.BuildStatus;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamUserDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 
 class FileIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

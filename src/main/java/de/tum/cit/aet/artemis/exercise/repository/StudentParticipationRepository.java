@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
-import de.tum.cit.aet.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -1242,7 +1242,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return a list of {@link FeedbackDetailDTO} objects, with the relative count and task number set to 0.
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.feedback.FeedbackDetailDTO(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
                 COUNT(f.id),
                 0,
                 f.detailText,

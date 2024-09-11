@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.science.ScienceEventDTO;
+import de.tum.cit.aet.artemis.atlas.dto.science.ScienceEventDTO;
 
 /**
  * Service class for {@link ScienceEvent}.

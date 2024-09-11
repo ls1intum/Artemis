@@ -80,7 +80,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
 import de.tum.cit.aet.artemis.service.CourseService;
-import de.tum.cit.aet.artemis.web.rest.dto.RepositoryExportOptionsDTO;
+import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 
 /**
  * REST controller for managing ProgrammingExercise.

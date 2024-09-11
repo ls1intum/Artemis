@@ -13,10 +13,10 @@ import org.springframework.stereotype.Repository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.MapEntryLongLong;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.ScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.ScoreDTO;
 
 /**
  * Spring Data JPA repository to fetch exercise related metrics.
@@ -32,7 +32,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return the exercise information for all exercises in the course
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.ExerciseInformationDTO(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO(
                 e.id,
                 e.shortName,
                 e.title,
@@ -66,7 +66,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return the average score for each exercise
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.ScoreDTO(p.exercise.id, AVG(COALESCE(p.lastRatedScore, 0)))
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ScoreDTO(p.exercise.id, AVG(COALESCE(p.lastRatedScore, 0)))
             FROM ParticipantScore p
             WHERE p.exercise.id IN :exerciseIds
             GROUP BY p.exercise.id
@@ -81,7 +81,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return the score for the user in each exercise
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.ScoreDTO(s.exercise.id, CAST(COALESCE(s.lastRatedScore, 0) AS DOUBLE))
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ScoreDTO(s.exercise.id, CAST(COALESCE(s.lastRatedScore, 0) AS DOUBLE))
             FROM StudentScore s
             WHERE s.exercise.id IN :exerciseIds
                 AND s.user.id = :userId
@@ -99,7 +99,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for the user
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate)), p.id
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate)), p.id
             FROM Submission s
                 LEFT JOIN StudentParticipation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e
@@ -123,7 +123,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return a set of ResourceTimestampDTO objects containing the exercise id and the latest submission date for each exercise
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate)), p.id
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO(e.id, MAX(s.submissionDate)), p.id
             FROM Submission s
                 LEFT JOIN Participation p ON s.participation.id = p.id
                 LEFT JOIN p.exercise e
@@ -162,7 +162,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
      * @return MapEntryDTO with exercise id and team id
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.MapEntryLongLong(e.id, t.id)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong(e.id, t.id)
             FROM Exercise e
                 LEFT JOIN e.teams t
                 LEFT JOIN t.students u

@@ -31,8 +31,8 @@ import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamUsersNotFoundDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ImageDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
+import de.tum.cit.aet.artemis.core.dto.ImageDTO;
 
 /**
  * Service Implementation for managing Exam Users.

@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

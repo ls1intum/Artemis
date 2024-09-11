@@ -21,18 +21,18 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyProgressDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyStudentMetricsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.ExerciseStudentMetricsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.LectureUnitInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.LectureUnitStudentMetricsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.MapEntryLongLong;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.ScoreDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.StudentMetricsDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyProgressDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyStudentMetricsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.ExerciseStudentMetricsDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitStudentMetricsDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.ScoreDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 
 /**
  * Service class to access metrics regarding students' learning progress.

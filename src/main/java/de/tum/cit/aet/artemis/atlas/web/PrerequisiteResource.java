@@ -43,8 +43,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 
 /**
  * REST controller for managing {@link Prerequisite Prerequisite} entities.

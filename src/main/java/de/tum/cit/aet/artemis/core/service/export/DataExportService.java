@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.FileService;
-import de.tum.cit.aet.artemis.web.rest.dto.DataExportDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.RequestDataExportDTO;
+import de.tum.cit.aet.artemis.core.dto.DataExportDTO;
+import de.tum.cit.aet.artemis.core.dto.RequestDataExportDTO;
 
 /**
  * Service Implementation for managing the data export in accordance with Art. 15 GDPR.

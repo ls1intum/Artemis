@@ -8,7 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 
 public class PageUtil {
 

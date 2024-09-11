@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.programming.domain.ide.Ide;
 import de.tum.cit.aet.artemis.programming.domain.ide.UserIdeMapping;
 import de.tum.cit.aet.artemis.programming.repository.settings.IdeRepository;
 import de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.settings.ide.IdeDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.settings.ide.IdeMappingDTO;
+import de.tum.cit.aet.artemis.programming.dto.IdeDTO;
+import de.tum.cit.aet.artemis.programming.dto.IdeMappingDTO;
 
 class IdePreferencesIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.PostDTO;
+import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 
 @Profile(PROFILE_CORE)
 @Service

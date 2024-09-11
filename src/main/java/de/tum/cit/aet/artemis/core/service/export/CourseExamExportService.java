@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.service.ZipFileService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.service.TextExerciseWithSubmissionsExportService;
-import de.tum.cit.aet.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 
 /**
  * Service Implementation for exporting courses and exams.

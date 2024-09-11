@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.lectureunit.LectureUnitForLearningPathNodeDetailsDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitForLearningPathNodeDetailsDTO;
 
 class LectureUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

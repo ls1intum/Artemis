@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.web.rest.dto.GradeDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.GradeStepsDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradeDTO;
+import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
 
 class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

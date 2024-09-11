@@ -15,8 +15,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 
 @Service
 public class StandardizedCompetencyUtilService {

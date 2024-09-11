@@ -31,8 +31,8 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.service.export.DataExportService;
-import de.tum.cit.aet.artemis.web.rest.dto.DataExportDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.RequestDataExportDTO;
+import de.tum.cit.aet.artemis.core.dto.DataExportDTO;
+import de.tum.cit.aet.artemis.core.dto.RequestDataExportDTO;
 
 @ExtendWith(MockitoExtension.class)
 class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {

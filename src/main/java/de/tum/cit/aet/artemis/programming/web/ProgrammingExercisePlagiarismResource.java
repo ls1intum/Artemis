@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
 import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 
 /**
  * REST controller for managing ProgrammingExercise.

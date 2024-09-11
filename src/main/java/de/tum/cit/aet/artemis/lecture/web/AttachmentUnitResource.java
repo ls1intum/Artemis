@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.service.AttachmentUnitService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.SlideSplitterService;
-import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitInformationDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitInformationDTO;
 
 @Profile(PROFILE_CORE)
 @RestController

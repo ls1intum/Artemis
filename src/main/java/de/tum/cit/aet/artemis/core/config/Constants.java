@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.config;
 
 import java.util.regex.Pattern;
 
+import de.tum.cit.aet.artemis.atlas.web.LtiResource;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -307,7 +308,7 @@ public final class Constants {
     public static final String PROFILE_AEOLUS = "aeolus";
 
     /**
-     * The name of the Spring profile used for activating LTI in Artemis, see {@link de.tum.cit.aet.artemis.web.rest.LtiResource}.
+     * The name of the Spring profile used for activating LTI in Artemis, see {@link LtiResource}.
      */
     public static final String PROFILE_LTI = "lti";
 

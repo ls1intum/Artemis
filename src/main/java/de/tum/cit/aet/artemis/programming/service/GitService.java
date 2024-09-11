@@ -27,6 +27,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -88,7 +89,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.service.ZipFileService;
-import de.tum.cit.aet.artemis.web.rest.dto.CommitInfoDTO;
 
 @Profile(PROFILE_CORE)
 @Service

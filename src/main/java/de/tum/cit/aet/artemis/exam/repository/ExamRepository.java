@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
 
 /**
  * Spring Data JPA repository for the ExamRepository entity.
@@ -82,7 +82,7 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             @Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.CourseContentCount(
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCount(
                 COUNT(e.id),
                 e.course.id
             )

@@ -44,7 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

@@ -25,7 +25,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.web.rest.dto.PrivacyStatementDTO;
+import de.tum.cit.aet.artemis.core.dto.PrivacyStatementDTO;
 
 class PrivacyStatementResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

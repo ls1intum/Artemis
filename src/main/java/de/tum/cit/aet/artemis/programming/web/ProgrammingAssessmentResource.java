@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
-import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 
 /**
  * REST controller for managing ProgrammingAssessment.

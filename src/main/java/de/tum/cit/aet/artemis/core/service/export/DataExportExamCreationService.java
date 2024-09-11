@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 
 /**
  * A service to create the data export for exams the user has participated in.

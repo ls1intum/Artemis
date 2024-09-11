@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonReposito
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismComparisonStatusDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 
 class PlagiarismIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

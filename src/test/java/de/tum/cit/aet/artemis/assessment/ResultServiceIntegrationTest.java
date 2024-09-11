@@ -73,8 +73,8 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 
 class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

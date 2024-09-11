@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.service.ParticipationAuthorizationCheckService;
-import de.tum.cit.aet.artemis.web.rest.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
 
 @Profile(PROFILE_CORE)
 @RestController

@@ -63,7 +63,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.util.TestConstants;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.web.rest.dto.SubmissionDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

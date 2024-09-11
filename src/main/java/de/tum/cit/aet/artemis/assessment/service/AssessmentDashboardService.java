@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
-import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 
 /**
  * Service Implementation for managing Tutor-Assessment-Dashboard.

@@ -22,7 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.web.rest.dto.LinkPreviewDTO;
+import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
 
 class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

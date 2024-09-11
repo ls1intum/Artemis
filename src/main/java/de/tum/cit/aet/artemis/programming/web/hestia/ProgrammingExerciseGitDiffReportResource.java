@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.service.CommitHistoryService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.service.ParticipationAuthorizationCheckService;
-import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGitDiffReportDTO;
 
 /**
  * REST controller for managing ProgrammingExerciseGitDiffReports and its entries.

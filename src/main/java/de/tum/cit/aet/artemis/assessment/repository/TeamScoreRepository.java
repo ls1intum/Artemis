@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.web.rest.dto.score.TeamScoreSum;
+import de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSum;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -34,7 +34,7 @@ public interface TeamScoreRepository extends ArtemisJpaRepository<TeamScore, Lon
     Optional<TeamScore> findByExercise_IdAndTeam_Id(Long exerciseId, Long teamId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.score.TeamScoreSum(t.id, COALESCE(SUM(s.lastRatedPoints), 0))
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSum(t.id, COALESCE(SUM(s.lastRatedPoints), 0))
             FROM TeamScore s
                 LEFT JOIN s.team t
             WHERE s.exercise IN :exercises

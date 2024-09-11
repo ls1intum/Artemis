@@ -40,15 +40,15 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyGraphEdgeDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyGraphNodeDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathCompetencyGraphDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathHealthDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.NgxLearningPathDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
+import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 /**
  * Service Implementation for managing Learning Paths.

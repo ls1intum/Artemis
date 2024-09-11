@@ -18,7 +18,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
 
 /**
  * Base class for all exam live events. An exam live event indicates that an event or change has occurred during an exam.

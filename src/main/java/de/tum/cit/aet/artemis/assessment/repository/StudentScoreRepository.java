@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.web.rest.dto.score.StudentScoreSum;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -33,7 +33,7 @@ public interface StudentScoreRepository extends ArtemisJpaRepository<StudentScor
     Optional<StudentScore> findByExercise_IdAndUser_Id(long exerciseId, long userId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.score.StudentScoreSum(u.id, COALESCE(SUM(s.lastRatedPoints), 0))
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum(u.id, COALESCE(SUM(s.lastRatedPoints), 0))
             FROM StudentScore s
                 LEFT JOIN s.user u
             WHERE s.exercise IN :exercises

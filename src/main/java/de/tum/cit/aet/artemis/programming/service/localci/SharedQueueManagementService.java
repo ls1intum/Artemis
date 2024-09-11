@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildAgentInformat
 import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.service.localci.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.service.ProfileService;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 
 /**
  * Includes methods for managing and retrieving the shared build job queue and build agent information. Also contains methods for cancelling build jobs.

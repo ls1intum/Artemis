@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 
 /**
  * Service responsible for initializing the database with specific testdata related to complaints for use in integration tests.

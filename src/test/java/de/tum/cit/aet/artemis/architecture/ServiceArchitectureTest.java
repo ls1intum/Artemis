@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.web.rest.GitDiffReportParserService;
-import de.tum.cit.aet.artemis.web.websocket.ResultWebsocketService;
-import de.tum.cit.aet.artemis.web.websocket.localci.LocalCIWebsocketMessagingService;
+import de.tum.cit.aet.artemis.programming.web.GitDiffReportParserService;
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.programming.web.LocalCIWebsocketMessagingService;
 
 class ServiceArchitectureTest extends AbstractArchitectureTest {
 

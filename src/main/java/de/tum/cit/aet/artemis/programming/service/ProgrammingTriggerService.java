@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.ProfileService;
-import de.tum.cit.aet.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
+import de.tum.cit.aet.artemis.programming.exceptions.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_CORE)
 @Service

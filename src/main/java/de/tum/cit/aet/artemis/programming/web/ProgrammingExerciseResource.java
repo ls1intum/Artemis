@@ -85,12 +85,12 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.service.CourseService;
-import de.tum.cit.aet.artemis.web.rest.dto.BuildLogStatisticsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CheckoutDirectoriesDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
+import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
 import io.jsonwebtoken.lang.Arrays;
 
 /**

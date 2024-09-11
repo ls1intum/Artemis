@@ -76,10 +76,10 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.text.service.TextAssessmentService;
-import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.TextAssessmentDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.TextAssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentDTO;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentUpdateDTO;
 
 class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

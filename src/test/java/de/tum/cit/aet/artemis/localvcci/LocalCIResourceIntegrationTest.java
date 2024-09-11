@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.service.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 

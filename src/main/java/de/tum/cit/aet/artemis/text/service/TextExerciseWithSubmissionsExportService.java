@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseWithSubmissionsExportService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.web.rest.dto.SubmissionExportOptionsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 
 /**
  * Service for exporting Text Exercises with the student submissions.

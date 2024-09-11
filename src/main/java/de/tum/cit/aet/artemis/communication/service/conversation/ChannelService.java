@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 
 @Profile(PROFILE_CORE)
 @Service

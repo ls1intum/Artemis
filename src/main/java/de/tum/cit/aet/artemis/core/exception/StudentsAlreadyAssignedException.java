@@ -9,7 +9,7 @@ import org.springframework.data.util.Pair;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.web.rest.TeamResource;
+import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 
 /**
  * Exception that will be thrown if the user tries to create a team that contains students who are already assigned to a different team for the exercise. The error response will

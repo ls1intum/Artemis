@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.Content
 import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.OgParser;
 import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.OpenGraph;
 import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.htmlparser.OgMetaElementHtmlParser;
-import de.tum.cit.aet.artemis.web.rest.dto.LinkPreviewDTO;
+import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
 
 /**
  * Service for retrieving meta information from a given url.

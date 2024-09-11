@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildConfig;
 import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.service.localci.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.programming.service.localci.dto.RepositoryInfo;
-import de.tum.cit.aet.artemis.web.rest.dto.CheckoutDirectoriesDTO;
+import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

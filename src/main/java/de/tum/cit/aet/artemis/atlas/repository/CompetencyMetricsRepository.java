@@ -11,10 +11,10 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyProgressDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.MapEntryLongLong;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyProgressDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong;
 
 /**
  * Spring Data JPA repository to fetch competency related metrics.
@@ -30,7 +30,7 @@ public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Compet
      * @return the competency information for all competencies in the course
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyInformationDTO(c.id, c.title, c.description, c.taxonomy, c.softDueDate, c.optional, c.masteryThreshold)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO(c.id, c.title, c.description, c.taxonomy, c.softDueDate, c.optional, c.masteryThreshold)
             FROM Competency c
             WHERE c.course.id = :courseId
             """)
@@ -43,7 +43,7 @@ public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Compet
      * @return the exercise ids for all exercises that are associated with the competencies
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.MapEntryLongLong(c.id, e.id)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong(c.id, e.id)
             FROM Exercise e
             JOIN e.competencies c
             WHERE c.id IN :competencyIds
@@ -57,7 +57,7 @@ public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Compet
      * @return the lecture unit ids for all lecture units that are associated with the competencies
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.MapEntryLongLong(c.id, lu.id)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong(c.id, lu.id)
             FROM LectureUnit lu
             JOIN lu.competencies c
             WHERE c.id IN :competencyIds
@@ -72,7 +72,7 @@ public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Compet
      * @return the competency progress for the user in the competencies
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyProgressDTO(c.id, cp.progress, cp.confidence)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyProgressDTO(c.id, cp.progress, cp.confidence)
             FROM CompetencyProgress cp
             JOIN cp.competency c
             WHERE cp.user.id = :userId
@@ -88,7 +88,7 @@ public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Compet
      * @return the competency judgement of learning values for the user in the competencies
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO(jol.id, jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO(jol.id, jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
             FROM CompetencyJol jol
             WHERE jol.user.id = :userId
                 AND jol.competency.id IN :competencyIds
@@ -110,7 +110,7 @@ public interface CompetencyMetricsRepository extends ArtemisJpaRepository<Compet
      * @return the competency judgement of learning values for the user in the competencies
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO(jol.id, jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO(jol.id, jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
             FROM CompetencyJol jol
             WHERE jol.user.id = :userId
                 AND jol.competency.id IN :competencyIds

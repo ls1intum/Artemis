@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.domain;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
+import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 
 public interface IBonusStrategy {
 

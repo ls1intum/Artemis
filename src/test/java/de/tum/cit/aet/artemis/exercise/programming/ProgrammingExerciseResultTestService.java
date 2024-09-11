@@ -68,7 +68,7 @@ import de.tum.cit.aet.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.RequestUtilService;
 import de.tum.cit.aet.artemis.util.TestConstants;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:

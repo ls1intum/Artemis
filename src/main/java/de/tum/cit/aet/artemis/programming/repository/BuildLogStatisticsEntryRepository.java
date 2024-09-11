@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.BuildLogStatisticsEntry;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.web.rest.dto.BuildLogStatisticsDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
 
 /**
  * Spring Data JPA repository for the BuildLogStatisticsEntry entity.
@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.web.rest.dto.BuildLogStatisticsDTO;
 public interface BuildLogStatisticsEntryRepository extends ArtemisJpaRepository<BuildLogStatisticsEntry, Long> {
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.BuildLogStatisticsDTO(
+            SELECT new de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO(
                 COUNT(b.id),
                 AVG(b.agentSetupDuration),
                 AVG(b.testDuration),

@@ -64,8 +64,8 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.text.service.TextAssessmentService;
 import de.tum.cit.aet.artemis.text.service.TextBlockService;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
-import de.tum.cit.aet.artemis.web.rest.dto.TextAssessmentDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.TextAssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentDTO;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentUpdateDTO;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 

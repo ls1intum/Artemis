@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.NgxLearningPathDTO;
+import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 
 /**
  * Service Implementation for the generation of ngx representations of learning paths.

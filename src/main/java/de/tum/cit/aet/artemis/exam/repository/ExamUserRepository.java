@@ -15,7 +15,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 
 @Profile(PROFILE_CORE)
 @Repository
@@ -35,7 +35,7 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     List<ExamUser> findAllByExamId(long examId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.ExamUserAttendanceCheckDTO(
+            SELECT new de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO(
                 examUser.id,
                 examUser.studentImagePath,
                 examUser.user.login,

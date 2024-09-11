@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 
 /**
  * Spring Data JPA repository for the {@link CompetencyJol} entity.
@@ -53,7 +53,7 @@ public interface CompetencyJolRepository extends ArtemisJpaRepository<Competency
             @Param("jolIdToExclude") long jolIdToExclude);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO(jol.id, jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO(jol.id, jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
             FROM CompetencyJol jol
             WHERE jol.user.id = :userId
                 AND jol.competency.course.id = :courseId
@@ -67,7 +67,7 @@ public interface CompetencyJolRepository extends ArtemisJpaRepository<Competency
     Set<CompetencyJolDTO> findLatestJolValuesForUserByCourseId(@Param("userId") long userId, @Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO(jol.id, jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO(jol.id, jol.competency.id, jol.value, jol.judgementTime, jol.competencyProgress, jol.competencyConfidence)
             FROM CompetencyJol jol
             WHERE jol.user.id = :userId
                 AND jol.competency.course.id = :courseId

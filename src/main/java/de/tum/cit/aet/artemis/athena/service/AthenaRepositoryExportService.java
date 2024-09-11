@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.service.FileService;
-import de.tum.cit.aet.artemis.web.rest.dto.RepositoryExportOptionsDTO;
+import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
 
 /**
  * Service for exporting programming exercise repositories for Athena.

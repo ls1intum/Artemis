@@ -38,8 +38,8 @@ import de.tum.cit.aet.artemis.service.AttachmentUnitService;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.SlideSplitterService;
-import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitSplitDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitInformationDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.web.rest.TeamResource;
+import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 
 /**
  * Exception that will be thrown if the user tries to import teams that contain students whose login or registration number cannot be found. The error response will

@@ -32,8 +32,8 @@ import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.web.websocket.dto.SubmissionPatch;
-import de.tum.cit.aet.artemis.web.websocket.team.ParticipationTeamWebsocketService;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatch;
+import de.tum.cit.aet.artemis.exercise.web.ParticipationTeamWebsocketService;
 
 class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest {
 

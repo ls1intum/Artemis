@@ -18,7 +18,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
 
 /**
  * Spring Data repository for the Lecture entity.
@@ -157,7 +157,7 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
     }
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.CourseContentCount(
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseContentCount(
                 COUNT(l.id),
                 l.course.id
             )

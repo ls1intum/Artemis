@@ -41,9 +41,9 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseTestService;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamUserDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamUsersNotFoundDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 
 class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

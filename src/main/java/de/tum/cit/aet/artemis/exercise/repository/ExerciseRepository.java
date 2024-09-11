@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.exam.web.ExamResource;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
@@ -603,7 +604,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             @Param("restrictedFeedbackSuggestionModule") Collection<String> restrictedFeedbackSuggestionModule);
 
     /**
-     * For an explanation, see {@link de.tum.cit.aet.artemis.web.rest.ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
+     * For an explanation, see {@link ExamResource#getAllExercisesWithPotentialPlagiarismForExam(long, long)}
      *
      * @param examId the id of the exam for which we want to get all exercises with potential plagiarism
      * @return a list of exercises with potential plagiarism

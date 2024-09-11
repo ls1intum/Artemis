@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.web.rest.dto.science.ScienceEventDTO;
+import de.tum.cit.aet.artemis.atlas.dto.science.ScienceEventDTO;
 
 class ScienceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

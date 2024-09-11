@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
-import de.tum.cit.aet.artemis.web.rest.dto.OnlineResourceDTO;
+import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 
 @Profile(PROFILE_CORE)
 @RestController

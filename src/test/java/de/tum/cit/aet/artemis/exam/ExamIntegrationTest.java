@@ -85,16 +85,16 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.user.UserFactory;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseWithIdDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamChecklistDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamInformationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamSessionDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamWithIdAndCourseDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExerciseForPlagiarismCasesOverviewDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExerciseGroupWithIdAndExamDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.SuspiciousExamSessionsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
+import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {

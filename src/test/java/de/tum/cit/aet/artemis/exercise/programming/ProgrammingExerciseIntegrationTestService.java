@@ -115,11 +115,11 @@ import de.tum.cit.aet.artemis.util.LocalRepository;
 import de.tum.cit.aet.artemis.util.RequestUtilService;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseResetOptionsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.RepositoryExportOptionsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
-import de.tum.cit.aet.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseResetOptionsDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseDTO;
+import de.tum.cit.aet.artemis.core.dto.RepositoryExportOptionsDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTestCaseStateDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:

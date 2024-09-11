@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPe
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.dto.TeamSearchUserDTO;
-import de.tum.cit.aet.artemis.web.rest.TeamResource;
+import de.tum.cit.aet.artemis.exercise.web.TeamResource;
 
 @Profile(PROFILE_CORE)
 @Service

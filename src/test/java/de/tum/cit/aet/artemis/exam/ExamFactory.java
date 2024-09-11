@@ -11,11 +11,11 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseWithIdDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamSessionDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ExamWithIdAndCourseDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.StudentExamWithIdAndExamAndUserDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.UserWithIdAndLoginDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithIdAndExamAndUserDTO;
+import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
 
 /**
  * Factory for creating Exams and related objects.

@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO;
 
 /**
  * Spring Data JPA repository for the {@link CourseCompetency} entity.
@@ -54,7 +54,7 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
      * @return the exercise information for the calculation of the mastery in the competency
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyExerciseMasteryCalculationDTO(
+            SELECT new de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyExerciseMasteryCalculationDTO(
                 ex.maxPoints,
                 ex.difficulty,
                 CASE WHEN TYPE(ex) = ProgrammingExercise THEN TRUE ELSE FALSE END,

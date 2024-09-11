@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.service.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.service.dto.FinishedBuildJobDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)

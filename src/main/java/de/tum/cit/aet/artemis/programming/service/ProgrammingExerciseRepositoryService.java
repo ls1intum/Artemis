@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.ResourceLoaderService;
-import de.tum.cit.aet.artemis.web.rest.SubmissionPolicyResource;
+import de.tum.cit.aet.artemis.exercise.web.SubmissionPolicyResource;
 
 @Profile(PROFILE_CORE)
 @Service

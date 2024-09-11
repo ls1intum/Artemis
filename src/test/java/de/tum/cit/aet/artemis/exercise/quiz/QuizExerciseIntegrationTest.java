@@ -84,8 +84,8 @@ import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.QuizBatchJoinDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

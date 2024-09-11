@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.service.FileService;
-import de.tum.cit.aet.artemis.web.rest.GitDiffReportParserService;
+import de.tum.cit.aet.artemis.programming.web.GitDiffReportParserService;
 
 /**
  * The service handling ProgrammingExerciseGitDiffReport and their ProgrammingExerciseGitDiffEntries.

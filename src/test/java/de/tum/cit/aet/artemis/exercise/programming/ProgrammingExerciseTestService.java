@@ -153,8 +153,8 @@ import de.tum.cit.aet.artemis.util.LocalRepository;
 import de.tum.cit.aet.artemis.util.RequestUtilService;
 import de.tum.cit.aet.artemis.util.TestConstants;
 import de.tum.cit.aet.artemis.util.ZipFileTestUtilService;
-import de.tum.cit.aet.artemis.web.rest.dto.BuildLogStatisticsDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildLogStatisticsDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:
