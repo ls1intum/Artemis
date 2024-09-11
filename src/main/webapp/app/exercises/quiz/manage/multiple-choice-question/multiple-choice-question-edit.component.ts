@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -65,7 +64,6 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
     constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
     ) {}
@@ -131,8 +129,16 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
      * to get the newest values in the editor to update the question attributes
      */
     prepareForSave(): void {
-        this.cleanupQuestion();
-        this.markdownEditor.parseMarkdown();
+        if (this.markdownEditor.inVisualMode) {
+            /*
+             * In the visual mode, the latest question values come from the visual tab, not the markdown editor.
+             * We update the markdown editor, which triggers the parsing of the visual tab content.
+             */
+            this.markdownEditor.markdown = this.visualChild.parseQuestion();
+        } else {
+            this.cleanupQuestion();
+            this.markdownEditor.parseMarkdown();
+        }
     }
 
     onLeaveVisualTab(): void {

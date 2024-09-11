@@ -214,4 +214,21 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         deleteButton.nativeElement.click();
         expect(spy).toHaveBeenCalledOnce();
     });
+
+    it('should parse markdown when preparing for save in edit mode', () => {
+        fixture.detectChanges();
+        component['markdownEditor'].inVisualMode = false;
+        const parseMarkdownSpy = jest.spyOn(component['markdownEditor'], 'parseMarkdown');
+        component.prepareForSave();
+        expect(parseMarkdownSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should update markdown from the visual component when preparing for save in visual mode', () => {
+        fixture.detectChanges();
+        component['markdownEditor'].inVisualMode = true;
+        const parseQuestionStub = jest.spyOn(component['visualChild'], 'parseQuestion').mockReturnValue('parsed-question');
+        component.prepareForSave();
+        expect(parseQuestionStub).toHaveBeenCalledOnce();
+        expect(component['markdownEditor'].markdown).toBe('parsed-question');
+    });
 });
