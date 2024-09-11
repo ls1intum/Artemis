@@ -28,13 +28,13 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.service.TextBlockService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;

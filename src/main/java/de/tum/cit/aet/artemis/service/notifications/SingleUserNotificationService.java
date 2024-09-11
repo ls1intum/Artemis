@@ -1,5 +1,20 @@
 package de.tum.cit.aet.artemis.service.notifications;
 
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_CHANNEL_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_GROUP_CHAT_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_CREATE_GROUP_CHAT_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_DELETE_CHANNEL_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_REMOVE_USER_CHANNEL_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.MENTIONED_IN_MESSAGE_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_REPLY_FOR_EXAM_POST_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
+import static de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.CONVERSATION_NEW_REPLY_MESSAGE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.CONVERSATION_USER_MENTIONED;
@@ -21,21 +36,6 @@ import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIA
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_REGISTRATION_STUDENT;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_UNASSIGNED;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_CHANNEL_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.CONVERSATION_ADD_USER_GROUP_CHAT_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.CONVERSATION_CREATE_GROUP_CHAT_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.CONVERSATION_CREATE_ONE_TO_ONE_CHAT_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.CONVERSATION_DELETE_CHANNEL_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.CONVERSATION_REMOVE_USER_CHANNEL_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.CONVERSATION_REMOVE_USER_GROUP_CHAT_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.MENTIONED_IN_MESSAGE_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_REPLY_FOR_COURSE_POST_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_REPLY_FOR_EXAM_POST_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_REPLY_FOR_EXERCISE_POST_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_REPLY_FOR_LECTURE_POST_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
-import static de.tum.cit.aet.artemis.domain.notification.SingleUserNotificationFactory.createNotification;
 import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel.WEBAPP;
 
 import java.util.Objects;
@@ -47,6 +47,12 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
+import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -58,20 +64,14 @@ import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.Team;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
-import de.tum.cit.aet.artemis.domain.metis.AnswerPost;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Conversation;
-import de.tum.cit.aet.artemis.domain.notification.NotificationConstants;
-import de.tum.cit.aet.artemis.domain.notification.SingleUserNotification;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ConversationService;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 @Profile(PROFILE_CORE)
 @Service

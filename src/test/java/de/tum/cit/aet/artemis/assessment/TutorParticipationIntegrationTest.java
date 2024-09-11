@@ -17,27 +17,27 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingInstructionRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.domain.TextBlock;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
 import de.tum.cit.aet.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.participation.TutorParticipation;
 import de.tum.cit.aet.artemis.exercise.ExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.service.ExampleSubmissionService;
 import de.tum.cit.aet.artemis.service.ResultService;
 import de.tum.cit.aet.artemis.service.SubmissionService;
 import de.tum.cit.aet.artemis.service.TutorParticipationService;
+import de.tum.cit.aet.artemis.text.domain.TextBlock;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
 
 class TutorParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {

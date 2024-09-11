@@ -13,10 +13,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.hestia.CodeHint;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisHestiaSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisHestiaSession;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;

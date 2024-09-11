@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto.plagiarism;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 
 /**
  * A DTO with a subset of Plagiarism Case fields for displaying relevant info to a student.

@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.plagiarism;
 
 import java.util.Locale;
 
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 
 public class ContinuousPlagiarismControlPostContentProvider {
 

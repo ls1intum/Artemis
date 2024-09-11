@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.iris.message.IrisMessage;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisExerciseChatSession;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisHestiaSession;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisHestiaSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.service.iris.session.IrisChatBasedFeatureInterface;
 import de.tum.cit.aet.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.service.iris.session.IrisExerciseChatSessionService;

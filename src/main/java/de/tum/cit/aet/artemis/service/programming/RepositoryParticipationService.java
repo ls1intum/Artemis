@@ -10,9 +10,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Repository;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.service.connectors.GitService;
 import de.tum.cit.aet.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;

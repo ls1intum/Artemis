@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.domain.hestia.CodeHint;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
- * REST controller for managing {@link de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry}.
+ * REST controller for managing {@link ProgrammingExerciseSolutionEntry}.
  */
 @Profile(PROFILE_CORE)
 @RestController

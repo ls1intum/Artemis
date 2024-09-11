@@ -15,9 +15,9 @@ import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Attachment;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Lecture;
-import de.tum.cit.aet.artemis.domain.lecture.ExerciseUnit;
-import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.LectureUtilService;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 

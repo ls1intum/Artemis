@@ -17,10 +17,10 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.enumeration.ParticipationLifecycle;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationIndependentTest {

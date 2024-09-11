@@ -5,8 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.tum.cit.aet.artemis.communication.ConversationSettings;
 import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
-import de.tum.cit.aet.artemis.domain.metis.conversation.ConversationSettings;
 
 /**
  * Exclusions of domain classes for specific tests.

@@ -23,9 +23,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.domain.lti.Claims;
-import de.tum.cit.aet.artemis.domain.lti.LtiAuthenticationResponse;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
+import de.tum.cit.aet.artemis.lti.dto.Claims;
+import de.tum.cit.aet.artemis.lti.dto.LtiAuthenticationResponse;
 import de.tum.cit.aet.artemis.service.connectors.lti.Lti13Service;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;

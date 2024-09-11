@@ -28,13 +28,13 @@ import de.tum.cit.aet.artemis.domain.Feedback;
 import de.tum.cit.aet.artemis.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.domain.TextBlock;
-import de.tum.cit.aet.artemis.domain.TextBlockType;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;
+import de.tum.cit.aet.artemis.text.domain.TextBlock;
+import de.tum.cit.aet.artemis.text.domain.TextBlockType;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 

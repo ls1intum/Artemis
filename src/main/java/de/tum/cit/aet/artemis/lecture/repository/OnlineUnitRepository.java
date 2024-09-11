@@ -12,7 +12,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.lecture.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 
 /**
  * Spring Data JPA repository for the Online Unit entity.

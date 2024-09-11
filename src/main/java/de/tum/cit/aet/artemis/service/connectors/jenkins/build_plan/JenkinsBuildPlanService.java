@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.domain.enumeration.AeolusTarget;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
 import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;

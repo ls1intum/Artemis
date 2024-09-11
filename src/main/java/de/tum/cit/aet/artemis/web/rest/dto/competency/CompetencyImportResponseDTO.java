@@ -4,8 +4,8 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyImportResponseDTO(long id, String title, String description, CompetencyTaxonomy taxonomy, ZonedDateTime softDueDate, Integer masteryThreshold,

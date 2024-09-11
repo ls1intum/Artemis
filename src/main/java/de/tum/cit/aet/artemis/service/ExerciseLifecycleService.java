@@ -17,8 +17,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.domain.enumeration.QuizMode;
-import de.tum.cit.aet.artemis.domain.quiz.QuizBatch;
-import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.service.util.Tuple;
 
 @Profile(PROFILE_CORE)

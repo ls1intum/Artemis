@@ -14,8 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
 import de.tum.cit.aet.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
 import de.tum.cit.aet.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;

@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.metis.UserRole;
+import de.tum.cit.aet.artemis.communication.domain.UserRole;
 
 /**
  * A Data Transfer Object (DTO) representing a user's role within a course.

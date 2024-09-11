@@ -19,11 +19,11 @@ import de.tum.cit.aet.artemis.AbstractAthenaTest;
 import de.tum.cit.aet.artemis.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 class AthenaSubmissionSelectionServiceTest extends AbstractAthenaTest {

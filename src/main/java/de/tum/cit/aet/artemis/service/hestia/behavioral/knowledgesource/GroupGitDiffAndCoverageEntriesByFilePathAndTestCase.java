@@ -9,9 +9,9 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import de.tum.cit.aet.artemis.domain.hestia.CoverageFileReport;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
-import de.tum.cit.aet.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.cit.aet.artemis.service.hestia.behavioral.GroupedFile;
 

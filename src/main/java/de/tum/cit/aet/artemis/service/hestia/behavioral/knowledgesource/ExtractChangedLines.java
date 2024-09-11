@@ -3,13 +3,14 @@ package de.tum.cit.aet.artemis.service.hestia.behavioral.knowledgesource;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.cit.aet.artemis.service.hestia.behavioral.GroupedFile;
 
 /**
  * For each {@link GroupedFile}:
  * Extracts the lines that were changed in the file (of the GroupedFile) from the
- * {@link de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry}s
+ * {@link ProgrammingExerciseGitDiffEntry}s
  */
 public class ExtractChangedLines extends BehavioralKnowledgeSource {
 

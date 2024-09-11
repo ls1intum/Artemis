@@ -8,10 +8,10 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismDetectionConfig;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 
 class PlagiarismDetectionConfigHelperTest {

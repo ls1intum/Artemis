@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.domain.metis.Post;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.service.metis.similarity.TitleJaccardSimilarityCompareStrategy;
 
 class TitleJaccardSimilarityCompareStrategyTest {

@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.Submission;
 import de.tum.cit.aet.artemis.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;

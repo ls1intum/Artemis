@@ -27,11 +27,11 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.feature.Feature;
 import de.tum.cit.aet.artemis.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

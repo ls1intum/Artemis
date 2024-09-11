@@ -13,10 +13,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.ZipFileService;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -11,13 +11,15 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
 import de.tum.cit.aet.artemis.domain.enumeration.Visibility;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ResultTest extends AbstractSpringIntegrationIndependentTest {
 

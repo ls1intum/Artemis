@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.enumeration.AttachmentType;
-import de.tum.cit.aet.artemis.domain.lecture.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 
 /**

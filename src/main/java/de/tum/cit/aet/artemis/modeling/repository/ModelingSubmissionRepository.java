@@ -13,7 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 
 /**
  * Spring Data JPA repository for the ModelingSubmission entity.

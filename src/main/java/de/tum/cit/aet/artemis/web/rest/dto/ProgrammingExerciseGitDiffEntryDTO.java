@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
 
 /**
  * DTO for a git diff report entry.

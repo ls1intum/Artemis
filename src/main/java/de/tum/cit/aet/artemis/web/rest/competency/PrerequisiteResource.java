@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -35,8 +37,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.LectureUnitService;
 import de.tum.cit.aet.artemis.service.competency.CourseCompetencyService;
@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
 
 /**
- * REST controller for managing {@link de.tum.cit.aet.artemis.domain.competency.Prerequisite Prerequisite} entities.
+ * REST controller for managing {@link Prerequisite Prerequisite} entities.
  */
 @Profile(PROFILE_CORE)
 @RestController

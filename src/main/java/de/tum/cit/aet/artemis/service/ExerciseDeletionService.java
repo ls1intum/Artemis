@@ -14,26 +14,26 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.domain.exam.StudentExam;
-import de.tum.cit.aet.artemis.domain.lecture.ExerciseUnit;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.service.quiz.QuizExerciseService;
 import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service Implementation for managing Exercise.

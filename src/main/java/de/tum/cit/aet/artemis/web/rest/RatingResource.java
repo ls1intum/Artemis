@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Rating;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.RatingService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;

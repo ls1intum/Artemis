@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.domain.Lecture;
-import de.tum.cit.aet.artemis.domain.lecture.VideoUnit;
+import de.tum.cit.aet.artemis.lecture.domain.VideoUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.VideoUnitRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;

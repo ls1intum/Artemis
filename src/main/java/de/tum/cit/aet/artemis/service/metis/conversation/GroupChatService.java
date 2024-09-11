@@ -9,13 +9,13 @@ import jakarta.validation.Valid;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.metis.ConversationParticipant;
-import de.tum.cit.aet.artemis.domain.metis.conversation.GroupChat;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 

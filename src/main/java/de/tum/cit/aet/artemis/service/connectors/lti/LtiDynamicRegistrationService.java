@@ -17,8 +17,8 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.domain.LtiPlatformConfiguration;
-import de.tum.cit.aet.artemis.domain.lti.Lti13ClientRegistration;
-import de.tum.cit.aet.artemis.domain.lti.Lti13PlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
+import de.tum.cit.aet.artemis.lti.dto.Lti13PlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

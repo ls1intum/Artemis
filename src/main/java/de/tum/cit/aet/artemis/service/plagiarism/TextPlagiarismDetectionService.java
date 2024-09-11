@@ -25,14 +25,14 @@ import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
 import de.jplag.text.NaturalLanguage;
 import de.tum.cit.aet.artemis.domain.PlagiarismCheckState;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.service.export.TextSubmissionExportService;
 import de.tum.cit.aet.artemis.service.plagiarism.cache.PlagiarismCacheService;
 import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 
 @Profile(PROFILE_CORE)

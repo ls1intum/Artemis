@@ -20,9 +20,9 @@ import de.tum.cit.aet.artemis.core.repository.base.DynamicSpecificationRepositor
 import de.tum.cit.aet.artemis.core.repository.base.FetchOptions;
 import de.tum.cit.aet.artemis.domain.DomainObject_;
 import de.tum.cit.aet.artemis.domain.Submission_;
-import de.tum.cit.aet.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.domain.participation.SolutionProgrammingExerciseParticipation_;
-import de.tum.cit.aet.artemis.domain.participation.TemplateProgrammingExerciseParticipation_;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation_;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation_;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 
 /**

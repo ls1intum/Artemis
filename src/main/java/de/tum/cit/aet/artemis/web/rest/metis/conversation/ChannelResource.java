@@ -30,6 +30,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -38,8 +40,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
-import de.tum.cit.aet.artemis.domain.metis.ConversationParticipant;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ConversationDTOService;

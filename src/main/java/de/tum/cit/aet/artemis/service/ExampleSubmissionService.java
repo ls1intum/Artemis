@@ -17,12 +17,12 @@ import de.tum.cit.aet.artemis.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

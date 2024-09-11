@@ -19,10 +19,10 @@ import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
-import de.tum.cit.aet.artemis.domain.exam.Exam_;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup_;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.Exam_;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup_;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 

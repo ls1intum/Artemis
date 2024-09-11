@@ -17,15 +17,15 @@ import org.jgrapht.alg.util.UnionFind;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
+import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.LearningObject;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.competency.CompetencyRelation;
-import de.tum.cit.aet.artemis.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.domain.competency.LearningPath;
-import de.tum.cit.aet.artemis.domain.competency.RelationType;
-import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 
 /**

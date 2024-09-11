@@ -19,8 +19,8 @@ import de.tum.cit.aet.artemis.domain.GradeStep;
 import de.tum.cit.aet.artemis.domain.GradeType;
 import de.tum.cit.aet.artemis.domain.GradingScale;
 import de.tum.cit.aet.artemis.domain.enumeration.SortingOrder;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 

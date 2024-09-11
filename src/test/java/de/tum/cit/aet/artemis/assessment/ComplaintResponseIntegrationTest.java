@@ -22,18 +22,18 @@ import de.tum.cit.aet.artemis.domain.Complaint;
 import de.tum.cit.aet.artemis.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Result;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.ComplaintType;
 import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.dto.ComplaintAction;
 import de.tum.cit.aet.artemis.service.dto.ComplaintResponseUpdateDTO;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

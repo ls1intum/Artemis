@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Team;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TeamAssignmentPayload(@NotNull Exercise exercise, @Nullable Team team, @NotNull List<StudentParticipation> studentParticipations) {

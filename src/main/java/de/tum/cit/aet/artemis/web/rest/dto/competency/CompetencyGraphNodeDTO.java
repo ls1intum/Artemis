@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyGraphNodeDTO(String id, String label, ZonedDateTime softDueDate, Double value, CompetencyNodeValueType valueType) {

@@ -21,6 +21,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCount;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.DomainObject;
@@ -32,9 +34,7 @@ import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.Submission;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.assessment.dashboard.ResultCount;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
 import de.tum.cit.aet.artemis.service.util.RoundingUtil;
 import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
 import de.tum.cit.aet.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;

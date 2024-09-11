@@ -27,6 +27,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
@@ -39,8 +41,6 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
-import de.tum.cit.aet.artemis.domain.science.ScienceEvent;
-import de.tum.cit.aet.artemis.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.exercise.programming.MockDelegate;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;

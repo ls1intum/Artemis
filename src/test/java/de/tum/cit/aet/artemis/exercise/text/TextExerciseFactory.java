@@ -7,16 +7,16 @@ import java.util.List;
 import java.util.Set;
 
 import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.TextBlock;
-import de.tum.cit.aet.artemis.domain.TextBlockType;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
-import de.tum.cit.aet.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
 import de.tum.cit.aet.artemis.domain.enumeration.TextAssessmentEventType;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.ExerciseFactory;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
+import de.tum.cit.aet.artemis.text.domain.TextBlock;
+import de.tum.cit.aet.artemis.text.domain.TextBlockType;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * Factory for creating TextExercises and related objects.

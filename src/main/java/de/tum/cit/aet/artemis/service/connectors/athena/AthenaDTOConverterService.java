@@ -12,10 +12,8 @@ import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Feedback;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.domain.TextBlock;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.dto.athena.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.service.dto.athena.FeedbackBaseDTO;
@@ -29,6 +27,8 @@ import de.tum.cit.aet.artemis.service.dto.athena.SubmissionBaseDTO;
 import de.tum.cit.aet.artemis.service.dto.athena.TextExerciseDTO;
 import de.tum.cit.aet.artemis.service.dto.athena.TextFeedbackDTO;
 import de.tum.cit.aet.artemis.service.dto.athena.TextSubmissionDTO;
+import de.tum.cit.aet.artemis.text.domain.TextBlock;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 /**

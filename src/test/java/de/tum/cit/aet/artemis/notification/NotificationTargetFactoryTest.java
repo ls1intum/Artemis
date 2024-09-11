@@ -1,34 +1,34 @@
 package de.tum.cit.aet.artemis.notification;
 
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.COURSES_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.COURSE_MANAGEMENT_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.DUPLICATE_TEST_CASE_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.EXAMS_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.EXERCISES_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.LECTURES_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.PROGRAMMING_EXERCISES_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.createAttachmentUpdatedTarget;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.createExamProgrammingExerciseOrTestCaseTarget;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.createExerciseReleasedTarget;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.createExerciseTarget;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.createExerciseUpdatedTarget;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.COURSES_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.COURSE_MANAGEMENT_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.DUPLICATE_TEST_CASE_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.EXAMS_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.EXERCISES_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.LECTURES_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.PROGRAMMING_EXERCISES_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createAttachmentUpdatedTarget;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createExamProgrammingExerciseOrTestCaseTarget;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createExerciseReleasedTarget;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createExerciseTarget;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createExerciseUpdatedTarget;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.extractNotificationUrl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
+import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationTarget;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Lecture;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
-import de.tum.cit.aet.artemis.domain.notification.GroupNotification;
-import de.tum.cit.aet.artemis.domain.notification.Notification;
-import de.tum.cit.aet.artemis.domain.notification.NotificationTarget;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class NotificationTargetFactoryTest {
 

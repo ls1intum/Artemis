@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.domain.metis.Post;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 
 /**
  * Implementation of a PostSimilarityComparisonStrategy to be used when searching for duplicates during post creation.

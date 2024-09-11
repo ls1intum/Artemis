@@ -14,10 +14,10 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.dto.GeneralConversationInfo;
+import de.tum.cit.aet.artemis.communication.dto.UserConversationInfo;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Conversation;
-import de.tum.cit.aet.artemis.domain.metis.conversation.GeneralConversationInfo;
-import de.tum.cit.aet.artemis.domain.metis.conversation.UserConversationInfo;
 
 @Profile(PROFILE_CORE)
 @Repository

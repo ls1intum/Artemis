@@ -10,10 +10,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSchedule;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;

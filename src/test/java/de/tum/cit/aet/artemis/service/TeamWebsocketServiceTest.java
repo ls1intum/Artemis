@@ -20,14 +20,14 @@ import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Team;
-import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
 import de.tum.cit.aet.artemis.domain.enumeration.TeamImportStrategyType;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.web.websocket.dto.TeamAssignmentPayload;
 

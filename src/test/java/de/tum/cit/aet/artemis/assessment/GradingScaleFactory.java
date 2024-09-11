@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.assessment;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.GradeType;
 import de.tum.cit.aet.artemis.domain.GradingScale;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**
  * Factory for creating GradingScales and related objects.

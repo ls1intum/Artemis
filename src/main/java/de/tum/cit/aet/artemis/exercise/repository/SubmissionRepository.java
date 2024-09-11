@@ -15,6 +15,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.FileUploadExercise;
@@ -22,16 +23,15 @@ import de.tum.cit.aet.artemis.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
-import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
-import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -327,7 +327,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      *         exercise due date at all
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
                 p.exercise.id,
                 COUNT(DISTINCT p)
             )
@@ -378,7 +378,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * @return the numbers of submissions belonging to each exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
                 e.id,
                 COUNT(DISTINCT p)
             )

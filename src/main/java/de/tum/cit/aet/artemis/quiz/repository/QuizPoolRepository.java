@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.quiz.QuizPool;
+import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
 
 /**
  * Spring Data JPA repository for the QuizPool entity.

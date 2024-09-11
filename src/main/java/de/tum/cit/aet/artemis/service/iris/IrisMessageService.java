@@ -8,9 +8,9 @@ import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.domain.iris.message.IrisMessage;
-import de.tum.cit.aet.artemis.domain.iris.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 
 /**

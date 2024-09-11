@@ -17,10 +17,10 @@ import org.springframework.data.util.Pair;
 import com.google.gson.JsonObject;
 
 import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.domain.modeling.ModelCluster;
-import de.tum.cit.aet.artemis.domain.modeling.ModelElement;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.domain.ModelCluster;
+import de.tum.cit.aet.artemis.modeling.domain.ModelElement;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.service.compass.assessment.Context;
 import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;

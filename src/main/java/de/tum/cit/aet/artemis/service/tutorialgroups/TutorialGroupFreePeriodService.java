@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.enumeration.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 

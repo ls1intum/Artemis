@@ -15,8 +15,8 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.metis.Post_;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.Post_;
 
 public class CustomPostRepositoryImpl implements CustomPostRepository {
 

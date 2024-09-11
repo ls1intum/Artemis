@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
 import de.tum.cit.aet.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
 import de.tum.cit.aet.artemis.domain.enumeration.IncludedInOverallScore;
-import de.tum.cit.aet.artemis.domain.view.QuizView;
+import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.web.rest.util.StringUtil;
 
 @MappedSuperclass

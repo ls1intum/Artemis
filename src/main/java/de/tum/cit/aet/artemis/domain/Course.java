@@ -34,17 +34,17 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.cit.aet.artemis.domain.competency.Competency;
-import de.tum.cit.aet.artemis.domain.competency.LearningPath;
-import de.tum.cit.aet.artemis.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.domain.enumeration.Language;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.domain.view.QuizView;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.quiz.config.QuizView;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 
 /**

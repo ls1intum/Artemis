@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
 import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.service.ResultService;
 import de.tum.cit.aet.artemis.service.SubmissionService;

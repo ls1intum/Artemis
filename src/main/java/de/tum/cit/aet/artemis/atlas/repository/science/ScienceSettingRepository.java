@@ -7,8 +7,8 @@ import java.util.Set;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceSetting;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.science.ScienceSetting;
 
 /**
  * Spring Data repository for the ScienceSetting entity.

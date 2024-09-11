@@ -12,9 +12,9 @@ import de.tum.cit.aet.artemis.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 /**
  * Factory for creating Exercises and related objects.

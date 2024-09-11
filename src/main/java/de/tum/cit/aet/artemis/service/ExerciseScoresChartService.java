@@ -11,15 +11,15 @@ import java.util.stream.Collectors;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
+import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
+import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
-import de.tum.cit.aet.artemis.domain.scores.ParticipantScore;
-import de.tum.cit.aet.artemis.domain.scores.StudentScore;
-import de.tum.cit.aet.artemis.domain.scores.TeamScore;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresDTO;
 

@@ -12,18 +12,18 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequests;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponses;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequests;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
 
 @Profile(PROFILE_CORE)

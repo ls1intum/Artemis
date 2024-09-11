@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.domain.Result;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

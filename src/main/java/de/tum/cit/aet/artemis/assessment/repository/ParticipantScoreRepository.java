@@ -20,11 +20,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
+import de.tum.cit.aet.artemis.assessment.dto.ScoreDistribution;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
-import de.tum.cit.aet.artemis.domain.scores.ParticipantScore;
-import de.tum.cit.aet.artemis.domain.statistics.ScoreDistribution;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;

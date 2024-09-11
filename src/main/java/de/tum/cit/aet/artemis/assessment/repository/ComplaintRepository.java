@@ -15,14 +15,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequests;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Complaint;
-import de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.domain.enumeration.ComplaintType;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponses;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints;
-import de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequests;
 
 /**
  * Spring Data JPA repository for the Complaint entity.
@@ -151,7 +151,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of exercise ids with the number of complaints based on the complaint type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
                 c.result.participation.exercise.id,
                 COUNT(DISTINCT c)
             )
@@ -170,7 +170,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of exercise ids with the number of complaints based on the complaint type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
                 c.result.participation.exercise.id,
                 COUNT(DISTINCT c)
             )
@@ -273,7 +273,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
@@ -299,7 +299,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
@@ -325,7 +325,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaints(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
@@ -351,7 +351,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponses(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)
@@ -376,7 +376,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponses(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)
@@ -401,7 +401,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardComplaintResponses(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)
@@ -428,7 +428,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardMoreFeedbackRequests
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequests(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequests(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted IS NULL) THEN 1L ELSE 0L END),
@@ -453,7 +453,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardMoreFeedbackRequests
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardMoreFeedbackRequests(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequests(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted IS NULL) THEN 1L ELSE 0L END),
@@ -478,7 +478,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)
@@ -503,7 +503,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)

@@ -24,6 +24,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
+import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
@@ -31,10 +35,6 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.domain.enumeration.SortingOrder;
-import de.tum.cit.aet.artemis.domain.metis.AnswerPost;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.metis.PostSortCriterion;
-import de.tum.cit.aet.artemis.domain.metis.Reaction;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
 
 class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {

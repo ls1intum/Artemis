@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 
 @Profile(PROFILE_CORE)
 @Repository

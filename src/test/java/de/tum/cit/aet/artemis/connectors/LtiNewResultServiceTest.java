@@ -13,10 +13,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.service.connectors.lti.Lti13Service;
 import de.tum.cit.aet.artemis.service.connectors.lti.LtiNewResultService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class LtiNewResultServiceTest {
 

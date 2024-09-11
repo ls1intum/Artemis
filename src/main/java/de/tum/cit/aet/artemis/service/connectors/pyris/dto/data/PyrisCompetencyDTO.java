@@ -6,8 +6,8 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.Competency;
-import de.tum.cit.aet.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisCompetencyDTO(long id, String title, String description, CompetencyTaxonomy taxonomy, Instant softDueDate, boolean optional) {

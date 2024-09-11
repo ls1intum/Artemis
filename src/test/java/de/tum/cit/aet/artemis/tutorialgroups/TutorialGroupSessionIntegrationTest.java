@@ -16,8 +16,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.domain.enumeration.Language;
 import de.tum.cit.aet.artemis.domain.enumeration.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.web.rest.tutorialgroups.TutorialGroupSessionResource;
 
 class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrationTest {

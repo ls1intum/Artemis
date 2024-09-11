@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 
 /**
  * Spring Data JPA repository for the TestwiseCoverageReportEntry entity.

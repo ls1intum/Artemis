@@ -13,14 +13,14 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.domain.enumeration.TutorParticipationStatus;
-import de.tum.cit.aet.artemis.domain.participation.TutorParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.util.TimeLogUtil;

@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.domain.analytics.TextAssessmentEvent;
+import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 
 /**
  * REST controller for administrating TextAssessmentEventResource.

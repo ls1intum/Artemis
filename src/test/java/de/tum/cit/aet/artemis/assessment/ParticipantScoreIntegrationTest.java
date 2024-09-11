@@ -26,20 +26,20 @@ import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.GradingScale;
 import de.tum.cit.aet.artemis.domain.Lecture;
 import de.tum.cit.aet.artemis.domain.Team;
-import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
-import de.tum.cit.aet.artemis.domain.lecture.ExerciseUnit;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.LectureUtilService;
+import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.web.rest.dto.score.ScoreDTO;
 
 class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

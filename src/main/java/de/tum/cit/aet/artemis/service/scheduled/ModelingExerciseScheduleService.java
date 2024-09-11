@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseLifecycle;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.service.compass.CompassService;
 import de.tum.cit.aet.artemis.service.exam.ExamDateService;

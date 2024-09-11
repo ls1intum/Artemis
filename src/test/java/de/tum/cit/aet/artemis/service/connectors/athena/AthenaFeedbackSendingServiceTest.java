@@ -24,17 +24,17 @@ import de.tum.cit.aet.artemis.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.Result;
-import de.tum.cit.aet.artemis.domain.TextBlock;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.GradingCriterionUtil;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.text.domain.TextBlock;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {

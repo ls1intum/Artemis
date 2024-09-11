@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.service.notifications;
 
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.extractNotificationUrl;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.EXERCISE_SUBMISSION_ASSESSED;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.extractNotificationUrl;
 
 import java.net.URL;
 import java.util.Locale;
@@ -18,16 +18,16 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.DataExport;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.notification.Notification;
-import de.tum.cit.aet.artemis.domain.notification.NotificationConstants;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.service.TimeService;
 
 /**

@@ -31,7 +31,7 @@ import com.google.common.net.InternetDomainName;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.domain.Lecture;
-import de.tum.cit.aet.artemis.domain.lecture.OnlineUnit;
+import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;

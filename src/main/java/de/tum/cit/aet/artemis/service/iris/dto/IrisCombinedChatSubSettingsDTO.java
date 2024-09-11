@@ -6,7 +6,7 @@ import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.iris.IrisTemplate;
+import de.tum.cit.aet.artemis.iris.domain.IrisTemplate;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisCombinedChatSubSettingsDTO(boolean enabled, Integer rateLimit, Integer rateLimitTimeframeHours, @Nullable Set<String> allowedModels,

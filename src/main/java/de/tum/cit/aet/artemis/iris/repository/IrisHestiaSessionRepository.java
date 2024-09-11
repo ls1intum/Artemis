@@ -7,7 +7,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.EntityGraph;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisHestiaSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisHestiaSession;
 
 /**
  * Repository interface for managing {@link IrisHestiaSession} entities.

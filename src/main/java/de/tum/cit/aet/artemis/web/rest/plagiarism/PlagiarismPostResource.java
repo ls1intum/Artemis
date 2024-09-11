@@ -27,9 +27,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.domain.metis.Post;
 import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismPostService;
 import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;

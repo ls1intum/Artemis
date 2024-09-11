@@ -4,9 +4,9 @@ import java.time.ZonedDateTime;
 
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.quiz.QuizBatch;
-import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 
 public enum ExerciseLifecycle implements IExerciseLifecycle {
     RELEASE {

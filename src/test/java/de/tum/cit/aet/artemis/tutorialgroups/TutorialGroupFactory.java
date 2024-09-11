@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.tutorialgroups;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 
 /**
  * Factory for creating TutorialGroups and related objects.

@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto.settings.ide;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.settings.ide.Ide;
+import de.tum.cit.aet.artemis.programming.domain.ide.Ide;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IdeDTO(String name, String deepLink) {

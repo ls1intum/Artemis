@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.metis.similarity;
 
-import de.tum.cit.aet.artemis.domain.metis.Post;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 
 /**
  * This interface offers a method that performs a similarity check on two posts that are compared to each other.

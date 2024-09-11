@@ -13,7 +13,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * Spring Data JPA repository for the TextSubmission entity.

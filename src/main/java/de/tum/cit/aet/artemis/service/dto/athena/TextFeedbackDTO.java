@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.TextBlock;
+import de.tum.cit.aet.artemis.text.domain.TextBlock;
 
 /**
  * A DTO representing a Feedback on a TextExercise, for transferring data to Athena and receiving suggestions from Athena

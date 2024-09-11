@@ -7,7 +7,7 @@ import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 /**

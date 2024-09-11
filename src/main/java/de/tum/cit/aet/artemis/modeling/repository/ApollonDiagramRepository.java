@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.modeling.ApollonDiagram;
+import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
 
 /**
  * Spring Data JPA repository for the ApollonDiagram entity.

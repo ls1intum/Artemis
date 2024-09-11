@@ -15,14 +15,14 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
-import de.tum.cit.aet.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.cit.aet.artemis.domain.quiz.MultipleChoiceQuestion;
-import de.tum.cit.aet.artemis.domain.quiz.QuizGroup;
-import de.tum.cit.aet.artemis.domain.quiz.QuizPool;
-import de.tum.cit.aet.artemis.domain.quiz.QuizQuestion;
-import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.quiz.QuizExerciseFactory;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizGroup;
+import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.service.quiz.QuizPoolService;
 
 class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {

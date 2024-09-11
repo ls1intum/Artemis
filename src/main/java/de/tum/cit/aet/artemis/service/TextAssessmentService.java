@@ -18,13 +18,13 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Feedback;
 import de.tum.cit.aet.artemis.domain.Result;
-import de.tum.cit.aet.artemis.domain.TextSubmission;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.service.connectors.lti.LtiNewResultService;
 import de.tum.cit.aet.artemis.service.exam.ExamDateService;
 import de.tum.cit.aet.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.web.websocket.ResultWebsocketService;
 
 @Profile(PROFILE_CORE)

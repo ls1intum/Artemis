@@ -4,7 +4,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.metis.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class OneToOneChatDTO extends ConversationDTO {

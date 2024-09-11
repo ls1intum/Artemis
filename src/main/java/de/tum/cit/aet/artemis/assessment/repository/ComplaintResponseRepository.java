@@ -13,9 +13,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.ComplaintResponse;
-import de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.domain.enumeration.ComplaintType;
 
 /**
@@ -69,7 +69,7 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      * @return List of exercise ids with their number of complaints
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
                 cr.complaint.result.participation.exercise.id,
                 COUNT(DISTINCT cr)
             )
@@ -91,7 +91,7 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      * @return list of exercise ids with their number of complaints based on the complaint type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
                 cr.complaint.result.participation.exercise.id,
                 COUNT(DISTINCT cr)
             )

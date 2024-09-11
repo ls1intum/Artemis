@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.web.rest.dto.plagiarism;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
 import de.tum.cit.aet.artemis.web.rest.plagiarism.PlagiarismResultStats;
 
 /**

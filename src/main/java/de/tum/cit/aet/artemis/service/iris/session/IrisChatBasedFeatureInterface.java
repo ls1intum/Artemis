@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.iris.session;
 
-import de.tum.cit.aet.artemis.domain.iris.message.IrisMessage;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 
 public interface IrisChatBasedFeatureInterface<S extends IrisSession> extends IrisSubFeatureInterface<S> {
 

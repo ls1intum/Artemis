@@ -16,7 +16,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Spring Data JPA repository for the TextExercise entity.

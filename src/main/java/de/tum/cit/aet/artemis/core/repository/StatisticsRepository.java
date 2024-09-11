@@ -25,14 +25,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.dto.CourseStatisticsAverageScore;
+import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.GraphType;
 import de.tum.cit.aet.artemis.domain.enumeration.SpanType;
 import de.tum.cit.aet.artemis.domain.enumeration.StatisticsView;
-import de.tum.cit.aet.artemis.domain.statistics.CourseStatisticsAverageScore;
-import de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry;
 
 /**
  * Spring Data JPA repository for the statistics pages
@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry;
 public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 s.submissionDate,
                 count(s.id)
             )
@@ -59,7 +59,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getTotalSubmissions(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 s.submissionDate,
                 count(s.id)
             )
@@ -74,7 +74,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 s.submissionDate,
                 count(s.id)
             )
@@ -89,7 +89,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             @Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 submission.submissionDate,
                 p.student.login
             )
@@ -138,7 +138,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     Long countActiveUsers(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 submission.submissionDate,
                 p.student.login
             )
@@ -154,7 +154,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 submission.submissionDate,
                 p.student.login
             )
@@ -169,7 +169,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getActiveUsersForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.releaseDate, COUNT(e.id)
             )
             FROM Exercise e
@@ -182,7 +182,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getReleasedExercises(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.releaseDate, COUNT(e.id)
             )
             FROM Exercise e
@@ -196,7 +196,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.dueDate, COUNT(e.id)
             )
             FROM Exercise e
@@ -209,7 +209,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getExercisesDue(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.dueDate, count(e.id)
             )
             FROM Exercise e
@@ -223,7 +223,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 p.auditEventDate, u.login
             )
             FROM User u
@@ -236,7 +236,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getLoggedInUsers(@Param("startDate") Instant startDate, @Param("endDate") Instant endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.endDate, COUNT(e.id)
             )
             FROM Exam e
@@ -249,7 +249,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getConductedExams(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.endDate, COUNT(e.id)
             )
             FROM Exam e
@@ -262,7 +262,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getConductedExamsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.endDate, COUNT(e.id)
             )
             FROM Exam e
@@ -277,7 +277,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getExamParticipations(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.endDate, COUNT(e.id)
             )
             FROM Exam e
@@ -292,7 +292,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getExamParticipationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.endDate, SUM(SIZE(e.examUsers))
             )
             FROM Exam e
@@ -305,7 +305,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getExamRegistrations(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 e.endDate, SUM(SIZE(e.examUsers))
             )
             FROM Exam e
@@ -318,7 +318,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getExamRegistrationsForCourse(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 r.completionDate,
                 r.assessor.login
             )
@@ -337,7 +337,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getActiveTutors(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 r.completionDate,
                 r.assessor.login
             )
@@ -354,7 +354,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 r.completionDate,
                 r.assessor.login
             )
@@ -370,7 +370,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getActiveTutorsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 r.completionDate, COUNT(r.id)
             )
             FROM Result r
@@ -386,7 +386,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getCreatedResults(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 r.completionDate, COUNT(r.id)
             )
             FROM Result r
@@ -400,7 +400,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 r.completionDate, COUNT(r.id)
             )
             FROM Result r
@@ -413,7 +413,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getCreatedResultsForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 r.completionDate, SUM(SIZE(r.feedbacks))
             )
             FROM Result r
@@ -428,7 +428,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getResultFeedbacks(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 r.completionDate, SUM(SIZE(r.feedbacks))
             )
             FROM Result r
@@ -442,7 +442,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             @Param("exerciseIds") List<Long> exerciseIds);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 r.completionDate, SUM(SIZE(r.feedbacks))
             )
             FROM Result r
@@ -455,7 +455,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getResultFeedbacksForExercise(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 post.creationDate, COUNT(post.id)
             )
             FROM Post post
@@ -470,7 +470,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getPostsForCourseInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 post.creationDate, COUNT(post.id)
             )
             FROM Post post
@@ -503,7 +503,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     long getNumberOfResolvedExercisePosts(@Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 answer.creationDate, COUNT(answer.id)
             )
             FROM AnswerPost answer
@@ -520,7 +520,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<StatisticsEntry> getResolvedCoursePostsInDateRange(@Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate, @Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 answer.creationDate, COUNT(answer.id)
             )
             FROM AnswerPost answer

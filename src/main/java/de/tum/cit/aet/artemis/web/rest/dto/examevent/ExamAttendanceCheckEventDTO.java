@@ -4,10 +4,10 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.exam.event.ExamAttendanceCheckEvent;
+import de.tum.cit.aet.artemis.exam.domain.event.ExamAttendanceCheckEvent;
 
 /**
- * A DTO for the {@link de.tum.cit.aet.artemis.domain.exam.event.ExamAttendanceCheckEvent} entity.
+ * A DTO for the {@link de.tum.cit.aet.artemis.exam.domain.event.ExamAttendanceCheckEvent} entity.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamAttendanceCheckEventDTO(Long id, String createdBy, Instant createdDate, String text) implements ExamLiveEventBaseDTO {

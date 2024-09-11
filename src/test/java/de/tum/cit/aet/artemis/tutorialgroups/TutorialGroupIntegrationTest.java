@@ -30,17 +30,17 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.common.collect.ImmutableSet;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.DisplayPriority;
 import de.tum.cit.aet.artemis.domain.enumeration.Language;
 import de.tum.cit.aet.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupRegistration;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.user.UserFactory;
 import de.tum.cit.aet.artemis.web.rest.tutorialgroups.TutorialGroupResource;
 import de.tum.cit.aet.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupRegistrationImportDTO;

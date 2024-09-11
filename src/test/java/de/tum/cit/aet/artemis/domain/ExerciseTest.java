@@ -16,15 +16,16 @@ import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
 import de.tum.cit.aet.artemis.domain.enumeration.DiagramType;
 import de.tum.cit.aet.artemis.domain.enumeration.InitializationState;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exam.ExamFactory;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.service.ExerciseService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ExerciseTest extends AbstractSpringIntegrationIndependentTest {
 

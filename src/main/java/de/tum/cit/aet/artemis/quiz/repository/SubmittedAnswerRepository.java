@@ -9,10 +9,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
-import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
-import de.tum.cit.aet.artemis.domain.quiz.SubmittedAnswer;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 
 /**
  * Spring Data JPA repository for the SubmittedAnswer entity.

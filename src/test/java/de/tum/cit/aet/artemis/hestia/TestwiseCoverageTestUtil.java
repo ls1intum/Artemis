@@ -4,8 +4,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.tum.cit.aet.artemis.domain.hestia.CoverageFileReport;
-import de.tum.cit.aet.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
+import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 
 public class TestwiseCoverageTestUtil {
 

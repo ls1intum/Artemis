@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.exam.Exam;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**
  * A grading scale for a course or an exam that consists of grade steps

@@ -35,12 +35,12 @@ import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration;
-import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.service.connectors.lti.LtiService;
 import de.tum.cit.aet.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class LtiServiceTest {
 

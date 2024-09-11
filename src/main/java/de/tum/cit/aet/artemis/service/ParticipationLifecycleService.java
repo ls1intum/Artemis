@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.enumeration.ParticipationLifecycle;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 @Profile(PROFILE_CORE)
 @Service

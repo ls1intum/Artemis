@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
 import de.tum.cit.aet.artemis.domain.enumeration.Visibility;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;

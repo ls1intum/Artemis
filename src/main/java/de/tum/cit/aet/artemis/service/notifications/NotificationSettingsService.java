@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.service.notifications;
 
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationType;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.ATTACHMENT_CHANGE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.CONVERSATION_ADD_USER_CHANNEL;
@@ -42,7 +43,6 @@ import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIA
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_UNASSIGNED;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_UPDATED;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.findCorrespondingNotificationType;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -54,13 +54,13 @@ import java.util.stream.Collectors;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.domain.DomainObject;
 import de.tum.cit.aet.artemis.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
-import de.tum.cit.aet.artemis.domain.notification.Notification;
-import de.tum.cit.aet.artemis.domain.notification.NotificationConstants;
 
 @Profile(PROFILE_CORE)
 @Service

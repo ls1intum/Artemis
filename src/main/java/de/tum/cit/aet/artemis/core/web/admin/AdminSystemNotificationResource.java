@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
+import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.domain.notification.Notification;
-import de.tum.cit.aet.artemis.domain.notification.SystemNotification;
 import de.tum.cit.aet.artemis.service.SystemNotificationService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;

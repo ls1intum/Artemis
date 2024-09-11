@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.KnowledgeArea;
+import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 
 /**
  * DTO used to send requests regarding {@link KnowledgeArea} objects. It has no id and only contains the id (not object) of its parent

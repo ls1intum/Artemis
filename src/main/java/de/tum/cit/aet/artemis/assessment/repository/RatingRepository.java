@@ -12,9 +12,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCount;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Rating;
-import de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseRatingCount;
 
 /**
  * Spring Data JPA repository for the Rating entity.

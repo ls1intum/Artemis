@@ -39,10 +39,11 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
-import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
-import de.tum.cit.aet.artemis.domain.view.QuizView;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.quiz.config.QuizView;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * A Submission.

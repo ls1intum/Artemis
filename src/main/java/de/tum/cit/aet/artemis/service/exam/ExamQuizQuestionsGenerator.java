@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.exam;
 
 import java.util.List;
 
-import de.tum.cit.aet.artemis.domain.quiz.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 
 /**
  * Service Interface for generating quiz questions for an exam

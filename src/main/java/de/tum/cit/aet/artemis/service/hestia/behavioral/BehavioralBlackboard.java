@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.service.hestia.behavioral;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.domain.hestia.CoverageReport;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageReport;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
 
 /**
  * The blackboard for creating SolutionEntries for behavioral test cases utilizing the git-diff and test-wise coverage report.

@@ -16,9 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.enumeration.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSchedule;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 
 @Profile(PROFILE_CORE)
 @Repository

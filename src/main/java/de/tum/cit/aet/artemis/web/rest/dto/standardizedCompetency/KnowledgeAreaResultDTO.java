@@ -6,7 +6,7 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.KnowledgeArea;
+import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 
 /**
  * DTO containing {@link KnowledgeArea} data. It only contains the id of the knowledge area and source.

@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.domain.enumeration.AttachmentType;
-import de.tum.cit.aet.artemis.domain.lecture.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 
 /**
  * A Attachment.

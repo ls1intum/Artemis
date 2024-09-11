@@ -16,12 +16,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.enumeration.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.domain.metis.AnswerPost;
-import de.tum.cit.aet.artemis.domain.metis.Post;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
 
 class PlagiarismAnswerPostIntegrationTest extends AbstractSpringIntegrationIndependentTest {

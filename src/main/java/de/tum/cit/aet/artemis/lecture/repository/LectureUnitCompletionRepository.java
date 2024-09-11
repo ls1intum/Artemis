@@ -13,8 +13,8 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
-import de.tum.cit.aet.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 
 @Profile(PROFILE_CORE)
 @Repository

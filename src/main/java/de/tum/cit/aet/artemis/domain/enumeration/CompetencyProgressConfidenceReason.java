@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.domain.enumeration;
 
-import de.tum.cit.aet.artemis.domain.competency.CompetencyProgress;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 
 /**
  * Enum to define the different reasons why the confidence is above/below 1 in the {@link CompetencyProgress}.

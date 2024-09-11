@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
+import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.domain.competency.KnowledgeArea;
-import de.tum.cit.aet.artemis.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.service.competency.StandardizedCompetencyService;
 import de.tum.cit.aet.artemis.service.feature.Feature;
 import de.tum.cit.aet.artemis.service.feature.FeatureToggle;

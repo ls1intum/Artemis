@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.domain.exam.Exam;
-import de.tum.cit.aet.artemis.domain.quiz.QuizGroup;
-import de.tum.cit.aet.artemis.domain.quiz.QuizPool;
-import de.tum.cit.aet.artemis.domain.quiz.QuizQuestion;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.quiz.domain.QuizGroup;
+import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizGroupRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPoolRepository;

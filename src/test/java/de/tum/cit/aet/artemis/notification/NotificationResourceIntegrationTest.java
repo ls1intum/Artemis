@@ -13,6 +13,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
+import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
+import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -20,10 +24,6 @@ import de.tum.cit.aet.artemis.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
-import de.tum.cit.aet.artemis.domain.notification.GroupNotification;
-import de.tum.cit.aet.artemis.domain.notification.Notification;
-import de.tum.cit.aet.artemis.domain.notification.NotificationConstants;
-import de.tum.cit.aet.artemis.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 
 class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {

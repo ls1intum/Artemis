@@ -22,10 +22,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.domain.hestia.CoverageFileReport;
-import de.tum.cit.aet.artemis.domain.hestia.CoverageReport;
-import de.tum.cit.aet.artemis.domain.hestia.TestwiseCoverageReportEntry;
-import de.tum.cit.aet.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageReport;
+import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;

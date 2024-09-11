@@ -5,7 +5,7 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.domain.GradeType;
-import de.tum.cit.aet.artemis.domain.exam.StudentExam;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 
 /**
  * DTO that wraps the {@link StudentExam} and contains related assessment result and grading information if available.

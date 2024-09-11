@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.GradeStep;
 import de.tum.cit.aet.artemis.domain.GradeType;
 import de.tum.cit.aet.artemis.domain.GradingScale;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**
  * Service responsible for initializing the database with specific testdata related to grading for use in integration tests.

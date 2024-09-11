@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 /**
- * A DTO for the {@link de.tum.cit.aet.artemis.domain.exam.event.ExamLiveEvent} entity.
+ * A DTO for the {@link de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent} entity.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "eventType")

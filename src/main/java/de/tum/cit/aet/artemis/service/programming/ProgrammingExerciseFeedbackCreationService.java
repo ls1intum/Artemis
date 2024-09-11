@@ -40,7 +40,7 @@ import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.domain.enumeration.Visibility;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;

@@ -8,10 +8,10 @@ import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.domain.modeling.ModelCluster;
-import de.tum.cit.aet.artemis.domain.modeling.ModelElement;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.domain.ModelCluster;
+import de.tum.cit.aet.artemis.modeling.domain.ModelElement;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.service.compass.controller.ModelClusterFactory;
 

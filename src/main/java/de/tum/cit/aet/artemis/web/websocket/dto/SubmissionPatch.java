@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.web.websocket.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 
-import de.tum.cit.aet.artemis.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 /**
  * DTO for a submission patch. Represents changes conducted by a peer while collaborating

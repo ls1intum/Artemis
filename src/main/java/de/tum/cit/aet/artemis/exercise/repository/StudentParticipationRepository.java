@@ -34,11 +34,11 @@ import de.tum.cit.aet.artemis.domain.Submission;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
-import de.tum.cit.aet.artemis.domain.exam.StudentExam;
-import de.tum.cit.aet.artemis.domain.participation.IdToPresentationScoreSum;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.domain.quiz.QuizSubmittedAnswerCount;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 import de.tum.cit.aet.artemis.web.rest.dto.feedback.FeedbackDetailDTO;
 
 /**
@@ -1147,7 +1147,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     }
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.quiz.QuizSubmittedAnswerCount(COUNT(a.id), s.id, p.id)
+            SELECT new de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount(COUNT(a.id), s.id, p.id)
             FROM SubmittedAnswer a
                 LEFT JOIN a.submission s
                 LEFT JOIN s.participation p
@@ -1181,7 +1181,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * @return a set of id to presentation score sum mappings
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.participation.IdToPresentationScoreSum(
+            SELECT new de.tum.cit.aet.artemis.exercise.domain.participation.IdToPresentationScoreSum(
                 COALESCE(p.student.id, ts.id),
                 COALESCE(SUM(p.presentationScore), 0)
             )

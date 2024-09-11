@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.exam.event.ExamLiveEvent;
+import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
 
 /**
  * Spring Data JPA repository for the ExamLiveEvent entity.

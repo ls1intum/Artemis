@@ -15,8 +15,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 
 /**
  * Spring Data JPA repository for the PlagiarismComparison entity.

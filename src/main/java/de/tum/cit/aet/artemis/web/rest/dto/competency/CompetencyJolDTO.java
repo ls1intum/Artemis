@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.CompetencyJol;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 
 /**
  * A DTO for the CompetencyJol entity.

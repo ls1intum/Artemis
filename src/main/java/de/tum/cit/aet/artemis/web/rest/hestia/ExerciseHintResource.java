@@ -27,9 +27,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.hestia.CodeHint;
-import de.tum.cit.aet.artemis.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
 import de.tum.cit.aet.artemis.service.hestia.CodeHintService;
@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
- * REST controller for managing {@link de.tum.cit.aet.artemis.domain.hestia.ExerciseHint}.
+ * REST controller for managing {@link ExerciseHint}.
  */
 @Profile(PROFILE_CORE)
 @RestController

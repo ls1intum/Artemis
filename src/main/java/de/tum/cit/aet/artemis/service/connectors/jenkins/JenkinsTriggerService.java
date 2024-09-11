@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.service.connectors.jenkins;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanService;
 

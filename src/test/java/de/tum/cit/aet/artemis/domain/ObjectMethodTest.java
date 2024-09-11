@@ -28,7 +28,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.domain.settings.ide.UserIdeMapping;
+import de.tum.cit.aet.artemis.programming.domain.ide.UserIdeMapping;
 import de.tum.cit.aet.artemis.util.classpath.ClassNode;
 import de.tum.cit.aet.artemis.util.classpath.ClassPathNode;
 import de.tum.cit.aet.artemis.util.classpath.ClassPathUtil;

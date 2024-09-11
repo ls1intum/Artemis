@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
+import static de.tum.cit.aet.artemis.programming.domain.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.domain.statistics.BuildLogStatisticsEntry;
+import de.tum.cit.aet.artemis.programming.domain.BuildLogStatisticsEntry;
 import de.tum.cit.aet.artemis.web.rest.dto.BuildLogStatisticsDTO;
 
 /**

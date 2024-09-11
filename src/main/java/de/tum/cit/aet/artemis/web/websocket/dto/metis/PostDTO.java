@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.web.websocket.dto.metis;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.notification.Notification;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 
 /**
  * DTO that is included as payload for post related websocket messages

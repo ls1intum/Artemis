@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.hestia.CoverageFileReport;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
 
 @Profile(PROFILE_CORE)
 @Repository

@@ -10,8 +10,8 @@ import de.tum.cit.aet.artemis.domain.Commit;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.service.connectors.ConnectorHealth;
 
 public interface VersionControlService {

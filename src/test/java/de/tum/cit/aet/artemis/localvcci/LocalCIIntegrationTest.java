@@ -58,7 +58,7 @@ import de.tum.cit.aet.artemis.domain.Team;
 import de.tum.cit.aet.artemis.domain.enumeration.BuildStatus;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
 import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.service.ParticipationVcsAccessTokenService;

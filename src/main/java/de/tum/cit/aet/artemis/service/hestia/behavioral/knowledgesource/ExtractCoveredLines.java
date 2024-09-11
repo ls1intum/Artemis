@@ -3,13 +3,14 @@ package de.tum.cit.aet.artemis.service.hestia.behavioral.knowledgesource;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.cit.aet.artemis.service.hestia.behavioral.GroupedFile;
 
 /**
  * For each {@link GroupedFile}:
  * Extracts the lines that were covered by the test case in the file (both of the GroupedFile) from the
- * {@link de.tum.cit.aet.artemis.domain.hestia.TestwiseCoverageReportEntry}s
+ * {@link TestwiseCoverageReportEntry}s
  */
 public class ExtractCoveredLines extends BehavioralKnowledgeSource {
 

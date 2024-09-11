@@ -22,8 +22,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 
-import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
-import de.tum.cit.aet.artemis.domain.metis.Post;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * A Lecture.

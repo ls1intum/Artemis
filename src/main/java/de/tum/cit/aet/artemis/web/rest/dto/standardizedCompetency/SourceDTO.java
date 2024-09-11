@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.Source;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
 
 /**
  * DTO containing source information

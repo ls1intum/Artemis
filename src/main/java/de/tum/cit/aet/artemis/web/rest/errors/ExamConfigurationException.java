@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 
 /**
  * Exception that will be thrown if the user tries to import an exam that contains programming exercises with an invalid shortName.

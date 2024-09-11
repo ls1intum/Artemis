@@ -11,9 +11,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.participation.ParticipationInterface;
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exercise.domain.participation.ParticipationInterface;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.service.exam.ExamDateService;
 

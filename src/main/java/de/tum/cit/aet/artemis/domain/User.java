@@ -38,15 +38,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
+import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
+import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.domain.competency.CompetencyProgress;
-import de.tum.cit.aet.artemis.domain.competency.LearningPath;
-import de.tum.cit.aet.artemis.domain.exam.ExamUser;
-import de.tum.cit.aet.artemis.domain.lecture.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.domain.participation.Participant;
-import de.tum.cit.aet.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.cit.aet.artemis.exam.domain.ExamUser;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 
 /**

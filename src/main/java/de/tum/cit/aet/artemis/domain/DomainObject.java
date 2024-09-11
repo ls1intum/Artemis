@@ -13,7 +13,7 @@ import jakarta.persistence.MappedSuperclass;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.cit.aet.artemis.domain.view.QuizView;
+import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 /**
  * Base abstract class for entities which have an id that is generated automatically (basically all domain objects).

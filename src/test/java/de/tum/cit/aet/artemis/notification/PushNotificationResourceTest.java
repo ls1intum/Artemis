@@ -14,11 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
+import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
-import de.tum.cit.aet.artemis.domain.push_notification.PushNotificationDeviceType;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.web.rest.push_notification.PushNotificationRegisterBody;
 import de.tum.cit.aet.artemis.web.rest.push_notification.PushNotificationRegisterDTO;

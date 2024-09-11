@@ -10,10 +10,10 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.domain.competency.KnowledgeArea;
-import de.tum.cit.aet.artemis.domain.competency.Source;
-import de.tum.cit.aet.artemis.domain.competency.StandardizedCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
+import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 
 /**
  * DTO including a nested structure of knowledge areas (including their descendants and competencies), as well as a list of sources

@@ -18,11 +18,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.domain.exam.ExamSession;
-import de.tum.cit.aet.artemis.domain.exam.StudentExam;
-import de.tum.cit.aet.artemis.domain.exam.SuspiciousExamSessions;
-import de.tum.cit.aet.artemis.domain.exam.SuspiciousSessionReason;
-import de.tum.cit.aet.artemis.domain.exam.SuspiciousSessionsAnalysisOptions;
+import de.tum.cit.aet.artemis.exam.domain.ExamSession;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.domain.SuspiciousExamSessions;
+import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
+import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.CourseWithIdDTO;

@@ -15,7 +15,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.iris.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.service.iris.IrisRateLimitService;
 import de.tum.cit.aet.artemis.service.iris.dto.IrisChatWebsocketDTO;

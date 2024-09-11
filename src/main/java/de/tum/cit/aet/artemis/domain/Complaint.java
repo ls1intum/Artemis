@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.domain.enumeration.ComplaintType;
-import de.tum.cit.aet.artemis.domain.participation.Participant;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 /**
  * A Complaint.

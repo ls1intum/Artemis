@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.web.rest.metis.conversation;
 
+import static de.tum.cit.aet.artemis.communication.ConversationSettings.MAX_GROUP_CHAT_PARTICIPANTS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.domain.metis.conversation.ConversationSettings.MAX_GROUP_CHAT_PARTICIPANTS;
 import static de.tum.cit.aet.artemis.service.metis.conversation.GroupChatService.GROUP_CHAT_ENTITY_NAME;
 
 import java.net.URI;
@@ -21,12 +21,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
-import de.tum.cit.aet.artemis.domain.metis.conversation.GroupChat;
 import de.tum.cit.aet.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ConversationService;
 import de.tum.cit.aet.artemis.service.metis.conversation.GroupChatService;

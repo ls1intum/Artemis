@@ -13,8 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.domain.competency.Competency;
-import de.tum.cit.aet.artemis.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;

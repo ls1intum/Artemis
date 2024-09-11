@@ -11,8 +11,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.modeling.ModelCluster;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelCluster;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelClusterRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelElementRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;

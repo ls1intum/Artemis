@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.DomainObject;
-import de.tum.cit.aet.artemis.domain.hestia.CoverageReport;
+import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageReport;
 import de.tum.cit.aet.artemis.service.dto.CoverageReportAndSubmissionDateDTO;
 
 /**

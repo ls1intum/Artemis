@@ -21,17 +21,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.domain.Organization;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -262,7 +262,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      * @return A list with a map for every submission containing date and the username
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.StatisticsEntry(
+            SELECT new de.tum.cit.aet.artemis.core.dto.StatisticsEntry(
                 SUBSTRING(CAST(s.submissionDate AS string), 1, 10),
                 p.student.login
             )

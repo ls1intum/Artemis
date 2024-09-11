@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
-import de.tum.cit.aet.artemis.domain.metis.conversation.ChannelSubType;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.ChannelSubType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ChannelDTO extends ConversationDTO {

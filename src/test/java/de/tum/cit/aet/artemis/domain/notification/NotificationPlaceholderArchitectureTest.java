@@ -19,6 +19,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 
 import de.tum.cit.aet.artemis.architecture.AbstractArchitectureTest;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationPlaceholderCreator;
 
 class NotificationPlaceholderArchitectureTest extends AbstractArchitectureTest {
 

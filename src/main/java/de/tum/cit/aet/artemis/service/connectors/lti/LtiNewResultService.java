@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.service.connectors.lti;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 @Service
 @Profile("lti")

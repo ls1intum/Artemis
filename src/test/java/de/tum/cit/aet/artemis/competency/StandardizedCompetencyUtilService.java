@@ -9,12 +9,12 @@ import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
+import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
-import de.tum.cit.aet.artemis.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.domain.competency.KnowledgeArea;
-import de.tum.cit.aet.artemis.domain.competency.Source;
-import de.tum.cit.aet.artemis.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 

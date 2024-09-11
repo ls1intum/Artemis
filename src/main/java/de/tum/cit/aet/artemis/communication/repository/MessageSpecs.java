@@ -13,18 +13,18 @@ import jakarta.persistence.criteria.Predicate;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.AnswerPost_;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
+import de.tum.cit.aet.artemis.communication.domain.Post_;
+import de.tum.cit.aet.artemis.communication.domain.Reaction_;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel_;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation_;
 import de.tum.cit.aet.artemis.domain.Course_;
 import de.tum.cit.aet.artemis.domain.User_;
 import de.tum.cit.aet.artemis.domain.enumeration.SortingOrder;
-import de.tum.cit.aet.artemis.domain.metis.AnswerPost;
-import de.tum.cit.aet.artemis.domain.metis.AnswerPost_;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.metis.PostSortCriterion;
-import de.tum.cit.aet.artemis.domain.metis.Post_;
-import de.tum.cit.aet.artemis.domain.metis.Reaction_;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Channel_;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Conversation_;
 
 public class MessageSpecs {
 

@@ -16,11 +16,10 @@ import org.junit.jupiter.api.Test;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
-import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
+import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismDetectionService;
@@ -29,6 +28,7 @@ import de.tum.cit.aet.artemis.service.plagiarism.ProgrammingPlagiarismDetectionS
 import de.tum.cit.aet.artemis.service.plagiarism.TextPlagiarismDetectionService;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class PlagiarismDetectionServiceTest {
 

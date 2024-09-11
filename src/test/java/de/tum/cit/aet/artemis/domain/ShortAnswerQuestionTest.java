@@ -4,9 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerQuestion;
-import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
-import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerSubmittedText;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 
 class ShortAnswerQuestionTest {
 

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.metis.conversation.auth;
 
+import static de.tum.cit.aet.artemis.communication.ConversationSettings.MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.domain.metis.conversation.ConversationSettings.MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE;
 
 import jakarta.validation.constraints.NotNull;
 

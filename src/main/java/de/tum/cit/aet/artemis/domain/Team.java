@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.cit.aet.artemis.domain.participation.Participant;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 /**
  * A Team of students.

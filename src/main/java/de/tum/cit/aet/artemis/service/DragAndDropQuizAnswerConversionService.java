@@ -27,10 +27,10 @@ import org.apache.pdfbox.pdmodel.graphics.image.PDImageXObject;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.domain.quiz.DragAndDropMapping;
-import de.tum.cit.aet.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.cit.aet.artemis.domain.quiz.DragAndDropSubmittedAnswer;
-import de.tum.cit.aet.artemis.domain.quiz.DropLocation;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropSubmittedAnswer;
+import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
 
 /**
  * Service for converting a DragAndDropSubmittedAnswer to a PDF file displaying the submitted answer.

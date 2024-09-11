@@ -7,7 +7,7 @@ import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.iris.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.service.iris.IrisRateLimitService;
 

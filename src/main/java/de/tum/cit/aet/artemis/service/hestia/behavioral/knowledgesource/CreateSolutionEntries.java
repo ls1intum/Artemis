@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.cit.aet.artemis.service.hestia.behavioral.GroupedFile;
 

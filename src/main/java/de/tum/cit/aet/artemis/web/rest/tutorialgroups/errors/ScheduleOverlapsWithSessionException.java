@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.ErrorConstants;
 import de.tum.cit.aet.artemis.web.rest.tutorialgroups.TutorialGroupResource;

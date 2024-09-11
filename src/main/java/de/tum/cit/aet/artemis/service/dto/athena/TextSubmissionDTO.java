@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 /**
  * A DTO representing a TextSubmission, for transferring data to Athena

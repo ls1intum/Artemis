@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismDetectionConfig;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 
 /**
  * A config class containing logic for filling missing PlagiarismDetectionConfig for exercises created before deployment of the cpc.

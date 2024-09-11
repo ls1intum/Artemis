@@ -29,9 +29,9 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.RSAKey;
 
 import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.lti.Claims;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
+import de.tum.cit.aet.artemis.lti.dto.Claims;
 import io.jsonwebtoken.Jwts;
 
 class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationIndependentTest {

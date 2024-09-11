@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.service.notifications;
 
+import static de.tum.cit.aet.artemis.communication.domain.notification.GroupNotificationFactory.createAnnouncementNotification;
+import static de.tum.cit.aet.artemis.communication.domain.notification.GroupNotificationFactory.createNotification;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.EDITOR;
 import static de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.INSTRUCTOR;
@@ -17,9 +20,6 @@ import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.PROGRAM
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.PROGRAMMING_REPOSITORY_LOCKS;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.QUIZ_EXERCISE_STARTED;
-import static de.tum.cit.aet.artemis.domain.notification.GroupNotificationFactory.createAnnouncementNotification;
-import static de.tum.cit.aet.artemis.domain.notification.GroupNotificationFactory.createNotification;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -31,6 +31,10 @@ import java.util.stream.Collectors;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationTarget;
 import de.tum.cit.aet.artemis.communication.repository.GroupNotificationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Attachment;
@@ -40,12 +44,8 @@ import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.notification.GroupNotification;
-import de.tum.cit.aet.artemis.domain.notification.NotificationConstants;
-import de.tum.cit.aet.artemis.domain.notification.NotificationTarget;
-import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 
 @Profile(PROFILE_CORE)

@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.domain.Submission;
 import de.tum.cit.aet.artemis.domain.Team;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.ComplaintType;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
 

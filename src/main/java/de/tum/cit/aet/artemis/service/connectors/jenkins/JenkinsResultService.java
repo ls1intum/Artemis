@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.jenkins;
 
-import static de.tum.cit.aet.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
+import static de.tum.cit.aet.artemis.programming.domain.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import java.time.ZonedDateTime;
 import java.util.List;

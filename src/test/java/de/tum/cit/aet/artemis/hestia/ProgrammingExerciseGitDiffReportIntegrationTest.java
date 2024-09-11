@@ -13,10 +13,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.util.LocalRepository;

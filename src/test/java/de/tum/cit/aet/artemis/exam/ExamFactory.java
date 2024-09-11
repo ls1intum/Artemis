@@ -7,10 +7,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.exam.Exam;
-import de.tum.cit.aet.artemis.domain.exam.ExamSession;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
-import de.tum.cit.aet.artemis.domain.exam.StudentExam;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exam.domain.ExamSession;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.web.rest.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamSessionDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamWithIdAndCourseDTO;

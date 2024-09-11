@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamScoresDTO(Long examId, String title, Integer maxPoints, Double averagePointsAchieved, Boolean hasSecondCorrectionAndStarted, List<ExerciseGroup> exerciseGroups,

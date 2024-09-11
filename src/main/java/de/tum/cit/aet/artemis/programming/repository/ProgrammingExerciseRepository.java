@@ -22,17 +22,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.core.repository.base.DynamicSpecificationRepository;
 import de.tum.cit.aet.artemis.core.repository.base.FetchOptions;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise_;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise_;
-import de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -422,7 +422,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @return list of exercises with the count of distinct submissions belonging to the exercise id
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
                 p.exercise.id,
                 count(DISTINCT p)
             )

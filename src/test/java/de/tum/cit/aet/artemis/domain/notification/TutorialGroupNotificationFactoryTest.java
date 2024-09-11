@@ -1,19 +1,22 @@
 package de.tum.cit.aet.artemis.domain.notification;
 
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TITLE;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationTarget;
+import de.tum.cit.aet.artemis.communication.domain.notification.TutorialGroupNotification;
+import de.tum.cit.aet.artemis.communication.domain.notification.TutorialGroupNotificationFactory;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
-import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 class TutorialGroupNotificationFactoryTest {
 

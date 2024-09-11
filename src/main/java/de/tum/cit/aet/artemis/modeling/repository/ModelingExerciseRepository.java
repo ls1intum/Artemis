@@ -17,7 +17,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
 /**
  * Spring Data JPA repository for the ModelingExercise entity.

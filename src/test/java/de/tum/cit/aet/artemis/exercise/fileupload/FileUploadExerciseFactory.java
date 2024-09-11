@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.ExerciseFactory;
 
 /**

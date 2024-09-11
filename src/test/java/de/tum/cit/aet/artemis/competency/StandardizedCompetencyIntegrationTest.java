@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.competency;
 
-import static de.tum.cit.aet.artemis.domain.competency.StandardizedCompetency.FIRST_VERSION;
+import static de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency.FIRST_VERSION;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -18,15 +18,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
+import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
-import de.tum.cit.aet.artemis.domain.competency.Competency;
-import de.tum.cit.aet.artemis.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.domain.competency.KnowledgeArea;
-import de.tum.cit.aet.artemis.domain.competency.Source;
-import de.tum.cit.aet.artemis.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.SourceDTO;

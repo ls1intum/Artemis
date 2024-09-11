@@ -4,8 +4,8 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.Competency;
-import de.tum.cit.aet.artemis.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 
 /**
  * DTO containing a {@link Competency} and list of {@link CompetencyRelationDTO CompetencyRelation(DTO)s} for which it is the tail competency.

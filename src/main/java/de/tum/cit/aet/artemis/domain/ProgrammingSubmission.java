@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 
 /**
  * A ProgrammingSubmission.

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LectureUnitForLearningPathNodeDetailsDTO(long id, @NotNull String name, @NotNull String type) {

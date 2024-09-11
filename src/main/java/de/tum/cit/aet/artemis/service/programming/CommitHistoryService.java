@@ -20,8 +20,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.domain.Repository;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.service.connectors.GitService;
 import de.tum.cit.aet.artemis.web.rest.GitDiffReportParserService;

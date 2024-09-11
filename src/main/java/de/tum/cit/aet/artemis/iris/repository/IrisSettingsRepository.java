@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.iris.settings.IrisCourseSettings;
-import de.tum.cit.aet.artemis.domain.iris.settings.IrisExerciseSettings;
-import de.tum.cit.aet.artemis.domain.iris.settings.IrisGlobalSettings;
-import de.tum.cit.aet.artemis.domain.iris.settings.IrisSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisGlobalSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 
 /**
  * Spring Data repository for the IrisSettings entity.

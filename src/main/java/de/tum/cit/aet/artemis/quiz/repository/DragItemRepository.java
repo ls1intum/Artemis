@@ -9,7 +9,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.quiz.DragItem;
+import de.tum.cit.aet.artemis.quiz.domain.DragItem;
 
 /**
  * Spring Data JPA repository for the DragItem entity.

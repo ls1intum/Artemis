@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
 import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
 import de.tum.cit.aet.artemis.domain.enumeration.StaticCodeAnalysisTool;
-import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.ExerciseFactory;
 import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.TestCaseDTO;

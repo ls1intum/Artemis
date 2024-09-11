@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.settings.ide.Ide;
+import de.tum.cit.aet.artemis.programming.domain.ide.Ide;
 
 /**
  * Spring Data repository for the Ide entity.

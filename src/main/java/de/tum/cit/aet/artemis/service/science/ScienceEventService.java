@@ -9,8 +9,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
-import de.tum.cit.aet.artemis.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.web.rest.dto.science.ScienceEventDTO;
 
 /**

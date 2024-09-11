@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationPlaceholderCreator;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import io.github.classgraph.AnnotationEnumValue;
 import io.github.classgraph.ClassGraph;

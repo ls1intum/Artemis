@@ -6,7 +6,7 @@ import java.util.Collection;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 
 /**

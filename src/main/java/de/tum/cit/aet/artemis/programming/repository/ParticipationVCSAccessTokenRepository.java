@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.participation.ParticipationVCSAccessToken;
+import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 
 @Profile(PROFILE_CORE)
 @Repository

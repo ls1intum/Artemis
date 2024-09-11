@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.enumeration.BuildPlanType;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.service.connectors.ConnectorHealth;

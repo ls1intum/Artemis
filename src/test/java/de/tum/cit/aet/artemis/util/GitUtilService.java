@@ -29,9 +29,9 @@ import de.tum.cit.aet.artemis.domain.Repository;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.enumeration.InitializationState;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.service.connectors.GitService;
 
 @Service

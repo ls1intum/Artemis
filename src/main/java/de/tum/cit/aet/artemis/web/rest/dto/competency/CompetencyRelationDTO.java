@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.web.rest.dto.competency;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.CompetencyRelation;
-import de.tum.cit.aet.artemis.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
+import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 
 /**
  * DTO containing {@link CompetencyRelation} data. It only contains ids of the linked competencies to reduce data sent.

@@ -11,8 +11,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.quiz.DragAndDropQuestion;
-import de.tum.cit.aet.artemis.domain.quiz.QuizQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
+import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 
 /**
  * Spring Data JPA repository for the QuizQuestion entity.

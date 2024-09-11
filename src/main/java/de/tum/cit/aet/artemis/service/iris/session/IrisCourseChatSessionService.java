@@ -11,15 +11,15 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.competency.CompetencyJol;
-import de.tum.cit.aet.artemis.domain.iris.message.IrisMessage;
-import de.tum.cit.aet.artemis.domain.iris.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.domain.iris.message.IrisTextMessageContent;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.domain.iris.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;

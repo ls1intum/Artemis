@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.iris.session;
 
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.iris.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 
 public interface IrisSubFeatureInterface<S extends IrisSession> {
 

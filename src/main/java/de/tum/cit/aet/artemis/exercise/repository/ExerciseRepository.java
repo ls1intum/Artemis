@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.metrics.ExerciseTypeMetricsEntry;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -97,7 +97,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
                 COUNT(e.id)
             )
@@ -116,7 +116,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
                 COUNT(e.id)
             )
@@ -135,7 +135,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
                 COUNT(e.id)
             )
@@ -156,7 +156,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
                 COUNT(DISTINCT user.id)
             )
@@ -179,7 +179,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
                 COUNT(DISTINCT user.id)
             )
@@ -203,7 +203,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
                 COUNT(e.id)
             )
@@ -224,7 +224,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
                 COUNT(DISTINCT user.id)
             )
@@ -248,7 +248,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
      * @return a list of ExerciseTypeMetricsEntries, one for each exercise type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metrics.ExerciseTypeMetricsEntry(
+            SELECT new de.tum.cit.aet.artemis.exercise.dto.ExerciseTypeMetricsEntry(
                 TYPE(e),
                 COUNT(DISTINCT user.id)
             )

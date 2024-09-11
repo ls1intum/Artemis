@@ -14,13 +14,13 @@ import org.springframework.stereotype.Service;
 
 import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.cit.aet.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
-import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service for triggering plagiarism checks.

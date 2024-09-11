@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.notifications;
 
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_MESSAGE_TITLE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.verify;
 
@@ -15,6 +15,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
+import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
+import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
@@ -25,11 +30,6 @@ import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.DomainObject;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.metis.ConversationParticipant;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.metis.conversation.OneToOneChat;
-import de.tum.cit.aet.artemis.domain.notification.ConversationNotification;
-import de.tum.cit.aet.artemis.domain.notification.Notification;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {

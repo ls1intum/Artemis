@@ -2,9 +2,11 @@ package de.tum.cit.aet.artemis.web.rest.dto.competency;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+
 /**
  * A DTO containing the information of the linkedCourseCompetency field of a
- * {@link de.tum.cit.aet.artemis.domain.competency.CourseCompetency CourseCompetency}
+ * {@link CourseCompetency CourseCompetency}
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 record LinkedCourseCompetencyDTO(long id, long courseId, String courseTitle, String semester) {

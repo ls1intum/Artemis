@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
+import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 /**
  * This interface represents a single job that is executed by the Pyris system.

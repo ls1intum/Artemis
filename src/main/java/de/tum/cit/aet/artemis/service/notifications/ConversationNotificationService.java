@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.service.notifications;
 
+import static de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotificationFactory.createConversationMessageNotification;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_MESSAGE_CHANNEL_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_MESSAGE_DIRECT_TEXT;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_MESSAGE_GROUP_CHAT_TEXT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.CONVERSATION_NEW_MESSAGE;
-import static de.tum.cit.aet.artemis.domain.notification.ConversationNotificationFactory.createConversationMessageNotification;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_CHANNEL_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_DIRECT_TEXT;
-import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_GROUP_CHAT_TEXT;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -13,19 +13,19 @@ import java.util.stream.Collectors;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNotification;
+import de.tum.cit.aet.artemis.communication.domain.notification.NotificationPlaceholderCreator;
+import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
+import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotificationFactory;
 import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
-import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
-import de.tum.cit.aet.artemis.domain.metis.conversation.Conversation;
-import de.tum.cit.aet.artemis.domain.metis.conversation.GroupChat;
-import de.tum.cit.aet.artemis.domain.notification.ConversationNotification;
-import de.tum.cit.aet.artemis.domain.notification.NotificationPlaceholderCreator;
-import de.tum.cit.aet.artemis.domain.notification.SingleUserNotification;
-import de.tum.cit.aet.artemis.domain.notification.SingleUserNotificationFactory;
 
 /**
  * Service for sending notifications about new messages in conversations.

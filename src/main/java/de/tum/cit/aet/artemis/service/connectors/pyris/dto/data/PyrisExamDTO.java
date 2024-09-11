@@ -6,7 +6,7 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.exam.Exam;
+import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisExamDTO(long id, String title, boolean isTextExam, Instant startDate, Instant endDate, Instant publishResultsDate, Instant examStudentReviewStart,

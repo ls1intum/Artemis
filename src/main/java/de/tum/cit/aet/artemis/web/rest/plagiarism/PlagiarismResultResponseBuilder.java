@@ -8,9 +8,9 @@ import java.util.stream.Stream;
 
 import org.springframework.http.ResponseEntity;
 
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 
 /**

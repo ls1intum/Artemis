@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseType;
-import de.tum.cit.aet.artemis.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ParticipationDTO(Long id, boolean testRun, String type, Integer submissionCount, ParticipationExerciseDTO exercise) implements Serializable {

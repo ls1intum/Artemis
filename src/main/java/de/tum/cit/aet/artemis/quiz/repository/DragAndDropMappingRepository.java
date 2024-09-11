@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.quiz.DragAndDropMapping;
+import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 
 /**
  * Spring Data JPA repository for the DragAndDropMapping entity.

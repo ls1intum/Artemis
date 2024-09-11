@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.plagiarism;
 
-import static de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismStatus.CONFIRMED;
-import static de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismStatus.DENIED;
-import static de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismStatus.NONE;
+import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
+import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.DENIED;
+import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
@@ -15,20 +15,20 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
 import de.tum.cit.aet.artemis.domain.enumeration.Language;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.cit.aet.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismComparisonStatusDTO;
 

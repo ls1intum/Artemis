@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
-import de.tum.cit.aet.artemis.domain.statistics.BuildLogStatisticsEntry;
+import de.tum.cit.aet.artemis.programming.domain.BuildLogStatisticsEntry;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;

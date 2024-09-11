@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto.competency;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.CompetencyJol;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 
 /**
  * This DTO is used to represent a pair of CompetencyJolDTOs, where the first one is the current judgement of learning value and the second one is the judgement of learning value

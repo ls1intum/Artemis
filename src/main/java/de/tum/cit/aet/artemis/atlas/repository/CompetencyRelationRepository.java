@@ -11,9 +11,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
+import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.competency.CompetencyRelation;
-import de.tum.cit.aet.artemis.domain.competency.RelationType;
 
 /**
  * Spring Data JPA repository for the Competency Relation entity.
@@ -91,7 +91,7 @@ public interface CompetencyRelationRepository extends ArtemisJpaRepository<Compe
                         END
                     FROM competency_relation AS relation
                     JOIN transitive_closure AS tc ON relation.tail_competency_id = tc.id OR relation.head_competency_id = tc.id
-                    WHERE relation.type = :#{T(de.tum.cit.aet.artemis.domain.competency.RelationType).MATCHES.ordinal()}
+                    WHERE relation.type = :#{T(de.tum.cit.aet.artemis.atlas.domain.competency.RelationType).MATCHES.ordinal()}
                 )
             )
             SELECT * FROM transitive_closure

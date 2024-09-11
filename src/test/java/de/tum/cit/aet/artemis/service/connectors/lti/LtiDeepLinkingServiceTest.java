@@ -36,8 +36,8 @@ import de.tum.cit.aet.artemis.core.security.lti.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration;
-import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 
@@ -125,7 +125,7 @@ class LtiDeepLinkingServiceTest {
                 """;
         Map<String, Object> deepLinkingSettingsAsMap = mapper.readValue(deepLinkingSettingsAsJsonString, new TypeReference<>() {
         });
-        when(oidcIdToken.getClaim(de.tum.cit.aet.artemis.domain.lti.Claims.DEEP_LINKING_SETTINGS)).thenReturn(deepLinkingSettingsAsMap);
+        when(oidcIdToken.getClaim(de.tum.cit.aet.artemis.lti.dto.Claims.DEEP_LINKING_SETTINGS)).thenReturn(deepLinkingSettingsAsMap);
 
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
         assertThatExceptionOfType(BadRequestAlertException.class)
@@ -138,7 +138,7 @@ class LtiDeepLinkingServiceTest {
     void testEmptyDeploymentIdBuildLtiDeepLinkResponse() throws MalformedURLException, URISyntaxException {
         createMockOidcIdToken();
         when(tokenRetriever.createDeepLinkingJWT(anyString(), anyMap())).thenReturn("test_jwt");
-        when(oidcIdToken.getClaim(de.tum.cit.aet.artemis.domain.lti.Claims.LTI_DEPLOYMENT_ID)).thenReturn(null);
+        when(oidcIdToken.getClaim(de.tum.cit.aet.artemis.lti.dto.Claims.LTI_DEPLOYMENT_ID)).thenReturn(null);
 
         DeepLinkCourseExercises result = createTestExercisesForDeepLinking();
         assertThatExceptionOfType(IllegalArgumentException.class)

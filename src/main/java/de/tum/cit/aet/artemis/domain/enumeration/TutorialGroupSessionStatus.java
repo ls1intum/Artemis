@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.domain.enumeration;
 
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
+
 /**
- * Describes the status of a {@link de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession}
+ * Describes the status of a {@link TutorialGroupSession}
  */
 public enum TutorialGroupSessionStatus {
     /**

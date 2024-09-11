@@ -4,7 +4,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.metis.conversation.GroupChat;
+import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GroupChatDTO extends ConversationDTO {

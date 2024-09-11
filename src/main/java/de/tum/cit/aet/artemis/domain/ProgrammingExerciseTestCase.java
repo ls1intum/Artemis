@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.domain;
 
-import static de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTestCaseType.DEFAULT;
+import static de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType.DEFAULT;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -28,10 +28,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
 import de.tum.cit.aet.artemis.domain.enumeration.Visibility;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
-import de.tum.cit.aet.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType;
+import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 
 /**
  * A ProgrammingExerciseTestCase.

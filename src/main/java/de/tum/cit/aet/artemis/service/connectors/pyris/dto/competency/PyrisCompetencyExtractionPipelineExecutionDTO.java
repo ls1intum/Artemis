@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.connectors.pyris.dto.competency;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionDTO;
 
 /**

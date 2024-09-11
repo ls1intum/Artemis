@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 

@@ -26,9 +26,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.metis.Post;
 import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;

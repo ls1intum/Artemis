@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.competency.CompetencyTaxonomy;
-import de.tum.cit.aet.artemis.domain.competency.StandardizedCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
+import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 
 /**
  * DTO containing {@link StandardizedCompetency} data. It only contains the id of the knowledge area and source.

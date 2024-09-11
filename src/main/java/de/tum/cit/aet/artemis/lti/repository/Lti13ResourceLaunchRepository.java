@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.lti.LtiResourceLaunch;
+import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 
 public interface Lti13ResourceLaunchRepository extends ArtemisJpaRepository<LtiResourceLaunch, Long> {
 

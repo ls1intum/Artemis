@@ -7,10 +7,10 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismSubmission;
-import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.cit.aet.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 
 class PlagiarismResultResponseBuilderTest {
 

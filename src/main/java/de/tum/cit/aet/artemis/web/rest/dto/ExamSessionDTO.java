@@ -5,7 +5,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.exam.SuspiciousSessionReason;
+import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExamSessionDTO(long id, String browserFingerprintHash, String ipAddress, Set<SuspiciousSessionReason> suspiciousReasons, Instant createdDate,

@@ -9,8 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.competency.Competency;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyProgressDTO;

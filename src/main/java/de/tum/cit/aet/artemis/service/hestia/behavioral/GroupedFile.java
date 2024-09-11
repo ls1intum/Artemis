@@ -7,8 +7,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 
 import de.tum.cit.aet.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
-import de.tum.cit.aet.artemis.domain.hestia.TestwiseCoverageReportEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
+import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 
 /**
  * One GroupedFile groups the {@link ProgrammingExerciseGitDiffEntry}s and {@link TestwiseCoverageReportEntry}s together
