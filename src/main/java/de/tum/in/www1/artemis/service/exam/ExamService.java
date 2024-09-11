@@ -899,7 +899,7 @@ public class ExamService {
             }
             case FileUploadExercise ignored -> {
                 FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) submissions.iterator().next();
-                return textSubmission.getFilePath() != null && !textSubmission.getFilePath().isEmpty();
+                return fileUploadSubmission.getFilePath() != null && !fileUploadSubmission.getFilePath().isEmpty();
             }
             case TextExercise ignored -> {
                 TextSubmission textSubmission = (TextSubmission) submissions.iterator().next();
