@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.repository.metrics;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Map.Entry;
 import java.util.Set;
@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.ExerciseInformationDTO;

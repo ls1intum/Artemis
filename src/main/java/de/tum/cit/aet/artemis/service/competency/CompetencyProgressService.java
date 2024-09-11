@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.competency;
 
-import static de.tum.cit.aet.artemis.config.Constants.MIN_SCORE_GREEN;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.service.util.TimeUtil.toRelativeTime;
 
 import java.time.Instant;
@@ -19,6 +19,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.LearningObject;
@@ -34,7 +35,6 @@ import de.tum.cit.aet.artemis.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.service.util.RoundingUtil;

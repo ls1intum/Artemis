@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.programming;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.Repository;
@@ -34,7 +35,6 @@ import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.exception.VersionControlException;
 import de.tum.cit.aet.artemis.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.SolutionProgrammingExerciseParticipationRepository;

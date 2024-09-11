@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.repository;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.cit.aet.artemis.config.Constants.TITLE_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.core.config.Constants.TITLE_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 

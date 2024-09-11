@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.authorization;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.assertj.core.api.Fail.fail;
 
 import java.lang.annotation.Annotation;
@@ -20,13 +20,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 
-import de.tum.cit.aet.artemis.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 
 /**
  * This service is used to check if the authorization annotations are used correctly.

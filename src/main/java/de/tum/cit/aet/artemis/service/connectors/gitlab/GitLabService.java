@@ -45,6 +45,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.domain.Commit;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
@@ -52,7 +53,6 @@ import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.exception.VersionControlException;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseStudentParticipationRepository;

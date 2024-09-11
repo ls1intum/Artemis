@@ -13,7 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
 
 @Entity
 @Table(name = "long_feedback_text")

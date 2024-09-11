@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 
@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.domain.Organization;
 import de.tum.cit.aet.artemis.repository.OrganizationRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastTutor;
 
 /**
  * REST controller for managing the Organization entities

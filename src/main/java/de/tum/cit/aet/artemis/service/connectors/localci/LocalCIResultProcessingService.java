@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.localci;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +22,7 @@ import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.BuildJob;
 import de.tum.cit.aet.artemis.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.domain.Result;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.cit.aet.artemis.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildJobQueueItem;

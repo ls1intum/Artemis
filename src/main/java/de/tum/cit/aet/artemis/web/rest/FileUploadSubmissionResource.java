@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -26,7 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.domain.FileUploadSubmission;
@@ -35,7 +39,6 @@ import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.Submission;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exception.EmptyFileException;
 import de.tum.cit.aet.artemis.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.repository.FileUploadSubmissionRepository;
@@ -43,9 +46,6 @@ import de.tum.cit.aet.artemis.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.Role;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.service.FileUploadSubmissionService;

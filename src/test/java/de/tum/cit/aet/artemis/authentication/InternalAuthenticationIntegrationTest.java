@@ -28,6 +28,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.connector.GitlabRequestMockProvider;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.domain.Authority;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -36,8 +38,6 @@ import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.security.Role;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.user.PasswordService;
 import de.tum.cit.aet.artemis.tutorialgroups.TutorialGroupUtilService;
 import de.tum.cit.aet.artemis.web.rest.vm.LoginVM;

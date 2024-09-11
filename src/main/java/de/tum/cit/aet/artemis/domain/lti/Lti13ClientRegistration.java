@@ -7,7 +7,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import de.tum.cit.aet.artemis.config.lti.CustomLti13Configurer;
+import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 
 /**
  * Represents the client registration details for an LTI 1.3 integration.

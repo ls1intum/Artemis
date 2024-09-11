@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.web.rest;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.SHORT_NAME_PATTERN;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
 import static de.tum.cit.aet.artemis.web.rest.util.StringUtil.stripIllegalCharacters;
 
 import java.net.URI;
@@ -34,7 +34,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
@@ -48,11 +53,6 @@ import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.TeamRepository;
 import de.tum.cit.aet.artemis.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.Role;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.SubmissionService;

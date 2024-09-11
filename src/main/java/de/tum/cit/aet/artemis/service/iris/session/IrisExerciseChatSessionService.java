@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.Submission;
@@ -21,7 +22,6 @@ import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.repository.iris.IrisSessionRepository;
-import de.tum.cit.aet.artemis.security.Role;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.cit.aet.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;

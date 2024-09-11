@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.service.connectors.ci;
 
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
 
 public interface CIUserManagementService {
 

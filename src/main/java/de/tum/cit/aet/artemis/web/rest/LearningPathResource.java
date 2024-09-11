@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -24,15 +24,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.repository.CourseRepository;
 import de.tum.cit.aet.artemis.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.CourseService;
 import de.tum.cit.aet.artemis.service.LearningObjectService;

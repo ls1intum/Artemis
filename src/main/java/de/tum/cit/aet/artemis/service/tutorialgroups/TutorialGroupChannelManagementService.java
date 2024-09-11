@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.tutorialgroups;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.util.Optional;

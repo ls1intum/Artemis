@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.export;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 
 import java.io.IOException;
@@ -19,10 +19,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.ArtemisMailException;
 import de.tum.cit.aet.artemis.domain.DataExport;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.DataExportState;
-import de.tum.cit.aet.artemis.exception.ArtemisMailException;
 import de.tum.cit.aet.artemis.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.ResourceLoaderService;

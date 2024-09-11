@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -23,10 +23,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.service.connectors.lti.LtiService;
 import de.tum.cit.aet.artemis.service.dto.UserDTO;
 import de.tum.cit.aet.artemis.service.dto.UserInitializationDTO;

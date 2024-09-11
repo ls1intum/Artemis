@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.plagiarism;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Map;
@@ -20,6 +20,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismCase;
@@ -27,9 +30,6 @@ import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.repository.CourseRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.security.Role;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;

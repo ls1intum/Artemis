@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.localvc;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService.TOKEN_PREFIX;
 import static de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
@@ -37,6 +37,12 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Commit;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
@@ -45,15 +51,9 @@ import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.exception.VersionControlException;
-import de.tum.cit.aet.artemis.exception.localvc.LocalVCAuthException;
-import de.tum.cit.aet.artemis.exception.localvc.LocalVCForbiddenException;
-import de.tum.cit.aet.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.service.programming.AuxiliaryRepositoryService;

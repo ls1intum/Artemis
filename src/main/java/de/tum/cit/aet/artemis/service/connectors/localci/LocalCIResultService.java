@@ -1,17 +1,17 @@
 package de.tum.cit.aet.artemis.service.connectors.localci;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
-import de.tum.cit.aet.artemis.exception.LocalCIException;
 import de.tum.cit.aet.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseTestCaseRepository;

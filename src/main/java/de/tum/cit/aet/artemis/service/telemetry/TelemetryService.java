@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.telemetry;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.util.Arrays;
 import java.util.List;

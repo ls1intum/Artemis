@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_THEIA;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Set;
@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.Team;
@@ -26,7 +27,6 @@ import de.tum.cit.aet.artemis.domain.participation.AbstractBaseProgrammingExerci
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.repository.LtiPlatformConfigurationRepository;
-import de.tum.cit.aet.artemis.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.service.exam.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.service.notifications.GroupNotificationScheduleService;
 

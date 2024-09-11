@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.web.rest.open;
 
-import static de.tum.cit.aet.artemis.config.lti.CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH;
-import static de.tum.cit.aet.artemis.config.lti.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH;
+import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH;
+import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -23,7 +23,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.nimbusds.jwt.SignedJWT;
 
-import de.tum.cit.aet.artemis.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 
 /**
  * REST controller for receiving LTI requests.

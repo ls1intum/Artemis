@@ -1,16 +1,16 @@
 package de.tum.cit.aet.artemis.service.connectors.localci;
 
-import static de.tum.cit.aet.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExerciseBuildConfig;
-import de.tum.cit.aet.artemis.exception.LocalCIException;
 import de.tum.cit.aet.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.service.connectors.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.service.connectors.aeolus.Windfile;

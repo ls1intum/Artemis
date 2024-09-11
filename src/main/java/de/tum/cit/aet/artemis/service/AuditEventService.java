@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -11,7 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.audit.AuditEventConverter;
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConverter;
 import de.tum.cit.aet.artemis.repository.PersistenceAuditEventRepository;
 
 /**

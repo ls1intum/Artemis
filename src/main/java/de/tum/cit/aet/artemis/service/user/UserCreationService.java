@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.service.user;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.security.Role.EDITOR;
-import static de.tum.cit.aet.artemis.security.Role.INSTRUCTOR;
-import static de.tum.cit.aet.artemis.security.Role.STUDENT;
-import static de.tum.cit.aet.artemis.security.Role.TEACHING_ASSISTANT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.security.Role.EDITOR;
+import static de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR;
+import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
+import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 
 import java.time.Instant;
 import java.util.HashSet;
@@ -23,7 +23,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Authority;
 import de.tum.cit.aet.artemis.domain.Organization;
 import de.tum.cit.aet.artemis.domain.User;
@@ -31,7 +32,6 @@ import de.tum.cit.aet.artemis.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.repository.CourseRepository;
 import de.tum.cit.aet.artemis.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.service.connectors.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.web.rest.vm.ManagedUserVM;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.localvc;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
 import java.net.URL;
@@ -30,13 +30,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.domain.Commit;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseStudentParticipationRepository;

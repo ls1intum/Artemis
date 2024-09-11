@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -18,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
@@ -35,8 +37,6 @@ import de.tum.cit.aet.artemis.domain.participation.Participation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.exception.VersionControlException;
 import de.tum.cit.aet.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.repository.ParticipationRepository;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.course;
 
-import static de.tum.cit.aet.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static de.tum.cit.aet.artemis.core.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,7 +63,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.assessment.ComplaintUtilService;
 import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
 import de.tum.cit.aet.artemis.competency.PrerequisiteUtilService;
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Complaint;
 import de.tum.cit.aet.artemis.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -137,7 +138,6 @@ import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;

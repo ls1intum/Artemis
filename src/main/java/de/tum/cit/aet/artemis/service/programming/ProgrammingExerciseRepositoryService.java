@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.programming;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.isMavenProject;
 
 import java.io.FileNotFoundException;
@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.Repository;

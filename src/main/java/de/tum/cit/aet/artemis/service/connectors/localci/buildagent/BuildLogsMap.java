@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.localci.buildagent;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;

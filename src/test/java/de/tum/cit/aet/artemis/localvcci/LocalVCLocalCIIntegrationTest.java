@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.localvcci;
 
-import static de.tum.cit.aet.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_EXAM_CONDUCTION;
 import static de.tum.cit.aet.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_NORMAL;
 import static de.tum.cit.aet.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;

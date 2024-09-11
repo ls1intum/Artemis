@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.beans.PropertyEditorSupport;
 import java.io.IOException;
@@ -38,7 +38,17 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
+import de.tum.cit.aet.artemis.core.exception.QuizJoinException;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.QuizAction;
@@ -48,21 +58,11 @@ import de.tum.cit.aet.artemis.domain.quiz.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.domain.quiz.DragItem;
 import de.tum.cit.aet.artemis.domain.quiz.QuizBatch;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
-import de.tum.cit.aet.artemis.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.exception.QuizJoinException;
 import de.tum.cit.aet.artemis.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.security.Role;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.CourseService;
 import de.tum.cit.aet.artemis.service.ExerciseDeletionService;

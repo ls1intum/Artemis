@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.user;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -11,7 +11,7 @@ import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
 
 @Profile(PROFILE_CORE)
 @Component

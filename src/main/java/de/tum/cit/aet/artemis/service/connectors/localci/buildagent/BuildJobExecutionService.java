@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.service.connectors.localci.buildagent;
 
-import static de.tum.cit.aet.artemis.config.Constants.CHECKED_OUT_REPOS_TEMP_DIR;
-import static de.tum.cit.aet.artemis.config.Constants.LOCALCI_RESULTS_DIRECTORY;
-import static de.tum.cit.aet.artemis.config.Constants.LOCALCI_WORKING_DIRECTORY;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.CHECKED_OUT_REPOS_TEMP_DIR;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.service.connectors.localci.buildagent.TestResultXmlParser.processTestResultFile;
 
 import java.io.IOException;
@@ -33,12 +33,12 @@ import org.springframework.stereotype.Service;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
+import de.tum.cit.aet.artemis.core.exception.GitException;
+import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.domain.Repository;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
 import de.tum.cit.aet.artemis.domain.enumeration.StaticCodeAnalysisTool;
-import de.tum.cit.aet.artemis.exception.GitException;
-import de.tum.cit.aet.artemis.exception.LocalCIException;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.cit.aet.artemis.service.connectors.localci.scaparser.ReportParser;

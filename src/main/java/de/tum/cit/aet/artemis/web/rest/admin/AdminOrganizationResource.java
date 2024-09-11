@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.admin;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,12 +21,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.domain.Organization;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.repository.CourseRepository;
 import de.tum.cit.aet.artemis.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.service.OrganizationService;
 import de.tum.cit.aet.artemis.web.rest.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;

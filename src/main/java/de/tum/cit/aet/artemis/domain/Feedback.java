@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.domain;
 
-import static de.tum.cit.aet.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_DATABASE_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.FEEDBACK_PREVIEW_TEXT_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.LONG_FEEDBACK_MAX_LENGTH;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
 import de.tum.cit.aet.artemis.domain.enumeration.Visibility;
 
@@ -146,7 +147,7 @@ public class Feedback extends DomainObject {
      * Sets the detail text of the feedback.
      * <p>
      * Always stores the whole detail text.
-     * In case the feedback is shorter than {@link de.tum.cit.aet.artemis.config.Constants#FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH},
+     * In case the feedback is shorter than {@link Constants#FEEDBACK_DETAIL_TEXT_SOFT_MAX_LENGTH},
      * the feedback is stored directly in the detail text.
      * Otherwise, an associated {@link LongFeedbackText} is attached that holds the full feedback.
      * In this case the actual detail text stored in this feedback only contains a short preview.

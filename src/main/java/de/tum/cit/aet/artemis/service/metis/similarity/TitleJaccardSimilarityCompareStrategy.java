@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.metis.similarity;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.apache.commons.text.similarity.JaccardSimilarity;
 import org.springframework.context.annotation.Primary;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.open;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
@@ -15,13 +15,13 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
 import de.tum.cit.aet.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
-import de.tum.cit.aet.artemis.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.service.ResultService;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.service.hestia.TestwiseCoverageService;

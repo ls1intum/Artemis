@@ -6,11 +6,11 @@ import org.gitlab4j.api.models.Trigger;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.exception.GitLabCIException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.exception.GitLabCIException;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.service.UriService;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;

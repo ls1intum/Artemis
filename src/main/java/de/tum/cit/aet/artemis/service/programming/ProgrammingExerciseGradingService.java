@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.programming;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static de.tum.cit.aet.artemis.domain.ProgrammingSubmission.createFallbackSubmission;
 
 import java.time.ZonedDateTime;
@@ -30,7 +30,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Feedback;
@@ -52,8 +54,6 @@ import de.tum.cit.aet.artemis.domain.participation.TemplateProgrammingExercisePa
 import de.tum.cit.aet.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.exception.VersionControlException;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionRepository;

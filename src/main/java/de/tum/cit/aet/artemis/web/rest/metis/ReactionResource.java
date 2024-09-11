@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.metis;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.metis.Reaction;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.service.metis.ReactionService;
 
 /**

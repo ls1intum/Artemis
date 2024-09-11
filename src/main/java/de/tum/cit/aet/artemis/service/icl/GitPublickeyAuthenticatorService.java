@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.icl;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -16,8 +16,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.icl.ssh.HashUtils;
-import de.tum.cit.aet.artemis.config.icl.ssh.SshConstants;
+import de.tum.cit.aet.artemis.programming.icl.ssh.HashUtils;
+import de.tum.cit.aet.artemis.programming.icl.ssh.SshConstants;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildAgentInformation;

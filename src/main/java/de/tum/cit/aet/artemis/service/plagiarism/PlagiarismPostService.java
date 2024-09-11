@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.plagiarism;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -9,6 +9,7 @@ import java.util.Objects;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.DisplayPriority;
@@ -21,7 +22,6 @@ import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.repository.metis.PostRepository;
 import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.security.Role;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.service.metis.PostingService;

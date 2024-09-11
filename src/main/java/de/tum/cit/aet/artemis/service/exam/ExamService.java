@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.exam;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static java.time.ZonedDateTime.now;
 
@@ -39,7 +39,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
@@ -86,7 +87,6 @@ import de.tum.cit.aet.artemis.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.BonusService;
 import de.tum.cit.aet.artemis.service.CourseScoreCalculationService;

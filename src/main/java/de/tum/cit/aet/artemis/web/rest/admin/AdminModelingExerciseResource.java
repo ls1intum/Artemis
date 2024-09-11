@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.admin;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.repository.ModelClusterRepository;
 import de.tum.cit.aet.artemis.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.service.ModelingExerciseService;
 import de.tum.cit.aet.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;

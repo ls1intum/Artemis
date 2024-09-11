@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.icl;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.io.IOException;
 import java.net.URL;
@@ -18,10 +18,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.icl.ssh.SshConstants;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.exception.localvc.LocalVCForbiddenException;
-import de.tum.cit.aet.artemis.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.programming.icl.ssh.SshConstants;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCServletService;

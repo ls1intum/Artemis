@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.tutorialgroups;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.web.rest.util.DateUtil.interpretInTimeZone;
 
 import java.net.URI;
@@ -23,12 +23,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
-import de.tum.cit.aet.artemis.security.Role;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.feature.Feature;
 import de.tum.cit.aet.artemis.service.feature.FeatureToggle;

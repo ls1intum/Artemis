@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.scheduled;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.util.Map;
 import java.util.Optional;
@@ -17,8 +17,8 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.exception.VersionControlException;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.connectors.vcs.VcsUserManagementService;
 

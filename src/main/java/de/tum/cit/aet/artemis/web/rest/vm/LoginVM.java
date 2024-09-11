@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.web.rest.vm;
 
-import static de.tum.cit.aet.artemis.config.Constants.PASSWORD_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.config.Constants.PASSWORD_MIN_LENGTH;
-import static de.tum.cit.aet.artemis.config.Constants.USERNAME_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.config.Constants.USERNAME_MIN_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

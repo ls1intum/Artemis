@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis;
 
-import static de.tum.cit.aet.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import static de.tum.cit.aet.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.cit.aet.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 
@@ -20,6 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.exception.QuizSubmissionException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
@@ -29,13 +33,9 @@ import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
 import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
 import de.tum.cit.aet.artemis.domain.quiz.SubmittedAnswer;
-import de.tum.cit.aet.artemis.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.exam.ExamSubmissionService;

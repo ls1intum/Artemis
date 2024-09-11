@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.quiz;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
@@ -24,7 +25,6 @@ import de.tum.cit.aet.artemis.domain.quiz.QuizBatch;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
 import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
 import de.tum.cit.aet.artemis.domain.quiz.SubmittedAnswer;
-import de.tum.cit.aet.artemis.exception.QuizSubmissionException;
 import de.tum.cit.aet.artemis.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.repository.ResultRepository;

@@ -23,10 +23,10 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.config.migration.MigrationEntry;
-import de.tum.cit.aet.artemis.config.migration.MigrationIntegrityException;
-import de.tum.cit.aet.artemis.config.migration.MigrationRegistry;
-import de.tum.cit.aet.artemis.config.migration.MigrationService;
+import de.tum.cit.aet.artemis.core.config.migration.MigrationEntry;
+import de.tum.cit.aet.artemis.core.config.migration.MigrationIntegrityException;
+import de.tum.cit.aet.artemis.core.config.migration.MigrationRegistry;
+import de.tum.cit.aet.artemis.core.config.migration.MigrationService;
 import de.tum.cit.aet.artemis.domain.MigrationChangelog;
 import de.tum.cit.aet.artemis.migration.entries.TestChangeEntry20211214_231800;
 import de.tum.cit.aet.artemis.migration.entries.TestChangeEntry20211215_231800;

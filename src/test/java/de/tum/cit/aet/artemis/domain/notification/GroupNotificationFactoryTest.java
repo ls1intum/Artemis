@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.domain.notification;
 
-import static de.tum.cit.aet.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
+import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationPriority.HIGH;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationPriority.MEDIUM;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.ATTACHMENT_CHANGE;

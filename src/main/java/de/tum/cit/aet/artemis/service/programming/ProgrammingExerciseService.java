@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.programming;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions.AuxiliaryRepositories;

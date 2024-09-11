@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.migration.entries;
 
-import de.tum.cit.aet.artemis.config.migration.MigrationEntry;
+import de.tum.cit.aet.artemis.core.config.migration.MigrationEntry;
 
 public class TestChangeEntry20211216_231800 extends MigrationEntry {
 

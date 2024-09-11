@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.programming;
 
-import static de.tum.cit.aet.artemis.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
+import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.timeout;

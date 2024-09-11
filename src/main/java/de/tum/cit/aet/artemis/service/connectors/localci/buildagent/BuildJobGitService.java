@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.localci.buildagent;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.IOException;
 import java.net.URI;
@@ -28,9 +28,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.domain.Repository;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.exception.GitException;
 import de.tum.cit.aet.artemis.service.connectors.AbstractGitService;
 
 @Profile(PROFILE_BUILDAGENT)

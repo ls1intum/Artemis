@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.scheduled;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.config.StartupDelayConfig.PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PROGRAMMING_EXERCISE_SCHEDULE_DELAY_SEC;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -34,7 +34,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
@@ -51,7 +52,6 @@ import de.tum.cit.aet.artemis.repository.ProgrammingExerciseStudentParticipation
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.repository.ResultRepository;
 import de.tum.cit.aet.artemis.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.service.connectors.GitService;
 import de.tum.cit.aet.artemis.service.exam.ExamDateService;

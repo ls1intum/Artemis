@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.admin;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static tech.jhipster.web.util.PaginationUtil.generatePaginationHttpHeaders;
 
 import java.time.Instant;
@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import de.tum.cit.aet.artemis.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.service.AuditEventService;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.ResponseUtil;

@@ -12,9 +12,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import de.tum.cit.aet.artemis.security.OAuth2JWKSService;
-import de.tum.cit.aet.artemis.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 
 /**
  * REST controller to serve the public JWKSet related to all OAuth2 clients.

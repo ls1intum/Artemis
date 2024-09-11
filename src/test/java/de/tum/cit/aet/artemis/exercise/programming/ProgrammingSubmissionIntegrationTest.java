@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.programming;
 
-import static de.tum.cit.aet.artemis.config.Constants.NEW_SUBMISSION_TOPIC;
-import static de.tum.cit.aet.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
+import static de.tum.cit.aet.artemis.core.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.cit.aet.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static de.tum.cit.aet.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,7 +35,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.domain.Commit;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.GradingCriterion;
@@ -52,7 +53,6 @@ import de.tum.cit.aet.artemis.domain.participation.Participation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;

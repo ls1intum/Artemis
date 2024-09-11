@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.hestia.CodeHint;
@@ -16,7 +17,6 @@ import de.tum.cit.aet.artemis.domain.iris.session.IrisHestiaSession;
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.repository.iris.IrisHestiaSessionRepository;
 import de.tum.cit.aet.artemis.repository.iris.IrisSessionRepository;
-import de.tum.cit.aet.artemis.security.Role;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService;

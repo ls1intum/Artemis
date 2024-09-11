@@ -12,13 +12,13 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
 import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
-import de.tum.cit.aet.artemis.exception.NetworkingException;
 import de.tum.cit.aet.artemis.service.dto.athena.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.service.dto.athena.ModelingFeedbackDTO;
 import de.tum.cit.aet.artemis.service.dto.athena.ProgrammingFeedbackDTO;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.vcs;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;

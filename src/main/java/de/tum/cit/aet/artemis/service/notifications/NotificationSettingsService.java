@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.notifications;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.ATTACHMENT_CHANGE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.CONVERSATION_ADD_USER_CHANNEL;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT;

@@ -17,13 +17,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.iris.message.IrisMessage;
 import de.tum.cit.aet.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.domain.iris.session.IrisSession;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.iris.IrisMessageRepository;
 import de.tum.cit.aet.artemis.repository.iris.IrisSessionRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.service.iris.IrisMessageService;
 import de.tum.cit.aet.artemis.service.iris.IrisSessionService;
 import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;

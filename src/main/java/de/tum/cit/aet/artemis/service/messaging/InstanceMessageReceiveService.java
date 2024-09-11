@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.messaging;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.util.Optional;
 
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.User;
@@ -22,7 +23,6 @@ import de.tum.cit.aet.artemis.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.quiz.QuizScheduleService;
 import de.tum.cit.aet.artemis.service.scheduled.AthenaScheduleService;
 import de.tum.cit.aet.artemis.service.scheduled.ModelingExerciseScheduleService;

@@ -11,7 +11,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import de.tum.cit.aet.artemis.web.filter.ApiVersionFilter;
+import de.tum.cit.aet.artemis.core.web.filter.ApiVersionFilter;
 
 class ContentVersionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

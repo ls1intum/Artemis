@@ -72,8 +72,8 @@ import com.tngtech.archunit.library.GeneralCodingRules;
 
 import de.tum.cit.aet.artemis.AbstractArtemisIntegrationTest;
 import de.tum.cit.aet.artemis.authorization.AuthorizationTestService;
-import de.tum.cit.aet.artemis.config.ApplicationConfiguration;
-import de.tum.cit.aet.artemis.config.ConditionalMetricsExclusionConfiguration;
+import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
+import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.service.connectors.GitService;
 import de.tum.cit.aet.artemis.web.rest.repository.RepositoryResource;

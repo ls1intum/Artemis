@@ -1,13 +1,13 @@
 package de.tum.cit.aet.artemis.service.icl;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import org.apache.sshd.git.pack.GitPackCommand;
 import org.apache.sshd.git.pack.GitPackCommandFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.icl.ssh.SshGitCommand;
+import de.tum.cit.aet.artemis.programming.icl.ssh.SshGitCommand;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCServletService;
 
 @Profile(PROFILE_LOCALVC)

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.plagiarism;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.service.plagiarism.PlagiarismService.filterParticipationMinimumScore;
 
 import java.io.File;
@@ -37,13 +37,13 @@ import de.jplag.options.JPlagOptions;
 import de.jplag.python3.PythonLanguage;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.jplag.swift.SwiftLanguage;
+import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.domain.PlagiarismCheckState;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.Repository;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.cit.aet.artemis.exception.GitException;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.service.FileService;

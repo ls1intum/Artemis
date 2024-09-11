@@ -13,11 +13,11 @@ import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.security.lti.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.domain.lti.Lti13DeepLinkingResponse;
 import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 
 /**

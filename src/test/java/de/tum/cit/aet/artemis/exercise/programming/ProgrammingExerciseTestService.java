@@ -70,7 +70,10 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
+import de.tum.cit.aet.artemis.core.exception.GitException;
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Authority;
 import de.tum.cit.aet.artemis.domain.AuxiliaryRepository;
@@ -104,8 +107,6 @@ import de.tum.cit.aet.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.cit.aet.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.exam.ExamFactory;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
-import de.tum.cit.aet.artemis.exception.GitException;
-import de.tum.cit.aet.artemis.exception.VersionControlException;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.repository.AuxiliaryRepositoryRepository;
@@ -128,7 +129,6 @@ import de.tum.cit.aet.artemis.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.repository.TeamRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.security.Role;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.UriService;

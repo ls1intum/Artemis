@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.repository;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.repository.specs.UserSpecs.distinct;
 import static de.tum.cit.aet.artemis.repository.specs.UserSpecs.getActivatedOrDeactivatedSpecification;
 import static de.tum.cit.aet.artemis.repository.specs.UserSpecs.getAllUsersWithoutUserGroups;
@@ -38,6 +38,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.ConversationNotificationRecipientSummary;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.DomainObject;
@@ -45,8 +47,6 @@ import de.tum.cit.aet.artemis.domain.Organization;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.SortingOrder;
 import de.tum.cit.aet.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.security.Role;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.dto.UserDTO;
 import de.tum.cit.aet.artemis.service.dto.UserRoleDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.UserPageableSearchDTO;

@@ -28,13 +28,13 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.domain.quiz.scoring.ScoringStrategy;
 import de.tum.cit.aet.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropAllOrNothing;
 import de.tum.cit.aet.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProportionalWithPenalty;
 import de.tum.cit.aet.artemis.domain.quiz.scoring.ScoringStrategyDragAndDropProportionalWithoutPenalty;
 import de.tum.cit.aet.artemis.domain.view.QuizView;
-import de.tum.cit.aet.artemis.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 

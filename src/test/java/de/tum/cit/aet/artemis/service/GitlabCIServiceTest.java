@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
+import de.tum.cit.aet.artemis.core.exception.GitLabCIException;
 import de.tum.cit.aet.artemis.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
@@ -36,7 +37,6 @@ import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
 import de.tum.cit.aet.artemis.domain.participation.Participation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.exception.GitLabCIException;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;

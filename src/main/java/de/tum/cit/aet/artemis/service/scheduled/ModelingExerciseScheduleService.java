@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.service.scheduled;
 
-import static de.tum.cit.aet.artemis.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.config.StartupDelayConfig.MODELING_EXERCISE_SCHEDULE_DELAY_SEC;
+import static de.tum.cit.aet.artemis.core.config.Constants.EXAM_END_WAIT_TIME_FOR_COMPASS_MINUTES;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.MODELING_EXERCISE_SCHEDULE_DELAY_SEC;
 import static java.time.Instant.now;
 
 import java.time.Instant;
@@ -24,11 +24,11 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
 import de.tum.cit.aet.artemis.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.compass.CompassService;
 import de.tum.cit.aet.artemis.service.exam.ExamDateService;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;

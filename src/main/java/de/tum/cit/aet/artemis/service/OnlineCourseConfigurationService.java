@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service;
 
-import static de.tum.cit.aet.artemis.config.Constants.LOGIN_REGEX;
+import static de.tum.cit.aet.artemis.core.config.Constants.LOGIN_REGEX;
 import static de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration.ENTITY_NAME;
 
 import java.util.List;
@@ -17,10 +17,10 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.lti.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

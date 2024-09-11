@@ -19,12 +19,12 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.domain.lti.Lti13ClientRegistration;
 import de.tum.cit.aet.artemis.domain.lti.Lti13PlatformConfiguration;
 import de.tum.cit.aet.artemis.repository.LtiPlatformConfigurationRepository;
-import de.tum.cit.aet.artemis.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.service.connectors.lti.LtiDynamicRegistrationService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

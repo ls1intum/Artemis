@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
@@ -35,7 +36,6 @@ import de.tum.cit.aet.artemis.repository.ExamRepository;
 import de.tum.cit.aet.artemis.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.security.Role;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {

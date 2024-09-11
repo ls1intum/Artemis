@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.localci;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.ASSEMBLER;
 import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.C;
 import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.HASKELL;

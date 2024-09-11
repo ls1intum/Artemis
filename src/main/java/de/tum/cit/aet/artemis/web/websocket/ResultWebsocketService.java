@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.web.websocket;
 
-import static de.tum.cit.aet.artemis.config.Constants.EXERCISE_TOPIC_ROOT;
-import static de.tum.cit.aet.artemis.config.Constants.NEW_RESULT_TOPIC;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
+import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_TOPIC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;

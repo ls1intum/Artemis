@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.admin;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALCI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.domain.BuildJob;
 import de.tum.cit.aet.artemis.repository.BuildJobRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.service.connectors.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildJobQueueItem;

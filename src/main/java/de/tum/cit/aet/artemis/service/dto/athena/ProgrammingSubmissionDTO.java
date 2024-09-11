@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.dto.athena;
 
-import static de.tum.cit.aet.artemis.config.Constants.ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH;
+import static de.tum.cit.aet.artemis.core.config.Constants.ATHENA_PROGRAMMING_EXERCISE_REPOSITORY_API_PATH;
 
 import jakarta.validation.constraints.NotNull;
 

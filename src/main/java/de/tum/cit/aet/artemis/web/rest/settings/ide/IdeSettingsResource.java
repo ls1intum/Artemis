@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.settings.ide;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.settings.ide.Ide;
@@ -24,7 +25,6 @@ import de.tum.cit.aet.artemis.domain.settings.ide.UserIdeMapping;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.settings.IdeRepository;
 import de.tum.cit.aet.artemis.repository.settings.UserIdeMappingRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.web.rest.dto.settings.ide.IdeDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.settings.ide.IdeMappingDTO;
 

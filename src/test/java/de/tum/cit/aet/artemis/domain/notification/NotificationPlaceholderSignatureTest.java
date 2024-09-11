@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import io.github.classgraph.AnnotationEnumValue;
 import io.github.classgraph.ClassGraph;
 
@@ -29,7 +30,7 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
      * You must now do the following:
      * 1. Check if you really need to change these placeholders. If not, revert your changes.
      * 2. Write a database migration for the old placeholder JSON strings, such that they match your new signature.
-     * 3. Increment the {{@link de.tum.cit.aet.artemis.config.Constants#PUSH_NOTIFICATION_VERSION}}. This ensures that old versions of the native apps discard your new
+     * 3. Increment the {{@link Constants#PUSH_NOTIFICATION_VERSION}}. This ensures that old versions of the native apps discard your new
      * notifications.
      * 4. Update both the Android and iOS app. Only merge this server PR after they have been updated and released to the stores. Otherwise, notifications no longer work for
      * end users.

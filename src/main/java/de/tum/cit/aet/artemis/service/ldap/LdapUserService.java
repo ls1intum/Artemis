@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.service.ldap;
 
-import static de.tum.cit.aet.artemis.config.Constants.TUM_LDAP_EMAILS;
-import static de.tum.cit.aet.artemis.config.Constants.TUM_LDAP_MAIN_EMAIL;
-import static de.tum.cit.aet.artemis.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
+import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_EMAILS;
+import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_MAIN_EMAIL;
+import static de.tum.cit.aet.artemis.core.config.Constants.TUM_LDAP_MATRIKEL_NUMBER;
 import static org.springframework.ldap.query.LdapQueryBuilder.query;
 
 import java.util.Optional;

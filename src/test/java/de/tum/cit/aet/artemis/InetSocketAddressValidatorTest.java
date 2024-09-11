@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.validation.InetSocketAddressValidator;
+import de.tum.cit.aet.artemis.core.validation.InetSocketAddressValidator;
 
 class InetSocketAddressValidatorTest {
 

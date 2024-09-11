@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.quiz;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.net.URI;

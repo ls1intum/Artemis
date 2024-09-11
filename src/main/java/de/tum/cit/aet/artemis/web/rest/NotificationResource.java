@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
 import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_TITLE;
 
@@ -21,12 +21,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.notification.Notification;
 import de.tum.cit.aet.artemis.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService;
 import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupService;

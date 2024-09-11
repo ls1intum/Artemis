@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.quiz;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
@@ -16,13 +16,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.QuizJoinException;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.QuizMode;
 import de.tum.cit.aet.artemis.domain.quiz.QuizBatch;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
 import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
-import de.tum.cit.aet.artemis.exception.QuizJoinException;
 import de.tum.cit.aet.artemis.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.repository.QuizSubmissionRepository;

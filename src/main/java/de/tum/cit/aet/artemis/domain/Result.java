@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.domain;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS;
-import static de.tum.cit.aet.artemis.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS;
+import static de.tum.cit.aet.artemis.core.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
 import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
 

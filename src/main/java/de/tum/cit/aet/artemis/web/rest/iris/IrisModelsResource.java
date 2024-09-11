@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisConnectorException;
 import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.service.connectors.pyris.dto.PyrisModelDTO;

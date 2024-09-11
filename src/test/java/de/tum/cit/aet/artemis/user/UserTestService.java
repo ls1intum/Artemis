@@ -27,7 +27,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Authority;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -45,7 +46,6 @@ import de.tum.cit.aet.artemis.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.science.ScienceEventRepository;
-import de.tum.cit.aet.artemis.security.Role;
 import de.tum.cit.aet.artemis.service.connectors.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.service.connectors.lti.LtiService;
 import de.tum.cit.aet.artemis.service.connectors.vcs.VcsUserManagementService;

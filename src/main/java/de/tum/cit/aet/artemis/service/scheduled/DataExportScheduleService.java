@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.scheduled;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
@@ -16,10 +16,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.DataExport;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.repository.DataExportRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.service.export.DataExportCreationService;
 import de.tum.cit.aet.artemis.service.export.DataExportService;

@@ -14,7 +14,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.validation.constraints.TeamAssignmentConfigConstraints;
+import de.tum.cit.aet.artemis.core.validation.constraints.TeamAssignmentConfigConstraints;
 
 /**
  * A team assignment configuration.

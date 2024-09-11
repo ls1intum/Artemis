@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.plagiarism;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
 import java.time.ZonedDateTime;
 import java.util.Set;
@@ -13,6 +13,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.jplag.exceptions.ExitException;
+import de.tum.cit.aet.artemis.core.exception.ArtemisMailException;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.TextExercise;
@@ -24,7 +25,6 @@ import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismSubmissionElement;
-import de.tum.cit.aet.artemis.exception.ArtemisMailException;
 import de.tum.cit.aet.artemis.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismComparisonRepository;

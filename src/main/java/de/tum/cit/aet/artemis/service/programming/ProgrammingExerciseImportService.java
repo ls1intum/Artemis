@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.service.programming;
 
-import static de.tum.cit.aet.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 
 import java.io.IOException;
 import java.util.HashMap;

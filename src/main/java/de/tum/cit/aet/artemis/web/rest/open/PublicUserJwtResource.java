@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.open;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
@@ -29,10 +29,10 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.security.SecurityUtils;
-import de.tum.cit.aet.artemis.security.UserNotActivatedException;
-import de.tum.cit.aet.artemis.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.service.connectors.SAML2Service;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.vm.LoginVM;

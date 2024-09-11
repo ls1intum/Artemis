@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.gitlabci;
 
-import static de.tum.cit.aet.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
+import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 
 import java.net.URL;
 import java.util.Comparator;
@@ -23,7 +23,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.exception.GitLabCIException;
 import de.tum.cit.aet.artemis.domain.BuildPlan;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExerciseBuildConfig;
@@ -31,8 +33,6 @@ import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.exception.GitLabCIException;
 import de.tum.cit.aet.artemis.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.service.UriService;

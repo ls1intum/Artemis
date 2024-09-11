@@ -32,12 +32,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.security.lti.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.security.lti.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 

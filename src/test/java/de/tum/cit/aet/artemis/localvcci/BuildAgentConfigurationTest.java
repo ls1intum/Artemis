@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.config.icl.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.programming.icl.BuildAgentConfiguration;
 
 class BuildAgentConfigurationTest {
 

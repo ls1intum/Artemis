@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.exam;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 import java.util.stream.Collectors;

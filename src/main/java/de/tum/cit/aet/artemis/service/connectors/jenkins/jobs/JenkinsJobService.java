@@ -16,7 +16,7 @@ import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.FolderJob;
 import com.offbytwo.jenkins.model.JobWithDetails;
 
-import de.tum.cit.aet.artemis.exception.JenkinsException;
+import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
 
 @Service

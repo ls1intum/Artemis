@@ -15,8 +15,8 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.cit.aet.artemis.core.exception.NetworkingException;
 import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.exception.NetworkingException;
 import de.tum.cit.aet.artemis.service.dto.athena.ExerciseBaseDTO;
 
 /**

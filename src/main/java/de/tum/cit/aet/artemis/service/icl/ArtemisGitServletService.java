@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.icl;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import jakarta.annotation.PostConstruct;
 

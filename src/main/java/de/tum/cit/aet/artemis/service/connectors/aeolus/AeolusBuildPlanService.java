@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.service.connectors.aeolus;
 
-import static de.tum.cit.aet.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.cit.aet.artemis.config.Constants.SOLUTION_REPO_NAME;
-import static de.tum.cit.aet.artemis.config.Constants.TEST_REPO_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.SOLUTION_REPO_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import static de.tum.cit.aet.artemis.domain.enumeration.AeolusTarget.JENKINS;
 
 import java.net.URL;

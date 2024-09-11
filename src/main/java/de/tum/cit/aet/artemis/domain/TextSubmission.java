@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.domain;
 
-import static de.tum.cit.aet.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_SUBMISSION_TEXT_LENGTH;
 
 import java.util.HashSet;
 import java.util.Set;

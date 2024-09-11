@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.COMPLAINT;
 import static de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK;
 import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
@@ -43,7 +43,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.DomainObject;
 import de.tum.cit.aet.artemis.domain.Exercise;
@@ -82,8 +84,6 @@ import de.tum.cit.aet.artemis.repository.metis.conversation.ConversationReposito
 import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
 import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.cit.aet.artemis.security.Role;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
 import de.tum.cit.aet.artemis.service.exam.ExamDeletionService;
 import de.tum.cit.aet.artemis.service.export.CourseExamExportService;

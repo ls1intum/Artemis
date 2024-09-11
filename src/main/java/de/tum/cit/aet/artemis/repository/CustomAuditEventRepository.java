@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.repository;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -14,7 +14,7 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.config.audit.AuditEventConverter;
+import de.tum.cit.aet.artemis.core.config.audit.AuditEventConverter;
 import de.tum.cit.aet.artemis.domain.PersistentAuditEvent;
 
 /**

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.jenkins.build_plan;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,11 +16,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
-import de.tum.cit.aet.artemis.exception.JenkinsException;
 import de.tum.cit.aet.artemis.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.service.ResourceLoaderService;

@@ -27,7 +27,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.ComplaintUtilService;
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.domain.AssessmentNote;
 import de.tum.cit.aet.artemis.domain.Complaint;
 import de.tum.cit.aet.artemis.domain.ComplaintResponse;

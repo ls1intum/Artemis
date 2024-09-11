@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.user;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -8,7 +8,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.config.SecurityConfiguration;
+import de.tum.cit.aet.artemis.core.config.SecurityConfiguration;
 
 /**
  * This service is a simple delegate to break the circular structure we would get when defining

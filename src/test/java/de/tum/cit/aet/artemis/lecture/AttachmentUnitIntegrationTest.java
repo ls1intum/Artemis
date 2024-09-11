@@ -37,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Attachment;
 import de.tum.cit.aet.artemis.domain.Lecture;
 import de.tum.cit.aet.artemis.domain.competency.Competency;
@@ -47,7 +48,6 @@ import de.tum.cit.aet.artemis.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.repository.LectureRepository;
 import de.tum.cit.aet.artemis.repository.SlideRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 
 class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

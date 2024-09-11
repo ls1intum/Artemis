@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.localci.buildagent;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -31,8 +31,8 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.domain.BuildLogEntry;
-import de.tum.cit.aet.artemis.exception.LocalCIException;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildResult;
 

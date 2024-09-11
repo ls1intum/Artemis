@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.scheduled;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.config.StartupDelayConfig.NOTIFICATION_SCHEDULE_DELAY_SEC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.NOTIFICATION_SCHEDULE_DELAY_SEC;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -16,10 +16,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.service.notifications.GroupNotificationService;

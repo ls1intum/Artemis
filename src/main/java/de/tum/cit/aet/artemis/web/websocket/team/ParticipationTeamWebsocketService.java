@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.websocket.team;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.security.Principal;
 import java.time.Instant;
@@ -32,6 +32,7 @@ import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Submission;
 import de.tum.cit.aet.artemis.domain.TextExercise;
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.service.TextSubmissionService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;

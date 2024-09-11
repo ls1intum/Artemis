@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.programming;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.TRIGGER_INSTRUCTOR_BUILD;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.TRIGGER_INSTRUCTOR_BUILD;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -17,6 +17,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
@@ -29,14 +31,12 @@ import de.tum.cit.aet.artemis.domain.participation.Participation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.repository.ResultRepository;
 import de.tum.cit.aet.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationTriggerService;

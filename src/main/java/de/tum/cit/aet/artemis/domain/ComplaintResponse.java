@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.domain;
 
-import static de.tum.cit.aet.artemis.config.Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES;
-import static de.tum.cit.aet.artemis.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
+import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_LOCK_DURATION_IN_MINUTES;
+import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_RESPONSE_TEXT_LIMIT;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

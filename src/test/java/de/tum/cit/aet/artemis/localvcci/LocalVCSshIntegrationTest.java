@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.localvcci;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -27,9 +27,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.config.icl.ssh.HashUtils;
-import de.tum.cit.aet.artemis.config.icl.ssh.SshGitCommand;
 import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.programming.icl.ssh.HashUtils;
+import de.tum.cit.aet.artemis.programming.icl.ssh.SshGitCommand;
 import de.tum.cit.aet.artemis.service.icl.SshGitCommandFactoryService;
 
 @Profile(PROFILE_LOCALVC)

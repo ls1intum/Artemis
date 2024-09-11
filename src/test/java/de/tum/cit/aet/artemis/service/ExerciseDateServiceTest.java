@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.enumeration.DiagramType;
 import de.tum.cit.aet.artemis.domain.exam.Exam;
@@ -29,7 +30,6 @@ import de.tum.cit.aet.artemis.repository.ExamRepository;
 import de.tum.cit.aet.artemis.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {

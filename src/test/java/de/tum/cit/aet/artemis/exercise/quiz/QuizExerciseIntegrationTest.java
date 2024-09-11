@@ -42,6 +42,7 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Team;
 import de.tum.cit.aet.artemis.domain.TeamAssignmentConfig;
@@ -79,7 +80,6 @@ import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.repository.TeamRepository;
 import de.tum.cit.aet.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.ExerciseService;
 import de.tum.cit.aet.artemis.service.quiz.QuizExerciseService;
 import de.tum.cit.aet.artemis.util.ExerciseIntegrationTestService;

@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
@@ -31,7 +32,6 @@ import de.tum.cit.aet.artemis.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.domain.notification.Notification;
 import de.tum.cit.aet.artemis.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.repository.NotificationSettingRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService;
 import de.tum.cit.aet.artemis.user.UserUtilService;

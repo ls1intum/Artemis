@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.domain;
 
-import static de.tum.cit.aet.artemis.config.Constants.COMPLAINT_TEXT_LIMIT;
+import static de.tum.cit.aet.artemis.core.config.Constants.COMPLAINT_TEXT_LIMIT;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;

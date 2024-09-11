@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.domain.quiz;
 
-import static de.tum.cit.aet.artemis.config.Constants.MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
 import java.util.Objects;
 

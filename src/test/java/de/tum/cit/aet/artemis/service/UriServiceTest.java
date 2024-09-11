@@ -9,11 +9,11 @@ import java.net.URISyntaxException;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.exception.VersionControlException;
 
 class UriServiceTest extends AbstractSpringIntegrationIndependentTest {
 

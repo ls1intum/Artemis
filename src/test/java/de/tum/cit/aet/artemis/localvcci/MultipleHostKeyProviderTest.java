@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.localvcci;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Path;
@@ -8,7 +8,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.cit.aet.artemis.config.icl.ssh.MultipleHostKeyProvider;
+import de.tum.cit.aet.artemis.programming.icl.ssh.MultipleHostKeyProvider;
 
 @Profile(PROFILE_LOCALVC)
 class MultipleHostKeyProviderTest extends LocalVCIntegrationTest {

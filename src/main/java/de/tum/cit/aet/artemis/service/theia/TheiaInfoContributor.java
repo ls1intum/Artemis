@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.theia;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_THEIA;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 
 import java.net.URL;
 
@@ -10,7 +10,7 @@ import org.springframework.boot.actuate.info.InfoContributor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
 
 @Profile(PROFILE_THEIA)
 @Component

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.dto;
 
-import static de.tum.cit.aet.artemis.config.Constants.USERNAME_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.config.Constants.USERNAME_MIN_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -18,7 +18,7 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.domain.Authority;
 import de.tum.cit.aet.artemis.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.domain.Organization;

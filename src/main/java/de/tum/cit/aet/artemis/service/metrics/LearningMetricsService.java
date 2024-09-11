@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.metrics;
 
-import static de.tum.cit.aet.artemis.config.Constants.MIN_SCORE_GREEN;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.service.util.TimeUtil.toRelativeTime;
 import static java.util.function.Function.identity;
 import static java.util.stream.Collectors.averagingDouble;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.notifications;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.CONVERSATION_NEW_REPLY_MESSAGE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.CONVERSATION_USER_MENTIONED;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.DATA_EXPORT_CREATED;
@@ -47,6 +47,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.DataExport;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.FileUploadExercise;
@@ -67,7 +68,6 @@ import de.tum.cit.aet.artemis.repository.SingleUserNotificationRepository;
 import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.metis.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;

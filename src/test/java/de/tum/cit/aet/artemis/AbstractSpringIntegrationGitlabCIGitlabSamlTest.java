@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.doNothing;
@@ -29,6 +29,7 @@ import org.springframework.test.context.TestPropertySource;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.connector.GitlabRequestMockProvider;
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.Team;
@@ -38,7 +39,6 @@ import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
 import de.tum.cit.aet.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.service.connectors.gitlab.GitLabService;
 import de.tum.cit.aet.artemis.service.connectors.gitlabci.GitLabCIService;
 import de.tum.cit.aet.artemis.service.connectors.gitlabci.GitLabCITriggerService;

@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.service.user;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.security.Role.EDITOR;
+import static de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR;
+import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
+import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 import static de.tum.cit.aet.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.cit.aet.artemis.security.Role.EDITOR;
-import static de.tum.cit.aet.artemis.security.Role.INSTRUCTOR;
-import static de.tum.cit.aet.artemis.security.Role.STUDENT;
-import static de.tum.cit.aet.artemis.security.Role.TEACHING_ASSISTANT;
 
 import java.util.HashSet;
 import java.util.Optional;

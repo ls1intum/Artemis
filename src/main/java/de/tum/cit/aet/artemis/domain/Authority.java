@@ -16,7 +16,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.security.Role;
+import de.tum.cit.aet.artemis.core.security.Role;
 
 /**
  * An authority (a security role) used by Spring Security.

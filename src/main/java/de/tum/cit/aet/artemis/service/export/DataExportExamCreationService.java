@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.export;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
 import static de.tum.cit.aet.artemis.service.export.DataExportUtil.createDirectoryIfNotExistent;
 import static de.tum.cit.aet.artemis.service.export.DataExportUtil.retrieveCourseDirPath;

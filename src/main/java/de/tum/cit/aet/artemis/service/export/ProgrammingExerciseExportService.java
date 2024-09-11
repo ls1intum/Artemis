@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.export;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 import static de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 
@@ -52,6 +52,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.domain.DomainObject;
 import de.tum.cit.aet.artemis.domain.Exercise;
@@ -63,7 +64,6 @@ import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exception.GitException;
 import de.tum.cit.aet.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;

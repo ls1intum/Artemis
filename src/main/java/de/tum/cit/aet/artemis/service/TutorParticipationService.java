@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.FeedbackType.MANUAL_UNREFERENCED;
 import static de.tum.cit.aet.artemis.domain.enumeration.TutorParticipationStatus.NOT_PARTICIPATED;
 import static de.tum.cit.aet.artemis.domain.enumeration.TutorParticipationStatus.REVIEWED_INSTRUCTIONS;

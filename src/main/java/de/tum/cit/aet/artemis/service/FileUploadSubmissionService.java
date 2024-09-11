@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
 import de.tum.cit.aet.artemis.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.domain.Submission;
@@ -26,7 +27,6 @@ import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.InitializationState;
 import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exception.EmptyFileException;
 import de.tum.cit.aet.artemis.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.repository.CourseRepository;
 import de.tum.cit.aet.artemis.repository.FeedbackRepository;

@@ -9,8 +9,8 @@ import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInCourse.EnforceRoleInCourse;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceRoleInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceRoleInExercise;
 
 /**
  * This class contains architecture tests for endpoints with EnforceRoleInResource annotations.

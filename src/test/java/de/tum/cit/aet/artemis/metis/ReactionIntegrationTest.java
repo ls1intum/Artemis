@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.metis;
 
-import static de.tum.cit.aet.artemis.config.Constants.VOTE_EMOJI_ID;
+import static de.tum.cit.aet.artemis.core.config.Constants.VOTE_EMOJI_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.repository.metis;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.repository.specs.MessageSpecs.getAnsweredOrReactedSpecification;
 import static de.tum.cit.aet.artemis.repository.specs.MessageSpecs.getConversationSpecification;
 import static de.tum.cit.aet.artemis.repository.specs.MessageSpecs.getConversationsSpecification;

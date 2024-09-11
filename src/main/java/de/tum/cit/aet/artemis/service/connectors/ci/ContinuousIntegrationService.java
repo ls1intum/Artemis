@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.connectors.ci;
 
-import static de.tum.cit.aet.artemis.config.Constants.ASSIGNMENT_DIRECTORY;
-import static de.tum.cit.aet.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
+import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_DIRECTORY;
+import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 
 import java.util.List;
 import java.util.Optional;
@@ -11,11 +11,11 @@ import org.springframework.http.ResponseEntity;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.service.connectors.ConnectorHealth;
 import de.tum.cit.aet.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 

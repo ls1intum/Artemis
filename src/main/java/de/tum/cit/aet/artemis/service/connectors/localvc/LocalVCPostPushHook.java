@@ -8,8 +8,8 @@ import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
-import de.tum.cit.aet.artemis.exception.LocalCIException;
-import de.tum.cit.aet.artemis.exception.VersionControlException;
+import de.tum.cit.aet.artemis.core.exception.LocalCIException;
+import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 
 /**
  * Contains an onPostReceive method that is called by JGit after a push has been received (i.e. after the pushed files were successfully written to disk).

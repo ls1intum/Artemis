@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.plagiarism;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.util.function.Predicate.isEqual;
 import static java.util.function.Predicate.not;
 

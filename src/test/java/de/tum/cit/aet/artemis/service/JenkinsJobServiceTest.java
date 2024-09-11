@@ -28,7 +28,7 @@ import org.w3c.dom.Document;
 import com.offbytwo.jenkins.model.FolderJob;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.exception.JenkinsException;
+import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
 import de.tum.cit.aet.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.user.UserUtilService;

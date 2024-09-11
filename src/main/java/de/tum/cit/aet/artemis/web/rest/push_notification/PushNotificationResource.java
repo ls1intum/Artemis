@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.push_notification;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -24,14 +24,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.domain.push_notification.PushNotificationDeviceConfigurationId;
 import de.tum.cit.aet.artemis.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.security.jwt.TokenProvider;
 import io.jsonwebtoken.ExpiredJwtException;
 
 /**

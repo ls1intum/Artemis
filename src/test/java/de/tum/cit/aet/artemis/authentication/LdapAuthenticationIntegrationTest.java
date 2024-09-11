@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Authority;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -30,7 +31,6 @@ import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.cit.aet.artemis.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.Role;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
 import de.tum.cit.aet.artemis.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.web.rest.vm.LoginVM;

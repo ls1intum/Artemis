@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.iris.session.IrisExerciseChatSession;
@@ -20,7 +21,6 @@ import de.tum.cit.aet.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.repository.iris.IrisExerciseChatSessionRepository;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.service.iris.IrisRateLimitService;
 import de.tum.cit.aet.artemis.service.iris.IrisSessionService;

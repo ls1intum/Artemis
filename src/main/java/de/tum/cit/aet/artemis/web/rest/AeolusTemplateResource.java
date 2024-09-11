@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.service.connectors.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.service.connectors.aeolus.Windfile;

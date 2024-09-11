@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.hestia;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 import java.util.Objects;
@@ -19,13 +19,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.service.hestia.CodeHintService;
 import de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;

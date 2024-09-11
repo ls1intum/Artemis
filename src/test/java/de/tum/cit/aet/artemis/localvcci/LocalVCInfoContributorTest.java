@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.localvcci;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;

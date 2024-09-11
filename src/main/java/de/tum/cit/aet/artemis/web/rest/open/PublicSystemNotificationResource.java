@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.open;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
@@ -12,8 +12,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.domain.notification.SystemNotification;
-import de.tum.cit.aet.artemis.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.service.SystemNotificationService;
 
 /**

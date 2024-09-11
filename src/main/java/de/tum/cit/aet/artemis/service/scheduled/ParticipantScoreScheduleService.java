@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.scheduled;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_SCHEDULING;
-import static de.tum.cit.aet.artemis.config.StartupDelayConfig.PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.PARTICIPATION_SCORES_SCHEDULE_DELAY_SEC;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -28,6 +28,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.Team;
@@ -44,7 +45,6 @@ import de.tum.cit.aet.artemis.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.repository.TeamRepository;
 import de.tum.cit.aet.artemis.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.security.SecurityUtils;
 import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.service.util.RoundingUtil;
 

@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.domain;
 
-import static de.tum.cit.aet.artemis.config.Constants.USERNAME_MAX_LENGTH;
-import static de.tum.cit.aet.artemis.config.Constants.USERNAME_MIN_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
+import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.domain.exam.ExamUser;

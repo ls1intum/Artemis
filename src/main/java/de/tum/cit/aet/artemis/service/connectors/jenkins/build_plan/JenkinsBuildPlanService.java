@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.connectors.jenkins.build_plan;
 
-import static de.tum.cit.aet.artemis.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
+import static de.tum.cit.aet.artemis.core.config.Constants.NEW_RESULT_RESOURCE_API_PATH;
 
 import java.io.IOException;
 import java.net.URI;
@@ -35,6 +35,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 
+import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
+import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingExerciseBuildConfig;
@@ -45,8 +47,6 @@ import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
 import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.exception.ContinuousIntegrationBuildPlanException;
-import de.tum.cit.aet.artemis.exception.JenkinsException;
 import de.tum.cit.aet.artemis.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;

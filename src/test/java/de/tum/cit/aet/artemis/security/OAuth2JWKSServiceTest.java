@@ -17,6 +17,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 
 import com.nimbusds.jose.jwk.JWK;
 
+import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.service.OnlineCourseConfigurationService;
 
 class OAuth2JWKSServiceTest {

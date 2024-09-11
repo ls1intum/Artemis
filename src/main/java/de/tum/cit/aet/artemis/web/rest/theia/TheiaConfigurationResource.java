@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.theia;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_THEIA;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
 
 import java.util.Map;
 
@@ -11,9 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.config.TheiaConfiguration;
+import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastInstructor;
 
 @Profile(PROFILE_THEIA)
 @RestController

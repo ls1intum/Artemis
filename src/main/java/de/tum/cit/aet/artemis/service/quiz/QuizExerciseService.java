@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.quiz;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
 import java.net.URI;
@@ -31,7 +31,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import de.tum.cit.aet.artemis.config.Constants;
+import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.QuizMode;
@@ -44,7 +45,6 @@ import de.tum.cit.aet.artemis.domain.quiz.QuizPointStatistic;
 import de.tum.cit.aet.artemis.domain.quiz.QuizQuestion;
 import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
 import de.tum.cit.aet.artemis.domain.quiz.SubmittedAnswer;
-import de.tum.cit.aet.artemis.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.repository.QuizSubmissionRepository;

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.notifications;
 
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.CONVERSATION_NEW_MESSAGE;
 import static de.tum.cit.aet.artemis.domain.notification.ConversationNotificationFactory.createConversationMessageNotification;
 import static de.tum.cit.aet.artemis.domain.notification.NotificationConstants.NEW_MESSAGE_CHANNEL_TEXT;

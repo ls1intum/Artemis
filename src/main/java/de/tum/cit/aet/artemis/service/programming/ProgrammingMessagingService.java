@@ -1,12 +1,12 @@
 package de.tum.cit.aet.artemis.service.programming;
 
-import static de.tum.cit.aet.artemis.config.Constants.BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE;
-import static de.tum.cit.aet.artemis.config.Constants.BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE;
-import static de.tum.cit.aet.artemis.config.Constants.EXERCISE_TOPIC_ROOT;
-import static de.tum.cit.aet.artemis.config.Constants.NEW_SUBMISSION_TOPIC;
-import static de.tum.cit.aet.artemis.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
-import static de.tum.cit.aet.artemis.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
+import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_RUN_COMPLETE_FOR_PROGRAMMING_EXERCISE;
+import static de.tum.cit.aet.artemis.core.config.Constants.BUILD_RUN_STARTED_FOR_PROGRAMMING_EXERCISE;
+import static de.tum.cit.aet.artemis.core.config.Constants.EXERCISE_TOPIC_ROOT;
+import static de.tum.cit.aet.artemis.core.config.Constants.NEW_SUBMISSION_TOPIC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_SUBMISSION_TOPIC;
+import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION;
 
 import java.util.Optional;
 

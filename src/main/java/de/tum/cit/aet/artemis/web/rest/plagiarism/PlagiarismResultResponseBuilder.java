@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.web.rest.plagiarism;
 
-import static de.tum.cit.aet.artemis.config.Constants.SYSTEM_ACCOUNT;
+import static de.tum.cit.aet.artemis.core.config.Constants.SYSTEM_ACCOUNT;
 
 import java.util.Objects;
 import java.util.stream.DoubleStream;

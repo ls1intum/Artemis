@@ -11,13 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tngtech.archunit.lang.ArchRule;
 
 import de.tum.cit.aet.artemis.architecture.AbstractArchitectureTest;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 
 class AuthorizationArchitectureTest extends AbstractArchitectureTest {
 
