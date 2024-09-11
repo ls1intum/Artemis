@@ -49,6 +49,8 @@
                 "login": "Login",
                 "email": "Email",
                 "joinedArtemis": "Joined Artemis on",
+                "profilePicture": "Profile Picture",
+                "addProfilePicture": "Add a profile picture",
                 "sshKey": "Public SSH Key"
             },
             "categories": {

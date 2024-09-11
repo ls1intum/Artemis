@@ -2,8 +2,12 @@
     <div class="row">
         <div class="col-lg-3 col-sm-12">
             <!-- profile header -->
-            <div class="d-flex">
-                <fa-icon id="avatar" size="3x" [icon]="faUser" />
+            <div class="d-flex flex-column">
+                @if (currentUser && currentUser.imageUrl) {
+                    <img class="user-settings-container-profile-picture rounded-3" [src]="currentUser.imageUrl" alt="User Profile Picture" />
+                } @else {
+                    <fa-icon id="avatar" size="3x" [icon]="faUser" />
+                }
                 @if (currentUser) {
                     <div>
                         @if (currentUser.name) {

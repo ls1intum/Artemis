@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
@@ -24,13 +27,17 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.config.icl.ssh.HashUtils;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.service.AccountService;
+import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService;
 import de.tum.in.www1.artemis.service.dto.PasswordChangeDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
@@ -49,6 +56,8 @@ import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsExcept
 @RequestMapping("api/")
 public class AccountResource {
 
+    public static final String ENTITY_NAME = "user";
+
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
@@ -62,11 +71,17 @@ public class AccountResource {
 
     private final AccountService accountService;
 
-    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService) {
+    private final FileService fileService;
+
+    private static final float MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES = 0.1f;
+
+    public AccountResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AccountService accountService,
+            FileService fileService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.accountService = accountService;
+        this.fileService = fileService;
     }
 
     /**
@@ -231,5 +246,58 @@ public class AccountResource {
 
         log.debug("REST request to create a new VCS access token for user {} for participation {}", user.getLogin(), participationId);
         return ResponseEntity.ok(userService.createParticipationVcsAccessTokenForUserAndParticipationIdOrElseThrow(user, participationId).getVcsAccessToken());
+    }
+
+    /**
+     * PUT account/profile-picture : upload a profile picture
+     *
+     * @param file the image file that is being uploaded
+     * @return the ResponseEntity with status 200 (OK) and with body of current user
+     */
+    @PutMapping("account/profile-picture")
+    @EnforceAtLeastStudent
+    public ResponseEntity<UserDTO> updateProfilePicture(@RequestPart MultipartFile file) throws URISyntaxException {
+        log.debug("REST request to update profile picture for logged-in user");
+        String contentType = file.getContentType();
+
+        // Check if the content type is either image/png or image/jpeg, else return 400
+        if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg") && !contentType.equals("image/jpg"))) {
+            throw new BadRequestAlertException("The file format is not supported, please make sure to upload a .png or .jpg file.", ENTITY_NAME,
+                    "profilePictureFileFormatNotSupported", true);
+        }
+        else if (file.getSize() > Math.floor(MAX_PROFILE_PICTURE_FILESIZE_IN_MEGABYTES * 1024 * 1024)) {
+            throw new BadRequestAlertException("The filesize of your image is too big, please upload a smaller one.", ENTITY_NAME, "profilePictureFilesizeTooBig", true);
+        }
+
+        User user = userRepository.getUser();
+        Path basePath = FilePathService.getProfilePictureFilePath();
+
+        // Delete existing
+        if (user.getImageUrl() != null) {
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(user.getImageUrl())), 0);
+        }
+
+        Path savePath = fileService.saveFile(file, basePath, false);
+        String publicPath = FilePathService.publicPathForActualPathOrThrow(savePath, user.getId()).toString();
+        userRepository.updateUserImageUrl(user.getId(), publicPath);
+        user.setImageUrl(publicPath);
+        return ResponseEntity.ok(new UserDTO(user));
+    }
+
+    /**
+     * DELETE account/profile-picture : remove current users profile picture
+     *
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("account/profile-picture")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> removeProfilePicture() throws URISyntaxException {
+        log.debug("REST request to remove profile picture for logged-in user");
+        User user = userRepository.getUser();
+        if (user.getImageUrl() != null) {
+            fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(user.getImageUrl())), 0);
+            userRepository.updateUserImageUrl(user.getId(), null);
+        }
+        return ResponseEntity.ok().build();
     }
 }

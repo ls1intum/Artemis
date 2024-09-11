@@ -49,6 +49,8 @@
                 "login": "Login",
                 "email": "E-Mail",
                 "joinedArtemis": "Artemis beigetreten am",
+                "profilePicture": "Profilbild",
+                "addProfilePicture": "Profilbild hinzufügen",
                 "sshKey": "Öffentlicher SSH Schlüssel"
             },
             "categories": {
