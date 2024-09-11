@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.core.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -76,8 +78,6 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintReposito
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
-import de.tum.cit.aet.artemis.repo.repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.repo.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 import de.tum.cit.aet.artemis.util.TestConstants;

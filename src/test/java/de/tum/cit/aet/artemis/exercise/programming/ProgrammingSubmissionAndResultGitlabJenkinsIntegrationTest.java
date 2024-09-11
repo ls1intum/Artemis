@@ -29,6 +29,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -43,7 +44,6 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDetailMessageDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
-import de.tum.cit.aet.artemis.repo.repository.ProgrammingSubmissionTestRepository;
 
 class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

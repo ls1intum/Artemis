@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.repo.repository;
+package de.tum.cit.aet.artemis.core.repository;
 
 import static de.tum.cit.aet.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 

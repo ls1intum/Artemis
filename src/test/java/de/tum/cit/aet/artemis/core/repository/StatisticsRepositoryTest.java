@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.repo.repository;
+package de.tum.cit.aet.artemis.core.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -21,8 +21,6 @@ import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.domain.StatisticsView;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
-import de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository;
-import de.tum.cit.aet.artemis.core.repository.StatisticsRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 

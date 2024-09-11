@@ -13,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
@@ -26,7 +27,6 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
-import de.tum.cit.aet.artemis.repo.repository.ProgrammingSubmissionTestRepository;
 
 class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

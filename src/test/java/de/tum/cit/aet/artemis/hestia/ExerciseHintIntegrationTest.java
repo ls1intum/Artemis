@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -36,7 +37,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.repo.repository.ProgrammingSubmissionTestRepository;
 
 class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
