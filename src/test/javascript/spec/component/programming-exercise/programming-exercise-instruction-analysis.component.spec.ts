@@ -10,7 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
+import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;
@@ -20,7 +20,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     const testCaseOkId = 'instruction_analysis_test-case-ok';
     const testCaseIssuesId = 'instruction_analysis_test-case-issues';
 
-    const taskRegex = MonacoTaskAction.GLOBAL_TASK_REGEX;
+    const taskRegex = TaskAction.GLOBAL_TASK_REGEX;
     const exerciseTestCases = ['test1', 'test2', 'test6', 'test7'];
     const problemStatement =
         '1. [task][SortStrategy Interface](test1,test2) \n 2. [task][SortStrategy Interface](test3) \n lorem ipsum \n lorem \n  3. [task][SortStrategy Interface](test2,test4)';

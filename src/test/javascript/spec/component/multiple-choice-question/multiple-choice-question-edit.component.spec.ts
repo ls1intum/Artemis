@@ -15,11 +15,11 @@ import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollaps
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 import { ScoringType } from 'app/entities/quiz/quiz-question.model';
-import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
-import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
-import { MonacoWrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-wrong-multiple-choice-answer.action';
-import { MonacoCorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-correct-multiple-choice-answer.action';
-import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
+import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
+import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
+import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
@@ -92,11 +92,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should parse answer options but not question titles', () => {
         component.domainActionsFound([
-            { text: 'text1', action: new MonacoTestCaseAction() },
-            { text: 'text2', action: new MonacoCorrectMultipleChoiceAnswerAction() },
-            { text: 'text3', action: new MonacoWrongMultipleChoiceAnswerAction() },
-            { text: 'text4', action: new MonacoQuizExplanationAction() },
-            { text: 'text5', action: new MonacoQuizHintAction() },
+            { text: 'text1', action: new TestCaseAction() },
+            { text: 'text2', action: new CorrectMultipleChoiceAnswerAction() },
+            { text: 'text3', action: new WrongMultipleChoiceAnswerAction() },
+            { text: 'text4', action: new QuizExplanationAction() },
+            { text: 'text5', action: new QuizHintAction() },
         ]);
 
         const expected: MultipleChoiceQuestion = {
@@ -130,11 +130,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     it('should parse answer options with question titles', () => {
         component.domainActionsFound([
-            { text: 'text1', action: new MonacoQuizExplanationAction() },
-            { text: 'text2', action: new MonacoQuizHintAction() },
-            { text: 'text3', action: new MonacoTestCaseAction() },
-            { text: 'text4', action: new MonacoCorrectMultipleChoiceAnswerAction() },
-            { text: 'text5', action: new MonacoWrongMultipleChoiceAnswerAction() },
+            { text: 'text1', action: new QuizExplanationAction() },
+            { text: 'text2', action: new QuizHintAction() },
+            { text: 'text3', action: new TestCaseAction() },
+            { text: 'text4', action: new CorrectMultipleChoiceAnswerAction() },
+            { text: 'text5', action: new WrongMultipleChoiceAnswerAction() },
         ]);
 
         const expected: MultipleChoiceQuestion = {
