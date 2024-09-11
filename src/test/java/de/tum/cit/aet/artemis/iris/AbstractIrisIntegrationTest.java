@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.cit.aet.artemis.iris.domain.IrisTemplate;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.iris.repository.IrisTemplateRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -32,9 +31,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     protected IrisSettingsService irisSettingsService;
-
-    @Autowired
-    protected IrisTemplateRepository irisTemplateRepository;
 
     @Autowired
     @Qualifier("irisRequestMockProvider")

@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
@@ -60,7 +62,7 @@ import de.tum.cit.aet.artemis.user.UserUtilService;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 @ResourceLock("AbstractSpringIntegrationLocalCILocalVCTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_SCHEDULING, "ldap-only", PROFILE_LTI, "aeolus", "iris",
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_CORE, PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_SCHEDULING, "ldap-only", PROFILE_LTI, PROFILE_AEOLUS, PROFILE_IRIS,
         PROFILE_BUILDAGENT })
 
 // Note: the server.port property must correspond to the port used in the artemis.version-control.url property.
