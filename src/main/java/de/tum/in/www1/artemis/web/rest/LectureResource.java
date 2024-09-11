@@ -357,19 +357,13 @@ public class LectureResource {
                 .loadExercisesWithInformationForDashboard(exercisesUserIsAllowedToSee.stream().map(Exercise::getId).collect(Collectors.toSet()), user);
 
         List<LectureUnit> lectureUnitsUserIsAllowedToSee = lecture.getLectureUnits().stream().filter(lectureUnit -> {
-            if (lectureUnit == null) {
-                return false;
-            }
-            if (lectureUnit instanceof ExerciseUnit) {
-                return ((ExerciseUnit) lectureUnit).getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
-                        && exercisesWithAllInformationNeeded.contains(((ExerciseUnit) lectureUnit).getExercise());
-            }
-            else if (lectureUnit instanceof AttachmentUnit) {
-                return ((AttachmentUnit) lectureUnit).getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
-            }
-            else {
-                return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
-            }
+            return switch (lectureUnit) {
+                case null -> false;
+                case ExerciseUnit exerciseUnit -> exerciseUnit.getExercise() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)
+                        && exercisesWithAllInformationNeeded.contains(exerciseUnit.getExercise());
+                case AttachmentUnit attachmentUnit -> attachmentUnit.getAttachment() != null && authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
+                default -> authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
+            };
         }).peek(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
 

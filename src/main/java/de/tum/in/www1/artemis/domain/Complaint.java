@@ -154,18 +154,14 @@ public class Complaint extends DomainObject {
      * @param participant either a team or user
      */
     public void setParticipant(Participant participant) {
-        if (participant instanceof User) {
-            this.student = (User) participant;
-        }
-        else if (participant instanceof Team) {
-            this.team = (Team) participant;
-        }
-        else if (participant == null) {
-            this.student = null;
-            this.team = null;
-        }
-        else {
-            throw new Error("Unknown participant type");
+        switch (participant) {
+            case User user -> this.student = user;
+            case Team team1 -> this.team = team1;
+            case null -> {
+                this.student = null;
+                this.team = null;
+            }
+            default -> throw new Error("Unknown participant type");
         }
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

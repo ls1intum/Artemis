@@ -450,25 +450,14 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * @return a new submission for the given type connected to the given participation
      */
     default Submission initializeSubmission(Participation participation, Exercise exercise, SubmissionType submissionType) {
-        Submission submission;
-        if (exercise instanceof ProgrammingExercise) {
-            submission = new ProgrammingSubmission();
-        }
-        else if (exercise instanceof ModelingExercise) {
-            submission = new ModelingSubmission();
-        }
-        else if (exercise instanceof TextExercise) {
-            submission = new TextSubmission();
-        }
-        else if (exercise instanceof FileUploadExercise) {
-            submission = new FileUploadSubmission();
-        }
-        else if (exercise instanceof QuizExercise) {
-            submission = new QuizSubmission();
-        }
-        else {
-            throw new RuntimeException("Unsupported exercise type: " + exercise);
-        }
+        Submission submission = switch (exercise) {
+            case ProgrammingExercise ignored -> new ProgrammingSubmission();
+            case ModelingExercise ignored -> new ModelingSubmission();
+            case TextExercise ignored -> new TextSubmission();
+            case FileUploadExercise ignored -> new FileUploadSubmission();
+            case QuizExercise ignored -> new QuizSubmission();
+            case null, default -> throw new RuntimeException("Unsupported exercise type: " + exercise);
+        };
 
         submission.setType(submissionType);
         submission.setParticipation(participation);
