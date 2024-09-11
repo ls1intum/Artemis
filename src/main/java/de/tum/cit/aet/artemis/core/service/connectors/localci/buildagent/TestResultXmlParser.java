@@ -13,7 +13,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildResult;
 
-class TestResultXmlParser {
+public class TestResultXmlParser {
 
     private static final XmlMapper mapper = new XmlMapper();
 
@@ -28,7 +28,7 @@ class TestResultXmlParser {
      * @param successfulTests      A list of successful tests. This list will be populated by the method.
      * @throws IOException If an I/O error occurs while reading the test result file.
      */
-    static void processTestResultFile(String testResultFileString, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests)
+    public static void processTestResultFile(String testResultFileString, List<BuildResult.LocalCITestJobDTO> failedTests, List<BuildResult.LocalCITestJobDTO> successfulTests)
             throws IOException {
         testResultFileString = testResultFileString.replaceAll(INVALID_XML_CHARS, "");
         TestSuite testSuite = mapper.readValue(testResultFileString, TestSuite.class);

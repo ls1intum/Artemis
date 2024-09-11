@@ -31,7 +31,7 @@ public class TextBlockService {
 
     private final TextBlockRepository textBlockRepository;
 
-    TextBlockService(TextBlockRepository textBlockRepository) {
+    public TextBlockService(TextBlockRepository textBlockRepository) {
         this.textBlockRepository = textBlockRepository;
     }
 

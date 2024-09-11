@@ -37,12 +37,12 @@ public class ApplePushNotificationService extends PushNotificationService {
     }
 
     @Override
-    protected PushNotificationDeviceConfigurationRepository getRepository() {
+    public PushNotificationDeviceConfigurationRepository getRepository() {
         return repository;
     }
 
     @Override
-    PushNotificationDeviceType getDeviceType() {
+    public PushNotificationDeviceType getDeviceType() {
         return PushNotificationDeviceType.APNS;
     }
 

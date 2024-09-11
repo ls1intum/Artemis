@@ -56,7 +56,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
     }
 
     @Override
-    PushNotificationDeviceType getDeviceType() {
+    public PushNotificationDeviceType getDeviceType() {
         return PushNotificationDeviceType.FIREBASE;
     }
 

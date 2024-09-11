@@ -24,7 +24,7 @@ import tech.jhipster.config.JHipsterProperties;
  */
 @Service
 @Profile(PROFILE_CORE)
-class MailSendingService {
+public class MailSendingService {
 
     private static final Logger log = LoggerFactory.getLogger(MailSendingService.class);
 
@@ -32,7 +32,7 @@ class MailSendingService {
 
     private final JavaMailSender javaMailSender;
 
-    MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender) {
+    public MailSendingService(JHipsterProperties jHipsterProperties, JavaMailSender javaMailSender) {
         this.jHipsterProperties = jHipsterProperties;
         this.javaMailSender = javaMailSender;
     }
@@ -47,7 +47,7 @@ class MailSendingService {
      * @param isHtml      Whether the mail should support HTML tags
      */
     @Async
-    void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
+    public void sendEmail(User recipient, String subject, String content, boolean isMultipart, boolean isHtml) {
         log.debug("Send email[multipart '{}' and html '{}'] to '{}' with subject '{}'", isMultipart, isHtml, recipient, subject);
 
         // Prepare message using a Spring helper
