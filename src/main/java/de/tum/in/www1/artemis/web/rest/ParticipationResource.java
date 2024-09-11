@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.velocity.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,6 +51,7 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -83,6 +85,7 @@ import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.GradingScaleService;
 import de.tum.in.www1.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.TextExerciseFeedbackService;
 import de.tum.in.www1.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -162,6 +165,8 @@ public class ParticipationResource {
 
     private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService;
 
+    private final TextExerciseFeedbackService textExerciseFeedbackService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -171,7 +176,7 @@ public class ParticipationResource {
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             SubmittedAnswerRepository submittedAnswerRepository, QuizSubmissionService quizSubmissionService, GradingScaleService gradingScaleService,
-            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService) {
+            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, TextExerciseFeedbackService textExerciseFeedbackService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -197,6 +202,7 @@ public class ParticipationResource {
         this.quizSubmissionService = quizSubmissionService;
         this.gradingScaleService = gradingScaleService;
         this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
+        this.textExerciseFeedbackService = textExerciseFeedbackService;
     }
 
     /**
@@ -352,39 +358,70 @@ public class ParticipationResource {
     @PutMapping("exercises/{exerciseId}/request-feedback")
     @EnforceAtLeastStudent
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request for feedback request: {}", exerciseId);
-        var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
-        if (programmingExercise.isExamExercise()) {
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+
+        if (!(exercise instanceof TextExercise) && !(exercise instanceof ProgrammingExercise)) {
+            throw new BadRequestAlertException("Unsupported exercise type", "participation", "unsupported type");
+        }
+
+        return handleExerciseFeedbackRequest(exercise, principal);
+    }
+
+    private ResponseEntity<StudentParticipation> handleExerciseFeedbackRequest(Exercise exercise, Principal principal) {
+        // Validate exercise and timing
+        if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
         }
-
-        if (programmingExercise.getDueDate() != null && now().isAfter(programmingExercise.getDueDate())) {
+        if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate())) {
             throw new BadRequestAlertException("The due date is over", "participation", "preconditions not met");
         }
-
-        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        checkAccessPermissionOwner(participation, user);
-        programmingExercise.validateSettingsForFeedbackRequest();
-
-        var studentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
-        var result = studentParticipation.findLatestLegalResult();
-        if (result == null) {
-            throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
+        if (exercise instanceof ProgrammingExercise) {
+            ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
         }
 
+        // Get and validate participation
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        StudentParticipation participation = (exercise instanceof ProgrammingExercise)
+                ? programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, principal.getName())
+                : studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), principal.getName())
+                        .orElseThrow(() -> new ResourceNotFoundException("Participation not found"));
+
+        checkAccessPermissionOwner(participation, user);
+        participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
+
+        // Check submission requirements
+        if (exercise instanceof TextExercise) {
+            if (submissionRepository.findAllByParticipationId(participation.getId()).isEmpty()) {
+                throw new BadRequestAlertException("You need to submit at least once", "participation", "preconditions not met");
+            }
+        }
+        else if (exercise instanceof ProgrammingExercise) {
+            if (participation.findLatestLegalResult() == null) {
+                throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
+            }
+        }
+
+        // Check if feedback has already been requested
         var currentDate = now();
         var participationIndividualDueDate = participation.getIndividualDueDate();
         if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 
-        participation = this.programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exerciseId, studentParticipation, programmingExercise);
+        // Process feedback request
+        StudentParticipation updatedParticipation;
+        if (exercise instanceof TextExercise) {
+            updatedParticipation = textExerciseFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(), participation, (TextExercise) exercise);
+        }
+        else {
+            updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
+                    (ProgrammingExerciseStudentParticipation) participation, (ProgrammingExercise) exercise);
+        }
 
-        return ResponseEntity.ok().body(participation);
+        return ResponseEntity.ok().body(updatedParticipation);
     }
 
     /**
@@ -580,7 +617,8 @@ public class ParticipationResource {
             participations = findParticipationWithLatestResults(exercise);
             participations.forEach(participation -> {
                 participation.setSubmissionCount(participation.getSubmissions().size());
-                if (participation.getResults() != null && !participation.getResults().isEmpty()) {
+                if (participation.getResults() != null && !participation.getResults().isEmpty()
+                        && !(participation.getResults().stream().allMatch(result -> AssessmentType.AUTOMATIC_ATHENA.equals(result.getAssessmentType())))) {
                     participation.setSubmissions(null);
                 }
                 else if (participation.getSubmissions() != null && !participation.getSubmissions().isEmpty()) {

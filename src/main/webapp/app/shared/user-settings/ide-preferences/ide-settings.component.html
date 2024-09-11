@@ -1,0 +1,56 @@
+<h1 jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></h1>
+<div class="list-group d-block">
+    <div class="list-group-item pb-3">
+        <dt>
+            <span jhiTranslate="artemisApp.userSettings.idePreferencesPage.description"></span>
+            <jhi-help-icon placement="right auto" text="artemisApp.userSettings.idePreferencesPage.jetbrainsHelp" />
+        </dt>
+        <h5 class="py-2" jhiTranslate="artemisApp.userSettings.idePreferencesPage.default"></h5>
+        <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: ProgrammingLanguage.EMPTY }"></ng-container>
+    </div>
+    <!-- Display each customized Programming Language -->
+    @for (programmingLanguage of assignedProgrammingLanguages; track programmingLanguage) {
+        <div class="list-group-item pb-3">
+            <div class="item-container d-flex flex-row justify-content-between align-items-center pb-2">
+                <h5>
+                    {{ programmingLanguage }}
+                </h5>
+                <button class="btn btn-sm btn-outline-danger" (click)="removeProgrammingLanguage(programmingLanguage)">
+                    <fa-icon [icon]="faTrash"></fa-icon>
+                </button>
+            </div>
+            <ng-container *ngTemplateOutlet="ideButtonRow; context: { language: programmingLanguage }"></ng-container>
+        </div>
+    }
+    <!-- Display plus button to add Programming Language with drop down menu -->
+    @if (remainingProgrammingLanguages.length) {
+        <div class="list-group-item">
+            <div ngbDropdown class="d-inline-block">
+                <button type="button" class="btn btn-primary" id="dropdown" ngbDropdownToggle>
+                    <fa-icon [icon]="faPlus"></fa-icon>
+                </button>
+                <div ngbDropdownMenu aria-labelledby="dropdown">
+                    @for (programmingLanguage of remainingProgrammingLanguages; track programmingLanguage) {
+                        <button ngbDropdownItem (click)="addProgrammingLanguage(programmingLanguage)">
+                            {{ programmingLanguage }}
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<ng-template #ideButtonRow let-programmingLanguage="language">
+    <div class="btn-group">
+        @for (ide of PREDEFINED_IDE; track ide) {
+            <div
+                class="btn"
+                [ngClass]="isIdeOfProgrammingLanguage(programmingLanguage, ide) ? 'btn-primary selected' : 'btn-default'"
+                (click)="changeIde(programmingLanguage, ide)"
+            >
+                {{ ide.name }}
+            </div>
+        }
+    </div>
+</ng-template>

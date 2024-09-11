@@ -643,7 +643,7 @@ export class CourseUpdateComponent implements OnInit {
 
     openCropper(): void {
         const modalRef = this.modalService.open(ImageCropperModalComponent, { size: 'm' });
-        modalRef.componentInstance.courseImageUploadFile = this.courseImageUploadFile;
+        modalRef.componentInstance.uploadFile = this.courseImageUploadFile;
         modalRef.componentInstance.croppedImage = this.croppedImage;
         modalRef.result.then((result) => {
             if (result) {
