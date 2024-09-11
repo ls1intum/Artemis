@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collection;
@@ -55,7 +57,7 @@ import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 
 @Service
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class Lti13Service {
 
     private static final String EXERCISE_PATH_PATTERN = "/courses/{courseId}/exercises/{exerciseId}";

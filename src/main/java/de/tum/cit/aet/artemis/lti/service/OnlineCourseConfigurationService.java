@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lti.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOGIN_REGEX;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration.ENTITY_NAME;
 
 import java.util.List;
@@ -28,7 +29,7 @@ import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
  * Service Implementation for OnlineCourseConfiguration.
  */
 @Service
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
 
     private static final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);

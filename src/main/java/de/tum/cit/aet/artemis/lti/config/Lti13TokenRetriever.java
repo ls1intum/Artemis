@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import java.net.URI;
 import java.security.KeyPair;
 import java.time.Instant;
@@ -35,13 +37,13 @@ import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
-import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
+import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 
 /**
  * This class is responsible to retrieve access tokens from an LTI 1.3 platform of a specific ClientRegistration.
  */
 @Component
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class Lti13TokenRetriever {
 
     private final OAuth2JWKSService oAuth2JWKSService;

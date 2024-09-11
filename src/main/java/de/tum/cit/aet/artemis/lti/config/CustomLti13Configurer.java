@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,7 +21,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorization
 /**
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
  */
-@Profile("lti")
+@Profile(PROFILE_LTI)
 @Component
 public class CustomLti13Configurer extends Lti13Configurer {
 

@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisModelDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
-import de.tum.cit.aet.artemis.lti.web.open.PublicPyrisStatusUpdateResource;
+import de.tum.cit.aet.artemis.iris.web.PublicPyrisStatusUpdateResource;
 
 /**
  * This service connects to the Python implementation of Iris (called Pyris).

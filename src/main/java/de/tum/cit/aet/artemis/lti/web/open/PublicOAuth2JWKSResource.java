@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.web.open;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -12,14 +14,14 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
-import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
+import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 
 /**
  * REST controller to serve the public JWKSet related to all OAuth2 clients.
  */
-@Profile("lti")
+@Profile(PROFILE_LTI)
 // TODO: should we adapt the mapping based on the profile?
 @RestController
 public class PublicOAuth2JWKSResource {

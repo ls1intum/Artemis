@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -27,7 +29,7 @@ import com.hazelcast.core.HazelcastInstance;
  * This is based on a copy of {@link uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.StateAuthorizationRequestRepository}.
  */
 @Component
-@Profile("lti")
+@Profile(PROFILE_LTI)
 class DistributedStateAuthorizationRequestRepository implements AuthorizationRequestRepository<OAuth2AuthorizationRequest> {
 
     private static final Logger log = LoggerFactory.getLogger(DistributedStateAuthorizationRequestRepository.class);

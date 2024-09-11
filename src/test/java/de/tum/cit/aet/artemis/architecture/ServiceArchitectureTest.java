@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.core.config.migration.MigrationService;
 import de.tum.cit.aet.artemis.core.management.SecurityMetersService;
 import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
-import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIWebsocketMessagingService;
 import de.tum.cit.aet.artemis.programming.web.GitDiffReportParserService;
 

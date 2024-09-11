@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lti.web.open;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH;
 import static de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH;
 
@@ -28,7 +29,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 /**
  * REST controller for receiving LTI requests.
  */
-@Profile("lti")
+@Profile(PROFILE_LTI)
 @RestController
 // TODO: should we adapt the mapping based on the profile?
 public class PublicLtiResource {

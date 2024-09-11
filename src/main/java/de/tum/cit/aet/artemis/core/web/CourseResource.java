@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.core.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static java.time.ZonedDateTime.now;
 
 import java.io.File;
@@ -372,7 +373,7 @@ public class CourseResource {
     // TODO: move into LTIResource
     @PutMapping("courses/{courseId}/onlineCourseConfiguration")
     @EnforceAtLeastInstructor
-    @Profile("lti")
+    @Profile(PROFILE_LTI)
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
             @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
         log.debug("REST request to update the online course configuration for Course : {}", courseId);
@@ -414,7 +415,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-lti-dashboard")
     @EnforceAtLeastInstructor
-    @Profile("lti")
+    @Profile(PROFILE_LTI)
     public ResponseEntity<List<OnlineCourseDTO>> findAllOnlineCoursesForLtiDashboard(@RequestParam("clientId") String clientId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all online courses the user {} has access to", user.getLogin());

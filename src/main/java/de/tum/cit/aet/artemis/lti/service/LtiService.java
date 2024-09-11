@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -40,7 +42,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Service
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class LtiService {
 
     @Value("${artemis.lti.trustExternalLTISystems:false}")

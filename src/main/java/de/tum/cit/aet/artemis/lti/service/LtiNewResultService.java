@@ -1,12 +1,14 @@
 package de.tum.cit.aet.artemis.lti.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 
 @Service
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class LtiNewResultService {
 
     private final Lti13Service lti13Service;

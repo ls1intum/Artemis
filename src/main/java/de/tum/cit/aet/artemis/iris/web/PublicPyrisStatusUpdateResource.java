@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lti.web.open;
+package de.tum.cit.aet.artemis.iris.web;
 
 import java.util.Objects;
 

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -18,13 +20,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
+import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 
 /**
  * REST controller for managing LTI platform configurations.
@@ -32,7 +34,7 @@ import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
  */
 @RestController
 @RequestMapping("api/admin/")
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class AdminLtiConfigurationResource {
 
     private static final String ENTITY_NAME = "lti-platform";

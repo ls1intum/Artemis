@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -35,7 +37,7 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticati
  * Step 3. of OpenID Connect Third Party Initiated Login is handled solely by spring-security-lti13
  * OAuth2LoginAuthenticationFilter.
  */
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class Lti13LaunchFilter extends OncePerRequestFilter {
 
     private final OAuth2LoginAuthenticationFilter defaultFilter;

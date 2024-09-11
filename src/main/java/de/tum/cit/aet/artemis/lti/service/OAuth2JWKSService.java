@@ -1,4 +1,6 @@
-package de.tum.cit.aet.artemis.core.security;
+package de.tum.cit.aet.artemis.lti.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -25,14 +27,12 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 
-import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
-
 /**
  * This Service is responsible to manage JWKs for all OAuth2 ClientRegistrations.
  * On initialisation, each ClientRegistration gets assigned a fresh generated RSAKey.
  */
 @Service
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class OAuth2JWKSService {
 
     private final OnlineCourseConfigurationService onlineCourseConfigurationService;

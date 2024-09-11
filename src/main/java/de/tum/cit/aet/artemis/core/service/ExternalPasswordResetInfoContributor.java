@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lti.service;
+package de.tum.cit.aet.artemis.core.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 

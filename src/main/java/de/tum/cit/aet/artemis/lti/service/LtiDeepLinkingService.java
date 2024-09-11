@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +26,7 @@ import de.tum.cit.aet.artemis.lti.dto.Lti13DeepLinkingResponse;
  * Service for handling LTI deep linking functionality.
  */
 @Service
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class LtiDeepLinkingService {
 
     @Value("${server.url}")

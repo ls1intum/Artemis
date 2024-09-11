@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import java.text.ParseException;
 import java.util.List;
 import java.util.Set;
@@ -40,7 +42,7 @@ import tech.jhipster.web.util.PaginationUtil;
 /**
  * REST controller to handle LTI13 launches.
  */
-@Profile("lti")
+@Profile(PROFILE_LTI)
 @RestController
 @RequestMapping("api/")
 public class LtiResource {

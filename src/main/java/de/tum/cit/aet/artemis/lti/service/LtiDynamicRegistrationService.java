@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.lti.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -16,14 +18,13 @@ import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13PlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 
 @Service
-@Profile("lti")
+@Profile(PROFILE_LTI)
 public class LtiDynamicRegistrationService {
 
     @Value("${server.url}")

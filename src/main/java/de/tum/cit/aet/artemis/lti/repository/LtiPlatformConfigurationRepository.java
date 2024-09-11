@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.lti.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 /**
  * Repository for managing LtiPlatformConfiguration entities.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_LTI)
 @Repository
 public interface LtiPlatformConfigurationRepository extends ArtemisJpaRepository<LtiPlatformConfiguration, Long> {
 
