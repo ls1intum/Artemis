@@ -47,6 +47,10 @@ public class FilePathService {
         return Path.of(fileUploadPath, "images", "course", "icons");
     }
 
+    public static Path getProfilePictureFilePath() {
+        return Path.of(fileUploadPath, "images", "user", "profile-pictures");
+    }
+
     public static Path getExamUserSignatureFilePath() {
         return Path.of(fileUploadPath, "images", "exam-user", "signatures");
     }
@@ -112,6 +116,9 @@ public class FilePathService {
         }
         if (uriPath.startsWith("/api/files/course/icons")) {
             return getCourseIconFilePath().resolve(filename);
+        }
+        if (uriPath.startsWith("/api/files/user/profile-pictures")) {
+            return getProfilePictureFilePath().resolve(filename);
         }
         if (uriPath.startsWith("/api/files/exam-user/signatures")) {
             return getExamUserSignatureFilePath().resolve(filename);
@@ -209,6 +216,9 @@ public class FilePathService {
         }
         if (path.startsWith(getCourseIconFilePath())) {
             return URI.create("/api/files/course/icons/" + id + "/" + filename);
+        }
+        if (path.startsWith(getProfilePictureFilePath())) {
+            return URI.create("/api/files/user/profile-pictures/" + id + "/" + filename);
         }
         if (path.startsWith(getExamUserSignatureFilePath())) {
             return URI.create("/api/files/exam-user/signatures/" + id + "/" + filename);
