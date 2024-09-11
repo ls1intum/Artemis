@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.athena.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Function;
@@ -49,7 +51,7 @@ import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 /**
  * REST controller for Athena feedback suggestions.
  */
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 @RestController
 @RequestMapping("api/")
 public class AthenaResource {

@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.connector;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -28,7 +29,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 @Component
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 public class AthenaRequestMockProvider {
 
     private final RestTemplate restTemplate;

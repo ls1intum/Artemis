@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.athena.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -29,7 +31,7 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
  * so that Athena can later give feedback suggestions on new submissions.
  */
 @Service
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 public class AthenaSubmissionSendingService {
 
     private static final int SUBMISSIONS_PER_REQUEST = 100;

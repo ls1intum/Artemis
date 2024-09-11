@@ -1,4 +1,6 @@
-package de.tum.cit.aet.artemis.athena.service;
+package de.tum.cit.aet.artemis.athena.config;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +21,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
  * Service determining the health of the Athena service and its assessment modules.
  */
 @Component
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 public class AthenaHealthIndicator implements HealthIndicator {
 
     private static final String GREEN_CIRCLE = "\uD83D\uDFE2"; // unicode green circle 🟢

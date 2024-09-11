@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web.hestia;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
 import java.util.Objects;
@@ -105,7 +106,7 @@ public class CodeHintResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated code hint
      */
     // TODO: move into some IrisResource
-    @Profile("iris")
+    @Profile(PROFILE_IRIS)
     @PostMapping("programming-exercises/{exerciseId}/code-hints/{codeHintId}/generate-description")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<CodeHint> generateDescriptionForCodeHint(@PathVariable Long exerciseId, @PathVariable Long codeHintId) {

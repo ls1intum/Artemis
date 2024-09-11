@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.athena.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -25,7 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * The default choice if Athena does not respond is to choose a random submission.
  */
 @Service
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 public class AthenaSubmissionSelectionService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaSubmissionSelectionService.class);

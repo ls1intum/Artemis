@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.athena.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -31,7 +33,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * Service to get the URL for an Athena module, depending on the type of exercise.
  */
 @Service
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 public class AthenaModuleService {
 
     @Value("${artemis.athena.url}")

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.athena.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -25,7 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
  * so that Athena can later give feedback suggestions on new submissions.
  */
 @Service
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 public class AthenaFeedbackSendingService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSendingService.class);

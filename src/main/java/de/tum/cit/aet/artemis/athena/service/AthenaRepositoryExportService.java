@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.athena.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -28,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportServi
  * Service for exporting programming exercise repositories for Athena.
  */
 @Service
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 public class AthenaRepositoryExportService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaRepositoryExportService.class);

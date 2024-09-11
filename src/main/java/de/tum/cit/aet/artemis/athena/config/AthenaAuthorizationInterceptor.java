@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.athena.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+
 import java.io.IOException;
 
 import jakarta.validation.constraints.NotNull;
@@ -14,7 +16,7 @@ import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
 @Component
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 public class AthenaAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.athena.secret}")

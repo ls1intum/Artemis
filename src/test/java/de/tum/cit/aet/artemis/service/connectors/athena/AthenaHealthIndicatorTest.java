@@ -8,7 +8,7 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
 
 import de.tum.cit.aet.artemis.AbstractAthenaTest;
-import de.tum.cit.aet.artemis.athena.service.AthenaHealthIndicator;
+import de.tum.cit.aet.artemis.athena.config.AthenaHealthIndicator;
 
 class AthenaHealthIndicatorTest extends AbstractAthenaTest {
 
