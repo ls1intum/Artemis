@@ -898,7 +898,7 @@ public class ExamService {
                 return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
             }
             case FileUploadExercise ignored -> {
-                FileUploadSubmission textSubmission = (FileUploadSubmission) submissions.iterator().next();
+                FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) submissions.iterator().next();
                 return textSubmission.getFilePath() != null && !textSubmission.getFilePath().isEmpty();
             }
             case TextExercise ignored -> {
