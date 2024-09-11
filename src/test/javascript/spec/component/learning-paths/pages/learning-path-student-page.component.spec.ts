@@ -93,7 +93,7 @@ describe('LearningPathStudentPageComponent', () => {
 
     it('should show error when learning path id could not be loaded', async () => {
         const getLearningPathIdSpy = jest.spyOn(learningPathApiService, 'getLearningPathId').mockRejectedValue(new Error());
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'error');
+        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
 
         fixture.detectChanges();
         await fixture.whenStable();
