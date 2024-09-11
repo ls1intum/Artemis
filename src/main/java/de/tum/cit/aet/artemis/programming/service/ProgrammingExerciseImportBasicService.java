@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseS
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.ExerciseHintService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.service.StaticCodeAnalysisService;
 
 @Profile(PROFILE_CORE)
 @Service

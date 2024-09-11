@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseLifecycleService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class ExerciseLifecycleServiceTest extends AbstractSpringIntegrationIndependentTest {

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -30,7 +31,6 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHintActivation;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
 

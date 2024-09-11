@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.RepositoryInfo
 import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -48,7 +49,6 @@ import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
-import de.tum.cit.aet.artemis.service.ExerciseDateService;
 
 /**
  * Service for triggering builds on the local CI system.

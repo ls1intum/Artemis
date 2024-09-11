@@ -7,7 +7,7 @@ import jakarta.persistence.Entity;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.service.SubmissionPolicyService;
+import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
 
 /**
  * Configures a Submission Penalty Policy.<br>

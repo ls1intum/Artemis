@@ -61,11 +61,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.service.ParticipationService;
-import de.tum.cit.aet.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.service.UriService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;

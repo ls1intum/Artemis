@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.jplag.exceptions.ExitException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
@@ -32,7 +33,6 @@ import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
 import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

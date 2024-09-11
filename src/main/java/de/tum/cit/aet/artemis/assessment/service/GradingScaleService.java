@@ -1,0 +1,139 @@
+package de.tum.cit.aet.artemis.assessment.service;
+
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.IntStream;
+
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
+
+import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
+import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.cit.aet.artemis.web.rest.util.PageUtil;
+
+@Profile(PROFILE_CORE)
+@Service
+public class GradingScaleService {
+
+    private final GradingScaleRepository gradingScaleRepository;
+
+    private final AuthorizationCheckService authCheckService;
+
+    public GradingScaleService(GradingScaleRepository gradingScaleRepository, AuthorizationCheckService authCheckService) {
+        this.gradingScaleRepository = gradingScaleRepository;
+        this.authCheckService = authCheckService;
+    }
+
+    /**
+     * Saves a grading scale to the database if it is valid
+     * - grading scale can't have both course and exam set
+     * - other checks performed in {@link GradingScaleService#checkGradeStepValidity(Set)}
+     *
+     * @param gradingScale the grading scale to be saved
+     * @return the saved grading scale
+     */
+    public GradingScale saveGradingScale(GradingScale gradingScale) {
+        if (gradingScale.getCourse() != null && gradingScale.getExam() != null) {
+            throw new BadRequestAlertException("Grading scales can't belong both to a course and an exam", "gradingScale", "gradingScaleBelongsToCourseAndExam");
+        }
+        Set<GradeStep> gradeSteps = gradingScale.getGradeSteps();
+        checkGradeStepValidity(gradeSteps);
+        for (GradeStep gradeStep : gradeSteps) {
+            gradeStep.setGradingScale(gradingScale);
+        }
+        gradingScale.setGradeSteps(gradeSteps);
+        return gradingScaleRepository.save(gradingScale);
+    }
+
+    /**
+     * Search for all grading scales fitting a {@link SearchTermPageableSearchDTO search query} among the grading scales having grade type BONUS.
+     * If the user does not have ADMIN role, they can only access the grading scales if they are an instructor in the course related to it.
+     * The result is paged, meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send too many results.
+     * <p>
+     * The search term is the title of the course or exam that is directly associated with that grading scale.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user   The user for whom to fetch all available grading scales
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final SearchTermPageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.GRADING_SCALE);
+        final var searchTerm = search.getSearchTerm();
+        final Page<GradingScale> gradingScalePage;
+        if (authCheckService.isAdmin(user)) {
+            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(searchTerm, pageable);
+        }
+        else {
+            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getGroups(), pageable);
+        }
+        return new SearchResultPageDTO<>(gradingScalePage.getContent(), gradingScalePage.getTotalPages());
+    }
+
+    /**
+     * Checks the validity of a grade step set and throws an exception if one of the following conditions is not fulfilled
+     * - all individuals grade steps should be in a valid format
+     * - the grade steps set should form a valid and congruent grading scale
+     *
+     * @param gradeSteps the grade steps to be checked
+     */
+    private void checkGradeStepValidity(Set<GradeStep> gradeSteps) {
+        if (gradeSteps != null && !gradeSteps.isEmpty()) {
+            if (!gradeSteps.stream().allMatch(GradeStep::checkValidity)) {
+                throw new BadRequestAlertException("Not all grade steps are following the correct format.", "gradeStep", "invalidGradeStepFormat");
+            }
+            else if (!gradeStepSetMapsToValidGradingScale(gradeSteps)) {
+                throw new BadRequestAlertException("Grade step set can't match to a valid grading scale.", "gradeStep", "invalidGradeStepAdjacency");
+            }
+        }
+        else {
+            throw new BadRequestAlertException("Grade steps can't be empty", "gradeStep", "emptyGradeSteps");
+        }
+    }
+
+    /**
+     * Checks if the grade steps map to a valid grading scale
+     * - the grade names should all be unique for the grading scale
+     * - when ordered, all steps should fulfill valid adjacency
+     * - the first and the last element should fulfill the boundary conditions (start with 0% and end with 100%)
+     *
+     * @param gradeSteps the grade steps to be checked
+     * @return true if the grade steps map to a valid grading scale and false otherwise
+     */
+    private boolean gradeStepSetMapsToValidGradingScale(Set<GradeStep> gradeSteps) {
+        // all grade steps should have distinct names
+        if (gradeSteps.stream().map(GradeStep::getGradeName).distinct().count() != gradeSteps.size()) {
+            return false;
+        }
+        // sort by lower bound percentage
+        List<GradeStep> sortedGradeSteps = gradeSteps.stream().sorted(Comparator.comparingDouble(GradeStep::getLowerBoundPercentage)).toList();
+        // check if all pairs of the sorted grade steps have valid adjacency
+        boolean validAdjacency = IntStream.range(0, sortedGradeSteps.size() - 1).allMatch(i -> GradeStep.checkValidAdjacency(sortedGradeSteps.get(i), sortedGradeSteps.get(i + 1)));
+        // first step should start from and include 0
+        boolean validFirstElement = sortedGradeSteps.getFirst().isLowerBoundInclusive() && sortedGradeSteps.getFirst().getLowerBoundPercentage() == 0;
+        // last step should end with an inclusive value
+        boolean validLastElement = sortedGradeSteps.getLast().isUpperBoundInclusive();
+        return validAdjacency && validFirstElement && validLastElement;
+    }
+
+    /**
+     * Find a grading scale in the database given the courseId
+     *
+     * @param courseId the grading scale corresponding to the courseId
+     * @return the grading scale
+     */
+    public Optional<GradingScale> findGradingScaleByCourseId(Long courseId) {
+        return gradingScaleRepository.findByCourseId(courseId);
+    }
+}

@@ -22,6 +22,7 @@ import org.springframework.util.FileSystemUtils;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlRepositoryPermission;
 import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
@@ -44,7 +45,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.web.rest.dto.CommitInfoDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 

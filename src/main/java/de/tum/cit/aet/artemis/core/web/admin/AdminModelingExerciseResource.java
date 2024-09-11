@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.modeling.repository.ModelClusterRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.service.ModelingExerciseService;
+import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
 import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
 
 /**

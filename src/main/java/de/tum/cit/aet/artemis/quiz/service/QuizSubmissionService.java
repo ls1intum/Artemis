@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.service.AbstractQuizSubmissionService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;

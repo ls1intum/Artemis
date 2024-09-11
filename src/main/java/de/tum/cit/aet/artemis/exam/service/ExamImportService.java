@@ -26,8 +26,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
+import de.tum.cit.aet.artemis.fileupload.service.FileUploadExerciseImportService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseImportService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
@@ -36,11 +38,9 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
-import de.tum.cit.aet.artemis.service.FileUploadExerciseImportService;
-import de.tum.cit.aet.artemis.service.ModelingExerciseImportService;
-import de.tum.cit.aet.artemis.service.TextExerciseImportService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
 import de.tum.cit.aet.artemis.web.rest.errors.ExamConfigurationException;
 
 @Profile(PROFILE_CORE)

@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
-import de.tum.cit.aet.artemis.service.StaticCodeAnalysisService;
+import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisIssue;
 
 class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

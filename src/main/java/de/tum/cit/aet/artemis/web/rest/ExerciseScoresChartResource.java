@@ -21,10 +21,10 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.ExerciseDateService;
-import de.tum.cit.aet.artemis.service.ExerciseScoresChartService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseScoresChartService;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresDTO;
 
 /**

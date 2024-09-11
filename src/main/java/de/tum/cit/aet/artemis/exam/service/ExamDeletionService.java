@@ -34,9 +34,9 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPoolRepository;
-import de.tum.cit.aet.artemis.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 
 @Profile(PROFILE_CORE)

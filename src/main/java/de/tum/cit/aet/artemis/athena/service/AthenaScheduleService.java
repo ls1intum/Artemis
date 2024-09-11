@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.service.connectors.athena.AthenaSubmissionSen
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.service.ExerciseLifecycleService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseLifecycleService;
 import de.tum.cit.aet.artemis.service.ProfileService;
 
 @Service

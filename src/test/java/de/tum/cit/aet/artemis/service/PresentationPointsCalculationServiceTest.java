@@ -10,6 +10,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.GradingScaleFactory;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.service.PresentationPointsCalculationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.course.CourseUtilService;

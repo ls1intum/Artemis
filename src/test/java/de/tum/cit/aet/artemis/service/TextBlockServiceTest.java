@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
+import de.tum.cit.aet.artemis.text.service.TextBlockService;
 
 class TextBlockServiceTest {
 

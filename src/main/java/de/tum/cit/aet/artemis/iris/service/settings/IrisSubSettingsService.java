@@ -12,6 +12,7 @@ import java.util.function.Function;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.IrisTemplate;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
@@ -25,7 +26,6 @@ import de.tum.cit.aet.artemis.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedHestiaSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.

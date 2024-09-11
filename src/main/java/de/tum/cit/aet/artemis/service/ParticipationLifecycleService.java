@@ -14,6 +14,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 

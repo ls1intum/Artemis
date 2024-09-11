@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.PlantUmlService;
+import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
 
 @Profile(PROFILE_CORE)
 @RestController

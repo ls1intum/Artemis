@@ -66,8 +66,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 
 /**

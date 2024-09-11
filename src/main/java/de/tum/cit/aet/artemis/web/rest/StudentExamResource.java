@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
@@ -65,7 +66,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO;

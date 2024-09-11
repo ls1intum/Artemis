@@ -37,7 +37,6 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.ProfileService;
-import de.tum.cit.aet.artemis.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.service.ZipFileService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

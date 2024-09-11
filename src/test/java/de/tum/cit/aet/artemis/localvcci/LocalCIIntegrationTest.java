@@ -61,9 +61,9 @@ import de.tum.cit.aet.artemis.programming.domain.BuildStatus;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

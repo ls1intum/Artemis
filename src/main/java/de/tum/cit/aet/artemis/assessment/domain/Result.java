@@ -51,12 +51,12 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageFileReport;
 import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
-import de.tum.cit.aet.artemis.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
 
 /**

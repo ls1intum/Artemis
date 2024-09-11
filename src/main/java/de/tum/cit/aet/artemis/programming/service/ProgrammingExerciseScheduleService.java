@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.IExerciseScheduleService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationLifecycle;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -59,7 +60,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 import tech.jhipster.config.JHipsterConstants;
 

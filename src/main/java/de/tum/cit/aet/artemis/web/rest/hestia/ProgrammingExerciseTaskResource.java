@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 
 /**
  * REST controller for managing {@link ProgrammingExerciseTask}.

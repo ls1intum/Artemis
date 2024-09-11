@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.service.dto.ResponsibleUserDTO;
 import de.tum.cit.aet.artemis.service.dto.UserPublicInfoDTO;

@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 
 /**
  * Entity for storing static code analysis categories and their settings.
@@ -88,7 +89,7 @@ public class StaticCodeAnalysisCategory extends DomainObject {
      * As an exception, the {exercise} attribute will not be set and be null.
      *
      * @return New SCA category object with the same values
-     * @see de.tum.cit.aet.artemis.service.StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
+     * @see StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
      */
     public StaticCodeAnalysisCategory copy() {
         StaticCodeAnalysisCategory category = new StaticCodeAnalysisCategory();

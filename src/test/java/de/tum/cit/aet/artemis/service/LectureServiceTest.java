@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.lecture.LectureUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;

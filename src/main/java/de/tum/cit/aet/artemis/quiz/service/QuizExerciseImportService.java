@@ -22,9 +22,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -38,8 +40,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
-import de.tum.cit.aet.artemis.service.ExerciseImportService;
-import de.tum.cit.aet.artemis.service.FeedbackService;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 

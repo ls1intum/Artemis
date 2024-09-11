@@ -61,8 +61,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.user.UserUtilService;

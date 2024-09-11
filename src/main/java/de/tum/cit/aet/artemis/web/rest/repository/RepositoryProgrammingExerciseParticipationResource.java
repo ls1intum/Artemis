@@ -33,6 +33,7 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
@@ -56,7 +57,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryParticipationService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ProfileService;

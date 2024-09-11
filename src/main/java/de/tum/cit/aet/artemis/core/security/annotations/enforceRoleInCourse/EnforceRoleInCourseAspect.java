@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceRoleInResourceAspect;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 
 @Profile(PROFILE_CORE)
 @Component

@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -30,7 +31,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.programming.service.CommitHistoryService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;

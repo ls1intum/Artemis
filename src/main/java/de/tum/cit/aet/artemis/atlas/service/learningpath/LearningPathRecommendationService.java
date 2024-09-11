@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.util.concurrent.AtomicDouble;
 
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -38,7 +39,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.service.LearningObjectService;
-import de.tum.cit.aet.artemis.service.ParticipantScoreService;
 
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.

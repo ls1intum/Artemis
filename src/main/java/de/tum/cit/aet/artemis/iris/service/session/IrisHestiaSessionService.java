@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisHestiaSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
@@ -19,7 +20,6 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 
 /**
  * Service to handle the Hestia integration of Iris.

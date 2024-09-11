@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 
 @Profile(PROFILE_CORE)
 @Service

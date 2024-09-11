@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.service.StaticCodeAnalysisService;
+import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

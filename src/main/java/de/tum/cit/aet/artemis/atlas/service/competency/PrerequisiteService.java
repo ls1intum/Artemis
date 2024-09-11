@@ -20,10 +20,10 @@ import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.ExerciseService;
-import de.tum.cit.aet.artemis.service.LectureUnitService;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 
 /**

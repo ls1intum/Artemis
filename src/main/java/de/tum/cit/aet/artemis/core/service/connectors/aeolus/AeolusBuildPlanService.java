@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.service.InternalUrlService;
+import de.tum.cit.aet.artemis.programming.service.InternalUrlService;
 
 /**
  * Service for publishing custom build plans using Aeolus
