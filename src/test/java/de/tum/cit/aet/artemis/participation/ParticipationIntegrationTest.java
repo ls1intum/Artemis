@@ -90,7 +90,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
-import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.util.LocalRepository;
@@ -116,9 +115,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Autowired
     private QuizBatchService quizBatchService;
-
-    @Autowired
-    protected QuizScheduleService quizScheduleService;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
