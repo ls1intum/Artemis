@@ -1009,6 +1009,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     private void testPriority(String login, int expectedPriority) throws Exception {
+        log.info("Creating participation");
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
