@@ -18,7 +18,7 @@ public class FaqService {
     }
 
     /**
-     * Deletes the given lecture (with its lecture units).
+     * Deletes the given faq
      *
      * @param faqId the faqId of to be deleted faq
      */
