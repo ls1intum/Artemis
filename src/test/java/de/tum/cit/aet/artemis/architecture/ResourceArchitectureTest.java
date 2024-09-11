@@ -43,7 +43,7 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void shouldBeInResourcePackage() {
-        ArchRule rule = classes().that().areAnnotatedWith(RestController.class).should().resideInAPackage("..rest..").because("resources should be in the package 'rest'.");
+        ArchRule rule = classes().that().areAnnotatedWith(RestController.class).should().resideInAPackage("..web..").because("resources should be in the package 'rest'.");
         rule.check(productionClasses);
     }
 
