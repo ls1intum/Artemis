@@ -23,6 +23,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import de.tum.in.www1.artemis.service.ProfileService;
+
 @Service
 @Profile(PROFILE_SCHEDULING)
 public class TelemetryService {
@@ -36,6 +38,8 @@ public class TelemetryService {
     private final Environment env;
 
     private final RestTemplate restTemplate;
+
+    private final ProfileService profileService;
 
     @Value("${artemis.telemetry.enabled}")
     public boolean useTelemetry;
@@ -61,9 +65,10 @@ public class TelemetryService {
     @Value("${info.contact}")
     private String contact;
 
-    public TelemetryService(Environment env, RestTemplate restTemplate) {
+    public TelemetryService(Environment env, RestTemplate restTemplate, ProfileService profileService) {
         this.env = env;
         this.restTemplate = restTemplate;
+        this.profileService = profileService;
     }
 
     /**
@@ -73,7 +78,7 @@ public class TelemetryService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
-        if (!useTelemetry) {
+        if (!useTelemetry || profileService.isDevActive()) {
             return;
         }
 

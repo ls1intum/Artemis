@@ -38,8 +38,5 @@ export class LearningPathLectureUnitViewComponent {
      */
     onChildActivate(instance: DiscussionSectionComponent) {
         this.discussionComponent = instance; // save the reference to the component instance
-        if (this.lecture) {
-            instance.lecture = this.lecture;
-        }
     }
 }

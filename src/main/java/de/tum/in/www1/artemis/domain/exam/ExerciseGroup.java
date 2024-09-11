@@ -80,4 +80,8 @@ public class ExerciseGroup extends DomainObject {
         this.exercises.add(exercise);
     }
 
+    @Override
+    public String toString() {
+        return "ExerciseGroup{" + "title='" + title + "'" + ", isMandatory=" + isMandatory + "}";
+    }
 }

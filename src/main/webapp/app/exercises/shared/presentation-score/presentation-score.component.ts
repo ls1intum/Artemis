@@ -68,7 +68,7 @@ export class PresentationScoreComponent implements DoCheck, OnDestroy {
     }
 
     private isBasicPresentation(): boolean {
-        return !!(this.exercise.course && this.exercise.course.presentationScore !== 0);
+        return !!this.exercise.course?.presentationScore;
     }
 
     private isGradedPresentation(): boolean {
