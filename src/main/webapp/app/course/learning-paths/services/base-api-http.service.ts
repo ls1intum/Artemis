@@ -1,6 +1,6 @@
 import { HttpMethod } from 'app/admin/metrics/metrics.model';
 import { inject } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 
 export abstract class BaseApiHttpService {
@@ -34,6 +34,7 @@ export abstract class BaseApiHttpService {
      * @param options The HTTP options to send with the request.
      *
      * @return  A `Promise` of the response body of type `T`.
+     * @throws {HttpErrorResponse} If the request fails.
      */
     private async request<T>(
         method: HttpMethod,
@@ -53,13 +54,17 @@ export abstract class BaseApiHttpService {
             responseType?: 'json';
         },
     ): Promise<T> {
-        const response = await lastValueFrom(
-            this.httpClient.request<T>(method, `${this.baseUrl}/${url}`, {
-                observe: 'response',
-                ...options,
-            }),
-        );
-        return response.body!;
+        try {
+            const response = await lastValueFrom(
+                this.httpClient.request<T>(method, `${this.baseUrl}/${url}`, {
+                    observe: 'response',
+                    ...options,
+                }),
+            );
+            return response.body!;
+        } catch (error) {
+            throw error as HttpErrorResponse;
+        }
     }
 
     /**
@@ -71,6 +76,7 @@ export abstract class BaseApiHttpService {
      * @protected
      *
      * @return A `Promise` of type `Object` (T),
+     * @throws {HttpErrorResponse} If the request fails.
      */
     protected async get<T>(
         url: string,
@@ -100,6 +106,7 @@ export abstract class BaseApiHttpService {
      * @protected
      *
      * @return A `Promise` of type `Object` (T),
+     * @throws {HttpErrorResponse} If the request fails.
      */
     protected async post<T>(
         url: string,
@@ -129,6 +136,7 @@ export abstract class BaseApiHttpService {
      * @protected
      *
      * @return A `Promise` of type `Object` (T),
+     * @throws {HttpErrorResponse} If the request fails.
      */
     protected async delete<T>(
         url: string,
