@@ -38,9 +38,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         this.faq = FaqFactory.generateFaq(faqId, course1);
         faqRepository.save(this.faq);
         this.course1.addFaq(this.faq);
-        // Add users that are not in the course
-        userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
-        userUtilService.createAndSaveUser(TEST_PREFIX + "instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {
