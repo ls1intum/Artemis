@@ -85,7 +85,7 @@ public interface ProgrammingExerciseTestCaseRepository extends ArtemisJpaReposit
             SELECT COUNT(DISTINCT testCase)
             FROM ProgrammingExerciseTestCase testCase
             WHERE testCase.exercise.id = :exerciseId
-                AND testCase.visibility = de.tum.cit.aet.artemis.domain.enumeration.Visibility.AFTER_DUE_DATE
+                AND testCase.visibility = de.tum.cit.aet.artemis.assessment.domain.Visibility.AFTER_DUE_DATE
             """)
     long countAfterDueDateByExerciseId(@Param("exerciseId") long exerciseId);
 }

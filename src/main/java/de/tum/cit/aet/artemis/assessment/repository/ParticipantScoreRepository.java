@@ -119,7 +119,7 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     List<ExerciseScoresAggregatedInformation> getAggregatedExerciseScoresInformation(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.ScoreDistribution(count(p.id), p.lastRatedScore)
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.ScoreDistribution(count(p.id), p.lastRatedScore)
             FROM ParticipantScore p
             WHERE p.exercise.id = :exerciseId
             GROUP BY p.id

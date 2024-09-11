@@ -40,7 +40,7 @@ public interface CoverageReportRepository extends ArtemisJpaRepository<CoverageR
                 JOIN r.submission s
                 JOIN ProgrammingExercise pe ON s.participation = pe.solutionParticipation
             WHERE pe.id = :programmingExerciseId
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY s.submissionDate DESC
             """)
     List<CoverageReportAndSubmissionDateDTO> findCoverageReportsByProgrammingExerciseId(@Param("programmingExerciseId") Long programmingExerciseId, Pageable pageable);

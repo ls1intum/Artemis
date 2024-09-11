@@ -70,7 +70,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @Query("""
             SELECT DISTINCT exercise
             FROM ModelingExercise exercise
-            WHERE exercise.assessmentType = de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+            WHERE exercise.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                 AND exercise.dueDate > :now
             """)
     List<ModelingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);

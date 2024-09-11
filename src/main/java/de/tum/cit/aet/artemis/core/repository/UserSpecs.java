@@ -10,9 +10,9 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.core.domain.Authority_;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.domain.Authority_;
-import de.tum.cit.aet.artemis.domain.User_;
+import de.tum.cit.aet.artemis.core.domain.User_;
 
 /**
  * This class contains possible specifications to query for specified users.

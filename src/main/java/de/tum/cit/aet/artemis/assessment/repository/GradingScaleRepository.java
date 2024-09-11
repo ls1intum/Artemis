@@ -140,7 +140,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
                 LEFT JOIN gs.course
                 LEFT JOIN gs.exam
                 LEFT JOIN gs.exam.course
-            WHERE gs.gradeType = de.tum.cit.aet.artemis.domain.GradeType.BONUS
+            WHERE gs.gradeType = de.tum.cit.aet.artemis.assessment.domain.GradeType.BONUS
                 AND (
                     (gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
                     OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%)
@@ -165,7 +165,7 @@ public interface GradingScaleRepository extends ArtemisJpaRepository<GradingScal
             FROM GradingScale gs
                 LEFT JOIN gs.course
                 LEFT JOIN gs.exam
-            WHERE gs.gradeType = de.tum.cit.aet.artemis.domain.GradeType.BONUS
+            WHERE gs.gradeType = de.tum.cit.aet.artemis.assessment.domain.GradeType.BONUS
                 AND (gs.course.title LIKE %:partialTitle% OR gs.exam.title LIKE %:partialTitle%)
             """)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);

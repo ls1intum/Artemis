@@ -73,7 +73,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                     SELECT MAX(rr.completionDate)
                     FROM Result rr
                         LEFT JOIN TREAT (rr.participation AS ProgrammingExerciseStudentParticipation) sp2
-                    WHERE rr.assessmentType = de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                    WHERE rr.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                         AND sp2.exercise.id = :exerciseId
                         AND sp2.student = sp.student
                 )
@@ -238,7 +238,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return a list with 3 elements: count of rated (in time) and unrated (late) assessments of a course and count of assessments without rating (null)
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.assessment.dashboard.ResultCount(r.rated, COUNT(r))
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCount(r.rated, COUNT(r))
             FROM Result r
                 JOIN r.participation p
             WHERE r.completionDate IS NOT NULL
@@ -392,7 +392,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
@@ -407,7 +407,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
@@ -423,7 +423,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
@@ -439,7 +439,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.score IS NOT NULL
                 AND r.completionDate IS NOT NULL
                 AND r.rated = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") long exerciseId, @Param("teamId") long teamId);
@@ -599,7 +599,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     // Valid JPQL syntax, only SCA is not able to parse it
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments(
                 r.assessor.id,
                 COUNT(r),
                 SUM(e.maxPoints),
@@ -622,7 +622,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     // Valid JPQL syntax, only SCA is not able to parse it
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments(
                 r.assessor.id,
                 COUNT(r),
                 SUM(e.maxPoints),
@@ -642,7 +642,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.leaderboard.tutor.TutorLeaderboardAssessments(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments(
                 r.assessor.id,
                 COUNT(r),
                 SUM(e.maxPoints),

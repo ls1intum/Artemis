@@ -41,7 +41,7 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
      * @return a list of user-related conversation info for the provided conversations
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metis.conversation.UserConversationInfo (
+            SELECT new de.tum.cit.aet.artemis.communication.dto.UserConversationInfo (
                 conv.id,
                 cp.id,
                 cp.isModerator,
@@ -68,7 +68,7 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
      * @return a list of user-related conversation info for the provided conversations
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.metis.conversation.GeneralConversationInfo (
+            SELECT new de.tum.cit.aet.artemis.communication.dto.GeneralConversationInfo (
                 conv.id,
                 COUNT(cp.user.id)
             )

@@ -34,16 +34,16 @@ public interface NotificationRepository extends ArtemisJpaRepository<Notificatio
                     (TYPE(notification) = GroupNotification
                         AND ((
                                 course.instructorGroupName IN :currentGroups
-                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.INSTRUCTOR
+                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.communication.domain.GroupNotificationType.INSTRUCTOR
                             ) OR (
                                 course.teachingAssistantGroupName IN :currentGroups
-                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.TA
+                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.communication.domain.GroupNotificationType.TA
                             ) OR (
                                 course.editorGroupName IN :currentGroups
-                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.EDITOR
+                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.communication.domain.GroupNotificationType.EDITOR
                             ) OR (
                                 course.studentGroupName IN :currentGroups
-                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.STUDENT
+                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.communication.domain.GroupNotificationType.STUDENT
                             )
                         )
                     ) OR (TYPE(notification) = SingleUserNotification
@@ -71,16 +71,16 @@ public interface NotificationRepository extends ArtemisJpaRepository<Notificatio
                         AND (notification.title NOT IN :deactivatedTitles OR notification.title IS NULL)
                         AND ((
                                 course.instructorGroupName IN :currentGroups
-                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.INSTRUCTOR
+                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.communication.domain.GroupNotificationType.INSTRUCTOR
                             ) OR (
                                 course.teachingAssistantGroupName IN :currentGroups
-                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.TA
+                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.communication.domain.GroupNotificationType.TA
                             ) OR (
                                 course.editorGroupName IN :currentGroups
-                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.EDITOR
+                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.communication.domain.GroupNotificationType.EDITOR
                             ) OR (
                                 course.studentGroupName IN :currentGroups
-                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType.STUDENT
+                                AND TREAT(notification AS GroupNotification).type = de.tum.cit.aet.artemis.communication.domain.GroupNotificationType.STUDENT
                             )
                         )
                     ) OR (TYPE(notification) = SingleUserNotification

@@ -21,7 +21,7 @@ public @interface PostConstraints {
     /**
      * @return the message of the violated constraint
      */
-    String message() default "{de.tum.cit.aet.artemis.domain.metis.PostConstraints}";
+    String message() default "{de.tum.cit.aet.artemis.communication.domain.PostConstraints}";
 
     /**
      * @return the groups, default is empty

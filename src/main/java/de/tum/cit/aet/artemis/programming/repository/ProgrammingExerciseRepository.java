@@ -27,11 +27,11 @@ import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.DynamicSpecificationRepository;
 import de.tum.cit.aet.artemis.core.repository.base.FetchOptions;
-import de.tum.cit.aet.artemis.domain.Exercise_;
-import de.tum.cit.aet.artemis.domain.ProgrammingExercise_;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise_;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
@@ -267,7 +267,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             LEFT JOIN FETCH t.students
             LEFT JOIN FETCH pep.submissions s
             WHERE pe.id = :exerciseId
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") long exerciseId);
 
@@ -375,7 +375,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN pe.testCases tc
             WHERE pe.dueDate > :now
                 AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
-                AND tc.visibility = de.tum.cit.aet.artemis.domain.enumeration.Visibility.AFTER_DUE_DATE
+                AND tc.visibility = de.tum.cit.aet.artemis.assessment.domain.Visibility.AFTER_DUE_DATE
             """)
     List<ProgrammingExercise> findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(@Param("now") ZonedDateTime now);
 
@@ -410,7 +410,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     long countLegalSubmissionsByExerciseIdSubmittedIgnoreTestRunSubmissions(@Param("exerciseId") long exerciseId);
 
@@ -432,7 +432,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.exercise.id IN :exerciseIds
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             GROUP BY p.exercise.id
             """)
     List<ExerciseMapEntry> countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(@Param("exerciseIds") Set<Long> exerciseIds);
@@ -452,7 +452,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
                 AND r.submission.submitted = TRUE
-                AND (r.submission.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR r.submission.type IS NULL)
+                AND (r.submission.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR r.submission.type IS NULL)
                 AND r.assessor IS NOT NULL
                 AND r.completionDate IS NOT NULL
             """)
@@ -470,9 +470,9 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT COUNT (DISTINCT p)
             FROM ProgrammingExerciseStudentParticipation p
                 JOIN p.submissions s
-            WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+            WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND p.exercise.exerciseGroup.exam.id = :examId
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     long countLegalSubmissionsByExamIdSubmitted(@Param("examId") long examId);
 
@@ -488,10 +488,10 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             SELECT COUNT (DISTINCT p)
             FROM ProgrammingExerciseStudentParticipation p
                 JOIN p.submissions s
-            WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+            WHERE p.exercise.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND p.exercise.id IN :exerciseIds
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 

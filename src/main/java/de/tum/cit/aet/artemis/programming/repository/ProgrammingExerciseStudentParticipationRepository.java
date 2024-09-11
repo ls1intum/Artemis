@@ -37,7 +37,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 AND (pr.id = (
                     SELECT MAX(prr.id)
                     FROM p.results prr
-                    WHERE (prr.assessmentType = de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                    WHERE (prr.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                         OR (prr.completionDate IS NOT NULL
                             AND (p.exercise.assessmentDueDate IS NULL OR p.exercise.assessmentDueDate < :dateTime)
                         )
@@ -210,9 +210,9 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
     @Modifying
     @Query("""
             UPDATE ProgrammingExerciseStudentParticipation p
-            SET p.buildPlanId = NULL, p.initializationState = de.tum.cit.aet.artemis.domain.enumeration.InitializationState.INACTIVE
+            SET p.buildPlanId = NULL, p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INACTIVE
             WHERE p.exercise.id = :#{#exerciseId}
-                AND p.initializationState = de.tum.cit.aet.artemis.domain.enumeration.InitializationState.INITIALIZED
+                AND p.initializationState = de.tum.cit.aet.artemis.exercise.domain.InitializationState.INITIALIZED
             """)
     void unsetBuildPlanIdForExercise(@Param("exerciseId") Long exerciseId);
 }

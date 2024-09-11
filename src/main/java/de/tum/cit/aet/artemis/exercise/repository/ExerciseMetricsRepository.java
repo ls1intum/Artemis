@@ -166,7 +166,7 @@ public interface ExerciseMetricsRepository extends ArtemisJpaRepository<Exercise
             FROM Exercise e
                 LEFT JOIN e.teams t
                 LEFT JOIN t.students u
-            WHERE e.mode = de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode.TEAM
+            WHERE e.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM
                 AND e.id IN :exerciseIds
                 AND u.id = :userId
             """)

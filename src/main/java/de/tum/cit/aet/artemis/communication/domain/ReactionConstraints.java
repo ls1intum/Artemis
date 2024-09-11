@@ -21,7 +21,7 @@ public @interface ReactionConstraints {
     /**
      * @return the message of the violated constraint
      */
-    String message() default "{de.tum.cit.aet.artemis.domain.metis.ReactionConstraints}";
+    String message() default "{de.tum.cit.aet.artemis.communication.domain.ReactionConstraints}";
 
     /**
      * @return the groups, default is empty

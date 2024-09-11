@@ -61,7 +61,7 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             SELECT e
             FROM Exercise e
             WHERE e.course.id = :courseId
-            	AND e.mode = de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode.TEAM
+            	AND e.mode = de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM
             """)
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
 

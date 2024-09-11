@@ -93,7 +93,7 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
                 LEFT JOIN CompetencyRelation cr ON cr.tailCompetency = c
                 LEFT JOIN CourseCompetency priorC ON priorC = cr.headCompetency
                 LEFT JOIN FETCH CompetencyProgress cp ON cp.competency = priorC
-            WHERE cr.type <> de.tum.cit.aet.artemis.domain.competency.RelationType.MATCHES
+            WHERE cr.type <> de.tum.cit.aet.artemis.atlas.domain.competency.RelationType.MATCHES
                 AND cp.user = :user
                 AND c = :competency
             """)

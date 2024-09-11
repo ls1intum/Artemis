@@ -103,7 +103,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     @Query("""
             SELECT COUNT(c)
             FROM Complaint c
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.COMPLAINT
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND c.student.id = :studentId
                 AND c.result.participation.exercise.course.id = :courseId
                 AND (c.accepted = FALSE OR c.accepted IS NULL)
@@ -121,7 +121,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     @Query("""
             SELECT COUNT(c)
             FROM Complaint c
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.COMPLAINT
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND c.team.shortName = :teamShortName
                 AND c.result.participation.exercise.course.id = :courseId
                 AND (c.accepted = FALSE OR c.accepted IS NULL)
@@ -283,7 +283,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN c.result r
                 JOIN r.participation p
                 JOIN p.exercise e
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.COMPLAINT
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND e.course.id = :courseId
                 AND r.completionDate IS NOT NULL
                 AND r.assessor.id IS NOT NULL
@@ -309,7 +309,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN c.result r
                 JOIN r.participation p
                 JOIN p.exercise e
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.COMPLAINT
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND e.id = :exerciseId
                 AND r.completionDate IS NOT NULL
                 AND r.assessor.id IS NOT NULL
@@ -336,7 +336,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN r.participation p
                 JOIN p.exercise e
                 JOIN e.exerciseGroup eg
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.COMPLAINT
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND eg.exam.id = :examId
                 AND r.completionDate IS NOT NULL
                 AND r.assessor.id IS NOT NULL
@@ -361,7 +361,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN c.result r
                 JOIN r.participation p
                 JOIN p.exercise e
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.COMPLAINT
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND e.course.id = :courseId
                 AND r.completionDate IS NOT NULL
                 AND c.accepted IS NOT NULL
@@ -386,7 +386,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN c.result r
                 JOIN r.participation p
                 JOIN p.exercise e
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.COMPLAINT
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND e.id = :exerciseId
                 AND r.completionDate IS NOT NULL
                 AND c.accepted IS NOT NULL
@@ -412,7 +412,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN r.participation p
                 JOIN p.exercise e
                 JOIN e.exerciseGroup eg
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.COMPLAINT
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.COMPLAINT
                 AND eg.exam.id = :examId
                 AND r.completionDate IS NOT NULL
                 AND c.accepted IS NOT NULL
@@ -438,7 +438,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN c.result r
                 JOIN r.participation p
                 JOIN p.exercise e
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
                 AND e.course.id = :courseId
                 AND r.completionDate IS NOT NULL
             GROUP BY r.assessor.id
@@ -464,7 +464,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN r.participation p
                 JOIN p.exercise e
             WHERE
-                c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
+                c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
                 AND e.id = :exerciseId
                 AND r.completionDate IS NOT NULL
             GROUP BY r.assessor.id
@@ -488,7 +488,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN c.result r
                 JOIN r.participation p
                 JOIN p.exercise e
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
                 AND e.course.id = :courseId
                 AND r.completionDate IS NOT NULL
                 AND c.accepted = TRUE
@@ -513,7 +513,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 JOIN c.result r
                 JOIN r.participation p
                 JOIN p.exercise e
-            WHERE c.complaintType = de.tum.cit.aet.artemis.domain.enumeration.ComplaintType.MORE_FEEDBACK
+            WHERE c.complaintType = de.tum.cit.aet.artemis.assessment.domain.ComplaintType.MORE_FEEDBACK
                 AND e.id = :exerciseId
                 AND r.completionDate IS NOT NULL
                 AND c.accepted = TRUE

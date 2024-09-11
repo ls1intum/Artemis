@@ -104,15 +104,15 @@ export class CourseDashboardService {
 
     private mapToExerciseType(type: string): ExerciseType {
         switch (type) {
-            case 'de.tum.cit.aet.artemis.domain.ProgrammingExercise':
+            case 'de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise':
                 return ExerciseType.PROGRAMMING;
-            case 'de.tum.cit.aet.artemis.domain.modeling.ModelingExercise':
+            case 'de.tum.cit.aet.artemis.modeling.domain.ModelingExercise':
                 return ExerciseType.MODELING;
-            case 'de.tum.cit.aet.artemis.domain.quiz.QuizExercise':
+            case 'de.tum.cit.aet.artemis.quiz.domain.QuizExercise':
                 return ExerciseType.QUIZ;
-            case 'de.tum.cit.aet.artemis.domain.TextExercise':
+            case 'de.tum.cit.aet.artemis.text.domain.TextExercise':
                 return ExerciseType.TEXT;
-            case 'de.tum.cit.aet.artemis.domain.FileUploadExercise':
+            case 'de.tum.cit.aet.artemis.file.domain.FileUploadExercise':
                 return ExerciseType.FILE_UPLOAD;
             default:
                 throw new Error(`Unknown exercise type: ${type}`);

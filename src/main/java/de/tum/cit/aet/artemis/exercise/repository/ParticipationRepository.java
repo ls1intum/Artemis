@@ -62,7 +62,7 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.id = :participationId
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") long participationId);
 

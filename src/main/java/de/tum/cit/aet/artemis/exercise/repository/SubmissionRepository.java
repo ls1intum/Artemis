@@ -212,7 +212,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             FROM Submission s
                 LEFT JOIN FETCH s.results r
             WHERE r.assessor.id IS NOT NULL
-                AND r.assessmentType <> de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.AUTOMATIC
+                AND r.assessmentType <> de.tum.cit.aet.artemis.assessment.domain.AssessmentType.AUTOMATIC
                 AND r.completionDate IS NULL
                 AND s.participation.exercise.exerciseGroup.exam.id = :examId
             """)
@@ -294,7 +294,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 JOIN p.submissions s
             WHERE e.id = :exerciseId
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDate(@Param("exerciseId") long exerciseId);
@@ -314,7 +314,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
             WHERE e.id = :exerciseId
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
-                AND (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+                AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             """)
     long countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseId") long exerciseId);

@@ -326,8 +326,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
                 AND (
-                    r.assessmentType = de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.MANUAL
-                    OR r.assessmentType = de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+                    r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                 ) AND r.assessor.login NOT LIKE '%test%'
                 AND (
                     r.participation.exercise.exerciseGroup IS NOT NULL
@@ -345,8 +345,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
                 AND (
-                    r.assessmentType = de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.MANUAL
-                    OR r.assessmentType = de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+                    r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                 ) AND r.assessor.login NOT LIKE '%test%'
                 AND r.participation.exercise.id IN :exerciseIds
             """)
@@ -362,8 +362,8 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
             WHERE r.completionDate >= :startDate
                 AND r.completionDate <= :endDate
                 AND (
-                    r.assessmentType = de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.MANUAL
-                    OR r.assessmentType = de.tum.cit.aet.artemis.domain.enumeration.AssessmentType.SEMI_AUTOMATIC
+                    r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.MANUAL
+                    OR r.assessmentType = de.tum.cit.aet.artemis.assessment.domain.AssessmentType.SEMI_AUTOMATIC
                 ) AND r.assessor.login NOT LIKE '%test%'
                 AND r.participation.exercise.id = :exerciseId
             """)
@@ -544,7 +544,7 @@ public interface StatisticsRepository extends ArtemisJpaRepository<User, Long> {
     List<Long> findExerciseIdsByCourseId(@Param("courseId") long courseId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.domain.statistics.CourseStatisticsAverageScore(
+            SELECT new de.tum.cit.aet.artemis.core.dto.CourseStatisticsAverageScore(
                 p.exercise.id,
                 p.exercise.title,
                 p.exercise.releaseDate,

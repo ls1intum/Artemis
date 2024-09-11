@@ -55,7 +55,7 @@ public interface CompetencyRelationRepository extends ArtemisJpaRepository<Compe
                 LEFT JOIN relation.headCompetency
                 LEFT JOIN relation.tailCompetency
             WHERE relation.tailCompetency.id IN :competencyIds
-                AND relation.type <> de.tum.cit.aet.artemis.domain.competency.RelationType.MATCHES
+                AND relation.type <> de.tum.cit.aet.artemis.atlas.domain.competency.RelationType.MATCHES
             """)
     Set<Long> getPriorCompetenciesByCompetencyIds(@Param("competencyIds") Set<Long> competencyIds);
 

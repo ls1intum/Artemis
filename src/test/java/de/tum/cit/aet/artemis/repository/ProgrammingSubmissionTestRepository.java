@@ -92,13 +92,13 @@ public interface ProgrammingSubmissionTestRepository extends ArtemisJpaRepositor
             SELECT s
             FROM ProgrammingSubmission s
                 LEFT JOIN FETCH s.results
-            WHERE (s.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s.type IS NULL)
+            WHERE (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
                 AND s.participation.id = :participationId
                 AND s.id = (
                     SELECT MAX(s2.id)
                     FROM ProgrammingSubmission s2
                     WHERE s2.participation.id = :participationId
-                        AND (s2.type <> de.tum.cit.aet.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s2.type IS NULL))
+                        AND (s2.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s2.type IS NULL))
             """)
     Optional<ProgrammingSubmission> findFirstByParticipationIdOrderByLegalSubmissionDateDesc(@Param("participationId") Long participationId);
 }

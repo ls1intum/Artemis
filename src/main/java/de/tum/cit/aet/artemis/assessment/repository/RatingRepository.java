@@ -38,7 +38,7 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
 
     // Valid JPQL syntax, only SCA is not able to parse it
     @Query("""
-                SELECT new de.tum.cit.aet.artemis.domain.assessment.dashboard.ExerciseRatingCount(
+                SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCount(
                     CAST(SUM(ra.rating) AS double) / SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END),
                     SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END))
                 FROM Result r
