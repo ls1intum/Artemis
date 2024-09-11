@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.repository;
+package de.tum.cit.aet.artemis.repo.repository;
 
 import static de.tum.cit.aet.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;

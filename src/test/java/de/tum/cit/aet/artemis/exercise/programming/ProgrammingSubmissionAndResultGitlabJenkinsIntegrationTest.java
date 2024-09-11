@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDetailMessageDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
-import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.repo.repository.ProgrammingSubmissionTestRepository;
 
 class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

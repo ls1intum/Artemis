@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExercise
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.repo.repository.ProgrammingSubmissionTestRepository;
 
 class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

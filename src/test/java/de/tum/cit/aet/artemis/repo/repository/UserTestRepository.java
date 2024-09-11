@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.repository;
+package de.tum.cit.aet.artemis.repo.repository;
 
 import java.util.Set;
 

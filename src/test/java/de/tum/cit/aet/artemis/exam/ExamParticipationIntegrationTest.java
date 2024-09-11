@@ -83,7 +83,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
-import de.tum.cit.aet.artemis.repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.repo.repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.util.ExamPrepareExercisesTestUtil;

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.repository;
+package de.tum.cit.aet.artemis.repo.repository;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
