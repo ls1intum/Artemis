@@ -87,4 +87,45 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
 
         expect(component.importSettings().isReleaseDate).toBeFalse();
     });
+
+    it('should set reference date when dateEvent is provided', () => {
+        const date = new Date(2022, 0, 1);
+        const dateEvent = { value: date.toDateString() } as HTMLInputElement;
+        component.setReferenceDate(dateEvent);
+
+        expect(component.importSettings().referenceDate).toEqual(date);
+        expect(component.importSettings().isReleaseDate).toBeTrue();
+    });
+
+    it('should unset reference date when dateEvent is not provided', () => {
+        component.setReferenceDate();
+
+        expect(component.importSettings().referenceDate).toBeUndefined();
+        expect(component.importSettings().isReleaseDate).toBeUndefined();
+    });
+
+    it('should retain isReleaseDate when reference date is already set', () => {
+        const initialDate = new Date(2022, 0, 1);
+        component.importSettings.update((settings) => ({
+            ...settings,
+            referenceDate: initialDate,
+            isReleaseDate: false,
+        }));
+
+        const newDate = new Date(2023, 0, 1);
+        const dateEvent = { value: newDate.toDateString() } as HTMLInputElement;
+        component.setReferenceDate(dateEvent);
+
+        expect(component.importSettings().referenceDate).toEqual(newDate);
+        expect(component.importSettings().isReleaseDate).toBeFalse();
+    });
+
+    it('should set isReleaseDate to true when reference date is set for the first time', () => {
+        const date = new Date(2022, 0, 1);
+        const dateEvent = { value: date.toDateString() } as HTMLInputElement;
+        component.setReferenceDate(dateEvent);
+
+        expect(component.importSettings().referenceDate).toEqual(date);
+        expect(component.importSettings().isReleaseDate).toBeTrue();
+    });
 });
