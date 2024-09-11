@@ -1,7 +1,7 @@
 import { Component, ContentChild, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { merge } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
@@ -15,7 +15,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
+import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { createBuildPlanUrl } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
@@ -39,7 +39,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
-import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_LOCALCI, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -55,6 +55,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     // Used to make the repository links download the repositories instead of linking to GitLab.
     localVCEnabled = false;
     localCIEnabled = false;
+    onlineIdeEnabled = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideRepositoryAndBuildPlan') overrideRepositoryAndBuildPlan: TemplateRef<any>;
@@ -111,6 +112,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                     this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
                     this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
                     this.localCIEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALCI);
+                    this.onlineIdeEnabled = profileInfo.activeProfiles.includes(PROFILE_THEIA);
                 });
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {

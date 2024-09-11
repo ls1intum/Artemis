@@ -14,11 +14,11 @@ import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { faCodeBranch, faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
@@ -171,8 +171,16 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             // the result of the first correction round will be at index 0,
             // the result of a complaints or the second correction at index 1.
             participation.results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
-            if (participation.results?.[0].submission) {
-                participation.submissions = [participation.results?.[0].submission];
+
+            const resultsWithoutAthena = participation.results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
+            if (resultsWithoutAthena?.length != 0) {
+                if (resultsWithoutAthena?.[0].submission) {
+                    participation.submissions = [resultsWithoutAthena?.[0].submission];
+                } else if (participation.results?.[0].submission) {
+                    participation.submissions = [participation.results?.[0].submission];
+                }
+            } else {
+                participation.results = undefined;
             }
         });
         this.filteredParticipations = this.filterByScoreRange(this.participations);

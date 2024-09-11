@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -20,20 +21,28 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.course.CourseUtilService;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.science.ScienceEvent;
 import de.tum.in.www1.artemis.domain.science.ScienceEventType;
 import de.tum.in.www1.artemis.exercise.programming.MockDelegate;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.AuthorityRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.science.ScienceEventRepository;
 import de.tum.in.www1.artemis.security.Role;
@@ -90,6 +99,9 @@ public class UserTestService {
     @Autowired
     private ScienceEventRepository scienceEventRepository;
 
+    @Autowired
+    private MockMvc mockMvc;
+
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
@@ -105,6 +117,15 @@ public class UserTestService {
     private static final int NUMBER_OF_EDITORS = 1;
 
     private static final int NUMBER_OF_INSTRUCTORS = 1;
+
+    @Autowired
+    private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
+
+    @Autowired
+    private ParticipationRepository participationRepository;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
@@ -706,6 +727,41 @@ public class UserTestService {
     }
 
     // Test
+    public void updateUserProfilePicture_asStudent_isSuccessful() throws Exception {
+        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNull();
+
+        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
+            request.setMethod("PUT");
+            return request;
+        })).andExpect(status().isOk());
+
+        userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNotNull();
+    }
+
+    // Test
+    public void updateAndDeleteUserProfilePicture_asStudent_isSuccessful() throws Exception {
+        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNull();
+
+        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
+            request.setMethod("PUT");
+            return request;
+        })).andExpect(status().isOk());
+        userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNotNull();
+
+        request.delete("/api/account/profile-picture", HttpStatus.OK);
+        userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNull();
+    }
+
+    // Test
     public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", true, HttpStatus.OK);
         User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
@@ -817,16 +873,71 @@ public class UserTestService {
 
         // adding invalid key should fail
         String invalidSshKey = "invalid key";
-        request.putWithResponseBody("/api/users/sshpublickey", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
+        request.putWithResponseBody("/api/account/ssh-public-key", invalidSshKey, String.class, HttpStatus.BAD_REQUEST, true);
 
         // adding valid key should work correctly
         String validSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
-        request.putWithResponseBody("/api/users/sshpublickey", validSshKey, String.class, HttpStatus.OK, true);
+        request.putWithResponseBody("/api/account/ssh-public-key", validSshKey, String.class, HttpStatus.OK, true);
         assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
 
         // deleting the key shoul work correctly
-        request.delete("/api/users/sshpublickey", HttpStatus.OK);
+        request.delete("/api/account/ssh-public-key", HttpStatus.OK);
         assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(null);
+    }
+
+    // Test
+    public void getAndCreateParticipationVcsAccessToken() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        // try to get token for non existent participation
+        request.get("/api/account/participation-vcs-access-token?participationId=11", HttpStatus.NOT_FOUND, String.class);
+
+        var course = courseUtilService.addEmptyCourse();
+        var exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        courseRepository.save(course);
+
+        var submission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(SubmissionType.MANUAL).submitted(true);
+        submission = programmingExerciseUtilService.addProgrammingSubmission(exercise, submission, user.getLogin());
+        // request existing token
+        var token = request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.OK, String.class);
+        assertThat(token).isNotNull();
+
+        // delete all tokens
+        participationVCSAccessTokenRepository.deleteAll();
+
+        // check that token was deleted
+        request.get("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), HttpStatus.NOT_FOUND, String.class);
+        var newToken = request.putWithResponseBody("/api/account/participation-vcs-access-token?participationId=" + submission.getParticipation().getId(), null, String.class,
+                HttpStatus.OK);
+        assertThat(newToken).isNotEqualTo(token);
+
+        submissionRepository.delete(submission);
+        participationVCSAccessTokenRepository.deleteAll();
+        participationRepository.deleteById(submission.getParticipation().getId());
+    }
+
+    // Test
+    public void createAndDeleteUserVcsAccessToken() throws Exception {
+        User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(user.getVcsAccessToken()).isNull();
+
+        // Set expiry date to already past date -> Bad Request
+        ZonedDateTime expiryDate = ZonedDateTime.now().minusMonths(1);
+        var userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.BAD_REQUEST);
+        assertThat(userDTO).isNull();
+
+        // Correct expiry date -> OK
+        expiryDate = ZonedDateTime.now().plusMonths(1);
+        userDTO = request.putWithResponseBody("/api/account/user-vcs-access-token?expiryDate=" + expiryDate, null, UserDTO.class, HttpStatus.OK);
+        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(user.getVcsAccessToken()).isEqualTo(userDTO.getVcsAccessToken());
+        assertThat(user.getVcsAccessTokenExpiryDate()).isEqualTo(userDTO.getVcsAccessTokenExpiryDate());
+
+        // Delete token
+        request.delete("/api/account/user-vcs-access-token", HttpStatus.OK);
+        user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(user.getVcsAccessToken()).isNull();
+        assertThat(user.getVcsAccessTokenExpiryDate()).isNull();
     }
 
     public UserRepository getUserRepository() {

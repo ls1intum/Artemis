@@ -27,7 +27,6 @@ module.exports = [
             'repos-download/',
             'src/main/generated/',
             'src/main/resources/',
-            'src/test/cypress/', // until we delete those files, we ignore them
             'target/',
             'uploads/',
         ],
@@ -37,19 +36,13 @@ module.exports = [
         languageOptions: {
             parser: typescriptParser,
             parserOptions: {
-                project: [
-                    './tsconfig.json',
-                    './tsconfig.app.json',
-                    './tsconfig.spec.json',
-                    'src/test/cypress/tsconfig.json',
-                    'src/test/playwright/tsconfig.json',
-                ],
+                project: ['./tsconfig.json', './tsconfig.app.json', './tsconfig.spec.json', 'src/test/playwright/tsconfig.json'],
             },
         },
         plugins: {
             '@typescript-eslint': tsPlugin,
             '@angular-eslint': angularPlugin,
-            'prettier': prettierPlugin,
+            prettier: prettierPlugin,
         },
         rules: {
             ...prettierPlugin.configs.recommended.rules,
@@ -102,7 +95,7 @@ module.exports = [
         },
         plugins: {
             '@angular-eslint': angularPlugin,
-            'prettier': prettierPlugin,
+            prettier: prettierPlugin,
         },
         rules: {
             // ...angularPlugin.configs['template/recommended'].rules,
@@ -126,7 +119,7 @@ module.exports = [
     {
         files: ['src/test/javascript/**'],
         plugins: {
-            'jest': jestPlugin,
+            jest: jestPlugin,
             'jest-extended': jestExtendedPlugin,
         },
         rules: {

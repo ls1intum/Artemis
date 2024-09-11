@@ -1,16 +1,10 @@
 import { TestBed } from '@angular/core/testing';
+import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
+import { DockerConfiguration } from 'app/entities/programming/docker.configuration';
+import { WindFile } from 'app/entities/programming/wind.file';
+import { WindMetadata } from 'app/entities/programming/wind.metadata';
 import { ArtemisTestModule } from '../../test.module';
-import {
-    BuildAction,
-    DockerConfiguration,
-    PlatformAction,
-    ProgrammingExercise,
-    ProgrammingLanguage,
-    ProjectType,
-    ScriptAction,
-    WindFile,
-    WindMetadata,
-} from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';

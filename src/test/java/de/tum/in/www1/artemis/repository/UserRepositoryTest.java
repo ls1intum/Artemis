@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -11,7 +12,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.user.UserUtilService;
 
 class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
@@ -23,6 +26,9 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserUtilService userUtilService;
+
+    @Autowired
+    private PasswordService passwordService;
 
     private List<User> users;
 
@@ -89,5 +95,23 @@ class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {
         final Set<User> usersNotYetExpiredTokens = userRepository.getUsersWithAccessTokenExpirationDateBefore(ZonedDateTime.now());
 
         assertThat(usersNotYetExpiredTokens).doesNotContainAnyElementsOf(users);
+    }
+
+    @Test
+    void testFindAllNotEnrolledUsers() {
+        List<User> expected = userRepository
+                .saveAll(userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 1, 3));
+        // Should not find administrators
+        List<User> unexpected = userRepository.saveAll(
+                userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(Authority.ADMIN_AUTHORITY), 4, 4));
+        // Should not find deleted users
+        List<User> deleted = userUtilService.generateActivatedUsers(TEST_PREFIX, passwordService.hashPassword(USER_PASSWORD), new String[] {}, Set.of(), 5, 6);
+        deleted.forEach(user -> user.setDeleted(true));
+        unexpected.addAll(userRepository.saveAll(deleted));
+
+        final List<String> actual = userRepository.findAllNotEnrolledUsers();
+
+        assertThat(actual).doesNotContainAnyElementsOf(unexpected.stream().map(User::getLogin).toList());
+        assertThat(actual).containsAll(expected.stream().map(User::getLogin).toList());
     }
 }

@@ -1,7 +1,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../test.module';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import dayjs from 'dayjs/esm';
 import { SubmissionVersionService } from 'app/exercises/shared/submission-version/submission-version.service';
 

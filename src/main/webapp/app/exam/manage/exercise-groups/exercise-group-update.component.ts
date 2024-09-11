@@ -5,7 +5,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { onError } from 'app/shared/util/global.utils';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 

@@ -727,6 +727,15 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             """)
     void updateUserNotificationReadDate(@Param("userId") long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
+            SET user.imageUrl = :imageUrl
+            WHERE user.id = :userId
+            """)
+    void updateUserImageUrl(@Param("userId") long userId, @Param("imageUrl") String imageUrl);
+
     /**
      * Update user notification hide until property for current user
      * I.e. updates the filter that hides all notifications with a creation/notification date prior to the set value.
@@ -769,6 +778,17 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @Transactional // ok because of modifying query
     @Query("""
             UPDATE User user
+            SET user.vcsAccessToken = :vcsAccessToken,
+                user.vcsAccessTokenExpiryDate = :vcsAccessTokenExpiryDate
+            WHERE user.id = :userId
+            """)
+    void updateUserVcsAccessToken(@Param("userId") long userId, @Param("vcsAccessToken") String vcsAccessToken,
+            @Param("vcsAccessTokenExpiryDate") ZonedDateTime vcsAccessTokenExpiryDate);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("""
+            UPDATE User user
             SET user.irisAccepted = :acceptDatetime
             WHERE user.id = :userId
             """)
@@ -793,6 +813,21 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
                 AND team.shortName = :teamShortName
             """)
     Set<User> findAllInTeam(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
+
+    /**
+     * Get all logins of users that are not enrolled in any course,
+     * without administrators which are normally not enrolled in any course.
+     *
+     * @return all logins of not enrolled users as a sorted list (not admins)
+     */
+    @Query("""
+            SELECT user.login
+            FROM User user
+            WHERE user.groups IS EMPTY AND NOT user.isDeleted
+                AND NOT :#{T(de.tum.in.www1.artemis.domain.Authority).ADMIN_AUTHORITY} MEMBER OF user.authorities
+            ORDER BY user.login
+            """)
+    List<String> findAllNotEnrolledUsers();
 
     /**
      * Get all managed users

@@ -1,9 +1,8 @@
-import { AfterViewChecked, Component, ElementRef, OnInit, Renderer2 } from '@angular/core';
+import { AfterViewChecked, Component, OnInit, Renderer2 } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
-import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { isOrion } from 'app/shared/orion/orion';
 import { ModalConfirmAutofocusComponent } from 'app/shared/orion/modal-confirm-autofocus/modal-confirm-autofocus.component';
@@ -12,10 +11,11 @@ import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-home',
@@ -25,6 +25,7 @@ import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 export class HomeComponent implements OnInit, AfterViewChecked {
     USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
+    PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
     authenticationError = false;
     account: User;
     modalRef: NgbModalRef;
@@ -40,9 +41,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     loading = true;
     mainElementFocused = false;
 
+    usernamePlaceholder = 'global.form.username.placeholder'; // default, might be overridden
+    usernamePlaceholderTranslated = 'Login or email'; // default, might be overridden
     // if the server is not connected to an external user management, we accept all valid username patterns
-    usernameRegexPattern = /^[a-z0-9_-]{3,50}$/; // default, might be overridden in ngOnInit
-    errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden in ngOnInit
+    usernameRegexPattern = /^[a-z0-9.@_-]{4,50}$/; // default (at least 4, at most 50 characters), might be overridden
+    errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden
     accountName?: string; // additional information in the welcome message
 
     externalUserManagementActive = true;
@@ -60,14 +63,13 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         private accountService: AccountService,
         private loginService: LoginService,
         private stateStorageService: StateStorageService,
-        private elementRef: ElementRef,
         private renderer: Renderer2,
         private eventManager: EventManager,
-        private guidedTourService: GuidedTourService,
         private orionConnectorService: OrionConnectorService,
         private modalService: NgbModal,
         private profileService: ProfileService,
         private alertService: AlertService,
+        private translateService: TranslateService,
     ) {}
 
     ngOnInit() {
@@ -101,9 +103,20 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         this.externalUserManagementActive = false;
 
         this.accountName = profileInfo.accountName;
-        if (this.accountName === 'TUM') {
-            this.errorMessageUsername = 'home.errors.tumWarning';
+        if (profileInfo.allowedLdapUsernamePattern) {
+            this.usernameRegexPattern = new RegExp(profileInfo.allowedLdapUsernamePattern);
         }
+        if (this.accountName === 'TUM') {
+            this.usernamePlaceholder = 'global.form.username.tumPlaceholder';
+            this.errorMessageUsername = 'home.errors.tumWarning';
+            // Temporary workaround: Do not show a warning when TUM users login with an email address with a specific ending
+            // allow emails with exactly one @ and usernames between 7 and 50 characters (shorter TUM usernames are not possible)
+            this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-z0-9.@_-]{7,50}$/);
+        }
+        this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
+        this.translateService.onLangChange.subscribe(() => {
+            this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
+        });
 
         this.isRegistrationEnabled = !!profileInfo.registrationEnabled;
         this.needsToAcceptTerms = !!profileInfo.needsToAcceptTerms;

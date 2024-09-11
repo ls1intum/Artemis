@@ -69,6 +69,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
+import de.tum.in.www1.artemis.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -300,6 +301,20 @@ public class FileResource {
     }
 
     /**
+     * GET /files/user/profile-picture/:userId/:filename : Get the user image
+     *
+     * @param userId ID of the user the image belongs to
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/user/profile-pictures/{userId}/*")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getProfilePicture(@PathVariable Long userId) {
+        log.debug("REST request to get profile picture for user : {}", userId);
+        User user = userRepository.findByIdElseThrow(userId);
+        return responseEntityForFilePath(getActualPathFromPublicPathString(user.getImageUrl()));
+    }
+
+    /**
      * GET /files/templates/code-of-conduct : Get the Code of Conduct template
      *
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
@@ -373,6 +388,24 @@ public class FileResource {
     }
 
     /**
+     * GET /files/courses/{courseId}/attachments/{attachmentId} : Returns the file associated with the
+     * given attachment ID as a downloadable resource
+     *
+     * @param courseId     The ID of the course that the Attachment belongs to
+     * @param attachmentId the ID of the attachment to retrieve
+     * @return ResponseEntity containing the file as a resource
+     */
+    @GetMapping("files/courses/{courseId}/attachments/{attachmentId}")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<byte[]> getAttachmentFile(@PathVariable Long courseId, @PathVariable Long attachmentId) {
+        Attachment attachment = attachmentRepository.findByIdElseThrow(attachmentId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        checkAttachmentExistsInCourseOrThrow(course, attachment);
+
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+    }
+
+    /**
      * GET /files/attachments/lecture/{lectureId}/merge-pdf : Get the lecture units
      * PDF attachments merged
      *
@@ -424,6 +457,26 @@ public class FileResource {
 
         // check if the user is authorized to access the requested attachment unit
         checkAttachmentAuthorizationOrThrow(course, attachment);
+
+        return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
+    }
+
+    /**
+     * GET files/courses/{courseId}/attachment-units/{attachmenUnitId} : Returns the file associated with the
+     * given attachmentUnit ID as a downloadable resource
+     *
+     * @param courseId         The ID of the course that the Attachment belongs to
+     * @param attachmentUnitId the ID of the attachment to retrieve
+     * @return ResponseEntity containing the file as a resource
+     */
+    @GetMapping("files/courses/{courseId}/attachment-units/{attachmentUnitId}")
+    @EnforceAtLeastEditorInCourse
+    public ResponseEntity<byte[]> getAttachmentUnitFile(@PathVariable Long courseId, @PathVariable Long attachmentUnitId) {
+        log.debug("REST request to get file for attachment unit : {}", attachmentUnitId);
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        Attachment attachment = attachmentUnit.getAttachment();
+        checkAttachmentUnitExistsInCourseOrThrow(course, attachmentUnit);
 
         return buildFileResponse(getActualPathFromPublicPathString(attachment.getLink()), false);
     }
@@ -554,6 +607,30 @@ public class FileResource {
         }
         else {
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
+        }
+    }
+
+    /**
+     * Checks if the attachment exists in the mentioned course
+     *
+     * @param course     the course to check if the attachment is part of it
+     * @param attachment the attachment for which the existence should be checked
+     */
+    private void checkAttachmentExistsInCourseOrThrow(Course course, Attachment attachment) {
+        if (!attachment.getLecture().getCourse().equals(course)) {
+            throw new EntityNotFoundException("This attachment does not exist in this course.");
+        }
+    }
+
+    /**
+     * Checks if the attachment exists in the mentioned course
+     *
+     * @param course         the course to check if the attachment is part of it
+     * @param attachmentUnit the attachment unit for which the existence should be checked
+     */
+    private void checkAttachmentUnitExistsInCourseOrThrow(Course course, AttachmentUnit attachmentUnit) {
+        if (!attachmentUnit.getLecture().getCourse().equals(course)) {
+            throw new EntityNotFoundException("This attachment unit does not exist in this course.");
         }
     }
 
