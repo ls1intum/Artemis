@@ -6,12 +6,12 @@ import static de.tum.cit.aet.artemis.communication.domain.NotificationType.DATA_
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.DATA_EXPORT_FAILED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXAM_ARCHIVE_STARTED;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_PRACTICE;
-import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
-import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel.PUSH;
-import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS;
-import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE;
-import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED;
-import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsCommunicationChannel.PUSH;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Arrays;
@@ -30,10 +30,10 @@ import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotificatio
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsCommunicationChannel;
+import de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel;
-import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class NotificationSettingsServiceTest extends AbstractSpringIntegrationIndependentTest {

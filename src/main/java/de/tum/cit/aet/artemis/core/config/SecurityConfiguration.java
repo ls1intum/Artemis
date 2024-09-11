@@ -37,10 +37,10 @@ import de.tum.cit.aet.artemis.core.security.DomainUserDetailsService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
+import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.web.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.service.ProfileService;
-import de.tum.cit.aet.artemis.service.user.PasswordService;
 
 @Configuration
 @EnableWebSecurity

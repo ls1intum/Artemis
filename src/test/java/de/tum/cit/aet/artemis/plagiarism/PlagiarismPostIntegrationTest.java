@@ -31,13 +31,13 @@ import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
-import de.tum.cit.aet.artemis.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.PostDTO;
 

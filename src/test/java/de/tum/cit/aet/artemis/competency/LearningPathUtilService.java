@@ -10,10 +10,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
+import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.service.learningpath.LearningPathService;
 
 /**
  * Service responsible for initializing the database with specific testdata related to learning paths for use in integration tests.

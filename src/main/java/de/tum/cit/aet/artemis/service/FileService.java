@@ -64,7 +64,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
 
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.service.util.CommonsMultipartFile;
+import de.tum.cit.aet.artemis.core.util.CommonsMultipartFile;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
 

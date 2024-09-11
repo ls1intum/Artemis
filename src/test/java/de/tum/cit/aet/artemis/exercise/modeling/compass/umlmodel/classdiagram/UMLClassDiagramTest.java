@@ -13,13 +13,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.AbstractUMLDiagramTest;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClass;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClassDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLElement;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClassDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLMethod;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLPackage;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship;
 
 class UMLClassDiagramTest extends AbstractUMLDiagramTest {
 

@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.notifications;
 
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TITLE;
-import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doNothing;

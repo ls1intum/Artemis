@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -28,7 +29,6 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;

@@ -26,6 +26,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EmptyFileException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.connectors.athena.AthenaSubmissionSelectionService;
+import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -36,8 +38,6 @@ import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadSubmissionRepository;
-import de.tum.cit.aet.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
-import de.tum.cit.aet.artemis.service.exam.ExamDateService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 

@@ -25,10 +25,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
+import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
-import de.tum.cit.aet.artemis.service.exam.ExamAccessService;
-import de.tum.cit.aet.artemis.service.exam.ExamUserService;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUsersNotFoundDTO;

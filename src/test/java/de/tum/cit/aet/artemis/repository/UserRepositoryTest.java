@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class UserRepositoryTest extends AbstractSpringIntegrationIndependentTest {

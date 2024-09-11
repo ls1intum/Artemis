@@ -20,11 +20,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.icl.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.cit.aet.artemis.web.rest.repository.RepositoryActionType;
 

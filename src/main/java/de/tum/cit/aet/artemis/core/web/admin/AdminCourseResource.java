@@ -30,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -40,7 +41,6 @@ import de.tum.cit.aet.artemis.service.CourseService;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.OnlineCourseConfigurationService;
-import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
 

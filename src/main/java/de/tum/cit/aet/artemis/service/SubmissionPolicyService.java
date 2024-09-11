@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.web.rest.SubmissionPolicyResource;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;

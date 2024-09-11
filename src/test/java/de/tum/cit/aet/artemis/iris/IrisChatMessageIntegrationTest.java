@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.iris;
 
-import static de.tum.cit.aet.artemis.service.connectors.pyris.dto.status.PyrisStageState.DONE;
-import static de.tum.cit.aet.artemis.service.connectors.pyris.dto.status.PyrisStageState.IN_PROGRESS;
-import static de.tum.cit.aet.artemis.service.connectors.pyris.dto.status.PyrisStageState.NOT_STARTED;
+import static de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageState.DONE;
+import static de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageState.IN_PROGRESS;
+import static de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageState.NOT_STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
@@ -31,25 +31,25 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.status.PyrisStageState;
-import de.tum.cit.aet.artemis.service.iris.IrisMessageService;
-import de.tum.cit.aet.artemis.service.iris.dto.IrisChatWebsocketDTO;
-import de.tum.cit.aet.artemis.service.iris.session.IrisExerciseChatSessionService;
 
 class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 

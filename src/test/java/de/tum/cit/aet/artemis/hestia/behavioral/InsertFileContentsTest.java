@@ -10,10 +10,10 @@ import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralBlackboard;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.GroupedFile;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.knowledgesource.InsertFileContents;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.GroupedFile;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.knowledgesource.InsertFileContents;
 
 class InsertFileContentsTest {
 

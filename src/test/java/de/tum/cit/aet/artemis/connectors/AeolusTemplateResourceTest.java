@@ -17,8 +17,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.ScriptAction;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.Windfile;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.ScriptAction;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.Windfile;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.RequestUtilService;
 

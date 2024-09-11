@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.connectors.athena.AthenaSubmissionSelectionService;
+import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -36,9 +38,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.SimilarElementCount;
 import de.tum.cit.aet.artemis.modeling.repository.ModelElementRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
-import de.tum.cit.aet.artemis.service.compass.CompassService;
-import de.tum.cit.aet.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
-import de.tum.cit.aet.artemis.service.exam.ExamDateService;
+import de.tum.cit.aet.artemis.modeling.service.compass.CompassService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 
 @Profile(PROFILE_CORE)

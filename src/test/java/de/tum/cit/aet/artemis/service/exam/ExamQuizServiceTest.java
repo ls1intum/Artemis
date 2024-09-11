@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.quiz.QuizExerciseFactory;
@@ -35,7 +36,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.service.quiz.QuizExerciseService;
+import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {

@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
-import de.tum.cit.aet.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.util.LocalRepository;

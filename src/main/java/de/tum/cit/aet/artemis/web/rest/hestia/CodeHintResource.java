@@ -21,13 +21,13 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.service.hestia.CodeHintService;
-import de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.programming.service.hestia.CodeHintService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
 

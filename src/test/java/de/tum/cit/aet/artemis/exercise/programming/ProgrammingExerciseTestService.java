@@ -5,9 +5,9 @@ import static de.tum.cit.aet.artemis.exercise.domain.ExerciseMode.TEAM;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
-import static de.tum.cit.aet.artemis.service.export.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
-import static de.tum.cit.aet.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
-import static de.tum.cit.aet.artemis.service.export.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
+import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
+import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.EXPORTED_EXERCISE_DETAILS_FILE_PREFIX;
+import static de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService.EXPORTED_EXERCISE_PROBLEM_STATEMENT_FILE_PREFIX;
 import static de.tum.cit.aet.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -80,6 +80,14 @@ import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.service.connectors.GitService;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.GitLabException;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.build_plan.JenkinsBuildPlanUtils;
+import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlRepositoryPermission;
+import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
+import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.ExamFactory;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
@@ -90,6 +98,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamImportService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -126,23 +135,15 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.service.AutomaticProgrammingExerciseCleanupService;
+import de.tum.cit.aet.artemis.programming.service.JavaTemplateUpgradeService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.UriService;
-import de.tum.cit.aet.artemis.service.connectors.GitService;
-import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.service.connectors.gitlab.GitLabException;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanUtils;
-import de.tum.cit.aet.artemis.service.connectors.vcs.VersionControlRepositoryPermission;
-import de.tum.cit.aet.artemis.service.connectors.vcs.VersionControlService;
-import de.tum.cit.aet.artemis.service.export.CourseExamExportService;
-import de.tum.cit.aet.artemis.service.programming.JavaTemplateUpgradeService;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingLanguageFeature;
-import de.tum.cit.aet.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
-import de.tum.cit.aet.artemis.service.user.PasswordService;
 import de.tum.cit.aet.artemis.user.UserFactory;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.ExamPrepareExercisesTestUtil;
@@ -1176,7 +1177,7 @@ public class ProgrammingExerciseTestService {
 
     /**
      * Method to test the correct import of a programming exercise into an exam during an exam import
-     * For more Information see {@link de.tum.cit.aet.artemis.service.exam.ExamImportService}
+     * For more Information see {@link ExamImportService}
      */
     public void importProgrammingExerciseAsPartOfExamImport() throws Exception {
         // Setup existing exam and exercise

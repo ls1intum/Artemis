@@ -13,16 +13,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisJobService;
-import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisStatusUpdateService;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.job.CompetencyExtractionJob;
-import de.tum.cit.aet.artemis.service.connectors.pyris.job.CourseChatJob;
-import de.tum.cit.aet.artemis.service.connectors.pyris.job.ExerciseChatJob;
-import de.tum.cit.aet.artemis.service.connectors.pyris.job.IngestionWebhookJob;
-import de.tum.cit.aet.artemis.service.connectors.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisStatusUpdateService;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.CourseChatJob;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.ExerciseChatJob;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
 

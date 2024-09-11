@@ -47,10 +47,10 @@ import com.offbytwo.jenkins.model.QueueReference;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.dto.JenkinsUserDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.dto.JenkinsUserDTO;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 
 @Component
 @Profile("jenkins")

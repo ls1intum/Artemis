@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.web.rest;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.service.util.TimeLogUtil.formatDurationFrom;
+import static de.tum.cit.aet.artemis.core.util.TimeLogUtil.formatDurationFrom;
 
 import java.io.IOException;
 

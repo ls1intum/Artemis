@@ -24,7 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
-import de.tum.cit.aet.artemis.service.scheduled.WeeklyEmailSummaryScheduleService;
+import de.tum.cit.aet.artemis.communication.service.WeeklyEmailSummaryScheduleService;
 
 /**
  * Tests if the WeeklyEmailSummaryScheduleService correctly calls the EmailSummaryService with the expected times and intervals

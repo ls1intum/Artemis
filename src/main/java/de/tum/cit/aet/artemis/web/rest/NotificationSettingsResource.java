@@ -22,11 +22,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService;
-import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
 

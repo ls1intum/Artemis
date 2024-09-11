@@ -1,7 +1,7 @@
 
 package de.tum.cit.aet.artemis.assessment.domain;
 
-import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import org.apache.commons.lang3.NotImplementedException;
 

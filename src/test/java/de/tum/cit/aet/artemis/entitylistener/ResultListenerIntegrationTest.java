@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.entitylistener;
 
-import static de.tum.cit.aet.artemis.service.util.RoundingUtil.round;
+import static de.tum.cit.aet.artemis.core.util.RoundingUtil.round;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
 import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -37,7 +38,6 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.service.ResultService;
-import de.tum.cit.aet.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 

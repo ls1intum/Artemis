@@ -13,7 +13,9 @@ import org.junit.jupiter.api.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.JenkinsXmlFileUtils;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.jobs.JenkinsJobPermission;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.jobs.JenkinsJobPermissionsUtils;
 
 class JenkinsJobPermissionsUtilsTest {
 

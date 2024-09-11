@@ -17,10 +17,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.programming.icl.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.icl.ssh.SshConstants;
-import de.tum.cit.aet.artemis.service.connectors.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildAgentInformation;
 
 @Profile(PROFILE_LOCALVC)
 @Service

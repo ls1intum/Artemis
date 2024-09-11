@@ -17,7 +17,7 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.URIish;
 
-import de.tum.cit.aet.artemis.service.connectors.GitService;
+import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 
 /**
  * This class describes a local repository cloned from an origin repository.

@@ -16,6 +16,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisStatusUpdateService;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
@@ -23,12 +29,6 @@ import de.tum.cit.aet.artemis.lecture.LectureUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisJobService;
-import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisStatusUpdateService;
-import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisWebhookService;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class PyrisLectureIngestionTest extends AbstractIrisIntegrationTest {

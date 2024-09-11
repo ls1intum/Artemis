@@ -9,7 +9,7 @@ import org.springframework.boot.actuate.info.Info;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ActiveProfiles;
 
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCInfoContributor;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCInfoContributor;
 
 @ActiveProfiles({ "artemis", PROFILE_LOCALVC, PROFILE_BUILDAGENT })
 class LocalVCInfoContributorTest {

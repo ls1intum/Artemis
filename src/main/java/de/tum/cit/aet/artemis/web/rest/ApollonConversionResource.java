@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.connectors.apollon.ApollonConversionService;
-import de.tum.cit.aet.artemis.service.connectors.apollon.dto.ApollonModelDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.apollon.ApollonConversionService;
+import de.tum.cit.aet.artemis.core.service.connectors.apollon.dto.ApollonModelDTO;
 
 /**
  * REST controller for managing ApollonDiagram.

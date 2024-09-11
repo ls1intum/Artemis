@@ -14,10 +14,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-import de.tum.cit.aet.artemis.service.compass.umlmodel.Similarity;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.Similarity;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLElement;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityDiagram;
 
 class UMLDiagramTest {
 

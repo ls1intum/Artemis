@@ -29,8 +29,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
+import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
-import de.tum.cit.aet.artemis.service.quiz.QuizBatchService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 
 /**

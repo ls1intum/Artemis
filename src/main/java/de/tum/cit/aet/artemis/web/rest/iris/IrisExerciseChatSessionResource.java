@@ -15,16 +15,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisHealthIndicator;
-import de.tum.cit.aet.artemis.service.iris.IrisRateLimitService;
-import de.tum.cit.aet.artemis.service.iris.IrisSessionService;
-import de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
 
 /**

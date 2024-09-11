@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * {@link IrisCourseSettings} are used to specify settings on a course level.
  * {@link IrisExerciseSettings} are used to specify settings on an exercise level.
  * <p>
- * Also see {@link de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService} for more information.
+ * Also see {@link de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService} for more information.
  */
 @Entity
 @Table(name = "iris_settings")

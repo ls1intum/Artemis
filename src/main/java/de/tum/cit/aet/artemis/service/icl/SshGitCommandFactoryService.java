@@ -7,8 +7,8 @@ import org.apache.sshd.git.pack.GitPackCommandFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.icl.ssh.SshGitCommand;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCServletService;
 
 @Profile(PROFILE_LOCALVC)
 @Service

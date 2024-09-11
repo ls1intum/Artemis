@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismAnswerPostService;
-import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
 
 /**
  * REST controller for managing AnswerPost.

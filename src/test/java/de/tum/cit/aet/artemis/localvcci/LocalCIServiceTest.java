@@ -25,6 +25,15 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.connectors.BuildScriptProviderService;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.Windfile;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationService.BuildStatus;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.buildagent.SharedQueueProcessingService;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildConfig;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.JobTimingInfo;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
@@ -33,15 +42,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.service.connectors.BuildScriptProviderService;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.Windfile;
-import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService.BuildStatus;
-import de.tum.cit.aet.artemis.service.connectors.localci.buildagent.SharedQueueProcessingService;
-import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.service.connectors.localci.dto.JobTimingInfo;
-import de.tum.cit.aet.artemis.service.connectors.localci.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {

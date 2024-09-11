@@ -20,10 +20,10 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisHestiaSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSubSettingsRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.service.iris.dto.IrisCombinedSettingsDTO;
 
 class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {
 

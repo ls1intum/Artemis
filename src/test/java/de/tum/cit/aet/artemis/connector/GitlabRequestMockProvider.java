@@ -92,17 +92,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.GitLabException;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.GitLabUserDoesNotExistException;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.GitLabUserManagementService;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.UriService;
-import de.tum.cit.aet.artemis.service.connectors.gitlab.GitLabException;
-import de.tum.cit.aet.artemis.service.connectors.gitlab.GitLabUserDoesNotExistException;
-import de.tum.cit.aet.artemis.service.connectors.gitlab.GitLabUserManagementService;
-import de.tum.cit.aet.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
-import de.tum.cit.aet.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
 
 @Component
 @Profile("gitlab")

@@ -20,12 +20,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import de.tum.cit.aet.artemis.communication.service.ConversationMessagingService;
+import de.tum.cit.aet.artemis.communication.service.PostingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.metis.ConversationMessagingService;
-import de.tum.cit.aet.artemis.service.metis.PostingService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 
 class PostingServiceUnitTest {

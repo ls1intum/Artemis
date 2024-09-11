@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -25,7 +26,6 @@ import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 

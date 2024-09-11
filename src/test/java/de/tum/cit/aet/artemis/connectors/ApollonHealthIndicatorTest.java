@@ -11,7 +11,7 @@ import org.springframework.boot.actuate.health.Status;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.connector.apollon.ApollonRequestMockProvider;
-import de.tum.cit.aet.artemis.service.connectors.apollon.ApollonHealthIndicator;
+import de.tum.cit.aet.artemis.core.service.connectors.apollon.ApollonHealthIndicator;
 
 class ApollonHealthIndicatorTest extends AbstractSpringIntegrationIndependentTest {
 

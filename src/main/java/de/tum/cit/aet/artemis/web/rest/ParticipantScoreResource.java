@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.assessment.listener.ResultListener;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -54,7 +55,7 @@ public class ParticipantScoreResource {
      * Currently both this server based calculation method and the traditional client side calculation method is used
      * side-by-side in course-scores.component.ts.
      * <p>
-     * The goal is to switch completely to this much faster server based calculation if the {@link de.tum.cit.aet.artemis.service.listeners.ResultListener}
+     * The goal is to switch completely to this much faster server based calculation if the {@link ResultListener}
      * has been battle tested enough.
      *
      * @param courseId the id of the course for which to calculate the course scores
@@ -80,7 +81,7 @@ public class ParticipantScoreResource {
      * Currently both this server based calculation method and the traditional client side calculation method is used
      * side-by-side in exam-scores.component.ts.
      * <p>
-     * The goal is to switch completely to this much faster server based calculation if the {@link de.tum.cit.aet.artemis.service.listeners.ResultListener}
+     * The goal is to switch completely to this much faster server based calculation if the {@link ResultListener}
      * has been battle tested enough.
      *
      * @param examId the id of the exam for which to calculate the exam scores

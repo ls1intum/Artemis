@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -60,8 +61,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildCon
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseGradingService;
-import de.tum.cit.aet.artemis.service.util.RoundingUtil;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
 

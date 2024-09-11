@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseRepositoryService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseRepositoryService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class ProgrammingExerciseRepositoryServiceTest extends AbstractSpringIntegrationIndependentTest {

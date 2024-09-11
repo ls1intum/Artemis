@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.service.exam.ExamAccessService;
-import de.tum.cit.aet.artemis.service.exam.ExamService;
+import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
+import de.tum.cit.aet.artemis.exam.service.ExamService;
 
 // only available for external version control services
 @Profile("!localvc & core")

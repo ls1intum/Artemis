@@ -50,8 +50,8 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
+import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
 import de.tum.cit.aet.artemis.service.FilePathService;
-import de.tum.cit.aet.artemis.service.quiz.QuizScheduleService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 /**

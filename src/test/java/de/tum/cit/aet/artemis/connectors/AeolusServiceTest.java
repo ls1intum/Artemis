@@ -25,6 +25,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.connector.AeolusRequestMockProvider;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusBuildPlanService;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusBuildScriptGenerationService;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusRepository;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.ScriptAction;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.Windfile;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.WindfileMetadata;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -32,14 +40,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.AeolusBuildPlanService;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.AeolusBuildScriptGenerationService;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.AeolusRepository;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.ScriptAction;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.Windfile;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.WindfileMetadata;
-import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 class AeolusServiceTest extends AbstractSpringIntegrationIndependentTest {
 

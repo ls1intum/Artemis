@@ -56,6 +56,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.connectors.GitService;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -66,8 +68,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.service.connectors.GitService;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 
 /**

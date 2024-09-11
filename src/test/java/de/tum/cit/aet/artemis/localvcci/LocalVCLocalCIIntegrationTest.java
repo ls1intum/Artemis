@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.localvcci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
-import static de.tum.cit.aet.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_EXAM_CONDUCTION;
-import static de.tum.cit.aet.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_NORMAL;
-import static de.tum.cit.aet.artemis.service.connectors.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
+import static de.tum.cit.aet.artemis.core.service.connectors.localci.LocalCITriggerService.PRIORITY_EXAM_CONDUCTION;
+import static de.tum.cit.aet.artemis.core.service.connectors.localci.LocalCITriggerService.PRIORITY_NORMAL;
+import static de.tum.cit.aet.artemis.core.service.connectors.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
@@ -41,6 +41,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -54,7 +55,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 
 /**

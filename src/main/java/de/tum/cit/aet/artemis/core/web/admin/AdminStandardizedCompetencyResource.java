@@ -23,11 +23,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
+import de.tum.cit.aet.artemis.atlas.service.competency.KnowledgeAreaService;
+import de.tum.cit.aet.artemis.atlas.service.competency.StandardizedCompetencyService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.service.competency.KnowledgeAreaService;
-import de.tum.cit.aet.artemis.service.competency.StandardizedCompetencyService;
-import de.tum.cit.aet.artemis.service.feature.Feature;
-import de.tum.cit.aet.artemis.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;

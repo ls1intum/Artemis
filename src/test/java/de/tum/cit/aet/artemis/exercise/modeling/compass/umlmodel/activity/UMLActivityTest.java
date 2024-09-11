@@ -13,8 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivity;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLControlFlow;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivity;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLControlFlow;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 @ExtendWith(MockitoExtension.class)

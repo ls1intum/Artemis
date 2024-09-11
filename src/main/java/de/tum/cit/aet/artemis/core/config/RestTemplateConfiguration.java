@@ -19,8 +19,8 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.config.auth.AthenaAuthorizationInterceptor;
 import de.tum.cit.aet.artemis.core.config.auth.PyrisAuthorizationInterceptor;
-import de.tum.cit.aet.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.GitLabAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
 
 /**
  * For now only provides a basic {@link org.springframework.web.client.RestTemplate RestTemplate} bean. Can be extended

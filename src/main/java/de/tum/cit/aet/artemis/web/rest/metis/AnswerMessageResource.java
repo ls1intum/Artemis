@@ -19,9 +19,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.service.AnswerMessageService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.metis.AnswerMessageService;
-import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 
 @Profile(PROFILE_CORE)
 @RestController

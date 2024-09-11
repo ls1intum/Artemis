@@ -10,11 +10,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCFetchFilter;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPostPushHook;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPrePushHook;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPushFilter;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCServletService;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCFetchFilter;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCPostPushHook;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCPrePushHook;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCPushFilter;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCServletService;
 
 /**
  * This class configures the JGit Servlet, which is used to receive Git push and fetch requests for local VC.

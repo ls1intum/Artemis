@@ -33,11 +33,11 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralTestCaseService;
+import de.tum.cit.aet.artemis.programming.service.hestia.structural.StructuralSolutionEntryGenerationException;
+import de.tum.cit.aet.artemis.programming.service.hestia.structural.StructuralTestCaseService;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralTestCaseService;
-import de.tum.cit.aet.artemis.service.hestia.structural.StructuralSolutionEntryGenerationException;
-import de.tum.cit.aet.artemis.service.hestia.structural.StructuralTestCaseService;
 import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
 import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
 import tech.jhipster.web.util.HeaderUtil;

@@ -30,6 +30,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.GitLabCIException;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlabci.GitLabCIResultService;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -45,8 +47,6 @@ import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepo
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.service.connectors.gitlabci.GitLabCIResultService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {

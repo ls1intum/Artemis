@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.google.common.net.InternetDomainName;
 
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -36,7 +37,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.LectureUnitService;
-import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;

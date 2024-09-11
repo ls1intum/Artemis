@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.service.hestia.CodeHintService;
+import de.tum.cit.aet.artemis.programming.service.hestia.CodeHintService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

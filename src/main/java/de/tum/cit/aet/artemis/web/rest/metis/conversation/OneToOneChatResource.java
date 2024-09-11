@@ -19,14 +19,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
+import de.tum.cit.aet.artemis.communication.service.conversation.OneToOneChatService;
+import de.tum.cit.aet.artemis.communication.service.conversation.auth.OneToOneChatAuthorizationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.metis.conversation.ConversationDTOService;
-import de.tum.cit.aet.artemis.service.metis.conversation.ConversationService;
-import de.tum.cit.aet.artemis.service.metis.conversation.OneToOneChatService;
-import de.tum.cit.aet.artemis.service.metis.conversation.auth.OneToOneChatAuthorizationService;
-import de.tum.cit.aet.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 

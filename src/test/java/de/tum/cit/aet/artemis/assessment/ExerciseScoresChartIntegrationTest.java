@@ -19,6 +19,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -26,7 +27,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseScoresDTO;

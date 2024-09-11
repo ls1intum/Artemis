@@ -21,6 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
@@ -32,8 +33,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepository
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.CommitDTO;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseGradingService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 
 class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.service.TimeService;

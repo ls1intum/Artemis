@@ -6,7 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.service.metis.similarity.TitleJaccardSimilarityCompareStrategy;
+import de.tum.cit.aet.artemis.communication.service.similarity.TitleJaccardSimilarityCompareStrategy;
 
 class TitleJaccardSimilarityCompareStrategyTest {
 

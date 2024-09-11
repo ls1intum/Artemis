@@ -28,6 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -46,7 +47,6 @@ import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ExerciseService;
 import de.tum.cit.aet.artemis.service.LectureImportService;
 import de.tum.cit.aet.artemis.service.LectureService;
-import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;
 import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;

@@ -30,6 +30,10 @@ import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.notification.dto.CommitDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.notification.dto.TestCaseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.notification.dto.TestCaseDetailMessageDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -40,10 +44,6 @@ import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepo
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.CommitDTO;
-import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.TestCaseDTO;
-import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.TestCaseDetailMessageDTO;
-import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 
 class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

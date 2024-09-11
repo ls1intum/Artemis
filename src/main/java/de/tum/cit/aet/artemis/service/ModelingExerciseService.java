@@ -11,12 +11,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelCluster;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.repository.ModelClusterRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelElementRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.web.rest.util.PageUtil;

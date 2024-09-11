@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CourseCompetencyService;
+import de.tum.cit.aet.artemis.atlas.service.competency.PrerequisiteService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -39,8 +41,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.LectureUnitService;
-import de.tum.cit.aet.artemis.service.competency.CourseCompetencyService;
-import de.tum.cit.aet.artemis.service.competency.PrerequisiteService;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;

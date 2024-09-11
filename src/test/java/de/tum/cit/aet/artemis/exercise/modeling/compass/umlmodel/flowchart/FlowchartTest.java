@@ -15,15 +15,15 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.AbstractUMLDiagramTest;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.flowchart.Flowchart;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.flowchart.FlowchartDecision;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.flowchart.FlowchartFlowline;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.flowchart.FlowchartFunctionCall;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.flowchart.FlowchartInputOutput;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.flowchart.FlowchartProcess;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.flowchart.FlowchartTerminal;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.flowchart.Flowchart;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.flowchart.FlowchartDecision;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.flowchart.FlowchartFlowline;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.flowchart.FlowchartFunctionCall;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.flowchart.FlowchartInputOutput;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.flowchart.FlowchartProcess;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.flowchart.FlowchartTerminal;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.parsers.UMLModelParser;
 
 class FlowchartTest extends AbstractUMLDiagramTest {
 

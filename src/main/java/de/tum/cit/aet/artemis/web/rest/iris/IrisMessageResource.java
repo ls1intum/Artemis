@@ -24,8 +24,8 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
-import de.tum.cit.aet.artemis.service.iris.IrisMessageService;
-import de.tum.cit.aet.artemis.service.iris.IrisSessionService;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
 
 /**

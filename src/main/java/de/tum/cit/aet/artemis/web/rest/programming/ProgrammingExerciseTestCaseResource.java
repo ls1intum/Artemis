@@ -25,9 +25,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseService;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 
 /**

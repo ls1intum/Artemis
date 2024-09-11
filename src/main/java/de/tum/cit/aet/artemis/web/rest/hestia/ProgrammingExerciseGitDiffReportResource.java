@@ -27,11 +27,11 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.service.CommitHistoryService;
+import de.tum.cit.aet.artemis.programming.service.RepositoryService;
+import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ParticipationAuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
-import de.tum.cit.aet.artemis.service.programming.CommitHistoryService;
-import de.tum.cit.aet.artemis.service.programming.RepositoryService;
 import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseGitDiffReportDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

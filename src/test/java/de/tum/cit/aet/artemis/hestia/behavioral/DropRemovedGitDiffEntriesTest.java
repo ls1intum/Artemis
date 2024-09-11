@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralBlackboard;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.knowledgesource.DropRemovedGitDiffEntries;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.knowledgesource.DropRemovedGitDiffEntries;
 
 class DropRemovedGitDiffEntriesTest {
 

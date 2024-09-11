@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizGroup;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
-import de.tum.cit.aet.artemis.service.quiz.QuizPoolService;
+import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 
 class QuizPoolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

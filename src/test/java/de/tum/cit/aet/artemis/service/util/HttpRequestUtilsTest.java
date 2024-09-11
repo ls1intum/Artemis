@@ -9,6 +9,8 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.core.util.HttpRequestUtils;
+
 class HttpRequestUtilsTest {
 
     @Test

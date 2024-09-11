@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.classdiagram;
 
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_BIDIRECTIONAL;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_UNIDIRECTIONAL;
-import static de.tum.cit.aet.artemis.service.compass.utils.CompassConfiguration.RELATION_ELEMENT_WEIGHT;
-import static de.tum.cit.aet.artemis.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_WEIGHT;
-import static de.tum.cit.aet.artemis.service.compass.utils.CompassConfiguration.RELATION_ROLE_WEIGHT;
-import static de.tum.cit.aet.artemis.service.compass.utils.CompassConfiguration.RELATION_TYPE_WEIGHT;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_BIDIRECTIONAL;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_UNIDIRECTIONAL;
+import static de.tum.cit.aet.artemis.modeling.service.compass.utils.CompassConfiguration.RELATION_ELEMENT_WEIGHT;
+import static de.tum.cit.aet.artemis.modeling.service.compass.utils.CompassConfiguration.RELATION_MULTIPLICITY_WEIGHT;
+import static de.tum.cit.aet.artemis.modeling.service.compass.utils.CompassConfiguration.RELATION_ROLE_WEIGHT;
+import static de.tum.cit.aet.artemis.modeling.service.compass.utils.CompassConfiguration.RELATION_TYPE_WEIGHT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 import static org.mockito.Mockito.doReturn;
@@ -18,8 +18,8 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClass;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship;
 
 class UMLRelationshipTest {
 

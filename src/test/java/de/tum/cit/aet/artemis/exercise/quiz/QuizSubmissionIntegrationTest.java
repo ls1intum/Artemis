@@ -65,9 +65,9 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.service.quiz.QuizBatchService;
-import de.tum.cit.aet.artemis.service.quiz.QuizExerciseService;
-import de.tum.cit.aet.artemis.service.quiz.QuizStatisticService;
+import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
+import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
+import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
 import de.tum.cit.aet.artemis.web.rest.dto.QuizBatchJoinDTO;
 
 class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

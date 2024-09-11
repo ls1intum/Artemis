@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.activity;
 
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_ACTION_NODE;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_FINAL_NODE;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_ACTION_NODE;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_FINAL_NODE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLControlFlow;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLControlFlow;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 class UMLActivityNodeTest {

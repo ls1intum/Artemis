@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.export.DataExportService;
+import de.tum.cit.aet.artemis.core.service.export.DataExportService;
 import de.tum.cit.aet.artemis.web.rest.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.RequestDataExportDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;

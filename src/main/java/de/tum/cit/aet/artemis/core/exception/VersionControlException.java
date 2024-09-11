@@ -8,7 +8,7 @@ package de.tum.cit.aet.artemis.core.exception;
  * declaring "throws Exception" themselves (Although in the end, we just throw an unchecked RuntimeException).
  */
 
-import de.tum.cit.aet.artemis.service.connectors.vcs.VersionControlService;
+import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
 
 /**
  * Generic exception thrown if there are any errors while communicating with the {@link VersionControlService VersionControlService}

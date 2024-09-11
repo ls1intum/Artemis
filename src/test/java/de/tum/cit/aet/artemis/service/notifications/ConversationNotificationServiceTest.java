@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRe
 import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
+import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;

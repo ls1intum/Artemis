@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 
 @Entity
@@ -124,7 +125,7 @@ public class TutorialGroup extends DomainObject {
     /**
      * This field represents the average attendance of this tutorial group
      * <p>
-     * For more information on how this is calculated check out {@link de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupService#setAverageAttendance}
+     * For more information on how this is calculated check out {@link TutorialGroupService#setAverageAttendance}
      */
     @Transient
     private Integer averageAttendance;

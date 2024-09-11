@@ -7,8 +7,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.util.ExamExerciseStartPreparationStatus;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.service.util.ExamExerciseStartPreparationStatus;
 
 public class ExamPrepareExercisesTestUtil {
 

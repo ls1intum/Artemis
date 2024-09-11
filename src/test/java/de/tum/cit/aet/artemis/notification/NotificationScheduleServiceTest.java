@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.notification;
 
-import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED;
-import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED;
+import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED;
 import static java.time.ZonedDateTime.now;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
@@ -28,12 +28,12 @@ import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageReceiveService;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.service.messaging.InstanceMessageReceiveService;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 

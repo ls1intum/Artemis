@@ -18,8 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.JenkinsInternalUrlService;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsInternalUrlService;
 
 class JenkinsInternalUriServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

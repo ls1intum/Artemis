@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 
 /**
  * Application constants.

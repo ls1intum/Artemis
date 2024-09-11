@@ -15,8 +15,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -27,12 +30,9 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
-import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseService;
-import de.tum.cit.aet.artemis.service.quiz.QuizExerciseService;
-import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**

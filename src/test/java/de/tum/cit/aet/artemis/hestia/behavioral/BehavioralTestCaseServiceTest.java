@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRe
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralTestCaseService;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralTestCaseService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.util.LocalRepository;

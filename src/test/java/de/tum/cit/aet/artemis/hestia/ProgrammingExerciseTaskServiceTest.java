@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.cit.aet.artemis.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationIndependentTest {

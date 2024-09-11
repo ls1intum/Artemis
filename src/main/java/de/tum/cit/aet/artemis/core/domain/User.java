@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.service.connectors.vcs.VcsTokenRenewalService;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
@@ -146,7 +147,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * The expiry date of the VCS access token.
      * This is used for checking if a access token needs to be renewed.
      *
-     * @see de.tum.cit.aet.artemis.service.connectors.vcs.VcsTokenRenewalService
+     * @see VcsTokenRenewalService
      * @see UserRepository#getUsersWithAccessTokenExpirationDateBefore
      */
     @Nullable

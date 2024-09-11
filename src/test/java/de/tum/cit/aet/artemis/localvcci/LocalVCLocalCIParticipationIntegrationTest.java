@@ -12,11 +12,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 
 class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

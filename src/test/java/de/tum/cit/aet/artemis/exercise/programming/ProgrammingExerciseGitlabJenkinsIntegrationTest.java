@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 

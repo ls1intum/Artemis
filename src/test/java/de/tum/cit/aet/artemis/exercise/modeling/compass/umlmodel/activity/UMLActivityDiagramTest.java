@@ -15,13 +15,13 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.AbstractUMLDiagramTest;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivity;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLControlFlow;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLElement;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivity;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLControlFlow;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.parsers.UMLModelParser;
 
 class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
 

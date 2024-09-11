@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.service.hestia.ExerciseHintService;
 
 /**
  * An ExerciseHint.
@@ -163,7 +164,7 @@ public class ExerciseHint extends DomainObject {
 
     /**
      * Returns a threshold value that defines when this exercise hint is displayed to student participating in a programming exercise.
-     * The algorithm defining if the hint is display is described in {@link de.tum.cit.aet.artemis.service.hestia.ExerciseHintService#getAvailableExerciseHints}
+     * The algorithm defining if the hint is display is described in {@link ExerciseHintService#getAvailableExerciseHints}
      *
      * @return the display threshold value
      */

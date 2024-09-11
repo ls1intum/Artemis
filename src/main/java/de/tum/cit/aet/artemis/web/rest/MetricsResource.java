@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.service.metrics.LearningMetricsService;
+import de.tum.cit.aet.artemis.exercise.service.LearningMetricsService;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.StudentMetricsDTO;
 
 @Profile(PROFILE_CORE)

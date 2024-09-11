@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service;
 
-import static de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
+import static de.tum.cit.aet.artemis.core.service.connectors.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 import static org.mockito.Mockito.any;
@@ -29,8 +29,8 @@ import com.offbytwo.jenkins.model.FolderJob;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsXmlFileUtils;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.JenkinsXmlFileUtils;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {

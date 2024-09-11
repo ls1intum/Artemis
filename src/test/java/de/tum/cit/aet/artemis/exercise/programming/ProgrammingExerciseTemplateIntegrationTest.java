@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingLanguageFeatureService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)

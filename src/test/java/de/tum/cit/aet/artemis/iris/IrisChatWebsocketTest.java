@@ -15,12 +15,12 @@ import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.service.iris.IrisRateLimitService;
-import de.tum.cit.aet.artemis.service.iris.dto.IrisChatWebsocketDTO;
-import de.tum.cit.aet.artemis.service.iris.session.IrisExerciseChatSessionService;
-import de.tum.cit.aet.artemis.service.iris.websocket.IrisChatWebsocketService;
 
 @ActiveProfiles("iris")
 class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {

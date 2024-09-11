@@ -8,11 +8,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService;
 
 @Profile(PROFILE_CORE)
 @Service

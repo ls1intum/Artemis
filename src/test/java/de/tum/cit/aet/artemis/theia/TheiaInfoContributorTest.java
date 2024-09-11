@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.info.Info;
 import org.springframework.context.annotation.Profile;
 
+import de.tum.cit.aet.artemis.core.component.TheiaInfoContributor;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.service.theia.TheiaInfoContributor;
 
 @Profile(PROFILE_THEIA)
 class TheiaInfoContributorTest {

@@ -32,8 +32,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.course.CourseTestService;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
-import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
-import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -47,6 +45,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 /**

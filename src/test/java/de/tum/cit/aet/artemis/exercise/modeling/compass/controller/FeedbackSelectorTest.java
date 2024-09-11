@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.modeling.domain.ModelElement;
-import de.tum.cit.aet.artemis.service.compass.controller.FeedbackSelector;
+import de.tum.cit.aet.artemis.modeling.service.compass.controller.FeedbackSelector;
 
 class FeedbackSelectorTest {
 

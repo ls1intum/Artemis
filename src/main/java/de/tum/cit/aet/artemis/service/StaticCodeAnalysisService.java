@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisDefaultCategory;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingTriggerService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -18,9 +18,9 @@ import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.jobs.JenkinsJobPermission;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsUtils;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.jobs.JenkinsJobPermission;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.jobs.JenkinsJobPermissionsUtils;
 
 class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

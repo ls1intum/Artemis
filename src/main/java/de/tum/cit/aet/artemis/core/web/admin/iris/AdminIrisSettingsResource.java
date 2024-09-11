@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
-import de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
 /**
  * REST controller for managing {@link IrisSettings}.

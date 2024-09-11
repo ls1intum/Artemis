@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityElement;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLControlFlow;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityElement;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLControlFlow;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship;
 
 class UMLControlFlowTest {
 

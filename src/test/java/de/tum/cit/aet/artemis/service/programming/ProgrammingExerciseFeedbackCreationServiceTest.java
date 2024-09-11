@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestC
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisReportDTO;

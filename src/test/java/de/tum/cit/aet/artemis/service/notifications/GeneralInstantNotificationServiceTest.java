@@ -19,9 +19,13 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
+import de.tum.cit.aet.artemis.communication.service.notifications.GeneralInstantNotificationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
+import de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsCommunicationChannel;
+import de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService;
+import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.service.notifications.push_notifications.ApplePushNotificationService;
-import de.tum.cit.aet.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 
 class GeneralInstantNotificationServiceTest {
 

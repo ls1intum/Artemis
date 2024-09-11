@@ -11,6 +11,7 @@ import org.springframework.cache.CacheManager;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
+import de.tum.cit.aet.artemis.core.util.Tuple;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -25,7 +26,6 @@ import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
 import de.tum.cit.aet.artemis.organization.OrganizationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
-import de.tum.cit.aet.artemis.service.util.Tuple;
 
 /**
  * Test for {@link TitleCacheEvictionService} that should evict entity titles from the title caches if the titles are

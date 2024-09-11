@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.classdiagram;
 
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.ABSTRACT_CLASS;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.CLASS;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.ABSTRACT_CLASS;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType.CLASS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doReturn;
@@ -19,13 +19,13 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClass;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
-import de.tum.cit.aet.artemis.service.compass.utils.CompassConfiguration;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLElement;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLMethod;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLPackage;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.cit.aet.artemis.modeling.service.compass.utils.CompassConfiguration;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 class UMLClassTest {

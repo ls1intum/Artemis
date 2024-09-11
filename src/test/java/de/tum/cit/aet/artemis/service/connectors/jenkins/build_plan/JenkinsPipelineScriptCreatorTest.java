@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.build_plan.JenkinsPipelineScriptCreator;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.BuildPlan;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;

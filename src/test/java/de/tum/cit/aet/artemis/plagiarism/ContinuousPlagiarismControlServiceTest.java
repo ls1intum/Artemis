@@ -39,13 +39,13 @@ import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.plagiarism.service.ContinuousPlagiarismControlService;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
+import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.service.plagiarism.ContinuousPlagiarismControlService;
-import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismCaseService;
-import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismDetectionService;
-import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismPostService;
-import de.tum.cit.aet.artemis.service.plagiarism.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 

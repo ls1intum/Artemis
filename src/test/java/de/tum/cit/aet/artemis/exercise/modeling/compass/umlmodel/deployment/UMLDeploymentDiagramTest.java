@@ -8,12 +8,12 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.AbstractUMLDiagramTest;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponent;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.deployment.UMLArtifact;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.deployment.UMLDeploymentDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.deployment.UMLNode;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponent;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.deployment.UMLArtifact;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.deployment.UMLDeploymentDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.deployment.UMLNode;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.parsers.UMLModelParser;
 
 class UMLDeploymentDiagramTest extends AbstractUMLDiagramTest {
 

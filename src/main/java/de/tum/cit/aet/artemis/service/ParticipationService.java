@@ -23,9 +23,14 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
+import de.tum.cit.aet.artemis.core.service.connectors.GitService;
+import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationService;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -48,11 +53,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
-import de.tum.cit.aet.artemis.service.connectors.GitService;
-import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;
-import de.tum.cit.aet.artemis.service.connectors.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.service.connectors.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 
 /**

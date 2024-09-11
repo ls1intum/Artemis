@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.assessment.domain;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROGRAMMING_GRACE_PERIOD_SECONDS;
 import static de.tum.cit.aet.artemis.core.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
-import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundToNDecimalPlaces;
+import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundToNDecimalPlaces;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
+import de.tum.cit.aet.artemis.assessment.listener.ResultListener;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -56,7 +57,6 @@ import de.tum.cit.aet.artemis.quiz.config.QuizView;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.service.ExerciseDateService;
-import de.tum.cit.aet.artemis.service.listeners.ResultListener;
 import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
 
 /**

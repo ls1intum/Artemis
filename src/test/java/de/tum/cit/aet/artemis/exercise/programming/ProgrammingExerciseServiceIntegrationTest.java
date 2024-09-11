@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepository
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseImportBasicService;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 

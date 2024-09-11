@@ -18,10 +18,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.StandardizedCompetencyService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.service.competency.StandardizedCompetencyService;
-import de.tum.cit.aet.artemis.service.feature.Feature;
-import de.tum.cit.aet.artemis.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaResultDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
 

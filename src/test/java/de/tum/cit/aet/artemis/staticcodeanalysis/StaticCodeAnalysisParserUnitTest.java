@@ -15,8 +15,8 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.service.connectors.localci.scaparser.ReportParser;
-import de.tum.cit.aet.artemis.service.connectors.localci.scaparser.exception.ParserException;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.scaparser.ReportParser;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.scaparser.exception.ParserException;
 
 /**
  * Tests each parser with an example file

@@ -64,7 +64,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
-import de.tum.cit.aet.artemis.service.quiz.QuizPoolService;
+import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 

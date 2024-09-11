@@ -8,12 +8,12 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.AbstractUMLDiagramTest;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.parsers.UMLModelParser;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.usecase.UMLActor;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.usecase.UMLUseCase;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.usecase.UMLUseCaseAssociation;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.usecase.UMLUseCaseDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.usecase.UMLActor;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.usecase.UMLUseCase;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.usecase.UMLUseCaseAssociation;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.usecase.UMLUseCaseDiagram;
 
 class UMLUseCaseDiagramTest extends AbstractUMLDiagramTest {
 

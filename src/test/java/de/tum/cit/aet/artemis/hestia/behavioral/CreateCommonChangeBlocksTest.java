@@ -10,9 +10,9 @@ import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralBlackboard;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.GroupedFile;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.knowledgesource.CreateCommonChangeBlocks;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.GroupedFile;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.knowledgesource.CreateCommonChangeBlocks;
 
 class CreateCommonChangeBlocksTest {
 

@@ -8,11 +8,11 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.AbstractUMLDiagramTest;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.communication.UMLCommunicationDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.communication.UMLCommunicationLink;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.object.UMLObject;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.communication.UMLCommunicationDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.communication.UMLCommunicationLink;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.object.UMLObject;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.parsers.UMLModelParser;
 
 class UMLCommunicationDiagramTest extends AbstractUMLDiagramTest {
 

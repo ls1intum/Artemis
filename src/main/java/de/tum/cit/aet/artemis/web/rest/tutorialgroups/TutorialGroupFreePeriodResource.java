@@ -25,14 +25,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.feature.Feature;
-import de.tum.cit.aet.artemis.service.feature.FeatureToggle;
-import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupFreePeriodService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupFreePeriodService;
 import de.tum.cit.aet.artemis.web.rest.dto.TutorialGroupFreePeriodDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

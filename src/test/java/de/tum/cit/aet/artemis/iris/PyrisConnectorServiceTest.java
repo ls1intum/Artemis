@@ -11,10 +11,10 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisConnectorException;
-import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisConnectorService;
-import de.tum.cit.aet.artemis.service.iris.exception.IrisForbiddenException;
-import de.tum.cit.aet.artemis.service.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisConnectorException;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisConnectorService;
+import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
+import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
 
 class PyrisConnectorServiceTest extends AbstractIrisIntegrationTest {
 

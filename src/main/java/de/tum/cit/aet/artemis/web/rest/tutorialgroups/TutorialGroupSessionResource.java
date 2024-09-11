@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.web.rest.tutorialgroups;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupScheduleService.updateTutorialGroupSession;
+import static de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService.updateTutorialGroupSession;
 import static de.tum.cit.aet.artemis.web.rest.util.DateUtil.interpretInTimeZone;
 
 import java.net.URI;
@@ -39,10 +39,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.feature.Feature;
-import de.tum.cit.aet.artemis.service.feature.FeatureToggle;
-import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
@@ -52,6 +51,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.tutorialgroups.errors.SessionOverlapsWithSessionException;
 

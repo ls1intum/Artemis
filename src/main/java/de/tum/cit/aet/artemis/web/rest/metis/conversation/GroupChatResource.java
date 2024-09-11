@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.web.rest.metis.conversation;
 
 import static de.tum.cit.aet.artemis.communication.ConversationSettings.MAX_GROUP_CHAT_PARTICIPANTS;
+import static de.tum.cit.aet.artemis.communication.service.conversation.GroupChatService.GROUP_CHAT_ENTITY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.service.metis.conversation.GroupChatService.GROUP_CHAT_ENTITY_NAME;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -24,14 +24,14 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
+import de.tum.cit.aet.artemis.communication.service.conversation.GroupChatService;
+import de.tum.cit.aet.artemis.communication.service.conversation.auth.GroupChatAuthorizationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.metis.conversation.ConversationDTOService;
-import de.tum.cit.aet.artemis.service.metis.conversation.ConversationService;
-import de.tum.cit.aet.artemis.service.metis.conversation.GroupChatService;
-import de.tum.cit.aet.artemis.service.metis.conversation.auth.GroupChatAuthorizationService;
-import de.tum.cit.aet.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;

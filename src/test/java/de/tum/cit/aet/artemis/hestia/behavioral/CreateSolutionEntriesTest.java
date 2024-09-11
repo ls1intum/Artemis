@@ -10,9 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.BehavioralBlackboard;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.GroupedFile;
-import de.tum.cit.aet.artemis.service.hestia.behavioral.knowledgesource.CreateSolutionEntries;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralBlackboard;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.GroupedFile;
+import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.knowledgesource.CreateSolutionEntries;
 
 class CreateSolutionEntriesTest {
 

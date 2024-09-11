@@ -26,8 +26,13 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.github.dockerjava.api.DockerClient;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.LocalCIService;
+import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCService;
+import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
+import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.localvcci.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.localvcci.TestBuildAgentConfiguration;
@@ -42,13 +47,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.service.ResourceLoaderService;
-import de.tum.cit.aet.artemis.service.connectors.localci.LocalCIService;
-import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCService;
-import de.tum.cit.aet.artemis.service.exam.ExamLiveEventsService;
-import de.tum.cit.aet.artemis.service.ldap.LdapUserService;
-import de.tum.cit.aet.artemis.service.notifications.GroupNotificationScheduleService;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.

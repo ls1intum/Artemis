@@ -11,15 +11,15 @@ import org.assertj.core.data.Offset;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponent;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponentInterface;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
-import de.tum.cit.aet.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
-import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismService;
-import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismWebsocketService;
-import de.tum.cit.aet.artemis.service.plagiarism.cache.PlagiarismCacheService;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLElement;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponent;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponentDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponentInterface;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponentRelationship;
+import de.tum.cit.aet.artemis.plagiarism.service.ModelingPlagiarismDetectionService;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismWebsocketService;
+import de.tum.cit.aet.artemis.plagiarism.service.cache.PlagiarismCacheService;
 
 public abstract class AbstractUMLDiagramTest {
 

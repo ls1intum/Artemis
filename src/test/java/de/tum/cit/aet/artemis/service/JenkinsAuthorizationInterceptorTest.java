@@ -31,7 +31,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
+import de.tum.cit.aet.artemis.core.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
 
 class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

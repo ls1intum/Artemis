@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -38,9 +38,9 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.service.dto.MaxAndReachablePoints;
-import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.cit.aet.artemis.web.rest.dto.BonusSourceResultDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.CourseScoresDTO;

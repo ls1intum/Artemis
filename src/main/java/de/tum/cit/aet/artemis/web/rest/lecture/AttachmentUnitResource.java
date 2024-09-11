@@ -29,6 +29,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
@@ -41,8 +43,6 @@ import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.LectureUnitProcessingService;
 import de.tum.cit.aet.artemis.service.SlideSplitterService;
-import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
-import de.tum.cit.aet.artemis.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;

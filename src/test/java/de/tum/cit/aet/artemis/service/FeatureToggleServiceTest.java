@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.service.feature.Feature;
-import de.tum.cit.aet.artemis.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 class FeatureToggleServiceTest extends AbstractSpringIntegrationIndependentTest {
 

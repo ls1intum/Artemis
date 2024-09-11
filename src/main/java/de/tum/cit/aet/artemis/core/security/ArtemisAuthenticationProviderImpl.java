@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.core.security;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.service.user.PasswordService;
-import de.tum.cit.aet.artemis.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.core.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 
 public abstract class ArtemisAuthenticationProviderImpl implements ArtemisAuthenticationProvider {
 

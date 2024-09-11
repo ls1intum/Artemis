@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -23,7 +24,6 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.service.exam.ExamDateService;
 import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
 
 /**

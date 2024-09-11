@@ -27,11 +27,11 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.PyrisHealthStatusDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.PyrisModelDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.PyrisHealthStatusDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.PyrisModelDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.chat.exercise.PyrisExerciseChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 
 @Component
 @Profile("iris")

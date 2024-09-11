@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.util;
 
-import static de.tum.cit.aet.artemis.service.util.TimeUtil.toRelativeTime;
+import static de.tum.cit.aet.artemis.core.util.TimeUtil.toRelativeTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;

@@ -18,10 +18,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
+import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.iris.dto.IrisCombinedSettingsDTO;
-import de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService;
 
 /**
  * REST controller for managing {@link IrisSettings}.

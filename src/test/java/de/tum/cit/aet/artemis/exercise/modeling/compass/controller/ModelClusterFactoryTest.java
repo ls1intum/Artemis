@@ -12,8 +12,8 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelCluster;
 import de.tum.cit.aet.artemis.modeling.domain.ModelElement;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.service.compass.controller.ModelClusterFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
-import de.tum.cit.aet.artemis.service.compass.controller.ModelClusterFactory;
 
 class ModelClusterFactoryTest {
 

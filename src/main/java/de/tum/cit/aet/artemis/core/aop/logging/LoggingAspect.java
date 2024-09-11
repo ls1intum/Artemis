@@ -15,7 +15,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
-import de.tum.cit.aet.artemis.service.connectors.vcs.AbstractVersionControlService;
+import de.tum.cit.aet.artemis.core.service.connectors.vcs.AbstractVersionControlService;
 import tech.jhipster.config.JHipsterConstants;
 
 /**

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis;
 
-import static de.tum.cit.aet.artemis.service.util.TimeUtil.toRelativeTime;
+import static de.tum.cit.aet.artemis.core.util.TimeUtil.toRelativeTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
@@ -23,11 +23,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
-import de.tum.cit.aet.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.StudentMetricsDTO;

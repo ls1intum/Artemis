@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -39,7 +40,6 @@ import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
-import de.tum.cit.aet.artemis.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
 import tech.jhipster.web.util.ResponseUtil;
 

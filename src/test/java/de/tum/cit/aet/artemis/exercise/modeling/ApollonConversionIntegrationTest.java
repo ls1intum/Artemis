@@ -20,8 +20,8 @@ import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.connector.apollon.ApollonRequestMockProvider;
-import de.tum.cit.aet.artemis.service.connectors.apollon.ApollonConversionService;
-import de.tum.cit.aet.artemis.service.connectors.apollon.dto.ApollonModelDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.apollon.ApollonConversionService;
+import de.tum.cit.aet.artemis.core.service.connectors.apollon.dto.ApollonModelDTO;
 
 class ApollonConversionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.component;
 
 import static com.google.gson.JsonParser.parseString;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.COMPONENT_DEPENDENCY;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.COMPONENT_INTERFACE_PROVIDED;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.COMPONENT_INTERFACE_REQUIRED;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.COMPONENT_DEPENDENCY;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.COMPONENT_INTERFACE_PROVIDED;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponentRelationship.UMLComponentRelationshipType.COMPONENT_INTERFACE_REQUIRED;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
@@ -11,12 +11,12 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.AbstractUMLDiagramTest;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponent;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponentDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponentInterface;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.component.UMLComponentRelationship;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponent;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponentDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponentInterface;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.component.UMLComponentRelationship;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.parsers.UMLModelParser;
 
 class UMLComponentDiagramTest extends AbstractUMLDiagramTest {
 

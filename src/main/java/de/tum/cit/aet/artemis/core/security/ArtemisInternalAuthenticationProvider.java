@@ -13,8 +13,8 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.service.user.PasswordService;
-import de.tum.cit.aet.artemis.service.user.UserCreationService;
+import de.tum.cit.aet.artemis.core.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 
 @Profile(PROFILE_CORE)
 @Component

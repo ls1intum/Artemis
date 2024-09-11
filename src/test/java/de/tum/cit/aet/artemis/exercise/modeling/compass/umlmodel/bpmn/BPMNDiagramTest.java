@@ -8,25 +8,25 @@ import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.exercise.modeling.compass.umlmodel.AbstractUMLDiagramTest;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNAnnotation;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNCallActivity;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNDataObject;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNDataStore;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNEndEvent;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNFlow;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNGateway;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNGroup;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNIntermediateEvent;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNPool;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNStartEvent;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNSubprocess;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNSwimlane;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNTask;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.bpmn.BPMNTransaction;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLElement;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNAnnotation;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNCallActivity;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNDataObject;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNDataStore;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNEndEvent;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNFlow;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNGateway;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNGroup;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNIntermediateEvent;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNPool;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNStartEvent;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNSubprocess;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNSwimlane;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNTask;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.bpmn.BPMNTransaction;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.parsers.UMLModelParser;
 
 class BPMNDiagramTest extends AbstractUMLDiagramTest {
 

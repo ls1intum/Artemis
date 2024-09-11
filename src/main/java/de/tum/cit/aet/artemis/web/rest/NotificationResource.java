@@ -24,13 +24,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
+import de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsCommunicationChannel;
+import de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel;
-import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService;
-import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupService;
-import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 

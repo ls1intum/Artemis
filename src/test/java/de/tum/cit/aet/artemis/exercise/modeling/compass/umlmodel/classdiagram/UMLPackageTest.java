@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClass;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLPackage;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 class UMLPackageTest {

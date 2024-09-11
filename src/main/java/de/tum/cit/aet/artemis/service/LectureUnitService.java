@@ -23,7 +23,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -36,8 +38,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
-import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
-import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)
 @Service

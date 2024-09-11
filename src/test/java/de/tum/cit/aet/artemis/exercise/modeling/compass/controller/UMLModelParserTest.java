@@ -1,19 +1,19 @@
 package de.tum.cit.aet.artemis.exercise.modeling.compass.controller;
 
 import static com.google.gson.JsonParser.parseString;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_ACTION_NODE;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_FINAL_NODE;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_FORK_NODE;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_INITIAL_NODE;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_MERGE_NODE;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_OBJECT_NODE;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_AGGREGATION;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_BIDIRECTIONAL;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_COMPOSITION;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_DEPENDENCY;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_INHERITANCE;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_REALIZATION;
-import static de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_UNIDIRECTIONAL;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_ACTION_NODE;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_FINAL_NODE;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_FORK_NODE;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_INITIAL_NODE;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_MERGE_NODE;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode.UMLActivityNodeType.ACTIVITY_OBJECT_NODE;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_AGGREGATION;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_BIDIRECTIONAL;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_COMPOSITION;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_DEPENDENCY;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_INHERITANCE;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_REALIZATION;
+import static de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship.UMLRelationshipType.CLASS_UNIDIRECTIONAL;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -24,18 +24,18 @@ import org.junit.jupiter.api.Test;
 
 import com.google.gson.JsonObject;
 
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivity;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLActivityNode;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.activity.UMLControlFlow;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClass;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLPackage;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLDiagram;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLElement;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivity;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLActivityNode;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.activity.UMLControlFlow;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClass.UMLClassType;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLMethod;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLPackage;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLRelationship;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.parsers.UMLModelParser;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
 
 class UMLModelParserTest {

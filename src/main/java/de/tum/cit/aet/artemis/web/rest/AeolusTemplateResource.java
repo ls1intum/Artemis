@@ -19,11 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
+import de.tum.cit.aet.artemis.core.service.connectors.BuildScriptProviderService;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.core.service.connectors.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.service.connectors.BuildScriptProviderService;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.service.connectors.aeolus.Windfile;
 
 /**
  * Service for retrieving aeolus template files based on the programming language, project type, and

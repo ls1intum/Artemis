@@ -17,8 +17,8 @@ import de.tum.cit.aet.artemis.programming.domain.BuildPlan;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 
 @Profile("gitlabci | jenkins")

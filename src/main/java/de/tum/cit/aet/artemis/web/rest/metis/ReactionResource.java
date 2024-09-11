@@ -20,8 +20,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
+import de.tum.cit.aet.artemis.communication.service.ReactionService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.service.metis.ReactionService;
 
 /**
  * REST controller for Reaction on Postings.

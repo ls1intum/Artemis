@@ -39,8 +39,8 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.service.quiz.QuizExerciseService;
-import de.tum.cit.aet.artemis.service.quiz.QuizSubmissionService;
+import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
+import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
 import de.tum.cit.aet.artemis.util.RequestUtilService;
 
 @Isolated

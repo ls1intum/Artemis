@@ -12,10 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLAttribute;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLClass;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.classdiagram.UMLMethod;
-import de.tum.cit.aet.artemis.service.compass.utils.CompassConfiguration;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLAttribute;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLClass;
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.classdiagram.UMLMethod;
+import de.tum.cit.aet.artemis.modeling.service.compass.utils.CompassConfiguration;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 class UMLMethodTest {

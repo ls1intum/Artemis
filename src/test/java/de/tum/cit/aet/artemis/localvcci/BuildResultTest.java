@@ -5,7 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildResult;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildResult;
 
 class BuildResultTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

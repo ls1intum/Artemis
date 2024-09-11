@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageReport;
-import de.tum.cit.aet.artemis.service.hestia.TestwiseCoverageService;
+import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 
 /**

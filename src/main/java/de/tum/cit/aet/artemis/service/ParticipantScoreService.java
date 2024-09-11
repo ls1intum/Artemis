@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static de.tum.cit.aet.artemis.core.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
+import de.tum.cit.aet.artemis.assessment.listener.ResultListener;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
@@ -73,7 +74,7 @@ public class ParticipantScoreService {
      * Currently, both this server based calculation method and the traditional client side calculation method is used
      * side-by-side in exam-scores.component.ts.
      * <p>
-     * The goal is to switch completely to this much faster server based calculation if the {@link de.tum.cit.aet.artemis.service.listeners.ResultListener}
+     * The goal is to switch completely to this much faster server based calculation if the {@link ResultListener}
      * has been battle tested enough.
      *
      * @param exam the exam with registered students, exercise groups and exercises for which to calculate the scores
@@ -99,7 +100,7 @@ public class ParticipantScoreService {
      * Currently, both this server based calculation method and the traditional client side calculation method is used
      * side-by-side in course-scores.component.ts.
      * <p>
-     * The goal is to switch completely to this much faster server based calculation if the {@link de.tum.cit.aet.artemis.service.listeners.ResultListener}
+     * The goal is to switch completely to this much faster server based calculation if the {@link ResultListener}
      * has been battle tested enough.
      *
      * @param course the course with exercises for which to calculate the course scores

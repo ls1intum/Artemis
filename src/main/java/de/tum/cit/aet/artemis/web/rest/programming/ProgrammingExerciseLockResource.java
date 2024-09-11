@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
-import de.tum.cit.aet.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 
 // only available for external version control services
 @Profile("!localvc & core")

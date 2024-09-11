@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.service.exam.ExamSessionService;
+import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import inet.ipaddr.IPAddressString;
 
 class ExamSessionIntegrationTest extends AbstractSpringIntegrationIndependentTest {

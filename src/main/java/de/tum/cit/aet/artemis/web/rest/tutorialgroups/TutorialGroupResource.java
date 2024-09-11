@@ -42,6 +42,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.TutorialGroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -51,15 +53,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
+import de.tum.cit.aet.artemis.core.service.feature.Feature;
+import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
-import de.tum.cit.aet.artemis.service.feature.Feature;
-import de.tum.cit.aet.artemis.service.feature.FeatureToggle;
-import de.tum.cit.aet.artemis.service.notifications.SingleUserNotificationService;
-import de.tum.cit.aet.artemis.service.notifications.TutorialGroupNotificationService;
-import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
-import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupScheduleService;
-import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -67,6 +64,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 

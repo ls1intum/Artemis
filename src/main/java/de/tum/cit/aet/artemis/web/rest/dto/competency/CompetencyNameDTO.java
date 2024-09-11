@@ -6,7 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyNameDTO(long id, String title, double masteryProgress) {

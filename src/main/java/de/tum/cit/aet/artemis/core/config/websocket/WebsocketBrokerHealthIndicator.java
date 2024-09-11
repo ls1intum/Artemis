@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.service.connectors.ConnectorHealth;
+import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 
 @Profile(PROFILE_CORE)
 @Component

@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.plagiarism.domain.modeling;
 
 import jakarta.persistence.Entity;
 
+import de.tum.cit.aet.artemis.modeling.service.compass.umlmodel.UMLElement;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
-import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;
 
 @Entity
 // TODO: use @DiscriminatorValue(value = "M") or even better use integers (because they use less space in the database)

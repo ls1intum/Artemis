@@ -25,14 +25,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.service.AccountService;
 import de.tum.cit.aet.artemis.service.dto.UserDTO;
-import de.tum.cit.aet.artemis.service.notifications.MailService;
-import de.tum.cit.aet.artemis.service.user.UserService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.EmailAlreadyUsedException;

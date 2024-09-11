@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
-import de.tum.cit.aet.artemis.service.connectors.SAML2Service;
+import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.vm.LoginVM;
 

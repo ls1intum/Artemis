@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.web.rest.metis.conversation;
 
+import static de.tum.cit.aet.artemis.communication.service.conversation.ChannelService.CHANNEL_ENTITY_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.service.metis.conversation.ChannelService.CHANNEL_ENTITY_NAME;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,18 +35,18 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationDTOService;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
+import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
+import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;
-import de.tum.cit.aet.artemis.service.metis.conversation.ConversationDTOService;
-import de.tum.cit.aet.artemis.service.metis.conversation.ConversationService;
-import de.tum.cit.aet.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
-import de.tum.cit.aet.artemis.service.notifications.SingleUserNotificationService;
-import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
+import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.ErrorConstants;

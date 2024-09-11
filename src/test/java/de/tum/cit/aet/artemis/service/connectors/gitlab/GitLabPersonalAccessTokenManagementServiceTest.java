@@ -32,7 +32,9 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.GitLabException;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.GitLabPersonalAccessTokenManagementService;
+import de.tum.cit.aet.artemis.core.service.connectors.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {

@@ -30,12 +30,12 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.buildagent.BuildAgentDockerService;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.buildagent.BuildLogsMap;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildConfig;
+import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.BuildStatus;
-import de.tum.cit.aet.artemis.service.connectors.localci.buildagent.BuildAgentDockerService;
-import de.tum.cit.aet.artemis.service.connectors.localci.buildagent.BuildLogsMap;
-import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildConfig;
-import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
