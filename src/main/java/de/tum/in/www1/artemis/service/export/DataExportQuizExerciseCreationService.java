@@ -100,27 +100,31 @@ public class DataExportQuizExerciseCreationService {
             for (var question : quizQuestions) {
                 var submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
                 // if this question wasn't answered, the submitted answer is null
-                if (submittedAnswer != null) {
-                    switch (submittedAnswer) {
-                        case DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer -> {
-                            try {
-                                dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
-                            }
-                            catch (IOException e) {
-                                errorOccurred = true;
-                                exportErrors.ifPresent(errors -> errors.add("Failed to export drag and drop answers for quiz submission " + submission.getId()
-                                        + " of quiz exercise " + quizExercise.getTitle() + " with id " + quizExercise.getId()));
-                            }
+                if (submittedAnswer == null) {
+                    // go to next question
+                    continue;
+                }
+
+                switch (submittedAnswer) {
+                    case DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer -> {
+                        try {
+                            dragAndDropQuizAnswerConversionService.convertDragAndDropQuizAnswerAndStoreAsPdf(dragAndDropSubmittedAnswer, outputDir, includeResults);
                         }
-                        case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer ->
-                            shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer, includeResults));
-                        case MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer ->
-                            multipleChoiceQuestionsSubmissions.add(createExportForMultipleChoiceAnswerQuestion(multipleChoiceSubmittedAnswer, includeResults));
-                        default -> {
+                        catch (IOException e) {
+                            errorOccurred = true;
+                            exportErrors.ifPresent(errors -> errors.add("Failed to export drag and drop answers for quiz submission " + submission.getId() + " of quiz exercise "
+                                    + quizExercise.getTitle() + " with id " + quizExercise.getId()));
                         }
+                    }
+                    case ShortAnswerSubmittedAnswer shortAnswerSubmittedAnswer ->
+                        shortAnswerQuestionsSubmissions.add(createExportForShortAnswerQuestion(shortAnswerSubmittedAnswer, includeResults));
+                    case MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer ->
+                        multipleChoiceQuestionsSubmissions.add(createExportForMultipleChoiceAnswerQuestion(multipleChoiceSubmittedAnswer, includeResults));
+                    default -> {
                     }
                 }
             }
+
             if (!multipleChoiceQuestionsSubmissions.isEmpty()) {
                 try {
                     FileUtils.writeLines(outputDir.resolve("quiz_submission_" + submission.getId() + "_multiple_choice_questions_answers" + TXT_FILE_EXTENSION).toFile(),

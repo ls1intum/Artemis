@@ -1371,6 +1371,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
                     participation.getSubmissions().add(programmingSubmission.get());
                     continue;
                 }
+
                 var submission = participation.getSubmissions().iterator().next();
                 switch (exercise) {
                     case ModelingExercise modelingExercise -> {
