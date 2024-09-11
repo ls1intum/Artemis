@@ -44,6 +44,7 @@ import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.lti.Lti13Service;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.metrics.LearningMetricsService;
 import de.tum.in.www1.artemis.service.notifications.ConversationNotificationService;
 import de.tum.in.www1.artemis.service.notifications.GeneralInstantNotificationService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -163,6 +164,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected CompetencyProgressService competencyProgressService;
+
+    @SpyBean
+    protected LearningMetricsService learningMetricsService;
 
     @Autowired
     protected RequestUtilService request;

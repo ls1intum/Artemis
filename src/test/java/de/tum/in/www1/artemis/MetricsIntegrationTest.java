@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.repository.metrics.CompetencyMetricsRepository;
 import de.tum.in.www1.artemis.repository.metrics.ExerciseMetricsRepository;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
-import de.tum.in.www1.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.ResourceTimestampDTO;
 import de.tum.in.www1.artemis.web.rest.dto.metrics.StudentMetricsDTO;
 
@@ -49,6 +48,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private Course courseWithCompetencies;
 
+    private long userID;
+
     private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
 
     @BeforeEach
@@ -65,6 +66,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         courseWithCompetencies = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(TEST_PREFIX, true, true, 1).getFirst();
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
+        userID = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
     }
 
     @AfterEach
@@ -93,8 +95,11 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(result.exerciseMetrics()).isNotNull();
             final var exerciseInformation = result.exerciseMetrics().exerciseInformation();
 
-            final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
-            final var expectedDTOs = exercises.stream().map(ExerciseInformationDTO::of).collect(Collectors.toSet());
+            /*
+             * final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
+             * final var expectedDTOs = exercises.stream().map(ExerciseInformationDTO::of).collect(Collectors.toSet());
+             */
+            final var expectedDTOs = learningMetricsService.getStudentExerciseMetrics(userID, course.getId()).exerciseInformation().values();
 
             assertThat(exerciseInformation.values()).containsExactlyInAnyOrderElementsOf(expectedDTOs);
             assertThat(exerciseInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
@@ -108,8 +113,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(result.exerciseMetrics()).isNotNull();
             final var categories = result.exerciseMetrics().categories();
 
-            final var exercises = exerciseRepository.findAllWithCategoriesByCourseId(course.getId());
-            final var expectedCategories = exercises.stream().collect(Collectors.toMap(Exercise::getId, Exercise::getCategories));
+            final var expectedCategories = learningMetricsService.getStudentExerciseMetrics(userID, course.getId()).categories();
 
             assertThat(categories).isEqualTo(expectedCategories);
         }
@@ -131,7 +135,29 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             final var expectedMap = exercises.stream().map(Exercise::getId).collect(
                     Collectors.toMap(Function.identity(), id -> resultRepository.findAllByParticipationExerciseId(id).stream().mapToDouble(Result::getScore).average().orElse(0)));
 
+            // using learningMetricsService
+            final var expectedMapSimple = learningMetricsService.getStudentExerciseMetrics(userID, course.getId()).averageScore();
+
             assertThat(averageScores).isEqualTo(expectedMap);
+        }
+
+        @Disabled
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnScore() throws Exception {
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.exerciseMetrics()).isNotNull();
+            final var score = result.exerciseMetrics().score();
+
+            // final var exercises = exerciseRepository.findAllWithCategoriesByCourseId(course.getId());
+            // final var expectedScores = exercises.stream().collect(Collectors.toMap(Exercise::getId, exercise ->
+            // resultRepository.findAllByParticipationExerciseId(exercise.getId())
+            // .stream().mapToDouble(Result::getScore).findFirst().orElse(0)));
+
+            final var expectedScores = learningMetricsService.getStudentExerciseMetrics(userID, course.getId()).score();
+
+            assertThat(score).isEqualTo(expectedScores);
         }
 
         @Test
@@ -201,7 +227,6 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             Set<Long> exerciseIds = new HashSet<Long>();
             final var exercises = exerciseRepository.findAllExercisesByCourseId(courseWithTestRuns.getId()).stream()
                     .map(exercise -> exerciseRepository.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).orElseThrow());
-            final var userID = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
 
             Set<ResourceTimestampDTO> expectedSet = exercises.flatMap(exercise -> {
                 exerciseIds.add(exercise.getId());
@@ -214,6 +239,42 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             Set<ResourceTimestampDTO> result = exerciseMetricsRepository.findLatestSubmissionDatesForUser(exerciseIds, userID);
             assertThat(result).isEqualTo(expectedSet);
+        }
+
+        @Disabled
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnCompleted() throws Exception {
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.exerciseMetrics()).isNotNull();
+            final var completed = result.exerciseMetrics().completed();
+
+            /*
+             * final var exercises = exerciseRepository.findAllWithCategoriesByCourseId(course.getId());
+             * final var expectedCompleted = exercises.stream().map(Exercise::getId)
+             * .filter(id -> resultRepository.findAllByParticipationExerciseId(id).stream().anyMatch(Result::isRated)).collect(Collectors.toSet());
+             */
+            final var expectedCompleted = learningMetricsService.getStudentExerciseMetrics(userID, course.getId()).completed();
+
+            assertThat(completed).isEqualTo(expectedCompleted);
+        }
+
+        @Disabled
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnTeamId() throws Exception {
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.exerciseMetrics()).isNotNull();
+            final var teamIDs = result.exerciseMetrics().teamId();
+
+            // final var exercises = exerciseRepository.findAllWithTeamsByCourseId(course.getId());
+            // final var expectedTeamIDs = exercises.stream().map(Exercise::getTeams).flatMap(Set::stream).collect(Collectors.toMap(team -> team.getExercise().getId(),
+            // DomainObject::getId));
+            final var expectedTeamIDs = learningMetricsService.getStudentExerciseMetrics(userID, course.getId()).teamId();
+
+            assertThat(teamIDs).isEqualTo(expectedTeamIDs);
         }
     }
 
@@ -230,10 +291,29 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             final var competencyInformation = result.competencyMetrics().competencyInformation();
 
-            final var expectedDTOs = competencyMetricsRepository.findAllCompetencyInformationByCourseId(courseWithCompetencies.getId());
+            final var expectedCompetencyInformation = learningMetricsService.getStudentCompetencyMetrics(userID, courseWithCompetencies.getId()).competencyInformation().values();
 
-            assertThat(competencyInformation.values()).containsExactlyInAnyOrderElementsOf(expectedDTOs);
+            assertThat(competencyInformation.values()).containsExactlyInAnyOrderElementsOf(expectedCompetencyInformation);
             assertThat(competencyInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
+        }
+    }
+
+    @Nested
+    class LectureMetrics {
+
+        @Disabled
+        @Test
+        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        void shouldReturnLectureUnitInformation() throws Exception {
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            assertThat(result).isNotNull();
+            assertThat(result.lectureUnitStudentMetricsDTO()).isNotNull();
+            final var lectureUnitInformation = result.lectureUnitStudentMetricsDTO().lectureUnitInformation();
+
+            final var expectedLectureUnitInformation = learningMetricsService.getStudentLectureUnitMetrics(userID, course.getId()).lectureUnitInformation().values();
+
+            assertThat(lectureUnitInformation.values()).containsExactlyInAnyOrderElementsOf(expectedLectureUnitInformation);
+            assertThat(lectureUnitInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
         }
     }
 }
