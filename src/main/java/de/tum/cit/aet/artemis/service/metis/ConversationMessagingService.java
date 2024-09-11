@@ -26,6 +26,11 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
 
+import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.ConversationNotificationRecipientSummary;
@@ -43,13 +48,8 @@ import de.tum.cit.aet.artemis.domain.notification.ConversationNotification;
 import de.tum.cit.aet.artemis.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.domain.notification.SingleUserNotificationFactory;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
-import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
-import de.tum.cit.aet.artemis.repository.SingleUserNotificationRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.metis.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ConversationService;

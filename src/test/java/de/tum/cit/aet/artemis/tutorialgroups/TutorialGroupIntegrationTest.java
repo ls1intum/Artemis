@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -31,6 +30,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.common.collect.ImmutableSet;
 
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.DisplayPriority;
 import de.tum.cit.aet.artemis.domain.enumeration.Language;
@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
-import de.tum.cit.aet.artemis.repository.metis.PostRepository;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
 import de.tum.cit.aet.artemis.user.UserFactory;
 import de.tum.cit.aet.artemis.web.rest.tutorialgroups.TutorialGroupResource;

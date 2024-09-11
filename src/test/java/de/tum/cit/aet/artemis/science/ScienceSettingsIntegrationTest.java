@@ -12,9 +12,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.atlas.repository.science.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.science.ScienceSetting;
-import de.tum.cit.aet.artemis.repository.science.ScienceSettingRepository;
 
 class ScienceSettingsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

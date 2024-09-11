@@ -22,11 +22,11 @@ import org.springframework.security.saml2.provider.service.authentication.Saml2A
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.SAML2Properties;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.domain.Authority;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.notifications.MailService;
 import de.tum.cit.aet.artemis.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.service.user.UserService;

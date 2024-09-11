@@ -27,9 +27,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.domain.DataExport;
 import de.tum.cit.aet.artemis.domain.enumeration.DataExportState;
-import de.tum.cit.aet.artemis.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.service.export.DataExportService;
 import de.tum.cit.aet.artemis.web.rest.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.RequestDataExportDTO;

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.domain.iris.message.IrisMessage;
 import de.tum.cit.aet.artemis.domain.iris.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.domain.iris.session.IrisSession;
-import de.tum.cit.aet.artemis.repository.iris.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 
 /**
  * Service for managing Iris messages.

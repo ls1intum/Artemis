@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Team;
@@ -30,9 +31,8 @@ import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.cit.aet.artemis.repository.metis.PostRepository;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismComparisonRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismVerdictDTO;
 

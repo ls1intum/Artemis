@@ -14,10 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.atlas.repository.competency.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.competency.Competency;
 import de.tum.cit.aet.artemis.domain.competency.CompetencyProgress;
-import de.tum.cit.aet.artemis.repository.competency.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolPairDTO;
 
 class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentTest {

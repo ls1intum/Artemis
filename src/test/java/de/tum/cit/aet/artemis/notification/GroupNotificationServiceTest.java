@@ -44,6 +44,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
+import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Attachment;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -62,13 +65,10 @@ import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
 import de.tum.cit.aet.artemis.domain.notification.Notification;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.quiz.QuizExerciseFactory;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
-import de.tum.cit.aet.artemis.repository.ExamRepository;
-import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.repository.NotificationRepository;
-import de.tum.cit.aet.artemis.repository.NotificationSettingRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 

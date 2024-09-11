@@ -21,8 +21,8 @@ import de.tum.cit.aet.artemis.domain.Lecture;
 import de.tum.cit.aet.artemis.domain.competency.Competency;
 import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
 import de.tum.cit.aet.artemis.domain.lecture.TextUnit;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
-import de.tum.cit.aet.artemis.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 
 class TextUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

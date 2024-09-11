@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.icl.ssh.SshConstants;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;

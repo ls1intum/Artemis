@@ -16,6 +16,8 @@ import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractAthenaTest;
+import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.domain.Feedback;
 import de.tum.cit.aet.artemis.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.domain.GradingInstruction;
@@ -32,10 +34,8 @@ import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.cit.aet.artemis.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.TextBlockRepository;
-import de.tum.cit.aet.artemis.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 class AthenaFeedbackSendingServiceTest extends AbstractAthenaTest {
 

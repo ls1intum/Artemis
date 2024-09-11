@@ -31,6 +31,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.lti.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -46,12 +49,9 @@ import de.tum.cit.aet.artemis.domain.lti.Lti13LaunchRequest;
 import de.tum.cit.aet.artemis.domain.lti.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.domain.lti.Scopes;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
-import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.repository.Lti13ResourceLaunchRepository;
-import de.tum.cit.aet.artemis.repository.LtiPlatformConfigurationRepository;
-import de.tum.cit.aet.artemis.repository.ResultRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
+import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.service.OnlineCourseConfigurationService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

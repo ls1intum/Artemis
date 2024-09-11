@@ -13,23 +13,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.InitializationState;
 import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
-import de.tum.cit.aet.artemis.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.repository.ResultRepository;
-import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.repository.TextSubmissionRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.service.connectors.athena.AthenaSubmissionSelectionService;
 import de.tum.cit.aet.artemis.service.exam.ExamDateService;
+import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 
 @Profile(PROFILE_CORE)

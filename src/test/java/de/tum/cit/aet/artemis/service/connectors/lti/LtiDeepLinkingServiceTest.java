@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.domain.TextExercise;
-import de.tum.cit.aet.artemis.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 

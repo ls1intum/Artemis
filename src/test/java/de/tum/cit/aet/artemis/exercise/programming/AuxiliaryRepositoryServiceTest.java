@@ -14,8 +14,8 @@ import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
-import de.tum.cit.aet.artemis.repository.AuxiliaryRepositoryRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.programming.AuxiliaryRepositoryService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

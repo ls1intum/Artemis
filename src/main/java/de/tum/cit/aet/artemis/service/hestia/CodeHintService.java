@@ -17,9 +17,9 @@ import de.tum.cit.aet.artemis.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.domain.iris.session.IrisHestiaSession;
-import de.tum.cit.aet.artemis.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.service.iris.session.IrisHestiaSessionService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

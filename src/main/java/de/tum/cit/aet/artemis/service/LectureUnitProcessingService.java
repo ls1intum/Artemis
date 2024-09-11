@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.domain.Attachment;
 import de.tum.cit.aet.artemis.domain.Lecture;
 import de.tum.cit.aet.artemis.domain.enumeration.AttachmentType;
 import de.tum.cit.aet.artemis.domain.lecture.AttachmentUnit;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;

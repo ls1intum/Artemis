@@ -14,12 +14,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.competency.CompetencyJolRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.domain.competency.CompetencyProgress;
-import de.tum.cit.aet.artemis.repository.CompetencyProgressRepository;
-import de.tum.cit.aet.artemis.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.competency.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolPairDTO;

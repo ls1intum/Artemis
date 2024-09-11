@@ -20,12 +20,12 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
+import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
+import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.domain.competency.Source;
 import de.tum.cit.aet.artemis.domain.competency.StandardizedCompetency;
-import de.tum.cit.aet.artemis.repository.SourceRepository;
-import de.tum.cit.aet.artemis.repository.competency.KnowledgeAreaRepository;
-import de.tum.cit.aet.artemis.repository.competency.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.SourceDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO;

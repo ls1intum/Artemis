@@ -39,10 +39,10 @@ import de.tum.cit.aet.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
-import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.service.plagiarism.ContinuousPlagiarismControlService;
 import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismDetectionService;

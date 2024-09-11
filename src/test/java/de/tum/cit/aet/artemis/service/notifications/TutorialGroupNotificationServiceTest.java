@@ -26,6 +26,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.NotificationSetting;
@@ -36,11 +38,9 @@ import de.tum.cit.aet.artemis.domain.notification.Notification;
 import de.tum.cit.aet.artemis.domain.notification.TutorialGroupNotification;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupRegistration;
-import de.tum.cit.aet.artemis.repository.NotificationSettingRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {

@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.domain.Lecture;
 import de.tum.cit.aet.artemis.domain.lecture.ExerciseUnit;
 import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.LectureUtilService;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class LectureImportServiceTest extends AbstractSpringIntegrationIndependentTest {

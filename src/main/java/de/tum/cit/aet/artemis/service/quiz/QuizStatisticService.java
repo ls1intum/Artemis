@@ -12,17 +12,17 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
 import de.tum.cit.aet.artemis.domain.quiz.QuizPointStatistic;
 import de.tum.cit.aet.artemis.domain.quiz.QuizQuestion;
 import de.tum.cit.aet.artemis.domain.quiz.QuizQuestionStatistic;
-import de.tum.cit.aet.artemis.repository.QuizPointStatisticRepository;
-import de.tum.cit.aet.artemis.repository.QuizQuestionStatisticRepository;
-import de.tum.cit.aet.artemis.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.repository.ResultRepository;
-import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizPointStatisticRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.service.connectors.lti.LtiNewResultService;
 

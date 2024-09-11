@@ -7,8 +7,8 @@ import jakarta.ws.rs.BadRequestException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.domain.competency.KnowledgeArea;
-import de.tum.cit.aet.artemis.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 

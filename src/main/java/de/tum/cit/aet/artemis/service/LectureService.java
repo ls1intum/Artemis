@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.domain.Attachment;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Lecture;
@@ -21,8 +22,7 @@ import de.tum.cit.aet.artemis.domain.lecture.AttachmentUnit;
 import de.tum.cit.aet.artemis.domain.lecture.ExerciseUnit;
 import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
 import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;

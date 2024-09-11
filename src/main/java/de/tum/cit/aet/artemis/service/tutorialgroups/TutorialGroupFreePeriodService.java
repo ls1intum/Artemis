@@ -13,8 +13,8 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupFreePeriodRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 
 @Profile(PROFILE_CORE)
 @Service

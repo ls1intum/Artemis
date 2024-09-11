@@ -22,6 +22,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
 import de.tum.cit.aet.artemis.domain.Attachment;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -35,12 +36,11 @@ import de.tum.cit.aet.artemis.domain.lecture.OnlineUnit;
 import de.tum.cit.aet.artemis.domain.lecture.TextUnit;
 import de.tum.cit.aet.artemis.domain.lecture.VideoUnit;
 import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
-import de.tum.cit.aet.artemis.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
-import de.tum.cit.aet.artemis.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 
 class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {

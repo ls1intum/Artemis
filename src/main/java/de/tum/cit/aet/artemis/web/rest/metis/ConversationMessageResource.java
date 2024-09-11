@@ -28,13 +28,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.enumeration.DisplayPriority;
 import de.tum.cit.aet.artemis.domain.metis.CreatedConversationMessage;
 import de.tum.cit.aet.artemis.domain.metis.Post;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.metis.ConversationMessagingService;
 import de.tum.cit.aet.artemis.service.util.TimeLogUtil;

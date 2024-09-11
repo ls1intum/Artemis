@@ -33,8 +33,8 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 
-import de.tum.cit.aet.artemis.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.repository.base.RepositoryImpl;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 
 /**
  * This class contains architecture tests for the persistence layer.

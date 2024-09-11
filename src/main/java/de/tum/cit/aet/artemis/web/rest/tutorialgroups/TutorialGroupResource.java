@@ -43,6 +43,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
@@ -53,11 +55,6 @@ import de.tum.cit.aet.artemis.domain.enumeration.tutorialgroups.TutorialGroupReg
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
 import de.tum.cit.aet.artemis.service.feature.Feature;
@@ -67,6 +64,9 @@ import de.tum.cit.aet.artemis.service.notifications.TutorialGroupNotificationSer
 import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupScheduleService;
 import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupService;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 

@@ -14,16 +14,16 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupRegistration;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ConversationService;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 
 /**
  * Service for managing the channel connected to a tutorial group.

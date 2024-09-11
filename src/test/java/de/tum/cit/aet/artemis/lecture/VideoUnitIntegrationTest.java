@@ -21,8 +21,8 @@ import de.tum.cit.aet.artemis.domain.Lecture;
 import de.tum.cit.aet.artemis.domain.competency.Competency;
 import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
 import de.tum.cit.aet.artemis.domain.lecture.VideoUnit;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
-import de.tum.cit.aet.artemis.repository.VideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.VideoUnitRepository;
 
 class VideoUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

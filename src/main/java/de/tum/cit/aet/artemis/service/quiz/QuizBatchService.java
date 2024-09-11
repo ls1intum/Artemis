@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.domain.enumeration.QuizMode;
 import de.tum.cit.aet.artemis.domain.quiz.QuizBatch;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
 import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
-import de.tum.cit.aet.artemis.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.repository.QuizBatchRepository;
-import de.tum.cit.aet.artemis.repository.QuizSubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 
 @Profile(PROFILE_CORE)

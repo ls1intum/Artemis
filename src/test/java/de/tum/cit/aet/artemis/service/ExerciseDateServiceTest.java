@@ -21,15 +21,15 @@ import de.tum.cit.aet.artemis.domain.exam.StudentExam;
 import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
 import de.tum.cit.aet.artemis.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.repository.ExamRepository;
-import de.tum.cit.aet.artemis.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class ExerciseDateServiceTest extends AbstractSpringIntegrationIndependentTest {

@@ -18,6 +18,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Feedback;
@@ -28,15 +32,11 @@ import de.tum.cit.aet.artemis.domain.TextBlock;
 import de.tum.cit.aet.artemis.domain.TextBlockType;
 import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.domain.TextSubmission;
-import de.tum.cit.aet.artemis.repository.ExampleSubmissionRepository;
-import de.tum.cit.aet.artemis.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.repository.ResultRepository;
-import de.tum.cit.aet.artemis.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.repository.TextBlockRepository;
-import de.tum.cit.aet.artemis.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.repository.TextSubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.service.metis.conversation.ChannelService;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 
 @Profile(PROFILE_CORE)
 @Service

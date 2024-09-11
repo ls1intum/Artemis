@@ -12,7 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.user.PasswordService;
 import de.tum.cit.aet.artemis.service.user.UserCreationService;
 

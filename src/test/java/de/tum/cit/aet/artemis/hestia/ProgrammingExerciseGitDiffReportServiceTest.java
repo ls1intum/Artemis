@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.cit.aet.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.HestiaUtilTestService;

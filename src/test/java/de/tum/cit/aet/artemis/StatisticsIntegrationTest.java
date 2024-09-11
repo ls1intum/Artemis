@@ -20,6 +20,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.GradingScaleFactory;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.GradingScale;
 import de.tum.cit.aet.artemis.domain.TextExercise;
@@ -32,15 +36,11 @@ import de.tum.cit.aet.artemis.domain.enumeration.StatisticsView;
 import de.tum.cit.aet.artemis.domain.metis.AnswerPost;
 import de.tum.cit.aet.artemis.domain.metis.Post;
 import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.repository.metis.AnswerPostRepository;
-import de.tum.cit.aet.artemis.repository.metis.PostRepository;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 

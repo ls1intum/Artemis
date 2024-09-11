@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismDetectionService;
 import de.tum.cit.aet.artemis.service.plagiarism.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;

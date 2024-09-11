@@ -10,14 +10,14 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Submission;
 import de.tum.cit.aet.artemis.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.domain.TextSubmission;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.modeling.ModelingSubmission;
 import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
-import de.tum.cit.aet.artemis.repository.SubmissionVersionRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
+import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 
 @Profile(PROFILE_CORE)
 @Service

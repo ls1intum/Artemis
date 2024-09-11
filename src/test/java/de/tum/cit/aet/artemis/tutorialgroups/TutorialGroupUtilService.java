@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
@@ -24,12 +25,11 @@ import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupFreePeriodRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to tutorial groups for use in integration tests.

@@ -25,10 +25,10 @@ import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismStatus;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismSubmissionElement;
-import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.service.util.TimeLogUtil;
 
 /**

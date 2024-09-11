@@ -21,8 +21,8 @@ import de.tum.cit.aet.artemis.domain.iris.settings.IrisHestiaSubSettings;
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.AbstractIrisIntegrationTest;
-import de.tum.cit.aet.artemis.repository.iris.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.repository.iris.IrisSubSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSubSettingsRepository;
 import de.tum.cit.aet.artemis.service.iris.dto.IrisCombinedSettingsDTO;
 
 class IrisSettingsIntegrationTest extends AbstractIrisIntegrationTest {

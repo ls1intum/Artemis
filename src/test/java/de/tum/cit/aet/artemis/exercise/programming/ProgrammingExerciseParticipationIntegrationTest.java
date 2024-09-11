@@ -37,11 +37,11 @@ import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.cit.aet.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.CommitInfoDTO;
 
 class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringIntegrationIndependentTest {

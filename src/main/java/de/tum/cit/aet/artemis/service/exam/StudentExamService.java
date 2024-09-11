@@ -33,6 +33,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.FileUploadExercise;
@@ -57,15 +58,13 @@ import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.domain.quiz.SubmittedAnswer;
 import de.tum.cit.aet.artemis.domain.quiz.compare.DnDMapping;
 import de.tum.cit.aet.artemis.domain.quiz.compare.SAMapping;
-import de.tum.cit.aet.artemis.repository.ExamRepository;
-import de.tum.cit.aet.artemis.repository.ModelingSubmissionRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.repository.TextSubmissionRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
+import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.SubmissionService;
 import de.tum.cit.aet.artemis.service.SubmissionVersionService;
@@ -74,6 +73,7 @@ import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.cit.aet.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.service.quiz.QuizPoolService;
 import de.tum.cit.aet.artemis.service.util.ExamExerciseStartPreparationStatus;
+import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 

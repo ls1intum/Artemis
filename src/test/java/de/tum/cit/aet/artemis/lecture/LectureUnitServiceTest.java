@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.domain.Lecture;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
 import de.tum.cit.aet.artemis.domain.lecture.LectureUnitCompletion;
-import de.tum.cit.aet.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.service.LectureUnitService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 

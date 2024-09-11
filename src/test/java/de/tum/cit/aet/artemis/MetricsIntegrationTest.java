@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.repository.metrics.ExerciseMetricsRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
 import de.tum.cit.aet.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.ResourceTimestampDTO;

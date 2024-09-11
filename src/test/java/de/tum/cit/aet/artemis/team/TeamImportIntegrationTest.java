@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.domain.Team;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
 import de.tum.cit.aet.artemis.domain.enumeration.TeamImportStrategyType;
-import de.tum.cit.aet.artemis.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 
 class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

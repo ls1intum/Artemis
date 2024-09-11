@@ -14,11 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Organization;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.OrganizationCountDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 

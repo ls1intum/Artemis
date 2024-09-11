@@ -66,6 +66,9 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
+import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -96,12 +99,9 @@ import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.cit.aet.artemis.exercise.fileupload.FileUploadExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.repository.NotificationRepository;
-import de.tum.cit.aet.artemis.repository.NotificationSettingRepository;
-import de.tum.cit.aet.artemis.repository.ResultRepository;
 import de.tum.cit.aet.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 

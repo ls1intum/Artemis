@@ -26,8 +26,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.repository.BuildLogEntryRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionRepository;
+import de.tum.cit.aet.artemis.programming.repository.BuildLogEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;
 
 @Profile(PROFILE_CORE)

@@ -25,10 +25,10 @@ import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
 import de.tum.cit.aet.artemis.domain.lecture.OnlineUnit;
 import de.tum.cit.aet.artemis.domain.lecture.TextUnit;
 import de.tum.cit.aet.artemis.domain.lecture.VideoUnit;
-import de.tum.cit.aet.artemis.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
-import de.tum.cit.aet.artemis.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.service.connectors.pyris.PyrisWebhookService;
 
 @Profile(PROFILE_CORE)

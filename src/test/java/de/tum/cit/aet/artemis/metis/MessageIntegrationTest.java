@@ -45,6 +45,10 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
@@ -61,10 +65,6 @@ import de.tum.cit.aet.artemis.domain.notification.ConversationNotification;
 import de.tum.cit.aet.artemis.domain.notification.Notification;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
-import de.tum.cit.aet.artemis.repository.metis.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ConversationNotificationRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.PostDTO;
 

@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseGradingService;
 

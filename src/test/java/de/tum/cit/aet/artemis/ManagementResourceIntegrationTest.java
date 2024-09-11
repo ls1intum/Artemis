@@ -21,14 +21,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository;
 import de.tum.cit.aet.artemis.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.repository.PersistenceAuditEventRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.service.feature.Feature;
 import de.tum.cit.aet.artemis.service.feature.FeatureToggleService;

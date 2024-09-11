@@ -3,11 +3,11 @@ package de.tum.cit.aet.artemis;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Result;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.scores.StudentScore;
-import de.tum.cit.aet.artemis.repository.StudentScoreRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to student scores for use in integration tests.

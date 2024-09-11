@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.GradeStep;
 import de.tum.cit.aet.artemis.domain.GradeType;
@@ -20,8 +21,7 @@ import de.tum.cit.aet.artemis.domain.GradingScale;
 import de.tum.cit.aet.artemis.domain.enumeration.SortingOrder;
 import de.tum.cit.aet.artemis.domain.exam.Exam;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
-import de.tum.cit.aet.artemis.repository.ExamRepository;
-import de.tum.cit.aet.artemis.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 
 class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTest {

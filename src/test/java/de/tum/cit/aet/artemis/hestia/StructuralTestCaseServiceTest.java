@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.domain.enumeration.Visibility;
 import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.service.hestia.structural.StructuralSolutionEntryGenerationException;
 import de.tum.cit.aet.artemis.service.hestia.structural.StructuralTestCaseService;
 import de.tum.cit.aet.artemis.user.UserUtilService;

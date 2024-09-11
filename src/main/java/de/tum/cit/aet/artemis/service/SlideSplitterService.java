@@ -25,7 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.cit.aet.artemis.domain.lecture.AttachmentUnit;
 import de.tum.cit.aet.artemis.domain.lecture.Slide;
-import de.tum.cit.aet.artemis.repository.SlideRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
 
 /**

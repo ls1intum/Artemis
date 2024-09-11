@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.enumeration.AttachmentType;
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.domain.lecture.AttachmentUnit;
-import de.tum.cit.aet.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.connectors.pyris.dto.PyrisPipelineExecutionSettingsDTO;
 import de.tum.cit.aet.artemis.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureUnitWebhookDTO;

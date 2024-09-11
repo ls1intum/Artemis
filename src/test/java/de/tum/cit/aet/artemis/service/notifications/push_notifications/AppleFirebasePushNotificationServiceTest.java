@@ -24,6 +24,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType;
 import de.tum.cit.aet.artemis.domain.notification.GroupNotification;
@@ -31,7 +32,6 @@ import de.tum.cit.aet.artemis.domain.notification.Notification;
 import de.tum.cit.aet.artemis.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.domain.push_notification.PushNotificationDeviceType;
-import de.tum.cit.aet.artemis.repository.PushNotificationDeviceConfigurationRepository;
 
 class AppleFirebasePushNotificationServiceTest {
 

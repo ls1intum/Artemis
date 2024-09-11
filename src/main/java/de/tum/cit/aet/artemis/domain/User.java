@@ -39,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.domain.exam.ExamUser;
@@ -146,7 +147,7 @@ public class User extends AbstractAuditingEntity implements Participant {
      * This is used for checking if a access token needs to be renewed.
      *
      * @see de.tum.cit.aet.artemis.service.connectors.vcs.VcsTokenRenewalService
-     * @see de.tum.cit.aet.artemis.repository.UserRepository#getUsersWithAccessTokenExpirationDateBefore
+     * @see UserRepository#getUsersWithAccessTokenExpirationDateBefore
      */
     @Nullable
     @JsonIgnore

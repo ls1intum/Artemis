@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.competency.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.User;
@@ -16,11 +19,8 @@ import de.tum.cit.aet.artemis.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
-import de.tum.cit.aet.artemis.repository.CompetencyRelationRepository;
-import de.tum.cit.aet.artemis.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.repository.competency.CompetencyJolRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 /**
  * Service responsible for initializing the database with specific test data related to competencies for use in integration tests.

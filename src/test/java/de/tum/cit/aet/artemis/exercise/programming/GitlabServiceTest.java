@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.domain.Commit;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.domain.participation.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.service.exam.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.service.notifications.GroupNotificationScheduleService;
 

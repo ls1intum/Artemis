@@ -25,8 +25,8 @@ import de.tum.cit.aet.artemis.domain.quiz.QuizQuestionStatisticComponent;
 import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerQuestionStatistic;
-import de.tum.cit.aet.artemis.repository.DragAndDropMappingRepository;
-import de.tum.cit.aet.artemis.repository.ShortAnswerMappingRepository;
+import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
+import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
 
 @Profile(PROFILE_CORE)
 @Service

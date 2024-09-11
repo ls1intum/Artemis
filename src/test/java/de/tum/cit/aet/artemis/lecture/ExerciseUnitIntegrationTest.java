@@ -26,11 +26,11 @@ import de.tum.cit.aet.artemis.domain.TextExercise;
 import de.tum.cit.aet.artemis.domain.lecture.ExerciseUnit;
 import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
 import de.tum.cit.aet.artemis.domain.quiz.QuizExercise;
-import de.tum.cit.aet.artemis.repository.FileUploadExerciseRepository;
-import de.tum.cit.aet.artemis.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

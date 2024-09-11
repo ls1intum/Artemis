@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.iris.IrisTemplate;
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.iris.IrisSettingsRepository;
-import de.tum.cit.aet.artemis.repository.iris.IrisTemplateRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisTemplateRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService;
 
 public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

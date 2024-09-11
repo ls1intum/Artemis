@@ -18,9 +18,9 @@ import de.tum.cit.aet.artemis.domain.enumeration.tutorialgroups.TutorialGroupReg
 import de.tum.cit.aet.artemis.domain.notification.TutorialGroupNotification;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupRegistration;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 
 @Profile(PROFILE_CORE)
 @Service

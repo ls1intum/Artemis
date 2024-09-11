@@ -9,9 +9,9 @@ import org.hibernate.Hibernate;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.domain.Feedback;
 import de.tum.cit.aet.artemis.domain.LongFeedbackText;
-import de.tum.cit.aet.artemis.repository.LongFeedbackTextRepository;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseImportBasicService;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.util.ExerciseIntegrationTestService;

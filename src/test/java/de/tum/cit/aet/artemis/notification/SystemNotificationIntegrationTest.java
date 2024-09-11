@@ -14,8 +14,8 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.domain.notification.SystemNotification;
-import de.tum.cit.aet.artemis.repository.SystemNotificationRepository;
 
 class SystemNotificationIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

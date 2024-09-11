@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.GradingScale;
-import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 
 /**
  * Service for calculating the presentation points for a course or student.

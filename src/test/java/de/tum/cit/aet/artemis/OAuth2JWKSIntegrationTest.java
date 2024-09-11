@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration;
-import de.tum.cit.aet.artemis.repository.OnlineCourseConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository;
 
 class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

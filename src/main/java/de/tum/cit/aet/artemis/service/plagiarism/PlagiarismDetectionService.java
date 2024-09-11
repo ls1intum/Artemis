@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.cit.aet.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.cit.aet.artemis.domain.plagiarism.text.TextPlagiarismResult;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingLanguageFeatureService;
 
 /**

@@ -31,9 +31,9 @@ import de.tum.cit.aet.artemis.domain.quiz.QuizSubmission;
 import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.domain.quiz.ShortAnswerSubmittedText;
-import de.tum.cit.aet.artemis.repository.QuizQuestionRepository;
-import de.tum.cit.aet.artemis.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
+import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.service.DragAndDropQuizAnswerConversionService;
 import de.tum.cit.aet.artemis.service.archival.ArchivalReportEntry;
 

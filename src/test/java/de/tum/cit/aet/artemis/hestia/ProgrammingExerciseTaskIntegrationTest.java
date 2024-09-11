@@ -22,10 +22,10 @@ import de.tum.cit.aet.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIndependentTest {

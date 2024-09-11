@@ -44,10 +44,10 @@ import de.tum.cit.aet.artemis.domain.competency.Competency;
 import de.tum.cit.aet.artemis.domain.lecture.AttachmentUnit;
 import de.tum.cit.aet.artemis.domain.lecture.LectureUnit;
 import de.tum.cit.aet.artemis.domain.lecture.Slide;
-import de.tum.cit.aet.artemis.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.repository.AttachmentUnitRepository;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
-import de.tum.cit.aet.artemis.repository.SlideRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 
 class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -17,14 +17,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.domain.settings.ide.Ide;
 import de.tum.cit.aet.artemis.domain.settings.ide.UserIdeMapping;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.settings.IdeRepository;
-import de.tum.cit.aet.artemis.repository.settings.UserIdeMappingRepository;
+import de.tum.cit.aet.artemis.programming.repository.settings.IdeRepository;
+import de.tum.cit.aet.artemis.programming.repository.settings.UserIdeMappingRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.settings.ide.IdeDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.settings.ide.IdeMappingDTO;
 

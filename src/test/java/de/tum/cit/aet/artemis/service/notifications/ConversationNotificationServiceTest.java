@@ -15,6 +15,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.DomainObject;
@@ -24,12 +30,6 @@ import de.tum.cit.aet.artemis.domain.metis.Post;
 import de.tum.cit.aet.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.domain.notification.ConversationNotification;
 import de.tum.cit.aet.artemis.domain.notification.Notification;
-import de.tum.cit.aet.artemis.repository.NotificationRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.metis.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ConversationNotificationRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {

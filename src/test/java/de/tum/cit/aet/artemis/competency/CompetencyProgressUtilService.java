@@ -3,10 +3,10 @@ package de.tum.cit.aet.artemis.competency;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.repository.CompetencyProgressRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to competency progress for use in integration tests.

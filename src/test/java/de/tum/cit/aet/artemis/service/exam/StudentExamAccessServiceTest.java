@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.exam.Exam;
 import de.tum.cit.aet.artemis.domain.exam.StudentExam;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
-import de.tum.cit.aet.artemis.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;

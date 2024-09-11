@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisSubSettingsType;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.cit.aet.artemis.service.hestia.CodeHintService;
 import de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;

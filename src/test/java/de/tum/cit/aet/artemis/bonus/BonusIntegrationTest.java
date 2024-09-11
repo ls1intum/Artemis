@@ -19,6 +19,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.GradingScaleFactory;
 import de.tum.cit.aet.artemis.assessment.GradingScaleUtilService;
+import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.domain.Bonus;
 import de.tum.cit.aet.artemis.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -29,10 +31,8 @@ import de.tum.cit.aet.artemis.domain.GradingScale;
 import de.tum.cit.aet.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.domain.exam.Exam;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
+import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
-import de.tum.cit.aet.artemis.repository.BonusRepository;
-import de.tum.cit.aet.artemis.repository.ExamRepository;
-import de.tum.cit.aet.artemis.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
 
 class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {

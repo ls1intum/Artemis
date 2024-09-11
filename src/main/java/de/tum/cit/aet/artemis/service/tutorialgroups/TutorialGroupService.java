@@ -33,6 +33,7 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.Language;
@@ -41,14 +42,13 @@ import de.tum.cit.aet.artemis.domain.enumeration.tutorialgroups.TutorialGroupReg
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
 import de.tum.cit.aet.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.cit.aet.artemis.service.notifications.SingleUserNotificationService;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.tutorialgroups.TutorialGroupResource.TutorialGroupImportErrors;

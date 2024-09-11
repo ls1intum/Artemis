@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.domain.Lecture;
 import de.tum.cit.aet.artemis.domain.lecture.ExerciseUnit;
-import de.tum.cit.aet.artemis.repository.ExerciseUnitRepository;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

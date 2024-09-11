@@ -17,13 +17,13 @@ import org.apache.commons.csv.CSVPrinter;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.metis.AnswerPost;
 import de.tum.cit.aet.artemis.domain.metis.Post;
 import de.tum.cit.aet.artemis.domain.metis.Reaction;
-import de.tum.cit.aet.artemis.repository.metis.AnswerPostRepository;
-import de.tum.cit.aet.artemis.repository.metis.PostRepository;
-import de.tum.cit.aet.artemis.repository.metis.ReactionRepository;
 
 /**
  * A service to create the communication data export for users

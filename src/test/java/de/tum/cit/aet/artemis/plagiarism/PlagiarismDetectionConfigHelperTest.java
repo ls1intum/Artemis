@@ -11,7 +11,7 @@ import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
 import de.tum.cit.aet.artemis.domain.modeling.ModelingExercise;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.repository.ModelingExerciseRepository;
+import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.service.plagiarism.PlagiarismDetectionConfigHelper;
 
 class PlagiarismDetectionConfigHelperTest {

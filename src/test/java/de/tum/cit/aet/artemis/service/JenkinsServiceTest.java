@@ -41,9 +41,9 @@ import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.exercise.programming.ContinuousIntegrationTestService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.repository.BuildPlanRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.connectors.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseImportService;
 

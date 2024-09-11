@@ -33,9 +33,9 @@ import de.tum.cit.aet.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.domain.Repository;
 import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.cit.aet.artemis.service.connectors.GitService;
 
 /**

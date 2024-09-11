@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.exam.Exam;
@@ -15,9 +16,8 @@ import de.tum.cit.aet.artemis.domain.exam.event.ExamLiveEvent;
 import de.tum.cit.aet.artemis.domain.exam.event.ExamWideAnnouncementEvent;
 import de.tum.cit.aet.artemis.domain.exam.event.ProblemStatementUpdateEvent;
 import de.tum.cit.aet.artemis.domain.exam.event.WorkingTimeUpdateEvent;
-import de.tum.cit.aet.artemis.repository.ExamLiveEventRepository;
-import de.tum.cit.aet.artemis.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
+import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 
 /**

@@ -13,8 +13,8 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import de.tum.cit.aet.artemis.domain.push_notification.PushNotificationDeviceType;
-import de.tum.cit.aet.artemis.repository.PushNotificationDeviceConfigurationRepository;
 
 /**
  * Handles the sending of iOS Notifications to the Relay Service

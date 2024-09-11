@@ -25,8 +25,8 @@ import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.web.rest.util.DateUtil;
 

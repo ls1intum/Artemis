@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
@@ -24,8 +26,6 @@ import de.tum.cit.aet.artemis.domain.notification.ConversationNotification;
 import de.tum.cit.aet.artemis.domain.notification.NotificationPlaceholderCreator;
 import de.tum.cit.aet.artemis.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.domain.notification.SingleUserNotificationFactory;
-import de.tum.cit.aet.artemis.repository.SingleUserNotificationRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ConversationNotificationRepository;
 
 /**
  * Service for sending notifications about new messages in conversations.

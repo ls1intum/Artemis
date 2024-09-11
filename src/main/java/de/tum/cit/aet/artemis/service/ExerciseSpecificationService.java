@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.domain.exam.Exam;
 import de.tum.cit.aet.artemis.domain.exam.Exam_;
 import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup;
 import de.tum.cit.aet.artemis.domain.exam.ExerciseGroup_;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 
 @Profile(PROFILE_CORE)
@@ -106,7 +107,7 @@ public class ExerciseSpecificationService {
      * Creates a {@link Specification} to filter for programming exercises with the given programming language and SCA enabled.
      *
      * @param programmingLanguage the language to filter for
-     * @return a Specification that can get passed to the @{@link de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository}
+     * @return a Specification that can get passed to the @{@link ProgrammingExerciseRepository}
      * @see de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseService#getAllWithSCAOnPageWithSize(SearchTermPageableSearchDTO, boolean, boolean, ProgrammingLanguage,
      *      User)
      */

@@ -3,9 +3,9 @@ package de.tum.cit.aet.artemis.web.rest.metis.conversation;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.enumeration.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
 
 public class ConversationManagementResource {
 

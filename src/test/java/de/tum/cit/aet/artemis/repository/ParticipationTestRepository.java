@@ -7,8 +7,8 @@ import java.util.List;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.domain.participation.Participation;
-import de.tum.cit.aet.artemis.repository.base.ArtemisJpaRepository;
 
 @Repository
 public interface ParticipationTestRepository extends ArtemisJpaRepository<Participation, Long> {

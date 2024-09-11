@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.domain.modeling;
 
-import de.tum.cit.aet.artemis.repository.ModelElementRepository;
+import de.tum.cit.aet.artemis.modeling.repository.ModelElementRepository;
 
 public class SimilarElementCount implements ModelElementRepository.ModelElementCount {
 

@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.participation.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.repository.ParticipationVCSAccessTokenRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPersonalAccessTokenManagementService;
 
 @Profile(PROFILE_CORE)

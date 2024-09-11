@@ -7,9 +7,9 @@ import jakarta.persistence.Persistence;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 
 @Profile(PROFILE_CORE)

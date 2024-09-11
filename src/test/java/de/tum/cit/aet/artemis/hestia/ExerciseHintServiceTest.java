@@ -13,6 +13,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.Feedback;
 import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
@@ -29,14 +31,12 @@ import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintActivationRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.repository.ResultRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ExerciseHintActivationRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ExerciseHintRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.service.hestia.ExerciseHintService;
 import de.tum.cit.aet.artemis.service.hestia.ProgrammingExerciseTaskService;
 import de.tum.cit.aet.artemis.user.UserUtilService;

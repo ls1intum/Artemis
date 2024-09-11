@@ -39,12 +39,12 @@ import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.cit.aet.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.repository.BuildLogStatisticsEntryRepository;
-import de.tum.cit.aet.artemis.repository.BuildPlanRepository;
-import de.tum.cit.aet.artemis.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.service.connectors.gitlabci.GitLabCIResultService;
 import de.tum.cit.aet.artemis.user.UserUtilService;

@@ -14,6 +14,13 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Course;
@@ -33,19 +40,12 @@ import de.tum.cit.aet.artemis.domain.metis.conversation.GroupChat;
 import de.tum.cit.aet.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
 import de.tum.cit.aet.artemis.lecture.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.LectureUtilService;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
-import de.tum.cit.aet.artemis.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
-import de.tum.cit.aet.artemis.repository.metis.AnswerPostRepository;
-import de.tum.cit.aet.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.repository.metis.PostRepository;
-import de.tum.cit.aet.artemis.repository.metis.ReactionRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.OneToOneChatRepository;
-import de.tum.cit.aet.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 /**

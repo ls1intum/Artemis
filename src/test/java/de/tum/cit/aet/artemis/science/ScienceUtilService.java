@@ -7,9 +7,9 @@ import java.util.Comparator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
 import de.tum.cit.aet.artemis.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.domain.science.ScienceEventType;
-import de.tum.cit.aet.artemis.repository.science.ScienceEventRepository;
 
 @Service
 public class ScienceUtilService {

@@ -3,6 +3,10 @@ package de.tum.cit.aet.artemis.assessment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.domain.Complaint;
 import de.tum.cit.aet.artemis.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.domain.Result;
@@ -11,10 +15,6 @@ import de.tum.cit.aet.artemis.domain.Team;
 import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.domain.enumeration.ComplaintType;
 import de.tum.cit.aet.artemis.domain.participation.Participation;
-import de.tum.cit.aet.artemis.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.repository.ComplaintResponseRepository;
-import de.tum.cit.aet.artemis.repository.ResultRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
 

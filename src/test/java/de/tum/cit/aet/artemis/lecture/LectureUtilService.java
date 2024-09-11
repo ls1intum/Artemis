@@ -15,6 +15,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 
+import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.Attachment;
@@ -33,21 +35,19 @@ import de.tum.cit.aet.artemis.domain.lecture.Slide;
 import de.tum.cit.aet.artemis.domain.lecture.TextUnit;
 import de.tum.cit.aet.artemis.domain.lecture.VideoUnit;
 import de.tum.cit.aet.artemis.domain.metis.conversation.Channel;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentRepository;
+import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
+import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.lecture.repository.VideoUnitRepository;
 import de.tum.cit.aet.artemis.post.ConversationFactory;
-import de.tum.cit.aet.artemis.repository.AttachmentRepository;
-import de.tum.cit.aet.artemis.repository.AttachmentUnitRepository;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
-import de.tum.cit.aet.artemis.repository.ExerciseUnitRepository;
-import de.tum.cit.aet.artemis.repository.LectureRepository;
-import de.tum.cit.aet.artemis.repository.LectureUnitCompletionRepository;
-import de.tum.cit.aet.artemis.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.repository.OnlineUnitRepository;
-import de.tum.cit.aet.artemis.repository.SlideRepository;
-import de.tum.cit.aet.artemis.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.repository.TextUnitRepository;
-import de.tum.cit.aet.artemis.repository.VideoUnitRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.service.FilePathService;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to lectures for use in integration tests.

@@ -12,12 +12,12 @@ import jakarta.ws.rs.BadRequestException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.domain.competency.RelationType;
-import de.tum.cit.aet.artemis.repository.CompetencyRelationRepository;
-import de.tum.cit.aet.artemis.repository.CourseCompetencyRepository;
 
 /**
  * Service for managing CompetencyRelations.

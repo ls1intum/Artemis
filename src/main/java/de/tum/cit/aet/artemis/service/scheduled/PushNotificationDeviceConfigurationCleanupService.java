@@ -10,7 +10,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.repository.PushNotificationDeviceConfigurationRepository;
+import de.tum.cit.aet.artemis.communication.repository.PushNotificationDeviceConfigurationRepository;
 import tech.jhipster.config.JHipsterConstants;
 
 @Service

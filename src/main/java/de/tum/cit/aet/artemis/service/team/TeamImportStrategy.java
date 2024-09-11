@@ -6,7 +6,7 @@ import org.hibernate.Hibernate;
 
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Team;
-import de.tum.cit.aet.artemis.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 
 public abstract class TeamImportStrategy {
 

@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.domain.iris.settings.IrisLectureIngestionSubSettin
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisSettings;
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.domain.iris.settings.IrisSubSettingsType;
-import de.tum.cit.aet.artemis.repository.iris.IrisSettingsRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.service.iris.IrisDefaultTemplateService;
 import de.tum.cit.aet.artemis.service.iris.dto.IrisCombinedSettingsDTO;

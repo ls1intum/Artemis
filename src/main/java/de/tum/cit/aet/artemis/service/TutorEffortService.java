@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
 import de.tum.cit.aet.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.domain.statistics.tutor.effort.TutorEffort;
-import de.tum.cit.aet.artemis.repository.TextAssessmentEventRepository;
 
 /**
  * Contains business logic needed to calculate tutor efforts.

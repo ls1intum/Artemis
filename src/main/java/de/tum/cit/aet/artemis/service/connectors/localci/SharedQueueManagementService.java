@@ -32,7 +32,7 @@ import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.domain.BuildJob;
 import de.tum.cit.aet.artemis.domain.enumeration.SortingOrder;
-import de.tum.cit.aet.artemis.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildJobQueueItem;

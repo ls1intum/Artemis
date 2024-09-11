@@ -18,9 +18,9 @@ import java.util.function.ToDoubleFunction;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.repository.metrics.CompetencyMetricsRepository;
-import de.tum.cit.aet.artemis.repository.metrics.ExerciseMetricsRepository;
-import de.tum.cit.aet.artemis.repository.metrics.LectureUnitMetricsRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyInformationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.CompetencyProgressDTO;

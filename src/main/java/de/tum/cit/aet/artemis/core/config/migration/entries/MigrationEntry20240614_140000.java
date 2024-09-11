@@ -6,11 +6,11 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.config.migration.MigrationEntry;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.domain.competency.Competency;
-import de.tum.cit.aet.artemis.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
 import de.tum.cit.aet.artemis.service.competency.CompetencyProgressService;
 
 public class MigrationEntry20240614_140000 extends MigrationEntry {

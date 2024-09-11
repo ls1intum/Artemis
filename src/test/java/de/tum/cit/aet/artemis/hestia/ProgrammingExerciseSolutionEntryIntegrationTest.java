@@ -19,10 +19,10 @@ import de.tum.cit.aet.artemis.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.cit.aet.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.repository.hestia.CodeHintRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
-import de.tum.cit.aet.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.CodeHintRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
+import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 
 class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

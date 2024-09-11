@@ -5,7 +5,7 @@ import static de.tum.cit.aet.artemis.service.util.RoundingUtil.roundScoreSpecifi
 
 import org.apache.commons.lang3.NotImplementedException;
 
-import de.tum.cit.aet.artemis.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

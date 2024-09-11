@@ -8,11 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.domain.Feedback;
 import de.tum.cit.aet.artemis.domain.LongFeedbackText;
-import de.tum.cit.aet.artemis.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.repository.LongFeedbackTextRepository;
 
 class FeedbackServiceTest extends AbstractSpringIntegrationIndependentTest {
 

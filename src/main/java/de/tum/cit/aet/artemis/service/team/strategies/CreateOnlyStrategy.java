@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 import de.tum.cit.aet.artemis.domain.Exercise;
 import de.tum.cit.aet.artemis.domain.Team;
 import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.service.team.TeamImportStrategy;
 
 public class CreateOnlyStrategy extends TeamImportStrategy {

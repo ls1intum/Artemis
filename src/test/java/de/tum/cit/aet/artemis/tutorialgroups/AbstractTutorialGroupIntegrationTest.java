@@ -22,6 +22,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.course.CourseTestService;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.domain.User;
@@ -34,19 +38,15 @@ import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.cit.aet.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
-import de.tum.cit.aet.artemis.repository.CourseRepository;
-import de.tum.cit.aet.artemis.repository.UserRepository;
-import de.tum.cit.aet.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.repository.metis.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupFreePeriodRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
-import de.tum.cit.aet.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupChannelManagementService;
 import de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupService;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 /**
