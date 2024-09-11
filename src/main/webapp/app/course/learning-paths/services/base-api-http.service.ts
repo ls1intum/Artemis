@@ -1,7 +1,6 @@
-import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
 import { HttpMethod } from 'app/admin/metrics/metrics.model';
 import { inject } from '@angular/core';
-import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
 
 export abstract class BaseApiHttpService {
@@ -24,20 +23,6 @@ export abstract class BaseApiHttpService {
                 callback(...args);
             }, delay);
         };
-    }
-
-    /**
-     * Handles the error response from the server and throws specific errors
-     * which can be handled on service or component level.
-     *
-     * @param error
-     * @private
-     */
-    private handleHttpError(error: HttpResponse<any>): void {
-        const statusCode = error.status;
-        if (statusCode == 404) {
-            throw new EntityNotFoundError();
-        }
     }
 
     /**
@@ -68,18 +53,13 @@ export abstract class BaseApiHttpService {
             responseType?: 'json';
         },
     ): Promise<T> {
-        try {
-            const response = await lastValueFrom(
-                this.httpClient.request<T>(method, `${this.baseUrl}/${url}`, {
-                    observe: 'response',
-                    ...options,
-                }),
-            );
-            return response.body!;
-        } catch (error) {
-            this.handleHttpError(error);
-            throw Error('Internal server error');
-        }
+        const response = await lastValueFrom(
+            this.httpClient.request<T>(method, `${this.baseUrl}/${url}`, {
+                observe: 'response',
+                ...options,
+            }),
+        );
+        return response.body!;
     }
 
     /**
