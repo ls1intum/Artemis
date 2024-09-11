@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+
 /**
  * A DTO representing a Feedback on a ProgrammingExercise, for transferring data to Athena and receiving suggestions from Athena
  */
@@ -19,7 +21,7 @@ public record ProgrammingFeedbackDTO(long id, long exerciseId, long submissionId
      * @param feedback     the feedback object
      * @return the ProgrammingFeedbackDTO
      */
-    public static ProgrammingFeedbackDTO of(long exerciseId, long submissionId, @NotNull de.tum.cit.aet.artemis.domain.Feedback feedback) {
+    public static ProgrammingFeedbackDTO of(long exerciseId, long submissionId, @NotNull Feedback feedback) {
         // Referenced feedback has a reference looking like this: "file:src/main/java/SomeFile.java_line:42"
         String filePath = null;
         Integer lineStart = null;

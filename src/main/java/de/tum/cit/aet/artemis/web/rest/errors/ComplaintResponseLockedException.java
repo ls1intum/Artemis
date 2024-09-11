@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.domain.ComplaintResponse;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.web.rest.ComplaintResponseResource;
 
 public class ComplaintResponseLockedException extends BadRequestAlertException {

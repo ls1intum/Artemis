@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.connectors.localci.scaparser.utils;
 
 import java.util.List;
 
-import de.tum.cit.aet.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisIssue;
 import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisReportDTO;
 

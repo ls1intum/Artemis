@@ -8,7 +8,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import de.tum.cit.aet.artemis.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * This class models the relation between two competencies. Imagine a graph: (tail) --- type --> (head)

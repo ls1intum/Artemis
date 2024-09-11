@@ -14,7 +14,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * A QuizStatisticCounter.

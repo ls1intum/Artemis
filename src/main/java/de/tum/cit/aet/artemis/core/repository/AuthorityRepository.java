@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.core.repository;
 
 import java.util.List;
 
+import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.Authority;
 
 /**
  * Spring Data JPA repository for the Authority entity.

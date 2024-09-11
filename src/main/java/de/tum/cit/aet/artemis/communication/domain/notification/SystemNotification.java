@@ -10,7 +10,7 @@ import jakarta.persistence.Enumerated;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.enumeration.SystemNotificationType;
+import de.tum.cit.aet.artemis.communication.domain.SystemNotificationType;
 
 /**
  * A SystemNotification.

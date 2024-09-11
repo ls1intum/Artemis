@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.communication.domain.push_notification;
 import java.io.Serializable;
 import java.util.Objects;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * The PrimaryKey used for PushNotificationDeviceConfiguration

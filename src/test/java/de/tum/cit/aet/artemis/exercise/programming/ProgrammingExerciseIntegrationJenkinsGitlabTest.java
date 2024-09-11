@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.programming;
 
-import static de.tum.cit.aet.artemis.domain.enumeration.BuildPlanType.SOLUTION;
-import static de.tum.cit.aet.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
+import static de.tum.cit.aet.artemis.programming.domain.BuildPlanType.SOLUTION;
+import static de.tum.cit.aet.artemis.programming.domain.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.io.IOException;
@@ -21,7 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseService;
 
 class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {

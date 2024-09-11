@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.connectors.pyris.job;
 
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.Exercise;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * An implementation of a PyrisJob for Lecture Ingestion in Pyris.

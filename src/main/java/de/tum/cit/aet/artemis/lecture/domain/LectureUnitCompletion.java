@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * This class models the 'completion' association between a user and a lecture unit.

@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * A Notification concerning all new messages in a conversation.

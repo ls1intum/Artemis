@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.domain;
 
-import static de.tum.cit.aet.artemis.domain.enumeration.ExerciseType.MODELING;
+import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.MODELING;
 
 import java.time.ZonedDateTime;
 
@@ -15,9 +15,8 @@ import jakarta.persistence.Transient;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.enumeration.DiagramType;
-import de.tum.cit.aet.artemis.domain.enumeration.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 /**
  * A ModelingExercise.

@@ -18,11 +18,11 @@ import org.springframework.util.ResourceUtils;
 
 import com.opencsv.CSVReader;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
+import de.tum.cit.aet.artemis.assessment.domain.GradeType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.GradeStep;
-import de.tum.cit.aet.artemis.domain.GradeType;
-import de.tum.cit.aet.artemis.domain.GradingScale;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 
 /**

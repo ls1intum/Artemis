@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 
 @Profile(PROFILE_CORE)
 @Service

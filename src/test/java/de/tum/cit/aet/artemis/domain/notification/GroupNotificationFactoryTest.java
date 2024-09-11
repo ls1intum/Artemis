@@ -1,5 +1,21 @@
 package de.tum.cit.aet.artemis.domain.notification;
 
+import static de.tum.cit.aet.artemis.communication.domain.NotificationPriority.HIGH;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationPriority.MEDIUM;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.ATTACHMENT_CHANGE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.COURSE_ARCHIVE_FAILED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.COURSE_ARCHIVE_FINISHED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.COURSE_ARCHIVE_STARTED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.DUPLICATE_TEST_CASE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXAM_ARCHIVE_FAILED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXAM_ARCHIVE_FINISHED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXAM_ARCHIVE_STARTED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_PRACTICE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_RELEASED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_UPDATED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.NEW_ANNOUNCEMENT_POST;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.QUIZ_EXERCISE_STARTED;
 import static de.tum.cit.aet.artemis.communication.domain.notification.GroupNotificationFactory.createAnnouncementNotification;
 import static de.tum.cit.aet.artemis.communication.domain.notification.GroupNotificationFactory.createNotification;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.ATTACHMENT_CHANGE_TEXT;
@@ -42,22 +58,6 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createExerciseTarget;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createLectureTarget;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_CASES_DUPLICATE_NOTIFICATION;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationPriority.HIGH;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationPriority.MEDIUM;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.ATTACHMENT_CHANGE;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.COURSE_ARCHIVE_FAILED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.COURSE_ARCHIVE_FINISHED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.COURSE_ARCHIVE_STARTED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.DUPLICATE_TEST_CASE;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.EXAM_ARCHIVE_FAILED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.EXAM_ARCHIVE_FINISHED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.EXAM_ARCHIVE_STARTED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.EXERCISE_PRACTICE;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.EXERCISE_RELEASED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.EXERCISE_UPDATED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.NEW_ANNOUNCEMENT_POST;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.PROGRAMMING_TEST_CASES_CHANGED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.QUIZ_EXERCISE_STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -67,22 +67,22 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
+import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
+import de.tum.cit.aet.artemis.communication.domain.NotificationPriority;
+import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationTarget;
-import de.tum.cit.aet.artemis.domain.Attachment;
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.Lecture;
-import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType;
-import de.tum.cit.aet.artemis.domain.enumeration.NotificationPriority;
-import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lecture.domain.Attachment;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 class GroupNotificationFactoryTest {

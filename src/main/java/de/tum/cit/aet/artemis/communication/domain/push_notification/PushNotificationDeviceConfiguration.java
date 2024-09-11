@@ -15,7 +15,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Model for saving PushNotification DeviceTokens for native clients

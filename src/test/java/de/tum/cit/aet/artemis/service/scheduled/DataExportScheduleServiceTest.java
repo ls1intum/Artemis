@@ -27,10 +27,10 @@ import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.domain.DataExport;
+import de.tum.cit.aet.artemis.core.domain.DataExportState;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
-import de.tum.cit.aet.artemis.domain.DataExport;
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.DataExportState;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 @ExtendWith(MockitoExtension.class)

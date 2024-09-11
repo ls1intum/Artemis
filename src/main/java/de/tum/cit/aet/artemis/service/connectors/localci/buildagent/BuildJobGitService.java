@@ -29,8 +29,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.domain.Repository;
-import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.service.connectors.AbstractGitService;
 
 @Profile(PROFILE_BUILDAGENT)

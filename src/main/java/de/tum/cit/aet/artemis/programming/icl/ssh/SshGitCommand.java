@@ -20,7 +20,7 @@ import org.eclipse.jgit.transport.RemoteConfig;
 import org.eclipse.jgit.transport.UploadPack;
 import org.eclipse.jgit.util.FS;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPostPushHook;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPrePushHook;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCServletService;

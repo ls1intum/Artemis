@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 
 /**
@@ -22,7 +23,7 @@ public record TextFeedbackDTO(long id, long exerciseId, long submissionId, Strin
      * @param feedbackBlock the TextBlock that the feedback is on (must be passed because this record cannot fetch it for itself)
      * @return the TextFeedbackDTO
      */
-    public static TextFeedbackDTO of(long exerciseId, long submissionId, @NotNull de.tum.cit.aet.artemis.domain.Feedback feedback, TextBlock feedbackBlock) {
+    public static TextFeedbackDTO of(long exerciseId, long submissionId, @NotNull Feedback feedback, TextBlock feedbackBlock) {
         Integer startIndex = feedbackBlock == null ? null : feedbackBlock.getStartIndex();
         Integer endIndex = feedbackBlock == null ? null : feedbackBlock.getEndIndex();
         Long gradingInstructionId = null;

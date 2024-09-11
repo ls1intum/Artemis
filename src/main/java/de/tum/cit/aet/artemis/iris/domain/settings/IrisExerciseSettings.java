@@ -9,7 +9,7 @@ import jakarta.persistence.OneToOne;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * An {@link IrisSettings} implementation for exercise specific settings.

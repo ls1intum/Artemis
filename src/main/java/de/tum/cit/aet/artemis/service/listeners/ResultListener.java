@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
-import de.tum.cit.aet.artemis.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.service.scheduled.ParticipantScoreScheduleService;

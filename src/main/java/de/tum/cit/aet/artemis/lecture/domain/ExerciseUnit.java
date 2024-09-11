@@ -19,7 +19,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Entity
 @DiscriminatorValue("E")

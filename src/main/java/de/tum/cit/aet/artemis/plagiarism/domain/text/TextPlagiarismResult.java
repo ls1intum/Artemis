@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.plagiarism.domain.text;
 import jakarta.persistence.Entity;
 
 import de.jplag.JPlagResult;
-import de.tum.cit.aet.artemis.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 

@@ -5,7 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import org.apache.sshd.common.AttributeRepository;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 @Profile(PROFILE_LOCALVC)
 public class SshConstants {

@@ -19,10 +19,10 @@ import org.hibernate.Hibernate;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.domain.Authority;
-import de.tum.cit.aet.artemis.domain.GuidedTourSetting;
-import de.tum.cit.aet.artemis.domain.Organization;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
+import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * A DTO representing a user, with his authorities.

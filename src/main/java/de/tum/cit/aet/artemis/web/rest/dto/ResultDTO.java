@@ -8,12 +8,12 @@ import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Feedback;
-import de.tum.cit.aet.artemis.domain.ProgrammingExerciseTestCase;
-import de.tum.cit.aet.artemis.domain.Result;
-import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
-import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
-import de.tum.cit.aet.artemis.domain.enumeration.Visibility;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
  * DTO containing {@link Result} information.

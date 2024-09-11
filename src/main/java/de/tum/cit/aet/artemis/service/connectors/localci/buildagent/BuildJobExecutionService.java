@@ -35,10 +35,10 @@ import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.domain.Repository;
-import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
-import de.tum.cit.aet.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildResult;
 import de.tum.cit.aet.artemis.service.connectors.localci.scaparser.ReportParser;

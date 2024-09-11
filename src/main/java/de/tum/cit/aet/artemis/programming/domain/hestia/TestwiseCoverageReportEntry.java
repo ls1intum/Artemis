@@ -11,8 +11,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.DomainObject;
-import de.tum.cit.aet.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
  * A single entry from testwise coverage report by file path and consecutive executed code block.

@@ -12,7 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.MapEntryLongLong;
 import de.tum.cit.aet.artemis.web.rest.dto.metrics.ResourceTimestampDTO;

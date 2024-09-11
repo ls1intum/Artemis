@@ -22,7 +22,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 
 /**
  * A TextBlock.

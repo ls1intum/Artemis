@@ -18,7 +18,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-import de.tum.cit.aet.artemis.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "knowledge_area")

@@ -6,7 +6,7 @@ import java.util.Objects;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.service.iris.exception.IrisRateLimitExceededException;
 import de.tum.cit.aet.artemis.service.iris.settings.IrisSettingsService;

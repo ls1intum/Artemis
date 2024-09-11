@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.connectors.localci.scaparser.strategy;
 
 import java.nio.file.Path;
 
-import de.tum.cit.aet.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 import de.tum.cit.aet.artemis.service.connectors.localci.scaparser.exception.UnsupportedToolException;
 
 /**

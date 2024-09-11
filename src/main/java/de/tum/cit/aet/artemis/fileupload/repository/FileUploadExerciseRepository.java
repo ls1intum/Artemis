@@ -16,7 +16,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 
 /**
  * Spring Data JPA repository for the FileUploadExercise entity.

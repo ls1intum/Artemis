@@ -4,8 +4,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
-import de.tum.cit.aet.artemis.domain.Course;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 /**

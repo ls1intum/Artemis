@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
-import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 @Profile(PROFILE_THEIA)
 @RestController

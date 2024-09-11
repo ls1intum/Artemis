@@ -4,11 +4,11 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 import java.util.UUID;
 
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.LtiPlatformConfiguration;
-import de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration;
-import de.tum.cit.aet.artemis.domain.enumeration.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 
 /**
  * Factory for creating Courses and related objects.

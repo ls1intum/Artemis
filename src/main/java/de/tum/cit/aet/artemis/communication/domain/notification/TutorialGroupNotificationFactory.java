@@ -1,13 +1,13 @@
 package de.tum.cit.aet.artemis.communication.domain.notification;
 
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_DELETED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.TUTORIAL_GROUP_UPDATED;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DELETED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UPDATED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createTutorialGroupTarget;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_DELETED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.TUTORIAL_GROUP_UPDATED;
 
-import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
+import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 public class TutorialGroupNotificationFactory {

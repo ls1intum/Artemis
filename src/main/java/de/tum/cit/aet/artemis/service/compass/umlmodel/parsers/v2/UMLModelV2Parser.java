@@ -11,7 +11,7 @@ import org.apache.commons.lang3.EnumUtils;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
-import de.tum.cit.aet.artemis.domain.enumeration.DiagramType;
+import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLDiagram;
 
 public class UMLModelV2Parser {

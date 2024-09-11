@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.text.domain;
 
-import static de.tum.cit.aet.artemis.domain.enumeration.ExerciseType.TEXT;
+import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.TEXT;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
@@ -9,8 +9,8 @@ import jakarta.persistence.SecondaryTable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.enumeration.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 /**
  * A TextExercise.

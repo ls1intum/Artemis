@@ -5,10 +5,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.ConductAgreement;
 import de.tum.cit.aet.artemis.communication.repository.ConductAgreementRepository;
-import de.tum.cit.aet.artemis.domain.ConductAgreement;
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Service Implementation for managing a user's agreement to a course's code of conduct.

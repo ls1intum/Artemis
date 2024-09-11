@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 
-import de.tum.cit.aet.artemis.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.service.FeedbackService;
 
 class FeedbackArchitectureTest extends AbstractArchitectureTest {

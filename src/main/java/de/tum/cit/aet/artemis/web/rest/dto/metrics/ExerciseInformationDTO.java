@@ -4,11 +4,11 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
-import de.tum.cit.aet.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 /**
  * DTO for exercise information.

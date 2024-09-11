@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.quiz.domain;
 
-import static de.tum.cit.aet.artemis.domain.enumeration.ExerciseType.QUIZ;
+import static de.tum.cit.aet.artemis.exercise.domain.ExerciseType.QUIZ;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -34,11 +34,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.Result;
-import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.domain.enumeration.ExerciseType;
-import de.tum.cit.aet.artemis.domain.enumeration.QuizMode;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.quiz.config.QuizView;

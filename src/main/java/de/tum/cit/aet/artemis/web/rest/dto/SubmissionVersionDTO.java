@@ -4,7 +4,7 @@ import java.time.Instant;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.SubmissionVersion;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 
 /**
  * A DTO representing a submission version.

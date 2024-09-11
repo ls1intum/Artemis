@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Service responsible for initializing the database with specific testdata related to competency progress for use in integration tests.

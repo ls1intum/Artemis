@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 
-import de.tum.cit.aet.artemis.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.service.dto.TestCaseBaseDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

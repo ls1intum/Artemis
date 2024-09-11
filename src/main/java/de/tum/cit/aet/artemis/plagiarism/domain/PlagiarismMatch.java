@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
 import de.jplag.Match;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * A `PlagiarismMatch` is a sequence of identical elements of both submissions.
@@ -78,10 +79,10 @@ public class PlagiarismMatch {
      * <p>
      * Note:
      * This is required here since unlike other domain classes this one does not extend
-     * {@link de.tum.cit.aet.artemis.domain.DomainObject} since it only represents an {@link Embeddable} part of another
+     * {@link DomainObject} since it only represents an {@link Embeddable} part of another
      * entity.
      * Therefore, it does inherit neither the database ID attribute nor the matching
-     * {@link de.tum.cit.aet.artemis.domain.DomainObject#equals(Object)} implementation.
+     * {@link DomainObject#equals(Object)} implementation.
      * Instead, we have to compare all relevant attributes here.
      *
      * @param other Some other object.

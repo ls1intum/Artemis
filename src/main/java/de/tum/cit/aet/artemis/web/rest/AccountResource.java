@@ -31,9 +31,9 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.programming.icl.ssh.HashUtils;
 import de.tum.cit.aet.artemis.service.AccountService;
 import de.tum.cit.aet.artemis.service.FilePathService;

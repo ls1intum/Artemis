@@ -6,7 +6,7 @@ import jakarta.persistence.MappedSuperclass;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * BaseCompetency is an abstract class that contains basic information shared between all competency types.

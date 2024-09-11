@@ -14,12 +14,12 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
+import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType;
-import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.service.notifications.push_notifications.FirebasePushNotificationService;
 

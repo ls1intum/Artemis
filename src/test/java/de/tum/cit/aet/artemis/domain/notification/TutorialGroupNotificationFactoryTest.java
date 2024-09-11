@@ -10,12 +10,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationTarget;
 import de.tum.cit.aet.artemis.communication.domain.notification.TutorialGroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.TutorialGroupNotificationFactory;
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 class TutorialGroupNotificationFactoryTest {

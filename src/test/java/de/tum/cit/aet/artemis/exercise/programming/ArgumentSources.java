@@ -1,14 +1,14 @@
 package de.tum.cit.aet.artemis.exercise.programming;
 
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.ASSEMBLER;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.OCAML;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.VHDL;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.ASSEMBLER;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.OCAML;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.VHDL;
 
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
-import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 public class ArgumentSources {
 

@@ -9,8 +9,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.BuildLogEntry;
-import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.TestwiseCoverageReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

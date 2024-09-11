@@ -20,11 +20,11 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.domain.Authority;
-import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.repository.UserTestRepository;
 import de.tum.cit.aet.artemis.service.user.PasswordService;
 

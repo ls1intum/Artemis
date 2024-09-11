@@ -5,7 +5,7 @@ import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.enumeration.ExerciseType;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // TODO: convert to record

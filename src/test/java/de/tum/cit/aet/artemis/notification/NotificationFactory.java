@@ -2,12 +2,12 @@ package de.tum.cit.aet.artemis.notification;
 
 import java.time.ZonedDateTime;
 
+import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Factory for creating Notifications and related objects.

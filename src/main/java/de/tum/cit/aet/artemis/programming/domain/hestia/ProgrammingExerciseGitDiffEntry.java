@@ -11,7 +11,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 /**
  * A single difference from a git-diff report between the template and solution repositories.

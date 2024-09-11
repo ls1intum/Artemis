@@ -5,14 +5,14 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.domain.GradingInstruction;
-import de.tum.cit.aet.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 

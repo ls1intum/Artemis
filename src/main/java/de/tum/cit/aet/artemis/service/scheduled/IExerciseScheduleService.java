@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.scheduled;
 
-import de.tum.cit.aet.artemis.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * Interface for exercise specific schedulers.

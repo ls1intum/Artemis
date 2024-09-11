@@ -16,7 +16,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.domain.enumeration.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.user.UserFactory;
 import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;

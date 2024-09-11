@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.service.user;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.cit.aet.artemis.core.security.Role.EDITOR;
 import static de.tum.cit.aet.artemis.core.security.Role.INSTRUCTOR;
 import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
-import static de.tum.cit.aet.artemis.domain.Authority.ADMIN_AUTHORITY;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -15,9 +15,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.domain.Authority;
-import de.tum.cit.aet.artemis.domain.User;
 
 @Profile(PROFILE_CORE)
 @Service

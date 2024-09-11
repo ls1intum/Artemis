@@ -8,14 +8,14 @@ import java.util.Optional;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.Rating;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCount;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.domain.Rating;
-import de.tum.cit.aet.artemis.domain.Result;
 
 /**
- * Service Implementation for managing {@link de.tum.cit.aet.artemis.domain.Rating}.
+ * Service Implementation for managing {@link Rating}.
  */
 @Profile(PROFILE_CORE)
 @Service

@@ -15,8 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfigurationId;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceType;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.User;
 
 /**
  * The Repository used for PushNotificationDeviceConfiguration

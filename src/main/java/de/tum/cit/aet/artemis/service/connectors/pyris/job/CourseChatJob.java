@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.connectors.pyris.job;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
  * An implementation of a PyrisJob for course chat messages.

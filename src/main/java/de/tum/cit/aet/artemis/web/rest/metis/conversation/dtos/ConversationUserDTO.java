@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.service.dto.UserPublicInfoDTO;
 
 /**

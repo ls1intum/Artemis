@@ -35,9 +35,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.domain.File;
-import de.tum.cit.aet.artemis.domain.FileType;
-import de.tum.cit.aet.artemis.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.File;
+import de.tum.cit.aet.artemis.programming.domain.FileType;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.user.UserFactory;
 import de.tum.cit.aet.artemis.util.GitUtilService;
 

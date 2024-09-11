@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.communication.domain.notification;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.findCorrespondingNotificationTitleOrThrow;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.createConversationMessageTarget;
 
+import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
 
 public class ConversationNotificationFactory {
 

@@ -17,12 +17,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.assessment.domain.Complaint;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.domain.Complaint;
-import de.tum.cit.aet.artemis.domain.ComplaintResponse;
-import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.service.ComplaintResponseService;
 import de.tum.cit.aet.artemis.service.dto.ComplaintAction;
 import de.tum.cit.aet.artemis.service.dto.ComplaintResponseUpdateDTO;

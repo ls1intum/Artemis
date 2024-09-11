@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto.user;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UserNameAndLoginDTO(String name, String login) {

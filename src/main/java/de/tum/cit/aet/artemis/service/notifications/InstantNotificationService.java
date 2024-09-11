@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.service.notifications;
 import java.util.Set;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * The Interface which should be used for InstantNotifications such as Mails and PushNotifications.

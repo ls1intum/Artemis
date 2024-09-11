@@ -24,7 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.domain.enumeration.Language;
+import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.web.rest.dto.ImprintDTO;
 
 class ImprintResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {

@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.programming;
 
-import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 public interface TemplateUpgradeService {
 

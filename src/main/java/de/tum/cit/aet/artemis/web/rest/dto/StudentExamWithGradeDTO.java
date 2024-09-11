@@ -4,7 +4,8 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.GradeType;
+import de.tum.cit.aet.artemis.assessment.domain.GradeType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 
 /**
@@ -12,7 +13,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
  * Includes max points and max bonus points.
  * <p>
  * It is possible to calculate data included in this DTO by using the {@link StudentExam}, {@link ExamScoresDTO.StudentResult}
- * and {@link de.tum.cit.aet.artemis.domain.GradingScale} for the exam. The calculations are done in the server and returned with this DTO so that the client
+ * and {@link GradingScale} for the exam. The calculations are done in the server and returned with this DTO so that the client
  * does not need to repeat the same filtering and calculation logic. Also this removes the need for client to send an extra request to
  * {@link de.tum.cit.aet.artemis.web.rest.GradeStepResource#getGradeStepByPercentageForExam(Long, Long, Double)}
  * by including the grade in {@link ExamScoresDTO.StudentResult#overallGrade()}.

@@ -16,7 +16,7 @@ import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
-import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCRepositoryUri;
 
 class RepositoryUriTest {

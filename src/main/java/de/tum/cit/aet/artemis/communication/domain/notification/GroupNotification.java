@@ -12,10 +12,10 @@ import jakarta.persistence.ManyToOne;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.GroupNotificationType;
-import de.tum.cit.aet.artemis.domain.enumeration.NotificationPriority;
+import de.tum.cit.aet.artemis.communication.domain.GroupNotificationType;
+import de.tum.cit.aet.artemis.communication.domain.NotificationPriority;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * A GroupNotification.

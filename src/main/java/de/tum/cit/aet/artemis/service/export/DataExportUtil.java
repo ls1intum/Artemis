@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import de.tum.cit.aet.artemis.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
  * A utility class for data export containing helper methods that are frequently used in the different services responsible for creating data exports.

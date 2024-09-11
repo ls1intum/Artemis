@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.archival;
 
 import jakarta.annotation.Nullable;
 
-import de.tum.cit.aet.artemis.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 public class ArchivalReportEntry {
 

@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.config.TheiaConfiguration;
-import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 class TheiaConfigurationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -9,9 +9,9 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.communication.domain.ConductAgreement;
+import de.tum.cit.aet.artemis.communication.domain.ConductAgreementId;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.ConductAgreement;
-import de.tum.cit.aet.artemis.domain.ConductAgreementId;
 
 /**
  * Spring Data repository for the Code of Conduct Agreement entity.

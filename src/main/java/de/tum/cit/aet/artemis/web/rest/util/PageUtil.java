@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
-import de.tum.cit.aet.artemis.domain.enumeration.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.PageableSearchDTO;
 
 public class PageUtil {

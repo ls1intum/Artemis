@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.bonus;
 
-import de.tum.cit.aet.artemis.domain.Bonus;
-import de.tum.cit.aet.artemis.domain.BonusStrategy;
-import de.tum.cit.aet.artemis.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.domain.Bonus;
+import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 
 /**
  * Factory for creating Bonuses and related objects.

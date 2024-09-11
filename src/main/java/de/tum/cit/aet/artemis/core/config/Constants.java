@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.core.config;
 
 import java.util.regex.Pattern;
 
-import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingSubmissionService;
 
 /**

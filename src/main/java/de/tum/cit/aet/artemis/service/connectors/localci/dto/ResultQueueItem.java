@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ResultQueueItem(BuildResult buildResult, BuildJobQueueItem buildJobQueueItem, List<BuildLogEntry> buildLogs, Throwable exception) implements Serializable {

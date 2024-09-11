@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.web.websocket.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Submission;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SubmissionSyncPayload(Submission submission, User sender) {

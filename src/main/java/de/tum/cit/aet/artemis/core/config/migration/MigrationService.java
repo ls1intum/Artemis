@@ -26,8 +26,8 @@ import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.core.domain.MigrationChangelog;
 import de.tum.cit.aet.artemis.core.repository.MigrationChangeRepository;
-import de.tum.cit.aet.artemis.domain.MigrationChangelog;
 
 /**
  * This service contains utility functionality that verifies a changelog to prevent corruption and executes a given changelog.

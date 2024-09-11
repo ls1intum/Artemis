@@ -7,8 +7,6 @@ import jakarta.persistence.OneToOne;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-
 @Entity
 @DiscriminatorValue(value = "TPEP")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

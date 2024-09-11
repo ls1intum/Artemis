@@ -11,7 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.SubmissionVersion;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 
 /**
  * Spring Data repository for the SubmissionVersion entity.

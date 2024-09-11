@@ -10,10 +10,10 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.course.CourseFactory;
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.LtiPlatformConfiguration;
-import de.tum.cit.aet.artemis.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
+import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.OnlineCourseConfigurationRepository;
 
 class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationIndependentTest {

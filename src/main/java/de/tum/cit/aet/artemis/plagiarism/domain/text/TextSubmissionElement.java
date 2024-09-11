@@ -6,10 +6,10 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 
 import de.jplag.Token;
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Entity
 // TODO: use @DiscriminatorValue(value = "T") or even better use integers (because they use less space in the database)

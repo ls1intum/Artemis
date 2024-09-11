@@ -9,7 +9,7 @@ import org.eclipse.jgit.transport.ReceivePack;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCFetchFilter;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPostPushHook;
 import de.tum.cit.aet.artemis.service.connectors.localvc.LocalVCPrePushHook;

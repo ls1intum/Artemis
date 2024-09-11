@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.service.plagiarism;
 
-import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 public class ProgrammingLanguageNotSupportedForPlagiarismDetectionException extends Exception {
 

@@ -25,14 +25,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.domain.GraphType;
+import de.tum.cit.aet.artemis.core.domain.SpanType;
+import de.tum.cit.aet.artemis.core.domain.StatisticsView;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseStatisticsAverageScore;
 import de.tum.cit.aet.artemis.core.dto.StatisticsEntry;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.GraphType;
-import de.tum.cit.aet.artemis.domain.enumeration.SpanType;
-import de.tum.cit.aet.artemis.domain.enumeration.StatisticsView;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * Spring Data JPA repository for the statistics pages

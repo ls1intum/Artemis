@@ -15,8 +15,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.domain.enumeration.Language;
-import de.tum.cit.aet.artemis.domain.enumeration.LegalDocumentType;
+import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.domain.LegalDocumentType;
 import de.tum.cit.aet.artemis.web.rest.dto.ImprintDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.LegalDocument;
 import de.tum.cit.aet.artemis.web.rest.dto.PrivacyStatementDTO;

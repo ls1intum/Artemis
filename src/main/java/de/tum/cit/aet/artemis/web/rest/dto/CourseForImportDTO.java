@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
  * DTO containing {@link Course} information.

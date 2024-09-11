@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.enumeration.Visibility;
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 
 /**
  * This is a dto for updating a programming exercise test case.

@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.service.connectors.aeolus;
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.SOLUTION_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
-import static de.tum.cit.aet.artemis.domain.enumeration.AeolusTarget.JENKINS;
+import static de.tum.cit.aet.artemis.programming.domain.AeolusTarget.JENKINS;
 
 import java.net.URL;
 import java.util.HashMap;
@@ -29,10 +29,10 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.domain.AuxiliaryRepository;
-import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.domain.enumeration.AeolusTarget;
-import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
+import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.service.InternalUrlService;
 import de.tum.cit.aet.artemis.service.connectors.aeolus.dto.AeolusGenerationResponseDTO;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;

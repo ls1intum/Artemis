@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import de.tum.cit.aet.artemis.domain.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
 
 public class BuildLogParseUtils {
 

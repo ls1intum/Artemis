@@ -1,9 +1,9 @@
 package de.tum.cit.aet.artemis.authentication;
 
-import static de.tum.cit.aet.artemis.domain.Authority.EDITOR_AUTHORITY;
-import static de.tum.cit.aet.artemis.domain.Authority.INSTRUCTOR_AUTHORITY;
-import static de.tum.cit.aet.artemis.domain.Authority.TA_AUTHORITY;
-import static de.tum.cit.aet.artemis.domain.Authority.USER_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.Authority.EDITOR_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.Authority.INSTRUCTOR_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.Authority.TA_AUTHORITY;
+import static de.tum.cit.aet.artemis.core.domain.Authority.USER_AUTHORITY;
 import static de.tum.cit.aet.artemis.user.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -28,15 +28,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.connector.GitlabRequestMockProvider;
+import de.tum.cit.aet.artemis.core.domain.Authority;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.course.CourseFactory;
-import de.tum.cit.aet.artemis.domain.Authority;
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.user.PasswordService;
 import de.tum.cit.aet.artemis.tutorialgroups.TutorialGroupUtilService;

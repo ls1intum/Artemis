@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.service.connectors.ci;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
  * Abstract service for managing entities related to continuous integration.

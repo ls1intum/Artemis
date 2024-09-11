@@ -9,10 +9,10 @@ import java.util.stream.Stream;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
-import de.tum.cit.aet.artemis.domain.LearningObject;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.service.LearningObjectService;
 import de.tum.cit.aet.artemis.service.learningpath.LearningPathRecommendationService.RecommendationState;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationDTO;

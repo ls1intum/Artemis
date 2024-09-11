@@ -8,7 +8,7 @@ import java.util.List;
 
 import org.assertj.core.data.Offset;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.service.compass.umlmodel.UMLElement;

@@ -15,14 +15,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.assessment.domain.Complaint;
+import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints;
 import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequests;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.Complaint;
-import de.tum.cit.aet.artemis.domain.enumeration.ComplaintType;
 
 /**
  * Spring Data JPA repository for the Complaint entity.

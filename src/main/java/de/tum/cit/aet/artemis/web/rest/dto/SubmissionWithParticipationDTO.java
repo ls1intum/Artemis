@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 
 /**
  * A DTO representing a submission.

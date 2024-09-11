@@ -14,8 +14,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.DomainObject;
-import de.tum.cit.aet.artemis.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 
 @Entity
 @Table(name = "build_log_statistics_entry")

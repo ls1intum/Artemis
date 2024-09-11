@@ -1,21 +1,21 @@
 package de.tum.cit.aet.artemis.service.connectors.jenkins;
 
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.C;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.EMPTY;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.HASKELL;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.KOTLIN;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.PYTHON;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.RUST;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.SWIFT;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.FACT;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.GCC;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.GRADLE_GRADLE;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.MAVEN_BLACKBOX;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.MAVEN_MAVEN;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.PLAIN;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.PLAIN_GRADLE;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.PLAIN_MAVEN;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.EMPTY;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.HASKELL;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTLIN;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.RUST;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.FACT;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GCC;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GRADLE_GRADLE;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_BLACKBOX;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_MAVEN;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_GRADLE;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_MAVEN;
 
 import java.util.List;
 

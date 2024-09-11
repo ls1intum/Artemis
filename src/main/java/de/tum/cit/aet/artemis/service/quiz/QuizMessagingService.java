@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.service.quiz;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.domain.enumeration.QuizAction.START_BATCH;
+import static de.tum.cit.aet.artemis.quiz.domain.QuizAction.START_BATCH;
 
 import jakarta.annotation.Nullable;
 
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.domain.enumeration.QuizAction;
+import de.tum.cit.aet.artemis.quiz.domain.QuizAction;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;

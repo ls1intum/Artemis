@@ -22,8 +22,8 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 @Entity
 @Table(name = "user_ide_mapping")

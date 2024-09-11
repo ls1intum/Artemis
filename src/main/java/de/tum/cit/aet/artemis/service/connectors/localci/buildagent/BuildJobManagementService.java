@@ -32,7 +32,7 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.domain.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildResult;
 

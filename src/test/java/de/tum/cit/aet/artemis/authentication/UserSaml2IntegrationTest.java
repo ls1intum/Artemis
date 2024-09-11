@@ -20,7 +20,7 @@ import org.springframework.security.saml2.provider.service.authentication.Saml2A
 import org.springframework.security.test.context.TestSecurityContextHolder;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.service.connectors.SAML2Service;
 import de.tum.cit.aet.artemis.service.user.PasswordService;
 import de.tum.cit.aet.artemis.web.rest.open.PublicUserJwtResource;

@@ -18,11 +18,11 @@ import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.ArtemisAuthenticationProviderImpl;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.domain.User;
 import de.tum.cit.aet.artemis.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.service.user.AuthorityService;

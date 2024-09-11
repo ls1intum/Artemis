@@ -4,7 +4,7 @@ import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
 import de.tum.cit.aet.artemis.core.validation.constraints.TeamAssignmentConfigConstraints;
-import de.tum.cit.aet.artemis.domain.TeamAssignmentConfig;
+import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 
 /**
  * Validates a team assignment configuration by checking that these criteria are fulfilled:

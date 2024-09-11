@@ -19,10 +19,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.BuildJob;
-import de.tum.cit.aet.artemis.domain.Result;
-import de.tum.cit.aet.artemis.domain.enumeration.BuildStatus;
+import de.tum.cit.aet.artemis.programming.domain.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.BuildStatus;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.service.dto.BuildJobResultCountDTO;

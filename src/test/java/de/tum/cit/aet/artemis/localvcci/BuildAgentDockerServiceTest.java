@@ -30,8 +30,8 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.domain.BuildJob;
-import de.tum.cit.aet.artemis.domain.enumeration.BuildStatus;
+import de.tum.cit.aet.artemis.programming.domain.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.BuildStatus;
 import de.tum.cit.aet.artemis.service.connectors.localci.buildagent.BuildAgentDockerService;
 import de.tum.cit.aet.artemis.service.connectors.localci.buildagent.BuildLogsMap;
 import de.tum.cit.aet.artemis.service.connectors.localci.dto.BuildConfig;

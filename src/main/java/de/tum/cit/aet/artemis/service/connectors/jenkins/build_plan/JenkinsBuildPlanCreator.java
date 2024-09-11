@@ -19,8 +19,8 @@ import org.w3c.dom.Document;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
-import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.domain.enumeration.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.service.connectors.jenkins.JenkinsXmlConfigBuilder;

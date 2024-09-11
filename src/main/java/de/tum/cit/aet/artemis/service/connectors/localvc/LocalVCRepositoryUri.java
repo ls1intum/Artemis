@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
-import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 
 /**
  * Represents a URI for a local version control (VC) repository. This class extends {@link VcsRepositoryUri} by adding specific properties

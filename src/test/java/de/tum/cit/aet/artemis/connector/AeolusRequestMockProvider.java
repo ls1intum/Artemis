@@ -23,7 +23,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.domain.enumeration.AeolusTarget;
+import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 
 /**
  * Mocks requests to Aeolus

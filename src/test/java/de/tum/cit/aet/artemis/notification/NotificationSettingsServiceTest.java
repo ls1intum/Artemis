@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.notification;
 
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.ATTACHMENT_CHANGE;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.COURSE_ARCHIVE_STARTED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.DATA_EXPORT_CREATED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.DATA_EXPORT_FAILED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.EXAM_ARCHIVE_STARTED;
-import static de.tum.cit.aet.artemis.domain.enumeration.NotificationType.EXERCISE_PRACTICE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.ATTACHMENT_CHANGE;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.COURSE_ARCHIVE_STARTED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.DATA_EXPORT_CREATED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.DATA_EXPORT_FAILED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXAM_ARCHIVE_STARTED;
+import static de.tum.cit.aet.artemis.communication.domain.NotificationType.EXERCISE_PRACTICE;
 import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel.EMAIL;
 import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel.PUSH;
 import static de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService.DEFAULT_NOTIFICATION_SETTINGS;
@@ -24,14 +24,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
+import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.domain.NotificationSetting;
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.NotificationType;
 import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.cit.aet.artemis.service.notifications.NotificationSettingsService;
 import de.tum.cit.aet.artemis.user.UserUtilService;

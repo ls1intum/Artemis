@@ -16,7 +16,7 @@ import org.springframework.data.util.Pair;
 
 import com.google.gson.JsonObject;
 
-import de.tum.cit.aet.artemis.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelCluster;
 import de.tum.cit.aet.artemis.modeling.domain.ModelElement;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;

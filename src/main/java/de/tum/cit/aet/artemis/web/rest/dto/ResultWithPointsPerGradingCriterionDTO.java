@@ -4,8 +4,8 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 
 /**
  * @param pointsPerCriterion Map of {@link GradingCriterion#getId()} to the result points in that category.

@@ -1,14 +1,14 @@
 package de.tum.cit.aet.artemis.exercise.programming;
 
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.C;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.EMPTY;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.HASKELL;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.KOTLIN;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.PYTHON;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.SWIFT;
 import static de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseTestService.STUDENT_LOGIN;
 import static de.tum.cit.aet.artemis.exercise.programming.ProgrammingSubmissionConstants.GITLAB_PUSH_EVENT_REQUEST;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.EMPTY;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.HASKELL;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTLIN;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -39,10 +39,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.domain.enumeration.AeolusTarget;
-import de.tum.cit.aet.artemis.domain.enumeration.ExerciseMode;
-import de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.domain.enumeration.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.service.programming.ProgrammingLanguageFeatureService;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;

@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.util;
 
 import org.springframework.http.HttpStatus;
 
-import de.tum.cit.aet.artemis.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * Represents an invalid exercise configuration that can be {@linkplain #applyTo(Exercise) applied} to any given exercise of type <code>E</code>.

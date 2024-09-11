@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.connectors.vcs;
 
 import java.time.Duration;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * Provides an interface for managing VCS access tokens.

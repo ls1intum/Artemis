@@ -5,13 +5,13 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.Bonus;
+import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
+import de.tum.cit.aet.artemis.assessment.domain.GradeType;
+import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.domain.IBonusStrategy;
 import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.domain.Bonus;
-import de.tum.cit.aet.artemis.domain.GradeStep;
-import de.tum.cit.aet.artemis.domain.GradeType;
-import de.tum.cit.aet.artemis.domain.GradingScale;
-import de.tum.cit.aet.artemis.domain.IBonusStrategy;
 import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 

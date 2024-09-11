@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.service.connectors.gitlabci;
 
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.EMPTY;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.JAVA;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProgrammingLanguage.RUST;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.MAVEN_MAVEN;
-import static de.tum.cit.aet.artemis.domain.enumeration.ProjectType.PLAIN_MAVEN;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.EMPTY;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.RUST;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.MAVEN_MAVEN;
+import static de.tum.cit.aet.artemis.programming.domain.ProjectType.PLAIN_MAVEN;
 
 import java.util.List;
 

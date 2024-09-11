@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.exercise.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * Custom record for SQL queries.

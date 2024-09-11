@@ -24,8 +24,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.User;
-import de.tum.cit.aet.artemis.domain.enumeration.CompetencyProgressConfidenceReason;
+import de.tum.cit.aet.artemis.atlas.domain.CompetencyProgressConfidenceReason;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
  * This class models the 'progress' association between a user and a competency.

@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 
 /**
  * This is a dto for providing statistics for the programming exercise test cases & sca categories.

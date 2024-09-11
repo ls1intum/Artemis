@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
+import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
+
 class GuidedTourSettingTest {
 
     @Test

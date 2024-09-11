@@ -6,7 +6,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
 
 /**
  * Record to represent the data transfer object for static code analysis reports.

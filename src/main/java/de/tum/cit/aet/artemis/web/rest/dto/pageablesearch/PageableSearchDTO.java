@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest.dto.pageablesearch;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.enumeration.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
 
 /**

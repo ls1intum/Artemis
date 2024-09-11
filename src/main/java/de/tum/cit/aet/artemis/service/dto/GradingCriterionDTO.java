@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GradingCriterionDTO(long id, String title, Set<GradingInstructionDTO> structuredGradingInstructions) {

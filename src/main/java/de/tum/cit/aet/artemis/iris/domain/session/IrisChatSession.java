@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.iris.domain.session;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 public abstract class IrisChatSession extends IrisSession {

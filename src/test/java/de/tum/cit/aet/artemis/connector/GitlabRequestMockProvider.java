@@ -90,12 +90,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.domain.Course;
-import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.service.UriService;
 import de.tum.cit.aet.artemis.service.connectors.gitlab.GitLabException;
@@ -454,7 +454,7 @@ public class GitlabRequestMockProvider {
         mockCreateRepository(exercise, clonedRepoName);
     }
 
-    public void mockConfigureRepository(ProgrammingExercise exercise, Set<de.tum.cit.aet.artemis.domain.User> users, boolean userExists) throws GitLabApiException {
+    public void mockConfigureRepository(ProgrammingExercise exercise, Set<de.tum.cit.aet.artemis.core.domain.User> users, boolean userExists) throws GitLabApiException {
         programmingExerciseUtilService.addTemplateParticipationForProgrammingExercise(exercise);
         var repositoryUri = exercise.getVcsTemplateRepositoryUri();
         for (var user : users) {
@@ -472,7 +472,7 @@ public class GitlabRequestMockProvider {
         doReturn(exists ? new User().withUsername(username) : null).when(userApi).getUser(username);
     }
 
-    private void mockImportUser(de.tum.cit.aet.artemis.domain.User user, boolean shouldFail) throws GitLabApiException {
+    private void mockImportUser(de.tum.cit.aet.artemis.core.domain.User user, boolean shouldFail) throws GitLabApiException {
         final var gitlabUser = new org.gitlab4j.api.models.User().withEmail(user.getEmail()).withUsername(user.getLogin()).withName(user.getName()).withCanCreateGroup(false)
                 .withCanCreateProject(false).withSkipConfirmation(true);
         if (!shouldFail) {
@@ -538,7 +538,7 @@ public class GitlabRequestMockProvider {
         doNothing().when(projectApi).removeMember(repositoryPath, mockedUserId);
     }
 
-    public void mockUpdateVcsUser(String login, de.tum.cit.aet.artemis.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
+    public void mockUpdateVcsUser(String login, de.tum.cit.aet.artemis.core.domain.User user, Set<String> removedGroups, Set<String> addedGroups, boolean shouldSynchronizePassword)
             throws GitLabApiException {
         mockUpdateBasicUserInformation(login, shouldSynchronizePassword);
         mockUpdateUserActivationState(user, false);
@@ -573,7 +573,7 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockUpdateVcsUserFailToActivate(String login, de.tum.cit.aet.artemis.domain.User user) throws GitLabApiException {
+    public void mockUpdateVcsUserFailToActivate(String login, de.tum.cit.aet.artemis.core.domain.User user) throws GitLabApiException {
         mockUpdateBasicUserInformation(login, true);
         mockUpdateUserActivationState(user, true);
     }
@@ -630,7 +630,7 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockCreateVcsUser(de.tum.cit.aet.artemis.domain.User user, boolean shouldFail) throws GitLabApiException {
+    public void mockCreateVcsUser(de.tum.cit.aet.artemis.core.domain.User user, boolean shouldFail) throws GitLabApiException {
         var userId = mockGetUserIdCreateIfNotExist(user, false, shouldFail);
 
         // Add user to existing exercises
@@ -646,17 +646,17 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockAddUserToGroupsUserExists(de.tum.cit.aet.artemis.domain.User user, String projectKey) throws GitLabApiException {
+    public void mockAddUserToGroupsUserExists(de.tum.cit.aet.artemis.core.domain.User user, String projectKey) throws GitLabApiException {
         Long userId = mockGetUserIdCreateIfNotExist(user, false, false);
         doThrow(new GitLabApiException("Member already exists")).when(groupApi).addMember(eq(projectKey), eq(userId), any(AccessLevel.class));
     }
 
-    public void mockAddUserToGroupsFails(de.tum.cit.aet.artemis.domain.User user, String projectKey) throws GitLabApiException {
+    public void mockAddUserToGroupsFails(de.tum.cit.aet.artemis.core.domain.User user, String projectKey) throws GitLabApiException {
         Long userId = mockGetUserIdCreateIfNotExist(user, false, false);
         doThrow(new GitLabApiException("Oh no")).when(groupApi).addMember(eq(projectKey), eq(userId), any(AccessLevel.class));
     }
 
-    private Long mockGetUserIdCreateIfNotExist(de.tum.cit.aet.artemis.domain.User user, boolean userExists, boolean shouldFail) throws GitLabApiException {
+    private Long mockGetUserIdCreateIfNotExist(de.tum.cit.aet.artemis.core.domain.User user, boolean userExists, boolean shouldFail) throws GitLabApiException {
         var userToReturn = new User().withId(1L).withUsername(user.getLogin());
         doReturn(userExists ? userToReturn : null).when(userApi).getUser(user.getLogin());
         if (!userExists) {
@@ -687,8 +687,8 @@ public class GitlabRequestMockProvider {
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getEditorGroupName(), allUsers));
         allUsers.addAll(userRepository.findAllUserInGroupAndNotIn(updatedCourse.getTeachingAssistantGroupName(), allUsers));
 
-        final Set<de.tum.cit.aet.artemis.domain.User> oldUsers = new HashSet<>();
-        final Set<de.tum.cit.aet.artemis.domain.User> newUsers = new HashSet<>();
+        final Set<de.tum.cit.aet.artemis.core.domain.User> oldUsers = new HashSet<>();
+        final Set<de.tum.cit.aet.artemis.core.domain.User> newUsers = new HashSet<>();
 
         for (var user : allUsers) {
             Set<String> userGroups = user.getGroups();
@@ -704,7 +704,7 @@ public class GitlabRequestMockProvider {
         mockSetPermissionsForNewGroupMembers(programmingExercises, newUsers, updatedCourse);
     }
 
-    private void mockUpdateOldGroupMembers(List<ProgrammingExercise> programmingExercises, Set<de.tum.cit.aet.artemis.domain.User> oldUsers, Course updatedCourse)
+    private void mockUpdateOldGroupMembers(List<ProgrammingExercise> programmingExercises, Set<de.tum.cit.aet.artemis.core.domain.User> oldUsers, Course updatedCourse)
             throws GitLabApiException {
         for (var user : oldUsers) {
             mockGetUserId(user.getLogin(), true, false);
@@ -725,8 +725,8 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    private void mockSetPermissionsForNewGroupMembers(List<ProgrammingExercise> programmingExercises, Set<de.tum.cit.aet.artemis.domain.User> newUsers, Course updatedCourse) {
-        for (de.tum.cit.aet.artemis.domain.User user : newUsers) {
+    private void mockSetPermissionsForNewGroupMembers(List<ProgrammingExercise> programmingExercises, Set<de.tum.cit.aet.artemis.core.domain.User> newUsers, Course updatedCourse) {
+        for (de.tum.cit.aet.artemis.core.domain.User user : newUsers) {
             try {
                 mockGetUserId(user.getLogin(), true, false);
 
@@ -775,16 +775,16 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void mockFailToGetUserWhenUpdatingOldMembers(de.tum.cit.aet.artemis.domain.User user) throws GitLabApiException {
+    public void mockFailToGetUserWhenUpdatingOldMembers(de.tum.cit.aet.artemis.core.domain.User user) throws GitLabApiException {
         mockGetUserId(user.getLogin(), false, true);
     }
 
-    public void mockFailToUpdateOldGroupMembers(ProgrammingExercise exercise, de.tum.cit.aet.artemis.domain.User user) throws GitLabApiException {
+    public void mockFailToUpdateOldGroupMembers(ProgrammingExercise exercise, de.tum.cit.aet.artemis.core.domain.User user) throws GitLabApiException {
         mockGetUserId(user.getLogin(), true, false);
         doThrow(GitLabApiException.class).when(groupApi).updateMember(eq(exercise.getProjectKey()), eq(1L), any(AccessLevel.class));
     }
 
-    public void mockFailToRemoveOldMember(ProgrammingExercise programmingExercise, de.tum.cit.aet.artemis.domain.User user) throws GitLabApiException {
+    public void mockFailToRemoveOldMember(ProgrammingExercise programmingExercise, de.tum.cit.aet.artemis.core.domain.User user) throws GitLabApiException {
         mockGetUserId(user.getLogin(), true, false);
         doThrow(GitLabApiException.class).when(groupApi).removeMember(programmingExercise.getProjectKey(), 1L);
     }
@@ -823,7 +823,7 @@ public class GitlabRequestMockProvider {
         }
     }
 
-    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, Set<de.tum.cit.aet.artemis.domain.User> users) throws GitLabApiException {
+    public void setRepositoryPermissionsToReadOnly(VcsRepositoryUri repositoryUri, Set<de.tum.cit.aet.artemis.core.domain.User> users) throws GitLabApiException {
         for (var user : users) {
             mockGetUserId(user.getLogin(), true, false);
             final var repositoryPath = uriService.getRepositoryPathFromRepositoryUri(repositoryUri);
@@ -841,7 +841,7 @@ public class GitlabRequestMockProvider {
         mockUnblockUser(shouldFail);
     }
 
-    public void mockUpdateUserActivationState(de.tum.cit.aet.artemis.domain.User user, boolean shouldFail) throws GitLabApiException {
+    public void mockUpdateUserActivationState(de.tum.cit.aet.artemis.core.domain.User user, boolean shouldFail) throws GitLabApiException {
         if (user.getActivated()) {
             mockUnblockUser(shouldFail);
         }

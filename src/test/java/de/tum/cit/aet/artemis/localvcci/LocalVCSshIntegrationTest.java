@@ -27,7 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.programming.icl.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.icl.ssh.SshGitCommand;
 import de.tum.cit.aet.artemis.service.icl.SshGitCommandFactoryService;

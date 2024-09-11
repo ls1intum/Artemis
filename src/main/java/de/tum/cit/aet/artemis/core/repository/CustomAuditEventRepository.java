@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.config.audit.AuditEventConverter;
-import de.tum.cit.aet.artemis.domain.PersistentAuditEvent;
+import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
 
 /**
  * An implementation of Spring Boot's {@link AuditEventRepository}.

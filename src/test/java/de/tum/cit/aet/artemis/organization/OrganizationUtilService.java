@@ -5,8 +5,8 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
-import de.tum.cit.aet.artemis.domain.Organization;
 
 /**
  * Service responsible for initializing the database with specific testdata related to organizations for use in integration tests.

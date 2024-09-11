@@ -10,8 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import de.tum.cit.aet.artemis.domain.ProgrammingExerciseTestCase;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
  * Spring Data repository for the ProgrammingExerciseTestCase entity.
@@ -75,10 +76,10 @@ public interface ProgrammingExerciseTestCaseRepository extends ArtemisJpaReposit
     Set<ProgrammingExerciseTestCase> findByExerciseIdAndActive(long exerciseId, Boolean active);
 
     /**
-     * Returns the number of test cases marked as {@link de.tum.cit.aet.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE} for the given exercise.
+     * Returns the number of test cases marked as {@link Visibility#AFTER_DUE_DATE} for the given exercise.
      *
      * @param exerciseId the exercise which test cases should be considered.
-     * @return the number of test cases marked as {@link de.tum.cit.aet.artemis.domain.enumeration.Visibility#AFTER_DUE_DATE}.
+     * @return the number of test cases marked as {@link Visibility#AFTER_DUE_DATE}.
      */
     @Query("""
             SELECT COUNT(DISTINCT testCase)

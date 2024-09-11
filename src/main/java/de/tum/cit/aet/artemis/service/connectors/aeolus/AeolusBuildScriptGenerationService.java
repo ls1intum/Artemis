@@ -5,8 +5,8 @@ import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import de.tum.cit.aet.artemis.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.domain.enumeration.AeolusTarget;
+import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.service.connectors.BuildScriptGenerationService;
 import de.tum.cit.aet.artemis.service.connectors.BuildScriptProviderService;

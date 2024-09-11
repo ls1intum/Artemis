@@ -14,9 +14,9 @@ import org.springframework.data.annotation.CreatedDate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.DomainObject;
-import de.tum.cit.aet.artemis.domain.enumeration.FeedbackType;
-import de.tum.cit.aet.artemis.domain.enumeration.TextAssessmentEventType;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventType;
 
 /**
  * A TextAssessmentEvent.

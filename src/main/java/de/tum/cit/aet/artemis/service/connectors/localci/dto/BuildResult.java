@@ -11,7 +11,7 @@ import org.springframework.util.ObjectUtils;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.service.connectors.ci.notification.dto.TestwiseCoverageReportDTO;
 import de.tum.cit.aet.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.service.dto.BuildJobDTOInterface;

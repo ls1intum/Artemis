@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.enumeration.DataExportState;
+import de.tum.cit.aet.artemis.core.domain.DataExportState;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DataExportDTO(Long id, DataExportState dataExportState, ZonedDateTime createdDate, ZonedDateTime nextRequestDate) {

@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.domain.GuidedTourSetting;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 class GuidedTourSettingResourceTest extends AbstractSpringIntegrationIndependentTest {

@@ -16,7 +16,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 

@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.service.quiz;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.StartupDelayConfig.QUIZ_EXERCISE_SCHEDULE_DELAY_SEC;
-import static de.tum.cit.aet.artemis.domain.enumeration.QuizAction.START_NOW;
+import static de.tum.cit.aet.artemis.quiz.domain.QuizAction.START_NOW;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
@@ -19,10 +19,10 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.domain.enumeration.ExerciseLifecycle;
-import de.tum.cit.aet.artemis.domain.enumeration.QuizMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.service.ProfileService;

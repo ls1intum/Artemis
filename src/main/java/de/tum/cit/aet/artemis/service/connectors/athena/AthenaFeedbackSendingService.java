@@ -12,10 +12,10 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.core.exception.NetworkingException;
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.Feedback;
-import de.tum.cit.aet.artemis.domain.Submission;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.service.dto.athena.ExerciseBaseDTO;
 import de.tum.cit.aet.artemis.service.dto.athena.FeedbackBaseDTO;
 import de.tum.cit.aet.artemis.service.dto.athena.SubmissionBaseDTO;

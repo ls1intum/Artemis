@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.service;
 
+import static de.tum.cit.aet.artemis.assessment.domain.FeedbackType.MANUAL_UNREFERENCED;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.domain.enumeration.FeedbackType.MANUAL_UNREFERENCED;
-import static de.tum.cit.aet.artemis.domain.enumeration.TutorParticipationStatus.NOT_PARTICIPATED;
-import static de.tum.cit.aet.artemis.domain.enumeration.TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
-import static de.tum.cit.aet.artemis.domain.enumeration.TutorParticipationStatus.TRAINED;
 import static de.tum.cit.aet.artemis.service.TutorParticipationService.FeedbackCorrectionErrorType.UNNECESSARY_FEEDBACK;
+import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus.NOT_PARTICIPATED;
+import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
+import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus.TRAINED;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -24,13 +24,13 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
-import de.tum.cit.aet.artemis.domain.ExampleSubmission;
-import de.tum.cit.aet.artemis.domain.Exercise;
-import de.tum.cit.aet.artemis.domain.Feedback;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
 

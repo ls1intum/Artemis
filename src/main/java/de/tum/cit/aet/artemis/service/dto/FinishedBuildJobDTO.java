@@ -6,13 +6,12 @@ import org.springframework.data.domain.Page;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.domain.BuildJob;
-import de.tum.cit.aet.artemis.domain.Result;
-import de.tum.cit.aet.artemis.domain.enumeration.AssessmentType;
-import de.tum.cit.aet.artemis.domain.enumeration.BuildStatus;
-import de.tum.cit.aet.artemis.domain.enumeration.RepositoryType;
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.programming.domain.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.BuildStatus;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.web.rest.dto.ParticipationDTO;
-import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.SubmissionDTO;
 
 /**

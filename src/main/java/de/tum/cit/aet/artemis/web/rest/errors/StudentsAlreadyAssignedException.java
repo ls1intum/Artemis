@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.springframework.data.util.Pair;
 
-import de.tum.cit.aet.artemis.domain.Team;
-import de.tum.cit.aet.artemis.domain.User;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.web.rest.TeamResource;
 
 /**
