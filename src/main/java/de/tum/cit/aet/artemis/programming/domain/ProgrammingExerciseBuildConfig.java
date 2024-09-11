@@ -19,8 +19,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.service.connectors.aeolus.Windfile;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.AbstractVersionControlService;
+import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
 
 @Entity
 @Table(name = "programming_exercise_build_config")

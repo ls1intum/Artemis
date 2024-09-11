@@ -50,7 +50,7 @@ import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 
-import de.tum.cit.aet.artemis.core.service.connectors.localci.LocalCIPriorityQueueComparator;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
 import de.tum.cit.aet.artemis.service.HazelcastPathSerializer;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;

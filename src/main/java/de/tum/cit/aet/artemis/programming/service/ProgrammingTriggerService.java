@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.ProfileService;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;

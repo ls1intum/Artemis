@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.regex.PatternSyntaxException;
 
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
@@ -32,9 +33,8 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.connectors.ci.CIUserManagementService;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.VcsUserManagementService;
-import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
+import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import tech.jhipster.security.RandomUtil;
 
 @Profile(PROFILE_CORE)

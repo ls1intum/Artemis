@@ -20,8 +20,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.service.connectors.GitService;
-import de.tum.cit.aet.artemis.core.service.connectors.ci.notification.dto.TestwiseCoverageReportDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
@@ -32,8 +30,10 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCase
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestwiseCoverageReportDTO;
 
 /**
  * Service for managing testwise coverage data and interacts with both CoverageReport, CoverageFileReport

@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
-import static de.tum.cit.aet.artemis.core.service.connectors.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
+import static de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
+import static de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils.getDocumentBuilderFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +55,6 @@ import org.xml.sax.SAXException;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
-import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;

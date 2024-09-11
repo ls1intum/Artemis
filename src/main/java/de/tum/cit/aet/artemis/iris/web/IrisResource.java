@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisHealthIndicator;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
 
 @Profile("iris")
 @RestController

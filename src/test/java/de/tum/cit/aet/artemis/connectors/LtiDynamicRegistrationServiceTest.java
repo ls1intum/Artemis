@@ -26,7 +26,8 @@ import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13ClientRegistration;
 import de.tum.cit.aet.artemis.lti.dto.Lti13PlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.lti.service.LtiDynamicRegistrationService;
+import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
 
 class LtiDynamicRegistrationServiceTest {
 

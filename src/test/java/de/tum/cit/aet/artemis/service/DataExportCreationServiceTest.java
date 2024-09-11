@@ -55,7 +55,6 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.apollon.ApollonConversionService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCreationService;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
@@ -70,6 +69,7 @@ import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.cit.aet.artemis.exercise.quiz.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
+import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;

@@ -35,7 +35,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
 import de.tum.cit.aet.artemis.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -43,6 +42,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.CheckoutDirectoriesDTO;
 

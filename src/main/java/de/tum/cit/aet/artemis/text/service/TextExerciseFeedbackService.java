@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
-import de.tum.cit.aet.artemis.core.service.connectors.athena.AthenaFeedbackSuggestionsService;
+import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.service.ParticipationService;

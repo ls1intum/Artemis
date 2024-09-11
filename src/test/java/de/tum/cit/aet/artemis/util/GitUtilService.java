@@ -24,7 +24,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
@@ -33,6 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 
 @Service
 public class GitUtilService {

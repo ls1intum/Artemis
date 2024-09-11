@@ -23,7 +23,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.PersistentAuditEvent;
 import de.tum.cit.aet.artemis.core.repository.PersistenceAuditEventRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
@@ -32,6 +31,7 @@ import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 
 class ManagementResourceIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

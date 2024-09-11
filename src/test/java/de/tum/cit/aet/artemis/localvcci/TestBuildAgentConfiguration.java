@@ -36,8 +36,8 @@ import com.github.dockerjava.api.command.StopContainerCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 
-import de.tum.cit.aet.artemis.core.service.connectors.localci.buildagent.BuildAgentDockerService;
-import de.tum.cit.aet.artemis.programming.icl.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
+import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
 import de.tum.cit.aet.artemis.util.FixMissingServletPathProcessor;
 
 /**

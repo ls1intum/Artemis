@@ -43,8 +43,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
-import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationResultService;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
@@ -68,6 +66,8 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionReposi
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResultService;
+import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;

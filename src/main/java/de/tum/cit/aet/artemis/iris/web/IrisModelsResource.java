@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.web;
 
 import java.util.List;
 
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -9,10 +10,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisConnectorException;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisConnectorService;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.PyrisModelDTO;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisModelDTO;
 
 /**
  * REST controller for managing the models Pyris provides.

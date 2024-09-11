@@ -46,10 +46,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.CompetencyJolPairDTO;

@@ -16,7 +16,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -28,6 +27,7 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
+import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {

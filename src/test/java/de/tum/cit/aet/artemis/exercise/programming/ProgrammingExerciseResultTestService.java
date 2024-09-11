@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.hestia.TestwiseCoverageTestUtil;
@@ -60,6 +59,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;

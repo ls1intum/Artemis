@@ -35,7 +35,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.FileType;

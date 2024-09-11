@@ -18,11 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.connectors.GitService;
-import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.GitUtilService;
 import de.tum.cit.aet.artemis.util.LocalRepository;

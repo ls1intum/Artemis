@@ -21,11 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.core.service.connectors.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildAgentInformation;
-import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.BuildJob;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
+import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.service.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.service.dto.BuildJobsStatisticsDTO;
 import de.tum.cit.aet.artemis.service.dto.FinishedBuildJobDTO;

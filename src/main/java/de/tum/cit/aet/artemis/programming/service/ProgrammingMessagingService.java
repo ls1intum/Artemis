@@ -17,11 +17,11 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
-import de.tum.cit.aet.artemis.core.service.connectors.lti.LtiNewResultService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.programming.domain.BuildRunState;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;

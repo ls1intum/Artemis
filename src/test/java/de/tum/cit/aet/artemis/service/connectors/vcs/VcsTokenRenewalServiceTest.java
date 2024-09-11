@@ -24,8 +24,8 @@ import org.mockito.Mockito;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.VcsTokenManagementService;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.VcsTokenRenewalService;
+import de.tum.cit.aet.artemis.programming.service.vcs.VcsTokenManagementService;
+import de.tum.cit.aet.artemis.programming.service.vcs.VcsTokenRenewalService;
 
 class VcsTokenRenewalServiceTest {
 

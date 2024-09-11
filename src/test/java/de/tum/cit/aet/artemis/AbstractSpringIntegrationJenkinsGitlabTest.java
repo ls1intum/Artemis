@@ -35,8 +35,6 @@ import de.tum.cit.aet.artemis.connector.GitlabRequestMockProvider;
 import de.tum.cit.aet.artemis.connector.JenkinsRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.connectors.gitlab.GitLabService;
-import de.tum.cit.aet.artemis.core.service.connectors.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
@@ -47,6 +45,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
+import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabService;
+import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
 import de.tum.cit.aet.artemis.web.websocket.ResultWebsocketService;
 
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")

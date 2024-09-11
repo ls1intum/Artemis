@@ -43,10 +43,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.communication.domain.push_notification.PushNotificationDeviceConfiguration;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.VcsTokenRenewalService;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
+import de.tum.cit.aet.artemis.programming.service.vcs.VcsTokenRenewalService;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 

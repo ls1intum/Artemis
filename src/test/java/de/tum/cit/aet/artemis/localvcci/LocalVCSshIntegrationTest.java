@@ -28,9 +28,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.programming.icl.ssh.HashUtils;
-import de.tum.cit.aet.artemis.programming.icl.ssh.SshGitCommand;
-import de.tum.cit.aet.artemis.service.icl.SshGitCommandFactoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactoryService;
+import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
+import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 
 @Profile(PROFILE_LOCALVC)
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {

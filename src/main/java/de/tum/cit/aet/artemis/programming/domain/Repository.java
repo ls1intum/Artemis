@@ -6,7 +6,7 @@ import java.util.Collection;
 
 import org.eclipse.jgit.lib.BaseRepositoryBuilder;
 
-import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 
 /**
  * This class represents repositories cloned from the VC system to Artemis to then be used in the online editor.

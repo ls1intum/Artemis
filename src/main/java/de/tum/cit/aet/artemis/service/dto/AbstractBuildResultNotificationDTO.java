@@ -9,9 +9,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.service.connectors.ci.notification.dto.TestwiseCoverageReportDTO;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestwiseCoverageReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

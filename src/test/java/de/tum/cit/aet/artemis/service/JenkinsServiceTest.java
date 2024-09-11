@@ -33,7 +33,6 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
-import de.tum.cit.aet.artemis.core.service.connectors.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ContinuousIntegrationTestService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -46,6 +45,7 @@ import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
+import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
 
 class JenkinsServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

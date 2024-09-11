@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
 
 @Entity
 @Table(name = "build_job")

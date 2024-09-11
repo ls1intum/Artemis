@@ -34,10 +34,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.security.lti.Lti13TokenRetriever;
-import de.tum.cit.aet.artemis.core.service.connectors.lti.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
+import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import uk.ac.ox.ctl.lti13.lti.Claims;

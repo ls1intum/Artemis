@@ -7,9 +7,9 @@ import jakarta.annotation.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 /**
  * A DTO for sending status updates of Iris to the client via the websocket

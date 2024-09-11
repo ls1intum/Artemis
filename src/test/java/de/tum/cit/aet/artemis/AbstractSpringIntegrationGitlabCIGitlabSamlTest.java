@@ -32,9 +32,6 @@ import de.tum.cit.aet.artemis.connector.GitlabRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
-import de.tum.cit.aet.artemis.core.service.connectors.gitlab.GitLabService;
-import de.tum.cit.aet.artemis.core.service.connectors.gitlabci.GitLabCIService;
-import de.tum.cit.aet.artemis.core.service.connectors.gitlabci.GitLabCITriggerService;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
@@ -43,6 +40,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabService;
+import de.tum.cit.aet.artemis.programming.service.gitlabci.GitLabCIService;
+import de.tum.cit.aet.artemis.programming.service.gitlabci.GitLabCITriggerService;
 
 @ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!

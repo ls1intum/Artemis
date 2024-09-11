@@ -29,7 +29,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;

@@ -21,7 +21,6 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.connectors.athena.AthenaSubmissionSendingService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;

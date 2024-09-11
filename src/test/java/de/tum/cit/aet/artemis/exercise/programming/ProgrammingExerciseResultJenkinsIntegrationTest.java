@@ -21,9 +21,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.util.TestConstants;
 
 class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {

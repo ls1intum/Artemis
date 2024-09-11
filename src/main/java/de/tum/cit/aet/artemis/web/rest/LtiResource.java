@@ -4,6 +4,7 @@ import java.text.ParseException;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -30,10 +31,9 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.connectors.lti.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 

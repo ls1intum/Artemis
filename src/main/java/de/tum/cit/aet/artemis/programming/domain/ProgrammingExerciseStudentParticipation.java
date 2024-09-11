@@ -8,9 +8,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.AbstractVersionControlService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
 import de.tum.cit.aet.artemis.quiz.config.QuizView;
 
 @Entity

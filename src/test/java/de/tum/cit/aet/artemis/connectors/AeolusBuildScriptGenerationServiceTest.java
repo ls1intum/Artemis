@@ -18,16 +18,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.connector.AeolusRequestMockProvider;
-import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusBuildPlanService;
-import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusBuildScriptGenerationService;
-import de.tum.cit.aet.artemis.core.service.connectors.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.core.service.connectors.aeolus.Windfile;
-import de.tum.cit.aet.artemis.core.service.connectors.aeolus.WindfileMetadata;
 import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildPlanService;
+import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusBuildScriptGenerationService;
+import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
+import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
+import de.tum.cit.aet.artemis.programming.service.aeolus.WindfileMetadata;
 
 class AeolusBuildScriptGenerationServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

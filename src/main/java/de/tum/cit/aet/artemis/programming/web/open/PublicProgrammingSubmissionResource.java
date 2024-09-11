@@ -4,6 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
@@ -19,8 +21,6 @@ import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.core.service.connectors.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.programming.domain.Commit;
@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
+import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 /**
  * REST controller for receiving updates for a ProgrammingSubmission.

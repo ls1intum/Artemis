@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
@@ -40,6 +39,7 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseS
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.ExerciseHintService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 @Profile(PROFILE_CORE)
 @Service

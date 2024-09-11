@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.VcsUserManagementService;
+import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 
 @Service
 @Profile(PROFILE_SCHEDULING)

@@ -12,10 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractAthenaTest;
+import de.tum.cit.aet.artemis.athena.service.AthenaDTOConverterService;
+import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSendingService;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.service.connectors.athena.AthenaDTOConverterService;
-import de.tum.cit.aet.artemis.core.service.connectors.athena.AthenaModuleService;
-import de.tum.cit.aet.artemis.core.service.connectors.athena.AthenaSubmissionSendingService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;

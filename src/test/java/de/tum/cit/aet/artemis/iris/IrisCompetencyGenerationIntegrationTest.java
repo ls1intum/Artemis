@@ -16,12 +16,12 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyRecommendationDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 
 class IrisCompetencyGenerationIntegrationTest extends AbstractIrisIntegrationTest {
 

@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisWebhookService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisWebhookService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;

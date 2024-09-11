@@ -49,7 +49,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 @Profile(PROFILE_CORE)
 @RestController
 @RequestMapping("api/")
-public class dBonusResource {
+public class BonusResource {
 
     private static final Logger log = LoggerFactory.getLogger(BonusResource.class);
 

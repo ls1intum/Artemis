@@ -38,7 +38,6 @@ import de.jplag.python3.PythonLanguage;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
 import de.jplag.swift.SwiftLanguage;
 import de.tum.cit.aet.artemis.core.exception.GitException;
-import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCheckState;
@@ -49,6 +48,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipatio
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseExportService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.service.FileService;

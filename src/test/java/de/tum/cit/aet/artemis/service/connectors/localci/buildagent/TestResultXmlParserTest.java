@@ -8,8 +8,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.cit.aet.artemis.core.service.connectors.localci.buildagent.TestResultXmlParser;
-import de.tum.cit.aet.artemis.core.service.connectors.localci.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.service.TestResultXmlParser;
+import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildResult;
 
 class TestResultXmlParserTest {
 

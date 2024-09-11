@@ -12,8 +12,8 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.cit.aet.artemis.core.service.connectors.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.domain.BuildJob;
+import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 
 class SharedQueueManagementServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

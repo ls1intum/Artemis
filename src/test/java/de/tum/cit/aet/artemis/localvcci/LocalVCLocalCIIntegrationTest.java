@@ -2,9 +2,9 @@ package de.tum.cit.aet.artemis.localvcci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
-import static de.tum.cit.aet.artemis.core.service.connectors.localci.LocalCITriggerService.PRIORITY_EXAM_CONDUCTION;
-import static de.tum.cit.aet.artemis.core.service.connectors.localci.LocalCITriggerService.PRIORITY_NORMAL;
-import static de.tum.cit.aet.artemis.core.service.connectors.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
+import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_EXAM_CONDUCTION;
+import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_NORMAL;
+import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;

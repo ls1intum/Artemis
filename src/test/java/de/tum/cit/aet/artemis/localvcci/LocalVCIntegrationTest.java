@@ -29,8 +29,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.service.connectors.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.util.LocalRepository;
 

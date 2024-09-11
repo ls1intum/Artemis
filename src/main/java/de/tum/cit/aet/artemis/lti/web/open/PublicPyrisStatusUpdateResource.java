@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.lti.web.open;
 
 import java.util.Objects;
 
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.context.annotation.Profile;
@@ -13,18 +15,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisJobService;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.PyrisStatusUpdateService;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.CompetencyExtractionJob;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.CourseChatJob;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.ExerciseChatJob;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.IngestionWebhookJob;
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
 /**
  * REST controller for providing Pyris access to Artemis internal data and status updates.

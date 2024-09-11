@@ -26,8 +26,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.service.connectors.GitService;
-import de.tum.cit.aet.artemis.core.service.connectors.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -37,6 +35,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.web.rest.SubmissionPolicyResource;

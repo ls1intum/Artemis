@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.service.DragAndDropQuizAnswerConversionService;
+import de.tum.cit.aet.artemis.quiz.service.DragAndDropQuizAnswerConversionService;
 
 /**
  * A service to create the data export for quiz exercise participations.

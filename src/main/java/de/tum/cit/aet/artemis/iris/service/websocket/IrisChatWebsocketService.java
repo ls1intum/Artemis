@@ -5,11 +5,11 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.core.service.connectors.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @Service
 @Profile("iris")

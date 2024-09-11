@@ -14,9 +14,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.core.service.connectors.lti.LtiNewResultService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPointStatistic;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
