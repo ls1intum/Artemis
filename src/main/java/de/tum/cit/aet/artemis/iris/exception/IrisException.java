@@ -5,8 +5,8 @@ import java.util.Map;
 
 import org.zalando.problem.Status;
 
-import de.tum.cit.aet.artemis.web.rest.errors.ErrorConstants;
-import de.tum.cit.aet.artemis.web.rest.errors.HttpStatusException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
+import de.tum.cit.aet.artemis.core.exception.HttpStatusException;
 
 public class IrisException extends HttpStatusException {
 

@@ -41,8 +41,8 @@ import de.tum.cit.aet.artemis.service.CourseService;
 import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.OnlineCourseConfigurationService;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 /**
  * REST controller for managing Course.

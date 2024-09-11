@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.web.rest.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.PostDTO;
 

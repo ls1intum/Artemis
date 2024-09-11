@@ -21,8 +21,8 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 class OnlineCourseConfigurationServiceTest {
 

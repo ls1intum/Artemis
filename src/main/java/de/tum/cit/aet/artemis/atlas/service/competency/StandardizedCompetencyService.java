@@ -31,8 +31,8 @@ import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCo
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service for managing {@link StandardizedCompetency} entities.

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.web.rest;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import de.tum.cit.aet.artemis.exercise.web.AssessmentResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;

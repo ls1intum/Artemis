@@ -33,8 +33,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingAssessmentService;
 import de.tum.cit.aet.artemis.service.SubmissionService;
 import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateBaseDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.web.websocket.ResultWebsocketService;
 
 @Profile(PROFILE_CORE)

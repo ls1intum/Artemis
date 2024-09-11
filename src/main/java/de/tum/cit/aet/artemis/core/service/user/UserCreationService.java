@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.connectors.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.core.service.connectors.vcs.VcsUserManagementService;
-import de.tum.cit.aet.artemis.web.rest.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
 
 @Profile(PROFILE_CORE)

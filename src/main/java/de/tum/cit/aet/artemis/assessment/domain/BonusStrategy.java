@@ -7,7 +7,7 @@ import org.apache.commons.lang3.NotImplementedException;
 
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.BonusExampleDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 public enum BonusStrategy implements IBonusStrategy {
 

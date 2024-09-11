@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
 
 @Entity
 @Table(name = "tutorial_group")

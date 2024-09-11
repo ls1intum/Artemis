@@ -43,7 +43,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingTriggerService;
 import de.tum.cit.aet.artemis.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.web.rest.dto.ResultDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.web.websocket.programmingSubmission.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_LOCALCI)

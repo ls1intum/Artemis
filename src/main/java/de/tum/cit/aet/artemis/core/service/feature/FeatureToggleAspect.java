@@ -11,7 +11,7 @@ import org.aspectj.lang.annotation.Pointcut;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 @Profile(PROFILE_CORE)
 @Component

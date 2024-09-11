@@ -33,8 +33,8 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingServ
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.TestConstants;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.cit.aet.artemis.web.rest.repository.RepositoryActionType;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 class RepositoryAccessServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

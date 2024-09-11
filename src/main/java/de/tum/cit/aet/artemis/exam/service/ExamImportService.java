@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.quiz.service.QuizExerciseImportService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 import de.tum.cit.aet.artemis.text.service.TextExerciseImportService;
-import de.tum.cit.aet.artemis.web.rest.errors.ExamConfigurationException;
+import de.tum.cit.aet.artemis.core.exception.ExamConfigurationException;
 
 @Profile(PROFILE_CORE)
 @Service

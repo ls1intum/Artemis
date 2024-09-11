@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -26,8 +27,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.web.rest.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.RequestDataExportDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service Implementation for managing the data export in accordance with Art. 15 GDPR.
@@ -91,8 +92,8 @@ public class DataExportService {
      *
      * @param dataExport the data export to download
      * @return the file path where the data export is stored
-     * @throws de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException  if the data export or the user could not be found
-     * @throws de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException if the user is not allowed to download the data export
+     * @throws EntityNotFoundException  if the data export or the user could not be found
+     * @throws AccessForbiddenException if the user is not allowed to download the data export
      */
     public Resource downloadDataExport(DataExport dataExport) {
         dataExport.setDownloadDate(ZonedDateTime.now());

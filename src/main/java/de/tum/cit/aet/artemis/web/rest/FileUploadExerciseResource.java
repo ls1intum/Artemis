@@ -57,10 +57,10 @@ import de.tum.cit.aet.artemis.service.CourseService;
 import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
-import de.tum.cit.aet.artemis.web.rest.util.ResponseUtil;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 
 /**
  * REST controller for managing FileUploadExercise.

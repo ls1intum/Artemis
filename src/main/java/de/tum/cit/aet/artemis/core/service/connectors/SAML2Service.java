@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.web.rest.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 
 /**
  * This class describes a service for SAML2 authentication.

@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 
 class AthenaFeedbackSuggestionsServiceTest extends AbstractAthenaTest {
 

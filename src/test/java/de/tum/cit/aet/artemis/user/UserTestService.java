@@ -53,8 +53,8 @@ import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessToken
 import de.tum.cit.aet.artemis.service.dto.UserDTO;
 import de.tum.cit.aet.artemis.service.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.util.RequestUtilService;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.cit.aet.artemis.web.rest.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:

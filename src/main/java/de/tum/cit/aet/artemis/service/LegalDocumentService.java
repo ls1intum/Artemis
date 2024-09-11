@@ -20,8 +20,8 @@ import de.tum.cit.aet.artemis.core.domain.LegalDocumentType;
 import de.tum.cit.aet.artemis.web.rest.dto.ImprintDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.LegalDocument;
 import de.tum.cit.aet.artemis.web.rest.dto.PrivacyStatementDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service class responsible for providing and managing legal documents (privacy statment, imprint).

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 

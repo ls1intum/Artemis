@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.PostDTO;
 

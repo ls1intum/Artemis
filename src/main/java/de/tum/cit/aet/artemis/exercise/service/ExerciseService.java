@@ -70,8 +70,8 @@ import de.tum.cit.aet.artemis.web.rest.dto.CourseManagementOverviewExerciseStati
 import de.tum.cit.aet.artemis.web.rest.dto.DueDateStat;
 import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Exercise.

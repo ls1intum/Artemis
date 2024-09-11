@@ -51,7 +51,7 @@ public class FirebasePushNotificationService extends PushNotificationService {
     }
 
     @Override
-    protected PushNotificationDeviceConfigurationRepository getRepository() {
+    public PushNotificationDeviceConfigurationRepository getRepository() {
         return repository;
     }
 

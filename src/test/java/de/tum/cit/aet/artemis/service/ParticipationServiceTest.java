@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.assessment.web.ResultResource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -110,7 +111,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     /**
-     * Test for methods of {@link ParticipationService} used by {@link de.tum.cit.aet.artemis.web.rest.ResultResource#createResultForExternalSubmission(Long, String, Result)}.
+     * Test for methods of {@link ParticipationService} used by {@link ResultResource#createResultForExternalSubmission(Long, String, Result)}.
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotificati
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.service.SystemNotificationService;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
 /**
  * REST controller for administrating system notifications.

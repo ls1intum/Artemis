@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

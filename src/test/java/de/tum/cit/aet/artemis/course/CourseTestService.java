@@ -165,8 +165,8 @@ import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.user.UserNameAndLoginDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
 
 @Service
 public class CourseTestService {

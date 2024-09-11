@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.modeling.service.compass.CompassService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.SubmissionService;
 import de.tum.cit.aet.artemis.service.SubmissionVersionService;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 @Profile(PROFILE_CORE)
 @Service

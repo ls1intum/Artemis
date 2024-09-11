@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.web.rest;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.web.rest.plagiarism.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
+import static de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
 
 import java.io.File;
 import java.net.URI;
@@ -64,10 +64,10 @@ import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.plagiarism.PlagiarismResultDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
-import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
-import de.tum.cit.aet.artemis.web.rest.util.ResponseUtil;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 
 /**
  * REST controller for managing ModelingExercise.

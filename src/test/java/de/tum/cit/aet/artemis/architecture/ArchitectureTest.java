@@ -77,7 +77,7 @@ import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.cit.aet.artemis.core.service.connectors.GitService;
 import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.web.rest.repository.RepositoryResource;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryResource;
 
 /**
  * This class contains architecture tests that apply for the whole project.

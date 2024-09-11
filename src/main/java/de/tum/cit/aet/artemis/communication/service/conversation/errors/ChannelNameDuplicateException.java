@@ -6,8 +6,8 @@ import java.io.Serial;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.ErrorConstants;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 
 public class ChannelNameDuplicateException extends BadRequestAlertException {
 

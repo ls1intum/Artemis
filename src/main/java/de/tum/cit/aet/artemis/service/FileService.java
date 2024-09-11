@@ -65,8 +65,8 @@ import com.ibm.icu.text.CharsetDetector;
 
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.util.CommonsMultipartFile;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 @Profile(PROFILE_CORE)
 @Service

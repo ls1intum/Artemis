@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.service.ParticipationService;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 /**
  * REST controller for managing quiz participations.

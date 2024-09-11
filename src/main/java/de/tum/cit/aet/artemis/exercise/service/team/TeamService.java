@@ -29,9 +29,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.cit.aet.artemis.web.rest.TeamResource;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.StudentsAppearMultipleTimesException;
-import de.tum.cit.aet.artemis.web.rest.errors.StudentsNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.StudentsAppearMultipleTimesException;
+import de.tum.cit.aet.artemis.core.exception.StudentsNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Service

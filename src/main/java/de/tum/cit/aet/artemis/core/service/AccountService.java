@@ -4,14 +4,14 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.core.web.AccountResource;
+import de.tum.cit.aet.artemis.core.web.open.PublicAccountResource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.web.rest.AccountResource;
-import de.tum.cit.aet.artemis.web.rest.open.PublicAccountResource;
 
 /**
  * Service class for {@link AccountResource} and {@link PublicAccountResource}.

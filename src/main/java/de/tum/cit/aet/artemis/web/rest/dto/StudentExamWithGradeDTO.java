@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.web.GradeStepResource;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 
 /**
@@ -15,7 +16,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
  * It is possible to calculate data included in this DTO by using the {@link StudentExam}, {@link ExamScoresDTO.StudentResult}
  * and {@link GradingScale} for the exam. The calculations are done in the server and returned with this DTO so that the client
  * does not need to repeat the same filtering and calculation logic. Also this removes the need for client to send an extra request to
- * {@link de.tum.cit.aet.artemis.web.rest.GradeStepResource#getGradeStepByPercentageForExam(Long, Long, Double)}
+ * {@link GradeStepResource#getGradeStepByPercentageForExam(Long, Long, Double)}
  * by including the grade in {@link ExamScoresDTO.StudentResult#overallGrade()}.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

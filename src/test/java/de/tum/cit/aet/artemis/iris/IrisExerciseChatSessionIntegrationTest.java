@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisExerciseChatSessionRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.web.rest.iris.IrisStatusDTO;
+import de.tum.cit.aet.artemis.iris.web.IrisStatusDTO;
 
 class IrisExerciseChatSessionIntegrationTest extends AbstractIrisIntegrationTest {
 

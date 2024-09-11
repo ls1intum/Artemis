@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.web.rest;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.SHORT_NAME_PATTERN;
-import static de.tum.cit.aet.artemis.web.rest.util.StringUtil.stripIllegalCharacters;
+import static de.tum.cit.aet.artemis.core.util.StringUtil.stripIllegalCharacters;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -58,9 +58,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.service.SubmissionService;
 import de.tum.cit.aet.artemis.service.dto.TeamSearchUserDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.util.HeaderUtil;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.web.websocket.team.TeamWebsocketService;
 
 /**

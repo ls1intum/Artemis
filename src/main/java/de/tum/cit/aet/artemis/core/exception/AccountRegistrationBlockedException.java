@@ -2,9 +2,6 @@ package de.tum.cit.aet.artemis.core.exception;
 
 import java.io.Serial;
 
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.ErrorConstants;
-
 public class AccountRegistrationBlockedException extends BadRequestAlertException {
 
     @Serial

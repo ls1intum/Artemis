@@ -26,7 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Slide;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
-import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service Implementation for managing the split of AttachmentUnit into single slides and save them as PNG.

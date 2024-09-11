@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
 import de.tum.cit.aet.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Profile(PROFILE_CORE)

@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseS
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.CodeHintService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 class CodeHintServiceTest extends AbstractSpringIntegrationIndependentTest {

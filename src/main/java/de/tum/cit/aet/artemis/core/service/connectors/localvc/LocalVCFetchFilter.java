@@ -15,7 +15,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
-import de.tum.cit.aet.artemis.web.rest.repository.RepositoryActionType;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * Filters incoming fetch requests reaching the local git server implementation.

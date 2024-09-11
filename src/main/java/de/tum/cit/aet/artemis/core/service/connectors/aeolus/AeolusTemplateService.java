@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
+import de.tum.cit.aet.artemis.programming.web.localci.AeolusTemplateResource;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.service.ResourceLoaderService;
 
 /**
- * Handles the request to {@link de.tum.cit.aet.artemis.web.rest.AeolusTemplateResource} and Artemis internal
+ * Handles the request to {@link AeolusTemplateResource} and Artemis internal
  * requests to fetch aeolus templates for programming exercises.
  */
 @Service

@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRe
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service for managing testwise coverage data and interacts with both CoverageReport, CoverageFileReport

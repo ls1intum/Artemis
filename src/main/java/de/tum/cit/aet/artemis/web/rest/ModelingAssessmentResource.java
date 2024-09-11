@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
+import de.tum.cit.aet.artemis.exercise.web.AssessmentResource;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ModelingAssessmentDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.ErrorConstants;
+import de.tum.cit.aet.artemis.core.exception.ErrorConstants;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 

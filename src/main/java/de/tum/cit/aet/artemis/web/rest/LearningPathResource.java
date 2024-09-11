@@ -54,7 +54,7 @@ import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationObje
 import de.tum.cit.aet.artemis.web.rest.dto.competency.LearningPathNavigationOverviewDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.competency.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 
 @Profile(PROFILE_CORE)
 @RestController

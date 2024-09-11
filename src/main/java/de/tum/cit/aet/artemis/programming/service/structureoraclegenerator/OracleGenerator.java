@@ -23,7 +23,7 @@ import com.thoughtworks.qdox.JavaProjectBuilder;
 import com.thoughtworks.qdox.model.JavaClass;
 import com.thoughtworks.qdox.model.JavaType;
 
-import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * This generator is used to parse the structure of a programming exercise to be then assessed from Artemis.

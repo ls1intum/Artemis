@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUsersNotFoundDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
  * REST controller for managing ExamUser.

@@ -61,10 +61,10 @@ import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.dto.StudentDTO;
 import de.tum.cit.aet.artemis.service.dto.UserDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.cit.aet.artemis.web.rest.errors.EmailAlreadyUsedException;
-import de.tum.cit.aet.artemis.web.rest.errors.PasswordViolatesRequirementsException;
-import de.tum.cit.aet.artemis.web.rest.vm.ManagedUserVM;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.EmailAlreadyUsedException;
+import de.tum.cit.aet.artemis.core.exception.PasswordViolatesRequirementsException;
+import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import tech.jhipster.security.RandomUtil;
 
 /**

@@ -107,7 +107,7 @@ import de.tum.cit.aet.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.web.rest.util.PageUtil;
+import de.tum.cit.aet.artemis.core.util.PageUtil;
 
 /**
  * Service Implementation for managing Course.

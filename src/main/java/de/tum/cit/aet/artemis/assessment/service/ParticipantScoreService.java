@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.web.rest.dto.score.ScoreDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.score.StudentScoreSum;
 import de.tum.cit.aet.artemis.web.rest.dto.score.TeamScoreSum;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 @Profile(PROFILE_CORE)
 @Service

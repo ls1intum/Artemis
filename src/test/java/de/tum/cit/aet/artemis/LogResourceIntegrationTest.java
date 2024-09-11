@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.web.rest.vm.LoggerVM;
+import de.tum.cit.aet.artemis.core.dto.vm.LoggerVM;
 
 class LogResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

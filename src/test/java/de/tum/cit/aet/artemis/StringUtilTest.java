@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis;
 
-import static de.tum.cit.aet.artemis.web.rest.util.StringUtil.ILLEGAL_CHARACTERS;
-import static de.tum.cit.aet.artemis.web.rest.util.StringUtil.stripIllegalCharacters;
+import static de.tum.cit.aet.artemis.core.util.StringUtil.ILLEGAL_CHARACTERS;
+import static de.tum.cit.aet.artemis.core.util.StringUtil.stripIllegalCharacters;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;

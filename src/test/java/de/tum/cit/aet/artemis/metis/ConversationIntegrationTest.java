@@ -32,11 +32,11 @@ import de.tum.cit.aet.artemis.post.ConversationUtilService;
 import de.tum.cit.aet.artemis.service.dto.ResponsibleUserDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.user.UserFactory;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationUserDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.OneToOneChatDTO;
 
 class ConversationIntegrationTest extends AbstractConversationTest {
 

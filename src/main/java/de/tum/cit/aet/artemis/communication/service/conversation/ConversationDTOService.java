@@ -27,11 +27,11 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
-import de.tum.cit.aet.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationUserDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
+import de.tum.cit.aet.artemis.communication.web.conversation.dtos.OneToOneChatDTO;
 
 @Profile(PROFILE_CORE)
 @Service

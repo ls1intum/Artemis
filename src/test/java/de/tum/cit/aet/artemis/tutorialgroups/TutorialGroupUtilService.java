@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.tutorialgroups;
 
-import static de.tum.cit.aet.artemis.web.rest.util.DateUtil.interpretInTimeZone;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;

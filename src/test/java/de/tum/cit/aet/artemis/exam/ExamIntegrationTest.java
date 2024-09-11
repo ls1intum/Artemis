@@ -94,7 +94,7 @@ import de.tum.cit.aet.artemis.web.rest.dto.ExerciseForPlagiarismCasesOverviewDTO
 import de.tum.cit.aet.artemis.web.rest.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.SuspiciousExamSessionsDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.pageablesearch.SearchTermPageableSearchDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {

@@ -91,7 +91,7 @@ import de.tum.cit.aet.artemis.util.LocalRepository;
 import de.tum.cit.aet.artemis.util.TestConstants;
 import de.tum.cit.aet.artemis.web.rest.dto.FileMove;
 import de.tum.cit.aet.artemis.web.rest.dto.RepositoryStatusDTO;
-import de.tum.cit.aet.artemis.web.rest.repository.FileSubmission;
+import de.tum.cit.aet.artemis.programming.web.repository.FileSubmission;
 
 class RepositoryIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

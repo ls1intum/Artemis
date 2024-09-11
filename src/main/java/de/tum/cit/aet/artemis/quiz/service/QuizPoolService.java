@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.quiz.repository.DragAndDropMappingRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizGroupRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPoolRepository;
 import de.tum.cit.aet.artemis.quiz.repository.ShortAnswerMappingRepository;
-import de.tum.cit.aet.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**
  * This service contains the functions to manage QuizPool entity.

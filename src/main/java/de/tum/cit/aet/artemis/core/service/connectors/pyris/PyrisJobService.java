@@ -19,8 +19,8 @@ import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.core.service.connectors.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.web.rest.errors.AccessForbiddenException;
-import de.tum.cit.aet.artemis.web.rest.errors.ConflictException;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 
 /**
  * The PyrisJobService class is responsible for managing Pyris jobs in the Artemis system.

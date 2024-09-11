@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.tutorialgroup.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.web.rest.util.DateUtil.getFirstDateOfWeekDay;
+import static de.tum.cit.aet.artemis.core.util.DateUtil.getFirstDateOfWeekDay;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
-import de.tum.cit.aet.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
-import de.tum.cit.aet.artemis.web.rest.util.DateUtil;
+import de.tum.cit.aet.artemis.tutorialgroup.exception.ScheduleOverlapsWithSessionException;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -30,7 +30,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 
-import de.tum.cit.aet.artemis.web.rest.ogparser.LinkPreviewResource;
+import de.tum.cit.aet.artemis.communication.web.LinkPreviewResource;
 
 class ResourceArchitectureTest extends AbstractArchitectureTest {
 

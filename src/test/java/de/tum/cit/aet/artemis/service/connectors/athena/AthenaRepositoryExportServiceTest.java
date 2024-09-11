@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.web.rest.errors.ServiceUnavailableException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 
 class AthenaRepositoryExportServiceTest extends AbstractSpringIntegrationIndependentTest {
 

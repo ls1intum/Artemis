@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.quiz.config.QuizView;
-import de.tum.cit.aet.artemis.web.rest.util.StringUtil;
+import de.tum.cit.aet.artemis.core.util.StringUtil;
 
 @MappedSuperclass
 public abstract class BaseExercise extends DomainObject {

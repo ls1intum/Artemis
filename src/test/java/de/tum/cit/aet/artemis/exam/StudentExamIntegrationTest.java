@@ -132,7 +132,7 @@ import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamAttendanceCheckEventDTO
 import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.examevent.ExamWideAnnouncementEventDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.examevent.WorkingTimeUpdateEventDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

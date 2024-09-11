@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.service.SlideSplitterService;
 import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.LectureUnitSplitDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 @Profile(PROFILE_CORE)
 @Service

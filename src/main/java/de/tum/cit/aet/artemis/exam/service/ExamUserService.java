@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.web.rest.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.web.rest.dto.ImageDTO;
-import de.tum.cit.aet.artemis.web.rest.errors.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service Implementation for managing Exam Users.

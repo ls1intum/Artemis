@@ -13,7 +13,7 @@ import org.springframework.data.jpa.repository.support.JpaEntityInformationSuppo
 import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
-import de.tum.cit.aet.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 public class RepositoryImpl<T, ID> extends SimpleJpaRepository<T, ID> {
 
