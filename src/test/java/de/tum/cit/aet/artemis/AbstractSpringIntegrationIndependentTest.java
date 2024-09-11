@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_THEIA;
@@ -35,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
  */
 @ResourceLock("AbstractSpringIntegrationIndependentTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_SCHEDULING, "athena", "apollon", "lti", PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_CORE })
+@ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_SCHEDULING, PROFILE_ATHENA, "apollon", "lti", PROFILE_AEOLUS, PROFILE_THEIA, PROFILE_CORE })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest {
 

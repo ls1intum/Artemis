@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.athena.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -31,7 +33,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
  * Assumes that submissions and already given feedback have already been sent to Athena or that the feedback is non-graded.
  */
 @Service
-@Profile("athena")
+@Profile(PROFILE_ATHENA)
 public class AthenaFeedbackSuggestionsService {
 
     private static final Logger log = LoggerFactory.getLogger(AthenaFeedbackSuggestionsService.class);

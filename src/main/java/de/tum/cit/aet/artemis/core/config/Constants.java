@@ -303,9 +303,19 @@ public final class Constants {
     public static final String PROFILE_CORE = "core";
 
     /**
-     * The name of the Spring profile used for Artemis core functionality.
+     * The name of the Spring profile used for Iris / Pyris functionality.
      */
     public static final String PROFILE_IRIS = "iris";
+
+    /**
+     * The name of the Spring profile used for Athena functionality.
+     */
+    public static final String PROFILE_ATHENA = "athena";
+
+    /**
+     * The name of the Spring profile used for Athena functionality.
+     */
+    public static final String PROFILE_APOLLON = "apollon";
 
     /**
      * The name of the Spring profile used for the Aeolus external system.

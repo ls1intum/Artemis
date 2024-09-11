@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.athena.service;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 /**
  * Service to convert exercises, submissions and feedback to DTOs for Athena.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_ATHENA)
 @Service
 public class AthenaDTOConverterService {
 

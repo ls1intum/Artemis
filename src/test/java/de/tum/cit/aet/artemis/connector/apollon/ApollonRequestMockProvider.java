@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.connector.apollon;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
@@ -21,7 +22,7 @@ import org.springframework.test.web.client.ResponseActions;
 import org.springframework.web.client.RestTemplate;
 
 @Component
-@Profile("apollon")
+@Profile(PROFILE_APOLLON)
 public class ApollonRequestMockProvider {
 
     private final RestTemplate restTemplate;

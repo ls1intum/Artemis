@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.modeling.service.apollon.dto;
+package de.tum.cit.aet.artemis.modeling.dto;
 
 import java.io.Serializable;
 

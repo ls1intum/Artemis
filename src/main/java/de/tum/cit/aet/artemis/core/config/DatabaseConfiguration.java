@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 
 @Profile(PROFILE_CORE)
 @Configuration
-@EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis.*.repository.*" }, repositoryBaseClass = RepositoryImpl.class)
+@EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis" }, repositoryBaseClass = RepositoryImpl.class)
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 @EnableTransactionManagement
 public class DatabaseConfiguration {

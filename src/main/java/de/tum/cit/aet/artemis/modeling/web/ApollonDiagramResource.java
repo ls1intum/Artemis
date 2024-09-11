@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
 /**
  * REST controller for managing ApollonDiagram.
  */
-@Profile(PROFILE_CORE)
+@Profile(PROFILE_APOLLON)
 @RestController
 @RequestMapping("api/")
 public class ApollonDiagramResource {

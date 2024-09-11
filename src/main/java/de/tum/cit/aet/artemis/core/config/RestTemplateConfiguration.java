@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
@@ -54,13 +56,13 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("athena")
+    @Profile(PROFILE_ATHENA)
     public RestTemplate athenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
-    @Profile("apollon")
+    @Profile(PROFILE_APOLLON)
     public RestTemplate apollonRestTemplate() {
         return createRestTemplate();
     }
@@ -100,13 +102,13 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("athena")
+    @Profile(PROFILE_ATHENA)
     public RestTemplate shortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean
-    @Profile("apollon")
+    @Profile(PROFILE_APOLLON)
     public RestTemplate shortTimeoutApollonRestTemplate() {
         return createShortTimeoutRestTemplate();
     }
@@ -115,7 +117,7 @@ public class RestTemplateConfiguration {
     // Therefore, we need additional rest templates. It is recommended to keep the timeout settings constant per rest template.
 
     @Bean
-    @Profile("athena")
+    @Profile(PROFILE_ATHENA)
     public RestTemplate veryShortTimeoutAthenaRestTemplate(AthenaAuthorizationInterceptor athenaAuthorizationInterceptor) {
         return initializeRestTemplateWithInterceptors(athenaAuthorizationInterceptor, createVeryShortTimeoutRestTemplate());
     }

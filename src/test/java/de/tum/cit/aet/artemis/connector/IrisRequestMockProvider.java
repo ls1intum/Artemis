@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.connector;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withRawStatus;
@@ -34,7 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyE
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 
 @Component
-@Profile("iris")
+@Profile(PROFILE_IRIS)
 public class IrisRequestMockProvider {
 
     private final RestTemplate restTemplate;
