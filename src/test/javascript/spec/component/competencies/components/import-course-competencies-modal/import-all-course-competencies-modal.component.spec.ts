@@ -83,4 +83,30 @@ describe('ImportAllCourseCompetenciesModalComponent', () => {
             },
         });
     });
+
+    it('should initialize table columns correctly', () => {
+        expect(component['tableColumns']).toEqual([
+            { name: 'TITLE', getProperty: expect.any(Function) },
+            { name: 'SHORT_NAME', getProperty: expect.any(Function) },
+            { name: 'SEMESTER', getProperty: expect.any(Function) },
+        ]);
+    });
+
+    it('should get correct property for TITLE column', () => {
+        const course = { title: 'Course Title' } as Course;
+        const titleColumn = component['tableColumns'].find((col) => col.name === 'TITLE');
+        expect(titleColumn?.getProperty(course)).toBe('Course Title');
+    });
+
+    it('should get correct property for SHORT_NAME column', () => {
+        const course = { shortName: 'CS101' } as Course;
+        const shortNameColumn = component['tableColumns'].find((col) => col.name === 'SHORT_NAME');
+        expect(shortNameColumn?.getProperty(course)).toBe('CS101');
+    });
+
+    it('should get correct property for SEMESTER column', () => {
+        const course = { semester: 'Fall 2023' } as Course;
+        const semesterColumn = component['tableColumns'].find((col) => col.name === 'SEMESTER');
+        expect(semesterColumn?.getProperty(course)).toBe('Fall 2023');
+    });
 });
