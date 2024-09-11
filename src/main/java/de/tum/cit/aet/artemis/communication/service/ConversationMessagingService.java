@@ -39,6 +39,9 @@ import de.tum.cit.aet.artemis.communication.domain.notification.ConversationNoti
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotificationFactory;
+import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.SingleUserNotificationRepository;
@@ -58,10 +61,6 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
@@ -54,9 +55,11 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
+import de.tum.cit.aet.artemis.modeling.dto.ModelingAssessmentDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelClusterRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelElementRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
@@ -67,11 +70,8 @@ import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingSubmissionElement;
-import de.tum.cit.aet.artemis.service.ParticipationService;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.modeling.dto.ModelingAssessmentDTO;
-import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
+import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

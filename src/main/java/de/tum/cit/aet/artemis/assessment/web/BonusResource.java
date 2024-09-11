@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.service.BonusService;
@@ -41,7 +42,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
-import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 
 /**
  * REST controller for managing bonus

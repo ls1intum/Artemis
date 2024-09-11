@@ -8,7 +8,6 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 
-import de.tum.cit.aet.artemis.core.aop.logging.LoggingAspect;
 import tech.jhipster.config.JHipsterConstants;
 
 @Profile(PROFILE_CORE)

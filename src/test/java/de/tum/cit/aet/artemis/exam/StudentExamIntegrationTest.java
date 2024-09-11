@@ -78,6 +78,11 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.WorkingTimeUpdateEventDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
@@ -94,6 +99,7 @@ import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilServic
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -123,16 +129,10 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
-import de.tum.cit.aet.artemis.service.ParticipationService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
-import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
-import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
-import de.tum.cit.aet.artemis.exam.dto.examevent.ExamWideAnnouncementEventDTO;
-import de.tum.cit.aet.artemis.exam.dto.examevent.WorkingTimeUpdateEventDTO;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

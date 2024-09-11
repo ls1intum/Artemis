@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 
 /**
  * A service to send a message over the websocket to a specific user

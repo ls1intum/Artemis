@@ -16,12 +16,12 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.ArchivalReportEntry;
+import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportQuizExerciseCreationService;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.service.FilePathService;
-import de.tum.cit.aet.artemis.service.FileService;
 
 /**
  * Service responsible for exporting quiz exercises with their submissions.

@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.core.web.AndroidAppSiteAssociationResource;
+import de.tum.cit.aet.artemis.communication.web.AndroidAppSiteAssociationResource;
 
 class AndroidAppSiteAssociationResourceTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
-import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 
 @Service
 public class ScienceUtilService {

@@ -16,11 +16,11 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
-import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
-import de.tum.cit.aet.artemis.user.UserFactory;
+import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
+import de.tum.cit.aet.artemis.user.UserFactory;
 
 class GroupChatIntegrationTest extends AbstractConversationTest {
 

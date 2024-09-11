@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
-import de.tum.cit.aet.artemis.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 @Profile(PROFILE_LOCALCI)
 @RestController

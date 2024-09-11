@@ -43,9 +43,9 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
+import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
-import de.tum.cit.aet.artemis.service.UriService;
 
 /**
  * Implementation of VersionControlService for the local VC server.

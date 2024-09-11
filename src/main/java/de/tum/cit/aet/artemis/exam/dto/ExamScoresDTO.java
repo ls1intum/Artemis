@@ -24,8 +24,8 @@ public record ExamScoresDTO(Long examId, String title, Integer maxPoints, Double
     // Inner DTO
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record StudentResult(Long userId, String name, String email, String login, String registrationNumber, Boolean submitted, Double overallPointsAchieved,
-                                Double overallScoreAchieved, String overallGrade, String overallGradeInFirstCorrection, Boolean hasPassed, Double overallPointsAchievedInFirstCorrection,
-                                BonusResultDTO gradeWithBonus, Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult, PlagiarismVerdict mostSeverePlagiarismVerdict) {
+            Double overallScoreAchieved, String overallGrade, String overallGradeInFirstCorrection, Boolean hasPassed, Double overallPointsAchievedInFirstCorrection,
+            BonusResultDTO gradeWithBonus, Map<Long, ExerciseResult> exerciseGroupIdToExerciseResult, PlagiarismVerdict mostSeverePlagiarismVerdict) {
     }
 
     // Inner DTO

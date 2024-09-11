@@ -14,8 +14,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.iris.domain.IrisTemplate;
-import de.tum.cit.aet.artemis.service.ResourceLoaderService;
 
 /**
  * Service that loads default Iris templates from the resources/templates/iris folder.

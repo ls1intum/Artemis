@@ -50,6 +50,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.GradingCriterionUtil;
@@ -70,6 +71,8 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -80,9 +83,6 @@ import de.tum.cit.aet.artemis.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
-import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 
 class TextExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

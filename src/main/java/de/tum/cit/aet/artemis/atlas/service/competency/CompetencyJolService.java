@@ -16,14 +16,14 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.competency.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
 
 /**
  * Service Implementation for managing CompetencyJol.

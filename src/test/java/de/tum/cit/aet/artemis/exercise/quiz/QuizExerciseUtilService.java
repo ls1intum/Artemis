@@ -17,6 +17,7 @@ import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.course.CourseFactory;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.ExamFactory;
@@ -51,7 +52,6 @@ import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizScheduleService;
-import de.tum.cit.aet.artemis.service.FilePathService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 /**

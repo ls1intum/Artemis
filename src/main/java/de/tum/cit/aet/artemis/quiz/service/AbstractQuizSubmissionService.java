@@ -12,9 +12,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionVersionService;
 import de.tum.cit.aet.artemis.quiz.domain.AbstractQuizSubmission;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.service.SubmissionVersionService;
 
 @Profile(PROFILE_CORE)
 @Service

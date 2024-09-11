@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
 
 /**
@@ -22,5 +23,5 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseStudentMetricsDTO(Map<Long, ExerciseInformationDTO> exerciseInformation, Map<Long, Set<String>> categories, Map<Long, Double> averageScore,
-                                        Map<Long, Double> score, Map<Long, Double> averageLatestSubmission, Map<Long, Double> latestSubmission, Set<Long> completed, Map<Long, Long> teamId) {
+        Map<Long, Double> score, Map<Long, Double> averageLatestSubmission, Map<Long, Double> latestSubmission, Set<Long> completed, Map<Long, Long> teamId) {
 }

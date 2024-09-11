@@ -21,11 +21,16 @@ import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.GradingScaleFactory;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePoints;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -35,12 +40,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.service.dto.MaxAndReachablePoints;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
-import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 
 class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndependentTest {
 

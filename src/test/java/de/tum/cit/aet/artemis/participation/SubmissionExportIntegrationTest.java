@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.fileupload.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 
 class SubmissionExportIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

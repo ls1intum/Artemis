@@ -48,6 +48,10 @@ import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificat
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
+import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -68,10 +72,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
-import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
-import de.tum.cit.aet.artemis.core.dto.DueDateStat;
-import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
-import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 
 /**
  * Service Implementation for managing Exercise.

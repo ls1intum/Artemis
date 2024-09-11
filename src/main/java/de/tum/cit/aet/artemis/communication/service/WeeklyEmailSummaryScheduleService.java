@@ -20,8 +20,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.service.EmailSummaryService;
-import de.tum.cit.aet.artemis.service.ProfileService;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 @Service
 @Profile(PROFILE_SCHEDULING)

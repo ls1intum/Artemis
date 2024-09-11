@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 
 @Profile(PROFILE_CORE)
 @Service

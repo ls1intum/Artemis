@@ -19,6 +19,7 @@ import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.util.Tuple;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseLifecycle;
@@ -27,7 +28,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.repository.QuizBatchRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.service.ProfileService;
 
 @Profile(PROFILE_SCHEDULING)
 @Service

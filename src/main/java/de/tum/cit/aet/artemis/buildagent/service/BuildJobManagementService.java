@@ -31,10 +31,10 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.topic.ITopic;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildResult;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 
 /**
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.

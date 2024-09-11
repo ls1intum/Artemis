@@ -32,10 +32,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismService;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismComparisonStatusDTO;
 
 /**
  * REST controller for managing Plagiarism Cases.

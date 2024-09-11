@@ -28,6 +28,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 
 class ResourceLoaderServiceTest extends AbstractSpringIntegrationIndependentTest {
 

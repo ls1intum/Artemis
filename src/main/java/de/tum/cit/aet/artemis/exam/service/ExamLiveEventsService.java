@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -18,7 +19,6 @@ import de.tum.cit.aet.artemis.exam.domain.event.WorkingTimeUpdateEvent;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 
 /**
  * This service handles outgoing events during exams, so we can inform the client about a change or something that happened.

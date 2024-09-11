@@ -19,12 +19,12 @@ import org.w3c.dom.Document;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationBuildPlanException;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlConfigBuilder;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsXmlFileUtils;
-import de.tum.cit.aet.artemis.service.ResourceLoaderService;
 
 @Profile("jenkins")
 @Component

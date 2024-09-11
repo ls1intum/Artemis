@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -63,7 +64,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.util.TestConstants;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 
 class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

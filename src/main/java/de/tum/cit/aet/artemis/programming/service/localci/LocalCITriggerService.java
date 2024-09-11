@@ -22,6 +22,10 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
+import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
@@ -44,10 +48,6 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusResult;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationTriggerService;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildConfig;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.JobTimingInfo;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 /**

@@ -37,16 +37,16 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
+import de.tum.cit.aet.artemis.lecture.service.AttachmentUnitService;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
-import de.tum.cit.aet.artemis.service.AttachmentUnitService;
-import de.tum.cit.aet.artemis.service.FileService;
-import de.tum.cit.aet.artemis.service.SlideSplitterService;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitInformationDTO;
+import de.tum.cit.aet.artemis.lecture.service.SlideSplitterService;
 
 @Profile(PROFILE_CORE)
 @RestController

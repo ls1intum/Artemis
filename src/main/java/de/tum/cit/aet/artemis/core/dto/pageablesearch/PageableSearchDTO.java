@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.core.dto.pageablesearch;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 
 /**
  * Wrapper for a generic search for any list of entities. The result should be paged,

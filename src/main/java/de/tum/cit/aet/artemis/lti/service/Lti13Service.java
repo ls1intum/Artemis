@@ -53,7 +53,6 @@ import de.tum.cit.aet.artemis.lti.dto.Lti13LaunchRequest;
 import de.tum.cit.aet.artemis.lti.dto.Scopes;
 import de.tum.cit.aet.artemis.lti.repository.Lti13ResourceLaunchRepository;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
-import de.tum.cit.aet.artemis.service.OnlineCourseConfigurationService;
 
 @Service
 @Profile("lti")

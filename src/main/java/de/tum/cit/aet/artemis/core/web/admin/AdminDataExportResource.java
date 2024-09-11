@@ -9,9 +9,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.dto.RequestDataExportDTO;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.export.DataExportService;
-import de.tum.cit.aet.artemis.core.dto.RequestDataExportDTO;
 
 /**
  * REST controller for requesting data exports for another user as admin.

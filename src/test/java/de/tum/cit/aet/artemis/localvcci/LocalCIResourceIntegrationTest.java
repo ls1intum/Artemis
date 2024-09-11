@@ -23,22 +23,22 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
+import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.programming.domain.BuildJob;
-import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.domain.BuildStatus;
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildAgentInformation;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildConfig;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.JobTimingInfo;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.RepositoryInfo;
-import de.tum.cit.aet.artemis.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.service.dto.BuildJobsStatisticsDTO;
-import de.tum.cit.aet.artemis.service.dto.FinishedBuildJobDTO;
-import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
+import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 

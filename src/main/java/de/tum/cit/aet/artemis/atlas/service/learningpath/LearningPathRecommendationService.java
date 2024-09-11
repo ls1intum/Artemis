@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
-import de.tum.cit.aet.artemis.service.LearningObjectService;
+import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 
 /**
  * Service Implementation for the recommendation of competencies and learning objects in learning paths.

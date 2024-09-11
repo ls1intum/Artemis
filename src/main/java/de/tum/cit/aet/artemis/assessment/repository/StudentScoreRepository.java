@@ -16,10 +16,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum;
 
 @Profile(PROFILE_CORE)
 @Repository

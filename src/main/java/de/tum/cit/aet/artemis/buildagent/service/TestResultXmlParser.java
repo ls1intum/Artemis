@@ -11,7 +11,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 
 public class TestResultXmlParser {
 

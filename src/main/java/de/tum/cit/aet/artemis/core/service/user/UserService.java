@@ -38,10 +38,12 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.GuidedTourSetting;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.AccountRegistrationBlockedException;
@@ -53,6 +55,8 @@ import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.GuidedTourSettingsRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.connectors.ldap.LdapAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
@@ -61,10 +65,6 @@ import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
-import de.tum.cit.aet.artemis.service.FilePathService;
-import de.tum.cit.aet.artemis.service.FileService;
-import de.tum.cit.aet.artemis.service.dto.StudentDTO;
-import de.tum.cit.aet.artemis.service.dto.UserDTO;
 import tech.jhipster.security.RandomUtil;
 
 /**

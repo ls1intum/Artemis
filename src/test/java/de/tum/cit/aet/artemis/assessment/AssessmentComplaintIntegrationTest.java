@@ -24,6 +24,10 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintAction;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -34,6 +38,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.fileupload.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
@@ -45,14 +50,9 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.service.dto.ComplaintAction;
-import de.tum.cit.aet.artemis.service.dto.ComplaintRequestDTO;
-import de.tum.cit.aet.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 
 class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

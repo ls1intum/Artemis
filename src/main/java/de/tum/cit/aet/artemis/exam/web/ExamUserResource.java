@@ -24,15 +24,15 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
-import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
-import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
-import de.tum.cit.aet.artemis.exam.service.ExamUserService;
-import de.tum.cit.aet.artemis.service.FilePathService;
-import de.tum.cit.aet.artemis.service.FileService;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
+import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
+import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 
 /**
  * REST controller for managing ExamUser.

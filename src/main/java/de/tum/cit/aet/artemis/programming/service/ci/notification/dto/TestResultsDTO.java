@@ -13,12 +13,12 @@ import com.fasterxml.jackson.annotation.Nulls;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
-import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildJobDTOInterface;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.BuildLogParseUtils;
-import de.tum.cit.aet.artemis.service.dto.AbstractBuildResultNotificationDTO;
-import de.tum.cit.aet.artemis.service.dto.BuildJobDTOInterface;
-import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

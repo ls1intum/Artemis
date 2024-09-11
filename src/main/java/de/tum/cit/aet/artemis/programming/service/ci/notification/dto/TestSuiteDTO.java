@@ -9,8 +9,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import com.fasterxml.jackson.annotation.Nulls;
 
-import de.tum.cit.aet.artemis.service.dto.BuildJobDTOInterface;
-import de.tum.cit.aet.artemis.service.dto.TestCaseBaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildJobDTOInterface;
+import de.tum.cit.aet.artemis.programming.dto.TestCaseBaseDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)

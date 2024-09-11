@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record SubmissionDTO(Long id, Boolean submitted, SubmissionType type, Boolean exampleSubmission, ZonedDateTime submissionDate, String commitHash, Boolean buildFailed,
-                            Boolean buildArtifact, ParticipationDTO participation, String submissionExerciseType) implements Serializable {
+        Boolean buildArtifact, ParticipationDTO participation, String submissionExerciseType) implements Serializable {
 
     /**
      * Converts a Submission into a SubmissionDTO.

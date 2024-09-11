@@ -12,9 +12,7 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 
 @Profile(PROFILE_CORE)
 @Configuration
-@EnableJpaRepositories(basePackages = {
-        "de.tum.cit.aet.artemis.*.repository",
-        "de.tum.cit.aet.artemis.repository.**" // ToDo: Remove once test files have been moved
+@EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis.*.repository", "de.tum.cit.aet.artemis.repository.**" // ToDo: Remove once test files have been moved
 }, repositoryBaseClass = RepositoryImpl.class)
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 @EnableTransactionManagement

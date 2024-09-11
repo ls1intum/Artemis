@@ -27,7 +27,6 @@ import org.apache.pdfbox.util.Matrix;
 
 import de.tum.cit.aet.artemis.core.dto.ImageDTO;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.core.dto.ImageDTO;
 
 /**
  * Processor to extract images from a PDF and get information.

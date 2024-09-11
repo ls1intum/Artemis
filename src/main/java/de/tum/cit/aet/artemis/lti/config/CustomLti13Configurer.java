@@ -7,10 +7,10 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.stereotype.Component;
 
+import de.tum.cit.aet.artemis.core.security.filter.Lti13LaunchFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
-import de.tum.cit.aet.artemis.core.web.filter.Lti13LaunchFilter;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
-import de.tum.cit.aet.artemis.service.OnlineCourseConfigurationService;
+import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcLaunchFlowAuthenticationProvider;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.HttpSessionOAuth2AuthorizationRequestRepository;

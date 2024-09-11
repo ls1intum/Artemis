@@ -2,9 +2,10 @@ package de.tum.cit.aet.artemis.repository;
 
 import java.util.Set;
 
+import org.springframework.stereotype.Repository;
+
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
-import org.springframework.stereotype.Repository;
 
 @Repository
 public interface UserTestRepository extends ArtemisJpaRepository<User, Long> {

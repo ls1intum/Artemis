@@ -11,9 +11,9 @@ import jakarta.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
-import de.tum.cit.aet.artemis.service.FilePathService;
-import de.tum.cit.aet.artemis.service.FileService;
 
 /**
  * A FileUploadSubmission.

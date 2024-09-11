@@ -11,8 +11,8 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlText;
 
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
-import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisIssue;
-import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 record PMDReport(@JacksonXmlElementWrapper(useWrapping = false) @JacksonXmlProperty(localName = "file") List<FileViolation> files) {

@@ -28,7 +28,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
-import de.tum.cit.aet.artemis.core.web.filter.CachingHttpHeadersFilter;
+import de.tum.cit.aet.artemis.core.security.filter.CachingHttpHeadersFilter;
 import tech.jhipster.config.JHipsterProperties;
 
 /**

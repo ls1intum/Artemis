@@ -28,13 +28,13 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionConfigHelper;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismDetectionService;
 import de.tum.cit.aet.artemis.plagiarism.service.ProgrammingLanguageNotSupportedForPlagiarismDetectionException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 
 /**
  * REST controller for managing ProgrammingExercise.

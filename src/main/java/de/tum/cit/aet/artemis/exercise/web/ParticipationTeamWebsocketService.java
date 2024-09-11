@@ -32,25 +32,25 @@ import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatch;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchPayload;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayload;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
-import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
+import de.tum.cit.aet.artemis.programming.dto.OnlineTeamStudentDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.service.TextSubmissionService;
-import de.tum.cit.aet.artemis.programming.dto.OnlineTeamStudentDTO;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatch;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionPatchPayload;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionSyncPayload;
 
 @Controller
 @Profile(PROFILE_CORE)

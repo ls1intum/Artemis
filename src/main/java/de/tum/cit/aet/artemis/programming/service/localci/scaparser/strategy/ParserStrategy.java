@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy;
 
-import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 
 /**
  * Strategy interface for the parser strategies.

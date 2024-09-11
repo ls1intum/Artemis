@@ -23,9 +23,9 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseScoresChartService;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseScoresDTO;
 
 /**
  * Controller to provides endpoints to query the necessary data for the exercise-scores-chart.component.ts in the client

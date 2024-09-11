@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -47,11 +48,10 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
+import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
 import de.tum.cit.aet.artemis.fileupload.repository.FileUploadExerciseRepository;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
-import de.tum.cit.aet.artemis.fileupload.dto.FileUploadAssessmentDTO;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationIndependentTest {

@@ -97,12 +97,12 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.service.UriService;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabException;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabUserDoesNotExistException;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.gitlab.dto.GitLabPersonalAccessTokenListResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.gitlab.dto.GitLabPersonalAccessTokenResponseDTO;
-import de.tum.cit.aet.artemis.service.UriService;
 
 @Component
 @Profile("gitlab")

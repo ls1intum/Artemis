@@ -7,11 +7,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
 import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.Content;
 import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.OgParser;
 import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.OpenGraph;
 import de.tum.cit.aet.artemis.communication.service.linkpreview.ogparser.htmlparser.OgMetaElementHtmlParser;
-import de.tum.cit.aet.artemis.communication.dto.LinkPreviewDTO;
 
 /**
  * Service for retrieving meta information from a given url.

@@ -33,7 +33,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.MailSendingSer
 import de.tum.cit.aet.artemis.communication.service.notifications.MailService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.service.TimeService;
+import de.tum.cit.aet.artemis.core.service.TimeService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**

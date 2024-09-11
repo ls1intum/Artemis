@@ -14,9 +14,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.ResultActions;
 
 import de.tum.cit.aet.artemis.core.config.SecurityConfiguration;
+import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
-import de.tum.cit.aet.artemis.core.web.filter.SpaWebFilter;
 
 /**
  * Test class for the ClientForwardController REST controller.

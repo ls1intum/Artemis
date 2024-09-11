@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCreationService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.service.ProfileService;
 
 /**
  * Service responsible for scheduling data exports.

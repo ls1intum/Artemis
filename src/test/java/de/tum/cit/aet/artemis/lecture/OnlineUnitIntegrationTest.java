@@ -31,12 +31,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
+import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.OnlineUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
-import de.tum.cit.aet.artemis.core.dto.OnlineResourceDTO;
 
 class OnlineUnitIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -19,7 +19,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.service.dto.ProgrammingSubmissionIdAndSubmissionDateDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingSubmissionIdAndSubmissionDateDTO;
 
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity.

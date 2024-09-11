@@ -11,6 +11,7 @@ import org.springframework.cache.CacheManager;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.repository.OrganizationRepository;
+import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
 import de.tum.cit.aet.artemis.core.util.Tuple;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;

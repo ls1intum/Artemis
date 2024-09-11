@@ -13,7 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceSetting;
-import de.tum.cit.aet.artemis.atlas.repository.science.ScienceSettingRepository;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 class ScienceSettingsIntegrationTest extends AbstractSpringIntegrationIndependentTest {

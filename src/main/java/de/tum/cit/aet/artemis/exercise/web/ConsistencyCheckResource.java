@@ -18,8 +18,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.programming.dto.ConsistencyErrorDTO;
 import de.tum.cit.aet.artemis.programming.service.ConsistencyCheckService;
-import de.tum.cit.aet.artemis.service.dto.ConsistencyErrorDTO;
 
 /**
  * REST controller for consistency checks

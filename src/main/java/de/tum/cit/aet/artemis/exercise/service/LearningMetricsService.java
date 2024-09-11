@@ -18,14 +18,10 @@ import java.util.function.ToDoubleFunction;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyStudentMetricsDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ExerciseStudentMetricsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitStudentMetricsDTO;
@@ -33,6 +29,10 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ScoreDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
 
 /**
  * Service class to access metrics regarding students' learning progress.

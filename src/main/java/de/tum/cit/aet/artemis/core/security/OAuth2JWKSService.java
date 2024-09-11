@@ -25,7 +25,7 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 
-import de.tum.cit.aet.artemis.service.OnlineCourseConfigurationService;
+import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 
 /**
  * This Service is responsible to manage JWKs for all OAuth2 ClientRegistrations.

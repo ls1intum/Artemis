@@ -61,6 +61,8 @@ import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExercisePart
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
@@ -69,9 +71,6 @@ import de.tum.cit.aet.artemis.programming.repository.StaticCodeAnalysisCategoryR
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationResultService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
-import de.tum.cit.aet.artemis.service.BuildLogEntryService;
-import de.tum.cit.aet.artemis.service.dto.AbstractBuildResultNotificationDTO;
-import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseGradingStatisticsDTO;
 
 @Profile(PROFILE_CORE)
 @Service

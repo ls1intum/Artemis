@@ -20,20 +20,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobsStatisticsDTO;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.programming.domain.BuildJob;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.service.dto.BuildJobResultCountDTO;
-import de.tum.cit.aet.artemis.service.dto.BuildJobsStatisticsDTO;
-import de.tum.cit.aet.artemis.service.dto.FinishedBuildJobDTO;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.FinishedBuildJobPageableSearchDTO;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)

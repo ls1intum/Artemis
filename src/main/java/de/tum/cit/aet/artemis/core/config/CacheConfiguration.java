@@ -50,8 +50,8 @@ import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 
+import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
-import de.tum.cit.aet.artemis.service.HazelcastPathSerializer;
 import tech.jhipster.config.JHipsterProperties;
 import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
@@ -293,7 +293,7 @@ public class CacheConfiguration {
     }
 
     /**
-     * Note: this is configured to be able to cache files in the Hazelcast cluster, see {@link de.tum.cit.aet.artemis.service.FileService#getFileForPath}
+     * Note: this is configured to be able to cache files in the Hazelcast cluster, see {@link FileService#getFileForPath}
      *
      * @return the serializer config for files based on paths
      */

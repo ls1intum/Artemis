@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 
 import java.util.List;
 
-import de.tum.cit.aet.artemis.programming.web.LocalCIWebsocketMessagingService;
 import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -20,8 +19,8 @@ import com.hazelcast.map.listener.EntryAddedListener;
 import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildAgentInformation;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 
 /**
  * This service is responsible for sending build job queue information over websockets.

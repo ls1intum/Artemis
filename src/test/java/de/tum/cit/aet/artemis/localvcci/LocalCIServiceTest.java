@@ -24,6 +24,10 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
+import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
@@ -34,15 +38,11 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
+import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.BuildStatus;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildConfig;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.JobTimingInfo;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.RepositoryInfo;
-import de.tum.cit.aet.artemis.programming.dto.CheckoutDirectoriesDTO;
 
 class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -105,9 +105,9 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         RepositoryInfo repositoryInfo = new RepositoryInfo("test", null, RepositoryType.USER, "test", "test", "test", null, null);
 
         BuildJobQueueItem job1 = new BuildJobQueueItem("1", "job1", "address1", participation.getId(), course.getId(), 1, 1, 1,
-                de.tum.cit.aet.artemis.programming.domain.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
+                de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
         BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
-                de.tum.cit.aet.artemis.programming.domain.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
+                de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
         processingJobs = hazelcastInstance.getMap("processingJobs");

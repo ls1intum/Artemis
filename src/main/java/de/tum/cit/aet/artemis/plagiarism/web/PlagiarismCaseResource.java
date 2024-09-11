@@ -32,10 +32,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismDetectionConfig;
-import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
-import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService;
 
 /**
  * REST controller for managing Plagiarism Cases.

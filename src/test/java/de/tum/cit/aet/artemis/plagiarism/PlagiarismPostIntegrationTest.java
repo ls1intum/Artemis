@@ -29,6 +29,8 @@ import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.UserRole;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
+import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
@@ -38,8 +40,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.post.ConversationUtilService;
-import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 
 class PlagiarismPostIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

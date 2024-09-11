@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmissionElement;
-import de.tum.cit.aet.artemis.plagiarism.web.PlagiarismResultStats;
 
 /**
  * Transfers information about plagiarism checks result and its statistics

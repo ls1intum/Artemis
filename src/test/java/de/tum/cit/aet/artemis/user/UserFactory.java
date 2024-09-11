@@ -8,7 +8,7 @@ import java.util.Set;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.service.dto.StudentDTO;
+import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 
 /**
  * Factory for creating Users and related objects.

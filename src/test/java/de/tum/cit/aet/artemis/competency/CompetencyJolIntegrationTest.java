@@ -16,9 +16,9 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
-import de.tum.cit.aet.artemis.atlas.repository.competency.CompetencyJolRepository;
-import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

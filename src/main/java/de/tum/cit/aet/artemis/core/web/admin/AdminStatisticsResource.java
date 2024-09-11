@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.domain.StatisticsView;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
-import de.tum.cit.aet.artemis.service.StatisticsService;
+import de.tum.cit.aet.artemis.core.service.StatisticsService;
 
 /**
  * REST controller for administrating statistics.

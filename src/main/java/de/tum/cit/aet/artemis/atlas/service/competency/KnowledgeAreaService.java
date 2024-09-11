@@ -8,8 +8,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
-import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
+import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 /**

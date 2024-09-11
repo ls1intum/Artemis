@@ -24,10 +24,13 @@ import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
+import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathNgxService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendationService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
+import de.tum.cit.aet.artemis.atlas.web.LearningPathResource;
 import de.tum.cit.aet.artemis.competency.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
 import de.tum.cit.aet.artemis.competency.LearningPathUtilService;
@@ -45,9 +48,6 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.atlas.web.LearningPathResource;
-import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
-import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 
 class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 

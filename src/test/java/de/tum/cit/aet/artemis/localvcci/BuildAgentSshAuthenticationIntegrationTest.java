@@ -14,9 +14,9 @@ import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.service.BuildAgentSshKeyService;
 import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildAgentInformation;
 
 class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

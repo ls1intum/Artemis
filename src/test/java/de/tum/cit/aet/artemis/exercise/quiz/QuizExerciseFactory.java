@@ -15,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.ExerciseFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
@@ -41,7 +42,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.service.FilePathService;
 
 /**
  * Factory for creating QuizExercises and related objects.

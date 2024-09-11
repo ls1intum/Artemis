@@ -6,8 +6,8 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.service.dto.GradingCriterionDTO;
 
 /**
  * A DTO representing a ModelingExercise, for transferring data to Athena

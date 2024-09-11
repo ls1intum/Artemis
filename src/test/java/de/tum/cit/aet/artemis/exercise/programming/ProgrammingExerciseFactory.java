@@ -27,13 +27,13 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestCaseDetailMessageDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestResultsDTO;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.TestSuiteDTO;
-import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisIssue;
-import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.util.TestConstants;
 
 /**

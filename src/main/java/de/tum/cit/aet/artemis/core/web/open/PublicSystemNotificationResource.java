@@ -13,8 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
+import de.tum.cit.aet.artemis.communication.service.SystemNotificationService;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
-import de.tum.cit.aet.artemis.service.SystemNotificationService;
 
 /**
  * REST controller for public system notifications.

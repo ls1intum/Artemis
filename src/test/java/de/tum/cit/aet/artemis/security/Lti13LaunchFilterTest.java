@@ -45,7 +45,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
-import de.tum.cit.aet.artemis.core.web.filter.Lti13LaunchFilter;
+import de.tum.cit.aet.artemis.core.security.filter.Lti13LaunchFilter;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;

@@ -22,6 +22,11 @@ import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
+import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
+import de.tum.cit.aet.artemis.communication.dto.GroupChatDTO;
+import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -29,8 +34,6 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.Conversation
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ChannelDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.GroupChatDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -38,9 +41,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
-import de.tum.cit.aet.artemis.communication.dto.ConversationWebsocketDTO;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 
 /**
  * Contains useful methods for testing the conversations futures

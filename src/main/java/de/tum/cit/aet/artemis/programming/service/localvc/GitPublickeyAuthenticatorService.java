@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 

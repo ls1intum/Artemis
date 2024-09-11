@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -54,6 +55,9 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
+import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
+import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -71,10 +75,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.SubmissionPolicyRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
-import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
-import de.tum.cit.aet.artemis.exam.dto.StudentExamWithGradeDTO;
-import de.tum.cit.aet.artemis.exam.dto.examevent.ExamAttendanceCheckEventDTO;
-import de.tum.cit.aet.artemis.exam.dto.examevent.ExamLiveEventBaseDTO;
 
 /**
  * REST controller for managing ExerciseGroup.

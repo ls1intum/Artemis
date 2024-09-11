@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.cit.aet.artemis.programming.domain.BuildPlanType.SOLUTION;
-import static de.tum.cit.aet.artemis.programming.domain.BuildPlanType.TEMPLATE;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
@@ -37,10 +37,10 @@ import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.ContinuousIntegrationTestService;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.programming.domain.BuildPlan;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;

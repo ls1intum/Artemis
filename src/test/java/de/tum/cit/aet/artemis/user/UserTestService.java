@@ -29,11 +29,13 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
-import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.UserDTO;
+import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
@@ -52,8 +54,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
-import de.tum.cit.aet.artemis.service.dto.UserDTO;
-import de.tum.cit.aet.artemis.service.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.util.RequestUtilService;
 
 /**

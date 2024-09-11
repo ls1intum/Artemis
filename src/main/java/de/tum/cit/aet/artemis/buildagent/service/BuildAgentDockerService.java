@@ -38,9 +38,9 @@ import com.github.dockerjava.api.model.PullResponseItem;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
 
 /**
  * Service for Docker related operations in local CI

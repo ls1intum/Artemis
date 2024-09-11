@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.LectureUtilService;
+import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 
 class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest {

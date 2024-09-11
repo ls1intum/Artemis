@@ -4,8 +4,8 @@ import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
-import static de.tum.cit.aet.artemis.programming.domain.BuildPlanType.SOLUTION;
-import static de.tum.cit.aet.artemis.programming.domain.BuildPlanType.TEMPLATE;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
+import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 import static de.tum.cit.aet.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
@@ -29,6 +29,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import com.offbytwo.jenkins.JenkinsServer;
 
+import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.connector.AeolusRequestMockProvider;
 import de.tum.cit.aet.artemis.connector.GitlabRequestMockProvider;
@@ -47,7 +48,6 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.JenkinsService;
-import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 
 @ResourceLock("AbstractSpringIntegrationJenkinsGitlabTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!

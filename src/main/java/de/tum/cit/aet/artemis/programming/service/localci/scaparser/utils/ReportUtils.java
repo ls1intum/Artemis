@@ -3,8 +3,8 @@ package de.tum.cit.aet.artemis.programming.service.localci.scaparser.utils;
 import java.util.List;
 
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisTool;
-import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisIssue;
-import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisReportDTO;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisIssue;
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 
 public final class ReportUtils {
 

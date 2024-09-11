@@ -26,10 +26,10 @@ import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ArtemisMailException;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
+import de.tum.cit.aet.artemis.core.service.FileService;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
+import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
-import de.tum.cit.aet.artemis.service.FileService;
-import de.tum.cit.aet.artemis.service.ResourceLoaderService;
-import de.tum.cit.aet.artemis.service.ZipFileService;
 
 /**
  * A service to create data exports for users

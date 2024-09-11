@@ -4,8 +4,6 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationDTO;
-import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -15,6 +13,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationDTO;
+import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 
 /**
@@ -25,8 +25,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 // this would also simplify the logic in result.component.ts and and result.service.ts and make the experience more consistent among different clients (webapp, ios, android)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, SubmissionDTO submission, ParticipationDTO participation,
-                        List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
-                        Integer codeIssueCount) implements Serializable {
+        List<FeedbackDTO> feedbacks, AssessmentType assessmentType, Boolean hasComplaint, Boolean exampleResult, Integer testCaseCount, Integer passedTestCaseCount,
+        Integer codeIssueCount) implements Serializable {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record FeedbackDTO(Long id, String text, String detailText, boolean hasLongFeedbackText, String reference, Double credits, Boolean positive, FeedbackType type,

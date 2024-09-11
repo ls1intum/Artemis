@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 
 class OnlineCourseConfigurationServiceTest {
 

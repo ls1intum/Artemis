@@ -11,6 +11,8 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.Posting;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
+import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
+import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
@@ -23,8 +25,6 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismAnswerPostService;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismPostService;
-import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
-import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 
 @Profile(PROFILE_CORE)
 @Service

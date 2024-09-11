@@ -9,12 +9,12 @@ import java.nio.file.Files;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.ParserException;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.exception.UnsupportedToolException;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.ParserPolicy;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.strategy.ParserStrategy;
 import de.tum.cit.aet.artemis.programming.service.localci.scaparser.utils.FileUtils;
-import de.tum.cit.aet.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 /**
  * Public API for parsing of static code analysis reports

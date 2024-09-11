@@ -13,10 +13,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
-import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
-import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
+import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 
 @Service
 public class StandardizedCompetencyUtilService {

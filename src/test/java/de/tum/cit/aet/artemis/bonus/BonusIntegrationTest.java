@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
+import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -33,7 +34,6 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
-import de.tum.cit.aet.artemis.assessment.dto.BonusExampleDTO;
 
 class BonusIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

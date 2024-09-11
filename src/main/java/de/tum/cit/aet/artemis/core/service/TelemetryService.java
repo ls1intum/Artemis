@@ -23,8 +23,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import de.tum.cit.aet.artemis.service.ProfileService;
-
 @Service
 @Profile(PROFILE_SCHEDULING)
 public class TelemetryService {

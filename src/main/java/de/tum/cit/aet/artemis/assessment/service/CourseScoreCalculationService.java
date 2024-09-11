@@ -26,13 +26,19 @@ import org.springframework.util.MultiValueMap;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
+import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePoints;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
@@ -41,12 +47,6 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.service.PlagiarismCaseService.PlagiarismMapping;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.service.dto.MaxAndReachablePoints;
-import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.core.dto.CourseScoresDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ParticipationResultDTO;
-import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 
 /**
  * Service Implementation for calculating course scores.

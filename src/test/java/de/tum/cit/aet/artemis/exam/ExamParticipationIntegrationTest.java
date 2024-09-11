@@ -47,10 +47,14 @@ import de.tum.cit.aet.artemis.bonus.BonusFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.DueDateStat;
+import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExamUser;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
@@ -84,10 +88,6 @@ import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.core.dto.DueDateStat;
-import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
-import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
-import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
 
 class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

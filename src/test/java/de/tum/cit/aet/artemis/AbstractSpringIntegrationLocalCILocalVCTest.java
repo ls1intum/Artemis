@@ -29,6 +29,7 @@ import com.github.dockerjava.api.DockerClient;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -48,7 +49,6 @@ import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExercise
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
-import de.tum.cit.aet.artemis.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.

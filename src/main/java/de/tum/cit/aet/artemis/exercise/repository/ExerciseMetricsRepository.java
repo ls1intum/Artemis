@@ -10,13 +10,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.ScoreDTO;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
-import de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong;
-import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
-import de.tum.cit.aet.artemis.atlas.dto.metrics.ScoreDTO;
 
 /**
  * Spring Data JPA repository to fetch exercise related metrics.

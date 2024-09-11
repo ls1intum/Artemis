@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.hestia.CoverageReport;
-import de.tum.cit.aet.artemis.service.dto.CoverageReportAndSubmissionDateDTO;
+import de.tum.cit.aet.artemis.programming.dto.CoverageReportAndSubmissionDateDTO;
 
 /**
  * Spring Data JPA repository for the CoverageReport entity.

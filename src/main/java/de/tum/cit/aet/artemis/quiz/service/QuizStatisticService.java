@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
@@ -24,7 +25,6 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestionStatistic;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPointStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizQuestionStatisticRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
-import de.tum.cit.aet.artemis.service.WebsocketMessagingService;
 
 @Profile(PROFILE_CORE)
 @Service

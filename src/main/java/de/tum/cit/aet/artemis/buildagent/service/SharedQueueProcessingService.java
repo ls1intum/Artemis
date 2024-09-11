@@ -34,14 +34,14 @@ import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
+import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.programming.domain.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.domain.BuildStatus;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildAgentInformation;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.BuildResult;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.JobTimingInfo;
-import de.tum.cit.aet.artemis.programming.service.localci.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
 /**
  * Includes functionality for processing build jobs from the shared build job queue.

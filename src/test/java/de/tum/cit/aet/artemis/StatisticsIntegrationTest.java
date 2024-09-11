@@ -33,6 +33,8 @@ import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
 import de.tum.cit.aet.artemis.core.domain.StatisticsView;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseManagementStatisticsDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
@@ -41,8 +43,6 @@ import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.core.dto.CourseManagementStatisticsDTO;
-import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
 
 class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

@@ -20,11 +20,11 @@ import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismSubmissionRepository;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismCaseInfoDTO;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismVerdictDTO;
 
 @Profile(PROFILE_CORE)
 @Service

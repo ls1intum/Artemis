@@ -10,11 +10,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyProgressDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.MapEntryLongLong;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository to fetch competency related metrics.

@@ -18,19 +18,19 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.security.web.util.matcher.IpAddressMatcher;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
+import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
 import de.tum.cit.aet.artemis.exam.domain.ExamSession;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousExamSessions;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionReason;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
-import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.core.dto.CourseWithIdDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.StudentExamWithIdAndExamAndUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
-import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
+import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
+import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressString;
 

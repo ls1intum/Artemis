@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.GradingCriterionUtil;
@@ -63,14 +64,13 @@ import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
+import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorParticipationStatus;
 import de.tum.cit.aet.artemis.util.ExerciseIntegrationTestService;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
-import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
 
 class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

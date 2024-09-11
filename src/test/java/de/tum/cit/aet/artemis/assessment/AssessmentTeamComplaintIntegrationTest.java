@@ -21,6 +21,10 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintAction;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -33,12 +37,8 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.service.dto.ComplaintAction;
-import de.tum.cit.aet.artemis.service.dto.ComplaintRequestDTO;
-import de.tum.cit.aet.artemis.service.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.team.TeamUtilService;
 import de.tum.cit.aet.artemis.util.TestResourceUtils;
-import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 
 class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

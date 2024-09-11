@@ -27,12 +27,15 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
+import de.tum.cit.aet.artemis.communication.dto.ConversationDTO;
+import de.tum.cit.aet.artemis.communication.dto.ConversationUserDTO;
+import de.tum.cit.aet.artemis.communication.dto.ResponsibleUserDTO;
+import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService.ConversationMemberSearchFilters;
 import de.tum.cit.aet.artemis.communication.service.conversation.auth.ChannelAuthorizationService;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationDTO;
-import de.tum.cit.aet.artemis.communication.web.conversation.dtos.ConversationUserDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -40,9 +43,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.service.ConductAgreementService;
-import de.tum.cit.aet.artemis.service.dto.ResponsibleUserDTO;
-import de.tum.cit.aet.artemis.service.dto.UserPublicInfoDTO;
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_CORE)

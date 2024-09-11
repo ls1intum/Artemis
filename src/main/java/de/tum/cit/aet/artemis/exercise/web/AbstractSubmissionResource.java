@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.service.SubmissionService;
+import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 
 /**
  * Abstract class that allows reuse

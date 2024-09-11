@@ -23,16 +23,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Source;
 import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
-import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
-import de.tum.cit.aet.artemis.atlas.repository.competency.KnowledgeAreaRepository;
-import de.tum.cit.aet.artemis.atlas.repository.competency.StandardizedCompetencyRepository;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.SourceDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.KnowledgeAreaForCatalogDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO.StandardizedCompetencyForCatalogDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
+import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
+import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * Service for managing {@link StandardizedCompetency} entities.

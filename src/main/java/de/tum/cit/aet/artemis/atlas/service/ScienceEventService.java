@@ -10,8 +10,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
-import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
-import de.tum.cit.aet.artemis.atlas.dto.science.ScienceEventDTO;
+import de.tum.cit.aet.artemis.atlas.dto.ScienceEventDTO;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 
 /**
  * Service class for {@link ScienceEvent}.

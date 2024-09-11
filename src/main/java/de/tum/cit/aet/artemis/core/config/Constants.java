@@ -2,8 +2,8 @@ package de.tum.cit.aet.artemis.core.config;
 
 import java.util.regex.Pattern;
 
-import de.tum.cit.aet.artemis.atlas.web.LtiResource;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.lti.web.LtiResource;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingSubmissionService;

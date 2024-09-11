@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
-import de.tum.cit.aet.artemis.atlas.repository.science.ScienceEventRepository;
+import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 
 /**
  * A Service to create the science event export data for users.

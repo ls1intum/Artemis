@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
+import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum;
+import de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSum;
 import de.tum.cit.aet.artemis.assessment.listener.ResultListener;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
@@ -34,9 +37,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
-import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum;
-import de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSum;
 
 @Profile(PROFILE_CORE)
 @Service
