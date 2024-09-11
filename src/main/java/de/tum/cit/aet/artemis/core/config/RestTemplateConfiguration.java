@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ATHENA;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
@@ -61,7 +62,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("apollon")
+    @Profile(PROFILE_APOLLON)
     public RestTemplate apollonRestTemplate() {
         return createRestTemplate();
     }
@@ -107,7 +108,7 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("apollon")
+    @Profile(PROFILE_APOLLON)
     public RestTemplate shortTimeoutApollonRestTemplate() {
         return createShortTimeoutRestTemplate();
     }

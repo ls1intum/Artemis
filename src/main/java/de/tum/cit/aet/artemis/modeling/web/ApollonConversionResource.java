@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.web;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
+
 import java.io.InputStream;
 
 import org.slf4j.Logger;
@@ -14,13 +16,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
+import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
-import de.tum.cit.aet.artemis.modeling.service.apollon.dto.ApollonModelDTO;
 
 /**
  * REST controller for managing ApollonDiagram.
  */
-@Profile("apollon")
+@Profile(PROFILE_APOLLON)
 @RestController
 @RequestMapping("api/")
 public class ApollonConversionResource {

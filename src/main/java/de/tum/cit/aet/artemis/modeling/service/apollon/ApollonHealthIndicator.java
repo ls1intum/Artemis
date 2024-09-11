@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.service.apollon;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
+
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,7 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import de.tum.cit.aet.artemis.core.service.connectors.ConnectorHealth;
 
 @Component
-@Profile("apollon")
+@Profile(PROFILE_APOLLON)
 public class ApollonHealthIndicator implements HealthIndicator {
 
     private final RestTemplate shortTimeoutRestTemplate;

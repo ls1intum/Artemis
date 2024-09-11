@@ -18,7 +18,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 /**
  * Service for exporting Modeling Exercises with the student submissions.
  */
-
 @Profile(PROFILE_CORE)
 @Service
 public class ModelingExerciseWithSubmissionsExportService extends ExerciseWithSubmissionsExportService {

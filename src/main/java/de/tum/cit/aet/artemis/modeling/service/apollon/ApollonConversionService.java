@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.service.apollon;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -12,10 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.cit.aet.artemis.modeling.service.apollon.dto.ApollonModelDTO;
+import de.tum.cit.aet.artemis.modeling.dto.ApollonModelDTO;
 
 @Service
-@Profile("apollon")
+@Profile(PROFILE_APOLLON)
 public class ApollonConversionService {
 
     private static final Logger log = LoggerFactory.getLogger(ApollonConversionService.class);
