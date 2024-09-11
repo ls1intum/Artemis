@@ -48,7 +48,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 
 import de.tum.cit.aet.artemis.core.security.OAuth2JWKSService;
-import de.tum.cit.aet.artemis.core.security.lti.Lti13TokenRetriever;
+import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.dto.Scopes;
 
 class Lti13TokenRetrieverTest {

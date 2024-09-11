@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.validation;
+package de.tum.cit.aet.artemis.core.config;
 
 import java.net.InetSocketAddress;
 import java.net.URI;

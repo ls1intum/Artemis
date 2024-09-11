@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security.lti;
+package de.tum.cit.aet.artemis.lti.config;
 
 import java.net.URI;
 import java.security.KeyPair;

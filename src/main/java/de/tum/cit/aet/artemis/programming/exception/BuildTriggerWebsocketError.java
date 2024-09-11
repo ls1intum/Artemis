@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.exceptions;
+package de.tum.cit.aet.artemis.programming.exception;
 
 import de.tum.cit.aet.artemis.core.exception.WebsocketError;
 

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.security.filter;
+package de.tum.cit.aet.artemis.lti.config;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.dto.Claims;
 import de.tum.cit.aet.artemis.lti.dto.LtiAuthenticationResponse;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;

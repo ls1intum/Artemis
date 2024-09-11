@@ -1,9 +1,8 @@
-package de.tum.cit.aet.artemis.core.validation;
+package de.tum.cit.aet.artemis.exercise.web;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-import de.tum.cit.aet.artemis.core.validation.constraints.TeamAssignmentConfigConstraints;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 
 /**

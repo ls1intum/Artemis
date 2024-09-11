@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.validation.constraints.TeamAssignmentConfigConstraints;
+import de.tum.cit.aet.artemis.exercise.web.TeamAssignmentConfigConstraints;
 
 /**
  * A team assignment configuration.

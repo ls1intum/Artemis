@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.assessment.listener;
+package de.tum.cit.aet.artemis.assessment;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 

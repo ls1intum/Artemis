@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.validation.constraints;
+package de.tum.cit.aet.artemis.exercise.web;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,8 +7,6 @@ import java.lang.annotation.Target;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
-
-import de.tum.cit.aet.artemis.core.validation.TeamAssignmentConfigValidator;
 
 /**
  * Custom constraint annotation for team assignment configurations
