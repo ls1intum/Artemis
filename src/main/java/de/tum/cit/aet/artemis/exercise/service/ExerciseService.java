@@ -98,7 +98,7 @@ public class ExerciseService {
 
     private final ResultRepository resultRepository;
 
-    private final Lti13ResourceLaunchRepository lti13ResourceLaunchRepository;
+    private final Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -127,7 +127,7 @@ public class ExerciseService {
     private final GroupNotificationScheduleService groupNotificationScheduleService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
-            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Lti13ResourceLaunchRepository lti13ResourceLaunchRepository,
+            TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, Optional<Lti13ResourceLaunchRepository> lti13ResourceLaunchRepository,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SubmissionRepository submissionRepository,
             ParticipantScoreRepository participantScoreRepository, UserRepository userRepository, ComplaintRepository complaintRepository,
             TutorLeaderboardService tutorLeaderboardService, ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository,
@@ -185,10 +185,12 @@ public class ExerciseService {
                     if (!exercise.isVisibleToStudents()) {
                         continue;
                     }
-                    // students in online courses can only see exercises where the lti resource launch exists, otherwise the result cannot be reported later on
-                    Collection<LtiResourceLaunch> ltiResourceLaunches = lti13ResourceLaunchRepository.findByUserAndExercise(user, exercise);
-                    if (!ltiResourceLaunches.isEmpty()) {
-                        exercisesUserIsAllowedToSee.add(exercise);
+                    if (lti13ResourceLaunchRepository.isPresent()) {
+                        // students in online courses can only see exercises where the lti resource launch exists, otherwise the result cannot be reported later on
+                        Collection<LtiResourceLaunch> ltiResourceLaunches = lti13ResourceLaunchRepository.get().findByUserAndExercise(user, exercise);
+                        if (!ltiResourceLaunches.isEmpty()) {
+                            exercisesUserIsAllowedToSee.add(exercise);
+                        }
                     }
                 }
             }
