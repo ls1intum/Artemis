@@ -31,7 +31,7 @@ class LinkPreviewIntegrationTest extends AbstractSpringIntegrationIndependentTes
     // this link will return null for all fields because it does not include OG tags
     private static final String GOOGLE_URL = "https://google.com";
 
-    private static final String MOCK_FILE_PATH_PREFIX = "src/test/java/de/tum/in/www1/artemis/metis/linkpreview/mockFiles/";
+    private static final String MOCK_FILE_PATH_PREFIX = "src/test/java/de/tum/cit/aet/artemis/metis/linkpreview/mockFiles/";
 
     @Autowired
     private CacheManager cacheManager;
