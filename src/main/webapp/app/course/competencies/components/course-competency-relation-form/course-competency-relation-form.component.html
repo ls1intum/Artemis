@@ -1,7 +1,7 @@
 <div class="course-competency-relation-form-container row m-0 p-3 align-items-end">
     <div class="form-group col m-0 ps-0">
         <label for="head" jhiTranslate="artemisApp.competency.relation.headCompetency"></label>
-        <select class="form-select mt-1" id="head" name="head" [ngModel]="headCompetencyId()" (change)="selectHeadCourseCompetency($event)">
+        <select class="form-select mt-1" id="head" name="head" [ngModel]="headCompetencyId()" (ngModelChange)="selectHeadCourseCompetency($event)">
             <option [value]="undefined" disabled>Select head course competency</option>
             @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
                 <option [value]="courseCompetency.id">{{ courseCompetency.title }}</option>

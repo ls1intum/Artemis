@@ -44,6 +44,8 @@ export class CourseCompetencyRelationFormComponent {
         return this.courseCompetencies();
     });
 
+    private readonly currentAdjacencyMap = computed(() => this.getAdjacencyMap(this.relations()));
+
     public selectRelation(relationId: number): void {
         const relation = this.relations().find(({ id }) => id === relationId);
         this.headCompetencyId.set(relation?.headCompetencyId);
@@ -58,14 +60,13 @@ export class CourseCompetencyRelationFormComponent {
             this.relationType.set(undefined);
         } else {
             if (this.selectableTailCourseCompetencies().find(({ id }) => id === courseCompetencyId)) {
-                this.tailCompetencyId.set(courseCompetencyId);
+                this.tailCompetencyId.set(Number(courseCompetencyId));
             }
         }
     }
 
-    protected selectHeadCourseCompetency(event: Event) {
-        const target = event.target as HTMLSelectElement;
-        this.headCompetencyId.set(Number(target.value));
+    protected selectHeadCourseCompetency(headId: string) {
+        this.headCompetencyId.set(Number(headId));
         this.tailCompetencyId.set(undefined);
     }
 
@@ -79,9 +80,9 @@ export class CourseCompetencyRelationFormComponent {
         try {
             this.isLoading.set(true);
             const courseCompetencyRelation = await this.courseCompetencyApiService.createCourseCompetencyRelation(this.courseId(), {
-                headCompetencyId: this.headCompetencyId(),
-                tailCompetencyId: this.tailCompetencyId(),
-                relationType: this.relationType(),
+                headCompetencyId: this.headCompetencyId()!,
+                tailCompetencyId: Number(this.tailCompetencyId()!),
+                relationType: this.relationType()!,
             });
             this.relations.update((relations) => [...relations, courseCompetencyRelation]);
             this.resetForm();
@@ -123,21 +124,31 @@ export class CourseCompetencyRelationFormComponent {
         return this.courseCompetencies()
             .filter(({ id }) => id !== headCompetencyId) // Exclude the head itself
             .filter(({ id }) => {
-                const newRelation: CompetencyRelationDTO = {
+                // check if direct relation already exists
+                if (this.relationAlreadyExists()) {
+                    return true;
+                }
+                // check if indirect relation already exists
+                return !this.currentAdjacencyMap().get(headCompetencyId)?.includes(id!);
+            })
+            .filter(({ id }) => {
+                const potentialRelation: CompetencyRelationDTO = {
                     headCompetencyId: headCompetencyId,
                     tailCompetencyId: id,
                     relationType: relationType,
                 };
-                const adjacencyMap = this.getAdjacencyMap(this.relations().concat(newRelation));
-                return !this.hasCycle(adjacencyMap);
+                // check if cycle would be created in potential adjacency map
+                const potentialAdjacencyMap = this.getAdjacencyMap(this.relations().concat(potentialRelation));
+                return !this.hasCycle(potentialAdjacencyMap);
             });
     }
 
     /**
-     * Function to build the adjacency list for the current relations
+     * Function to create an adjacency map from the given relations
+     * @param relations The relations to create the adjacency map from
      * @private
      *
-     * @returns The adjacency list for the current relations
+     * @returns The adjacency map
      */
     private getAdjacencyMap(relations: CompetencyRelationDTO[]): Map<number, number[]> {
         const adjacencyMap: Map<number, number[]> = new Map();
@@ -147,45 +158,48 @@ export class CourseCompetencyRelationFormComponent {
                 adjacencyMap.set(relation.headCompetencyId!, []);
             }
             if (relation.relationType == CompetencyRelationType.MATCHES) {
+                // store matches relations to merge them later
                 matchesRelations.push(relation);
+            } else {
+                // '+' used in push() is necessary to require the value to be a number
+                adjacencyMap.get(relation.headCompetencyId!)!.push(+relation.tailCompetencyId!);
             }
-            // '+' used in push() is necessary to require the value to be a number
-            adjacencyMap.get(relation.headCompetencyId!)!.push(+relation.tailCompetencyId!);
         });
         // merge matches relations into the adjacency map
-        matchesRelations.forEach((relation) => {
-            adjacencyMap.set(relation.headCompetencyId!, this.mergeMatchesTailRelations(adjacencyMap, relation));
-        });
-        matchesRelations.forEach((relation) => {
-            const headRelations = this.relations().filter(({ tailCompetencyId }) => tailCompetencyId == relation.headCompetencyId);
-            headRelations?.forEach((headRelation) => {
-                if (headRelation.relationType != CompetencyRelationType.MATCHES) {
-                    const headRelationIds = adjacencyMap.get(headRelation.headCompetencyId!)!;
-                    adjacencyMap.get(headRelation.headCompetencyId!)!.push(...[relation.tailCompetencyId!, ...headRelationIds]);
-                }
-            });
-        });
+        matchesRelations.forEach((relation) => adjacencyMap.set(relation.headCompetencyId!, this.getMatchesRelationNeighbours(adjacencyMap, relation)));
         console.log(adjacencyMap);
         return adjacencyMap;
     }
 
-    private mergeMatchesTailRelations(adjacencyMap: Map<number, number[]>, relation: CompetencyRelationDTO): number[] {
-        const existingRelations = adjacencyMap.get(relation.headCompetencyId!)!;
-        if (relation.relationType != CompetencyRelationType.MATCHES) {
-            return existingRelations;
-        } else {
+    private getMatchesRelationNeighbours(adjacencyMap: Map<number, number[]>, relation: CompetencyRelationDTO, matchRelationIds: number[] = []): number[] {
+        const existingNeighbours = adjacencyMap.get(relation.headCompetencyId!)!;
+        if (relation.relationType == CompetencyRelationType.MATCHES) {
+            // if current relation is a MATCHES relation, add the head competency id for next recursion steps
+            matchRelationIds.push(relation.headCompetencyId!);
+            matchRelationIds.push(relation.tailCompetencyId!);
+            // find all relations that have the current tail competency as head competency
             const tailRelations = this.relations().filter(({ headCompetencyId }) => headCompetencyId == relation.tailCompetencyId);
-            if (tailRelations.length > 0) {
-                let tailRelationIds = new Set<number>();
-                tailRelations.forEach((tailRelation) => {
-                    tailRelationIds = new Set<number>([...tailRelationIds, ...this.mergeMatchesTailRelations(adjacencyMap, tailRelation)]);
-                });
-                return [...existingRelations, ...tailRelationIds];
-            }
-            return existingRelations;
+            tailRelations.forEach((tailRelation) => {
+                // push all neighbours of the next recursion steps to the existing neighbours of the current relation
+                existingNeighbours.push(...this.getMatchesRelationNeighbours(adjacencyMap, tailRelation, matchRelationIds));
+            });
         }
+        const headRelations = this.relations().filter(
+            ({ tailCompetencyId, relationType }) => tailCompetencyId == relation.headCompetencyId && relationType != CompetencyRelationType.MATCHES,
+        );
+        // add the MATCHES relations of the previous recursion steps as neighbours of the found head relations
+        headRelations.forEach((headRelation) => adjacencyMap.get(headRelation.headCompetencyId!)!.push(...matchRelationIds));
+        // return the existing neighbours to be added to the neighbours of previous recursion steps
+        return existingNeighbours;
     }
 
+    /**
+     * Function to check if the given adjacency map has a cycle
+     * @param adjacencyMap The adjacency map to check for cycles
+     * @private
+     *
+     * @returns True if the adjacency map has a cycle, false otherwise
+     */
     private hasCycle(adjacencyMap: Map<number, number[]>): boolean {
         const visited = new Set<number>();
         const recursionStack = new Set<number>();
@@ -198,7 +212,17 @@ export class CourseCompetencyRelationFormComponent {
         return false;
     }
 
-    private hasCycleUtil(adjacencyMap: Map<number, number[]>, node: number, visited: Set<number>, recursionStack: Set<number>) {
+    /**
+     * Utility function to check if the given node has a cycle
+     * @param adjacencyMap The adjacency map to check for cycles
+     * @param node The node to check for cycles
+     * @param visited The set of visited nodes
+     * @param recursionStack The set of nodes in the recursion stack
+     * @private
+     *
+     * @returns True if the node has a cycle, false otherwise
+     */
+    private hasCycleUtil(adjacencyMap: Map<number, number[]>, node: number, visited: Set<number>, recursionStack: Set<number>): boolean {
         if (recursionStack.has(node)) {
             // Cycle detected
             return true;
