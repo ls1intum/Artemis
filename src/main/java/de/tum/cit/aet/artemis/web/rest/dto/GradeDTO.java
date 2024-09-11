@@ -1,0 +1,9 @@
+package de.tum.cit.aet.artemis.web.rest.dto;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.domain.GradeType;
+
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record GradeDTO(String gradeName, Boolean isPassingGrade, GradeType gradeType) {
+}
