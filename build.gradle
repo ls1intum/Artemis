@@ -24,7 +24,7 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
-group = "de.tum.in.www1.artemis"
+group = "de.tum.cit.aet.artemis"
 version = "7.5.3"
 description = "Interactive Learning with Individual Feedback"
 
@@ -103,7 +103,7 @@ spotless {
 defaultTasks "bootRun"
 
 springBoot {
-    mainClass = "de.tum.in.www1.artemis.ArtemisApp"
+    mainClass = "de.tum.cit.aet.artemis.ArtemisApp"
 }
 
 modernizer {
