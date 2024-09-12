@@ -8,7 +8,7 @@ import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { Faq } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
 
@@ -21,15 +21,14 @@ import { loadCourseFaqCategories } from 'app/faq/faq.utils';
     styleUrls: ['./faq-update.component.scss'],
 })
 export class FAQUpdateComponent implements OnInit {
-
     faq: Faq;
     isSaving: boolean;
-    existingCategories: FaqCategory[] = []
-    exerciseCategories: FaqCategory[] = []
+    existingCategories: FaqCategory[] = [];
+    exerciseCategories: FaqCategory[] = [];
 
     courses: Course[];
 
-    domainActionsDescription = [new MonacoFormulaAction()];
+    domainActionsDescription = [new FormulaAction()];
     file: File;
     fileName: string;
 
@@ -40,7 +39,7 @@ export class FAQUpdateComponent implements OnInit {
 
     constructor(
         protected alertService: AlertService,
-        protected faqService : FaqService,
+        protected faqService: FaqService,
         protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -59,13 +58,12 @@ export class FAQUpdateComponent implements OnInit {
             const course = data['course'];
             if (course) {
                 this.faq.course = course;
-                this.loadCourseFaqCategories(course.id)
+                this.loadCourseFaqCategories(course.id);
             }
-            if(faq.categories){
-            this.exerciseCategories = faq.categories
+            if (faq.categories) {
+                this.exerciseCategories = faq.categories;
             }
         });
-
     }
 
     /**
@@ -87,9 +85,8 @@ export class FAQUpdateComponent implements OnInit {
             this.subscribeToSaveResponse(this.faqService.update(this.faq));
         } else {
             // Newly created faq must have a channel name, which cannot be undefined
-            console.log(this.faq)
+            console.log(this.faq);
             this.subscribeToSaveResponse(this.faqService.create(this.faq));
-
         }
     }
 
@@ -113,11 +110,9 @@ export class FAQUpdateComponent implements OnInit {
                     this.isSaving = false;
                     this.faq = response.body!;
                     this.alertService.success(`FAQ with title ${faq.questionTitle} was successfully created.`);
-
                 },
             });
-        }
-        else {
+        } else {
             this.isSaving = false;
             this.router.navigate(['course-management', faq.course!.id, 'faqs']);
         }
@@ -147,8 +142,7 @@ export class FAQUpdateComponent implements OnInit {
         });
     }
 
-    canSave(){
-        return this.faq.questionTitle && this.faq.questionAnswer
+    canSave() {
+        return this.faq.questionTitle && this.faq.questionAnswer;
     }
-
 }
