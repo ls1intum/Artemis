@@ -4,15 +4,15 @@
 <configuration scan="true">
     <include resource="org/springframework/boot/logging/logback/defaults.xml" />
 
-    <conversionRule conversionWord="threadId" converterClass="de.tum.in.www1.artemis.util.junit_parallel_logging.ThreadIdConverter"/>
+    <conversionRule conversionWord="threadId" converterClass="de.tum.cit.aet.artemis.util.junit_parallel_logging.ThreadIdConverter"/>
 
-    <appender name="ParallelConsoleAppender" class="de.tum.in.www1.artemis.util.junit_parallel_logging.ParallelConsoleAppender">
+    <appender name="ParallelConsoleAppender" class="de.tum.cit.aet.artemis.util.junit_parallel_logging.ParallelConsoleAppender">
         <encoder>
             <pattern>%16.16d{HH:mm:ss.SSS} | %3.3threadId %-16.16thread | %-5level | %-36.36logger{36} : %msg%n</pattern>
         </encoder>
     </appender>
 
-    <logger name="de.tum.in.www1.artemis" level="INFO"/>
+    <logger name="de.tum.cit.aet.artemis" level="INFO"/>
 
     <logger name="tech.jhipster" level="WARN"/>
 
