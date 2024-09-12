@@ -18,9 +18,9 @@ public class VcsRepositoryUri {
 
     /**
      * Default constructor, intended for internal use only to prevent compile errors.
-     * This constructor is protected to discourage its use as it creates an uninitialized object.
+     * IMPORTANT: It is discouraged to use it as it creates an uninitialized object.
      */
-    protected VcsRepositoryUri() {
+    public VcsRepositoryUri() {
     }
 
     /**

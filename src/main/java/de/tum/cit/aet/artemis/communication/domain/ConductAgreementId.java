@@ -12,12 +12,12 @@ public class ConductAgreementId implements Serializable {
 
     private Long user;
 
-    ConductAgreementId(Long course, Long user) {
+    public ConductAgreementId(Long course, Long user) {
         this.course = course;
         this.user = user;
     }
 
-    ConductAgreementId() {
+    public ConductAgreementId() {
         // Needed for JPA
     }
 

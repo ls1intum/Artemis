@@ -45,6 +45,8 @@ class ObjectMethodTest {
 
     private static final String DOMAIN_PACKAGE_NAME = "de.tum.cit.aet.artemis.domain";
 
+    private static final String BASE_PACKAGE_NAME = "de.tum.cit.aet.artemis";
+
     private static final Map<Class<?>, List<?>> ID_TEST_VALUES = Map.of(Long.class, List.of(1L, 42L), String.class, List.of("A", "B"), UserIdeMapping.UserIdeMappingId.class,
             List.of(new UserIdeMapping.UserIdeMappingId(1L, ProgrammingLanguage.JAVA), new UserIdeMapping.UserIdeMappingId(42L, ProgrammingLanguage.PYTHON)));
 
@@ -53,9 +55,21 @@ class ObjectMethodTest {
      */
     @TestFactory
     DynamicNode testDomainClasses() {
-        var allDomainClasses = ClassPathUtil.findAllClassesIn(DOMAIN_PACKAGE_NAME, ObjectMethodTest::classPathElementFilter);
-        var domainClassTests = generateTestContainerForClasses(allDomainClasses);
-        return domainClassTests.orElseGet(() -> dynamicTest(GENERATE_TESTS, () -> fail("No testable domain classes found")));
+        var modules = ClassPathUtil.findAllPackagesIn(BASE_PACKAGE_NAME, classPathElement -> classPathElement.contains("build/classes/java/main"));
+
+        List<DynamicNode> allModuleTests = new ArrayList<>();
+        for (var module : modules) {
+            var allDomainClasses = ClassPathUtil.findAllClassesIn(BASE_PACKAGE_NAME + "." + module + ".domain", ObjectMethodTest::classPathElementFilter);
+            var domainClassTests = generateTestContainerForClasses(allDomainClasses);
+            domainClassTests.ifPresent(allModuleTests::add);
+        }
+
+        if (allModuleTests.isEmpty()) {
+            return dynamicTest(GENERATE_TESTS, () -> fail("No testable domain classes found in any module"));
+        }
+        else {
+            return dynamicContainer("All Modules", allModuleTests);
+        }
     }
 
     /**
