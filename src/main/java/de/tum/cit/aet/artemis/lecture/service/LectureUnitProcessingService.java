@@ -35,8 +35,8 @@ import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentType;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 @Profile(PROFILE_CORE)
@@ -69,17 +69,17 @@ public class LectureUnitProcessingService {
     /**
      * Split units from given file according to given split information and saves them.
      *
-     * @param lectureUnitInformationDTO The split information
-     * @param fileBytes                 The byte content of the file (lecture slides) to be split
-     * @param lecture                   The lecture that the attachment unit belongs to
+     * @param lectureUnitSplitInformationDTO The split information
+     * @param fileBytes                      The byte content of the file (lecture slides) to be split
+     * @param lecture                        The lecture that the attachment unit belongs to
      * @return The prepared units to be saved
      */
-    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitInformationDTO lectureUnitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
+    public List<AttachmentUnit> splitAndSaveUnits(LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO, byte[] fileBytes, Lecture lecture) throws IOException {
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = Loader.loadPDF(fileBytes)) {
             List<AttachmentUnit> units = new ArrayList<>();
 
-            for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units()) {
+            for (LectureUnitSplitDTO lectureUnit : lectureUnitSplitInformationDTO.units()) {
                 // make sure output stream doesn't contain old data
                 outputStream.reset();
 
@@ -94,8 +94,8 @@ public class LectureUnitProcessingService {
 
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
-                if (!StringUtils.isEmpty(lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases())) {
-                    removeSlidesContainingAnyKeyPhrases(documentUnits.getFirst(), lectureUnitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
+                if (!StringUtils.isEmpty(lectureUnitSplitInformationDTO.removeSlidesCommaSeparatedKeyPhrases())) {
+                    removeSlidesContainingAnyKeyPhrases(documentUnits.getFirst(), lectureUnitSplitInformationDTO.removeSlidesCommaSeparatedKeyPhrases());
                 }
                 documentUnits.getFirst().setDocumentInformation(pdDocumentInformation);
                 documentUnits.getFirst().save(outputStream);
@@ -192,7 +192,7 @@ public class LectureUnitProcessingService {
      * @param fileBytes The byte content of the file (lecture slides) to be split
      * @return The prepared information of split units LectureUnitInformationDTO
      */
-    public LectureUnitInformationDTO getSplitUnitData(byte[] fileBytes) {
+    public LectureUnitSplitInformationDTO getSplitUnitData(byte[] fileBytes) {
         try {
             log.debug("Start preparing information of split units.");
             Outline unitsInformation = separateIntoUnits(fileBytes);
@@ -203,7 +203,7 @@ public class LectureUnitProcessingService {
                     .map(lectureUnitSplit -> new LectureUnitSplitDTO(lectureUnitSplit.unitName, ZonedDateTime.now(), lectureUnitSplit.startPage, lectureUnitSplit.endPage))
                     .toList();
             // return units information, maximum number of pages and by default remove break slides and remove solution slides are false
-            return new LectureUnitInformationDTO(units, numberOfPages, null);
+            return new LectureUnitSplitInformationDTO(units, numberOfPages, null);
         }
         catch (IOException e) {
             log.error("Error while preparing the map with information", e);
