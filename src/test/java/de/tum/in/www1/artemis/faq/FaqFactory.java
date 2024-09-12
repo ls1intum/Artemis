@@ -9,9 +9,8 @@ import de.tum.in.www1.artemis.domain.FaqState;
 
 public class FaqFactory {
 
-    public static Faq generateFaq(Long id, Course course) {
+    public static Faq generateFaq(Course course) {
         Faq faq = new Faq();
-        faq.setId(id);
         faq.setCourse(course);
         faq.setFaqState(FaqState.ACCEPTED);
         faq.setQuestionAnswer("Answer");
