@@ -15,7 +15,7 @@
             }
         },
         "password": {
-            "forgot": "Du hast dein Passwort vergessen?"
+            "forgot": "Passwort vergessen?"
         },
         "ide": {
             "confirmation": "Wills du deinen Login und dein Passwort in deiner IDE speichern?\nDas wird das Importieren deiner Programmieraufgaben sehr vereinfachen!",

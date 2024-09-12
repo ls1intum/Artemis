@@ -13,7 +13,7 @@
 logging:
     level:
         ROOT: INFO
-        de.tum.in.www1.artemis: DEBUG
+        de.tum.cit.aet.artemis: DEBUG
         tech.jhipster: INFO
 
 artemis:
@@ -179,7 +179,7 @@ zonky:
             type: H2  # Alternatives: H2 / MYSQL / POSTGRES
             postgres:
                 docker:
-                    image: "postgres:16.3-alpine"
+                    image: "postgres:16.4-alpine"
                     tmpfs:
                         enabled: true
                 server:
@@ -202,7 +202,7 @@ zonky:
                         max_parallel_maintenance_workers: 4
             mysql:
                 docker:
-                    image: "mysql:8.4.0"
+                    image: "mysql:9.0.1"
                     tmpfs:
                         enabled: true
 
@@ -253,6 +253,7 @@ info:
     # default value set to true for tests
     text-assessment-analytics-enabled: true
     student-exam-store-session-data: true
+    contact: contactEmail@contact.de
 
 jhipster:
     clientApp:

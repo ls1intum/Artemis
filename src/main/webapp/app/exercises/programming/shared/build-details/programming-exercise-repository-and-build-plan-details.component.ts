@@ -1,9 +1,9 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
-import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { Subscription } from 'rxjs';
-import type { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
+import type { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';

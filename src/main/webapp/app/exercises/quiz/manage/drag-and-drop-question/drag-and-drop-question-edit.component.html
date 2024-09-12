@@ -458,9 +458,18 @@
                         }
                     </button>
                     <input #dragItemFileInput id="dragItemFileInput{{ questionIndex }}" type="file" accept="image/*" [hidden]="true" (change)="createImageDragItem($event)" />
-                    <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
+                    <button class="btn btn-outline-secondary me-2" id="add-text-drag-item" (click)="addTextDragItem()">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
+                    </button>
+                    <button
+                        class="btn btn-outline-secondary"
+                        id="crop-drag-item"
+                        [ngbTooltip]="'artemisApp.dragAndDropQuestion.cutImagesFromDropLocationTip' | artemisTranslate"
+                        (click)="getImagesFromDropLocations()"
+                    >
+                        <fa-icon [icon]="faScissors" />
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.cutImagesFromDropLocation"></span>
                     </button>
                 </div>
             </div>
