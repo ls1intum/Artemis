@@ -432,7 +432,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         if (this.participation.results) {
             const athenaResults = this.participation.results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA);
-            this.alertService.info('There are ' + athenaResults.length + ' athena resultst');
             const countOfSuccessfulRequests = athenaResults.length;
 
             if (countOfSuccessfulRequests >= 10) {

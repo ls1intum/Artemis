@@ -15,7 +15,6 @@ export class SubmissionResultStatusComponent implements OnChanges {
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
     readonly dayjs = dayjs;
-    @Input() isInsideEditor = false;
 
     /**
      * @property exercise Exercise to which the submission's participation belongs

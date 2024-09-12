@@ -6,11 +6,9 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +24,7 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -112,10 +111,6 @@ public class TextExerciseFeedbackService {
         }
         TextSubmission textSubmission = (TextSubmission) submissionOptional.get();
 
-        if (textSubmission.getNonAthenaResults().stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new)).isEmpty()) {
-            throw new BadRequestAlertException("Submission already has an athena result", "submission", "hasAthenaFeedback");
-        }
-
         Result automaticResult = new Result();
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
         automaticResult.setRated(true);
@@ -124,7 +119,7 @@ public class TextExerciseFeedbackService {
         automaticResult.setSubmission(textSubmission);
         automaticResult.setParticipation(participation);
         try {
-            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
+            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
 
             log.debug("Submission id: {}", textSubmission.getId());
 
