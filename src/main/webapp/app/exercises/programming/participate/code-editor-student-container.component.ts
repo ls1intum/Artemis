@@ -10,7 +10,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ActivatedRoute } from '@angular/router';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';

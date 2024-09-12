@@ -12,7 +12,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { TranslateService } from '@ngx-translate/core';
 import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 
 describe('ExamBarComponent', () => {

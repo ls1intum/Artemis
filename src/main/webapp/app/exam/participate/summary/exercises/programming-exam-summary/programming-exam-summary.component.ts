@@ -1,9 +1,9 @@
 import { Component, Input, OnInit, Optional } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MissingResultInformation, evaluateTemplateStatus } from 'app/exercises/shared/result/result.utils';
 import { FeedbackComponentPreparedParams, prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';

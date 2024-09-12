@@ -7,7 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { HttpResponse } from '@angular/common/http';

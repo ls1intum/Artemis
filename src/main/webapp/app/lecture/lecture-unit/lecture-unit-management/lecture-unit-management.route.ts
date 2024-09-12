@@ -1,4 +1,8 @@
-import { Routes } from '@angular/router';
+import { Injectable } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
+import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
+import { Observable, of } from 'rxjs';
+import { filter, map } from 'rxjs/operators';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
@@ -12,6 +16,27 @@ import { EditVideoUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-ma
 import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-online-unit/create-online-unit.component';
 import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
 import { AttachmentUnitsComponent } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
+import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+
+@Injectable({ providedIn: 'root' })
+export class AttachmentUnitResolve implements Resolve<AttachmentUnit> {
+    constructor(private attachmentUnitService: AttachmentUnitService) {}
+
+    resolve(route: ActivatedRouteSnapshot): Observable<AttachmentUnit> {
+        const lectureId = route.params['lectureId'];
+        const attachmentUnitId = route.params['attachmentUnitId'];
+        if (attachmentUnitId) {
+            return this.attachmentUnitService.findById(attachmentUnitId, lectureId).pipe(
+                filter((response: HttpResponse<AttachmentUnit>) => response.ok),
+                map((attachmentUnit: HttpResponse<AttachmentUnit>) => attachmentUnit.body!),
+            );
+        }
+        return of(new AttachmentUnit());
+    }
+}
 
 export const lectureUnitRoute: Routes = [
     {
@@ -84,6 +109,14 @@ export const lectureUnitRoute: Routes = [
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.attachmentUnit.editAttachmentUnit.title',
+                },
+            },
+            {
+                path: 'attachment-units/:attachmentUnitId/view',
+                component: PdfPreviewComponent,
+                resolve: {
+                    course: CourseManagementResolve,
+                    attachmentUnit: AttachmentUnitResolve,
                 },
             },
             {

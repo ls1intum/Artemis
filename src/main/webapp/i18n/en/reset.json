@@ -4,10 +4,10 @@
             "title": "Reset your password",
             "form": {
                 "button": "Reset password",
-                "emailUsername": "Email/Username"
+                "emailUsername": "Email / Login"
             },
             "messages": {
-                "info": "Enter the email address you used to register or your username.",
+                "info": "Enter the email address you used to register or your login.",
                 "success": "Check your email for details on how to reset your password. For security reasons, this hint is visible even if the account doesn't exist. Recheck your input if you don't receive an email."
             },
             "external": {

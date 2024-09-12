@@ -1,8 +1,8 @@
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { Observable } from 'rxjs';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationConfig = {
@@ -67,6 +67,9 @@ export const programmingExerciseCreationConfigMock: ProgrammingExerciseCreationC
     },
     updateTemplate: false,
     validIdeSelection(): boolean | undefined {
+        return true;
+    },
+    validOnlineIdeSelection(): boolean | undefined {
         return true;
     },
     withDependencies: false,
