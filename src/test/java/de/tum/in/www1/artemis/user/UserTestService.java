@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.user;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
@@ -20,7 +21,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -94,6 +98,9 @@ public class UserTestService {
 
     @Autowired
     private ScienceEventRepository scienceEventRepository;
+
+    @Autowired
+    private MockMvc mockMvc;
 
     private String TEST_PREFIX;
 
@@ -717,6 +724,41 @@ public class UserTestService {
         request.put("/api/users/notification-date", null, HttpStatus.OK);
         User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
+    }
+
+    // Test
+    public void updateUserProfilePicture_asStudent_isSuccessful() throws Exception {
+        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNull();
+
+        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
+            request.setMethod("PUT");
+            return request;
+        })).andExpect(status().isOk());
+
+        userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNotNull();
+    }
+
+    // Test
+    public void updateAndDeleteUserProfilePicture_asStudent_isSuccessful() throws Exception {
+        User userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNull();
+
+        MockMultipartFile mockImageFile = new MockMultipartFile("file", "test-image.jpeg", "image/jpeg", "test image".getBytes());
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/api/account/profile-picture").file(mockImageFile).with(request -> {
+            request.setMethod("PUT");
+            return request;
+        })).andExpect(status().isOk());
+        userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNotNull();
+
+        request.delete("/api/account/profile-picture", HttpStatus.OK);
+        userInDB = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        assertThat(userInDB.getImageUrl()).isNull();
     }
 
     // Test

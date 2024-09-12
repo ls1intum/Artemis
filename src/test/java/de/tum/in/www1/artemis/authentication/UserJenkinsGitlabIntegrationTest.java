@@ -331,6 +331,18 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void updateUserProfilePicture_asStudent_isSuccessful() throws Exception {
+        userTestService.updateUserProfilePicture_asStudent_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void deleteUserProfilePicture_asStudent_isSuccessful() throws Exception {
+        userTestService.updateAndDeleteUserProfilePicture_asStudent_isSuccessful();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateUserNotificationVisibility_showAll_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserNotificationVisibilityShowAllAsStudentIsSuccessful();
     }

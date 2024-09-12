@@ -1,4 +1,4 @@
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { TextWithDomainAction } from './markdown-editor-monaco.component';
 
@@ -8,7 +8,7 @@ import { TextWithDomainAction } from './markdown-editor-monaco.component';
  * @param markdown The markdown text to parse
  * @param domainActions The domain actions to search for in the markdown
  */
-export function parseMarkdownForDomainActions(markdown: string, domainActions: MonacoEditorDomainAction[]): TextWithDomainAction[] {
+export function parseMarkdownForDomainActions(markdown: string, domainActions: TextEditorDomainAction[]): TextWithDomainAction[] {
     let remainingText = markdown;
     const actionIdentifiersString = domainActions
         .map((action) => action.getOpeningIdentifier())
@@ -45,7 +45,7 @@ export function parseMarkdownForDomainActions(markdown: string, domainActions: M
  * @param text The text to parse
  * @param domainActions The domain actions to search for in the text
  */
-function parseLineForDomainAction(text: string, domainActions: MonacoEditorDomainAction[]): TextWithDomainAction {
+function parseLineForDomainAction(text: string, domainActions: TextEditorDomainAction[]): TextWithDomainAction {
     for (const domainAction of domainActions) {
         const possibleOpeningIdentifiers = [
             domainAction.getOpeningIdentifier(),

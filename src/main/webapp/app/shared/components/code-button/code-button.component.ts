@@ -14,6 +14,8 @@ import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
+import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 
 @Component({
     selector: 'jhi-code-button',
@@ -66,9 +68,13 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     activeParticipation?: ProgrammingExerciseStudentParticipation;
     isPracticeMode: boolean | undefined;
 
+    vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
+    programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
+
     // Icons
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
+    ideName: string;
 
     constructor(
         private translateService: TranslateService,
@@ -77,6 +83,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         private profileService: ProfileService,
         private localStorage: LocalStorageService,
         private participationService: ParticipationService,
+        private ideSettingsService: IdeSettingsService,
     ) {}
 
     ngOnInit() {
@@ -124,6 +131,14 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.sshSettingsUrl = profileInfo.sshKeysURL;
             }
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
+        });
+
+        this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIde) => {
+            if (programmingLanguageToIde.size) {
+                this.programmingLanguageToIde = programmingLanguageToIde;
+            }
+
+            this.ideName = this.getIde().name;
         });
     }
 
@@ -312,12 +327,16 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         return this.externalCloningService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUri(false));
     }
 
-    buildJetbrainsUrl(): string | undefined {
-        return this.externalCloningService.buildJetbrainsUrl(this.getHttpOrSshRepositoryUri(false));
+    buildIdeUrl(): string | undefined {
+        return this.externalCloningService.buildIdeUrl(this.getHttpOrSshRepositoryUri(false), this.getIde());
     }
 
-    buildVSCodeUrl(): string | undefined {
-        return this.externalCloningService.buildVSCodeUrl(this.getHttpOrSshRepositoryUri(false));
+    getIde(): Ide {
+        return (
+            this.programmingLanguageToIde.get(this.exercise?.programmingLanguage ?? ProgrammingLanguage.EMPTY) ??
+            this.programmingLanguageToIde.get(ProgrammingLanguage.EMPTY) ??
+            this.vscodeFallback
+        );
     }
 
     switchPracticeMode() {

@@ -7,13 +7,13 @@ import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'ap
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
-import { toObservable } from '@angular/core/rxjs-interop';
+import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 
 export const MAX_TAB_SIZE = 8;
-export type EditorPosition = { lineNumber: number; column: number };
 
 @Component({
     selector: 'jhi-monaco-editor',
@@ -23,13 +23,14 @@ export type EditorPosition = { lineNumber: number; column: number };
 })
 export class MonacoEditorComponent implements OnInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneCodeEditor;
+    private textEditorAdapter: MonacoTextEditorAdapter;
     private monacoEditorContainerElement: HTMLElement;
     themeSubscription?: Subscription;
-    models: monaco.editor.IModel[] = [];
+    models: MonacoEditorTextModel[] = [];
     lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
-    actions: MonacoEditorAction[] = [];
+    actions: TextEditorAction[] = [];
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
 
     /**
@@ -64,8 +65,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             },
         });
         this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
+        this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
-        this.themeSubscription = toObservable(this.themeService.currentTheme).subscribe((theme) => this.changeTheme(theme));
     }
 
     @Input()
@@ -107,9 +108,9 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     onBlurEditor = new EventEmitter<void>();
 
-    private contentHeightListener?: monaco.IDisposable;
-    private textChangedListener?: monaco.IDisposable;
-    private blurEditorWidgetListener?: monaco.IDisposable;
+    private contentHeightListener?: Disposable;
+    private textChangedListener?: Disposable;
+    private blurEditorWidgetListener?: Disposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
@@ -131,6 +132,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
             this.onBlurEditor.emit();
         });
+
+        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
     ngOnDestroy() {
@@ -165,7 +168,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.setPosition(position);
     }
 
-    setSelection(range: monaco.IRange): void {
+    setSelection(range: EditorRange): void {
         this._editor.setSelection(range);
     }
 
@@ -209,6 +212,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * All elements currently rendered in the editor will be disposed.
      * @param fileName The name of the file to switch to.
      * @param newFileContent The content of the file (will be retrieved from the model if left out).
+     * @param languageId The language ID to use for syntax highlighting (will be inferred from the file extension if left out).
      */
     changeModel(fileName: string, newFileContent?: string, languageId?: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
@@ -285,9 +289,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     changeTheme(artemisTheme: Theme): void {
-        this._editor.updateOptions({
-            theme: artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light',
-        });
+        monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
     }
 
     layout(): void {
@@ -381,8 +383,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * Registers an action to be available in the editor. The action will be disposed when the editor is disposed.
      * @param action The action to register.
      */
-    registerAction(action: MonacoEditorAction): void {
-        action.register(this._editor, this.translateService);
+    registerAction(action: TextEditorAction): void {
+        action.register(this.textEditorAdapter, this.translateService);
         this.actions.push(action);
     }
 
