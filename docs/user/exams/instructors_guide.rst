@@ -259,10 +259,8 @@ During the exam creation and configuration, you can create your exam and configu
     |generate_individual_exams| button will be locked once the exam becomes visible to the students. You cannot perform changes to student exams once the :ref:`exam conduction <exam_conduction>` has started.
 
 - If you have added more students recently, you can choose to |generate_missing_exams|.
-- |prepare_exercise_start| creates a participation for each exercise for every registered user, based on their assigned exercises. It also creates the individual repositories and build plans for programming exercises. This action can take a while if there are many registered students due to the communication between the version control (VC) and continuous integration (CI) server.
+- Both |generate_individual_exams| and |generate_missing_exams| create a participation for each exercise for every registered user, based on their assigned exercises. It also creates the individual repositories and build plans for programming exercises. This action can take a while if there are many registered students due to the communication between the version control (VC) and continuous integration (CI) server.
 
-.. warning::
-    You must trigger |prepare_exercise_start| before the :ref:`exam conduction <exam_conduction>` begins.
 
 - On the *Student Exams* page, you can also maintain the repositories of student exams. This functionality only affects programming exercises. You can choose to |lock_repo| and |unlock_repo| all student repositories.
 
