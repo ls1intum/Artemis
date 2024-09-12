@@ -254,7 +254,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.sortedHistoryResults = this.studentParticipations
                 .flatMap((participation) => participation.results ?? [])
                 .sort(this.resultSortFunction)
-                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful == undefined));
+                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && !result.successful));
         }
     }
 
@@ -311,12 +311,17 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                     }
                     if (
-                        (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0) &&
+                        ((changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0) ||
+                            changedParticipation.results?.last()?.completionDate === undefined) &&
                         changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
                         changedParticipation.results?.last()?.successful !== undefined
                     ) {
                         this.isGeneratingFeedback = false;
-                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                        if (changedParticipation.results?.last()?.successful === true) {
+                            this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
+                        } else {
+                            this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
+                        }
                     }
                     if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
                         this.exercise.studentParticipations = this.studentParticipations.map((participation) =>

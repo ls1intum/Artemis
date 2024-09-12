@@ -248,10 +248,16 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-        if (result.successful == undefined) {
+        // result loading
+        if (result.successful === undefined) {
             return 'text-primary';
         }
-        return 'text-secondary';
+        // result done successfuly
+        if (result.successful) {
+            return 'text-secondary';
+        }
+        // generating failed
+        return 'text-danger';
     }
 
     if (templateStatus === ResultTemplateStatus.LATE) {
@@ -295,10 +301,16 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+        // result loading
         if (result.successful === undefined) {
             return faCircleNotch;
         }
-        return faQuestionCircle;
+        // result done successfuly
+        if (result.successful) {
+            return faQuestionCircle;
+        }
+        // generating failed
+        return faTimesCircle;
     }
 
     if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {

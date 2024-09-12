@@ -19,7 +19,7 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
     @Input() title: string;
     @Input() exercise: Exercise;
     @Input() participation: StudentParticipation;
-
+    @Input() isInsideEditor = false;
     public exerciseStatusBadge = 'bg-success';
     public exerciseCategories: ExerciseCategory[];
     public achievedPoints?: number;

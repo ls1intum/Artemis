@@ -1,28 +1,89 @@
 <div [id]="'exercise-' + textExercise?.id">
     @if (displayHeader) {
-        <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
+        <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation" [isInsideEditor]="true">
             <span pagetitle>
                 {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}:
                 <span class="font-weight-normal">{{ examMode ? textExercise.exerciseGroup?.title : textExercise?.title }}</span>
             </span>
             <ng-container submitbutton>
                 @if (isOwnerOfParticipation) {
-                    <jhi-button
-                        id="submit"
-                        [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                        (onClick)="submit()"
-                        [disabled]="!isActive || !submission"
-                        [isLoading]="isSaving"
-                        [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
-                        [tooltip]="submitButtonTooltip"
-                    />
+                    @if (isReadOnlyWithShowResult && isActive) {
+                        <jhi-button
+                            id="Continue"
+                            [title]="'entity.action.continueSubmission'"
+                            [ngbTooltip]="'Continue working on your submission'"
+                            [routerLink]="['/courses', this.course?.id, 'exercises', 'text-exercises', this.textExercise?.id!, 'participate', this.result.participation?.id]"
+                        />
+                    }
+                    @if (!this.isReadOnlyWithShowResult) {
+                        @if (this.hasLatestResult) {
+                            <jhi-button
+                                [title]="'artemisApp.exerciseActions.viewResults'"
+                                [icon]="faEye"
+                                [btnType]="ButtonType.PRIMARY"
+                                [routerLink]="[
+                                    '/courses',
+                                    course?.id,
+                                    'exercises',
+                                    'text-exercises',
+                                    textExercise?.id!,
+                                    'participate',
+                                    result.participation?.id,
+                                    'submission',
+                                    submissionId,
+                                ]"
+                            />
+
+                            />
+                        } @else {
+                            <jhi-button
+                                [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
+                                [icon]="faPenSquare"
+                                (onClick)="requestFeedback()"
+                                [disabled]="!submission.submitted || isGeneratingFeedback"
+                                [btnType]="ButtonType.PRIMARY"
+                                [isLoading]="isGeneratingFeedback"
+                                [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+                            />
+                        }
+                        <jhi-button
+                            id="submit"
+                            [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
+                            (onClick)="submit()"
+                            [disabled]="!isActive || !submission || isReadOnlyWithShowResult"
+                            [isLoading]="isSaving"
+                            [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
+                            [tooltip]="submitButtonTooltip"
+                        />
+                    }
                 }
             </ng-container>
         </jhi-header-participation-page>
     }
+    <div class="card border build-output mb-2">
+        @if (isReadOnlyWithShowResult) {
+            <div class="card-header d-flex bg-primary text-white" (click)="showHistory = !showHistory">
+                <h3 class="card-title">
+                    <fa-icon [icon]="faTimeline" />
+                    <span> View Result Timeline </span>
+                </h3>
+                <fa-icon class="ms-auto clickable" [icon]="faChevronDown" />
+            </div>
+            @if (showHistory) {
+                <div class="row mb-2">
+                    <jhi-result-history [results]="sortedHistoryResults" [exercise]="textExercise" [isInsideEditor]="true" />
+                </div>
+            }
+        }
+    </div>
+
     <!--resizable container-->
     @if (textExercise) {
-        <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement">
+        <jhi-resizeable-container
+            [isExerciseParticipation]="true"
+            [expandProblemStatement]="expandProblemStatement && !isReadOnlyWithShowResult"
+            [collapsed]="isReadOnlyWithShowResult"
+        >
             <!--region Left Panel-->
             <div left-body class="text-editor-grid ps-2 pb-2 w-100">
                 @if (textExercise?.teamMode && isActive) {
@@ -49,14 +110,14 @@
                         >
                         </span>
                     </div>
-                    @if (!result || isAutomaticResult) {
+                    @if ((!result || isAutomaticResult) && !isReadOnlyWithShowResult) {
                         <textarea
                             id="text-editor"
                             #textEditor
                             class="text-editor-textarea"
                             [maxLength]="MAX_CHARACTER_COUNT"
                             [(ngModel)]="answer"
-                            [readOnly]="!isActive || !submission || !isOwnerOfParticipation"
+                            [readOnly]="!isActive || !submission || !isOwnerOfParticipation || isReadOnlyWithShowResult"
                             [disabled]="!isActive || !submission || !isOwnerOfParticipation"
                             (keydown.tab)="onTextEditorTab(textEditor, $event)"
                             (input)="onTextEditorInput($event)"
@@ -125,6 +186,7 @@
                     </p>
                 }
             </ng-container>
+
             <!--endregion-->
         </jhi-resizeable-container>
     }

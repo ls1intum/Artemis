@@ -465,6 +465,81 @@ public class TextExerciseResource {
         return ResponseEntity.ok(participation);
     }
 
+    @GetMapping("text-editor-all/{participationId}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<StudentParticipation> getDataForTextEditorWithAllSubmissionsAndResults(@PathVariable Long participationId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        StudentParticipation participation = studentParticipationRepository.findByIdWithLegalSubmissionsResultsFeedbackElseThrow(participationId);
+        if (!(participation.getExercise() instanceof TextExercise textExercise)) {
+            throw new BadRequestAlertException("The exercise of the participation is not a text exercise.", ENTITY_NAME, "wrongExerciseType");
+        }
+
+        // users can only see their own submission (to prevent cheating), TAs, instructors and admins can see all answers
+        if (!authCheckService.isOwnerOfParticipation(participation, user) && !authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+            throw new AccessForbiddenException();
+        }
+
+        // Exam exercises cannot be seen by students between the endDate and the publishResultDate
+        if (!authCheckService.isAllowedToGetExamResult(textExercise, participation, user)) {
+            throw new AccessForbiddenException();
+        }
+
+        // if no results, check if there are really no results or the relation to results was not updated yet
+        if (participation.getResults().isEmpty()) {
+            List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            participation.setResults(new HashSet<>(results));
+        }
+
+        Set<Submission> submissions = participation.getSubmissions();
+        participation.setSubmissions(new HashSet<>());
+        for (Submission submission : submissions) {
+            if (submission != null) {
+                TextSubmission textSubmission = (TextSubmission) submission;
+
+                // set reference to participation to null, since we are already inside a participation
+                textSubmission.setParticipation(null);
+
+                if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+                    // We want to have the preliminary feedback before the assessment due date too
+                    List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+                    textSubmission.setResults(athenaResults);
+                }
+
+                Result result = textSubmission.getLatestResult();
+                if (result != null) {
+                    // Load TextBlocks for the Submission. They are needed to display the Feedback in the client.
+                    final var textBlocks = textBlockRepository.findAllBySubmissionId(textSubmission.getId());
+                    textSubmission.setBlocks(textBlocks);
+
+                    if (textSubmission.isSubmitted() && result.getCompletionDate() != null) {
+                        List<Feedback> assessments = feedbackRepository.findByResult(result);
+                        result.setFeedbacks(assessments);
+                    }
+
+                    if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise, user)) {
+                        result.filterSensitiveInformation();
+                    }
+
+                    // only send the one latest result to the client
+                    textSubmission.setResults(List.of(result));
+                    // participation.setResults(Set.of(result));
+                    participation.addResult(result);
+                }
+
+                participation.addSubmission(textSubmission);
+            }
+            if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
+                participation.filterSensitiveInformation();
+            }
+
+            textExercise.filterSensitiveInformation();
+            if (textExercise.isExamExercise()) {
+                textExercise.getExam().setCourse(null);
+            }
+        }
+        return ResponseEntity.ok(participation);
+    }
+
     /**
      * Search for all text exercises by id, title and course title. The result is pageable since there
      * might be hundreds of exercises in the DB.

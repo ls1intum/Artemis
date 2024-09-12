@@ -227,6 +227,7 @@
             "purge": "Purge",
             "archive": "Archive",
             "submit": "Submit",
+            "continueSubmission": "Continue",
             "submitTooltip": "You can submit multiple times until the exercise due date. Your last submission will count towards your score.",
             "submitNoDueDateTooltip": "You can submit multiple times. Your last submission will count towards your score.",
             "submitDueDateMissedTooltip": "The due date has passed. Your submissions will not be graded!",

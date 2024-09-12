@@ -16,6 +16,11 @@ export class TextEditorService {
             .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
     }
 
+    getAll(participationId: number): Observable<StudentParticipation> {
+        return this.http
+            .get(`api/text-editor-all/${participationId}`, { responseType: 'json' })
+            .pipe(tap((participation: StudentParticipation) => ExerciseService.convertExerciseDatesFromServer(participation.exercise)));
+    }
     /**
      * Takes a text and returns its language
      * @param   {string} text

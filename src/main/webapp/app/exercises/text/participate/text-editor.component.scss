@@ -71,3 +71,29 @@ div {
         background-color: lightblue;
     }
 }
+
+.build-output {
+    height: inherit;
+
+    &__content {
+        font-family: Menlo, Monaco, 'Courier New', monospace;
+        font-size: 11px;
+        overflow: auto;
+        margin: 0;
+    }
+
+    &__entry {
+        &-date {
+            width: 130px;
+            margin-right: 10px;
+            color: var(--secondary);
+            font-weight: normal;
+            float: left;
+            clear: left;
+        }
+        &-text {
+            margin-bottom: 0;
+            color: var(--body-color);
+        }
+    }
+}

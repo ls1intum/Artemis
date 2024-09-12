@@ -31,6 +31,7 @@ import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-da
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
 import { isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { cloneDeep } from 'lodash-es';
+import { Router } from '@angular/router';
 
 // Modal -> Result details view
 @Component({
@@ -79,7 +80,6 @@ export class FeedbackComponent implements OnInit, OnChanges {
     faXmark = faXmark;
     faCircleNotch = faCircleNotch;
     faExclamationTriangle = faExclamationTriangle;
-
     private showTestDetails = false;
     isLoading = false;
     loadingFailed = false;
@@ -123,6 +123,7 @@ export class FeedbackComponent implements OnInit, OnChanges {
         private feedbackService: FeedbackService,
         private feedbackChartService: FeedbackChartService,
         private injector: Injector,
+        private router: Router,
         @Optional()
         public activeModal?: NgbActiveModal,
     ) {

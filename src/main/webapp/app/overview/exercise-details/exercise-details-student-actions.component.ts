@@ -20,6 +20,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -31,6 +32,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
+    protected readonly ButtonType = ButtonType;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -389,7 +391,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             // submissions.results is always undefined so this is neccessary
             return (
                 this.gradedParticipation.submissions.last()?.id ===
-                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id
+                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && !!result.successful).first()?.submission?.id
             );
         }
         return false;

@@ -252,17 +252,15 @@
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
                     @if (exercise.allowFeedbackRequests && athenaEnabled && exercise.type === ExerciseType.TEXT) {
-                        <button
-                            class="btn btn-primary"
-                            (click)="requestFeedback()"
-                            [class.btn-sm]="smallButtons"
+                        <jhi-button
+                            [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
+                            [icon]="faPenSquare"
+                            (onClick)="requestFeedback()"
                             [disabled]="!gradedParticipation?.submissions?.last()?.submitted || isGeneratingFeedback"
-                            [id]="'request-feedback-' + exercise.id"
+                            [btnType]="ButtonType.PRIMARY"
+                            [isLoading]="isGeneratingFeedback"
                             [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
-                        >
-                            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-                        </button>
+                        />
                     }
                 }
             </div>

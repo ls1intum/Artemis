@@ -202,6 +202,17 @@
     </ng-template>
 </div>
 <div class="modal-footer">
+    @if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
+        <button
+            id="feedback-open-submission"
+            type="button"
+            class="btn btn-outline-dark"
+            [routerLink]="['/courses', this.course?.id, 'exercises', this.exerciseType + '-exercises', this.exercise?.id!, 'participate', this.result.participation?.id]"
+            [state]="{ submissionId: this.result.submission?.id }"
+        >
+            View Submission
+        </button>
+    }
     @if (activeModal) {
         <button id="feedback-close" type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
     }

@@ -4,6 +4,10 @@ $result-icon-size: 25px;
     display: flex;
     width: 100%;
 
+    .noClickingSpan {
+        color: grey;
+        pointer-events: none;
+    }
     .result-history-element {
         display: flex;
         flex: 2;
