@@ -117,10 +117,17 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation, this.submissionId);
             });
 
-            this.textService.getAll(participationId).subscribe({
-                next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
-                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-            });
+            if (this.submissionId) {
+                this.textService.getAll(participationId).subscribe({
+                    next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+            } else {
+                this.textService.get(participationId).subscribe({
+                    next: (data: StudentParticipation) => this.updateParticipation(data),
+                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                });
+            }
 
             this.isReadOnlyWithShowResult = !!this.submissionId;
         }
