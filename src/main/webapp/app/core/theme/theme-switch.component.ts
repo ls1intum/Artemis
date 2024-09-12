@@ -82,7 +82,7 @@ export class ThemeSwitchComponent implements OnInit, OnDestroy {
     toggleTheme() {
         this.animate.set(false);
         this.openPopupAfterNextChange.set(true);
-        this.themeService.applyTheme(this.isDarkTheme() ? Theme.LIGHT : Theme.DARK);
+        this.themeService.applyThemePreference(this.isDarkTheme() ? Theme.LIGHT : Theme.DARK);
     }
 
     /**
@@ -91,6 +91,6 @@ export class ThemeSwitchComponent implements OnInit, OnDestroy {
      * - if it's currently not synced, we remove the preference to apply the system theme
      */
     toggleSynced() {
-        this.themeService.applyTheme(this.isSyncedWithOS() ? this.themeService.currentTheme() : undefined);
+        this.themeService.applyThemePreference(this.isSyncedWithOS() ? this.themeService.currentTheme() : undefined);
     }
 }

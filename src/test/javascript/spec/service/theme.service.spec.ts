@@ -61,7 +61,7 @@ describe('ThemeService', () => {
     });
 
     it('applies theme changes correctly', () => {
-        service.applyTheme(Theme.DARK);
+        service.applyThemePreference(Theme.DARK);
         TestBed.flushEffects();
 
         expect(documentGetElementMock).toHaveBeenCalledOnce();
@@ -90,7 +90,7 @@ describe('ThemeService', () => {
         expect(linkElement.remove).toHaveBeenCalledOnce();
         expect(service.currentTheme()).toBe(Theme.DARK);
 
-        service.applyTheme(Theme.LIGHT);
+        service.applyThemePreference(Theme.LIGHT);
         TestBed.flushEffects();
 
         expect(documentGetElementMock).toHaveBeenCalledTimes(2);

@@ -32,7 +32,7 @@ describe('ThemeSwitchComponent', () => {
     afterEach(() => jest.restoreAllMocks());
 
     it('theme toggles correctly', fakeAsync(async () => {
-        const applyThemeSpy = jest.spyOn(themeService, 'applyTheme');
+        const applyThemeSpy = jest.spyOn(themeService, 'applyThemePreference');
 
         component.ngOnInit();
         component.toggleTheme();
@@ -50,7 +50,7 @@ describe('ThemeSwitchComponent', () => {
     }));
 
     it('os sync toggles correctly', fakeAsync(() => {
-        const applyThemeSpy = jest.spyOn(themeService, 'applyTheme');
+        const applyThemeSpy = jest.spyOn(themeService, 'applyThemePreference');
 
         component.ngOnInit();
         component.toggleSynced();
