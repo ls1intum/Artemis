@@ -11,10 +11,15 @@ import { onError } from 'app/shared/util/global.utils';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { SortService } from 'app/shared/service/sort.service';
+import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
+    standalone: true,
+    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule],
 })
 export class FAQComponent implements OnInit, OnDestroy {
     faqs: Faq[];

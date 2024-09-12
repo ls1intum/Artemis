@@ -14,11 +14,17 @@ import { FaqService } from 'app/faq/faq.service';
 
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-faq-update',
     templateUrl: './faq-update.component.html',
     styleUrls: ['./faq-update.component.scss'],
+    standalone: true,
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, ArtemisCategorySelectorModule],
 })
 export class FAQUpdateComponent implements OnInit {
     faq: Faq;
