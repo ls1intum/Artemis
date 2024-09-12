@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.localvcci;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -11,7 +12,7 @@ import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCInfoContributor;
 
-@ActiveProfiles({ "artemis", PROFILE_LOCALVC, PROFILE_BUILDAGENT })
+@ActiveProfiles({ PROFILE_ARTEMIS, PROFILE_LOCALVC, PROFILE_BUILDAGENT })
 class LocalVCInfoContributorTest {
 
     @SpyBean

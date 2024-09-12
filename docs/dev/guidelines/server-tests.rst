@@ -219,7 +219,7 @@ the name of the test group (matching the ``abstract`` base class name) as a para
     @Execution(ExecutionMode.CONCURRENT)
     @ResourceLock("AbstractSpringIntegrationIndependentTest")
     @AutoConfigureEmbeddedDatabase
-    @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", PROFILE_SCHEDULING, PROFILE_IRIS })
+    @ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_SCHEDULING, PROFILE_IRIS })
     @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
     public abstract class AbstractSpringIntegrationIndependentTest extends AbstractArtemisIntegrationTest { ... }
 

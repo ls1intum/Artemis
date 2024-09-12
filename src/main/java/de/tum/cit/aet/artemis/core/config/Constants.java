@@ -298,6 +298,11 @@ public final class Constants {
     public static final String PROFILE_BUILDAGENT = "buildagent";
 
     /**
+     * The name of the Spring profile used for Artemis functionality.
+     */
+    public static final String PROFILE_ARTEMIS = "artemis";
+
+    /**
      * The name of the Spring profile used for Artemis core functionality.
      */
     public static final String PROFILE_CORE = "core";
