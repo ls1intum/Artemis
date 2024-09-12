@@ -31,35 +31,33 @@ describe('ThemeSwitchComponent', () => {
 
     afterEach(() => jest.restoreAllMocks());
 
-    it('theme toggles correctly', fakeAsync(async () => {
-        const applyThemeSpy = jest.spyOn(themeService, 'applyThemePreference');
+    it('theme toggles correctly', fakeAsync(() => {
+        const applyThemePreferenceSpy = jest.spyOn(themeService, 'applyThemePreference');
 
         component.ngOnInit();
         component.toggleTheme();
+        TestBed.flushEffects();
 
-        expect(applyThemeSpy).toHaveBeenCalledWith(Theme.DARK);
-        expect(component.animate()).toBeFalse();
-        expect(component.openPopupAfterNextChange()).toBeTrue();
+        expect(applyThemePreferenceSpy).toHaveBeenCalledWith(Theme.DARK);
 
-        tick();
-        await fixture.whenStable();
-
-        expectSwitchToDark();
+        expect(component.isDarkTheme()).toBeTrue();
+        tick(250);
+        expect(component.popover().open).toHaveBeenCalledOnce();
 
         flush();
     }));
 
     it('os sync toggles correctly', fakeAsync(() => {
-        const applyThemeSpy = jest.spyOn(themeService, 'applyThemePreference');
+        const applyThemePreferenceSpy = jest.spyOn(themeService, 'applyThemePreference');
 
         component.ngOnInit();
         component.toggleSynced();
 
-        expect(applyThemeSpy).toHaveBeenCalledWith(Theme.LIGHT);
+        expect(applyThemePreferenceSpy).toHaveBeenCalledWith(Theme.LIGHT);
         expect(component.isSyncedWithOS()).toBeFalse();
         component.toggleSynced();
 
-        expect(applyThemeSpy).toHaveBeenCalledWith(undefined);
+        expect(applyThemePreferenceSpy).toHaveBeenCalledWith(undefined);
         expect(component.isSyncedWithOS()).toBeTrue();
     }));
 
@@ -78,14 +76,4 @@ describe('ThemeSwitchComponent', () => {
         tick(250);
         expect(component.popover().close).toHaveBeenCalledOnce();
     }));
-
-    function expectSwitchToDark() {
-        expect(component.isDarkTheme()).toBeTrue();
-        expect(component.animate()).toBeTrue();
-        expect(component.openPopupAfterNextChange()).toBeFalse();
-
-        tick(250);
-
-        expect(component.popover().open).toHaveBeenCalledOnce();
-    }
 });

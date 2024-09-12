@@ -5,12 +5,12 @@ export class MockThemeService {
     private _currentTheme = signal(Theme.LIGHT);
     public readonly currentTheme = this._currentTheme.asReadonly();
 
-    private _preference = signal<Theme | undefined>(undefined);
-    public readonly preference = this._preference.asReadonly();
+    private _userPreference = signal<Theme | undefined>(undefined);
+    public readonly userPreference = this._userPreference.asReadonly();
 
-    public applyTheme(theme: Theme | undefined) {
-        this._preference.set(theme);
-        this._currentTheme.set(theme ?? Theme.LIGHT);
+    public applyThemePreference(preference: Theme | undefined) {
+        this._userPreference.set(preference);
+        this._currentTheme.set(preference ?? Theme.LIGHT);
     }
 
     public print() {}
