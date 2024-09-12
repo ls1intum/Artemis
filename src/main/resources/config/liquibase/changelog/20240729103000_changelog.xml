@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240729103000" author="janthoXO">
+        <createTable tableName="ide">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="name" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="deep_link" type="varchar(200)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+        </createTable>
+        <createTable tableName="user_ide_mapping">
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="programming_language" type="varchar(50)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="ide_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="user_id"
+                                 baseTableName="user_ide_mapping"
+                                 constraintName="FK_user_ide_mapping_user"
+                                 referencedColumnNames="id"
+                                 referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="ide_id"
+                                 baseTableName="user_ide_mapping"
+                                 constraintName="FK_user_ide_mapping_ide"
+                                 referencedColumnNames="id"
+                                 referencedTableName="ide"/>
+    </changeSet>
+</databaseChangeLog>

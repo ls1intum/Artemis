@@ -100,3 +100,17 @@ Alternatively, the Python modules `qtpy` or `PyQT5` have to be present.
 If no option to insert text into the clipboard is found, the script falls back to printing to stdout.
 
 **You will have to manually adjust the confirmation column for each file!**
+
+
+### Dependency management
+
+Find outdated dependencies using the following command:
+```
+pip list --outdated
+```
+
+Find unused dependencies using the following command:
+```
+pip install deptry
+deptry .
+```
