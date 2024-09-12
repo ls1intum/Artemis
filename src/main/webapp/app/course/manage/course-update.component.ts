@@ -71,7 +71,7 @@ export class CourseUpdateComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faPen = faPen;
 
-    faqEnabled = true
+    faqEnabled = true;
     communicationEnabled = true;
     messagingEnabled = true;
     ltiEnabled = false;
@@ -116,7 +116,7 @@ export class CourseUpdateComponent implements OnInit {
                     this.courseOrganizations = organizations;
                 });
                 this.originalTimeZone = this.course.timeZone;
-                this.faqEnabled = course.faqEnabled
+                this.faqEnabled = course.faqEnabled;
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled =
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
@@ -296,13 +296,12 @@ export class CourseUpdateComponent implements OnInit {
 
         if (this.communicationEnabled && this.messagingEnabled) {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-            course.faqEnabled = this.faqEnabled
+            course.faqEnabled = this.faqEnabled;
         } else if (this.communicationEnabled && !this.messagingEnabled) {
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-            course.faqEnabled = this.faqEnabled
+            course.faqEnabled = this.faqEnabled;
         } else {
             this.communicationEnabled = false;
-            this.faqEnabled = false
             course['courseInformationSharingConfiguration'] = CourseInformationSharingConfiguration.DISABLED;
         }
 
@@ -654,9 +653,7 @@ export class CourseUpdateComponent implements OnInit {
 
     disableMessaging() {
         this.messagingEnabled = false;
-        this.faqEnabled = false
     }
-
 }
 
 const CourseValidator: ValidatorFn = (formGroup: FormGroup) => {
