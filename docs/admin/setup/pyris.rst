@@ -9,7 +9,7 @@ Prerequisites
 ^^^^^^^^^^^^^
 
 - A server/VM or local machine
-- Docker installed on the machine (Needed for Docker Setup)
+- Docker installed on the machine (Required for Docker Setup)
 
 Installation Steps
 ^^^^^^^^^^^^^^^^^^
