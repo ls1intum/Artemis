@@ -179,7 +179,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             const verifyFeedbackSpy = jest.spyOn(component, 'validateFeedback');
 
             component.ngOnInit();
-            tick(1000);
+            tick(500);
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             expect(component.isLoading).toBeFalse();
             expect(component.complaint).toEqual(complaint);
