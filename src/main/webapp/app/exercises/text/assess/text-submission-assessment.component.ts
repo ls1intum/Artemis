@@ -187,7 +187,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.participation = studentParticipation;
-        this.submission = this.participation!.submissions![0] as TextSubmission;
+        this.submission = this.participation?.submissions?.last() as TextSubmission;
         this.exercise = this.participation?.exercise as TextExercise;
         this.course = getCourseFromExercise(this.exercise);
         setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));

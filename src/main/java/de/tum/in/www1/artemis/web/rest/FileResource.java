@@ -301,6 +301,20 @@ public class FileResource {
     }
 
     /**
+     * GET /files/user/profile-picture/:userId/:filename : Get the user image
+     *
+     * @param userId ID of the user the image belongs to
+     * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
+     */
+    @GetMapping("files/user/profile-pictures/{userId}/*")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getProfilePicture(@PathVariable Long userId) {
+        log.debug("REST request to get profile picture for user : {}", userId);
+        User user = userRepository.findByIdElseThrow(userId);
+        return responseEntityForFilePath(getActualPathFromPublicPathString(user.getImageUrl()));
+    }
+
+    /**
      * GET /files/templates/code-of-conduct : Get the Code of Conduct template
      *
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
