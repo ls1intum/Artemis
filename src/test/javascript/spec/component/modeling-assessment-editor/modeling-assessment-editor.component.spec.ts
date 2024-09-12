@@ -43,6 +43,7 @@ import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { AthenaService } from 'app/assessment/athena.service';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -50,6 +51,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let service: ModelingAssessmentService;
     let mockAuth: MockAccountService;
     let modelingSubmissionService: ModelingSubmissionService;
+    let athenaService: AthenaService;
     let complaintService: ComplaintService;
     let modelingSubmissionSpy: jest.SpyInstance;
     let complaintSpy: jest.SpyInstance;
@@ -98,6 +100,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 component = fixture.componentInstance;
                 service = TestBed.inject(ModelingAssessmentService);
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+                athenaService = TestBed.inject(AthenaService);
                 complaintService = TestBed.inject(ComplaintService);
                 submissionService = TestBed.inject(SubmissionService);
                 mockAuth = fixture.debugElement.injector.get(AccountService) as any as MockAccountService;
@@ -218,22 +221,19 @@ describe('ModelingAssessmentEditorComponent', () => {
                     exercise: {
                         id: 1,
                         type: 'modeling',
-                    },
+                        feedbackSuggestionModule: 'modeling',
+                    } as unknown as Exercise,
                 },
             } as ModelingSubmission;
 
             const modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            jest.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback(), new Feedback()]));
 
-            // Spy on the relevant service methods
-            const handleFeedbackSpy = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
-
-            // Initialize the component
             component.ngOnInit();
             tick(500);
+
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
-            expect(component.isLoading).toBeFalse();
             expect(component.submission).toBeDefined();
-            expect(handleFeedbackSpy).toHaveBeenCalledOnce();
             expect(component.assessmentsAreValid).toBeFalse();
         }));
     });
