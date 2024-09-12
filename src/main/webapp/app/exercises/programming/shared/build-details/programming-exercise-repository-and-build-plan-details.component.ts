@@ -19,6 +19,7 @@ import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
     @Input() programmingExercise: ProgrammingExercise;
+    @Input() programmingExerciseBuildConfig?: ProgrammingExerciseBuildConfig;
     @Input() programmingLanguage?: ProgrammingLanguage;
     @Input() isLocal: boolean;
     @Input() checkoutSolutionRepository?: boolean = true;

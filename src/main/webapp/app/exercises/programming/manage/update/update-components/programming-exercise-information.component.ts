@@ -140,18 +140,18 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     onAssigmentRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise.buildConfig!.assignmentCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise = { ...this.programmingExercise };
+        this.programmingExercise.buildConfig = { ...this.programmingExercise.buildConfig };
     }
 
     onTestRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise.buildConfig!.testCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise = { ...this.programmingExercise };
+        this.programmingExercise.buildConfig = { ...this.programmingExercise.buildConfig };
     }
 
     onSolutionRepositoryCheckoutPathChange(event: string) {
         this.programmingExercise.buildConfig!.solutionCheckoutPath = event;
         // We need to create a new object to trigger the change detection
-        this.programmingExercise = { ...this.programmingExercise };
+        this.programmingExercise.buildConfig = { ...this.programmingExercise.buildConfig };
     }
 }
