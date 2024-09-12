@@ -5,11 +5,13 @@ import { NotificationSetting, notificationSettingsStructure } from 'app/shared/u
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { ScienceSetting, scienceSettingsStructure } from 'app/shared/user-settings/science-settings/science-settings-structure';
+import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserSettingsService {
     public notificationSettingsResourceUrl = 'api/notification-settings';
     public scienceSettingsResourceUrl = 'api/science-settings';
+    public profilePictureResourceUrl = 'api/account/profile-picture';
     private applyNewChangesSource = new Subject<string>();
     userSettingsChangeEvent = this.applyNewChangesSource.asObservable();
     error?: string;
@@ -151,5 +153,16 @@ export class UserSettingsService {
      */
     public sendApplyChangesEvent(message: string): void {
         this.applyNewChangesSource.next(message);
+    }
+
+    public updateProfilePicture(file: Blob) {
+        const formData = new FormData();
+        formData.append('file', file, 'placeholderName.jpeg');
+
+        return this.http.put<User>(`${this.profilePictureResourceUrl}`, formData, { observe: 'response' });
+    }
+
+    public removeProfilePicture() {
+        return this.http.delete<User>(`${this.profilePictureResourceUrl}`, { observe: 'response' });
     }
 }

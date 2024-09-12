@@ -32,8 +32,8 @@ import de.tum.in.www1.artemis.domain.User;
 public abstract class Posting extends DomainObject {
 
     @ManyToOne
-    // Avoid to leak too much information, only the name (for display) and the id (for comparison) is needed)
-    @JsonIncludeProperties({ "id", "name" })
+    // Avoid to leak too much information, only the name + image (for display) and the id (for comparison) is needed)
+    @JsonIncludeProperties({ "id", "name", "imageUrl" })
     private User author;
 
     @CreatedDate

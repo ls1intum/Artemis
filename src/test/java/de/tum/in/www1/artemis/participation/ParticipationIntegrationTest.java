@@ -587,6 +587,41 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestTextFeedbackSuccess_withAthenaSuccess() throws Exception {
+
+        var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        textCourse.setRestrictedAthenaModulesAccess(true);
+        this.courseRepository.save(textCourse);
+
+        this.textExercise.setFeedbackSuggestionModule("module_text_test");
+        this.exerciseRepository.save(textExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        participationRepo.save(textParticipation);
+
+        Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, true);
+        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
+        resultText2.setAssessmentType(AssessmentType.MANUAL);
+        resultText2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(resultText2);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
+
+        verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
+
+        Result invokedTextResult = resultCaptor.getAllValues().get(1);
+        assertThat(invokedTextResult).isNotNull();
+        assertThat(invokedTextResult.getId()).isNotNull();
+        assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedTextResult.getFeedbacks()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackSuccess_withAthenaFailure() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -629,6 +664,40 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.getFeedbacks()).hasSize(0);
 
         localRepo.resetLocalRepo();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestTextFeedbackSuccess_withAthenaFailure() throws Exception {
+
+        var textCourse = textExercise.getCourseViaExerciseGroupOrCourseMember();
+        textCourse.setRestrictedAthenaModulesAccess(true);
+        this.courseRepository.save(textCourse);
+
+        this.textExercise.setFeedbackSuggestionModule("module_text_test");
+        this.exerciseRepository.save(textExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("text");
+
+        var textParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        participationRepo.save(textParticipation);
+
+        Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, false);
+        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
+        resultText2.setAssessmentType(AssessmentType.MANUAL);
+        resultText2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(resultText2);
+
+        request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
+
+        verify(resultWebsocketService, timeout(2000).times(1)).broadcastNewResult(any(), resultCaptor.capture());
+
+        Result invokedTextResult = resultCaptor.getAllValues().getFirst();
+        assertThat(invokedTextResult).isNotNull();
+        assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedTextResult.getFeedbacks()).hasSize(0);
     }
 
     @Test
