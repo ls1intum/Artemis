@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -174,8 +175,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
-        Thread.sleep(1000);
-        assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
         await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == NUMBER_OF_STUDENTS);
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
@@ -261,8 +260,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
-        Thread.sleep(1000);
-        assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
         await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == NUMBER_OF_STUDENTS);
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
@@ -315,8 +312,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
-        Thread.sleep(1000);
-        assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
         await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == NUMBER_OF_STUDENTS);
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {

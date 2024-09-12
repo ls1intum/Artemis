@@ -80,6 +80,7 @@ import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.core.repository.ProgrammingSubmissionTestRepository;
