@@ -31,7 +31,7 @@ export class ThemeSwitchComponent implements OnInit, OnDestroy {
     popover = viewChild.required<NgbPopover>('popover');
 
     isDarkTheme = computed(() => this.themeService.currentTheme() === Theme.DARK);
-    isSyncedWithOS = computed(() => this.themeService.preference() === undefined);
+    isSyncedWithOS = computed(() => this.themeService.userPreference() === undefined);
 
     animate = signal(true);
     openPopupAfterNextChange = signal(false);

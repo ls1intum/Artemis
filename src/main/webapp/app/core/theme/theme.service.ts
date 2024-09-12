@@ -2,7 +2,7 @@ import { Injectable, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
-import { distinctUntilChanged, map, tap } from 'rxjs';
+import { combineLatest, distinctUntilChanged, map, tap } from 'rxjs';
 
 export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';
 export const THEME_OVERRIDE_ID = 'artemis-theme-override';
@@ -48,20 +48,25 @@ export class ThemeService {
      * The user preference changes as WritableSignal.
      * If changed, the theme is applied immediately.
      */
-    private _preference = signal<Theme | undefined>(undefined);
+    private _userPreference = signal<Theme | undefined>(undefined);
 
     /**
      * The user preference changes as ReadonlySignal.
      * Can be either a theme for an explicit theme or undefined if system settings are preferred.
      */
-    public readonly preference = this._preference.asReadonly();
+    public readonly userPreference = this._userPreference.asReadonly();
+
+    /**
+     * The system preference as WritableSignal.
+     */
+    private systemPreference = signal<Theme>(Theme.LIGHT);
 
     /**
      * The currently applied theme as Signal.
      */
     public currentTheme = toSignal(
-        toObservable(this._preference).pipe(
-            map((preference) => preference ?? (this.darkSchemeMediaQuery.matches ? Theme.DARK : Theme.LIGHT)),
+        combineLatest([toObservable(this.userPreference), toObservable(this.systemPreference)]).pipe(
+            map(([preference, systemPreference]) => preference ?? systemPreference),
             distinctUntilChanged(),
             tap((theme) => this.applyTheme(theme)),
         ),
@@ -82,21 +87,21 @@ export class ThemeService {
         if (this.darkSchemeMediaQuery.media !== 'not all') {
             this.darkSchemeMediaQuery.addEventListener('change', () => {
                 if (this.darkSchemeMediaQuery.matches) {
-                    this._preference.set(Theme.DARK);
+                    this.systemPreference.set(Theme.DARK);
                 } else {
-                    this._preference.set(Theme.LIGHT);
+                    this.systemPreference.set(Theme.LIGHT);
                 }
             });
         }
 
         addEventListener('storage', (event) => {
             if (event.key === 'jhi-' + THEME_LOCAL_STORAGE_KEY) {
-                this._preference.set(this.getStoredThemePreference());
+                this._userPreference.set(this.getStoredThemePreference());
             }
         });
 
-        const osTheme = this.darkSchemeMediaQuery.matches ? Theme.DARK : Theme.LIGHT;
-        this._preference.set(this.getStoredThemePreference() ?? osTheme);
+        this.systemPreference.set(this.darkSchemeMediaQuery.matches ? Theme.DARK : Theme.LIGHT);
+        this._userPreference.set(this.getStoredThemePreference());
     }
 
     /**
@@ -154,7 +159,7 @@ export class ThemeService {
         } else {
             this.localStorageService.clear(THEME_LOCAL_STORAGE_KEY);
         }
-        this._preference.set(preference);
+        this._userPreference.set(preference);
     }
 
     /**

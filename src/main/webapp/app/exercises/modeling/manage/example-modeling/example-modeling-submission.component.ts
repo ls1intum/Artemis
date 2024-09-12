@@ -118,7 +118,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         private changeDetector: ChangeDetectorRef,
         private themeService: ThemeService,
     ) {
-        toObservable(this.themeService.preference).subscribe((themeOrUndefined) => {
+        toObservable(this.themeService.userPreference).subscribe((themeOrUndefined) => {
             if (themeOrUndefined === Theme.DARK) {
                 this.highlightColor = 'darkblue';
             } else {
