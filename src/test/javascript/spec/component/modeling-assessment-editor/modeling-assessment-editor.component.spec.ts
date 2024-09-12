@@ -203,7 +203,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             modelingSubmissionSpy.mockRestore();
         }));
-
         it('call ngOnInit with submissionId set to new', fakeAsync(() => {
             paramMapSubject.next(
                 convertToParamMap({
