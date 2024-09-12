@@ -31,8 +31,8 @@ import org.springframework.util.ResourceUtils;
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
@@ -53,7 +53,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
     @Autowired
     private LectureUnitProcessingService lectureUnitProcessingService;
 
-    private LectureUnitInformationDTO lectureUnitSplits;
+    private LectureUnitSplitInformationDTO lectureUnitSplits;
 
     private Lecture lecture1;
 
@@ -65,7 +65,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         this.lecture1 = lectureUtilService.createCourseWithLecture(true);
         this.invalidLecture = lectureUtilService.createLecture(null, null);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
-        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, "Break");
+        this.lectureUnitSplits = new LectureUnitSplitInformationDTO(units, 1, "Break");
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
         userUtilService.createAndSaveUser(TEST_PREFIX + "tutor42");
@@ -100,8 +100,9 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
         request.postWithMultipartFile("/api/lectures/" + invalidLecture.getId() + "/attachment-units/upload", null, "upload", createLectureFile(true), String.class,
                 HttpStatus.BAD_REQUEST);
-        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/data/any-file", HttpStatus.BAD_REQUEST, LectureUnitInformationDTO.class);
-        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.BAD_REQUEST, LectureUnitInformationDTO.class, params);
+        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/data/any-file", HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class);
+        request.get("/api/lectures/" + invalidLecture.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class,
+                params);
         request.postListWithResponseBody("/api/lectures/" + invalidLecture.getId() + "/attachment-units/split/any-file", lectureUnitSplits, AttachmentUnit.class,
                 HttpStatus.BAD_REQUEST);
     }
@@ -117,8 +118,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         String filename = manualFileUpload(invalidLecture.getId(), lectureFile);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(invalidLecture.getId(), filename);
 
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class, params);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class, params);
         request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplits, AttachmentUnit.class,
                 HttpStatus.NOT_FOUND);
         assertThat(Files.exists(filePath)).isTrue();
@@ -135,7 +136,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         try (MockedStatic<Files> mockedFiles = Mockito.mockStatic(Files.class)) {
             mockedFiles.when(() -> Files.readAllBytes(any())).thenThrow(IOException.class);
             mockedFiles.when(() -> Files.exists(any())).thenReturn(true);
-            request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, LectureUnitInformationDTO.class);
+            request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, LectureUnitSplitInformationDTO.class);
             request.getList("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.INTERNAL_SERVER_ERROR, Integer.class, params);
             request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplits, AttachmentUnit.class,
                     HttpStatus.INTERNAL_SERVER_ERROR);
@@ -155,7 +156,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void uploadSlidesForProcessing_asInstructor_shouldThrowError() throws Exception {
         var filePartWord = createLectureFile(false);
-        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/upload", null, "upload", filePartWord, LectureUnitInformationDTO.class,
+        request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/upload", null, "upload", filePartWord, LectureUnitSplitInformationDTO.class,
                 HttpStatus.BAD_REQUEST);
     }
 
@@ -165,8 +166,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
-                LectureUnitInformationDTO.class);
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+                LectureUnitSplitInformationDTO.class);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
@@ -178,8 +179,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         var realFile = readFromFile();
         String filename = manualFileUpload(lecture1.getId(), realFile);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
-                LectureUnitInformationDTO.class);
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+                LectureUnitSplitInformationDTO.class);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(4);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(102);
@@ -191,8 +192,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         var lectureFile = createLectureFile(false);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.BAD_REQUEST, LectureUnitInformationDTO.class);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class);
     }
 
     @Test
@@ -218,8 +219,9 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("commaSeparatedKeyPhrases", "Break, Example Solution");
 
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.BAD_REQUEST, LectureUnitInformationDTO.class, params);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitInformationDTO.class, params);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/" + filename, HttpStatus.BAD_REQUEST, LectureUnitSplitInformationDTO.class, params);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/non-existent-file", HttpStatus.NOT_FOUND, LectureUnitSplitInformationDTO.class,
+                params);
     }
 
     @Test
@@ -228,13 +230,13 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
-                LectureUnitInformationDTO.class);
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+                LectureUnitSplitInformationDTO.class);
 
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), "");
+        lectureUnitSplitInfo = new LectureUnitSplitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), "");
 
         List<AttachmentUnit> attachmentUnits = request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplitInfo,
                 AttachmentUnit.class, HttpStatus.OK);
@@ -255,13 +257,13 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
         var lectureFile = createLectureFile(true);
         String filename = manualFileUpload(lecture1.getId(), lectureFile);
 
-        LectureUnitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
-                LectureUnitInformationDTO.class);
+        LectureUnitSplitInformationDTO lectureUnitSplitInfo = request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/" + filename, HttpStatus.OK,
+                LectureUnitSplitInformationDTO.class);
         assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         var commaSeparatedKeyPhrases = String.join(",", new String[] { "Break", "Example solution" });
-        lectureUnitSplitInfo = new LectureUnitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), commaSeparatedKeyPhrases);
+        lectureUnitSplitInfo = new LectureUnitSplitInformationDTO(lectureUnitSplitInfo.units(), lectureUnitSplitInfo.numberOfPages(), commaSeparatedKeyPhrases);
 
         List<AttachmentUnit> attachmentUnits = request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/" + filename, lectureUnitSplitInfo,
                 AttachmentUnit.class, HttpStatus.OK);
@@ -311,8 +313,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
 
         request.postWithMultipartFile("/api/lectures/" + lecture1.getId() + "/attachment-units/upload", null, "upload", createLectureFile(true), String.class,
                 HttpStatus.FORBIDDEN);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/any-file", HttpStatus.FORBIDDEN, LectureUnitInformationDTO.class);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.FORBIDDEN, LectureUnitInformationDTO.class, params);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/data/any-file", HttpStatus.FORBIDDEN, LectureUnitSplitInformationDTO.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/slides-to-remove/any-file", HttpStatus.FORBIDDEN, LectureUnitSplitInformationDTO.class, params);
         request.postListWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units/split/any-file", lectureUnitSplits, AttachmentUnit.class, HttpStatus.FORBIDDEN);
     }
 

@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.lecture.dto.LectureUnitInformationDTO;
+import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.service.AttachmentUnitService;
@@ -209,23 +209,23 @@ public class AttachmentUnitResource {
     /**
      * POST lectures/:lectureId/attachment-units/split : creates new attachment units from the given file and lecture unit information
      *
-     * @param lectureId                 the id of the lecture to which the attachment units will be added
-     * @param lectureUnitInformationDTO the units that will be created
-     * @param filename                  the name of the lecture file, located in the temp folder
+     * @param lectureId                      the id of the lecture to which the attachment units will be added
+     * @param lectureUnitSplitInformationDTO the units that will be created
+     * @param filename                       the name of the lecture file, located in the temp folder
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
      */
     @PostMapping("lectures/{lectureId}/attachment-units/split/{filename}")
     @EnforceAtLeastEditor
-    public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestBody LectureUnitInformationDTO lectureUnitInformationDTO,
+    public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestBody LectureUnitSplitInformationDTO lectureUnitSplitInformationDTO,
             @PathVariable String filename) {
-        log.debug("REST request to create AttachmentUnits {} with lectureId {} for file {}", lectureUnitInformationDTO, lectureId, filename);
+        log.debug("REST request to create AttachmentUnits {} with lectureId {} for file {}", lectureUnitSplitInformationDTO, lectureId, filename);
         checkLecture(lectureId);
         Path filePath = lectureUnitProcessingService.getPathForTempFilename(lectureId, filename);
         checkFile(filePath);
 
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
-            List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitInformationDTO, fileBytes,
+            List<AttachmentUnit> savedAttachmentUnits = lectureUnitProcessingService.splitAndSaveUnits(lectureUnitSplitInformationDTO, fileBytes,
                     lectureRepository.findByIdWithLectureUnitsAndAttachmentsElseThrow(lectureId));
             savedAttachmentUnits.forEach(attachmentUnitService::prepareAttachmentUnitForClient);
             savedAttachmentUnits.forEach(competencyProgressService::updateProgressByLearningObjectAsync);
@@ -246,7 +246,7 @@ public class AttachmentUnitResource {
      */
     @GetMapping("lectures/{lectureId}/attachment-units/data/{filename}")
     @EnforceAtLeastEditor
-    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
+    public ResponseEntity<LectureUnitSplitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @PathVariable String filename) {
         log.debug("REST request to split lecture file : {}", filename);
 
         checkLecture(lectureId);
@@ -255,7 +255,7 @@ public class AttachmentUnitResource {
 
         try {
             byte[] fileBytes = fileService.getFileForPath(filePath);
-            LectureUnitInformationDTO attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(fileBytes);
+            LectureUnitSplitInformationDTO attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(fileBytes);
             return ResponseEntity.ok().body(attachmentUnitsData);
         }
         catch (IOException e) {
