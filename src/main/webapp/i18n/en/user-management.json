@@ -9,6 +9,13 @@
                 },
                 "deleted": "Deleted {{ param }} Users"
             },
+            "notEnrolled": {
+                "delete": {
+                    "cancel": "No not enrolled users found to delete.",
+                    "caption": "Delete not enrolled users",
+                    "question": "Are you sure you want to permanently delete these users? <br> {{ users }} <br> These are <strong>{{ title }}</strong> users! This action can NOT be undone!"
+                }
+            },
             "filter": {
                 "modal": {
                     "open": "Filter ({{ num }})",

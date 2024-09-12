@@ -14,16 +14,16 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import * as CourseModel from 'app/entities/course.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MonacoChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-channel-reference.action';
-import { MonacoUserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-user-mention.action';
-import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
-import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
-import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
-import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/monaco-quote.action';
-import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
-import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
-import { MonacoExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-exercise-reference.action';
-import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-lecture-attachment-reference.action';
+import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
+import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { QuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
+import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
+import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
@@ -64,18 +64,18 @@ describe('PostingsMarkdownEditor', () => {
         component.ngOnInit();
 
         expect(component.defaultActions).toEqual([
-            new MonacoBoldAction(),
-            new MonacoItalicAction(),
-            new MonacoUnderlineAction(),
-            new MonacoQuoteAction(),
-            new MonacoCodeAction(),
-            new MonacoCodeBlockAction(),
-            new MonacoUserMentionAction(courseManagementService, metisService),
-            new MonacoChannelReferenceAction(metisService, channelService),
-            new MonacoExerciseReferenceAction(metisService),
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new QuoteAction(),
+            new CodeAction(),
+            new CodeBlockAction(),
+            new UserMentionAction(courseManagementService, metisService),
+            new ChannelReferenceAction(metisService, channelService),
+            new ExerciseReferenceAction(metisService),
         ]);
 
-        expect(component.lectureAttachmentReferenceAction).toEqual(new MonacoLectureAttachmentReferenceAction(metisService, lectureService));
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
 
     it('should have set the correct default commands on init if communication and messaging and communication is disabled', () => {
@@ -83,16 +83,16 @@ describe('PostingsMarkdownEditor', () => {
         component.ngOnInit();
 
         expect(component.defaultActions).toEqual([
-            new MonacoBoldAction(),
-            new MonacoItalicAction(),
-            new MonacoUnderlineAction(),
-            new MonacoQuoteAction(),
-            new MonacoCodeAction(),
-            new MonacoCodeBlockAction(),
-            new MonacoExerciseReferenceAction(metisService),
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new QuoteAction(),
+            new CodeAction(),
+            new CodeBlockAction(),
+            new ExerciseReferenceAction(metisService),
         ]);
 
-        expect(component.lectureAttachmentReferenceAction).toEqual(new MonacoLectureAttachmentReferenceAction(metisService, lectureService));
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
 
     it('should show the correct amount of characters below the markdown input', () => {
