@@ -227,7 +227,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     it('should not call service when inEdit and build config is available', () => {
         jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
 
-        component.isEdit = true;
+        component.isCreateOrEdit = true;
         component.programmingExercise!.buildConfig = new ProgrammingExerciseBuildConfig();
         component.programmingExercise!.buildConfig.solutionCheckoutPath = 'solution';
         component.programmingExercise!.buildConfig.testCheckoutPath = 'tests';
@@ -274,7 +274,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
     });
 
     it('should update component when buildconfig was changed', () => {
-        component.isEdit = true;
+        component.isCreateOrEdit = true;
         component.programmingExercise!.buildConfig = new ProgrammingExerciseBuildConfig();
         component.programmingExercise!.buildConfig.solutionCheckoutPath = 'solution';
 
