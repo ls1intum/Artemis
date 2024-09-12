@@ -237,7 +237,7 @@ Example:
 
 .. code-block:: ts
 
-    this.themeService.applyTheme(Theme.DARK);
+    this.themeService.applyThemePreference(Theme.DARK);
 
 
 

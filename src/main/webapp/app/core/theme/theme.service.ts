@@ -167,8 +167,7 @@ export class ThemeService {
      *
      * Only call if the theme changed.
      *
-     * @param theme
-     * @private
+     * @param theme the theme to apply
      */
     private applyTheme(theme: Theme) {
         // Get current <link> theme override
