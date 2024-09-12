@@ -45,7 +45,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     isMergedPdfLoading = false;
     attachmentToBeEdited?: Attachment;
 
-    private dialogErrorSource = new Subject<string>();
+    dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
@@ -471,7 +471,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
 
         const canvasElements = this.pdfContainer.nativeElement.querySelectorAll('canvas');
-        const scaleFactor = 1;
+        const scaleFactor = 1.0;
         Array.from(canvasElements).forEach((canvas, index) => {
             if (index > 0) doc.addPage();
             const imgData = canvas.toDataURL('image/jpeg', scaleFactor);
@@ -502,7 +502,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 },
             });
         } else if (this.attachmentUnit) {
-            this.attachmentToBeEdited = this.attachmentUnit;
+            this.attachmentToBeEdited = this.attachmentUnit.attachment!;
             this.attachmentToBeEdited!.version!++;
             this.attachmentToBeEdited!.uploadDate = dayjs();
 
@@ -511,7 +511,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             formData.append('attachment', objectToJsonBlob(this.attachmentToBeEdited));
             formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit));
 
-            this.attachmentUnitService.update(this.attachmentUnit!.lecture!.id!, this.attachmentToBeEdited!.id!, formData).subscribe({
+            this.attachmentUnitService.update(this.attachmentUnit!.lecture!.id!, this.attachmentUnit!.id!, formData).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
                 },
