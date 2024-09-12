@@ -63,7 +63,7 @@ describe('ProfileService', () => {
             name: 'Artemis',
             time: '2021-05-26T23:13:30.212Z',
             version: '5.0.0',
-            group: 'de.tum.in.www1.artemis',
+            group: 'de.tum.cit.aet.artemis',
         },
         features: ['ProgrammingExercises', 'PlagiarismChecks'],
         programmingLanguageFeatures: [
@@ -145,6 +145,7 @@ describe('ProfileService', () => {
                 },
             },
         },
+        operatorName: 'TUM',
         theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
     };
 
@@ -261,6 +262,7 @@ describe('ProfileService', () => {
             },
         },
         theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        operatorName: 'TUM',
     };
 
     beforeEach(() => {

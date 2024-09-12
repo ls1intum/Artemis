@@ -79,6 +79,17 @@
                                                 </td>
                                                 <td class="text-end">
                                                     <div class="flex-btn-group-container">
+                                                        @if (viewButtonAvailable[attachment.id!]) {
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-primary btn-sm me-1"
+                                                                [routerLink]="['/course-management', lecture.course?.id, 'lectures', lecture.id, 'attachments', attachment.id]"
+                                                                [ngbTooltip]="'entity.action.view' | artemisTranslate"
+                                                            >
+                                                                <fa-icon [icon]="faEye" />
+                                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.view"></span>
+                                                            </button>
+                                                        }
                                                         <button
                                                             [disabled]="attachmentToBeCreated?.id === attachment?.id"
                                                             type="submit"

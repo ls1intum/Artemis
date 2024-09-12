@@ -17,7 +17,7 @@
 logging:
     level:
         ROOT: INFO
-        de.tum.in.www1.artemis: INFO
+        de.tum.cit.aet.artemis: INFO
         tech.jhipster: INFO
         org.springframework.web.socket.config: INFO
         liquibase: INFO
