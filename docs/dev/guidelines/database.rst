@@ -352,7 +352,7 @@ Solutions for known issues
 
  There is a problem with the way you save the associated objects. You must follow this procedure:
 
- #. Save the child entity (e.g., `Feedback <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Feedback.java>`_) without connection to the parent entity (e.g., `Result <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Result.java>`_)
+ #. Save the child entity (e.g., `Feedback <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Feedback.java>`_) without connection to the parent entity (e.g., `Result <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Result.java>`_)
  #. Add back the connection of the child entity to the parent entity.
  #. Save the parent entity.
  #. Always use the returned value after saving the entity, see: ``feedback = feedbackRepository.save(feedback);``
