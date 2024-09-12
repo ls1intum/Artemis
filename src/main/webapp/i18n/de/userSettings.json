@@ -13,6 +13,11 @@
             "scienceSettings": "Forschung",
             "scienceSettingsFeatureDisabled": "Dieses Feature ist derzeit deaktiviert. Du kannst deine Einstellungen trotzdem bearbeiten, falls das Feature wieder aktiviert wird.",
             "scienceSettingsInfo": "Hilf Artemis dabei besser zu werden!",
+            "idePreferencesPage": {
+                "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
+                "default": "Standard",
+                "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox."
+            },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
                 "deleteSshKeyQuestion": "Möchtest du deinen öffentlichen SSH-Schlüssel wirklich löschen?",
@@ -47,15 +52,18 @@
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
                 "login": "Login",
-                "email": "Email",
+                "email": "E-Mail",
                 "joinedArtemis": "Artemis beigetreten am",
+                "profilePicture": "Profilbild",
+                "addProfilePicture": "Profilbild hinzufügen",
                 "sshKey": "Öffentlicher SSH Schlüssel"
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",
-                "VCS_TOKEN_SETTINGS": "VCS Tokeneinstellungen"
+                "VCS_TOKEN_SETTINGS": "VCS Tokeneinstellungen",
+                "IDE_PREFERENCES": "IDE Präferenzen"
             },
             "settingGroupNames": {
                 "weeklySummary": "Wöchentliche Zusammenfassung",
