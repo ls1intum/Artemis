@@ -10,7 +10,7 @@ import org.springframework.security.ldap.SpringSecurityLdapTemplate;
 
 @Configuration
 @Profile("ldap | ldap-only")
-@EnableLdapRepositories
+@EnableLdapRepositories(basePackages = "de.tum.cit.aet.artemis.core.repository.ldap")
 public class LdapConfig {
 
     @Value("${artemis.user-management.ldap.url}")

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.repository;
+package de.tum.cit.aet.artemis.core.repository.ldap;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.ldap.repository.LdapRepository;
