@@ -22,7 +22,7 @@
                         [disabled]="!submission.submitted || isGeneratingFeedback || this.isReadOnlyWithShowResult || this.hasLatestResult"
                         [btnType]="ButtonType.PRIMARY"
                         [isLoading]="isGeneratingFeedback"
-                        [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+                        [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
                     />
                     @if (!this.isReadOnlyWithShowResult) {
                         <jhi-button
