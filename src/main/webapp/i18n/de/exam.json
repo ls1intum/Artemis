@@ -357,7 +357,6 @@
             "title": "Klausuren",
             "generateStudentExams": "Individuelle Klausuren erstellen",
             "generateMissingStudentExams": "Fehlende individuelle Klausuren erstellen",
-            "startExercises": "Aufgabenstart vorbereiten",
             "evaluateQuizExercises": "Quizzes auswerten",
             "assessUnsubmittedStudentExams": "Nicht eingereichte Klausuren bewerten",
             "unlockAllRepositories": "Alle Repositories entsperren",

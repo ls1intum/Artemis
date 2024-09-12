@@ -358,7 +358,6 @@
             "title": "Student exams",
             "generateStudentExams": "Generate individual exams",
             "generateMissingStudentExams": "Generate missing individual exams",
-            "startExercises": "Prepare exercise start",
             "evaluateQuizExercises": "Evaluate quizzes",
             "assessUnsubmittedStudentExams": "Assess unsubmitted exams",
             "unlockAllRepositories": "Unlock all repositories",
