@@ -40,19 +40,7 @@ export class CleanupServiceComponent implements OnInit {
             deleteFrom: dayjs().subtract(12, 'months'),
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
-        },
-        {
-            name: 'deleteOldSubmissionVersions',
-            deleteFrom: dayjs().subtract(12, 'months'),
-            deleteTo: dayjs().subtract(6, 'months'),
-            lastExecuted: undefined,
-        },
-        {
-            name: 'deleteOldFeedback',
-            deleteFrom: dayjs().subtract(12, 'months'),
-            deleteTo: dayjs().subtract(6, 'months'),
-            lastExecuted: undefined,
-        },
+        }
     ];
 
     ngOnInit(): void {

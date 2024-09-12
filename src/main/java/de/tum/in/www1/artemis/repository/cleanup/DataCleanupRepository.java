@@ -1,18 +1,15 @@
 package de.tum.in.www1.artemis.repository.cleanup;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 
 public interface DataCleanupRepository {
 
     void deleteOrphans();
 
-    void deletePlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
+    Collection<Long> getUnnecessaryPlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 
     void deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 
     void deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
-
-    void deleteSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
-
-    void deleteFeedback(ZonedDateTime deleteFrom, ZonedDateTime deleteTo);
 }

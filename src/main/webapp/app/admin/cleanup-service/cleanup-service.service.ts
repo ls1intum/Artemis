@@ -5,6 +5,7 @@ import dayjs from 'dayjs/esm';
 
 export interface CleanupServiceExecutionRecordDTO {
     executionDate: dayjs.Dayjs;
+    jobType: string;
 }
 
 @Injectable({ providedIn: 'root' })

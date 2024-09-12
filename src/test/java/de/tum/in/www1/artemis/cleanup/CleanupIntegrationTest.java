@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.cleanup;
 
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.CONFIRMED;
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -7,6 +9,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismMatch;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.exam.ExamUtilService;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
+import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.in.www1.artemis.participation.ParticipationFactory;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,12 +49,10 @@ import de.tum.in.www1.artemis.repository.LongFeedbackTextRepository;
 import de.tum.in.www1.artemis.repository.RatingRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.StudentScoreRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.repository.TeamScoreRepository;
 import de.tum.in.www1.artemis.repository.TextBlockRepository;
 import de.tum.in.www1.artemis.repository.cleanup.CleanupJobExecutionRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CleanupServiceExecutionRecordDTO;
 
 class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
@@ -80,53 +92,62 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private PlagiarismSubmissionRepository plagiarismSubmissionRepository;
+    private TextExerciseUtilService textExerciseUtilService;
 
     @Autowired
     private TextBlockRepository textBlockRepository;
 
-    // data for this course will be deleted
-    private Course course1;
+    @Autowired
+    private TextExerciseRepository textExerciseRepository;
 
-    // this is a new course whose data will not be deleted
-    private Course course2;
+    @Autowired
+    private ExerciseRepository exerciseRepository;
+
+    private Course oldCourse;
+
+    private Course newCourse;
+
+    private User student;
+
+    private User instructor;
 
     @BeforeEach
     void initTestCase() {
         ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime startDate = now.minusMonths(12).plusDays(2);
-        ZonedDateTime endDate = now.minusMonths(6).minusDays(2);
 
-        course1 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course1.setStartDate(startDate);
-        course1.setEndDate(endDate);
-        courseRepository.save(course1);
+        oldCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        oldCourse.setStartDate(now.minusMonths(12).plusDays(2));
+        oldCourse.setEndDate(now.minusMonths(6).minusDays(2));
+        TextExercise finishedTextExercise1 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12), now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
+        finishedTextExercise1.setTitle("Finished");
+        oldCourse.addExercises(finishedTextExercise1);
+        oldCourse = courseRepository.save(oldCourse);
+        exerciseRepository.save(finishedTextExercise1);
 
-        course2 = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-        course2.setStartDate(now);
-        course2.setEndDate(now.plusMonths(6));
-        courseRepository.save(course2);
+        newCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
+        newCourse.setStartDate(now);
+        newCourse.setEndDate(now.plusMonths(6));
+        TextExercise finishedTextExercise2 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12), now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
+        finishedTextExercise2.setTitle("Finished");
+        newCourse.addExercises(finishedTextExercise2);
+        newCourse = courseRepository.save(newCourse);
+        exerciseRepository.save(finishedTextExercise2);
+        student = new User();
+        student.setGroups(Set.of("STUDENT"));
+        student.setLogin("student228");
+        student = userRepository.save(student);
+
+        instructor = new User();
+        instructor.setGroups(Set.of("INSTRUCTOR"));
+        instructor.setLogin("instructor228");
+        instructor = userRepository.save(instructor);
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testDeleteOrphans() throws Exception {
-        Feedback orphanFeedback = new Feedback();
-        orphanFeedback = feedbackRepository.save(orphanFeedback);
-
-        TextBlock textBlockForOrphanFeedback = new TextBlock();
-        textBlockForOrphanFeedback.setFeedback(orphanFeedback);
-        textBlockForOrphanFeedback.setText("text");
-        textBlockForOrphanFeedback.computeId();
-        textBlockRepository.save(textBlockForOrphanFeedback);
-
-        LongFeedbackText orphanLongFeedbackText = new LongFeedbackText();
-        orphanLongFeedbackText.setFeedback(orphanFeedback);
-        orphanLongFeedbackText.setText("text");
-        longFeedbackTextRepository.save(orphanLongFeedbackText);
+        var orphanFeedback = createFeedbackWithLinkedLongFeedback();
+        var orphanTextBlock = createTextBlockForFeedback(orphanFeedback);
 
         StudentScore orphanStudentScore = new StudentScore();
         orphanStudentScore = studentScoreRepository.save(orphanStudentScore);
@@ -140,26 +161,10 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         orphanFeedback.setResult(orphanResult);
         orphanFeedback = feedbackRepository.save(orphanFeedback);
 
-        User user = new User();
-        user.setGroups(Set.of("STUDENT"));
-        user.setLogin("student228");
-        userRepository.save(user);
+        var submission = participationUtilService.addSubmission(newCourse.getExercises().stream().findFirst().orElseThrow(), new ProgrammingSubmission(), student.getLogin());
 
-        var submission = participationUtilService.addSubmission(course2.getExercises().stream().findFirst().orElseThrow(), new ProgrammingSubmission(), "student228");
-
-        Feedback nonOrphanFeedback = new Feedback();
-        nonOrphanFeedback = feedbackRepository.save(nonOrphanFeedback);
-
-        TextBlock textBlockForNonOrphanFeedback = new TextBlock();
-        textBlockForNonOrphanFeedback.setFeedback(nonOrphanFeedback);
-        textBlockForNonOrphanFeedback.setText("newText");
-        textBlockForNonOrphanFeedback.computeId();
-        textBlockRepository.save(textBlockForNonOrphanFeedback);
-
-        LongFeedbackText nonOrphanLongFeedbackText = new LongFeedbackText();
-        nonOrphanLongFeedbackText.setFeedback(nonOrphanFeedback);
-        nonOrphanLongFeedbackText.setText("newText");
-        longFeedbackTextRepository.save(nonOrphanLongFeedbackText);
+        var nonOrphanFeedback = createFeedbackWithLinkedLongFeedback();
+        var nonOrphanTextBlock = createTextBlockForFeedback(nonOrphanFeedback);
 
         Result nonOrphanResult = new Result();
         nonOrphanResult.setParticipation(submission.getParticipation());
@@ -171,7 +176,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         nonOrphanFeedback = feedbackRepository.save(nonOrphanFeedback);
 
         StudentScore nonOrphanStudentScore = new StudentScore();
-        nonOrphanStudentScore.setUser(user);
+        nonOrphanStudentScore.setUser(student);
         nonOrphanStudentScore = studentScoreRepository.save(nonOrphanStudentScore);
 
         TeamScore nonOrphanTeamScore = new TeamScore();
@@ -189,18 +194,21 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         orphanRating.setResult(orphanResult);
         orphanRating = ratingRepository.save(orphanRating);
 
-        request.postWithoutResponseBody("/api/admin/delete-orphans", HttpStatus.OK, new LinkedMultiValueMap<>());
+        var responseBody = request.postWithResponseBody("/api/admin/delete-orphans", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null, new LinkedMultiValueMap<>());
 
-        assertThat(longFeedbackTextRepository.existsById(orphanLongFeedbackText.getId())).isFalse();
-        assertThat(textBlockRepository.existsById(textBlockForOrphanFeedback.getId())).isFalse();
+        assertThat(responseBody.jobType()).isEqualTo("deleteOrphans");
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        assertThat(longFeedbackTextRepository.existsById(orphanFeedback.getLongFeedback().orElseThrow().getId())).isFalse();
+        assertThat(textBlockRepository.existsById(orphanTextBlock.getId())).isFalse();
         assertThat(feedbackRepository.existsById(orphanFeedback.getId())).isFalse();
         assertThat(studentScoreRepository.existsById(orphanStudentScore.getId())).isFalse();
         assertThat(teamScoreRepository.existsById(orphanTeamScore.getId())).isFalse();
         assertThat(resultRepository.existsById(orphanResult.getId())).isFalse();
         assertThat(ratingRepository.existsById(orphanRating.getId())).isFalse();
 
-        assertThat(textBlockRepository.existsById(textBlockForNonOrphanFeedback.getId())).isTrue();
-        assertThat(longFeedbackTextRepository.existsById(nonOrphanLongFeedbackText.getId())).isTrue();
+        assertThat(textBlockRepository.existsById(nonOrphanTextBlock.getId())).isTrue();
+        assertThat(longFeedbackTextRepository.existsById(nonOrphanFeedback.getLongFeedback().orElseThrow().getId())).isTrue();
         assertThat(feedbackRepository.existsById(nonOrphanFeedback.getId())).isTrue();
         assertThat(studentScoreRepository.existsById(nonOrphanStudentScore.getId())).isTrue();
         assertThat(teamScoreRepository.existsById(nonOrphanTeamScore.getId())).isTrue();
@@ -208,87 +216,228 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(resultRepository.existsById(nonOrphanResult.getId())).isTrue();
     }
 
-    // @Test
-    // @WithMockUser(username = "admin", roles = "ADMIN", setupBefore = TEST_EXECUTION)
-    // @Transactional
-    // void testDeletePlagiarismComparisons() throws Exception {
-    // // Проверяем, что данные созданы
-    // ZonedDateTime from = ZonedDateTime.now().minusMonths(1);
-    // ZonedDateTime to = ZonedDateTime.now();
-    //
-    // // Вызов эндпоинта
-    // var response = request.post("/api/admin/delete-plagiarism-comparisons?deleteFrom=" + from + "&deleteTo=" + to,
-    // null, HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
-    //
-    // // Проверяем, что операция выполнена успешно
-    // assertThat(response).isNotNull();
-    // assertThat(response.getRecordsDeleted()).isGreaterThan(0);
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = "admin", roles = "ADMIN", setupBefore = TEST_EXECUTION)
-    // @Transactional
-    // void testDeleteNonRatedResults() throws Exception {
-    // ZonedDateTime from = ZonedDateTime.now().minusMonths(1);
-    // ZonedDateTime to = ZonedDateTime.now();
-    //
-    // // Вызов эндпоинта
-    // var response = request.post("/api/admin/delete-non-rated-results?deleteFrom=" + from + "&deleteTo=" + to,
-    // null, HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
-    //
-    // // Проверяем успешное выполнение операции
-    // assertThat(response).isNotNull();
-    // assertThat(response.getRecordsDeleted()).isGreaterThan(0);
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = "admin", roles = "ADMIN", setupBefore = TEST_EXECUTION)
-    // @Transactional
-    // void testDeleteOldRatedResults() throws Exception {
-    // ZonedDateTime from = ZonedDateTime.now().minusMonths(1);
-    // ZonedDateTime to = ZonedDateTime.now();
-    //
-    // // Вызов эндпоинта
-    // var response = request.post("/api/admin/delete-old-rated-results?deleteFrom=" + from + "&deleteTo=" + to,
-    // null, HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
-    //
-    // // Проверка успешного выполнения операции
-    // assertThat(response).isNotNull();
-    // assertThat(response.getRecordsDeleted()).isGreaterThan(0);
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = "admin", roles = "ADMIN", setupBefore = TEST_EXECUTION)
-    // @Transactional
-    // void testDeleteSubmissionVersions() throws Exception {
-    // ZonedDateTime from = ZonedDateTime.now().minusMonths(1);
-    // ZonedDateTime to = ZonedDateTime.now();
-    //
-    // // Вызов эндпоинта
-    // var response = request.post("/api/admin/delete-old-submission-versions?deleteFrom=" + from + "&deleteTo=" + to,
-    // null, HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
-    //
-    // // Проверка успешного выполнения операции
-    // assertThat(response).isNotNull();
-    // assertThat(response.getRecordsDeleted()).isGreaterThan(0);
-    // }
-    //
-    // @Test
-    // @WithMockUser(username = "admin", roles = "ADMIN", setupBefore = TEST_EXECUTION)
-    // @Transactional
-    // void testDeleteOldFeedback() throws Exception {
-    // ZonedDateTime from = ZonedDateTime.now().minusMonths(1);
-    // ZonedDateTime to = ZonedDateTime.now();
-    //
-    // // Вызов эндпоинта
-    // var response = request.post("/api/admin/delete-old-feedback?deleteFrom=" + from + "&deleteTo=" + to,
-    // null, HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
-    //
-    // // Проверка успешного выполнения операции
-    // assertThat(response).isNotNull();
-    // assertThat(response.getRecordsDeleted()).isGreaterThan(0);
-    // }
-    //
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeletePlagiarismComparisons() throws Exception {
+        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        // old course, should delete undecided plagiarism comparisons
+        var textExercise1 = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
+        var textPlagiarismResult1 = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise1);
+
+        var submission1 = participationUtilService.addSubmission(textExercise1, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student1");
+        var submission2 = participationUtilService.addSubmission(textExercise1, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student2");
+        var submission3 = participationUtilService.addSubmission(textExercise1, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student3");
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison1 = new PlagiarismComparison<>();
+        plagiarismComparison1.setPlagiarismResult(textPlagiarismResult1);
+        plagiarismComparison1.setStatus(CONFIRMED);
+        var plagiarismSubmissionA1 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionA1.setStudentLogin(TEST_PREFIX + "student1");
+        plagiarismSubmissionA1.setSubmissionId(submission1.getId());
+        var plagiarismSubmissionB1 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionB1.setStudentLogin(TEST_PREFIX + "student2");
+        plagiarismSubmissionB1.setSubmissionId(submission2.getId());
+        plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);
+        plagiarismComparison1.setSubmissionB(plagiarismSubmissionB1);
+        plagiarismComparison1.setMatches(Set.of(new PlagiarismMatch()));
+        plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
+
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison2 = new PlagiarismComparison<>();
+        plagiarismComparison2.setPlagiarismResult(textPlagiarismResult1);
+        plagiarismComparison2.setStatus(NONE);
+        var plagiarismSubmissionA2 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionA2.setStudentLogin(TEST_PREFIX + "student2");
+        plagiarismSubmissionA2.setSubmissionId(submission2.getId());
+        var plagiarismSubmissionB2 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionB2.setStudentLogin(TEST_PREFIX + "student3");
+        plagiarismSubmissionB2.setSubmissionId(submission3.getId());
+        plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
+        plagiarismComparison2.setSubmissionB(plagiarismSubmissionB2);
+        plagiarismComparison2.setMatches(Set.of(new PlagiarismMatch()));
+        plagiarismComparison2 = plagiarismComparisonRepository.save(plagiarismComparison2);
+
+        // new course, should not delete undecided plagiarism comparisons
+        var textExercise2 = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
+        var textPlagiarismResult2 = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise2);
+
+        var submission4 = participationUtilService.addSubmission(textExercise2, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student1");
+        var submission5 = participationUtilService.addSubmission(textExercise2, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student2");
+        var submission6 = participationUtilService.addSubmission(textExercise2, ParticipationFactory.generateTextSubmission("", Language.GERMAN, true), TEST_PREFIX + "student3");
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison3 = new PlagiarismComparison<>();
+        plagiarismComparison3.setPlagiarismResult(textPlagiarismResult2);
+        plagiarismComparison3.setStatus(CONFIRMED);
+        var plagiarismSubmissionA3 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionA1.setStudentLogin(TEST_PREFIX + "student1");
+        plagiarismSubmissionA1.setSubmissionId(submission4.getId());
+        var plagiarismSubmissionB3 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionB1.setStudentLogin(TEST_PREFIX + "student2");
+        plagiarismSubmissionB1.setSubmissionId(submission5.getId());
+        plagiarismComparison3.setSubmissionA(plagiarismSubmissionA3);
+        plagiarismComparison3.setSubmissionB(plagiarismSubmissionB3);
+        plagiarismComparison3.setMatches(Set.of(new PlagiarismMatch()));
+        plagiarismComparison3 = plagiarismComparisonRepository.save(plagiarismComparison3);
+
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison4 = new PlagiarismComparison<>();
+        plagiarismComparison4.setPlagiarismResult(textPlagiarismResult2);
+        plagiarismComparison4.setStatus(NONE);
+        var plagiarismSubmissionA4 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionA2.setStudentLogin(TEST_PREFIX + "student2");
+        plagiarismSubmissionA2.setSubmissionId(submission2.getId());
+        var plagiarismSubmissionB4 = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionB2.setStudentLogin(TEST_PREFIX + "student3");
+        plagiarismSubmissionB2.setSubmissionId(submission6.getId());
+        plagiarismComparison4.setSubmissionA(plagiarismSubmissionA4);
+        plagiarismComparison4.setSubmissionB(plagiarismSubmissionB4);
+        plagiarismComparison4.setMatches(Set.of(new PlagiarismMatch()));
+        plagiarismComparison4 = plagiarismComparisonRepository.save(plagiarismComparison4);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("deleteFrom", DELETE_FROM.toString());
+        params.add("deleteTo", DELETE_TO.toString());
+        var responseBody = request.postWithResponseBody("/api/admin/delete-plagiarism-comparisons", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null, params);
+
+        assertThat(responseBody.jobType()).isEqualTo("deletePlagiarismComparisons");
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        assertThat(plagiarismComparisonRepository.existsById(plagiarismComparison2.getId())).isFalse();
+        assertThat(plagiarismComparisonRepository.existsById(plagiarismComparison1.getId())).isTrue();
+
+        assertThat(plagiarismComparisonRepository.existsById(plagiarismComparison4.getId())).isTrue();
+        assertThat(plagiarismComparisonRepository.existsById(plagiarismComparison3.getId())).isTrue();
+
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteNonRatedResults() throws Exception {
+        // create non rated results for an old course
+        var oldExercise = oldCourse.getExercises().stream().findFirst().orElseThrow();
+        var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
+        var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+        ;
+        var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor);
+        oldResult1.setParticipation(oldStudentParticipation);
+        oldResult1.setRated(false);
+        var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
+        oldResult2.setParticipation(oldStudentParticipation);
+        oldResult2.setRated(false);
+
+        var oldFeedback1 = createFeedbackWithLinkedLongFeedback();
+        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
+        participationUtilService.addFeedbackToResult(oldFeedback1, oldResult1);
+
+        var oldFeedback2 = createFeedbackWithLinkedLongFeedback();
+        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
+        participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
+
+        // create non rated results for the new course
+        var newExercise = newCourse.getExercises().stream().findFirst().orElseThrow();
+        var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
+        var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+        ;
+        var newResult1 = participationUtilService.generateResult(newSubmission, instructor);
+        newResult1.setParticipation(newStudentParticipation);
+        newResult1.setRated(false);
+        var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
+        newResult2.setParticipation(newStudentParticipation);
+        newResult2.setRated(false);
+
+        var newFeedback1 = createFeedbackWithLinkedLongFeedback();
+        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
+        participationUtilService.addFeedbackToResult(newFeedback1, newResult1);
+
+        var newFeedback2 = createFeedbackWithLinkedLongFeedback();
+        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
+        participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("deleteFrom", DELETE_FROM.toString());
+        params.add("deleteTo", DELETE_TO.toString());
+        var responseBody = request.postWithResponseBody("/api/admin/delete-non-rated-results", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null, params);
+
+        assertThat(responseBody.jobType()).isEqualTo("deleteNonRatedResults");
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        assertThat(resultRepository.findById(oldResult1.getId())).isEmpty();
+        assertThat(feedbackRepository.findByResult(oldResult1)).isEmpty();
+        assertThat(textBlockRepository.findById(oldTextBlock1.getId())).isEmpty();
+
+        assertThat(resultRepository.findById(oldResult2.getId())).isEmpty();
+        assertThat(feedbackRepository.findByResult(oldResult2)).isEmpty();
+        assertThat(textBlockRepository.findById(oldTextBlock2.getId())).isEmpty();
+
+        assertThat(resultRepository.findById(newResult1.getId())).isPresent();
+        assertThat(feedbackRepository.findByResult(newResult1)).isNotEmpty();
+        assertThat(textBlockRepository.findById(newTextBlock1.getId())).isNotEmpty();
+
+        assertThat(resultRepository.findById(newResult2.getId())).isPresent();
+        assertThat(feedbackRepository.findByResult(newResult2)).isNotEmpty();
+        assertThat(textBlockRepository.findById(newTextBlock2.getId())).isNotEmpty();
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void testDeleteOldRatedResults() throws Exception {
+        // create rated results for an old course
+        var oldExercise = oldCourse.getExercises().stream().findFirst().orElseThrow();
+        var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
+        var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+        ;
+        var oldResult1 = participationUtilService.generateResult(oldSubmission, instructor); // should be deleted, with all associated entities
+        oldResult1.setParticipation(oldStudentParticipation);
+        var oldResult2 = participationUtilService.generateResult(oldSubmission, instructor);
+        oldResult2.setParticipation(oldStudentParticipation);
+
+        var oldFeedback1 = createFeedbackWithLinkedLongFeedback();
+        var oldTextBlock1 = createTextBlockForFeedback(oldFeedback1);
+        participationUtilService.addFeedbackToResult(oldFeedback1, oldResult1);
+
+        var oldFeedback2 = createFeedbackWithLinkedLongFeedback();
+        var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
+        participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
+
+        // create rated results for the new course
+        var newExercise = newCourse.getExercises().stream().findFirst().orElseThrow();
+        var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
+        var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
+        ;
+        var newResult1 = participationUtilService.generateResult(newSubmission, instructor); // should not be deleted, with all associated entities
+        newResult1.setParticipation(newStudentParticipation);
+        var newResult2 = participationUtilService.generateResult(newSubmission, instructor);
+        newResult2.setParticipation(newStudentParticipation);
+
+        var newFeedback1 = createFeedbackWithLinkedLongFeedback();
+        var newTextBlock1 = createTextBlockForFeedback(newFeedback1);
+        participationUtilService.addFeedbackToResult(newFeedback1, newResult1);
+
+        var newFeedback2 = createFeedbackWithLinkedLongFeedback();
+        var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
+        participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("deleteFrom", DELETE_FROM.toString());
+        params.add("deleteTo", DELETE_TO.toString());
+        var responseBody = request.postWithResponseBody("/api/admin/delete-old-rated-results", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null, params);
+
+        assertThat(responseBody.jobType()).isEqualTo("deleteRatedResults");
+        assertThat(responseBody.executionDate()).isNotNull();
+
+        assertThat(resultRepository.findById(oldResult1.getId())).isEmpty();
+        assertThat(feedbackRepository.findByResult(oldResult1)).isEmpty();
+        assertThat(textBlockRepository.findById(oldTextBlock1.getId())).isEmpty();
+
+        assertThat(resultRepository.findById(oldResult2.getId())).isPresent();
+        assertThat(feedbackRepository.findByResult(oldResult2)).isNotEmpty();
+        assertThat(textBlockRepository.findById(oldTextBlock2.getId())).isNotEmpty();
+
+        assertThat(resultRepository.findById(newResult1.getId())).isPresent();
+        assertThat(feedbackRepository.findByResult(newResult1)).isNotEmpty();
+        assertThat(textBlockRepository.findById(newTextBlock1.getId())).isNotEmpty();
+
+        assertThat(resultRepository.findById(newResult2.getId())).isPresent();
+        assertThat(feedbackRepository.findByResult(newResult2)).isNotEmpty();
+        assertThat(textBlockRepository.findById(newTextBlock2.getId())).isNotEmpty();
+    }
+
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
@@ -323,5 +472,27 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         request.postWithoutResponseBody("/api/admin/delete-old-submission-versions", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
         request.postWithoutResponseBody("/api/admin/delete-old-feedback", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
         request.get("/api/admin/get-last-executions", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    private Feedback createFeedbackWithLinkedLongFeedback() {
+        Feedback feedback = new Feedback();
+        feedback = feedbackRepository.save(feedback);
+
+        LongFeedbackText longFeedback = new LongFeedbackText();
+        longFeedback.setFeedback(feedback);
+        longFeedback.setText("text" + longFeedback.hashCode());
+        longFeedbackTextRepository.save(longFeedback);
+
+        feedback.setLongFeedbackText(Set.of(longFeedback));
+
+        return feedbackRepository.save(feedback);
+    }
+
+    private TextBlock createTextBlockForFeedback(Feedback feedback) {
+        TextBlock textBlock = new TextBlock();
+        textBlock.setFeedback(feedback);
+        textBlock.setText("text" + feedback.hashCode());
+        textBlock.computeId();
+        return textBlockRepository.save(textBlock);
     }
 }

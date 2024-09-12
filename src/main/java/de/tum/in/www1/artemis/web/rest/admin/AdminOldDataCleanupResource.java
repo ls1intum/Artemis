@@ -71,24 +71,6 @@ public class AdminOldDataCleanupResource {
         return ResponseEntity.ok().body(result);
     }
 
-    @PostMapping("delete-old-submission-versions")
-    @EnforceAdmin
-    public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteOldSubmissionVersions(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
-            @RequestParam("deleteTo") ZonedDateTime deleteTo) {
-        log.debug("REST request to delete old submission versions between {} and {}", deleteFrom, deleteTo);
-        CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteSubmissionVersions(deleteFrom, deleteTo);
-        return ResponseEntity.ok().body(result);
-    }
-
-    @PostMapping("delete-old-feedback")
-    @EnforceAdmin
-    public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteOldFeedback(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
-            @RequestParam("deleteTo") ZonedDateTime deleteTo) {
-        log.debug("REST request to delete old feedback between {} and {}", deleteFrom, deleteTo);
-        CleanupServiceExecutionRecordDTO result = dataCleanupService.deleteFeedback(deleteFrom, deleteTo);
-        return ResponseEntity.ok().body(result);
-    }
-
     @GetMapping("get-last-executions")
     @EnforceAdmin
     public ResponseEntity<List<CleanupServiceExecutionRecordDTO>> getLastExecutions() {

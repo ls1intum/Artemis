@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CleanupJobType;
 import de.tum.in.www1.artemis.repository.cleanup.CleanupJobExecutionRepository;
 import de.tum.in.www1.artemis.repository.cleanup.DataCleanupRepository;
 import de.tum.in.www1.artemis.web.rest.dto.CleanupServiceExecutionRecordDTO;
+import org.springframework.transaction.annotation.Transactional;
 
 @Profile(PROFILE_CORE)
 @Service
@@ -23,9 +25,12 @@ public class DataCleanupService {
 
     private final CleanupJobExecutionRepository cleanupJobExecutionRepository;
 
-    public DataCleanupService(DataCleanupRepository dataCleanUpRepository, CleanupJobExecutionRepository cleanupJobExecutionRepository) {
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
+
+    public DataCleanupService(DataCleanupRepository dataCleanUpRepository, CleanupJobExecutionRepository cleanupJobExecutionRepository, PlagiarismComparisonRepository plagiarismComparisonRepository) {
         this.dataCleanUpRepository = dataCleanUpRepository;
         this.cleanupJobExecutionRepository = cleanupJobExecutionRepository;
+        this.plagiarismComparisonRepository = plagiarismComparisonRepository;
     }
 
     public CleanupServiceExecutionRecordDTO deleteOrphans() {
@@ -33,8 +38,10 @@ public class DataCleanupService {
         return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.ORPHANS, null, null));
     }
 
+    @Transactional // transactinal ok, because of delete statements
     public CleanupServiceExecutionRecordDTO deletePlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        dataCleanUpRepository.deletePlagiarismComparisons(deleteFrom, deleteTo);
+        var pcIds = dataCleanUpRepository.getUnnecessaryPlagiarismComparisons(deleteFrom, deleteTo);
+        plagiarismComparisonRepository.deleteAllById(pcIds);
         return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.PLAGIARISM_COMPARISONS, deleteFrom, deleteTo));
     }
 
@@ -46,16 +53,6 @@ public class DataCleanupService {
     public CleanupServiceExecutionRecordDTO deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         dataCleanUpRepository.deleteRatedResults(deleteFrom, deleteTo);
         return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo));
-    }
-
-    public CleanupServiceExecutionRecordDTO deleteSubmissionVersions(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        dataCleanUpRepository.deleteSubmissionVersions(deleteFrom, deleteTo);
-        return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.SUBMISSION_VERSIONS, deleteFrom, deleteTo));
-    }
-
-    public CleanupServiceExecutionRecordDTO deleteFeedback(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        dataCleanUpRepository.deleteFeedback(deleteFrom, deleteTo);
-        return CleanupServiceExecutionRecordDTO.of(this.createDBEntry(CleanupJobType.FEEDBACK, deleteFrom, deleteTo));
     }
 
     public List<CleanupServiceExecutionRecordDTO> getLastExecutions() {
