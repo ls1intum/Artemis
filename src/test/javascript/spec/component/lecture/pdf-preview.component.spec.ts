@@ -212,7 +212,7 @@ describe('PdfPreviewComponent', () => {
 
     it('should toggle enlarged view state', () => {
         const mockCanvas = document.createElement('canvas');
-        component.displayEnlargedCanvas(mockCanvas, 1);
+        component.displayEnlargedCanvas(mockCanvas);
         expect(component.isEnlargedView).toBeTrue();
 
         const clickEvent = new MouseEvent('click', {
@@ -300,7 +300,7 @@ describe('PdfPreviewComponent', () => {
 
         const canvas = document.createElement('canvas');
         const pdfContainer = document.createElement('div');
-        pdfContainer.className = 'pdf-page-container';
+        pdfContainer.className = 'pdf-canvas-container';
         pdfContainer.appendChild(canvas);
         component.pdfContainer = {
             nativeElement: pdfContainer,
@@ -396,22 +396,22 @@ describe('PdfPreviewComponent', () => {
         mockCanvas.style.width = '600px';
         mockCanvas.style.height = '400px';
 
-        const container = component.createContainer(mockCanvas, 1);
+        const container = component.createCanvasContainer(mockCanvas, 1);
         expect(container.tagName).toBe('DIV');
-        expect(container.classList.contains('pdf-page-container')).toBeTruthy();
+        expect(container.classList.contains('pdf-canvas-container')).toBeTruthy();
         expect(container.style.position).toBe('relative');
         expect(container.style.display).toBe('inline-block');
         expect(container.style.width).toBe('600px');
         expect(container.style.height).toBe('400px');
         expect(container.style.margin).toBe('20px');
-        expect(container.children).toHaveLength(2);
+        expect(container.children).toHaveLength(3);
 
         expect(container.firstChild).toBe(mockCanvas);
     });
 
     it('should handle mouseenter and mouseleave events correctly', () => {
         const mockCanvas = document.createElement('canvas');
-        const container = component.createContainer(mockCanvas, 1);
+        const container = component.createCanvasContainer(mockCanvas, 1);
         const overlay = container.children[1] as HTMLElement;
 
         // Trigger mouseenter
@@ -428,10 +428,10 @@ describe('PdfPreviewComponent', () => {
     it('should handle click event on overlay to trigger displayEnlargedCanvas', () => {
         jest.spyOn(component, 'displayEnlargedCanvas');
         const mockCanvas = document.createElement('canvas');
-        const container = component.createContainer(mockCanvas, 1);
+        const container = component.createCanvasContainer(mockCanvas, 1);
         const overlay = container.children[1];
 
         overlay.dispatchEvent(new Event('click'));
-        expect(component.displayEnlargedCanvas).toHaveBeenCalledWith(mockCanvas, 1);
+        expect(component.displayEnlargedCanvas).toHaveBeenCalledWith(mockCanvas);
     });
 });

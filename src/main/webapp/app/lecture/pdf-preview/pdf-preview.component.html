@@ -52,8 +52,8 @@
                     class="btn btn-default"
                     [routerLink]="
                         attachment
-                            ? ['/course-management', course!.id, 'lectures', attachment.lecture!.id, 'attachments']
-                            : ['/course-management', course!.id, 'lectures', attachmentUnit!.lecture!.id, 'unit-management']
+                            ? ['/course-management', course!.id, 'lectures', attachment!.lecture?.id, 'attachments']
+                            : ['/course-management', course!.id, 'lectures', attachmentUnit!.lecture?.id, 'unit-management']
                     "
                     [ngbTooltip]="'entity.action.view' | artemisTranslate"
                 >
