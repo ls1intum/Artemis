@@ -43,8 +43,6 @@ class ObjectMethodTest {
 
     private static final String GENERATE_TESTS = "Generate tests";
 
-    private static final String DOMAIN_PACKAGE_NAME = "de.tum.cit.aet.artemis.domain";
-
     private static final String BASE_PACKAGE_NAME = "de.tum.cit.aet.artemis";
 
     private static final Map<Class<?>, List<?>> ID_TEST_VALUES = Map.of(Long.class, List.of(1L, 42L), String.class, List.of("A", "B"), UserIdeMapping.UserIdeMappingId.class,

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.util.classpath;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,10 +17,6 @@ public final class ClassPathUtil {
 
     }
 
-    public static ClassPathNode findAllClassesIn(String packageName) {
-        return findAllClassesIn(packageName, classPathElement -> true);
-    }
-
     public static ClassPathNode findAllClassesIn(String packageName, ClasspathElementFilter filter) {
         try (ScanResult scanResult = new ClassGraph().enableAllInfo().acceptPackages(packageName).filterClasspathElements(filter).scan()) {
             return new RootNode(packageName).addAll(scanResult.getAllClasses());
@@ -32,12 +27,6 @@ public final class ClassPathUtil {
         try (ScanResult scanResult = new ClassGraph().acceptPackages(basePackage).filterClasspathElements(filter).scan()) {
             return scanResult.getPackageInfo().stream().map(PackageInfo::getName).filter(pkg -> pkg.startsWith(basePackage) && pkg.indexOf('.', basePackage.length() + 1) == -1)
                     .filter(pkg -> !pkg.equals(basePackage)).map(pkg -> pkg.substring(basePackage.length() + 1)).collect(Collectors.toSet());
-        }
-    }
-
-    public static List<Class<?>> findAllClassesAsListIn(String packageName) {
-        try (ScanResult scanResult = new ClassGraph().enableClassInfo().acceptPackages(packageName).scan()) {
-            return scanResult.getAllClasses().loadClasses();
         }
     }
 }
