@@ -54,13 +54,9 @@
                 "button": "Im Git Client klonen",
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
             },
-            "cloneVSCode": {
-                "button": "In VSCode klonen",
-                "helpIcon": "Klone das Repository direkt in Visual Studio Code."
-            },
-            "cloneIntelliJ": {
-                "button": "In IntelliJ klonen",
-                "helpIcon": "Klone das Repository direkt in IntelliJ. Dieses Feature benötigt die Jetbrains Toolbox."
+            "ideButton": {
+                "openIn": "Öffnen in {{ ideName }}",
+                "helpIcon": "IDE kann in den Einstellungen festgelegt werden"
             },
             "goToBuildPlan": "Zum Build Plan gehen",
             "openTextEditor": "Texteditor öffnen",

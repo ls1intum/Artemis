@@ -1,18 +1,15 @@
 import { ExerciseHintExplanationInterface } from 'app/entities/quiz/quiz-question.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
-import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
-import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
+import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 
-const hintOrExpRegex = new RegExp(
-    escapeStringForUseInRegex(`${MonacoQuizExplanationAction.IDENTIFIER}`) + '|' + escapeStringForUseInRegex(`${MonacoQuizHintAction.IDENTIFIER}`),
-    'g',
-);
+const hintOrExpRegex = new RegExp(escapeStringForUseInRegex(`${QuizExplanationAction.IDENTIFIER}`) + '|' + escapeStringForUseInRegex(`${QuizHintAction.IDENTIFIER}`), 'g');
 
 /**
  * Parse the markdown text and apply the result to the target object's data
  *
- * The markdown text is split at MonacoQuizHintAction.IDENTIFIER and MonacoQuizExplanationAction.IDENTIFIER tags.
- *  => First part is text. Everything after MonacoQuizHintAction.IDENTIFIER is Hint, anything after MonacoQuizExplanationAction.IDENTIFIER is explanation
+ * The markdown text is split at QuizHintAction.IDENTIFIER and QuizExplanationAction.IDENTIFIER tags.
+ *  => First part is text. Everything after QuizHintAction.IDENTIFIER is Hint, anything after QuizExplanationAction.IDENTIFIER is explanation
  *
  * @param markdownText {string} the markdown text to parse
  * @param targetObject {object} the object that the result will be saved in. Fields modified are 'text', 'hint' and 'explanation'.
@@ -24,18 +21,18 @@ export function parseExerciseHintExplanation(markdownText: string, targetObject:
     // split markdownText into main text, hint and explanation
     const markdownTextParts = markdownText.split(hintOrExpRegex);
     targetObject.text = markdownTextParts[0].trim();
-    if (markdownText.indexOf(MonacoQuizHintAction.IDENTIFIER) !== -1 && markdownText.indexOf(MonacoQuizExplanationAction.IDENTIFIER) !== -1) {
-        if (markdownText.indexOf(MonacoQuizHintAction.IDENTIFIER) < markdownText.indexOf(MonacoQuizExplanationAction.IDENTIFIER)) {
+    if (markdownText.indexOf(QuizHintAction.IDENTIFIER) !== -1 && markdownText.indexOf(QuizExplanationAction.IDENTIFIER) !== -1) {
+        if (markdownText.indexOf(QuizHintAction.IDENTIFIER) < markdownText.indexOf(QuizExplanationAction.IDENTIFIER)) {
             targetObject.hint = markdownTextParts[1].trim();
             targetObject.explanation = markdownTextParts[2].trim();
         } else {
             targetObject.hint = markdownTextParts[2].trim();
             targetObject.explanation = markdownTextParts[1].trim();
         }
-    } else if (markdownText.indexOf(MonacoQuizHintAction.IDENTIFIER) !== -1) {
+    } else if (markdownText.indexOf(QuizHintAction.IDENTIFIER) !== -1) {
         targetObject.hint = markdownTextParts[1].trim();
         targetObject.explanation = undefined;
-    } else if (markdownText.indexOf(MonacoQuizExplanationAction.IDENTIFIER) !== -1) {
+    } else if (markdownText.indexOf(QuizExplanationAction.IDENTIFIER) !== -1) {
         targetObject.hint = undefined;
         targetObject.explanation = markdownTextParts[1].trim();
     } else {
@@ -60,6 +57,6 @@ export function generateExerciseHintExplanation(sourceObject: ExerciseHintExplan
     return !sourceObject.text
         ? ''
         : sourceObject.text +
-              (sourceObject.hint ? '\n\t' + MonacoQuizHintAction.IDENTIFIER + ' ' + sourceObject.hint : '') +
-              (sourceObject.explanation ? '\n\t' + MonacoQuizExplanationAction.IDENTIFIER + ' ' + sourceObject.explanation : '');
+              (sourceObject.hint ? '\n\t' + QuizHintAction.IDENTIFIER + ' ' + sourceObject.hint : '') +
+              (sourceObject.explanation ? '\n\t' + QuizExplanationAction.IDENTIFIER + ' ' + sourceObject.explanation : '');
 }

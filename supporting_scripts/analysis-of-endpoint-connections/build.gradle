@@ -3,7 +3,7 @@ plugins {
     id "application"
 }
 
-group "de.tum.in.www1.artemis"
+group "de.tum.cit.aet.artemis"
 version "1.0.0"
 
 repositories {
