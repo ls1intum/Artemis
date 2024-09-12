@@ -1,6 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
@@ -27,8 +27,7 @@ import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
-import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -57,8 +56,10 @@ describe('ModelingAssessmentEditorComponent', () => {
     let router: Router;
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
+    let paramMapSubject: BehaviorSubject<ParamMap>;
 
     beforeEach(() => {
+        paramMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule],
             declarations: [
@@ -70,7 +71,22 @@ describe('ModelingAssessmentEditorComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                mockedActivatedRoute({}, { showBackButton: 'false', submissionId: 'new', exerciseId: 1 }),
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        paramMap: paramMapSubject.asObservable(),
+                        queryParamMap: of(convertToParamMap({})),
+                        params: of({}),
+                        queryParams: of({}),
+                        snapshot: {
+                            paramMap: convertToParamMap({}),
+                            queryParamMap: convertToParamMap({}),
+                        },
+                        parent: {
+                            paramMap: of(convertToParamMap({})),
+                        },
+                    },
+                },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -163,7 +179,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             const verifyFeedbackSpy = jest.spyOn(component, 'validateFeedback');
 
             component.ngOnInit();
-            tick(500);
+            tick(1000);
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             expect(component.isLoading).toBeFalse();
             expect(component.complaint).toEqual(complaint);
@@ -183,6 +199,42 @@ describe('ModelingAssessmentEditorComponent', () => {
             tick(500);
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             modelingSubmissionSpy.mockRestore();
+        }));
+
+        it('call ngOnInit with submissionId set to new', fakeAsync(() => {
+            paramMapSubject.next(
+                convertToParamMap({
+                    submissionId: 'new',
+                    // Include other necessary params here
+                    courseId: '1',
+                    exerciseId: '1',
+                }),
+            );
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: {
+                        id: 1,
+                        type: 'modeling',
+                    },
+                },
+            } as ModelingSubmission;
+
+            const modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+
+            // Spy on the relevant service methods
+            const handleFeedbackSpy = jest.spyOn(submissionService, 'handleFeedbackCorrectionRoundTag');
+
+            // Initialize the component
+            component.ngOnInit();
+            tick(500);
+            expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
+            expect(component.isLoading).toBeFalse();
+            expect(component.submission).toBeDefined();
+            expect(handleFeedbackSpy).toHaveBeenCalledOnce();
+            expect(component.assessmentsAreValid).toBeFalse();
         }));
     });
 
