@@ -99,10 +99,15 @@
             style="min-width: 100px"
             jhiTranslate="{{ wasCopied ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
         ></button>
-        <a class="btn btn-primary btn-sm" [href]="buildVSCodeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneVSCode.button"> </a>
-        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneVSCode.helpIcon" />
-        <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildJetbrainsUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneIntelliJ.button"> </a>
-        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneIntelliJ.helpIcon" />
+        <a
+            class="btn btn-primary btn-sm"
+            target="hidden-iframe"
+            [href]="buildIdeUrl() | safeUrl"
+            jhiTranslate="artemisApp.exerciseActions.ideButton.openIn"
+            [translateValues]="{ ideName: ideName }"
+        >
+        </a>
+        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.ideButton.helpIcon" />
         <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"> </a>
         <!-- This hidden iframe is used to avoid "Do you want to leave the site" messages in the exam mode -->
         <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
