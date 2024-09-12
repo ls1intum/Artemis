@@ -2,12 +2,10 @@ package de.tum.in.www1.artemis.web.rest;
 
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.web.rest.plagiarism.PlagiarismResultResponseBuilder.buildPlagiarismResultResponse;
-import static java.util.Collections.emptySet;
 
 import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -41,6 +39,7 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
@@ -424,8 +423,11 @@ public class TextExerciseResource {
             textSubmission.setParticipation(null);
 
             if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
-                textSubmission.setResults(Collections.emptyList());
-                participation.setResults(emptySet());
+                // We want to have the preliminary feedback before the assessment due date too
+                List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+                textSubmission.setResults(athenaResults);
+                Set<Result> athenaResultsSet = new HashSet<Result>(athenaResults);
+                participation.setResults(athenaResultsSet);
             }
 
             Result result = textSubmission.getLatestResult();

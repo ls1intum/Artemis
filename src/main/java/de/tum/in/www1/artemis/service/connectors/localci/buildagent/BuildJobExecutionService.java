@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import jakarta.annotation.Nullable;
 
@@ -36,6 +37,7 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUri;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.LocalCIException;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildJobQueueItem;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildResult;
@@ -63,6 +65,8 @@ public class BuildJobExecutionService {
     private final BuildAgentDockerService buildAgentDockerService;
 
     private final BuildLogsMap buildLogsMap;
+
+    private static final int MAX_CLONE_RETRIES = 3;
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
@@ -276,18 +280,19 @@ public class BuildJobExecutionService {
             buildJobContainerService.stopContainer(containerName);
 
             // Delete the cloned repositories
-            deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash, buildJob.id());
-            deleteCloneRepo(testRepositoryUri, assignmentRepoCommitHash, buildJob.id());
+            deleteCloneRepo(assignmentRepositoryUri, assignmentRepoCommitHash, buildJob.id(), assignmentRepositoryPath);
+            deleteCloneRepo(testRepositoryUri, assignmentRepoCommitHash, buildJob.id(), testsRepositoryPath);
             // do not try to delete the temp repository if it does not exist or is the same as the assignment reposity
             if (solutionRepositoryUri != null && !Objects.equals(assignmentRepositoryUri.repositorySlug(), solutionRepositoryUri.repositorySlug())) {
-                deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash, buildJob.id());
+                deleteCloneRepo(solutionRepositoryUri, assignmentRepoCommitHash, buildJob.id(), solutionRepositoryPath);
             }
-            for (VcsRepositoryUri auxiliaryRepositoryUri : auxiliaryRepositoriesUris) {
-                deleteCloneRepo(auxiliaryRepositoryUri, assignmentRepoCommitHash, buildJob.id());
+
+            for (int i = 0; i < auxiliaryRepositoriesUris.length; i++) {
+                deleteCloneRepo(auxiliaryRepositoriesUris[i], assignmentRepoCommitHash, buildJob.id(), auxiliaryRepositoriesPaths[i]);
             }
 
             try {
-                FileUtils.deleteDirectory(Path.of(CHECKED_OUT_REPOS_TEMP_DIR, assignmentRepoCommitHash).toFile());
+                deleteRepoParentFolder(assignmentRepoCommitHash, assignmentRepositoryPath, testRepoCommitHash, testsRepositoryPath);
             }
             catch (IOException e) {
                 msg = "Could not delete " + CHECKED_OUT_REPOS_TEMP_DIR + " directory";
@@ -454,32 +459,52 @@ public class BuildJobExecutionService {
     }
 
     private Path cloneRepository(VcsRepositoryUri repositoryUri, @Nullable String commitHash, boolean checkout, String buildJobId) {
+        Repository repository = null;
+
+        for (int attempt = 1; attempt <= MAX_CLONE_RETRIES; attempt++) {
+            try {
+                // Generate a random folder name for the repository parent folder if the commit hash is null. This is to avoid conflicts when cloning multiple repositories.
+                String repositoryParentFolder = commitHash != null ? commitHash : UUID.randomUUID().toString();
+                // Clone the assignment repository into a temporary directory
+                repository = buildJobGitService.cloneRepository(repositoryUri,
+                        Path.of(CHECKED_OUT_REPOS_TEMP_DIR, repositoryParentFolder, repositoryUri.folderNameForRepositoryUri()));
+
+                break;
+            }
+            catch (GitAPIException | IOException | URISyntaxException e) {
+                if (attempt >= MAX_CLONE_RETRIES) {
+                    String msg = "Error while cloning repository " + repositoryUri.repositorySlug() + " with uri " + repositoryUri + " after " + MAX_CLONE_RETRIES + " attempts";
+                    buildLogsMap.appendBuildLogEntry(buildJobId, msg);
+                    throw new LocalCIException(msg, e);
+                }
+                buildLogsMap.appendBuildLogEntry(buildJobId,
+                        "Attempt " + attempt + " to clone repository " + repositoryUri.repositorySlug() + " failed due to " + e.getMessage() + ". Retrying...");
+            }
+        }
+
         try {
-            // Clone the assignment repository into a temporary directory
-            // TODO: use a random value if commitHash is null
-            Repository repository = buildJobGitService.cloneRepository(repositoryUri, Path.of(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()));
             if (checkout && commitHash != null) {
                 // Checkout the commit hash
                 buildJobGitService.checkoutRepositoryAtCommit(repository, commitHash);
             }
+
             // if repository is not closed, it causes weird IO issues when trying to delete the repository later on
             // java.io.IOException: Unable to delete file: ...\.git\objects\pack\...
             repository.closeBeforeDelete();
             return repository.getLocalPath();
         }
-        catch (GitAPIException | IOException | URISyntaxException e) {
-            String msg = "Error while cloning repository " + repositoryUri.repositorySlug() + " with uri " + repositoryUri;
+        catch (GitException e) {
+            String msg = "Error while checking out commit " + commitHash + " in repository " + repositoryUri.repositorySlug();
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             throw new LocalCIException(msg, e);
         }
     }
 
-    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId) {
+    private void deleteCloneRepo(VcsRepositoryUri repositoryUri, @Nullable String commitHash, String buildJobId, Path repositoryPath) {
         String msg;
         try {
-            // TODO: handle the case when commitHash is null
-            Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(
-                    Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()), repositoryUri, defaultBranch);
+            Path repositoryPathForDeletion = commitHash != null ? Paths.get(CHECKED_OUT_REPOS_TEMP_DIR, commitHash, repositoryUri.folderNameForRepositoryUri()) : repositoryPath;
+            Repository repository = buildJobGitService.getExistingCheckedOutRepositoryByLocalPath(repositoryPathForDeletion, repositoryUri, defaultBranch);
             if (repository == null) {
                 msg = "Repository with commit hash " + commitHash + " not found";
                 buildLogsMap.appendBuildLogEntry(buildJobId, msg);
@@ -497,5 +522,17 @@ public class BuildJobExecutionService {
             buildLogsMap.appendBuildLogEntry(buildJobId, msg);
             throw new LocalCIException(msg, e);
         }
+    }
+
+    private void deleteRepoParentFolder(String assignmentRepoCommitHash, Path assignmentRepositoryPath, String testRepoCommitHash, Path testsRepositoryPath) throws IOException {
+        Path assignmentRepo = assignmentRepoCommitHash != null ? Path.of(CHECKED_OUT_REPOS_TEMP_DIR, assignmentRepoCommitHash)
+                : getRepositoryParentFolderPath(assignmentRepositoryPath);
+        FileUtils.deleteDirectory(assignmentRepo.toFile());
+        Path testRepo = testRepoCommitHash != null ? Path.of(CHECKED_OUT_REPOS_TEMP_DIR, testRepoCommitHash) : getRepositoryParentFolderPath(testsRepositoryPath);
+        FileUtils.deleteDirectory(testRepo.toFile());
+    }
+
+    private Path getRepositoryParentFolderPath(Path repoPath) {
+        return repoPath.getParent().getParent();
     }
 }

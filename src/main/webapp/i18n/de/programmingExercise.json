@@ -289,7 +289,8 @@
                     "settingNegative": "Der Testfall {{testCase}} darf keine Einstellungen mit negativen Werten haben."
                 },
                 "categories": {
-                    "title": "Code-Analyse-Kategorien",
+                    "titleHeader": "Quelltext-Analyse",
+                    "title": "Quelltext-Analyse-Kategorien",
                     "notGraded": "Nicht bewertet.",
                     "noFeedback": "Ohne sichtbares Feedback.",
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
@@ -334,6 +335,17 @@
                     "resultingPoints": "Resultierende Punkte",
                     "testType": "Type",
                     "passedPercent": "Bestanden %"
+                },
+                "feedbackAnalysis": {
+                    "titleHeader": "Feedback Analyse",
+                    "title": "Fehleranalyse für {{exerciseTitle}}",
+                    "occurrence": "Häufigkeit",
+                    "feedback": "Feedback",
+                    "task": "Aufgabe",
+                    "testcase": "Testfall",
+                    "errorCategory": "Fehlerkategorie",
+                    "totalItems": "Insgesamt {{count}} Elemente",
+                    "error": "Beim Laden des Feedback ist ein Fehler aufgetreten."
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",

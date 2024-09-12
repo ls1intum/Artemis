@@ -11,7 +11,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
@@ -33,7 +32,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.domain.BuildJob;
 import de.tum.in.www1.artemis.domain.enumeration.BuildStatus;
 import de.tum.in.www1.artemis.exception.LocalCIException;
-import de.tum.in.www1.artemis.repository.BuildJobRepository;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildAgentDockerService;
 import de.tum.in.www1.artemis.service.connectors.localci.buildagent.BuildLogsMap;
 import de.tum.in.www1.artemis.service.connectors.localci.dto.BuildConfig;
@@ -46,16 +44,8 @@ class BuildAgentDockerServiceTest extends AbstractSpringIntegrationLocalCILocalV
     private BuildAgentDockerService buildAgentDockerService;
 
     @Autowired
-    private BuildJobRepository buildJobRepository;
-
-    @Autowired
     @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
-
-    @AfterEach
-    void tearDown() {
-        buildJobRepository.deleteAll();
-    }
 
     @Test
     @Order(2)
