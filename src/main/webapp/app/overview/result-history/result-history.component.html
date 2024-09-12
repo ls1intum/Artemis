@@ -1,9 +1,4 @@
 <div class="result-history-wrapper">
-    @if (this.isInsideEditor && this.successfulResultsLength > MAX_RESULT_HISTORY_LENGTH) {
-        <span [ngClass]="{ noClickingSpan: this.leftIndex === 0 }" (click)="moveStart()"> <fa-icon [icon]="faAnglesLeft" size="lg" class="me-2" /> </span>
-        <span [ngClass]="{ noClickingSpan: this.leftIndex === 0 }" (click)="moveLeft()"> <fa-icon [icon]="faAngleLeft" size="lg" class="me-2" /> </span>
-    }
-
     <div class="result-history-element" [class.previous-history-element]="showPreviousDivider">
         <div class="result-divider"></div>
     </div>
@@ -23,16 +18,7 @@
                     [showIcon]="false"
                 />
             </div>
-            <div
-                class="result-divider"
-                [ngStyle]="(i === 0 && movedLastRatedResult) || (i === displayedResults.length - 1 && showFutureDivider) ? { 'border-top': '1px dashed' } : {}"
-            ></div>
+            <div class="result-divider" [ngStyle]="i === 0 && movedLastRatedResult ? { 'border-top': '1px dashed' } : {}"></div>
         </div>
-    }
-    @if (this.isInsideEditor && this.successfulResultsLength > MAX_RESULT_HISTORY_LENGTH) {
-        <span [ngClass]="this.rightIndex === this.results.length - 1 ? 'noClickingSpan' : ''" (click)="moveRight()">
-            <fa-icon [icon]="faAngleRight" size="lg" class="me-2" />
-        </span>
-        <span [ngClass]="this.rightIndex === this.results.length - 1 ? 'noClickingSpan' : ''" (click)="moveEnd()"> <fa-icon [icon]="faAnglesRight" size="lg" class="me-2" /> </span>
     }
 </div>

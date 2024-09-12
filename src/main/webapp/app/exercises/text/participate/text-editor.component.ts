@@ -112,7 +112,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 return this.alertService.error('artemisApp.textExercise.error');
             }
 
-            this.route.params.subscribe(() => {
+            this.route.params?.subscribe(() => {
                 this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
                 this.updateParticipation(this.participation, this.submissionId);
             });

@@ -465,6 +465,12 @@ public class TextExerciseResource {
         return ResponseEntity.ok(participation);
     }
 
+    /**
+     * This method gets data for the text editor, including submissions and their results to create the history
+     *
+     * @param participationId the participation id
+     * @return the participation data including submissions and results.
+     */
     @GetMapping("text-editor-all/{participationId}")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> getDataForTextEditorWithAllSubmissionsAndResults(@PathVariable Long participationId) {
