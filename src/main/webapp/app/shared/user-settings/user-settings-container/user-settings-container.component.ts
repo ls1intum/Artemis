@@ -3,6 +3,8 @@ import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { tap } from 'rxjs';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -19,11 +21,19 @@ export class UserSettingsContainerComponent implements OnInit {
     currentUser?: User;
     localVCEnabled = false;
 
-    constructor(private profileService: ProfileService) {}
+    constructor(
+        private profileService: ProfileService,
+        private accountService: AccountService,
+    ) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
+
+        this.accountService
+            .getAuthenticationState()
+            .pipe(tap((user: User) => (this.currentUser = user)))
+            .subscribe();
     }
 }

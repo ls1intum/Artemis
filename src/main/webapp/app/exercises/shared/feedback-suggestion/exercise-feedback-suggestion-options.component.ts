@@ -15,6 +15,8 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     @Input() dueDate?: dayjs.Dayjs;
     @Input() readOnly: boolean = false;
 
+    protected readonly ExerciseType = ExerciseType;
+
     protected readonly AssessmentType = AssessmentType;
 
     readonly assessmentType: AssessmentType;
@@ -72,7 +74,17 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
         if (event.target.checked) {
             this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
         } else {
+            this.exercise.allowFeedbackRequests = false;
             this.exercise.feedbackSuggestionModule = undefined;
+        }
+    }
+
+    toggleFeedbackRequests(event: any) {
+        if (event.target.checked) {
+            this.exercise.feedbackSuggestionModule = this.availableAthenaModules.first();
+            this.exercise.allowFeedbackRequests = true;
+        } else {
+            this.exercise.allowFeedbackRequests = false;
         }
     }
 
