@@ -39,7 +39,7 @@
     </root>
 
 
-    <logger name="de.tum.in.www1.artemis" level="INFO"/>
+    <logger name="de.tum.cit.aet.artemis" level="INFO"/>
     <logger name="tech.jhipster" level="WARN"/>
 
     <logger name="angus.activation" level="WARN"/>
