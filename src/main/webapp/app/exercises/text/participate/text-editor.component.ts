@@ -147,7 +147,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                     this.isGeneratingFeedback = false;
                     if (changedParticipation.results.last()?.successful === false) {
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
-                        // this.alertService.info("The length of particiapation results is " + this.participation.results?.length)
                     } else {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
                         this.hasLatestResult = true;

@@ -1,6 +1,6 @@
 <div [id]="'exercise-' + textExercise?.id">
     @if (displayHeader) {
-        <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation" [isInsideEditor]="true">
+        <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
             <span pagetitle>
                 {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}:
                 <span class="font-weight-normal">{{ examMode ? textExercise.exerciseGroup?.title : textExercise?.title }}</span>
@@ -15,35 +15,16 @@
                             [routerLink]="['/courses', this.course?.id, 'exercises', 'text-exercises', this.textExercise?.id!, 'participate', this.result.participation?.id]"
                         />
                     }
+                    <jhi-button
+                        [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
+                        [icon]="faPenSquare"
+                        (onClick)="requestFeedback()"
+                        [disabled]="!submission.submitted || isGeneratingFeedback || this.isReadOnlyWithShowResult || this.hasLatestResult"
+                        [btnType]="ButtonType.PRIMARY"
+                        [isLoading]="isGeneratingFeedback"
+                        [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+                    />
                     @if (!this.isReadOnlyWithShowResult) {
-                        @if (this.hasLatestResult) {
-                            <jhi-button
-                                [title]="'artemisApp.exerciseActions.viewResults'"
-                                [icon]="faEye"
-                                [btnType]="ButtonType.PRIMARY"
-                                [routerLink]="[
-                                    '/courses',
-                                    course?.id,
-                                    'exercises',
-                                    'text-exercises',
-                                    textExercise?.id!,
-                                    'participate',
-                                    result.participation?.id,
-                                    'submission',
-                                    submissionId,
-                                ]"
-                            />
-                        } @else {
-                            <jhi-button
-                                [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
-                                [icon]="faPenSquare"
-                                (onClick)="requestFeedback()"
-                                [disabled]="!submission.submitted || isGeneratingFeedback"
-                                [btnType]="ButtonType.PRIMARY"
-                                [isLoading]="isGeneratingFeedback"
-                                [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
-                            />
-                        }
                         <jhi-button
                             id="submit"
                             [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
