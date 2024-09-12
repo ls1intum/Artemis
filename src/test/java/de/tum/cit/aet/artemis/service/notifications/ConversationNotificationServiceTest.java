@@ -53,7 +53,7 @@ class ConversationNotificationServiceTest extends AbstractSpringIntegrationIndep
     private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
-    UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private UserUtilService userUtilService;
