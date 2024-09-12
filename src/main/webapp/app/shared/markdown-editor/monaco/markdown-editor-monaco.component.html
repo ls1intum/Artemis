@@ -5,7 +5,7 @@
         [style.overflow]="inEditMode ? 'visible' : 'auto'"
         [style.height.px]="inEditMode ? targetWrapperHeight : undefined"
         [style.cursor]="isResizing ? 'ns-resize' : undefined"
-        [style.min-height.px]="minWrapperHeight"
+        [style.min-height.px]="initialEditorHeight === 'external' ? undefined : minWrapperHeight"
     >
         <nav ngbNav #actionPalette #nav="ngbNav" class="nav-tabs" [destroyOnHide]="false" (navChange)="onNavChanged($event)">
             <ng-container [ngbNavItem]="TAB_EDIT">
