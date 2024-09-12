@@ -21,12 +21,12 @@
                     [disabled]="isRemovePagesDisabled()"
                 >
                     <fa-icon [icon]="faTrash" />
-                    <span>Remove Page(s)</span>
+                    <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
                 </button>
                 <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
                 <button (click)="triggerFileInput()" class="btn btn-primary text-truncate">
                     <fa-icon [icon]="faFileImport" />
-                    <span>Append File</span>
+                    <span jhiTranslate="artemisApp.attachment.pdfPreview.appendFileButton"></span>
                 </button>
             </div>
         </div>

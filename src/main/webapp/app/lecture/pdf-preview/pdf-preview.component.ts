@@ -495,10 +495,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             this.attachmentService.update(this.attachmentToBeEdited!.id!, this.attachmentToBeEdited!, pdfFile).subscribe({
                 next: () => {
-                    this.alertService.success('Attachment updated successfully!');
+                    this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
                 },
                 error: (error) => {
-                    this.alertService.error('Failed to update attachment: ' + error.message);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
         } else if (this.attachmentUnit) {
@@ -513,10 +513,10 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             this.attachmentUnitService.update(this.attachmentUnit!.lecture!.id!, this.attachmentToBeEdited!.id!, formData).subscribe({
                 next: () => {
-                    this.alertService.success('Attachment updated successfully!');
+                    this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
                 },
                 error: (error) => {
-                    this.alertService.error('Failed to update attachment: ' + error.message);
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
                 },
             });
         }

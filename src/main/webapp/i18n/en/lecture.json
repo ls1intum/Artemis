@@ -100,7 +100,11 @@
             "pdfPreview": {
                 "title": "Attachment",
                 "attachmentIDError": "Invalid Attachment or Attachment ID.",
-                "attachmentUnitIDError": "Invalid Attachment Unit or Attachment Unit ID."
+                "attachmentUnitIDError": "Invalid Attachment Unit or Attachment Unit ID.",
+                "removePageButton": "Remove Page(s)",
+                "appendFileButton": "Append File",
+                "attachmentUpdateSuccess": "Attachment updated successfully.",
+                "attachmentUpdateError": "Failed to update attachment: {{error}}"
             }
         }
     }
