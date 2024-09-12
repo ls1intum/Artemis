@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.vcstokens;
+package de.tum.cit.aet.artemis.programming.domain;
 
 public enum AuthenticationMechanism {
     /**

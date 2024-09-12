@@ -1,6 +1,6 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.cit.aet.artemis.programming.service.localvc;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -9,15 +9,15 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Repository;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.vcstokens.AuthenticationMechanism;
-import de.tum.in.www1.artemis.domain.vcstokens.VcsAccessLog;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.VcsAccessLogRepository;
-import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.Repository;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 @Profile(PROFILE_LOCALVC)
 @Service

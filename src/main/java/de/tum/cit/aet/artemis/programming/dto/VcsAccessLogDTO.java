@@ -1,10 +1,10 @@
-package de.tum.in.www1.artemis.web.rest.dto;
+package de.tum.cit.aet.artemis.programming.dto;
 
 import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.vcstokens.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 
 /**
  * DTO representing a VCS access log entry.

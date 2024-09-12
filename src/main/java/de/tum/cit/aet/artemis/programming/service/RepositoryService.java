@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
-import de.tum.cit.aet.artemis.service.VcsAccessLogService;
+import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
 
 /**
  * Service that provides utilities for managing files in a git repository.

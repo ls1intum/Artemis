@@ -15,16 +15,16 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
+import de.tum.cit.aet.artemis.programming.dto.VcsAccessLogDTO;
+import de.tum.cit.aet.artemis.programming.repository.VcsAccessLogRepository;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.domain.vcstokens.AuthenticationMechanism;
-import de.tum.in.www1.artemis.domain.vcstokens.VcsAccessLog;
-import de.tum.in.www1.artemis.participation.ParticipationUtilService;
-import de.tum.in.www1.artemis.repository.VcsAccessLogRepository;
-import de.tum.in.www1.artemis.web.rest.dto.VcsAccessLogDTO;
-import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
 
 class LocalVCLocalCIParticipationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.vcstokens;
+package de.tum.cit.aet.artemis.programming.domain;
 
 import java.time.ZonedDateTime;
 
@@ -14,10 +14,10 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.web.rest.repository.RepositoryActionType;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * A Vcs access log entry.

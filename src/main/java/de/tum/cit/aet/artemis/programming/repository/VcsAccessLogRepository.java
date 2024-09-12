@@ -1,6 +1,6 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.cit.aet.artemis.programming.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_LOCALVC;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -11,8 +11,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.vcstokens.VcsAccessLog;
-import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.programming.domain.VcsAccessLog;
 
 /**
  * Spring Data JPA repository for the User entity.<br>
