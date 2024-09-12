@@ -158,7 +158,7 @@ Setup Instructions
 
       .. code:: bash
 
-         docker-compose -f docker-compose/pyris-dev.yml up --build
+         docker compose -f docker-compose/pyris-dev.yml up --build
 
       This command will:
 
@@ -176,7 +176,7 @@ Setup Instructions
 
       .. code:: bash
 
-         docker-compose -f docker-compose/pyris-production.yml up -d
+         docker compose -f docker-compose/pyris-production.yml up -d
 
       This command will:
 
@@ -211,19 +211,19 @@ Setup Instructions
 
    .. code:: bash
 
-      docker-compose -f docker-compose/pyris-dev.yml down
+      docker compose -f docker-compose/pyris-dev.yml down
 
    or
 
    .. code:: bash
 
-      docker-compose -f docker-compose/pyris-production.yml down
+      docker compose -f docker-compose/pyris-production.yml down
 5. **Logs and Debugging**
    -  View the logs for a specific service, e.g., Pyris:
 
       .. code:: bash
 
-         docker-compose -f docker-compose/pyris-dev.yml logs pyris-app
+         docker compose -f docker-compose/pyris-dev.yml logs pyris-app
 
    -  For production, ensure that Nginx and Weaviate services are
       running smoothly and check their respective logs if needed.
