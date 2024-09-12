@@ -23,8 +23,8 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
-import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
+import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('DragAndDropQuestionEditComponent', () => {
@@ -608,7 +608,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         let textWithDomainAction: TextWithDomainAction;
 
         // explanation
-        let action = new MonacoQuizExplanationAction();
+        let action = new QuizExplanationAction();
         let text = 'take this as an explanationCommand';
         textWithDomainAction = { text, action };
 
@@ -617,7 +617,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.question.explanation).toBe(text);
 
         // hint
-        action = new MonacoQuizHintAction();
+        action = new QuizHintAction();
         text = 'take this as a hintCommand';
         textWithDomainAction = { text, action };
 

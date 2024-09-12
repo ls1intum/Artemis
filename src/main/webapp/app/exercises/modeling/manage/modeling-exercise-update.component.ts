@@ -30,7 +30,7 @@ import { NgModel } from '@angular/forms';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 
 @Component({
     selector: 'jhi-modeling-exercise-update',
@@ -64,8 +64,8 @@ export class ModelingExerciseUpdateComponent implements AfterViewInit, OnDestroy
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     notificationText?: string;
-    domainActionsProblemStatement = [new MonacoFormulaAction()];
-    domainActionsExampleSolution = [new MonacoFormulaAction()];
+    domainActionsProblemStatement = [new FormulaAction()];
+    domainActionsExampleSolution = [new FormulaAction()];
     examCourseId?: number;
     isImport: boolean;
     isExamMode: boolean;

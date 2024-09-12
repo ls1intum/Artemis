@@ -8,13 +8,13 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { MonacoGradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-instruction.action';
-import { MonacoGradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-credits.action';
-import { MonacoGradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-scale.action';
-import { MonacoGradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-description.action';
-import { MonacoGradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-feedback.action';
-import { MonacoGradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-usage-count.action';
-import { MonacoGradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-criterion.action';
+import { GradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
+import { GradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-credits.action';
+import { GradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-scale.action';
+import { GradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-description.action';
+import { GradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-feedback.action';
+import { GradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
+import { GradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
 import { TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('GradingInstructionsDetailsComponent', () => {
@@ -137,7 +137,7 @@ describe('GradingInstructionsDetailsComponent', () => {
 
     it('should change grading instruction', () => {
         const newDescription = 'new text';
-        const domainActions = [{ text: newDescription, action: new MonacoGradingDescriptionAction() }] as TextWithDomainAction[];
+        const domainActions = [{ text: newDescription, action: new GradingDescriptionAction() }] as TextWithDomainAction[];
 
         component.exercise.gradingCriteria = [gradingCriterion];
         component.onInstructionChange(domainActions, gradingInstruction);
@@ -165,13 +165,13 @@ describe('GradingInstructionsDetailsComponent', () => {
     });
 
     const getDomainActionArray = () => {
-        const creditsAction = new MonacoGradingCreditsAction();
-        const scaleAction = new MonacoGradingScaleAction();
-        const descriptionAction = new MonacoGradingDescriptionAction();
-        const feedbackAction = new MonacoGradingFeedbackAction();
-        const usageCountAction = new MonacoGradingUsageCountAction();
-        const instructionAction = new MonacoGradingInstructionAction(creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction);
-        const criterionAction = new MonacoGradingCriterionAction(instructionAction);
+        const creditsAction = new GradingCreditsAction();
+        const scaleAction = new GradingScaleAction();
+        const descriptionAction = new GradingDescriptionAction();
+        const feedbackAction = new GradingFeedbackAction();
+        const usageCountAction = new GradingUsageCountAction();
+        const instructionAction = new GradingInstructionAction(creditsAction, scaleAction, descriptionAction, feedbackAction, usageCountAction);
+        const criterionAction = new GradingCriterionAction(instructionAction);
 
         return [
             { text: 'testCriteria', action: criterionAction },
