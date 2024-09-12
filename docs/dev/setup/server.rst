@@ -6,7 +6,7 @@ Server Setup
 To start the Artemis application server from the development
 environment, first import the project into IntelliJ and then make sure
 to install the Spring Boot plugins to run the main class
-``de.tum.in.www1.artemis.ArtemisApp``. Before the application runs, you
+``de.tum.cit.aet.artemis.ArtemisApp``. Before the application runs, you
 have to change some configuration options.
 You can change the options directly in the file ``application-artemis.yml`` in the folder
 ``src/main/resources/config``. However, you have to be careful that you do not
@@ -214,7 +214,7 @@ Run the server with Spring Boot and Spring profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Artemis server should startup by running the main class
-``de.tum.in.www1.artemis.ArtemisApp`` using Spring Boot.
+``de.tum.cit.aet.artemis.ArtemisApp`` using Spring Boot.
 
 .. note::
     Artemis uses Spring profiles to segregate parts of the
