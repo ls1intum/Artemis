@@ -192,7 +192,6 @@ export class ThemeService {
             newTag.href = theme.fileName! + '?_=' + new Date().setMinutes(0, 0, 0);
 
             // As soon as the new style sheet loaded, remove the old override (if present)
-            // and fire the subject to inform other services and components
             newTag.onload = () => {
                 overrideTag?.remove();
             };

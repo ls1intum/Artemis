@@ -61,10 +61,13 @@ describe('ThemeService', () => {
     });
 
     it('applies theme changes correctly', () => {
+        TestBed.flushEffects();
+        expect(documentGetElementMock).toHaveBeenCalledOnce();
+
         service.applyThemePreference(Theme.DARK);
         TestBed.flushEffects();
 
-        expect(documentGetElementMock).toHaveBeenCalledOnce();
+        expect(documentGetElementMock).toHaveBeenCalledTimes(2);
         expect(documentGetElementMock).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
 
         expect(documentgetElementsByTagNameMock).toHaveBeenCalledOnce();
@@ -81,11 +84,8 @@ describe('ThemeService', () => {
         expect(headElement.insertBefore).toHaveBeenCalledOnce();
         expect(headElement.insertBefore).toHaveBeenCalledWith(newElement, undefined);
 
-        expect(service.currentTheme()).toBe(Theme.LIGHT);
+        expect(service.currentTheme()).toBe(Theme.DARK);
         expect(storeSpy).toHaveBeenCalledWith(THEME_LOCAL_STORAGE_KEY, 'DARK');
-
-        // @ts-ignore
-        newElement.onload();
 
         expect(linkElement.remove).toHaveBeenCalledOnce();
         expect(service.currentTheme()).toBe(Theme.DARK);
@@ -93,8 +93,8 @@ describe('ThemeService', () => {
         service.applyThemePreference(Theme.LIGHT);
         TestBed.flushEffects();
 
-        expect(documentGetElementMock).toHaveBeenCalledTimes(2);
-        expect(documentGetElementMock).toHaveBeenNthCalledWith(2, THEME_OVERRIDE_ID);
+        expect(documentGetElementMock).toHaveBeenCalledTimes(3);
+        expect(documentGetElementMock).toHaveBeenNthCalledWith(3, THEME_OVERRIDE_ID);
         expect(linkElement.remove).toHaveBeenCalledTimes(2);
         expect(service.currentTheme()).toBe(Theme.LIGHT);
     });
@@ -154,12 +154,12 @@ describe('ThemeService', () => {
 
         service.print();
 
-        expect(docSpy).toHaveBeenCalledOnce();
+        expect(docSpy).toHaveBeenCalledTimes(2);
         expect(docSpy).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
         expect(returnedElement.rel).toBe('none-tmp');
         tick(250);
         expect(docSpy).toHaveBeenCalledWith('notification-sidebar');
-        expect(docSpy).toHaveBeenCalledTimes(3); // 1x for theme override, 2x for notification sidebar (changing style to display: none and back to initial value)
+        expect(docSpy).toHaveBeenCalledTimes(4); // 1x for theme override, 2x for notification sidebar (changing style to display: none and back to initial value)
         expect(winSpy).toHaveBeenCalledOnce();
         tick(250);
         expect(returnedElement.rel).toBe('stylesheet');
