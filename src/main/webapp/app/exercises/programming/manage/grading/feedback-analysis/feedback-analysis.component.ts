@@ -29,7 +29,7 @@ export class FeedbackAnalysisComponent {
     readonly totalItems = signal<number>(0);
     readonly collectionsSize = computed(() => this.content().numberOfPages * this.pageSize());
 
-    private pagingService = inject(FeedbackAnalysisService);
+    private feedbackAnalysisService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
 
@@ -56,7 +56,7 @@ export class FeedbackAnalysisComponent {
         };
 
         try {
-            const response = await this.pagingService.search(state, { exerciseId: this.exerciseId() });
+            const response = await this.feedbackAnalysisService.search(state, { exerciseId: this.exerciseId() });
             this.content.set(response.feedbackDetails);
             this.totalItems.set(response.totalItems);
         } catch (error) {

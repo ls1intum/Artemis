@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
+import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 
 describe('FeedbackAnalysisService', () => {
     let service: FeedbackAnalysisService;
@@ -10,6 +10,11 @@ describe('FeedbackAnalysisService', () => {
         { detailText: 'Feedback 1', testCaseName: 'test1', count: 5, relativeCount: 25.0, taskNumber: 1 },
         { detailText: 'Feedback 2', testCaseName: 'test2', count: 3, relativeCount: 15.0, taskNumber: 2 },
     ];
+
+    const feedbackResponseMock: FeedbackAnalysisResponse = {
+        feedbackDetails: { resultsOnPage: feedbackDetailsMock, numberOfPages: 1 },
+        totalItems: 8,
+    };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -25,26 +30,19 @@ describe('FeedbackAnalysisService', () => {
         httpMock.verify();
     });
 
-    describe('getFeedbackDetailsForExercise', () => {
+    describe('search', () => {
         it('should retrieve feedback details for a given exercise', async () => {
-            const responsePromise = service.getFeedbackDetailsForExercise(1);
+            const pageable = { page: 1, pageSize: 10, searchTerm: '', sortingOrder: 'ASC', sortedColumn: 'count' };
+            const exerciseId = 1;
 
-            const req = httpMock.expectOne('api/exercises/1/feedback-details');
-            expect(req.request.method).toBe('GET');
-            req.flush(feedbackDetailsMock);
+            const responsePromise = service.search(pageable, { exerciseId });
+
+            const req = httpMock.expectOne('api/exercises/1/feedback-details-paged');
+            expect(req.request.method).toBe('POST');
+            req.flush(feedbackResponseMock);
 
             const result = await responsePromise;
-            expect(result).toEqual(feedbackDetailsMock);
-        });
-
-        it('should handle errors while retrieving feedback details', async () => {
-            const responsePromise = service.getFeedbackDetailsForExercise(1);
-
-            const req = httpMock.expectOne('api/exercises/1/feedback-details');
-            expect(req.request.method).toBe('GET');
-            req.flush('Something went wrong', { status: 500, statusText: 'Server Error' });
-
-            await expect(responsePromise).rejects.toThrow('Internal server error');
+            expect(result).toEqual(feedbackResponseMock);
         });
     });
 });
