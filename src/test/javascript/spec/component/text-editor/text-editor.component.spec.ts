@@ -101,7 +101,7 @@ describe('TextEditorComponent', () => {
                 debugElement = fixture.debugElement;
                 textService = debugElement.injector.get(TextEditorService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
-                getTextForParticipationStub = jest.spyOn(textService, 'get');
+                getTextForParticipationStub = jest.spyOn(textService, 'getAll');
             });
     });
 
