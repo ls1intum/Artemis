@@ -112,4 +112,20 @@ describe('ExerciseFeedbackSuggestionOptionsComponent', () => {
 
         expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
     });
+
+    it('should toggle feedback requests and set the module for text exercises', () => {
+        const modules = ['Module1', 'Module2'];
+        component.availableAthenaModules = modules;
+        component.exercise = { type: ExerciseType.TEXT } as Exercise;
+
+        const event = { target: { checked: true } };
+        component.toggleFeedbackRequests(event); // for students
+
+        expect(component.exercise.feedbackSuggestionModule).toBe('Module1');
+
+        event.target.checked = false;
+        component.toggleFeedbackSuggestions(event); // for tutors, should disable both
+
+        expect(component.exercise.feedbackSuggestionModule).toBeUndefined();
+    });
 });
