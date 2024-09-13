@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.modeling.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -124,20 +123,18 @@ public class ModelingSubmissionService extends SubmissionService {
             throw new AccessForbiddenException();
         }
 
+        // update submission properties
+        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+            modelingSubmission.setSubmitted(true);
+        }
+
         // if athena results are present than create new submission on submit
         if (!modelingSubmission.getResults().isEmpty()) {
             log.debug("Creating a new submission due to Athena results for user: {}", user.getLogin());
             modelingSubmission.setId(null);
         }
 
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResults(new ArrayList<>());
-
-        // update submission properties
-        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
-            modelingSubmission.setSubmitted(true);
-        }
         modelingSubmission = save(modelingSubmission, exercise, user, participation);
         return modelingSubmission;
     }
@@ -161,8 +158,6 @@ public class ModelingSubmissionService extends SubmissionService {
             studentParticipationRepository.save(participation);
         }
 
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        modelingSubmission.setResults(new ArrayList<>());
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
         // versioning of submission
