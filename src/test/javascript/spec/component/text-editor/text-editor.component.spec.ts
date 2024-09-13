@@ -366,7 +366,7 @@ describe('TextEditorComponent', () => {
             id: 2,
             results: [
                 {
-                    assessmentType: AssessmentType.AUTOMATIC,
+                    assessmentType: AssessmentType.AUTOMATIC_ATHENA,
                     score: 100,
                 },
             ],
