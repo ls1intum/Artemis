@@ -114,7 +114,10 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             """)
     List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime, @Param("courseId") Long courseId);
 
-    // find buildjob by buildJobId
-    Optional<BuildJob> findBuildJobByBuildJobId(String buildJobId);
+    Optional<BuildJob> findByBuildJobId(String buildJobId);
+
+    default BuildJob findByBuildJobIdElseThrow(String buildJobId) {
+        return getValueElseThrow(findByBuildJobId(buildJobId));
+    }
 
 }

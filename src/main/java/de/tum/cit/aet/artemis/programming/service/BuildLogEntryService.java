@@ -378,8 +378,8 @@ public class BuildLogEntryService {
     }
 
     private ProgrammingExercise retrieveProgrammingExerciseByBuildJobId(String buildJobId) {
-        BuildJob buildJob = buildJobRepository.findBuildJobByBuildJobId(buildJobId).orElseThrow();
-        return programmingExerciseRepository.findById(buildJob.getExerciseId()).orElseThrow();
+        BuildJob buildJob = buildJobRepository.findByBuildJobIdElseThrow(buildJobId);
+        return programmingExerciseRepository.findByIdElseThrow(buildJob.getExerciseId());
     }
 
     /**
@@ -411,14 +411,14 @@ public class BuildLogEntryService {
         log.info("Deleting old build log files");
 
         try {
-            deleteRecursively(buildLogsPath);
+            deleteExpiredBuildLogFilesRecursively(buildLogsPath);
         }
         catch (IOException e) {
             log.error("Error occurred while trying to delete old build log files", e);
         }
     }
 
-    private void deleteRecursively(Path path) throws IOException {
+    private void deleteExpiredBuildLogFilesRecursively(Path path) throws IOException {
         if (!Files.isDirectory(path)) {
             deleteFileIfExpired(path);
             return;
@@ -426,7 +426,7 @@ public class BuildLogEntryService {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
             for (Path subPath : stream) {
-                deleteRecursively(subPath);
+                deleteExpiredBuildLogFilesRecursively(subPath);
             }
         }
         catch (IOException e) {
