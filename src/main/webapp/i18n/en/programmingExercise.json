@@ -670,7 +670,7 @@
                 },
                 "pushExercise": "Push the exercise code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>.",
                 "pushSolution": "Push the solution code to its repository. It will not be checked out.",
-                "pushTest": "Push the test code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>."
+                "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
             }
         },
         "error": {
