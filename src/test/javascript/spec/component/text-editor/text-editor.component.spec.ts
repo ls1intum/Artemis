@@ -27,7 +27,7 @@ import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text
 import { Language } from 'app/entities/course.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Participation } from 'app/entities/participation/participation.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
@@ -41,6 +41,9 @@ import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -48,7 +51,6 @@ describe('TextEditorComponent', () => {
     let debugElement: DebugElement;
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
-
     let getTextForParticipationStub: jest.SpyInstance;
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
@@ -92,6 +94,7 @@ describe('TextEditorComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
             ],
         })
             .compileComponents()
@@ -102,6 +105,8 @@ describe('TextEditorComponent', () => {
                 textService = debugElement.injector.get(TextEditorService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 getTextForParticipationStub = jest.spyOn(textService, 'getAll');
+                assureConditionsSatisfiedSpy = jest.spyOn(comp, 'assureConditionsSatisfied');
+                courseExerciseService = debugElement.injector.get(CourseExerciseService);
             });
     });
 
@@ -297,6 +302,77 @@ describe('TextEditorComponent', () => {
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
         expect(comp.answer).toBe('abc');
+    });
+
+    it('assureConditionsSatisfied should alert and return false if the request is made after the due date', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        comp.textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().subtract(5, 'minutes'),
+        } as TextExercise;
+        comp.participation = {
+            id: 2,
+            results: [
+                {
+                    assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                    score: 100,
+                },
+            ],
+        } as StudentParticipation;
+        const result = comp.assureConditionsSatisfied();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAfterDueDate');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should alert and return false if the latest submission already has athena result', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        const submission: Submission = { id: 42 };
+        comp.textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+        } as TextExercise;
+
+        comp.hasLatestResult = true;
+
+        comp.participation = {
+            id: 2,
+            results: [
+                {
+                    assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                    score: 100,
+                    submission: submission,
+                    successful: true,
+                },
+            ],
+            submissions: [submission],
+        } as StudentParticipation;
+
+        const result = comp.assureConditionsSatisfied();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.submissionAlreadyHasAthenaResult');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should return true if all conditions are satisfied', () => {
+        comp.textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+        } as TextExercise;
+
+        comp.participation = {
+            id: 2,
+            results: [
+                {
+                    assessmentType: AssessmentType.AUTOMATIC,
+                    score: 100,
+                },
+            ],
+        } as StudentParticipation;
+        const result = comp.assureConditionsSatisfied();
+        expect(result).toBeTrue();
     });
 
     it('should destroy', () => {

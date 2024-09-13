@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.participation;
 
 import static de.tum.cit.aet.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_PROGRAMMING_TEST;
+import static de.tum.cit.aet.artemis.connector.AthenaRequestMockProvider.ATHENA_MODULE_TEXT_TEST;
 import static de.tum.cit.aet.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -589,7 +590,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(textCourse);
 
-        this.textExercise.setFeedbackSuggestionModule("module_text_test");
+        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
@@ -600,6 +601,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(textParticipation);
 
         Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, true);
+        resultText1.setSuccessful(true);
         Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
         resultText2.setSuccessful(true);
         resultText2.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
@@ -610,7 +612,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
 
-        Result invokedTextResult = resultCaptor.getAllValues().get(1);
+        Result invokedTextResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedTextResult).isNotNull();
         assertThat(invokedTextResult.getId()).isNotNull();
         assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
@@ -671,7 +673,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         textCourse.setRestrictedAthenaModulesAccess(true);
         this.courseRepository.save(textCourse);
 
-        this.textExercise.setFeedbackSuggestionModule("module_text_test");
+        this.textExercise.setFeedbackSuggestionModule(ATHENA_MODULE_TEXT_TEST);
         this.exerciseRepository.save(textExercise);
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("text");
