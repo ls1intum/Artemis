@@ -127,7 +127,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
     @Test
     void testCronDataExportCreationTaskScheduledEveryDayAt4AMByDefault() {
         final String cronExpression = "0 0 4 * * *";
-        final String cronTaskName = "de.tum.cit.aet.artemis.service.scheduled.DataExportScheduleService.createDataExportsAndDeleteOldOnes";
+        final String cronTaskName = "de.tum.cit.aet.artemis.core.service.DataExportScheduleService.createDataExportsAndDeleteOldOnes";
         Set<ScheduledTask> scheduledTasks = scheduledTaskHolder.getScheduledTasks();
         long scheduledCronTasksToCreateDataExportsAt4AM = scheduledTasks.stream().filter(scheduledTask -> scheduledTask.getTask() instanceof CronTask)
                 .map(scheduledTask -> (CronTask) scheduledTask.getTask()).filter(cronTask -> (cronExpression).equals(cronTask.getExpression()))
