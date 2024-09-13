@@ -9,8 +9,6 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
-import de.tum.cit.aet.artemis.core.service.FilePathService;
-import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class FilePathServiceTest extends AbstractSpringIntegrationIndependentTest {

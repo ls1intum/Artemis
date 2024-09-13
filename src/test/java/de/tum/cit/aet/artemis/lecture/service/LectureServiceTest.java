@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.lecture.util.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;

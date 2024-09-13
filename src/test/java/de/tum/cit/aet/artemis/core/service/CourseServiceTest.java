@@ -25,7 +25,6 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;

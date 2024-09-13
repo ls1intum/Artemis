@@ -29,8 +29,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
-import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;

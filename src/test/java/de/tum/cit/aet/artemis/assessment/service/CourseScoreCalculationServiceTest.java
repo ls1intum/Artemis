@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePoints;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;

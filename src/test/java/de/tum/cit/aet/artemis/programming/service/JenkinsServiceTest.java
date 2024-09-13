@@ -42,7 +42,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
 import de.tum.cit.aet.artemis.programming.service.jenkins.build_plan.JenkinsBuildPlanUtils;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;

@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
-import de.tum.cit.aet.artemis.communication.service.EmailSummaryService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;

@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
-import de.tum.cit.aet.artemis.core.service.DataExportScheduleService;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 

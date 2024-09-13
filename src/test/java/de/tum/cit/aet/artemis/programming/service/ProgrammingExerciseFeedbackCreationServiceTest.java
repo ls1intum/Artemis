@@ -30,7 +30,6 @@ import de.tum.cit.aet.artemis.programming.dto.StaticCodeAnalysisReportDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseFeedbackCreationService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;

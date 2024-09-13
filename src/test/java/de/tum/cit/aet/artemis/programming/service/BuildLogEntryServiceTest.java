@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class BuildLogEntryServiceTest extends AbstractSpringIntegrationIndependentTest {

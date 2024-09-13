@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.exam.service.StudentExamService;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
