@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.modeling.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -158,6 +159,8 @@ public class ModelingSubmissionService extends SubmissionService {
             studentParticipationRepository.save(participation);
         }
 
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        modelingSubmission.setResults(new ArrayList<>());
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
         // versioning of submission
