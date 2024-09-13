@@ -95,6 +95,8 @@
         "titleAlreadyExists": "Es existiert bereits eine Programmieraufgabe mit demselben Titel, bitte nutze einen anderen Titel.",
         "shortnameAlreadyExists": "Es existiert bereits eine Programmieraufgabe mit demselben Kurznamen, bitte nutze einen anderen Kurznamen.",
         "courseTitleTooLong": "Der Kurstitel ist zu lang (max. 255 Zeichen), bitte nutze einen kürzeren Kurstitel.",
-        "notAllowedInExam": "Diese Aktion ist in einer Klausur nicht erlaubt."
+        "notAllowedInExam": "Diese Aktion ist in einer Klausur nicht erlaubt.",
+        "profilePictureFilesizeTooBig": "Die Dateigröße des hochgeladenen Bilds ist zu groß, bitte lade ein kleineres Bild hoch.",
+        "profilePictureFileFormatNotSupported": "Das Dateiformat wird nicht unterstützt, bitte lade eine .png oder .jpg Datei hoch."
     }
 }
