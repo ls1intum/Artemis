@@ -62,7 +62,7 @@
 
     <div class="d-flex flex-column align-items-end mt-2">
         <ngb-pagination
-            [collectionSize]="content().numberOfPages * pageSize()"
+            [collectionSize]="collectionsSize()"
             [pageSize]="pageSize()"
             [page]="page()"
             (pageChange)="setPage($event)"
@@ -72,11 +72,7 @@
         </ngb-pagination>
 
         <div class="text-muted text-end">
-            <span
-                class="small-text"
-                jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.totalItems"
-                [translateValues]="{ count: distinctResultCount() }"
-            ></span>
+            <span class="small-text" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.totalItems" [translateValues]="{ count: totalItems() }"></span>
         </div>
     </div>
 </div>

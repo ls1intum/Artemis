@@ -1,4 +1,4 @@
-import { Component, InputSignal, effect, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, computed, effect, inject, input, signal } from '@angular/core';
 import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,18 +19,16 @@ export class FeedbackAnalysisComponent {
     exerciseTitle: InputSignal<string> = input.required<string>();
     exerciseId: InputSignal<number> = input.required<number>();
 
-    // Signals for reactive state
     readonly page = signal<number>(1);
     readonly pageSize = signal<number>(15);
-    searchTerm = signal<string>(''); // Initially empty
+    searchTerm = signal<string>('');
     readonly sortingOrder = signal<SortingOrder>(SortingOrder.DESCENDING);
     readonly sortedColumn = signal<string>('count');
 
-    readonly isLoading = signal<boolean>(false);
     readonly content = signal<SearchResult<FeedbackDetail>>({ resultsOnPage: [], numberOfPages: 0 });
-    distinctResultCount = signal<number>(0); // To store the distinct result count
+    readonly totalItems = signal<number>(0);
+    readonly collectionsSize = computed(() => this.content().numberOfPages * this.pageSize());
 
-    // Inject dependencies
     private pagingService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
@@ -40,10 +38,11 @@ export class FeedbackAnalysisComponent {
     readonly faSortDown = faSortDown;
     readonly faMagnifyingGlass = faMagnifyingGlass;
     readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
+    readonly SortingOrder = SortingOrder;
 
     constructor() {
         effect(() => {
-            this.loadData(); // This will be triggered immediately upon page load
+            this.loadData();
         });
     }
 
@@ -51,14 +50,18 @@ export class FeedbackAnalysisComponent {
         const state = {
             page: this.page(),
             pageSize: this.pageSize(),
-            searchTerm: this.searchTerm(), // Will be empty initially
+            searchTerm: this.searchTerm(),
             sortingOrder: this.sortingOrder(),
             sortedColumn: this.sortedColumn(),
         };
 
-        const response = await this.pagingService.search(state, { exerciseId: this.exerciseId() });
-        this.content.set(response.feedbackDetails);
-        this.distinctResultCount.set(response.distinctResultCount);
+        try {
+            const response = await this.pagingService.search(state, { exerciseId: this.exerciseId() });
+            this.content.set(response.feedbackDetails);
+            this.totalItems.set(response.totalItems);
+        } catch (error) {
+            this.alertService.error('artemisApp.programmingExercise.configureGrading.feedbackAnalysis.error');
+        }
     }
 
     setPage(newPage: number): void {
@@ -77,7 +80,7 @@ export class FeedbackAnalysisComponent {
     }
 
     search(): void {
-        this.page.set(1); // Reset to page 1 when searching
+        this.page.set(1);
         this.loadData();
     }
 
@@ -85,6 +88,4 @@ export class FeedbackAnalysisComponent {
         const modalRef = this.modalService.open(FeedbackModalComponent, { centered: true });
         modalRef.componentInstance.feedbackDetail = feedbackDetail;
     }
-
-    protected readonly SortingOrder = SortingOrder;
 }

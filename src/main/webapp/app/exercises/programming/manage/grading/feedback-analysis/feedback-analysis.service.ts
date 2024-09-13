@@ -4,7 +4,7 @@ import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-
 
 export interface FeedbackAnalysisResponse {
     feedbackDetails: SearchResult<FeedbackDetail>;
-    distinctResultCount: number;
+    totalItems: number;
 }
 
 export interface FeedbackDetail {
@@ -21,7 +21,7 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
         super();
     }
 
-    search(pageable: SearchTermPageableSearch, options: { exerciseId: number }): Promise<any> {
+    search(pageable: SearchTermPageableSearch, options: { exerciseId: number }): Promise<FeedbackAnalysisResponse> {
         return this.post<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details-paged`, pageable);
     }
 }
