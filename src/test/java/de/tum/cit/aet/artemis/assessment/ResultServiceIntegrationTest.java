@@ -31,12 +31,15 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -740,24 +743,33 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setTestCase(testCase);
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        List<FeedbackDetailDTO> response = request.getList("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK, FeedbackDetailDTO.class);
+        SearchTermPageableSearchDTO<String> searchDTO = new SearchTermPageableSearchDTO<>();
+        searchDTO.setSortedColumn("detailText");
+        searchDTO.setSortingOrder(SortingOrder.ASCENDING);
+        searchDTO.setPage(1);
+        searchDTO.setPageSize(10);
 
-        assertThat(response).isNotEmpty();
-        FeedbackDetailDTO feedbackDetail = response.getFirst();
+        FeedbackAnalysisResponseDTO response = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged", searchDTO,
+                FeedbackAnalysisResponseDTO.class, HttpStatus.OK);
+
+        assertThat(response.feedbackDetails().getResultsOnPage()).isNotEmpty();
+        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().getResultsOnPage().get(0);
         assertThat(feedbackDetail.count()).isEqualTo(1);
         assertThat(feedbackDetail.relativeCount()).isEqualTo(100.0);
         assertThat(feedbackDetail.detailText()).isEqualTo("Some feedback");
         assertThat(feedbackDetail.testCaseName()).isEqualTo("test1");
         assertThat(feedbackDetail.taskNumber()).isEqualTo(1);
+
+        assertThat(response.distinctResultCount()).isEqualTo(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllFeedbackDetailsForExerciseWithMultipleFeedback() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        StudentParticipation participation1 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
         StudentParticipation participation2 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
+        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation1);
         Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation2);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         testCase.setId(1L);
@@ -766,7 +778,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback1.setPositive(false);
         feedback1.setDetailText("Some feedback");
         feedback1.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback1, result);
+        participationUtilService.addFeedbackToResult(feedback1, result1);
 
         Feedback feedback2 = new Feedback();
         feedback2.setPositive(false);
@@ -778,15 +790,23 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback3.setPositive(false);
         feedback3.setDetailText("Some different feedback");
         feedback3.setTestCase(testCase);
-        participationUtilService.addFeedbackToResult(feedback3, result);
+        participationUtilService.addFeedbackToResult(feedback3, result1);
 
-        List<FeedbackDetailDTO> response = request.getList("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK, FeedbackDetailDTO.class);
+        SearchTermPageableSearchDTO<String> searchDTO = new SearchTermPageableSearchDTO<>();
+        searchDTO.setSortedColumn("detailText");
+        searchDTO.setSortingOrder(SortingOrder.ASCENDING);
+        searchDTO.setPage(1);
+        searchDTO.setPageSize(10);
 
-        assertThat(response).hasSize(2);
+        FeedbackAnalysisResponseDTO response = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged", searchDTO,
+                FeedbackAnalysisResponseDTO.class, HttpStatus.OK);
 
-        FeedbackDetailDTO firstFeedbackDetail = response.stream().filter(feedbackDetail -> "Some feedback".equals(feedbackDetail.detailText())).findFirst().orElseThrow();
+        List<FeedbackDetailDTO> feedbackDetails = response.feedbackDetails().getResultsOnPage();
+        assertThat(feedbackDetails).hasSize(2);
 
-        FeedbackDetailDTO secondFeedbackDetail = response.stream().filter(feedbackDetail -> "Some different feedback".equals(feedbackDetail.detailText())).findFirst()
+        FeedbackDetailDTO firstFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> "Some feedback".equals(feedbackDetail.detailText())).findFirst().orElseThrow();
+
+        FeedbackDetailDTO secondFeedbackDetail = feedbackDetails.stream().filter(feedbackDetail -> "Some different feedback".equals(feedbackDetail.detailText())).findFirst()
                 .orElseThrow();
 
         assertThat(firstFeedbackDetail.count()).isEqualTo(2);
@@ -800,15 +820,27 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(secondFeedbackDetail.detailText()).isEqualTo("Some different feedback");
         assertThat(secondFeedbackDetail.testCaseName()).isEqualTo("test1");
         assertThat(secondFeedbackDetail.taskNumber()).isEqualTo(1);
+
+        assertThat(response.distinctResultCount()).isEqualTo(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllFeedbackDetailsForExercise_NoParticipation() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        List<FeedbackDetailDTO> response = request.getList("/api/exercises/" + programmingExercise.getId() + "/feedback-details", HttpStatus.OK, FeedbackDetailDTO.class);
 
-        assertThat(response).isEmpty();
+        SearchTermPageableSearchDTO<String> searchDTO = new SearchTermPageableSearchDTO<>();
+        searchDTO.setSortedColumn("detailText");
+        searchDTO.setSortingOrder(SortingOrder.ASCENDING);
+        searchDTO.setPage(1);
+        searchDTO.setPageSize(10);
+
+        FeedbackAnalysisResponseDTO response = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged", searchDTO,
+                FeedbackAnalysisResponseDTO.class, HttpStatus.OK);
+
+        assertThat(response.feedbackDetails().getResultsOnPage()).isEmpty();
+
+        assertThat(response.distinctResultCount()).isEqualTo(0);
     }
 
 }

@@ -12,7 +12,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -534,62 +536,61 @@ public class ResultService {
     }
 
     /**
-     * Retrieves aggregated feedback details for a given exercise, calculating relative counts based on the total number of distinct results.
+     * Retrieves paginated and filtered aggregated feedback details for a given exercise, calculating relative counts based on the total number of distinct results.
      * The task numbers are assigned based on the associated test case names, using the set of tasks fetched from the database.
      * <br>
      * For each feedback detail:
      * 1. The relative count is calculated as a percentage of the total number of distinct results for the exercise.
      * 2. The task number is determined by matching the test case name with the tasks.
+     * <br>
+     * The method supports filtering by a search term across feedback details, test case names, counts, task numbers, and relative counts.
+     * Sorting is applied based on the specified column and order (ascending or descending).
+     * The result is paginated based on the provided page number and page size.
      *
      * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @return A list of FeedbackDetailDTO objects, each containing:
-     *         - feedback count,
-     *         - relative count (as a percentage of distinct results),
-     *         - detail text,
-     *         - test case name,
-     *         - determined task number (based on the test case name).
+     * @param search     The pageable search DTO containing page number, page size, sorting options, and a search term for filtering results.
+     * @return A {@link FeedbackAnalysisResponseDTO} object containing:
+     *         - a {@link SearchResultPageDTO} of paginated feedback details, and
+     *         - the total number of distinct results (distinctResultCount) for the exercise.
      */
     public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, SearchTermPageableSearchDTO<String> search) {
-        // Step 1: Retrieve the distinct result count and the tasks
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
         Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
 
-        // Step 2: Retrieve all feedback details for the exercise
         List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
+        String searchTerm = search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "";
+
         long totalFeedbackCount = feedbackDetails.size();
 
-        // Step 3 & 4: Calculate relative count, task number, and filter in a single step
-        String searchTerm = search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "";
+        Predicate<FeedbackDetailDTO> matchesSearchTerm = detail -> searchTerm.isEmpty() || detail.detailText().toLowerCase().contains(searchTerm)
+                || detail.testCaseName().toLowerCase().contains(searchTerm) || String.valueOf(detail.count()).contains(searchTerm)
+                || String.valueOf(detail.taskNumber()).contains(searchTerm) || String.valueOf(detail.relativeCount()).contains(searchTerm);
+
         feedbackDetails = feedbackDetails.stream().map(detail -> {
             double relativeCount = (detail.count() * 100.0) / distinctResultCount;
-            int taskNumber = tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(detail.testCaseName()))).findFirst()
-                    .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
+            int taskNumber = IntStream.range(0, tasks.size())
+                    .filter(i -> tasks.stream().toList().get(i).getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(detail.testCaseName()))).findFirst().orElse(-1) + 1;
 
             return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);
-        }).filter(detail -> searchTerm.isEmpty() || detail.detailText().toLowerCase().contains(searchTerm) || detail.testCaseName().toLowerCase().contains(searchTerm)
-                || String.valueOf(detail.count()).contains(searchTerm) || String.valueOf(detail.taskNumber()).contains(searchTerm)
-                || String.valueOf(detail.relativeCount()).contains(searchTerm)).collect(Collectors.toList());
+        }).filter(matchesSearchTerm).collect(Collectors.toList());
 
-        // Step 5: Apply sorting
-        feedbackDetails.sort((a, b) -> {
-            int comparison = switch (search.getSortedColumn()) {
-                case "count" -> Long.compare(a.count(), b.count());
-                case "detailText" -> a.detailText().compareToIgnoreCase(b.detailText());
-                case "testCaseName" -> a.testCaseName().compareToIgnoreCase(b.testCaseName());
-                case "taskNumber" -> Integer.compare(a.taskNumber(), b.taskNumber());
-                case "relativeCount" -> Double.compare(a.relativeCount(), b.relativeCount());
-                default -> 0;
-            };
-            return search.getSortingOrder() == SortingOrder.ASCENDING ? comparison : -comparison;
-        });
+        Map<String, Comparator<FeedbackDetailDTO>> comparators = Map.of("count", Comparator.comparingLong(FeedbackDetailDTO::count), "detailText",
+                Comparator.comparing(FeedbackDetailDTO::detailText, String.CASE_INSENSITIVE_ORDER), "testCaseName",
+                Comparator.comparing(FeedbackDetailDTO::testCaseName, String.CASE_INSENSITIVE_ORDER), "taskNumber", Comparator.comparingInt(FeedbackDetailDTO::taskNumber),
+                "relativeCount", Comparator.comparingDouble(FeedbackDetailDTO::relativeCount));
 
-        // Step 6: Apply pagination
-        int start = (search.getPage() - 1) * search.getPageSize();
-        int end = Math.min(start + search.getPageSize(), feedbackDetails.size());
+        Comparator<FeedbackDetailDTO> comparator = comparators.getOrDefault(search.getSortedColumn(), (a, b) -> 0);
+        feedbackDetails.sort(search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed());
+
+        int pageSize = search.getPageSize();
+        int page = search.getPage();
+
+        int start = (page - 1) * pageSize;
+        int end = Math.min(start + pageSize, feedbackDetails.size());
+
         List<FeedbackDetailDTO> paginatedFeedbackDetails = feedbackDetails.subList(start, end);
 
-        // Step 7: Calculate total pages
-        int totalPages = (feedbackDetails.size() + search.getPageSize() - 1) / search.getPageSize();
+        int totalPages = (feedbackDetails.size() + pageSize - 1) / pageSize;
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(paginatedFeedbackDetails, totalPages), totalFeedbackCount);
     }
 }

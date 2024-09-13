@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
-import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
@@ -282,11 +281,16 @@ public class ResultResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/feedback-details : Retrieves all aggregated feedback details for a given exercise.
-     * The feedback details include counts and relative counts of feedback occurrences, along with associated test case names and task numbers.
+     * POST /exercises/{exerciseId}/feedback-details-paged : Retrieves paginated and filtered aggregated feedback details for a given exercise.
+     * The feedback details include counts and relative counts of feedback occurrences, test case names, and task numbers.
+     * The method allows filtering by search term and sorting by various fields.
+     * <br>
+     * Pagination is applied based on the provided {@link SearchTermPageableSearchDTO}, including page number, page size, sorting order, and search term.
+     * The response contains both the paginated feedback details and the total count of distinct results for the exercise.
      *
      * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @return A ResponseEntity containing a list of {@link FeedbackDetailDTO}s
+     * @param search     The pageable search DTO containing page number, page size, sorting options, and a search term for filtering results.
+     * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes the paginated feedback details and the total count of distinct results.
      */
     @PostMapping("/exercises/{exerciseId}/feedback-details-paged")
     @EnforceAtLeastEditorInExercise

@@ -1,5 +1,5 @@
 import { Component, InputSignal, effect, inject, input, signal } from '@angular/core';
-import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
+import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { faMagnifyingGlass, faMagnifyingGlassPlus, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
@@ -47,7 +47,7 @@ export class FeedbackAnalysisComponent {
         });
     }
 
-    private loadData(): void {
+    private async loadData(): Promise<void> {
         const state = {
             page: this.page(),
             pageSize: this.pageSize(),
@@ -56,17 +56,9 @@ export class FeedbackAnalysisComponent {
             sortedColumn: this.sortedColumn(),
         };
 
-        this.pagingService
-            .search(state, { exerciseId: this.exerciseId() }) // Make sure exerciseId is correct
-            .subscribe({
-                next: (response: FeedbackAnalysisResponse) => {
-                    this.content.set(response.feedbackDetails);
-                    this.distinctResultCount.set(response.distinctResultCount); // Store distinct result count
-                },
-                error: (error) => {
-                    this.alertService.error(error.message);
-                },
-            });
+        const response = await this.pagingService.search(state, { exerciseId: this.exerciseId() });
+        this.content.set(response.feedbackDetails);
+        this.distinctResultCount.set(response.distinctResultCount);
     }
 
     setPage(newPage: number): void {
