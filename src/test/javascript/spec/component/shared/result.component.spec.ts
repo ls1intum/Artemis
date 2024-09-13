@@ -235,9 +235,9 @@ describe('ResultComponent', () => {
             'text-exercises',
             comp.exercise.id,
             'participate',
-            mockResult.participation.id,
+            mockResult.participation?.id,
             'submission',
-            mockResult.submission.id,
+            mockResult.submission?.id,
         ]);
     });
 
