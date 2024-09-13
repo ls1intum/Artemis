@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.modeling.web;
+package de.tum.cit.aet.artemis.modeling.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 

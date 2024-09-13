@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.iris.web;
+package de.tum.cit.aet.artemis.iris.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 

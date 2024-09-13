@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lti.web;
+package de.tum.cit.aet.artemis.lti.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 

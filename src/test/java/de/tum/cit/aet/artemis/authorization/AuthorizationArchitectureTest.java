@@ -4,7 +4,6 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMethods;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,7 +43,6 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
         rule.check(productionClasses);
     }
 
-    @Disabled // TODO: Enable this test once the restructuring is done
     @Test
     void testEnforceAdminAnnotations() {
         ArchRule rule = methods().that().areAnnotatedWith(EnforceAdmin.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
@@ -80,7 +78,6 @@ class AuthorizationArchitectureTest extends AbstractArchitectureTest {
         rule.check(productionClasses);
     }
 
-    @Disabled // TODO: Enable this test once the restructuring is done
     @Test
     void testEnforceNothingAnnotations() {
         ArchRule rule = methods().that().areAnnotatedWith(EnforceNothing.class).and().areNotAnnotatedWith(ManualConfig.class).should().beDeclaredInClassesThat()
