@@ -1,7 +1,7 @@
-package de.tum.in.www1.artemis.cleanup;
+package de.tum.cit.aet.artemis;
 
-import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.CONFIRMED;
-import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.NONE;
+import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
+import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
@@ -9,18 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismMatch;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
-import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.exam.ExamUtilService;
-import de.tum.in.www1.artemis.exercise.text.TextExerciseFactory;
-import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.in.www1.artemis.participation.ParticipationFactory;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,32 +16,43 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.LongFeedbackText;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Rating;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Team;
-import de.tum.in.www1.artemis.domain.TextBlock;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.cleanup.CleanupJobExecution;
-import de.tum.in.www1.artemis.domain.enumeration.CleanupJobType;
-import de.tum.in.www1.artemis.domain.scores.StudentScore;
-import de.tum.in.www1.artemis.domain.scores.TeamScore;
-import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
-import de.tum.in.www1.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.LongFeedbackTextRepository;
-import de.tum.in.www1.artemis.repository.RatingRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.StudentScoreRepository;
-import de.tum.in.www1.artemis.repository.TeamScoreRepository;
-import de.tum.in.www1.artemis.repository.TextBlockRepository;
-import de.tum.in.www1.artemis.repository.cleanup.CleanupJobExecutionRepository;
-import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.in.www1.artemis.web.rest.dto.CleanupServiceExecutionRecordDTO;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
+import de.tum.cit.aet.artemis.assessment.domain.Rating;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
+import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
+import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
+import de.tum.cit.aet.artemis.core.domain.CleanupJobType;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
+import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
+import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
+import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.cit.aet.artemis.localvcci.AbstractLocalCILocalVCIntegrationTest;
+import de.tum.cit.aet.artemis.participation.ParticipationFactory;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismMatch;
+import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
+import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
+import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.text.domain.TextBlock;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
 class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
@@ -118,7 +117,8 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         oldCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         oldCourse.setStartDate(now.minusMonths(12).plusDays(2));
         oldCourse.setEndDate(now.minusMonths(6).minusDays(2));
-        TextExercise finishedTextExercise1 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12), now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
+        TextExercise finishedTextExercise1 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),
+                now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
         finishedTextExercise1.setTitle("Finished");
         oldCourse.addExercises(finishedTextExercise1);
         oldCourse = courseRepository.save(oldCourse);
@@ -127,7 +127,8 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         newCourse = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         newCourse.setStartDate(now);
         newCourse.setEndDate(now.plusMonths(6));
-        TextExercise finishedTextExercise2 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12), now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
+        TextExercise finishedTextExercise2 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),
+                now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
         finishedTextExercise2.setTitle("Finished");
         newCourse.addExercises(finishedTextExercise2);
         newCourse = courseRepository.save(newCourse);
@@ -155,7 +156,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         TeamScore orphanTeamScore = new TeamScore();
         orphanTeamScore = teamScoreRepository.save(orphanTeamScore);
 
-        Result orphanResult = new Result();
+        var orphanResult = new Result();
         orphanResult = resultRepository.save(orphanResult);
 
         orphanFeedback.setResult(orphanResult);
@@ -194,7 +195,8 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         orphanRating.setResult(orphanResult);
         orphanRating = ratingRepository.save(orphanRating);
 
-        var responseBody = request.postWithResponseBody("/api/admin/delete-orphans", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null, new LinkedMultiValueMap<>());
+        var responseBody = request.postWithResponseBody("/api/admin/delete-orphans", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
+                new LinkedMultiValueMap<>());
 
         assertThat(responseBody.jobType()).isEqualTo("deleteOrphans");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -293,7 +295,8 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
-        var responseBody = request.postWithResponseBody("/api/admin/delete-plagiarism-comparisons", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null, params);
+        var responseBody = request.postWithResponseBody("/api/admin/delete-plagiarism-comparisons", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
+                params);
 
         assertThat(responseBody.jobType()).isEqualTo("deletePlagiarismComparisons");
         assertThat(responseBody.executionDate()).isNotNull();

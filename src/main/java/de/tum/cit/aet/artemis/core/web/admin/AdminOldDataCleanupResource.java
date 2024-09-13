@@ -1,6 +1,6 @@
-package de.tum.in.www1.artemis.web.rest.admin;
+package de.tum.cit.aet.artemis.core.web.admin;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
-import de.tum.in.www1.artemis.service.cleanup.DataCleanupService;
-import de.tum.in.www1.artemis.web.rest.dto.CleanupServiceExecutionRecordDTO;
+import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
+import de.tum.cit.aet.artemis.core.service.cleanup.DataCleanupService;
 
 /**
  * REST controller for managing old data cleanup operations in Artemis.

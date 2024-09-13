@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository.cleanup;
+package de.tum.cit.aet.artemis.core.repository.cleanup;
 
 import java.time.ZonedDateTime;
 import java.util.Collection;

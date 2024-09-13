@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.cleanup;
+package de.tum.cit.aet.artemis.core.domain;
 
 import java.time.ZonedDateTime;
 
@@ -10,9 +10,6 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.enumeration.CleanupJobType;
 
 @Entity
 @Table(name = "cleanup_job_execution")

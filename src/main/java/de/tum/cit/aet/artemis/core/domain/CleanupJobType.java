@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.enumeration;
+package de.tum.cit.aet.artemis.core.domain;
 
 public enum CleanupJobType {
 
