@@ -760,7 +760,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(feedbackDetail.testCaseName()).isEqualTo("test1");
         assertThat(feedbackDetail.taskNumber()).isEqualTo(1);
 
-        assertThat(response.distinctResultCount()).isEqualTo(1);
+        assertThat(response.totalItems()).isEqualTo(1);
     }
 
     @Test
@@ -821,7 +821,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(secondFeedbackDetail.testCaseName()).isEqualTo("test1");
         assertThat(secondFeedbackDetail.taskNumber()).isEqualTo(1);
 
-        assertThat(response.distinctResultCount()).isEqualTo(2);
+        assertThat(response.totalItems()).isEqualTo(2);
     }
 
     @Test
@@ -840,7 +840,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
 
         assertThat(response.feedbackDetails().getResultsOnPage()).isEmpty();
 
-        assertThat(response.distinctResultCount()).isEqualTo(0);
+        assertThat(response.totalItems()).isEqualTo(0);
     }
 
 }
