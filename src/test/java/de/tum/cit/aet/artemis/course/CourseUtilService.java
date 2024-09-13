@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.course;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.cit.aet.artemis.participation.ParticipationFactory.generateResult;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -658,7 +659,7 @@ public class CourseUtilService {
         return courseSaved;
     }
 
-    public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTeamsAndScores(String userPrefix, boolean hasAssessmentDueDatePassed) {
+    public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndScores(String userPrefix, boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
         Course course = CourseFactory.generateCourse(null, PAST_TIMESTAMP, FUTURE_TIMESTAMP, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
@@ -817,7 +818,7 @@ public class CourseUtilService {
 
         // Setup Scores
         courseSaved.getExercises().forEach(exercise -> {
-            studentScoreUtilService.createStudentScore(exercise, user, 0.5);
+            studentScoreUtilService.createStudentScore(exercise, user, MIN_SCORE_GREEN);
         });
 
         return courseSaved;

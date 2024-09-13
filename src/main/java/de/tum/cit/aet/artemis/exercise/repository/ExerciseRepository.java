@@ -322,6 +322,9 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Set<String> findAllCategoryNames(@Param("courseId") Long courseId);
 
+    @EntityGraph(attributePaths = "categories")
+    List<Exercise> findAllWithCategoriesByCourseId(Long courseId);
+
     @Query("""
             SELECT DISTINCT e
             FROM Exercise e

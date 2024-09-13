@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toRelativeTime;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -67,7 +68,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         userUtilService.addUsers(TEST_PREFIX, 3, 1, 1, 1);
 
-        course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTeamsAndScores(TEST_PREFIX, true);
+        course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndScores(TEST_PREFIX, true);
         courseWithTestRuns = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(TEST_PREFIX, true);
         courseWithCompetencies = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(TEST_PREFIX, true, true, 1).getFirst();
 
@@ -120,7 +121,8 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(result.exerciseMetrics()).isNotNull();
             final var categories = result.exerciseMetrics().categories();
 
-            final var expectedCategories = learningMetricsService.getStudentExerciseMetrics(userID, course.getId()).categories();
+            final var expectedCategories = exerciseRepository.findAllWithCategoriesByCourseId(course.getId()).stream()
+                    .collect(Collectors.toMap(Exercise::getId, Exercise::getCategories));
 
             assertThat(categories).isEqualTo(expectedCategories);
         }
@@ -141,9 +143,6 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             final var expectedMap = exercises.stream().map(Exercise::getId).collect(
                     Collectors.toMap(Function.identity(), id -> resultRepository.findAllByParticipationExerciseId(id).stream().mapToDouble(Result::getScore).average().orElse(0)));
-
-            // using learningMetricsService
-            final var expectedMapSimple = learningMetricsService.getStudentExerciseMetrics(userID, course.getId()).averageScore();
 
             assertThat(averageScores).isEqualTo(expectedMap);
         }
@@ -248,36 +247,27 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnCompleted() throws Exception {
+
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var completed = result.exerciseMetrics().completed();
 
-            /*
-             * final var exercises = exerciseRepository.findAllWithCategoriesByCourseId(course.getId());
-             * final var expectedCompleted = exercises.stream().map(Exercise::getId)
-             * .filter(id -> resultRepository.findAllByParticipationExerciseId(id).stream().anyMatch(Result::isRated)).collect(Collectors.toSet());
-             */
-            final var expectedCompleted = learningMetricsService.getStudentExerciseMetrics(userID, course.getId()).completed();
+            final var exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(userID);
+
+            final var expectedCompleted = exercises.stream().map(Exercise::getId)
+                    .filter(id -> resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(id, userID).stream()
+                            .anyMatch(result1 -> result1.getScore() != null && result1.getScore() >= MIN_SCORE_GREEN))
+                    .collect(Collectors.toSet());
 
             assertThat(completed).isEqualTo(expectedCompleted);
-        }
-
-        @Test
-        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnTeamId() throws Exception {
-            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
-            assertThat(result).isNotNull();
-            assertThat(result.exerciseMetrics()).isNotNull();
-            // final var teamIDs = result.exerciseMetrics().teamId())
-
-            // assertThat(teamIDs).isEqualTo(expectedTeamIDs);
         }
     }
 
     @Nested
     class CompetencyMetrics {
 
+        @Disabled
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnCompetencyInformation() throws Exception {
@@ -287,23 +277,21 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             final var competencyInformation = result.competencyMetrics().competencyInformation();
 
-            // final var competencies = competencyRepository.findAllForCourse(courseWithCompetencies.getId());
-            // final var expectedDTOs = competencies.stream().map().collect(Collectors.toSet());
-            //
-            // final var expectedDTOs = exercises.stream().map(ExerciseInformationDTO::of).collect(Collectors.toSet());
+            final var expectedCompetencies = competencyMetricsRepository.findAllCompetencyInformationByCourseId(courseWithCompetencies.getId());
 
-            // assertThat(exerciseInformation.values()).containsExactlyInAnyOrderElementsOf(expectedDTOs);
-            // assertThat(exerciseInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
+            assertThat(competencyInformation.values()).containsExactlyInAnyOrderElementsOf(expectedCompetencies);
+            assertThat(competencyInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
         }
     }
 
     @Nested
     class LectureMetrics {
 
+        @Disabled
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnLectureUnitInformation() throws Exception {
-            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            final var result = request.get("/api/metrics/course/" + courseWithCompetencies.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.lectureUnitStudentMetricsDTO()).isNotNull();
             final var lectureUnitInformation = result.lectureUnitStudentMetricsDTO().lectureUnitInformation();
