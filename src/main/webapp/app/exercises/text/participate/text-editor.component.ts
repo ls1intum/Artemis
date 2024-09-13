@@ -117,17 +117,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation, this.submissionId);
             });
 
-            if (this.submissionId) {
-                this.textService.getAll(participationId).subscribe({
-                    next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
-            } else {
-                this.textService.get(participationId).subscribe({
-                    next: (data: StudentParticipation) => this.updateParticipation(data),
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
-            }
+            this.textService.getAll(participationId).subscribe({
+                next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
 
             this.isReadOnlyWithShowResult = !!this.submissionId;
         }
@@ -183,10 +176,13 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
     }
 
+    /**
+     * Updates the participation, the submission selected can be chosen through submissionId, default undefined means latest
+     * @param participation The participation data
+     * @param submissionId The id of the submission of choice. undefined value defaults to the latest submission
+     */
     private updateParticipation(participation: StudentParticipation, submissionId: number | undefined = undefined) {
         this.participation = participation;
-        //this.alertService.info("Participation results length " + participation.results?.length)
-        //this.sortedHistoryResults = participation.results || [];
         this.textExercise = this.participation.exercise as TextExercise;
         this.examMode = !!this.textExercise.exerciseGroup;
         this.textExercise.studentParticipations = [this.participation];
