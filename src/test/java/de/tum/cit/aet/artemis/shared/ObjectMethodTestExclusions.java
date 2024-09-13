@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.domain;
+package de.tum.cit.aet.artemis.shared;
 
 import java.util.EnumSet;
 import java.util.List;

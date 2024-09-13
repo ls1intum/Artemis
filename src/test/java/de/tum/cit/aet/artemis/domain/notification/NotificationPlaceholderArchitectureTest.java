@@ -18,8 +18,8 @@ import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ConditionEvents;
 
-import de.tum.cit.aet.artemis.architecture.AbstractArchitectureTest;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationPlaceholderCreator;
+import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 class NotificationPlaceholderArchitectureTest extends AbstractArchitectureTest {
 

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.architecture;
+package de.tum.cit.aet.artemis.shared.architecture;
 
 import static com.tngtech.archunit.core.domain.JavaModifier.ABSTRACT;
 import static com.tngtech.archunit.core.domain.JavaModifier.FINAL;

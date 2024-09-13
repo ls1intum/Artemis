@@ -1,14 +1,14 @@
-package de.tum.cit.aet.artemis.domain;
+package de.tum.cit.aet.artemis.shared;
 
-import static de.tum.cit.aet.artemis.domain.ObjectMethodTestExclusions.ALL_TESTS;
-import static de.tum.cit.aet.artemis.domain.ObjectMethodTestExclusions.ENUM_TOSTRING_NAME_EQUALITY;
-import static de.tum.cit.aet.artemis.domain.ObjectMethodTestExclusions.ID_EQUALS;
-import static de.tum.cit.aet.artemis.domain.ObjectMethodTestExclusions.ID_GET_AND_SET;
-import static de.tum.cit.aet.artemis.domain.ObjectMethodTestExclusions.ID_HASHCODE;
-import static de.tum.cit.aet.artemis.domain.ObjectMethodTestExclusions.ID_RELATED_TESTS;
-import static de.tum.cit.aet.artemis.domain.ObjectMethodTestExclusions.INSTANCE_TESTS;
-import static de.tum.cit.aet.artemis.domain.ObjectMethodTestExclusions.isClassExcludedFrom;
-import static de.tum.cit.aet.artemis.domain.ObjectMethodTestExclusions.isClassNotExcludedFrom;
+import static de.tum.cit.aet.artemis.shared.ObjectMethodTestExclusions.ALL_TESTS;
+import static de.tum.cit.aet.artemis.shared.ObjectMethodTestExclusions.ENUM_TOSTRING_NAME_EQUALITY;
+import static de.tum.cit.aet.artemis.shared.ObjectMethodTestExclusions.ID_EQUALS;
+import static de.tum.cit.aet.artemis.shared.ObjectMethodTestExclusions.ID_GET_AND_SET;
+import static de.tum.cit.aet.artemis.shared.ObjectMethodTestExclusions.ID_HASHCODE;
+import static de.tum.cit.aet.artemis.shared.ObjectMethodTestExclusions.ID_RELATED_TESTS;
+import static de.tum.cit.aet.artemis.shared.ObjectMethodTestExclusions.INSTANCE_TESTS;
+import static de.tum.cit.aet.artemis.shared.ObjectMethodTestExclusions.isClassExcludedFrom;
+import static de.tum.cit.aet.artemis.shared.ObjectMethodTestExclusions.isClassNotExcludedFrom;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.AssertionsForClassTypes.fail;

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.architecture;
+package de.tum.cit.aet.artemis.shared.architecture;
 
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
