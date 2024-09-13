@@ -17,6 +17,10 @@ export class DataCleanupService {
     /**
      * Send POST request to delete orphaned data within a specific date range.
      */
+    /**
+     * Send POST request to delete orphaned data.
+     * @returns An observable of type HttpResponse<CleanupServiceExecutionRecordDTO>.
+     */
     deleteOrphans(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         return this.http.post<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-orphans`, null, {
             observe: 'response',
@@ -83,6 +87,10 @@ export class DataCleanupService {
         });
     }
 
+    /**
+     * Send POST request to get the last executions.
+     * @returns An observable of type HttpResponse<CleanupServiceExecutionRecordDTO[]>.
+     */
     getLastExecutions(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO[]>> {
         return this.http.post<CleanupServiceExecutionRecordDTO[]>(`${this.adminResourceUrl}/get-last-executions`, null, {
             observe: 'response',
