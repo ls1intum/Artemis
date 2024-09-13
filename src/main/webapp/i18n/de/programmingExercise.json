@@ -118,14 +118,22 @@
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
-                "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
-                "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "offlineIde": "IDE",
+            "allowOnlineIde": {
+                "title": "Online-IDE erlauben",
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein.",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+            },
+            "onlineIde": "Online IDE",
             "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
@@ -170,6 +178,11 @@
             "projectType": "Projekttyp",
             "testRepositoryProjectType": "Projekttyp des Test-Repository",
             "packageName": "Package-Name",
+            "theiaImage": {
+                "title": "Konfiguration für Online IDE",
+                "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
+                "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
+            },
             "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
             "solutionResult": "Ergebnis der Musterlösung",

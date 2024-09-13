@@ -130,14 +130,22 @@
             "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
-                "alert": "At least one option (Offline IDE or Online Editor) must be selected"
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Allow Offline IDE",
-                "alert": "At least one option (Offline IDE or Online Editor) must be selected"
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "offlineIde": "IDE",
+            "allowOnlineIde": {
+                "title": "Allow Online IDE",
+                "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
+                "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
+            },
+            "onlineIde": "Online IDE",
             "showTestNamesToStudents": "Show Test Names to Students",
             "showTestNamesToStudentsTooltip": "Activate this option to show the names of the automated test cases to the students. Leave the option disabled to make no visual distinction between manual and automated feedback for the students.",
             "participationMode": "Participation Mode",
@@ -172,6 +180,11 @@
             "projectType": "Project Type",
             "testRepositoryProjectType": "Test Repository Project Type",
             "packageName": "Package Name",
+            "theiaImage": {
+                "title": "Configuration for Online IDE",
+                "noImageAvailable": "The Online IDE is not yet available for this programming language.",
+                "alert": "A valid configuration for the Online IDE must be selected."
+            },
             "appName": "App Name",
             "templateResult": "Template Result",
             "solutionResult": "Solution Result",
