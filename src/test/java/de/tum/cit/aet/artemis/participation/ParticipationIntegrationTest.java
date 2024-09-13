@@ -612,7 +612,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
 
-        Result invokedTextResult = resultCaptor.getAllValues().getFirst();
+        Result invokedTextResult = resultCaptor.getAllValues().getLast();
         assertThat(invokedTextResult).isNotNull();
         assertThat(invokedTextResult.getId()).isNotNull();
         assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
@@ -691,7 +691,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
 
-        verify(resultWebsocketService, timeout(2000).times(1)).broadcastNewResult(any(), resultCaptor.capture());
+        verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
 
         Result invokedTextResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedTextResult).isNotNull();
