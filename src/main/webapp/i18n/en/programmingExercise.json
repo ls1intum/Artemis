@@ -661,7 +661,7 @@
             },
             "otherLanguageHints": {
                 "title": "To use another language, complete the following tasks. See the <a href=\"{{documentationLink}}\">documentation</a> for details.",
-                "setImage": "Specify a custom Docker image with required dependencies (potentially create a custom one and upload it to the <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> or <a href=\"{{dockerhubLink}}\">Docker Hub</a>).",
+                "setImage": "Specify a custom Docker image with the required dependencies (potentially create a custom one and upload it to the <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> or <a href=\"{{dockerhubLink}}\">Docker Hub</a>).",
                 "buildScript": {
                     "title": "Customize the build script to:",
                     "dependencies": "Optional: Install exercise specific dependencies.",
