@@ -23,7 +23,7 @@ import { By } from '@angular/platform-browser';
 import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-
+import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
@@ -37,6 +37,7 @@ const mockExercise: Exercise = {
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: false,
     studentAssignedTeamIdComputed: false,
+    course: { id: 42 },
 } as Exercise;
 
 const mockParticipation: Participation = {
@@ -50,6 +51,7 @@ const mockResult: Result = {
     completionDate: dayjs().subtract(2, 'hours'),
     score: 85,
     rated: true,
+    submission: { id: 42 },
     feedbacks: [
         {
             id: 1,
@@ -77,6 +79,7 @@ describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
     let modalService: NgbModal;
     let mockLink: HTMLAnchorElement;
+    let router: Router;
 
     beforeEach(async () => {
         participationServiceMock.downloadArtifact = jest.fn() as jest.Mock;
@@ -96,6 +99,7 @@ describe('ResultComponent', () => {
                 fixture = TestBed.createComponent(ResultComponent);
                 comp = fixture.componentInstance;
                 modalService = TestBed.inject(NgbModal);
+                router = TestBed.inject(Router);
 
                 participationServiceMock.downloadArtifact = jest.fn() as jest.Mock;
 
@@ -216,6 +220,25 @@ describe('ResultComponent', () => {
             expect(modalComponentInstance.latestDueDate).toEqual(preparedFeedback.latestDueDate);
             expect(modalComponentInstance.showMissingAutomaticFeedbackInformation).toEqual(preparedFeedback.showMissingAutomaticFeedbackInformation);
         });
+    });
+
+    it('should navigate to text exercise details when exercise type is TEXT', () => {
+        comp.exercise = { ...mockExercise, type: ExerciseType.TEXT };
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        const courseId = 42;
+        comp.showDetails(mockResult);
+
+        expect(navigateSpy).toHaveBeenCalledWith([
+            '/courses',
+            courseId,
+            'exercises',
+            'text-exercises',
+            comp.exercise.id,
+            'participate',
+            mockResult.participation.id,
+            'submission',
+            mockResult.submission.id,
+        ]);
     });
 
     it('should call showDetails only when isInSidebarCard is false', () => {
