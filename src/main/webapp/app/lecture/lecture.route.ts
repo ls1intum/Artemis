@@ -14,6 +14,9 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
+import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { Attachment } from 'app/entities/attachment.model';
+import { AttachmentService } from 'app/lecture/attachment.service';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {
@@ -28,6 +31,22 @@ export class LectureResolve implements Resolve<Lecture> {
             );
         }
         return of(new Lecture());
+    }
+}
+
+@Injectable({ providedIn: 'root' })
+export class AttachmentResolve implements Resolve<Attachment> {
+    constructor(private attachmentService: AttachmentService) {}
+
+    resolve(route: ActivatedRouteSnapshot): Observable<Attachment> {
+        const attachmentId = route.params['attachmentId'];
+        if (attachmentId) {
+            return this.attachmentService.find(attachmentId).pipe(
+                filter((response: HttpResponse<Attachment>) => response.ok),
+                map((attachment: HttpResponse<Attachment>) => attachment.body!),
+            );
+        }
+        return of(new Attachment());
     }
 }
 
@@ -90,6 +109,20 @@ export const lectureRoute: Routes = [
                                     pageTitle: 'artemisApp.lecture.attachments.title',
                                 },
                                 canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: 'attachments',
+                                canActivate: [UserRouteAccessService],
+                                children: [
+                                    {
+                                        path: ':attachmentId',
+                                        component: PdfPreviewComponent,
+                                        resolve: {
+                                            attachment: AttachmentResolve,
+                                            course: CourseManagementResolve,
+                                        },
+                                    },
+                                ],
                             },
                             {
                                 path: 'edit',

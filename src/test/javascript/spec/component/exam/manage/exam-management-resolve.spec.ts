@@ -6,7 +6,7 @@ import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';

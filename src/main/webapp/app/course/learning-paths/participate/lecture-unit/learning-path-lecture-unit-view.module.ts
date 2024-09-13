@@ -19,13 +19,6 @@ const routes: Routes = [
             pageTitle: 'overview.learningPath',
         },
         canActivate: [UserRouteAccessService],
-        children: [
-            {
-                path: '',
-                pathMatch: 'full',
-                loadChildren: () => import('app/overview/discussion-section/discussion-section.module').then((m) => m.DiscussionSectionModule),
-            },
-        ],
     },
 ];
 

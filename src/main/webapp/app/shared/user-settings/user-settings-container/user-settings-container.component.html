@@ -2,8 +2,12 @@
     <div class="row">
         <div class="col-lg-3 col-sm-12">
             <!-- profile header -->
-            <div class="d-flex">
-                <fa-icon id="avatar" size="3x" [icon]="faUser" />
+            <div class="d-flex flex-column">
+                @if (currentUser && currentUser.imageUrl) {
+                    <img class="user-settings-container-profile-picture rounded-3" [src]="currentUser.imageUrl" alt="User Profile Picture" />
+                } @else {
+                    <fa-icon id="avatar" size="3x" [icon]="faUser" />
+                }
                 @if (currentUser) {
                     <div>
                         @if (currentUser.name) {
@@ -26,8 +30,19 @@
                 ></a>
                 <a class="list-group-item btn btn-outline-primary" routerLink="science" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.scienceSettings"></a>
                 @if (localVCEnabled) {
-                    <a class="list-group-item btn btn-outline-primary" routerLink="sshSettings" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.sshSettings"></a>
+                    <a class="list-group-item btn btn-outline-primary" routerLink="ssh" routerLinkActive="active" jhiTranslate="artemisApp.userSettings.sshSettings"></a>
+                    <a
+                        class="list-group-item btn btn-outline-primary"
+                        routerLink="vcs-token"
+                        routerLinkActive="active"
+                        jhiTranslate="artemisApp.userSettings.vcsAccessTokenSettings"
+                    >
+                    </a>
                 }
+                <a class="list-group-item btn btn-outline-primary" routerLink="ide-preferences" routerLinkActive="active">
+                    <!--Default IDE Settings-->
+                    <span jhiTranslate="artemisApp.userSettings.categories.IDE_PREFERENCES"></span>
+                </a>
             </section>
         </div>
         <!-- the currently opened settings -->

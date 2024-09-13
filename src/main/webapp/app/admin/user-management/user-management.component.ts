@@ -430,6 +430,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Actions after the deletion of not enrolled users is completed.
+     */
+    deleteNotEnrolledUsersComplete() {
+        this.eventManager.broadcast({
+            name: 'userListModification',
+            content: 'Deleted users',
+        });
+    }
+
+    /**
      * Retrieve the list of users from the user service for a single page in the user management based on the page, size and sort configuration
      */
     loadAll() {

@@ -9,7 +9,7 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 describe('ExerciseHint Management Component', () => {
     let comp: ExerciseHintComponent;

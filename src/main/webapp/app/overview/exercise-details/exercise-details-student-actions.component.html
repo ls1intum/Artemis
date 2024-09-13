@@ -126,6 +126,7 @@
                                 [participations]="exercise.studentParticipations!"
                                 [exercise]="exercise"
                                 [routerLinkForRepositoryView]="repositoryLink + '/repository/' + exercise.studentParticipations![0].id"
+                                [useParticipationVcsAccessToken]="true"
                             />
                         }
                         @if (theiaEnabled) {
@@ -250,6 +251,19 @@
                         [hideLabelMobile]="false"
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
+                    @if (exercise.allowFeedbackRequests && athenaEnabled && exercise.type === ExerciseType.TEXT) {
+                        <button
+                            class="btn btn-primary"
+                            (click)="requestFeedback()"
+                            [class.btn-sm]="smallButtons"
+                            [disabled]="!gradedParticipation?.submissions?.last()?.submitted || isGeneratingFeedback"
+                            [id]="'request-feedback-' + exercise.id"
+                            [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+                        </button>
+                    }
                 }
             </div>
         }

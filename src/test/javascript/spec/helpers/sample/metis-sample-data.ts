@@ -13,7 +13,7 @@ import { Conversation, ConversationType } from 'app/entities/metis/conversation/
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { Slide } from 'app/entities/lecture-unit/slide.model';
 import { Channel, ChannelDTO, ChannelSubType } from 'app/entities/metis/conversation/channel.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 

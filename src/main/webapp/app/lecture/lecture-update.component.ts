@@ -13,7 +13,7 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -33,7 +33,7 @@ export class LectureUpdateComponent implements OnInit {
 
     courses: Course[];
 
-    domainActionsDescription = [new MonacoFormulaAction()];
+    domainActionsDescription = [new FormulaAction()];
     file: File;
     fileName: string;
     fileInputTouched = false;

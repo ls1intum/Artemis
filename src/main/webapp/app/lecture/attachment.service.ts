@@ -135,4 +135,15 @@ export class AttachmentService {
         }
         return formData;
     }
+
+    /**
+     * Retrieve the file associated with a given attachment ID as a Blob object
+     *
+     * @param courseId The ID of the course that the attachment belongs to
+     * @param attachmentId The ID of the attachment to retrieve
+     * @returns An Observable that emits the Blob object of the file when the HTTP request completes successfully
+     */
+    getAttachmentFile(courseId: number, attachmentId: number): Observable<Blob> {
+        return this.http.get(`api/files/courses/${courseId}/attachments/${attachmentId}`, { responseType: 'blob' });
+    }
 }
