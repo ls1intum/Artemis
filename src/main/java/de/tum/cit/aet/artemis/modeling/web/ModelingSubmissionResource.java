@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.modeling.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -26,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
@@ -46,6 +48,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.web.AbstractSubmissionResource;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -340,12 +343,22 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
         // make sure only the latest submission and latest result is sent to the client
         participation.setSubmissions(null);
-        participation.setResults(null);
 
         // do not send the result to the client if the assessment is not finished
         if (modelingSubmission.getLatestResult() != null
                 && (modelingSubmission.getLatestResult().getCompletionDate() == null || modelingSubmission.getLatestResult().getAssessor() == null)) {
             modelingSubmission.setResults(new ArrayList<>());
+        }
+
+        if (!ExerciseDateService.isAfterAssessmentDueDate(modelingExercise)) {
+            // We want to have the preliminary feedback before the assessment due date too
+            Set<Result> participationResults = participation.getResults();
+            if (participationResults != null) {
+                List<Result> athenaResults = participationResults.stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+                modelingSubmission.setResults(athenaResults);
+                Set<Result> athenaResultsSet = new HashSet<>(athenaResults);
+                participation.setResults(athenaResultsSet);
+            }
         }
 
         if (modelingSubmission.getLatestResult() != null && !authCheckService.isAtLeastTeachingAssistantForExercise(modelingExercise)) {

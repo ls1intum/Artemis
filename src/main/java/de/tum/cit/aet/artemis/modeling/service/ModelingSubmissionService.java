@@ -131,7 +131,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // if athena results are present than create new submission on submit
-        if (!modelingSubmission.getResults().isEmpty()) {
+        if (!modelingSubmission.getParticipation().getResults().isEmpty()) {
             log.debug("Creating a new submission due to Athena results for user: {}", user.getLogin());
             modelingSubmission.setId(null);
         }
