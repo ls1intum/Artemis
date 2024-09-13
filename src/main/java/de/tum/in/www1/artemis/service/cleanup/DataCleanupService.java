@@ -56,20 +56,12 @@ public class DataCleanupService {
     }
 
     public List<CleanupServiceExecutionRecordDTO> getLastExecutions() {
-        List<CleanupServiceExecutionRecordDTO> executionRecords = new ArrayList<>();
-
-        for (CleanupJobType jobType : CleanupJobType.values()) {
-            CleanupJobExecution lastExecution = cleanupJobExecutionRepository.findTopByCleanupJobTypeOrderByDeletionTimestampDesc(jobType);
-            if (lastExecution != null) {
-                executionRecords.add(CleanupServiceExecutionRecordDTO.of(lastExecution));
-            }
-            else {
-                // for jobs that have not been run yet
-                executionRecords.add(new CleanupServiceExecutionRecordDTO(null, jobType.getName()));
-            }
-        }
-
-        return executionRecords;
+        return Arrays.stream(CleanupJobType.values())
+            .map(jobType -> {
+                CleanupJobExecution lastExecution = cleanupJobExecutionRepository.findTopByCleanupJobTypeOrderByDeletionTimestampDesc(jobType);
+                return lastExecution != null ? CleanupServiceExecutionRecordDTO.of(lastExecution) : new CleanupServiceExecutionRecordDTO(null, jobType.getName());
+            })
+            .collect(Collectors.toList());
     }
 
     private CleanupJobExecution createDBEntry(CleanupJobType cleanupJobType, ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
