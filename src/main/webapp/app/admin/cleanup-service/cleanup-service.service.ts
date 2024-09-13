@@ -88,11 +88,11 @@ export class DataCleanupService {
     }
 
     /**
-     * Send POST request to get the last executions.
+     * Send GET request to get the last executions.
      * @returns An observable of type HttpResponse<CleanupServiceExecutionRecordDTO[]>.
      */
     getLastExecutions(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO[]>> {
-        return this.http.post<CleanupServiceExecutionRecordDTO[]>(`${this.adminResourceUrl}/get-last-executions`, null, {
+        return this.http.get<CleanupServiceExecutionRecordDTO[]>(`${this.adminResourceUrl}/get-last-executions`, {
             observe: 'response',
         });
     }
