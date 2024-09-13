@@ -41,8 +41,6 @@ import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('TextEditorComponent', () => {
@@ -94,7 +92,6 @@ describe('TextEditorComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
             ],
         })
             .compileComponents()
@@ -105,8 +102,6 @@ describe('TextEditorComponent', () => {
                 textService = debugElement.injector.get(TextEditorService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 getTextForParticipationStub = jest.spyOn(textService, 'getAll');
-                assureConditionsSatisfiedSpy = jest.spyOn(comp, 'assureConditionsSatisfied');
-                courseExerciseService = debugElement.injector.get(CourseExerciseService);
             });
     });
 
