@@ -53,7 +53,7 @@ class ServiceArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testCorrectServiceAnnotation() {
-        classes().that().resideInAPackage("de.tum.cit.aet.artemis.service..").and().haveSimpleNameEndingWith("Service").and().areNotInterfaces().and().doNotHaveModifier(ABSTRACT)
+        classes().that().resideInAPackage("de.tum.cit.aet.artemis.*.service..").and().haveSimpleNameEndingWith("Service").and().areNotInterfaces().and().doNotHaveModifier(ABSTRACT)
                 .should().beAnnotatedWith(org.springframework.stereotype.Service.class)
                 .because("services should be consistently managed by Spring's dependency injection container.").check(allClasses);
 
