@@ -1,0 +1,29 @@
+.modal-body {
+    padding: 1rem;
+}
+
+.modal-label {
+    font-weight: bold;
+}
+
+.border {
+    padding: 5px;
+    border-left: var(--border-color) 1px solid;
+    border-right: var(--border-color) 1px solid;
+    border-bottom: var(--border-color) 1px solid;
+    border-radius: 10px;
+}
+
+.modal-header {
+    border-bottom: none;
+    padding-left: 1rem;
+    padding-top: 1.5rem;
+}
+
+.modal-body p {
+    margin-bottom: 0;
+}
+
+.modal-footer {
+    border-top: none;
+}

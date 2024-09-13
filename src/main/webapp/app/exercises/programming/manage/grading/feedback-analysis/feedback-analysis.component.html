@@ -1,27 +1,81 @@
+<ng-template #headerTemplate let-column="column" let-label="label">
+    <th scope="col" class="clickable" (click)="setSortedColumn(column)">
+        <span [jhiTranslate]="label"></span>
+        @if (sortedColumn() === column) {
+            @if (sortingOrder() === 'ASC') {
+                <fa-icon [icon]="faSortUp"></fa-icon>
+            } @else {
+                <fa-icon [icon]="faSortDown"></fa-icon>
+            }
+        }
+    </th>
+</ng-template>
+
 <div class="m-3">
-    <h2 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle }"></h2>
+    <h2 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h2>
+
+    <div class="d-flex align-items-center mb-3 position-relative">
+        <input type="search" class="form-control" [placeholder]="'Search feedback...'" aria-label="Search feedback" [(ngModel)]="searchTerm" (ngModelChange)="search()" />
+        <fa-icon [icon]="faMagnifyingGlass" class="search-icon"></fa-icon>
+    </div>
+
     <table class="table table-striped mb-3">
         <thead>
             <tr>
-                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.occurrence"></th>
-                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedback"></th>
-                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.task"></th>
-                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.testcase"></th>
-                <th scope="col" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.errorCategory"></th>
+                <ng-container
+                    *ngTemplateOutlet="headerTemplate; context: { column: 'count', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.occurrence' }"
+                ></ng-container>
+                <ng-container
+                    *ngTemplateOutlet="headerTemplate; context: { column: 'detailText', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedback' }"
+                ></ng-container>
+                <ng-container
+                    *ngTemplateOutlet="headerTemplate; context: { column: 'taskNumber', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.task' }"
+                ></ng-container>
+                <ng-container
+                    *ngTemplateOutlet="headerTemplate; context: { column: 'testCaseName', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.testcase' }"
+                ></ng-container>
+                <ng-container
+                    *ngTemplateOutlet="
+                        headerTemplate;
+                        context: { column: 'relativeCount', label: 'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.errorCategory' }
+                    "
+                ></ng-container>
             </tr>
         </thead>
         <tbody class="table-group-divider">
-            @for (item of feedbackDetails; track item) {
+            @for (item of paginatedFeedbackDetails(); track item) {
                 <tr>
                     <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
-                    <td>{{ item.detailText }}</td>
+                    <td>
+                        {{ item.detailText.length > 150 ? (item.detailText | slice: 0 : 100) + '...' : item.detailText }}
+                    </td>
                     <td class="text-center">{{ item.taskNumber }}</td>
                     <td>{{ item.testCaseName }}</td>
                     <td>Student Error</td>
-                    <!-- This is a placeholder, will be covered in follow up PRs -->
+                    <td class="text-center">
+                        <fa-icon [icon]="faMagnifyingGlassPlus" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
+                    </td>
                 </tr>
             }
         </tbody>
     </table>
-    <div jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.totalItems" [translateValues]="{ count: feedbackDetails.length }"></div>
+
+    <div class="d-flex flex-column align-items-end mt-2">
+        <ngb-pagination
+            [collectionSize]="collectionSize()"
+            [pageSize]="pageSize()"
+            [page]="page()"
+            (pageChange)="setPage($event)"
+            size="sm"
+            class="pagination justify-content-end"
+        ></ngb-pagination>
+
+        <div class="text-muted text-end">
+            <span
+                class="small-text"
+                jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.totalItems"
+                [translateValues]="{ count: collectionSize() }"
+            ></span>
+        </div>
+    </div>
 </div>

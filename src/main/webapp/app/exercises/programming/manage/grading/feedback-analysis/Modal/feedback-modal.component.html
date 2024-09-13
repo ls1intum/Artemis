@@ -1,0 +1,29 @@
+<div class="modal-header">
+    <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.header"></h4>
+</div>
+<div class="modal-body">
+    <div class="d-flex justify-content-between mb-3">
+        <div class="border">
+            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.task"></span>
+            <p>{{ feedbackDetail.taskNumber }}</p>
+        </div>
+        <div class="border">
+            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.occurrence"></span>
+            <p>{{ feedbackDetail.relativeCount }}% ({{ feedbackDetail.count }})</p>
+        </div>
+        <div class="border">
+            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.testcase"></span>
+            <p>{{ feedbackDetail.testCaseName }}</p>
+        </div>
+        <div class="border">
+            <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.errorCategory"></span>
+            <p>Student Error</p>
+        </div>
+    </div>
+
+    <h5 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.feedbackTitle"></h5>
+    <p>{{ feedbackDetail.detailText }}</p>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-primary" (click)="activeModal.close('Close click')">Ok</button>
+</div>
