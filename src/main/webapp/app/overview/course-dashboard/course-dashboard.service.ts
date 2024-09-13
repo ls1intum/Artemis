@@ -104,15 +104,15 @@ export class CourseDashboardService {
 
     private mapToExerciseType(type: string): ExerciseType {
         switch (type) {
-            case 'de.tum.in.www1.artemis.domain.ProgrammingExercise':
+            case 'de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise':
                 return ExerciseType.PROGRAMMING;
-            case 'de.tum.in.www1.artemis.domain.modeling.ModelingExercise':
+            case 'de.tum.cit.aet.artemis.modeling.domain.ModelingExercise':
                 return ExerciseType.MODELING;
-            case 'de.tum.in.www1.artemis.domain.quiz.QuizExercise':
+            case 'de.tum.cit.aet.artemis.quiz.domain.QuizExercise':
                 return ExerciseType.QUIZ;
-            case 'de.tum.in.www1.artemis.domain.TextExercise':
+            case 'de.tum.cit.aet.artemis.text.domain.TextExercise':
                 return ExerciseType.TEXT;
-            case 'de.tum.in.www1.artemis.domain.FileUploadExercise':
+            case 'de.tum.cit.aet.artemis.file.domain.FileUploadExercise':
                 return ExerciseType.FILE_UPLOAD;
             default:
                 throw new Error(`Unknown exercise type: ${type}`);
@@ -121,15 +121,15 @@ export class CourseDashboardService {
 
     private mapToLectureUnitType(type: string): LectureUnitType {
         switch (type) {
-            case 'de.tum.in.www1.artemis.domain.lecture.AttachmentUnit':
+            case 'de.tum.cit.aet.artemis.domain.lecture.AttachmentUnit':
                 return LectureUnitType.ATTACHMENT;
-            case 'de.tum.in.www1.artemis.domain.lecture.ExerciseUnit':
+            case 'de.tum.cit.aet.artemis.domain.lecture.ExerciseUnit':
                 return LectureUnitType.EXERCISE;
-            case 'de.tum.in.www1.artemis.domain.lecture.TextUnit':
+            case 'de.tum.cit.aet.artemis.domain.lecture.TextUnit':
                 return LectureUnitType.TEXT;
-            case 'de.tum.in.www1.artemis.domain.lecture.VideoUnit':
+            case 'de.tum.cit.aet.artemis.domain.lecture.VideoUnit':
                 return LectureUnitType.VIDEO;
-            case 'de.tum.in.www1.artemis.domain.lecture.OnlineUnit':
+            case 'de.tum.cit.aet.artemis.domain.lecture.OnlineUnit':
                 return LectureUnitType.ONLINE;
             default:
                 throw new Error(`Unknown lecture unit type: ${type}`);

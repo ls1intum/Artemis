@@ -5,13 +5,6 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 import static com.diffplug.spotless.Formatter.NO_FILE_SENTINEL
 
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-}
-
 plugins {
     id "checkstyle"
     id "java"
@@ -31,8 +24,8 @@ plugins {
     id "com.adarshr.test-logger" version "4.0.0"
 }
 
-group = "de.tum.in.www1.artemis"
-version = "7.5.2"
+group = "de.tum.cit.aet.artemis"
+version = "7.5.3"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -88,7 +81,7 @@ spotless {
         removeUnusedImports()
         trimTrailingWhitespace()
 
-        // Wildcard imports can't be resolved by spotless itself.
+        // Wildcard imports cannot be resolved by spotless itself.
         // This will require the developer themselves to adhere to best practices.
         addStep(FormatterStep.createNeverUpToDate("Refuse wildcard imports", new FormatterFunc() {
             @Override
@@ -99,7 +92,7 @@ spotless {
             @Override
             String apply(String s, File file) throws Exception {
                 if (s =~ /\nimport .*\*;/) {
-                    throw new AssertionError("Do not use wildcard imports. 'spotlessApply' cannot resolve this issue.\n" +
+                    throw new AssertionError("Do not use wildcard imports. spotlessApply cannot resolve this issue.\n" +
                         "The following file violates this rule: " + file.getName())
                 }
             }
@@ -110,7 +103,7 @@ spotless {
 defaultTasks "bootRun"
 
 springBoot {
-    mainClass = "de.tum.in.www1.artemis.ArtemisApp"
+    mainClass = "de.tum.cit.aet.artemis.ArtemisApp"
 }
 
 modernizer {
@@ -210,11 +203,18 @@ configurations {
 repositories {
     mavenLocal()
     mavenCentral()
+    // required for org.gradle:gradle-tooling-api dependency
     maven {
-        url "https://repo.gradle.org/gradle/libs-releases/"
+        url "https://repo.gradle.org/gradle/libs-releases"
     }
+    // required for org.opensaml:* dependencies
     maven {
-        url "https://build.shibboleth.net/maven/releases/"
+        url "https://build.shibboleth.net/maven/releases"
+    }
+    // required for latest jgit 7.0.0 dependency
+    // TODO: remove this when jgit is available in the official maven repository
+    maven {
+        url "https://repo.eclipse.org/content/repositories/jgit-releases"
     }
 }
 
@@ -264,7 +264,7 @@ dependencies {
         }
     }
 
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.23.1"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.0"
 
     // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
     // implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
@@ -275,7 +275,7 @@ dependencies {
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
     // Note: jgit.htt.server is not compatible with jakarta yet and neither is there a timeline. Hence, we had to add the source files to our repository.
     // Once the compatibility is given, we can switch back to the maven dependency.
-    // implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
+    implementation "org.eclipse.jgit:org.eclipse.jgit.http.server:${jgit_version}"
 
     // apache ssh enabled the ssh git operations in LocalVC together with JGit
     implementation "org.apache.sshd:sshd-core:${sshd_version}"
@@ -330,7 +330,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.13.3"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.13.4"
     implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -396,7 +396,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.3"
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.4"
 
-    implementation "io.netty:netty-all:4.1.112.Final"
+    implementation "io.netty:netty-all:4.1.113.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.22"
     implementation "org.springframework:spring-messaging:6.1.12"
     implementation "org.springframework.retry:spring-retry:2.0.8"
@@ -457,6 +457,38 @@ dependencies {
 
     implementation "com.google.errorprone:error_prone_annotations:2.31.0"
 
+    // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
+    implementation("net.bytebuddy:byte-buddy") {
+        version {
+            strictly byte_buddy_version
+        }
+    }
+    annotationProcessor("net.bytebuddy:byte-buddy") {
+        version {
+            strictly byte_buddy_version
+        }
+    }
+    liquibase("net.bytebuddy:byte-buddy") {
+        version {
+            strictly byte_buddy_version
+        }
+    }
+    implementation("net.bytebuddy:byte-buddy-agent") {
+        version {
+            strictly byte_buddy_version
+        }
+    }
+    annotationProcessor("net.bytebuddy:byte-buddy-agent") {
+        version {
+            strictly byte_buddy_version
+        }
+    }
+    liquibase("net.bytebuddy:byte-buddy-agent") {
+        version {
+            strictly byte_buddy_version
+        }
+    }
+
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {
         exclude group: "jakarta.ws.rs", module: "jsr311-api"
@@ -488,7 +520,7 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.175"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.10"
+    testImplementation "org.gradle:gradle-tooling-api:8.10.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.0"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
@@ -499,24 +531,21 @@ dependencies {
     testImplementation("org.skyscreamer:jsonassert:1.5.3") {
         exclude module: "android-json"
     }
-    testImplementation("net.bytebuddy:byte-buddy") {
-        version {
-            strictly "1.15.1"
-        }
-    }
+
     // cannot update due to "Syntax error in SQL statement "WITH ids_to_delete"
 //    testImplementation "com.h2database:h2:2.3.230"
     testImplementation "com.h2database:h2:2.2.224"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20240303"
-}
 
-ext["junit-jupiter.version"] = junit_version
+    // NOTE: make sure this corresponds to the version used for JUnit in the testImplementation
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher:${junit_platform_version}"
+}
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:16.2.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:16.4.0"
     }
 }
 
@@ -525,7 +554,7 @@ tasks.register("cleanResources", Delete) {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.compilerArgs << '-Xlint:deprecation'
+    options.compilerArgs << "-Xlint:deprecation"
 }
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
@@ -573,7 +602,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.10"
+    gradleVersion = "8.10.1"
 }
 
 tasks.register("stage") {

@@ -1,3 +1,5 @@
+$profile-picture-height: 2.15rem;
+
 .post-result-information {
     font-size: small;
     font-style: italic;
@@ -21,19 +23,59 @@
     color: var(--metis-green);
 }
 
-.badge {
+.post-header-author-date {
+    line-height: 1.1;
+}
+
+.post-content-margin {
+    margin-left: 2.65rem;
+}
+
+.post-profile-picture {
+    width: $profile-picture-height;
+    height: $profile-picture-height;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gray-400);
     color: var(--white);
 }
 
-.badge-student {
+.post-profile-picture-wrap {
+    width: $profile-picture-height;
+    height: $profile-picture-height;
+    position: relative;
+}
+
+.post-edit-profile-picture-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(#000, 0.6);
+    opacity: 0;
+    color: var(--white);
+}
+
+.post-edit-profile-picture-overlay:hover {
+    opacity: 1;
+}
+
+.post-authority-icon-student {
+    display: none;
+}
+
+.post-profile-picture-student {
     background-color: var(--cyan);
 }
 
-.badge-tutor {
+.post-profile-picture-tutor {
     background-color: var(--orange);
 }
 
-.badge-instructor {
+.post-profile-picture-instructor {
     background-color: var(--graph-red);
 }
 
