@@ -4,7 +4,6 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { BehaviorSubject } from 'rxjs';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorLineDecorationsHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-line-decorations-hover-button.model';
@@ -79,24 +78,20 @@ describe('MonacoEditorComponent', () => {
     });
 
     it('should adjust its theme to the global theme', () => {
-        const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
-        const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
         const changeThemeSpy = jest.spyOn(comp, 'changeTheme');
         fixture.detectChanges();
-        themeSubject.next(Theme.DARK);
-        expect(subscribeStub).toHaveBeenCalledOnce();
+
+        mockThemeService.applyThemePreference(Theme.DARK);
+        TestBed.flushEffects();
+
         expect(changeThemeSpy).toHaveBeenCalledTimes(2);
         expect(changeThemeSpy).toHaveBeenNthCalledWith(1, Theme.LIGHT);
         expect(changeThemeSpy).toHaveBeenNthCalledWith(2, Theme.DARK);
     });
 
     it('should unsubscribe from the global theme when destroyed', () => {
-        const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
-        const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
-        fixture.detectChanges();
         const unsubscribeStub = jest.spyOn(comp.themeSubscription!, 'unsubscribe').mockImplementation();
         comp.ngOnDestroy();
-        expect(subscribeStub).toHaveBeenCalledOnce();
         expect(unsubscribeStub).toHaveBeenCalledOnce();
     });
 

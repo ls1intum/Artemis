@@ -11,6 +11,7 @@ import {
     ViewChild,
     ViewContainerRef,
     createComponent,
+    inject,
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/theme.service';
@@ -47,6 +48,8 @@ import { toObservable } from '@angular/core/rxjs-interop';
     styleUrls: ['./programming-exercise-instruction.scss'],
 })
 export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDestroy {
+    private themeService = inject(ThemeService);
+
     @Input() public exercise: ProgrammingExercise;
     @Input() public participation: Participation;
     @Input() generateHtmlEvents: Observable<void>;
@@ -85,8 +88,10 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     private injectableContentFoundSubscription: Subscription;
     private tasksSubscription: Subscription;
     private generateHtmlSubscription: Subscription;
-    private themeChangeSubscription: Subscription;
     private testCases?: ProgrammingExerciseTestCase[];
+    private themeChangeSubscription = toObservable(this.themeService.currentTheme).subscribe(() => {
+        this.updateMarkdown();
+    });
 
     // Icons
     faSpinner = faSpinner;
@@ -99,16 +104,12 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseGradingService: ProgrammingExerciseGradingService,
-        themeService: ThemeService,
         private sanitizer: DomSanitizer,
         private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
         private appRef: ApplicationRef,
         private injector: EnvironmentInjector,
     ) {
         this.programmingExerciseTaskWrapper.viewContainerRef = this.viewContainerRef;
-        this.themeChangeSubscription = toObservable(themeService.currentTheme).subscribe(() => {
-            this.updateMarkdown();
-        });
     }
 
     /**

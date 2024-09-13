@@ -4,7 +4,6 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
-import { BehaviorSubject } from 'rxjs';
 
 describe('MonacoDiffEditorComponent', () => {
     let fixture: ComponentFixture<MonacoDiffEditorComponent>;
@@ -33,12 +32,11 @@ describe('MonacoDiffEditorComponent', () => {
     });
 
     it('should adjust its theme to the global theme', () => {
-        const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
-        const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
         const changeThemeSpy = jest.spyOn(comp, 'changeTheme');
         fixture.detectChanges();
-        themeSubject.next(Theme.DARK);
-        expect(subscribeStub).toHaveBeenCalledOnce();
+        mockThemeService.applyThemePreference(Theme.DARK);
+        TestBed.flushEffects();
+
         expect(changeThemeSpy).toHaveBeenCalledTimes(2);
         expect(changeThemeSpy).toHaveBeenNthCalledWith(1, Theme.LIGHT);
         expect(changeThemeSpy).toHaveBeenNthCalledWith(2, Theme.DARK);

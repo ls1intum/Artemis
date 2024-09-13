@@ -49,7 +49,7 @@ describe('ProgressBarComponent', () => {
         component.ngOnChanges({ percentage: {} as SimpleChange });
         expect(component.foregroundColorClass).toBe('text-dark');
 
-        themeService.applyTheme(Theme.DARK);
+        themeService.applyThemePreference(Theme.DARK);
         expect(component.foregroundColorClass).toBe('text-white');
     });
 

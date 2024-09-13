@@ -11,7 +11,6 @@ describe('EmojiPickerComponent', () => {
     let fixture: ComponentFixture<EmojiPickerComponent>;
     let comp: EmojiPickerComponent;
     let mockThemeService: ThemeService;
-    let themeSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -21,7 +20,6 @@ describe('EmojiPickerComponent', () => {
             .compileComponents()
             .then(() => {
                 mockThemeService = TestBed.inject(ThemeService);
-                themeSpy = jest.spyOn(mockThemeService, 'currentTheme');
                 fixture = TestBed.createComponent(EmojiPickerComponent);
                 comp = fixture.componentInstance;
             });
@@ -31,19 +29,14 @@ describe('EmojiPickerComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should subscribe and unsubscribe to the theme service and react to changes', () => {
-        expect(themeSpy).toHaveBeenCalledOnce();
-        expect(comp.dark).toBeFalse();
-        expect(comp.themeSubscription).toBeDefined();
+    it('should react to theme changes', () => {
+        expect(comp.dark()).toBeFalse();
+        expect(comp.singleImageFunction()({ unified: '1F519' } as EmojiData)).toBe('');
 
-        expect(comp.singleImageFunction({ unified: '1F519' } as EmojiData)).toBe('');
         mockThemeService.applyThemePreference(Theme.DARK);
-        expect(comp.singleImageFunction({ unified: '1F519' } as EmojiData)).toBe('public/emoji/1f519.png');
 
-        const subSpy = jest.spyOn(comp.themeSubscription, 'unsubscribe');
-
-        comp.ngOnDestroy();
-        expect(subSpy).toHaveBeenCalledOnce();
+        expect(comp.dark()).toBeTrue();
+        expect(comp.singleImageFunction()({ unified: '1F519' } as EmojiData)).toBe('public/emoji/1f519.png');
     });
 
     it('should emit an event on emoji select', () => {
