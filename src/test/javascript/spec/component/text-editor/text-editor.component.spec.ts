@@ -316,7 +316,7 @@ describe('TextEditorComponent', () => {
             exercise: textExercise,
         } as StudentParticipation;
         comp['updateParticipation'](comp.participation, undefined);
-        expect(comp.submission.id).toEqual(submissionList.last().id);
+        expect(comp.submission.id).toEqual(submissionList[submissionList.length - 1].id);
     });
 
     it('should set the correct submission if updateParticipation is called with submission id', () => {
