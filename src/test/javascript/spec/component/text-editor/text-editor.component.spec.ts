@@ -299,6 +299,46 @@ describe('TextEditorComponent', () => {
         expect(comp.answer).toBe('abc');
     });
 
+    it('should set latest submission if submissionId is undefined in updateParticipation', () => {
+        const submissionList = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+        const exGroup = {
+            id: 1,
+        };
+        const textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            exerciseGroup: exGroup,
+        } as TextExercise;
+        comp.participation = {
+            id: 2,
+            submissions: submissionList,
+            exercise: textExercise,
+        } as StudentParticipation;
+        comp['updateParticipation'](comp.participation, undefined);
+        expect(comp.submission.id).toEqual(submissionList.last().id);
+    });
+
+    it('should set the correct submission if updateParticipation is called with submission id', () => {
+        const submissionList = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+        const exGroup = {
+            id: 1,
+        };
+        const textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            exerciseGroup: exGroup,
+        } as TextExercise;
+        comp.participation = {
+            id: 2,
+            submissions: submissionList,
+            exercise: textExercise,
+        } as StudentParticipation;
+        comp['updateParticipation'](comp.participation, 2);
+        expect(comp.submission.id).toBe(2);
+    });
+
     it('assureConditionsSatisfied should alert and return false if the request is made after the due date', () => {
         const alertService = fixture.debugElement.injector.get(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'warning');

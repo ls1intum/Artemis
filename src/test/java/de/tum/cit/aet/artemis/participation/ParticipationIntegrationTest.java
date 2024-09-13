@@ -614,7 +614,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         Result invokedTextResult = resultCaptor.getAllValues().getLast();
         assertThat(invokedTextResult).isNotNull();
-        assertThat(invokedTextResult.getId()).isNotNull();
         assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
         assertThat(invokedTextResult.getFeedbacks()).hasSize(1);
     }

@@ -7,23 +7,32 @@
             </span>
             <ng-container submitbutton>
                 @if (isOwnerOfParticipation) {
-                    @if (isReadOnlyWithShowResult && isActive) {
+                    @if (isReadOnlyWithShowResult) {
                         <jhi-button
-                            id="Continue"
-                            [title]="'entity.action.continueSubmission'"
-                            [tooltip]="'Continue working on your submission'"
-                            [routerLink]="['/courses', this.course?.id, 'exercises', 'text-exercises', this.textExercise?.id!, 'participate', this.result.participation?.id]"
+                            id="toggleTimeline"
+                            [title]="showHistory ? 'Hide Timeline' : 'View Timeline'"
+                            [tooltip]="'Result History Timeline'"
+                            (click)="showHistory = !showHistory"
+                        />
+                        @if (isActive) {
+                            <jhi-button
+                                id="Continue"
+                                [title]="'entity.action.continueSubmission'"
+                                [tooltip]="'Continue working on your submission'"
+                                [routerLink]="['/courses', this.course?.id, 'exercises', 'text-exercises', this.textExercise?.id!, 'participate', this.result.participation?.id]"
+                            />
+                        }
+                    } @else {
+                        <jhi-button
+                            [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
+                            [icon]="faPenSquare"
+                            (onClick)="requestFeedback()"
+                            [disabled]="!submission.submitted || isGeneratingFeedback || this.isReadOnlyWithShowResult || this.hasLatestResult"
+                            [btnType]="ButtonType.PRIMARY"
+                            [isLoading]="isGeneratingFeedback"
+                            [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
                         />
                     }
-                    <jhi-button
-                        [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
-                        [icon]="faPenSquare"
-                        (onClick)="requestFeedback()"
-                        [disabled]="!submission.submitted || isGeneratingFeedback || this.isReadOnlyWithShowResult || this.hasLatestResult"
-                        [btnType]="ButtonType.PRIMARY"
-                        [isLoading]="isGeneratingFeedback"
-                        [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
-                    />
                     @if (!this.isReadOnlyWithShowResult) {
                         <jhi-button
                             id="submit"
@@ -39,15 +48,8 @@
             </ng-container>
         </jhi-header-participation-page>
     }
-    <div class="card border build-output mb-2">
+    <div class="mb-2">
         @if (isReadOnlyWithShowResult) {
-            <div class="card-header d-flex bg-primary text-white" (click)="showHistory = !showHistory">
-                <h3 class="card-title">
-                    <fa-icon [icon]="faTimeline" />
-                    <span> View Result Timeline </span>
-                </h3>
-                <fa-icon class="ms-auto clickable" [icon]="faChevronDown" />
-            </div>
             @if (showHistory) {
                 <div class="row mb-2">
                     <jhi-result-history [results]="sortedHistoryResults" [exercise]="textExercise" />
