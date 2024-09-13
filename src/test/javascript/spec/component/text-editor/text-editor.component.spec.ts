@@ -413,6 +413,42 @@ describe('TextEditorComponent', () => {
         expect(result).toBeFalse();
     });
 
+    it('assureConditionsSatisfied should alert and return false if the maximum number of successful Athena results is reached', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        const numResults = 20;
+        const results: Array<{ assessmentType: AssessmentType; successful: boolean }> = [];
+
+        for (let i = 0; i < numResults; i++) {
+            results.push({ assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true });
+        }
+
+        comp.textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+        } as TextExercise;
+
+        comp.hasLatestResult = true;
+
+        comp.participation = {
+            id: 2,
+            individualDueDate: undefined,
+            results: [
+                {
+                    assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                    score: 100,
+                    successful: true,
+                },
+                ...results,
+            ],
+        } as StudentParticipation;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(result).toBeFalse();
+    });
+
     it('assureConditionsSatisfied should return true if all conditions are satisfied', () => {
         comp.textExercise = {
             type: ExerciseType.TEXT,

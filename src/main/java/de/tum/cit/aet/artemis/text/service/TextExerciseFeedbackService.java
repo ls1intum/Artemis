@@ -138,17 +138,19 @@ public class TextExerciseFeedbackService {
                 feedback.setType(FeedbackType.AUTOMATIC);
                 feedback.setCredits(individualFeedbackItem.credits());
 
-                textBlock.setStartIndex(individualFeedbackItem.indexStart());
-                textBlock.setEndIndex(individualFeedbackItem.indexEnd());
-                textBlock.setSubmission(textSubmission);
-                textBlock.setTextFromSubmission();
-                textBlock.automatic();
-                textBlock.computeId();
-                feedback.setReference(textBlock.getId());
-                textBlock.setFeedback(feedback);
-                log.debug(textBlock.toString());
+                if (textSubmission.getText() != null) {
+                    textBlock.setStartIndex(individualFeedbackItem.indexStart());
+                    textBlock.setEndIndex(individualFeedbackItem.indexEnd());
+                    textBlock.setSubmission(textSubmission);
+                    textBlock.setTextFromSubmission();
+                    textBlock.automatic();
+                    textBlock.computeId();
+                    feedback.setReference(textBlock.getId());
+                    textBlock.setFeedback(feedback);
+                    log.debug(textBlock.toString());
 
-                textBlocks.add(textBlock);
+                    textBlocks.add(textBlock);
+                }
                 feedbacks.add(feedback);
             });
 
