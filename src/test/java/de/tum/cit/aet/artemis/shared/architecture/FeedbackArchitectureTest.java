@@ -29,7 +29,7 @@ class FeedbackArchitectureTest extends AbstractArchitectureTest {
 
         // internal usage for the Feedback and its tests okay, the service needs it for Hibernate lazy initialisation checks
         final JavaClasses classesToCheck = allClasses
-                .that(are(not(assignableFrom(Feedback.class).or(assignableFrom("de.tum.cit.aet.artemis.domain.FeedbackTest")).or(assignableFrom(FeedbackService.class)))));
+                .that(are(not(assignableFrom(Feedback.class).or(assignableFrom("de.tum.cit.aet.artemis.assessment.FeedbackTest")).or(assignableFrom(FeedbackService.class)))));
 
         getLongFeedbackTextUsage.check(classesToCheck);
     }

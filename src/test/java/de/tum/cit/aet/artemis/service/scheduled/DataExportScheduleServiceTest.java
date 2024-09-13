@@ -26,13 +26,13 @@ import org.springframework.scheduling.config.CronTask;
 import org.springframework.scheduling.config.ScheduledTask;
 import org.springframework.scheduling.config.ScheduledTaskHolder;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.service.DataExportScheduleService;
-import de.tum.cit.aet.artemis.user.UserUtilService;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @ExtendWith(MockitoExtension.class)
 class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -127,7 +127,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
     @Test
     void testCronDataExportCreationTaskScheduledEveryDayAt4AMByDefault() {
         final String cronExpression = "0 0 4 * * *";
-        final String cronTaskName = "de.tum.cit.aet.artemis.service.scheduled.DataExportScheduleService.createDataExportsAndDeleteOldOnes";
+        final String cronTaskName = "de.tum.cit.aet.artemis.core.service.DataExportScheduleService.createDataExportsAndDeleteOldOnes";
         Set<ScheduledTask> scheduledTasks = scheduledTaskHolder.getScheduledTasks();
         long scheduledCronTasksToCreateDataExportsAt4AM = scheduledTasks.stream().filter(scheduledTask -> scheduledTask.getTask() instanceof CronTask)
                 .map(scheduledTask -> (CronTask) scheduledTask.getTask()).filter(cronTask -> (cronExpression).equals(cronTask.getExpression()))

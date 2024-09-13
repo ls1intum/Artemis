@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 
 class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {

@@ -29,9 +29,9 @@ import org.slf4j.LoggerFactory;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ide.UserIdeMapping;
-import de.tum.cit.aet.artemis.util.classpath.ClassNode;
-import de.tum.cit.aet.artemis.util.classpath.ClassPathNode;
-import de.tum.cit.aet.artemis.util.classpath.ClassPathUtil;
+import de.tum.cit.aet.artemis.shared.architecture.util.ClassNode;
+import de.tum.cit.aet.artemis.shared.architecture.util.ClassPathNode;
+import de.tum.cit.aet.artemis.shared.architecture.util.ClassPathUtil;
 import io.github.classgraph.ClassInfo;
 
 /**
