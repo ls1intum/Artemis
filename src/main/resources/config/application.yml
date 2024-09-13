@@ -194,7 +194,7 @@ spring:
             hibernate.query.in_clause_parameter_padding: true
             hibernate.cache.use_second_level_cache: true
             hibernate.cache.use_query_cache: false
-            hibernate.cache.region.factory_class: de.tum.in.www1.artemis.config.ArtemisRedissonRegionFactory
+            hibernate.cache.region.factory_class: de.tum.cit.aet.artemis.core.config.ArtemisRedissonRegionFactory
             hibernate.cache.use_minimal_puts: true
             # TODO: why do we need those hazelcast values?
 #            hibernate.cache.hazelcast.instance_name: Artemis
