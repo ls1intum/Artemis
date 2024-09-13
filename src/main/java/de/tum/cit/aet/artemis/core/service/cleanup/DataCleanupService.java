@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.service.cleanup;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.context.annotation.Profile;
@@ -24,7 +25,7 @@ public class DataCleanupService {
 
     private final CleanupJobExecutionRepository cleanupJobExecutionRepository;
 
-    private PlagiarismComparisonRepository plagiarismComparisonRepository;
+    private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     public DataCleanupService(DataCleanupRepository dataCleanUpRepository, CleanupJobExecutionRepository cleanupJobExecutionRepository,
             PlagiarismComparisonRepository plagiarismComparisonRepository) {
@@ -59,7 +60,7 @@ public class DataCleanupService {
         return Arrays.stream(CleanupJobType.values()).map(jobType -> {
             CleanupJobExecution lastExecution = cleanupJobExecutionRepository.findTopByCleanupJobTypeOrderByDeletionTimestampDesc(jobType);
             return lastExecution != null ? CleanupServiceExecutionRecordDTO.of(lastExecution) : new CleanupServiceExecutionRecordDTO(null, jobType.getName());
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     private CleanupJobExecution createCleanupJobExecution(CleanupJobType cleanupJobType, ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
