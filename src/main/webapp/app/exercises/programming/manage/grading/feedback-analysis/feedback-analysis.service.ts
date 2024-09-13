@@ -1,5 +1,9 @@
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
+import { PagingService } from 'app/exercises/shared/manage/paging.service';
+import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface FeedbackDetail {
     count: number;
@@ -9,11 +13,22 @@ export interface FeedbackDetail {
     taskNumber: number;
 }
 
-@Injectable()
-export class FeedbackAnalysisService extends BaseApiHttpService {
-    private readonly EXERCISE_RESOURCE_URL = 'exercises';
+export interface FeedbackAnalysisResponse {
+    feedbackDetails: SearchResult<FeedbackDetail>;
+    distinctResultCount: number;
+}
 
-    getFeedbackDetailsForExercise(exerciseId: number): Promise<FeedbackDetail[]> {
-        return this.get<FeedbackDetail[]>(`${this.EXERCISE_RESOURCE_URL}/${exerciseId}/feedback-details`);
+@Injectable({ providedIn: 'root' })
+export class FeedbackAnalysisService extends PagingService<FeedbackDetail> {
+    private resourceUrl = 'api';
+
+    constructor(private http: HttpClient) {
+        super();
+    }
+
+    override search(pageable: SearchTermPageableSearch, options: { exerciseId: number }): Observable<any> {
+        return this.http
+            .post<FeedbackAnalysisResponse>(`${this.resourceUrl}/exercises/${options.exerciseId}/feedback-details-paged`, pageable, { observe: 'response' })
+            .pipe(map((resp: HttpResponse<FeedbackAnalysisResponse>) => resp.body!));
     }
 }

@@ -2,7 +2,7 @@
     <th scope="col" class="clickable" (click)="setSortedColumn(column)">
         <span [jhiTranslate]="label"></span>
         @if (sortedColumn() === column) {
-            @if (sortingOrder() === 'ASC') {
+            @if (sortingOrder() === SortingOrder.ASCENDING) {
                 <fa-icon [icon]="faSortUp"></fa-icon>
             } @else {
                 <fa-icon [icon]="faSortDown"></fa-icon>
@@ -43,7 +43,7 @@
             </tr>
         </thead>
         <tbody class="table-group-divider">
-            @for (item of paginatedFeedbackDetails(); track item) {
+            @for (item of content().resultsOnPage; track item) {
                 <tr>
                     <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
                     <td>
@@ -62,19 +62,20 @@
 
     <div class="d-flex flex-column align-items-end mt-2">
         <ngb-pagination
-            [collectionSize]="collectionSize()"
+            [collectionSize]="content().numberOfPages * pageSize()"
             [pageSize]="pageSize()"
             [page]="page()"
             (pageChange)="setPage($event)"
             size="sm"
             class="pagination justify-content-end"
-        ></ngb-pagination>
+        >
+        </ngb-pagination>
 
         <div class="text-muted text-end">
             <span
                 class="small-text"
                 jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.totalItems"
-                [translateValues]="{ count: collectionSize() }"
+                [translateValues]="{ count: distinctResultCount() }"
             ></span>
         </div>
     </div>

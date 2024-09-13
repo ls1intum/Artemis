@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
@@ -40,6 +41,9 @@ import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
+import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -545,16 +549,47 @@ public class ResultService {
      *         - test case name,
      *         - determined task number (based on the test case name).
      */
-    public List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(long exerciseId) {
+    public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, SearchTermPageableSearchDTO<String> search) {
+        // Step 1: Retrieve the distinct result count and the tasks
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
         Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
-        List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
 
-        return feedbackDetails.stream().map(detail -> {
+        // Step 2: Retrieve all feedback details for the exercise
+        List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
+        long totalFeedbackCount = feedbackDetails.size();
+
+        // Step 3 & 4: Calculate relative count, task number, and filter in a single step
+        String searchTerm = search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "";
+        feedbackDetails = feedbackDetails.stream().map(detail -> {
             double relativeCount = (detail.count() * 100.0) / distinctResultCount;
             int taskNumber = tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(detail.testCaseName()))).findFirst()
                     .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
+
             return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);
-        }).toList();
+        }).filter(detail -> searchTerm.isEmpty() || detail.detailText().toLowerCase().contains(searchTerm) || detail.testCaseName().toLowerCase().contains(searchTerm)
+                || String.valueOf(detail.count()).contains(searchTerm) || String.valueOf(detail.taskNumber()).contains(searchTerm)
+                || String.valueOf(detail.relativeCount()).contains(searchTerm)).collect(Collectors.toList());
+
+        // Step 5: Apply sorting
+        feedbackDetails.sort((a, b) -> {
+            int comparison = switch (search.getSortedColumn()) {
+                case "count" -> Long.compare(a.count(), b.count());
+                case "detailText" -> a.detailText().compareToIgnoreCase(b.detailText());
+                case "testCaseName" -> a.testCaseName().compareToIgnoreCase(b.testCaseName());
+                case "taskNumber" -> Integer.compare(a.taskNumber(), b.taskNumber());
+                case "relativeCount" -> Double.compare(a.relativeCount(), b.relativeCount());
+                default -> 0;
+            };
+            return search.getSortingOrder() == SortingOrder.ASCENDING ? comparison : -comparison;
+        });
+
+        // Step 6: Apply pagination
+        int start = (search.getPage() - 1) * search.getPageSize();
+        int end = Math.min(start + search.getPageSize(), feedbackDetails.size());
+        List<FeedbackDetailDTO> paginatedFeedbackDetails = feedbackDetails.subList(start, end);
+
+        // Step 7: Calculate total pages
+        int totalPages = (feedbackDetails.size() + search.getPageSize() - 1) / search.getPageSize();
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(paginatedFeedbackDetails, totalPages), totalFeedbackCount);
     }
 }

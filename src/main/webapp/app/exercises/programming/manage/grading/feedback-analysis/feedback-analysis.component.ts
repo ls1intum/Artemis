@@ -1,16 +1,11 @@
-import { Component, InputSignal, computed, effect, inject, input, signal } from '@angular/core';
-import { FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
-import { AlertService } from 'app/core/util/alert.service';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { Component, InputSignal, effect, inject, input, signal } from '@angular/core';
+import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
 import { faMagnifyingGlass, faMagnifyingGlassPlus, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
-import { SortService } from 'app/shared/service/sort.service';
-
-enum SortingOrder {
-    ASCENDING = 'ASC',
-    DESCENDING = 'DESC',
-}
 
 @Component({
     selector: 'jhi-feedback-analysis',
@@ -24,79 +19,59 @@ export class FeedbackAnalysisComponent {
     exerciseTitle: InputSignal<string> = input.required<string>();
     exerciseId: InputSignal<number> = input.required<number>();
 
-    private feedbackAnalysisService = inject(FeedbackAnalysisService);
+    // Signals for reactive state
+    readonly page = signal<number>(1);
+    readonly pageSize = signal<number>(15);
+    searchTerm = signal<string>(''); // Initially empty
+    readonly sortingOrder = signal<SortingOrder>(SortingOrder.DESCENDING);
+    readonly sortedColumn = signal<string>('count');
+
+    readonly isLoading = signal<boolean>(false);
+    readonly content = signal<SearchResult<FeedbackDetail>>({ resultsOnPage: [], numberOfPages: 0 });
+    distinctResultCount = signal<number>(0); // To store the distinct result count
+
+    // Inject dependencies
+    private pagingService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);
     private modalService = inject(NgbModal);
-    private sortService = inject(SortService);
 
-    readonly feedbackDetails = signal<FeedbackDetail[]>([]);
-
-    readonly sortedColumn = signal<string>('count');
-    readonly sortingOrder = signal<SortingOrder>(SortingOrder.DESCENDING);
     readonly faSort = faSort;
     readonly faSortUp = faSortUp;
     readonly faSortDown = faSortDown;
     readonly faMagnifyingGlass = faMagnifyingGlass;
     readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
 
-    readonly page = signal<number>(1);
-    readonly pageSize = signal<number>(15);
-    readonly searchTerm = signal<string>('');
-
-    readonly paginatedFeedbackDetails = computed(() => {
-        const filteredAndSorted = this.getFilteredAndSortedFeedback();
-        const start = (this.page() - 1) * this.pageSize();
-        const end = start + this.pageSize();
-        return filteredAndSorted.slice(start, end);
-    });
-
-    readonly collectionSize = computed(() => this.getFilteredAndSortedFeedback().length);
-
     constructor() {
         effect(() => {
-            this.loadFeedbackDetails(this.exerciseId());
+            this.loadData(); // This will be triggered immediately upon page load
         });
     }
 
-    async loadFeedbackDetails(exerciseId: number): Promise<void> {
-        try {
-            this.feedbackDetails.set(await this.feedbackAnalysisService.getFeedbackDetailsForExercise(exerciseId));
-        } catch (error) {
-            this.alertService.error(`artemisApp.programmingExercise.configureGrading.feedbackAnalysis.error`);
-        }
-    }
+    private loadData(): void {
+        const state = {
+            page: this.page(),
+            pageSize: this.pageSize(),
+            searchTerm: this.searchTerm(), // Will be empty initially
+            sortingOrder: this.sortingOrder(),
+            sortedColumn: this.sortedColumn(),
+        };
 
-    private getFilteredAndSortedFeedback() {
-        const searchTermLower = this.searchTerm().toLowerCase();
-        const searchTermNumber = Number(this.searchTerm());
-        const hasNumber = !isNaN(searchTermNumber);
-
-        const filtered = this.filterForSearch(searchTermLower, hasNumber, searchTermNumber);
-        return this.sortFeedbackDetails(filtered);
-    }
-
-    private sortFeedbackDetails(details: FeedbackDetail[]): FeedbackDetail[] {
-        const column = this.sortedColumn();
-        const order = this.sortingOrder() === SortingOrder.ASCENDING;
-        return this.sortService.sortByProperty(details, column, order);
-    }
-
-    private filterForSearch(searchTermLower: string, hasNumber: boolean, searchTermNumber: number) {
-        return this.feedbackDetails().filter((item) => {
-            const matchesTextFields = item.detailText.toLowerCase().includes(searchTermLower) || item.testCaseName.toLowerCase().includes(searchTermLower);
-
-            const matchesNumericFields = hasNumber && (item.taskNumber === searchTermNumber || item.count === searchTermNumber || item.relativeCount === searchTermNumber);
-
-            return matchesTextFields || matchesNumericFields;
-        });
+        this.pagingService
+            .search(state, { exerciseId: this.exerciseId() }) // Make sure exerciseId is correct
+            .subscribe({
+                next: (response: FeedbackAnalysisResponse) => {
+                    this.content.set(response.feedbackDetails);
+                    this.distinctResultCount.set(response.distinctResultCount); // Store distinct result count
+                },
+                error: (error) => {
+                    this.alertService.error(error.message);
+                },
+            });
     }
 
     setPage(newPage: number): void {
         this.page.set(newPage);
-    }
-
-    search(): void {
-        this.page.set(1);
+        this.loadData();
     }
 
     setSortedColumn(column: string): void {
@@ -106,11 +81,18 @@ export class FeedbackAnalysisComponent {
             this.sortedColumn.set(column);
             this.sortingOrder.set(SortingOrder.ASCENDING);
         }
-        this.page.set(1);
+        this.loadData();
+    }
+
+    search(): void {
+        this.page.set(1); // Reset to page 1 when searching
+        this.loadData();
     }
 
     openFeedbackModal(feedbackDetail: FeedbackDetail): void {
         const modalRef = this.modalService.open(FeedbackModalComponent, { centered: true });
         modalRef.componentInstance.feedbackDetail = feedbackDetail;
     }
+
+    protected readonly SortingOrder = SortingOrder;
 }
