@@ -25,8 +25,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     testwiseCoverageEnabled?: boolean;
     isImportFromFile: boolean = false;
 
-    originalBuildScript: string = '';
-
     constructor(private aeolusService: AeolusService) {}
 
     code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
@@ -48,13 +46,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             if (this.shouldReloadTemplate()) {
                 const isImportFromFile = changes.programmingExerciseCreationConfig?.currentValue?.isImportFromFile ?? false;
                 this.loadAeolusTemplate(isImportFromFile);
-            }
-        }
-        if (this.shouldReplacePlaceholders()) {
-            const updatedBuildScript = this.replacePlaceholders(this.originalBuildScript);
-            if (updatedBuildScript) {
-                this.programmingExercise.buildConfig!.buildScript = updatedBuildScript;
-                this.codeChanged(this.programmingExercise.buildConfig?.buildScript || '');
             }
         }
     }
@@ -126,7 +117,6 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                 .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
                 .subscribe({
                     next: (file: string) => {
-                        this.originalBuildScript = file;
                         file = this.replacePlaceholders(file);
                         this.codeChanged(file);
                         this.editor?.setText(file);

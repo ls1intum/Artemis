@@ -124,7 +124,8 @@
                 "solution": "Checkout-Pfad für das Lösungs-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
                 "tests": "Checkout-Pfad für das Tests-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
                 "invalid": "Ungültige Checkout-Pfade",
-                "warning": "Das Ändern der Checkout-Pfade kann zu Build-Fehlern führen. Einige Programmiersprachen verlassen sich auf Docker-Images, die bestimmte Verzeichnisstrukturen für den Code voraussetzen."
+                "warning": "Das Ändern der Checkout-Pfade kann zu Build-Fehlern führen. Einige Programmiersprachen verlassen sich auf Docker-Images, die bestimmte Verzeichnisstrukturen für den Code voraussetzen.",
+                "warningBuildScript": "Stellen Sie sicher, dass Sie das Build-Skript und die Repositories entsprechend anpassen."
             },
             "timeout": {
                 "title": "Timeout",

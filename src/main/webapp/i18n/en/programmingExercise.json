@@ -137,7 +137,8 @@
                 "solution": "Solution Repository Checkout Path. This can't be edited after creation.",
                 "tests": "Tests Repository Checkout Path. This can't be edited after creation.",
                 "invalid": "Invalid checkout paths",
-                "warning": "Modifying checkout paths may result in build failures. Some programming languages rely on Docker images that assume specific directory structures for the code."
+                "warning": "Modifying checkout paths may result in build failures. Some programming languages rely on Docker images that assume specific directory structures for the code.",
+                "warningBuildScript": "Make sure to adjust the build script and repositories accordingly."
             },
             "timeout": {
                 "title": "Timeout",
