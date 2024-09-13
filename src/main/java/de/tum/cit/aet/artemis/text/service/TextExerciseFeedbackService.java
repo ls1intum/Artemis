@@ -169,7 +169,7 @@ public class TextExerciseFeedbackService {
             textBlockService.saveAll(textBlocks);
             textSubmission.setBlocks(textBlocks);
             submissionService.saveNewResult(textSubmission, automaticResult);
-            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
+            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
@@ -177,7 +177,7 @@ public class TextExerciseFeedbackService {
             // but since we do not differentiate for athena feedback we use it to indicate a failed generation
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(null);
-            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
+            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
         }
     }
 }

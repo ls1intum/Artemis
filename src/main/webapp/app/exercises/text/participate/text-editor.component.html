@@ -10,6 +10,7 @@
                     @if (isReadOnlyWithShowResult) {
                         <jhi-button
                             id="toggleTimeline"
+                            [icon]="faTimeline"
                             [title]="showHistory ? 'Hide Timeline' : 'View Timeline'"
                             [tooltip]="'Result History Timeline'"
                             (click)="showHistory = !showHistory"

@@ -339,6 +339,28 @@ describe('TextEditorComponent', () => {
         expect(comp.submission.id).toBe(2);
     });
 
+    it('should sort results by completion date in ascending order', () => {
+        const result1 = { completionDate: dayjs().subtract(2, 'days') } as Result;
+        const result2 = { completionDate: dayjs().subtract(1, 'day') } as Result;
+        const result3 = { completionDate: dayjs() } as Result;
+
+        const results = [result3, result1, result2];
+        results.sort((a, b) => comp['resultSortFunction'](a, b));
+
+        expect(results).toEqual([result1, result2, result3]);
+    });
+
+    it('should sort submission by completion date in ascending order', () => {
+        const submission1 = { completionDate: dayjs().subtract(2, 'days') } as Submission;
+        const submission2 = { completionDate: dayjs().subtract(1, 'day') } as Submission;
+        const submission3 = { completionDate: dayjs() } as Submission;
+
+        const submissions = [submission3, submission1, submission2];
+        submissions.sort((a, b) => comp['resultSortFunction'](a, b));
+
+        expect(submissions).toEqual([submission1, submission2, submission3]);
+    });
+
     it('assureConditionsSatisfied should alert and return false if the request is made after the due date', () => {
         const alertService = fixture.debugElement.injector.get(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'warning');

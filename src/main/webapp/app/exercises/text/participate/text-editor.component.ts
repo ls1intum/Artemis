@@ -412,10 +412,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         });
     }
 
-    get isBeforeStartDateAndStudent(): boolean {
-        return !this.textExercise.isAtLeastTutor && !!this.textExercise.startDate && dayjs().isBefore(this.textExercise.startDate);
-    }
-
     /**
      * Checks if the conditions for requesting automatic non-graded feedback are satisfied.
      * The student can request automatic non-graded feedback under the following conditions:
