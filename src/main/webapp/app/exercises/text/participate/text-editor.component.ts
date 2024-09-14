@@ -339,10 +339,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 } else {
                     this.submission.participation!.submissions = [this.submission];
                 }
-                const results = this.participation.results;
-                // make sure to keep the results
                 this.participation = this.submission.participation as StudentParticipation;
-                this.participation.results = results;
                 this.participation.exercise = this.textExercise;
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
