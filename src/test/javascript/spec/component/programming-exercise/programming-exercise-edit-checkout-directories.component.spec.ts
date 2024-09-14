@@ -134,4 +134,14 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         expect(component.testCheckoutPath).toBe('tests');
         expect(component.solutionCheckoutPath).toBe('solution');
     });
+
+    it('should set values to their defaults if no buildConfig of submissionBuildPlan available', () => {
+        fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(course, undefined));
+        fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', undefined);
+        component.reset();
+
+        expect(component.assignmentCheckoutPath).toBe('');
+        expect(component.testCheckoutPath).toBe('/');
+        expect(component.solutionCheckoutPath).toBe('');
+    });
 });

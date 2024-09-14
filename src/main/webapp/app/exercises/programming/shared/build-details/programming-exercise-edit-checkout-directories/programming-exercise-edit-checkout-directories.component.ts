@@ -87,15 +87,6 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
         this.calculateFormValid();
     }
 
-    isSubmissionBuildPlanCheckoutRepositoriesChanged(newValue?: BuildPlanCheckoutDirectoriesDTO, oldValue?: BuildPlanCheckoutDirectoriesDTO, firstChange = false): boolean {
-        return (
-            firstChange ||
-            (oldValue !== undefined && newValue?.exerciseCheckoutDirectory !== oldValue?.exerciseCheckoutDirectory) ||
-            newValue?.testCheckoutDirectory !== oldValue?.testCheckoutDirectory ||
-            newValue?.solutionCheckoutDirectory !== oldValue?.solutionCheckoutDirectory
-        );
-    }
-
     private removeLeadingSlash(path?: string): string | undefined {
         return path?.replace(/^\//, '');
     }
