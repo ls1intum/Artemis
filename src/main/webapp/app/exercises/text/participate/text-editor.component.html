@@ -18,7 +18,6 @@
                             <jhi-button
                                 id="Continue"
                                 [title]="'entity.action.continueSubmission'"
-                                [tooltip]="'Continue working on your submission'"
                                 [routerLink]="['/courses', this.course?.id, 'exercises', 'text-exercises', this.textExercise?.id!, 'participate', this.result.participation?.id]"
                             />
                         }
@@ -30,7 +29,7 @@
                             [disabled]="!submission.submitted || isGeneratingFeedback || this.isReadOnlyWithShowResult || this.hasLatestResult"
                             [btnType]="ButtonType.PRIMARY"
                             [isLoading]="isGeneratingFeedback"
-                            [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+                            [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip'"
                         />
                     }
                     @if (!this.isReadOnlyWithShowResult) {
