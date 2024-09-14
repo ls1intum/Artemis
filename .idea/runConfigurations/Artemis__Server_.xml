@@ -3,7 +3,7 @@
     <option name="ACTIVE_PROFILES" value="dev,bamboo,bitbucket,jira,artemis,scheduling,core,local" />
     <module name="Artemis.main" />
     <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.in.www1.artemis.ArtemisApp" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.cit.aet.artemis.ArtemisApp" />
     <option name="VM_PARAMETERS" value="-XX:+ShowCodeDetailsInExceptionMessages -Duser.country=US -Duser.language=en" />
     <option name="ALTERNATIVE_JRE_PATH" />
     <method v="2">
