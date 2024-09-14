@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildJobDTOInterface;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;

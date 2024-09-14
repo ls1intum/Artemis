@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 
 @Profile("gitlabci | jenkins")

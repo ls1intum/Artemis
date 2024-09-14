@@ -34,7 +34,7 @@ import com.hazelcast.topic.ITopic;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildLogEntry;
 
 /**
  * This service is responsible for adding build jobs to the Integrated Code Lifecycle executor service.

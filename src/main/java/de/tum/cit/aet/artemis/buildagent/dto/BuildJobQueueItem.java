@@ -7,7 +7,7 @@ import java.time.ZonedDateTime;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 
 // NOTE: this data structure is used in shared code between core and build agent nodes. Changing it requires that the shared data structures in Hazelcast (or potentially Redis)

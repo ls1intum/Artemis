@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service.jenkins;
 
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildLogStatisticsEntry.BuildJobPartDuration;
+import static de.tum.cit.aet.artemis.buildagent.domain.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.dto.AbstractBuildResultNotificationDTO;
 import de.tum.cit.aet.artemis.programming.repository.BuildLogStatisticsEntryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;

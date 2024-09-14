@@ -11,7 +11,7 @@ import java.util.concurrent.ConcurrentMap;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildLogEntry;
 
 @Profile(PROFILE_BUILDAGENT)
 @Component

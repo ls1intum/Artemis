@@ -40,8 +40,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildLogEntry;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildStatus;
 
 /**
  * Includes functionality for processing build jobs from the shared build job queue.

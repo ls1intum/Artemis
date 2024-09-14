@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildPlan;
 
 public interface BuildPlanRepository extends ArtemisJpaRepository<BuildPlan, Long> {
 
