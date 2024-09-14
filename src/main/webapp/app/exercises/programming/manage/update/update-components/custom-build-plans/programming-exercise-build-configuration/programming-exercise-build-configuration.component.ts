@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, input, output, viewChild } from '@angular/core';
 import { NgModel } from '@angular/forms';
 
 @Component({
@@ -7,15 +7,15 @@ import { NgModel } from '@angular/forms';
     styleUrls: ['../../../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseBuildConfigurationComponent {
-    @Input() dockerImage: string;
-    @Output() dockerImageChange = new EventEmitter<string>();
+    dockerImage = input.required<string>();
+    dockerImageChange = output<string>();
 
-    @Input() timeout: number;
-    @Output() timeoutChange = new EventEmitter<number>();
+    timeout = input<number>();
+    timeoutChange = output<number>();
 
-    @Input() isAeolus: boolean = false;
+    isAeolus = input.required<boolean>();
 
-    @ViewChild('dockerImageField') dockerImageField?: NgModel;
+    dockerImageField = viewChild<NgModel>('dockerImageField');
 
-    @ViewChild('timeoutField') timeoutField?: NgModel;
+    timeoutField = viewChild<NgModel>('timeoutField');
 }

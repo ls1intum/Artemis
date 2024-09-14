@@ -19,8 +19,8 @@ describe('ProgrammingExercise Docker Image', () => {
         const fixture = TestBed.createComponent(ProgrammingExerciseBuildConfigurationComponent);
         comp = fixture.componentInstance;
 
-        comp.dockerImage = 'testImage';
-        comp.timeout = 10;
+        fixture.componentRef.setInput('dockerImage', 'testImage');
+        fixture.componentRef.setInput('timeout', 10);
     });
 
     afterEach(() => {
@@ -28,11 +28,11 @@ describe('ProgrammingExercise Docker Image', () => {
     });
 
     it('should update build values', () => {
-        expect(comp.dockerImage).toBe('testImage');
+        expect(comp.dockerImage()).toBe('testImage');
         comp.dockerImageChange.subscribe((value) => expect(value).toBe('newImage'));
         comp.dockerImageChange.emit('newImage');
 
-        expect(comp.timeout).toBe(10);
+        expect(comp.timeout()).toBe(10);
         comp.timeoutChange.subscribe((value) => expect(value).toBe(20));
         comp.timeoutChange.emit(20);
     });

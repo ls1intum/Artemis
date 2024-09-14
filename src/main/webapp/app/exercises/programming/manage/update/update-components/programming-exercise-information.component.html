@@ -64,7 +64,6 @@
             @if (editRepositoryCheckoutPath && isLocal && !isImport && !programmingExerciseCreationConfig.isEdit) {
                 <jhi-programming-exercise-edit-checkout-directories
                     [programmingExercise]="programmingExercise"
-                    [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
                     [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories"
                     (assignmentCheckoutPathEvent)="onAssigmentRepositoryCheckoutPathChange($event)"
                     (testCheckoutPathEvent)="onTestRepositoryCheckoutPathChange($event)"

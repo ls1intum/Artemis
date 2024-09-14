@@ -46,15 +46,15 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         }
 
         const dockerImageField =
-            this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField ??
-            this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField;
+            this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField() ??
+            this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField();
         if (!(dockerImageField?.valueChanges as EventEmitter<string>)?.observed) {
             this.fieldSubscriptions.push(dockerImageField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
 
         const timeoutField =
-            this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField ??
-            this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField;
+            this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField() ??
+            this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField();
         if (!(timeoutField?.valueChanges as EventEmitter<number>)?.observed) {
             this.fieldSubscriptions.push(timeoutField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         }
@@ -90,15 +90,15 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
 
         if (this.programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
             return (
-                (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField?.valid ?? false) &&
-                (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField?.valid ?? false)
+                (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField()?.valid ?? false) &&
+                (this.programmingExerciseCustomBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField()?.valid ?? false)
             );
         }
 
         if (this.programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
             return (
-                (this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField?.valid ?? false) &&
-                (this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField?.valid ?? false)
+                (this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.dockerImageField()?.valid ?? false) &&
+                (this.programmingExerciseCustomAeolusBuildPlanComponent?.programmingExerciseDockerImageComponent?.timeoutField()?.valid ?? false)
             );
         }
 

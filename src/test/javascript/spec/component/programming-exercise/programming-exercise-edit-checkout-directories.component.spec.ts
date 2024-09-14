@@ -6,7 +6,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent } from 'ng-mocks';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
 import { WindFile } from 'app/entities/programming/wind.file';
 import { WindMetadata } from 'app/entities/programming/wind.metadata';
@@ -65,12 +65,10 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         fixture = TestBed.createComponent(ProgrammingExerciseEditCheckoutDirectoriesComponent);
         component = fixture.componentInstance;
 
-        component.programmingLanguage = ProgrammingLanguage.JAVA;
-        component.programmingExercise = programmingExercise;
-        component.submissionBuildPlanCheckoutRepositories = {
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+        fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', {
             testCheckoutDirectory: '/',
-        };
-        fixture.detectChanges();
+        });
     });
 
     it('should create', () => {
@@ -78,7 +76,7 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     });
 
     it('reset should set editable and input fields correctly', () => {
-        component.submissionBuildPlanCheckoutRepositories = submissionBuildPlanCheckoutRepositories;
+        fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', submissionBuildPlanCheckoutRepositories);
         component.reset();
         expect(component.isAssigmentRepositoryEditable).toBeTrue();
         expect(component.assignmentCheckoutPath).toBe('assignment');
@@ -87,9 +85,9 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
         expect(component.isSolutionRepositoryEditable).toBeTrue();
         expect(component.solutionCheckoutPath).toBe('solution');
 
-        component.submissionBuildPlanCheckoutRepositories = {
+        fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', {
             testCheckoutDirectory: '/',
-        };
+        });
         component.reset();
         expect(component.isAssigmentRepositoryEditable).toBeFalse();
         expect(component.assignmentCheckoutPath).toBe('');
@@ -128,26 +126,9 @@ describe('ProgrammingExerciseEditCheckoutDirectoriesComponent', () => {
     });
 
     it('should should reset values correctly when buildconfig is null', () => {
-        component.programmingExercise.buildConfig = undefined;
-        component.submissionBuildPlanCheckoutRepositories = submissionBuildPlanCheckoutRepositories;
-        component.ngOnChanges({
-            programmingLanguage: {
-                currentValue: ProgrammingLanguage.JAVA,
-                previousValue: undefined,
-                firstChange: true,
-                isFirstChange: () => true,
-            },
-            submissionBuildPlanCheckoutRepositories: {
-                currentValue: submissionBuildPlanCheckoutRepositories,
-                previousValue: {
-                    exerciseCheckoutDirectory: '/assignment',
-                    testCheckoutDirectory: '/tests',
-                    solutionCheckoutDirectory: '/solutionRepo',
-                },
-                firstChange: false,
-                isFirstChange: () => false,
-            },
-        });
+        fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(course, undefined));
+        fixture.componentRef.setInput('submissionBuildPlanCheckoutRepositories', submissionBuildPlanCheckoutRepositories);
+        component.reset();
 
         expect(component.assignmentCheckoutPath).toBe('assignment');
         expect(component.testCheckoutPath).toBe('tests');

@@ -11,11 +11,11 @@
             class="form-control"
             name="dockerImage"
             id="field_dockerImage"
-            [(ngModel)]="dockerImage"
+            [ngModel]="dockerImage()"
             (ngModelChange)="dockerImageChange.emit($event)"
         />
     </div>
-    @if (!isAeolus) {
+    @if (!isAeolus()) {
         <label>
             <span jhiTranslate="artemisApp.programmingExercise.timeout.title"></span>
         </label>
@@ -27,7 +27,7 @@
             class="form-control"
             name="timeout"
             id="field_timeout"
-            [(ngModel)]="timeout"
+            [ngModel]="timeout()"
             (ngModelChange)="timeoutChange!.emit($event)"
         />
     }
