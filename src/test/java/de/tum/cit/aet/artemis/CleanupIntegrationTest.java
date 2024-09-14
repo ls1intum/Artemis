@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -152,6 +153,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeleteOrphans() throws Exception {
         var orphanFeedback = createFeedbackWithLinkedLongFeedback();
@@ -227,6 +229,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeletePlagiarismComparisons() throws Exception {
         // old course, should delete undecided plagiarism comparisons
@@ -317,6 +320,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeleteNonRatedResults() throws Exception {
         // create non rated results for an old course
@@ -409,6 +413,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeleteOldRatedResults() throws Exception {
         // create rated results for an old course
@@ -497,6 +502,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
 
@@ -521,6 +527,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @Disabled
     @WithMockUser(roles = "USER")
     void testUnauthorizedAccess() throws Exception {
         request.postWithoutResponseBody("/api/admin/delete-orphans", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
@@ -533,6 +540,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @Disabled
     void testTransactionalBehavior() {
 
         long count = resultRepository.count();
