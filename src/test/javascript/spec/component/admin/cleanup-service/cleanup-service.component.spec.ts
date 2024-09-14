@@ -25,8 +25,7 @@ describe('CleanupServiceComponent', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [CleanupServiceComponent],
+            imports: [ArtemisTestModule, CleanupServiceComponent],
             providers: [{ provide: DataCleanupService, useValue: mockCleanupService }],
         })
             .compileComponents()

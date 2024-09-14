@@ -153,7 +153,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeleteOrphans() throws Exception {
         var orphanFeedback = createFeedbackWithLinkedLongFeedback();
