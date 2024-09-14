@@ -1,4 +1,4 @@
-package de.tum.cit.det.www1.artemis.web.rest.dto.competency;
+package de.tum.cit.aet.artemis.atlas.dto;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;

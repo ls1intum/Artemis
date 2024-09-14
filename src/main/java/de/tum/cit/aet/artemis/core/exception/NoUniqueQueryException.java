@@ -1,4 +1,4 @@
-package de.tum.cit.aet.www1.artemis.exception;
+package de.tum.cit.aet.artemis.core.exception;
 
 /**
  * Checked exception in case a query does not return a unique result, so calling methods must handle this case.
