@@ -34,7 +34,7 @@ export class DataCleanupService {
         const deleteFromString = convertDateFromClient(deleteFrom)!;
         const deleteToString = convertDateFromClient(deleteTo)!;
         return this.http.post<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-plagiarism-comparisons`, null, {
-            params: { deleteFromString, deleteToString },
+            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
     }
@@ -48,7 +48,7 @@ export class DataCleanupService {
         const deleteFromString = convertDateFromClient(deleteFrom)!;
         const deleteToString = convertDateFromClient(deleteTo)!;
         return this.http.post<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-non-rated-results`, null, {
-            params: { deleteFromString, deleteToString },
+            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
     }
@@ -62,7 +62,7 @@ export class DataCleanupService {
         const deleteFromString = convertDateFromClient(deleteFrom)!;
         const deleteToString = convertDateFromClient(deleteTo)!;
         return this.http.post<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-old-rated-results`, null, {
-            params: { deleteFromString, deleteToString },
+            params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
     }

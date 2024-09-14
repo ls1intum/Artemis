@@ -5,8 +5,8 @@ import dayjs from 'dayjs/esm';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
-import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/cleanup-service.service';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
+import { DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service.ts';
 
 describe('CleanupServiceComponent', () => {
     let comp: CleanupServiceComponent;

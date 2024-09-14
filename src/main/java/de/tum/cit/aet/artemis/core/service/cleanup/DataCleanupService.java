@@ -27,7 +27,7 @@ public class DataCleanupService {
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     public DataCleanupService(DataCleanupRepository dataCleanUpRepository, CleanupJobExecutionRepository cleanupJobExecutionRepository,
-                              PlagiarismComparisonRepository plagiarismComparisonRepository) {
+            PlagiarismComparisonRepository plagiarismComparisonRepository) {
         this.dataCleanUpRepository = dataCleanUpRepository;
         this.cleanupJobExecutionRepository = cleanupJobExecutionRepository;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;

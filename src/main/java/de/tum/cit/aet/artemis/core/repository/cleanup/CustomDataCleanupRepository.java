@@ -131,6 +131,33 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                     )
                 """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
 
+        // delete participation scores
+        entityManager.createQuery("""
+                    DELETE FROM ParticipantScore ps
+                    WHERE ps.lastResult IN (
+                        SELECT r
+                        FROM Result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE r.rated=false AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
+        entityManager.createQuery("""
+                    DELETE FROM ParticipantScore ps
+                    WHERE ps.lastRatedResult IN (
+                        SELECT r
+                        FROM Result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE r.rated=false AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
         entityManager.createQuery("""
                     DELETE FROM Result r
                     WHERE r.rated = false
@@ -195,6 +222,41 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
         entityManager.createQuery("""
                     DELETE FROM Feedback f
                     WHERE f.result IN (
+                        SELECT r
+                        FROM Result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE r.id NOT IN (
+                            SELECT MAX(r2.id)
+                            FROM Result r2
+                            WHERE r2.participation.id = p.id AND r2.rated=true
+                        ) AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
+        // delete participation scores
+        entityManager.createQuery("""
+                    DELETE FROM ParticipantScore ps
+                    WHERE ps.lastResult IN (
+                        SELECT r
+                        FROM Result r
+                        JOIN r.participation p
+                        JOIN p.exercise e
+                        JOIN e.course c
+                        WHERE r.id NOT IN (
+                            SELECT MAX(r2.id)
+                            FROM Result r2
+                            WHERE r2.participation.id = p.id AND r2.rated=true
+                        ) AND c.endDate < :deleteTo
+                        AND c.startDate > :deleteFrom
+                    )
+                """).setParameter("deleteFrom", deleteFrom).setParameter("deleteTo", deleteTo).executeUpdate();
+
+        entityManager.createQuery("""
+                    DELETE FROM ParticipantScore ps
+                    WHERE ps.lastRatedResult IN (
                         SELECT r
                         FROM Result r
                         JOIN r.participation p
