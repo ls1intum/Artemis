@@ -376,6 +376,11 @@ public class SharedQueueProcessingService {
     }
 
     private void pauseBuildAgent() {
+        if (this.isPaused) {
+            log.info("Build agent is already paused");
+            return;
+        }
+
         log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
 
         this.isPaused = true;
@@ -414,6 +419,11 @@ public class SharedQueueProcessingService {
     }
 
     private void resumeBuildAgent() {
+        if (!this.isPaused) {
+            log.info("Build agent is already running");
+            return;
+        }
+
         log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
         this.isPaused = false;
         this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
