@@ -247,6 +247,7 @@ describe('TextEditorComponent', () => {
     });
 
     it('should submit', () => {
+        comp.participation = { id: 1 };
         comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
         comp.textExercise = { id: 1 } as TextExercise;
         comp.answer = 'abc';
