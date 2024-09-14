@@ -220,7 +220,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     /**
      * This method is necessary to ignore Athena results in the assessment view
      *
-     * @return non athena automatic results including null results
+     * @return non athena automatic results excluding null results
      */
     @JsonIgnore
     public List<Result> getNonAthenaResults() {
