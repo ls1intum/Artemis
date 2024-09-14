@@ -5,8 +5,7 @@ import dayjs from 'dayjs/esm';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
-import { DataCleanupService } from 'app/admin/cleanup-service/cleanup-service.service';
-import { CleanupServiceExecutionRecordDTO } from 'app/admin/cleanup-service/cleanup-service.service';
+import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/cleanup-service.service';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 
 describe('CleanupServiceComponent', () => {
@@ -39,7 +38,7 @@ describe('CleanupServiceComponent', () => {
     });
 
     it('should load last executions on init', () => {
-        const executionRecord: CleanupServiceExecutionRecordDTO[] = [{ executionDate: dayjs() }];
+        const executionRecord: CleanupServiceExecutionRecordDTO[] = [{ executionDate: dayjs(), jobType: 'deleteOrphans' }];
         const response = new HttpResponse<CleanupServiceExecutionRecordDTO[]>({
             body: executionRecord,
         });
@@ -55,7 +54,7 @@ describe('CleanupServiceComponent', () => {
     it('should execute a cleanup operation successfully', () => {
         const operation = comp.cleanupOperations[0];
         const response = new HttpResponse<CleanupServiceExecutionRecordDTO>({
-            body: { executionDate: dayjs() },
+            body: { executionDate: dayjs(), jobType: 'deleteOrphans' },
         });
 
         jest.spyOn(cleanupService, 'deleteOrphans').mockReturnValue(of(response));

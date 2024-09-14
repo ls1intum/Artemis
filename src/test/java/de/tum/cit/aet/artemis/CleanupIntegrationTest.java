@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
@@ -457,12 +456,12 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         var response = request.getList("/api/admin/get-last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
 
-        List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::getName).toList();
+        List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::toString).toList();
 
         assertThat(response).isNotNull();
         assertThat(response).extracting(CleanupServiceExecutionRecordDTO::jobType).containsAll(enumJobTypes);
 
-        var orphansJob = response.stream().filter(elem -> elem.jobType().equals(CleanupJobType.ORPHANS.getName())).findFirst();
+        var orphansJob = response.stream().filter(elem -> elem.jobType().equals(CleanupJobType.ORPHANS.toString())).findFirst();
 
         assertThat(orphansJob).isPresent();
         assertThat(now).isEqualTo(orphansJob.get().executionDate());
@@ -481,7 +480,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    public void testTransactionalBehavior() {
+    void testTransactionalBehavior() {
 
         long count = resultRepository.count();
 
@@ -493,7 +492,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
             status.setRollbackOnly();
         });
 
-        assertEquals("Expected no entities get deleted after rollback", count + 1, resultRepository.count());
+        assertThat(resultRepository.count()).as("Expected no entities get deleted after rollback").isEqualTo(count + 1);
     }
 
     private Feedback createFeedbackWithLinkedLongFeedback() {

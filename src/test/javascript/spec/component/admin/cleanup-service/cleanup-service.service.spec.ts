@@ -8,7 +8,7 @@ describe('DataCleanupService', () => {
     let httpMock: HttpTestingController;
 
     const mockDate = dayjs();
-    const mockExecutionRecord: CleanupServiceExecutionRecordDTO = { executionDate: mockDate };
+    const mockExecutionRecord: CleanupServiceExecutionRecordDTO = { executionDate: mockDate, jobType: 'deleteOrphans' };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -136,8 +136,8 @@ describe('DataCleanupService', () => {
             expect(res.body).toEqual(mockExecutionRecords);
         });
 
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/admin/get-last-executions' });
-        expect(req.request.method).toBe('POST');
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/get-last-executions' });
+        expect(req.request.method).toBe('GET');
         req.flush(mockExecutionRecords);
     });
 });

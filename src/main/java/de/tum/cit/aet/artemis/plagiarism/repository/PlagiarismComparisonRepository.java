@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.plagiarism.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
-import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
@@ -94,5 +93,5 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
 
     @Modifying
     @Transactional
-    void deleteAllById(Collection<Long> ids);
+    void deleteAllById(Iterable<? extends Long> ids);
 }
