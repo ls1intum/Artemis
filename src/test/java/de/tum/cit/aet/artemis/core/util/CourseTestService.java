@@ -76,7 +76,7 @@ import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
-import de.tum.cit.aet.artemis.atlas.util.OnlineCourseConfigurationRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.OnlineCourseConfigurationRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;

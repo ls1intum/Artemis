@@ -63,8 +63,8 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingSubmissionTestRepository;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {

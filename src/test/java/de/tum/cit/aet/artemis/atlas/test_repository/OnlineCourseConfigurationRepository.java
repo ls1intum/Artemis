@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.util;
+package de.tum.cit.aet.artemis.atlas.test_repository;
 
 import org.springframework.stereotype.Repository;
 

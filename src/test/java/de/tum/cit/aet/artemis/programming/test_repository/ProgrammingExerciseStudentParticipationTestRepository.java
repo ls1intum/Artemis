@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.util;
+package de.tum.cit.aet.artemis.programming.test_repository;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

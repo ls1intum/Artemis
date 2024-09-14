@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas;
+package de.tum.cit.aet.artemis.lti;
 
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.when;

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas;
+package de.tum.cit.aet.artemis.lti;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;

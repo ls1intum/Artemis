@@ -4,13 +4,13 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import de.tum.cit.aet.artemis.assessment.util.ParticipationTestRepository;
-import de.tum.cit.aet.artemis.atlas.util.OnlineCourseConfigurationRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.OnlineCourseConfigurationRepository;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
-import de.tum.cit.aet.artemis.core.util.UserTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseStudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
 /**
  * Test configuration to enable JPA repositories for the respective test-only repositories.

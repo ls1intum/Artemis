@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas;
+package de.tum.cit.aet.artemis.lti;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -10,7 +10,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.atlas.util.OnlineCourseConfigurationRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.OnlineCourseConfigurationRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;

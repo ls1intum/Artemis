@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
-import de.tum.cit.aet.artemis.core.util.UserTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to Users for use in integration tests.
