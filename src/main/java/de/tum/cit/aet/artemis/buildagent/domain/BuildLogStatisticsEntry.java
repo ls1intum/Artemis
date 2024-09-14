@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.buildagent.domain;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.OneToOne;
@@ -16,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 @Entity
 @Table(name = "build_log_statistics_entry")

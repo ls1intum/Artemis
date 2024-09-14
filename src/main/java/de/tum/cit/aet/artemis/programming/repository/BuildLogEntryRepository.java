@@ -7,8 +7,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.buildagent.domain.BuildLogEntry;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data JPA repository for the BuildLogEntry entity.

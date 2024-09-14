@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.buildagent.domain;
 
 import java.time.ZonedDateTime;
 
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
@@ -15,6 +14,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 /**
  * Created by Josias Montag on 11.11.16.

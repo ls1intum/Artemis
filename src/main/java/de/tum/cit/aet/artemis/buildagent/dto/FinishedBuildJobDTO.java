@@ -8,11 +8,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildJob;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildStatus;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionDTO;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.buildagent.domain.BuildJob;
-import de.tum.cit.aet.artemis.buildagent.domain.BuildStatus;
 
 /**
  * A DTO representing a finished build job

@@ -5,7 +5,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -21,6 +20,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 
 @Entity
 @Table(name = "build_plan", uniqueConstraints = { @UniqueConstraint(columnNames = { "build_plan" }) })

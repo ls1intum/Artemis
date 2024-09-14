@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.buildagent.domain;
 
 import java.time.ZonedDateTime;
 
-import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,8 +14,9 @@ import jakarta.persistence.Table;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 @Entity
 @Table(name = "build_job")

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildRunState;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -29,7 +30,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.buildagent.domain.BuildRunState;
 import de.tum.cit.aet.artemis.programming.exception.BuildTriggerWebsocketError;
 
 @Profile(PROFILE_CORE)
