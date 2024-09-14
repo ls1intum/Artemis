@@ -10,17 +10,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
-import de.tum.cit.aet.artemis.core.repository.cleanup.DataCleanupRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import org.hibernate.engine.spi.SessionImplementor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.annotation.Rollback;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -45,6 +39,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository;
+import de.tum.cit.aet.artemis.core.repository.cleanup.DataCleanupRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -132,7 +127,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         oldCourse.setStartDate(now.minusMonths(12).plusDays(2));
         oldCourse.setEndDate(now.minusMonths(6).minusDays(2));
         TextExercise finishedTextExercise1 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),
-            now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
+                now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
         finishedTextExercise1.setTitle("Finished");
         oldCourse.addExercises(finishedTextExercise1);
         oldCourse = courseRepository.save(oldCourse);
@@ -142,7 +137,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         newCourse.setStartDate(now);
         newCourse.setEndDate(now.plusMonths(6));
         TextExercise finishedTextExercise2 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),
-            now.minusMonths(12).plusDays(2).plusHours(24), newCourse);
+                now.minusMonths(12).plusDays(2).plusHours(24), newCourse);
         finishedTextExercise2.setTitle("Finished");
         newCourse.addExercises(finishedTextExercise2);
         newCourse = courseRepository.save(newCourse);
@@ -170,7 +165,8 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         orphanFeedback.setResult(orphanResult);
         orphanFeedback = feedbackRepository.save(orphanFeedback);
 
-        var submission = participationUtilService.addSubmission(textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst(), new ProgrammingSubmission(), student.getLogin());
+        var submission = participationUtilService.addSubmission(textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst(), new ProgrammingSubmission(),
+                student.getLogin());
 
         var nonOrphanFeedback = createFeedbackWithLinkedLongFeedback();
         var nonOrphanTextBlock = createTextBlockForFeedback(nonOrphanFeedback);
@@ -204,7 +200,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         orphanRating = ratingRepository.save(orphanRating);
 
         var responseBody = request.postWithResponseBody("/api/admin/delete-orphans", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
-            new LinkedMultiValueMap<>());
+                new LinkedMultiValueMap<>());
 
         assertThat(responseBody.jobType()).isEqualTo("deleteOrphans");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -303,7 +299,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
         var responseBody = request.postWithResponseBody("/api/admin/delete-plagiarism-comparisons", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
-            params);
+                params);
 
         assertThat(responseBody.jobType()).isEqualTo("deletePlagiarismComparisons");
         assertThat(responseBody.executionDate()).isNotNull();
