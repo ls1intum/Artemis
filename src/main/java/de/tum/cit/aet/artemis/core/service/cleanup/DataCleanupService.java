@@ -57,7 +57,7 @@ public class DataCleanupService {
     public List<CleanupServiceExecutionRecordDTO> getLastExecutions() {
         return Arrays.stream(CleanupJobType.values()).map(jobType -> {
             CleanupJobExecution lastExecution = cleanupJobExecutionRepository.findTopByCleanupJobTypeOrderByDeletionTimestampDesc(jobType);
-            return lastExecution != null ? CleanupServiceExecutionRecordDTO.of(lastExecution) : new CleanupServiceExecutionRecordDTO(null, jobType.toString());
+            return lastExecution != null ? CleanupServiceExecutionRecordDTO.of(lastExecution) : new CleanupServiceExecutionRecordDTO(null, jobType.label());
         }).toList();
     }
 

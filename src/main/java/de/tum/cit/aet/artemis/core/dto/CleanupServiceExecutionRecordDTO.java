@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
 public record CleanupServiceExecutionRecordDTO(ZonedDateTime executionDate, String jobType) {
 
     public static CleanupServiceExecutionRecordDTO of(CleanupJobExecution cleanupJobExecution) {
-        return new CleanupServiceExecutionRecordDTO(cleanupJobExecution.getDeletionTimestamp(), cleanupJobExecution.getCleanupJobType().toString());
+        return new CleanupServiceExecutionRecordDTO(cleanupJobExecution.getDeletionTimestamp(), cleanupJobExecution.getCleanupJobType().label());
     }
 
 }

@@ -5,14 +5,18 @@ public enum CleanupJobType {
     ORPHANS("deleteOrphans"), PLAGIARISM_COMPARISONS("deletePlagiarismComparisons"), NON_RATED_RESULTS("deleteNonRatedResults"), RATED_RESULTS("deleteRatedResults"),
     SUBMISSION_VERSIONS("deleteSubmissionVersions"), FEEDBACK("deleteFeedback");
 
-    private final String name;
+    private final String label;
 
     CleanupJobType(String name) {
-        this.name = name;
+        this.label = name;
+    }
+
+    public String label() {
+        return label;
     }
 
     @Override
     public String toString() {
-        return name;
+        return this.name();
     }
 }
