@@ -27,7 +27,7 @@ public class DataCleanupService {
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
     public DataCleanupService(DataCleanupRepository dataCleanUpRepository, CleanupJobExecutionRepository cleanupJobExecutionRepository,
-            PlagiarismComparisonRepository plagiarismComparisonRepository) {
+                              PlagiarismComparisonRepository plagiarismComparisonRepository) {
         this.dataCleanUpRepository = dataCleanUpRepository;
         this.cleanupJobExecutionRepository = cleanupJobExecutionRepository;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
@@ -40,7 +40,7 @@ public class DataCleanupService {
 
     public CleanupServiceExecutionRecordDTO deletePlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         var pcIds = dataCleanUpRepository.getUnnecessaryPlagiarismComparisons(deleteFrom, deleteTo);
-        plagiarismComparisonRepository.deleteAllById(pcIds);
+        plagiarismComparisonRepository.deleteByIdIn(pcIds);
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.PLAGIARISM_COMPARISONS, deleteFrom, deleteTo));
     }
 

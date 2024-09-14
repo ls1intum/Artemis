@@ -6,10 +6,10 @@
         <table id="cleanupOperations" class="table table-striped" aria-describedby="cleanup-page-heading">
             <thead>
                 <tr>
-                    <th scope="col" jhiTranslate="cleanupService.table.operation">Operation</th>
-                    <th scope="col" jhiTranslate="cleanupService.table.deleteFrom">Delete From</th>
-                    <th scope="col" jhiTranslate="cleanupService.table.deleteTo">Delete To</th>
-                    <th scope="col" jhiTranslate="cleanupService.table.lastExecuted">Last Executed</th>
+                    <th scope="col" jhiTranslate="cleanupService.table.operation"></th>
+                    <th scope="col" jhiTranslate="cleanupService.table.deleteFrom"></th>
+                    <th scope="col" jhiTranslate="cleanupService.table.deleteTo"></th>
+                    <th scope="col" jhiTranslate="cleanupService.table.lastExecuted"></th>
                     <th scope="col"></th>
                 </tr>
             </thead>
@@ -17,7 +17,7 @@
                 @for (operation of cleanupOperations; track operation) {
                     <tr>
                         <td>
-                            {{ 'cleanupService.operation.' + operation.name | artemisTranslate }}
+                            <span [jhiTranslate]="'cleanupService.operation.' + operation.name"></span>
                         </td>
                         <td>
                             @if (operation.name !== 'deleteOrphans') {

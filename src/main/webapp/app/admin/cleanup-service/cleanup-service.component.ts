@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
-import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/cleanup-service.service';
-import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromServer } from 'app/utils/date.utils';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service.ts';
+import { Observer } from 'rxjs';
 
 @Component({
     selector: 'jhi-cleanup-service',
@@ -40,7 +41,7 @@ export class CleanupServiceComponent implements OnInit {
             deleteFrom: dayjs().subtract(12, 'months'),
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
-        }
+        },
     ];
 
     ngOnInit(): void {
@@ -62,9 +63,6 @@ export class CleanupServiceComponent implements OnInit {
     }
 
     executeCleanupOperation(operation: CleanupOperation): void {
-        const deleteFrom = convertDateFromClient(operation.deleteFrom)!;
-        const deleteTo = convertDateFromClient(operation.deleteTo)!;
-
         const subscriptionHandler = this.handleResponse(operation);
 
         switch (operation.name) {
@@ -72,33 +70,32 @@ export class CleanupServiceComponent implements OnInit {
                 this.cleanupService.deleteOrphans().subscribe(subscriptionHandler);
                 break;
             case 'deletePlagiarismComparisons':
-                this.cleanupService.deletePlagiarismComparisons(deleteFrom, deleteTo).subscribe(subscriptionHandler);
+                this.cleanupService.deletePlagiarismComparisons(operation.deleteFrom, operation.deleteTo).subscribe(subscriptionHandler);
                 break;
             case 'deleteNonRatedResults':
-                this.cleanupService.deleteNonRatedResults(deleteFrom, deleteTo).subscribe(subscriptionHandler);
+                this.cleanupService.deleteNonRatedResults(operation.deleteFrom, operation.deleteTo).subscribe(subscriptionHandler);
                 break;
             case 'deleteOldRatedResults':
-                this.cleanupService.deleteOldRatedResults(deleteFrom, deleteTo).subscribe(subscriptionHandler);
-                break;
-            case 'deleteOldSubmissionVersions':
-                this.cleanupService.deleteOldSubmissionVersions(deleteFrom, deleteTo).subscribe(subscriptionHandler);
-                break;
-            case 'deleteOldFeedback':
-                this.cleanupService.deleteOldFeedback(deleteFrom, deleteTo).subscribe(subscriptionHandler);
+                this.cleanupService.deleteOldRatedResults(operation.deleteFrom, operation.deleteTo).subscribe(subscriptionHandler);
                 break;
         }
     }
 
-    private handleResponse(operation: CleanupOperation) {
+    private handleResponse(operation: CleanupOperation): Observer<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         return {
             next: (response: HttpResponse<CleanupServiceExecutionRecordDTO>) => {
                 this.dialogErrorSource.next('');
                 const executionDateFromServer = convertDateFromServer(response.body!.executionDate);
                 operation.lastExecuted = executionDateFromServer;
             },
-            error: (error: HttpErrorResponse) => {
-                this.dialogErrorSource.next(error.message);
+            error: (error: any) => {
+                if (error instanceof HttpErrorResponse) {
+                    this.dialogErrorSource.next(error.message);
+                } else {
+                    this.dialogErrorSource.next('An unexpected error occurred.');
+                }
             },
+            complete: () => {},
         };
     }
 
