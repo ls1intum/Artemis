@@ -256,23 +256,20 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(result).isEqualTo(expectedSet);
         }
 
-        @Disabled
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnCompleted() throws Exception {
-            final var exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(userID);
+            final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
+            exercises.forEach(exercise -> studentScoreUtilService.createStudentScoreIsRated(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), MIN_SCORE_GREEN));
 
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var completed = result.exerciseMetrics().completed();
 
-            final var expectedCompleted = exercises.stream().map(Exercise::getId).filter(id -> resultRepository
-                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(id, userID).stream().anyMatch(result1 -> result1.getScore() >= MIN_SCORE_GREEN))
+            final var expectedCompleted = exercises.stream().map(Exercise::getId).filter(
+                    id -> studentScoreRepository.findByExercise_IdAndUser_Id(id, userID).map(studentScore -> studentScore.getLastRatedScore() >= MIN_SCORE_GREEN).orElse(false))
                     .collect(Collectors.toSet());
-
-            final var expectedScores = exercises.stream().collect(Collectors.toMap(Exercise::getId, exercise -> resultRepository
-                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exercise.getId(), userID).stream().mapToDouble(Result::getScore).sum()));
 
             assertThat(completed).isEqualTo(expectedCompleted);
         }
