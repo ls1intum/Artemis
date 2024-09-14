@@ -23,6 +23,9 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildJob;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildLogEntry;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -35,9 +38,6 @@ import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {

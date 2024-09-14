@@ -71,6 +71,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildLogStatisticsEntry;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -126,7 +127,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.StaticCodeAnalysisCategory;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildLogStatisticsEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;

@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.buildagent.domain.BuildPlanType.SOLUTION;
+import static de.tum.cit.aet.artemis.buildagent.domain.BuildPlanType.TEMPLATE;
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
@@ -31,6 +31,7 @@ import org.springframework.util.StreamUtils;
 
 import com.offbytwo.jenkins.model.JobWithDetails;
 
+import de.tum.cit.aet.artemis.buildagent.domain.BuildPlan;
 import de.tum.cit.aet.artemis.core.exception.JenkinsException;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -38,7 +39,6 @@ import de.tum.cit.aet.artemis.programming.ContinuousIntegrationTestService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPlan;
 import de.tum.cit.aet.artemis.programming.repository.BuildPlanRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;

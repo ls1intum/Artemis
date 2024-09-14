@@ -28,13 +28,13 @@ import com.github.dockerjava.api.model.Info;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
+import de.tum.cit.aet.artemis.buildagent.domain.BuildJob;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
 import de.tum.cit.aet.artemis.buildagent.service.BuildLogsMap;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)

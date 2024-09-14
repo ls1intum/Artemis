@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.shared.base;
 
+import static de.tum.cit.aet.artemis.buildagent.domain.BuildPlanType.SOLUTION;
+import static de.tum.cit.aet.artemis.buildagent.domain.BuildPlanType.TEMPLATE;
 import static de.tum.cit.aet.artemis.core.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_AEOLUS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
@@ -10,8 +12,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static de.tum.cit.aet.artemis.core.config.Constants.TEST_REPO_NAME;
 import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;

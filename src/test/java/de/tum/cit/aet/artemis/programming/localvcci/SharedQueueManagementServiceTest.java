@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 
-import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.buildagent.domain.BuildJob;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 

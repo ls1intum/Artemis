@@ -1,7 +1,7 @@
 package de.tum.cit.aet.artemis.programming;
 
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
+import static de.tum.cit.aet.artemis.buildagent.domain.BuildPlanType.SOLUTION;
+import static de.tum.cit.aet.artemis.buildagent.domain.BuildPlanType.TEMPLATE;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 
 import java.io.IOException;

@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.programming;
 
+import static de.tum.cit.aet.artemis.buildagent.domain.BuildPlanType.SOLUTION;
+import static de.tum.cit.aet.artemis.buildagent.domain.BuildPlanType.TEMPLATE;
 import static de.tum.cit.aet.artemis.core.util.TestResourceUtils.HalfSecond;
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
-import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_BUILD_PLAN_ID;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_SOLUTION_REPOSITORY_URL;
 import static de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResourceErrorKeys.INVALID_TEMPLATE_BUILD_PLAN_ID;
