@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { convertDateFromServer } from 'app/utils/date.utils';
@@ -6,16 +6,20 @@ import { Subject } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service.ts';
 import { Observer } from 'rxjs';
+import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-cleanup-service',
     templateUrl: './cleanup-service.component.html',
+    standalone: true,
+    imports: [FormDateTimePickerModule, ArtemisSharedModule],
 })
 export class CleanupServiceComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
-    constructor(private cleanupService: DataCleanupService) {}
+    private dataCleanupService: DataCleanupService = inject(DataCleanupService);
 
     cleanupOperations: CleanupOperation[] = [
         {
@@ -49,7 +53,7 @@ export class CleanupServiceComponent implements OnInit {
     }
 
     loadLastExecutions(): void {
-        this.cleanupService.getLastExecutions().subscribe((executionRecordsBody: HttpResponse<CleanupServiceExecutionRecordDTO[]>) => {
+        this.dataCleanupService.getLastExecutions().subscribe((executionRecordsBody: HttpResponse<CleanupServiceExecutionRecordDTO[]>) => {
             const executionRecords = executionRecordsBody.body!;
             if (executionRecords && executionRecords.length > 0) {
                 this.cleanupOperations.forEach((operation, index) => {
@@ -67,16 +71,16 @@ export class CleanupServiceComponent implements OnInit {
 
         switch (operation.name) {
             case 'deleteOrphans':
-                this.cleanupService.deleteOrphans().subscribe(subscriptionHandler);
+                this.dataCleanupService.deleteOrphans().subscribe(subscriptionHandler);
                 break;
             case 'deletePlagiarismComparisons':
-                this.cleanupService.deletePlagiarismComparisons(operation.deleteFrom, operation.deleteTo).subscribe(subscriptionHandler);
+                this.dataCleanupService.deletePlagiarismComparisons(operation.deleteFrom, operation.deleteTo).subscribe(subscriptionHandler);
                 break;
             case 'deleteNonRatedResults':
-                this.cleanupService.deleteNonRatedResults(operation.deleteFrom, operation.deleteTo).subscribe(subscriptionHandler);
+                this.dataCleanupService.deleteNonRatedResults(operation.deleteFrom, operation.deleteTo).subscribe(subscriptionHandler);
                 break;
             case 'deleteOldRatedResults':
-                this.cleanupService.deleteOldRatedResults(operation.deleteFrom, operation.deleteTo).subscribe(subscriptionHandler);
+                this.dataCleanupService.deleteOldRatedResults(operation.deleteFrom, operation.deleteTo).subscribe(subscriptionHandler);
                 break;
         }
     }
