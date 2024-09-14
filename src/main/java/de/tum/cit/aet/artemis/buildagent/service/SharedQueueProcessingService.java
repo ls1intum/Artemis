@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.buildagent.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
@@ -24,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +36,7 @@ import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
+import com.hazelcast.topic.ITopic;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -64,6 +68,8 @@ public class SharedQueueProcessingService {
 
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
+    private final TaskScheduler taskScheduler;
+
     private IQueue<BuildJobQueueItem> queue;
 
     private IQueue<ResultQueueItem> resultQueue;
@@ -82,13 +88,21 @@ public class SharedQueueProcessingService {
 
     private UUID listenerId;
 
+    /**
+     * Scheduled future for checking availability and processing next build job.
+     */
+    private ScheduledFuture<?> scheduledFuture;
+
+    private boolean isPaused = false;
+
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService) {
+            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler) {
         this.hazelcastInstance = hazelcastInstance;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
+        this.taskScheduler = taskScheduler;
     }
 
     /**
@@ -101,6 +115,28 @@ public class SharedQueueProcessingService {
         this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
         this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
         this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+
+        /*
+         * Check every 10 seconds whether the node has at least one thread available for a new build job.
+         * If so, process the next build job.
+         * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
+         * node otherwise stopped checking for build jobs in the queue.
+         */
+        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+
+        ITopic<String> pauseBuildAgentTopic = hazelcastInstance.getTopic("pauseBuildAgentTopic");
+        pauseBuildAgentTopic.addMessageListener(message -> {
+            if (message.getMessageObject().equals(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+                pauseBuildAgent();
+            }
+        });
+
+        ITopic<String> resumeBuildAgentTopic = hazelcastInstance.getTopic("resumeBuildAgentTopic");
+        resumeBuildAgentTopic.addMessageListener(message -> {
+            if (message.getMessageObject().equals(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+                resumeBuildAgent();
+            }
+        });
     }
 
     @PreDestroy
@@ -125,17 +161,6 @@ public class SharedQueueProcessingService {
         if (!buildAgentInformation.containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
             updateLocalBuildAgentInformation();
         }
-    }
-
-    /**
-     * Check every 10 seconds whether the node has at least one thread available for a new build job.
-     * If so, process the next build job.
-     * This is a backup mechanism in case the build queue is not empty, no new build jobs are entering the queue and the
-     * node otherwise stopped checking for build jobs in the queue.
-     */
-    @Scheduled(fixedRate = 10000)
-    public void checkForBuildJobs() {
-        checkAvailabilityAndProcessNextBuild();
     }
 
     /**
@@ -165,7 +190,7 @@ public class SharedQueueProcessingService {
         instanceLock.lock();
         try {
             // Recheck conditions after acquiring the lock to ensure they are still valid
-            if (!nodeIsAvailable() || queue.isEmpty()) {
+            if (!nodeIsAvailable() || queue.isEmpty() || isPaused) {
                 return;
             }
 
@@ -348,6 +373,51 @@ public class SharedQueueProcessingService {
             checkAvailabilityAndProcessNextBuild();
             return null;
         });
+    }
+
+    private void pauseBuildAgent() {
+        log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+
+        this.isPaused = true;
+        this.removeListener();
+        if (this.scheduledFuture != null && !this.scheduledFuture.isCancelled()) {
+            this.scheduledFuture.cancel(false);
+        }
+
+        log.info("Gracefully cancelling running build jobs");
+
+        if (buildJobManagementService.getRunningBuildJobIds().isEmpty()) {
+            log.info("No running build jobs to cancel");
+        }
+        else {
+            // Sleep for 10 seconds to allow the build jobs to be finished. If they are not finished, they will be cancelled.
+            try {
+                Thread.sleep(10000);
+            }
+            catch (InterruptedException e) {
+                log.error("Error while pausing build agent", e);
+            }
+
+            if (!this.isPaused) {
+                log.info("Build agent was resumed before the build jobs could be cancelled");
+                return;
+            }
+
+            Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
+            List<BuildJobQueueItem> runningBuildJobs = processingJobs.getAll(runningBuildJobIds).values().stream().toList();
+            runningBuildJobIds.forEach(buildJobManagementService::cancelBuildJob);
+            this.queue.addAll(runningBuildJobs);
+            log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIds);
+            log.debug("Cancelled running build jobs: {}", runningBuildJobs);
+
+        }
+    }
+
+    private void resumeBuildAgent() {
+        log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+        this.isPaused = false;
+        this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        this.scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
     }
 
     /**

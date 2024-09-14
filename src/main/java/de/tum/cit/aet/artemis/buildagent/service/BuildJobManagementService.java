@@ -170,9 +170,12 @@ public class BuildJobManagementService {
                 }
             }
         });
-        futureResult.whenComplete(((result, throwable) -> runningFutures.remove(buildJobItem.id())));
 
-        return futureResult;
+        return futureResult.whenComplete(((result, throwable) -> runningFutures.remove(buildJobItem.id())));
+    }
+
+    Set<String> getRunningBuildJobIds() {
+        return Set.copyOf(runningFutures.keySet());
     }
 
     /**
@@ -227,7 +230,7 @@ public class BuildJobManagementService {
      *
      * @param buildJobId The id of the build job that should be cancelled.
      */
-    private void cancelBuildJob(String buildJobId) {
+    void cancelBuildJob(String buildJobId) {
         Future<BuildResult> future = runningFutures.get(buildJobId);
         if (future != null) {
             try {
