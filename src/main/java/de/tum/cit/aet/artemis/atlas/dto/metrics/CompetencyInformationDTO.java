@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 
 /**
@@ -19,4 +20,9 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyInformationDTO(long id, String title, String description, CompetencyTaxonomy taxonomy, ZonedDateTime softDueDate, boolean optional, int masteryThreshold) {
+
+    public static <C extends Competency> CompetencyInformationDTO of(C competency) {
+        return new CompetencyInformationDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getSoftDueDate(),
+                competency.isOptional(), competency.getMasteryThreshold());
+    }
 }

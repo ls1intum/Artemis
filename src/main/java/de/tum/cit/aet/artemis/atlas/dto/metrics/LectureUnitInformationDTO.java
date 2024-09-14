@@ -18,4 +18,9 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LectureUnitInformationDTO(long id, long lectureId, String lectureTitle, String name, ZonedDateTime releaseDate, Class<? extends LectureUnit> type) {
+
+    public static <L extends LectureUnit> LectureUnitInformationDTO of(L lectureUnit) {
+        return new LectureUnitInformationDTO(lectureUnit.getId(), lectureUnit.getLecture().getId(), lectureUnit.getLecture().getTitle(), lectureUnit.getName(),
+                lectureUnit.getReleaseDate(), lectureUnit.getClass());
+    }
 }

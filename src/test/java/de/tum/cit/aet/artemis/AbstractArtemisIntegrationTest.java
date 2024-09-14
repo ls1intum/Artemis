@@ -25,7 +25,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
-import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.communication.service.notifications.ConversationNotificationService;
@@ -36,6 +35,7 @@ import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNoti
 import de.tum.cit.aet.artemis.communication.service.notifications.TutorialGroupNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
+import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -48,6 +48,8 @@ import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
 import de.tum.cit.aet.artemis.exercise.ExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.programming.MockDelegate;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.lecture.LectureUtilService;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
@@ -169,7 +171,13 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected StudentScoreUtilService studentScoreUtilService;
 
     @SpyBean
-    protected ParticipantScoreService participantScoreService;
+    protected LectureUtilService lectureUtilService;
+
+    @SpyBean
+    protected CompetencyUtilService competencyUtilService;
+
+    @SpyBean
+    protected LectureUnitService lectureUnitService;
 
     @Autowired
     protected RequestUtilService request;

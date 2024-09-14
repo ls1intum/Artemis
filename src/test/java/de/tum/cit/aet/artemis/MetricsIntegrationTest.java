@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -14,7 +15,6 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,16 +25,17 @@ import org.springframework.test.util.ReflectionTestUtils;
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.CompetencyInformationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyMetricsRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitMetricsRepository;
-import de.tum.cit.aet.artemis.team.TeamFactory;
+import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 
 class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -44,10 +45,10 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ExerciseMetricsRepository exerciseMetricsRepository;
 
     @Autowired
-    private CompetencyMetricsRepository competencyMetricsRepository;
+    private CompetencyRepository competencyRepository;
 
     @Autowired
-    private LectureUnitMetricsRepository lectureUnitMetricsRepository;
+    private LectureUnitRepository lectureUnitRepository;
 
     @Autowired
     StudentScoreRepository studentScoreRepository;
@@ -55,8 +56,6 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private Course course;
 
     private Course courseWithTestRuns;
-
-    private Course courseWithCompetencies;
 
     private long userID;
 
@@ -73,13 +72,10 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         courseWithTestRuns = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(TEST_PREFIX, true);
-        courseWithCompetencies = courseUtilService.createCoursesWithExercisesAndLecturesAndLectureUnitsAndCompetencies(TEST_PREFIX, true, true, 1).getFirst();
+        ;
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
         userID = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
-
-        course.getExercises().forEach(
-                exercise -> exercise.setTeams(Set.of(TeamFactory.generateTeamForExercise(exercise, "testTeam", "test", 3, userUtilService.getUserByLogin(STUDENT_OF_COURSE)))));
     }
 
     @AfterEach
@@ -270,19 +266,21 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Nested
     class CompetencyMetrics {
 
-        @Disabled
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnCompetencyInformation() throws Exception {
-            final var result = request.get("/api/metrics/course/" + courseWithCompetencies.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+            course.setCompetencies(Set.of(competencyUtilService.createCompetency(course)));
+
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.competencyMetrics()).isNotNull();
 
             final var competencyInformation = result.competencyMetrics().competencyInformation();
 
-            final var expectedCompetencies = competencyMetricsRepository.findAllCompetencyInformationByCourseId(courseWithCompetencies.getId());
+            final var competencies = competencyRepository.findAllForCourse(course.getId());
+            final var expectedDTOs = competencies.stream().map(CompetencyInformationDTO::of).collect(Collectors.toSet());
 
-            assertThat(competencyInformation.values()).containsExactlyInAnyOrderElementsOf(expectedCompetencies);
+            assertThat(competencyInformation.values()).containsExactlyInAnyOrderElementsOf(expectedDTOs);
             assertThat(competencyInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
         }
     }
@@ -290,18 +288,26 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Nested
     class LectureMetrics {
 
-        @Disabled
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnLectureUnitInformation() throws Exception {
-            final var result = request.get("/api/metrics/course/" + courseWithCompetencies.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
+
+            final var lectureUnit = lectureUtilService.createTextUnit();
+            lectureUnitService.linkLectureUnitsToCompetency(competencyUtilService.createCompetency(course), Set.of(lectureUnit), Set.of());
+
+            final var testLecture = lectureUtilService.createLecture(course, null);
+            lectureUtilService.addLectureUnitsToLecture(testLecture, List.of(lectureUnit));
+            course.addLectures(testLecture);
+
+            final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.lectureUnitStudentMetricsDTO()).isNotNull();
             final var lectureUnitInformation = result.lectureUnitStudentMetricsDTO().lectureUnitInformation();
 
-            final var expectedLectureUnits = lectureUnitMetricsRepository.findAllLectureUnitInformationByCourseId(courseWithCompetencies.getId());
+            final var lectureUnits = lectureUnitRepository.findAllById(Set.of(lectureUnit.getId()));
+            final var expectedDTOs = lectureUnits.stream().map(LectureUnitInformationDTO::of).collect(Collectors.toSet());
 
-            assertThat(lectureUnitInformation.values()).containsExactlyInAnyOrderElementsOf(expectedLectureUnits);
+            assertThat(lectureUnitInformation.values()).containsExactlyInAnyOrderElementsOf(expectedDTOs);
             assertThat(lectureUnitInformation).allSatisfy((id, dto) -> assertThat(id).isEqualTo(dto.id()));
         }
     }
