@@ -1,6 +1,11 @@
 package de.tum.cit.aet.artemis.core.service.connectors;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
+import static de.tum.cit.aet.artemis.core.config.Constants.SYSTEM_ACCOUNT;
+
+import java.time.Instant;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -12,6 +17,8 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
+import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -35,7 +42,7 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
 /**
  * This class describes a service for SAML2 authentication.
  * <p>
- * The main method is {@link #handleAuthentication(Saml2AuthenticatedPrincipal)}. The service extracts the user information
+ * The main method is {@link #handleAuthentication(Authentication,Saml2AuthenticatedPrincipal)}. The service extracts the user information
  * from the {@link Saml2AuthenticatedPrincipal} and creates the user, if it does not exist already.
  * <p>
  * When the user gets created, the SAML2 attributes can be used to fill in user information. The configuration happens
@@ -45,8 +52,10 @@ import de.tum.cit.aet.artemis.core.service.user.UserService;
  * This is needed, since the client "does not know" that he is already authenticated via SAML2.
  */
 @Service
-@Profile("saml2")
+@Profile(PROFILE_SAML2)
 public class SAML2Service {
+
+    private final AuditEventRepository auditEventRepository;
 
     @Value("${info.saml2.enable-password:#{null}}")
     private Optional<Boolean> saml2EnablePassword;
@@ -68,12 +77,14 @@ public class SAML2Service {
     /**
      * Constructs a new instance.
      *
-     * @param userRepository      The user repository
-     * @param properties          The properties
-     * @param userCreationService The user creation service
+     * @param auditEventRepository The audit event repository
+     * @param userRepository       The user repository
+     * @param properties           The properties
+     * @param userCreationService  The user creation service
      */
-    public SAML2Service(final UserRepository userRepository, final SAML2Properties properties, final UserCreationService userCreationService, MailService mailService,
-            UserService userService) {
+    public SAML2Service(final AuditEventRepository auditEventRepository, final UserRepository userRepository, final SAML2Properties properties,
+            final UserCreationService userCreationService, MailService mailService, UserService userService) {
+        this.auditEventRepository = auditEventRepository;
         this.userRepository = userRepository;
         this.properties = properties;
         this.userCreationService = userCreationService;
@@ -93,10 +104,13 @@ public class SAML2Service {
      * <p>
      * Registers new users and returns a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user.
      *
-     * @param principal the principal, containing the user information
+     * @param originalAuth the original authentication with details
+     * @param principal    the principal, containing the user information
      * @return a new {@link UsernamePasswordAuthenticationToken} matching the SAML2 user
      */
-    public Authentication handleAuthentication(final Saml2AuthenticatedPrincipal principal) {
+    public Authentication handleAuthentication(final Authentication originalAuth, final Saml2AuthenticatedPrincipal principal) {
+        Map<String, Object> details = originalAuth.getDetails() == null ? Map.of() : Map.of("details", originalAuth.getDetails());
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         log.debug("SAML2 User '{}' logged in, attributes {}", auth.getName(), principal.getAttributes());
@@ -107,6 +121,9 @@ public class SAML2Service {
         if (user.isEmpty()) {
             // create User if not exists
             user = Optional.of(createUser(username, principal));
+            Map<String, Object> accountCreationDetails = new HashMap<>(details);
+            accountCreationDetails.put("user", user.get().getLogin());
+            auditEventRepository.add(new AuditEvent(Instant.now(), SYSTEM_ACCOUNT, "SAML2_ACCOUNT_CREATE", accountCreationDetails));
 
             if (saml2EnablePassword.isPresent() && Boolean.TRUE.equals(saml2EnablePassword.get())) {
                 log.debug("Sending SAML2 creation mail");
@@ -125,6 +142,7 @@ public class SAML2Service {
         }
 
         auth = new UsernamePasswordAuthenticationToken(user.get().getLogin(), user.get().getPassword(), toGrantedAuthorities(user.get().getAuthorities()));
+        auditEventRepository.add(new AuditEvent(Instant.now(), user.get().getLogin(), "SAML2_AUTHENTICATION_SUCCESS", details));
         return auth;
     }
 
