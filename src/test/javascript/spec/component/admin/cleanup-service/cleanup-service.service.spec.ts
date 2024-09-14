@@ -38,7 +38,7 @@ describe('DataCleanupService', () => {
         const deleteFrom = '2024-03-07T13:06:36.100Z';
         const deleteTo = '2024-03-08T13:06:36.100Z';
 
-        service.deletePlagiarismComparisons(deleteFrom, deleteTo).subscribe((res) => {
+        service.deletePlagiarismComparisons(dayjs(deleteFrom), dayjs(deleteTo)).subscribe((res) => {
             expect(res.body).toEqual(mockExecutionRecord);
         });
 
@@ -57,7 +57,7 @@ describe('DataCleanupService', () => {
         const deleteFrom = '2024-03-07T13:06:36.100Z';
         const deleteTo = '2024-03-08T13:06:36.100Z';
 
-        service.deleteNonRatedResults(deleteFrom, deleteTo).subscribe((res) => {
+        service.deleteNonRatedResults(dayjs(deleteFrom), dayjs(deleteTo)).subscribe((res) => {
             expect(res.body).toEqual(mockExecutionRecord);
         });
 
@@ -76,7 +76,7 @@ describe('DataCleanupService', () => {
         const deleteFrom = '2024-03-07T13:06:36.100Z';
         const deleteTo = '2024-03-08T13:06:36.100Z';
 
-        service.deleteOldRatedResults(deleteFrom, deleteTo).subscribe((res) => {
+        service.deleteOldRatedResults(dayjs(deleteFrom), dayjs(deleteTo)).subscribe((res) => {
             expect(res.body).toEqual(mockExecutionRecord);
         });
 

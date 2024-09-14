@@ -527,7 +527,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "USER")
     void testUnauthorizedAccess() throws Exception {
         request.postWithoutResponseBody("/api/admin/delete-orphans", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
