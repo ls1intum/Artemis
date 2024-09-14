@@ -32,10 +32,10 @@ following dependencies/tools on your machine:
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL <https://www.postgresql.org/>`_:
    Artemis uses Hibernate to store entities in an SQL database and Liquibase to
    automatically apply schema transformations when updating Artemis.
-3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=20.14.0 < 21) to compile
+3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=20.16.0 < 21) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
-4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=10.7.0) to
+4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=10.8.0) to
    manage client side dependencies. Npm is typically bundled with Node.js,
    but can also be installed separately.
 5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task

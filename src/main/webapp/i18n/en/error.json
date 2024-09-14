@@ -95,6 +95,8 @@
         "titleAlreadyExists": "A programming exercise with the same title already exists. Please choose a different title.",
         "shortnameAlreadyExists": "A programming exercise with the same short name already exists. Please choose a different short name.",
         "courseTitleTooLong": "The course title is too long (max. 255 characters). Please choose a shorter title.",
-        "notAllowedInExam": "This operation is not allowed in an exam."
+        "notAllowedInExam": "This operation is not allowed in an exam.",
+        "profilePictureFilesizeTooBig": "The filesize of your image is too big, please upload a smaller one.",
+        "profilePictureFileFormatNotSupported": "The file format is not supported, please make sure to upload a .png or .jpg file."
     }
 }
