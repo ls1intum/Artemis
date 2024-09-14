@@ -138,7 +138,7 @@ public class TextExerciseFeedbackService {
                 feedback.setType(FeedbackType.AUTOMATIC);
                 feedback.setCredits(individualFeedbackItem.credits());
 
-                if (textSubmission.getText() != null) {
+                if (textSubmission.getText() != null && individualFeedbackItem.indexStart() != null && individualFeedbackItem.indexEnd() != null) {
                     textBlock.setStartIndex(individualFeedbackItem.indexStart());
                     textBlock.setEndIndex(individualFeedbackItem.indexEnd());
                     textBlock.setSubmission(textSubmission);
