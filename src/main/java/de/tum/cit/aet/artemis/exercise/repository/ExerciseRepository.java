@@ -333,6 +333,14 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
 
+    @EntityGraph(attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
+            """)
+    Set<Exercise> findAllExercisesByCourseIdWithEagerParticipation(@Param("courseId") Long courseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
 
