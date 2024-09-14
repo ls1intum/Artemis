@@ -2,6 +2,7 @@ import sys
 from logging_config import logging
 from typing import Dict, Any
 from requests import Session
+from randomize_results_after import run_cleanup
 
 exercise_Ids: list[int] = []
 
@@ -39,6 +40,7 @@ def create_programming_exercise(session: Session, course_id: int, server_url: st
             exercise_Ids.append(response.json().get('id'))
         elif response.status_code == 400:
             logging.info(f"Programming exercise with shortName {default_programming_exercise['shortName']} already exists. Please provide the exercise IDs in the config file and set create_exercises to FALSE.")
+            run_cleanup()
             sys.exit(0)
         else:
             raise Exception(f"Could not create programming exercise; Status code: {response.status_code}\nResponse content: {response.text}")
