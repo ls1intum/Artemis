@@ -8,6 +8,7 @@ from logging_config import logging
 from requests import Session
 from utils import login_as_admin
 from add_users_to_course import add_users_to_groups_of_course
+from randomize_results_after import run_cleanup
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -89,6 +90,7 @@ def create_course(session: Session) -> requests.Response:
         logging.info(f"Created course {COURSE_NAME} with shortName {course_short_name} \n {response.json()}")
     elif response.status_code == 400:
         logging.info(f"Course with shortName {course_short_name} already exists. Please provide the course ID in the config file and set create_course to FALSE if you intend to add programming exercises to this course.")
+        run_cleanup()
         sys.exit(0)
     else:
         logging.error("Problem with the group 'students' and interacting with a test server? "
