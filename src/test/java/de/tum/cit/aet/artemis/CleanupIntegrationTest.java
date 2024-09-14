@@ -3,17 +3,25 @@ package de.tum.cit.aet.artemis;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.core.repository.cleanup.DataCleanupRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.hibernate.engine.spi.SessionImplementor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -102,6 +110,12 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Autowired
     private ExerciseRepository exerciseRepository;
 
+    @Autowired
+    private DataCleanupRepository dataCleanupRepository;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
+
     private Course oldCourse;
 
     private Course newCourse;
@@ -118,7 +132,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         oldCourse.setStartDate(now.minusMonths(12).plusDays(2));
         oldCourse.setEndDate(now.minusMonths(6).minusDays(2));
         TextExercise finishedTextExercise1 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),
-                now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
+            now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
         finishedTextExercise1.setTitle("Finished");
         oldCourse.addExercises(finishedTextExercise1);
         oldCourse = courseRepository.save(oldCourse);
@@ -128,20 +142,14 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         newCourse.setStartDate(now);
         newCourse.setEndDate(now.plusMonths(6));
         TextExercise finishedTextExercise2 = TextExerciseFactory.generateTextExercise(now.minusMonths(12).plusDays(2), now.minusMonths(12).plusDays(2).plusHours(12),
-                now.minusMonths(12).plusDays(2).plusHours(24), oldCourse);
+            now.minusMonths(12).plusDays(2).plusHours(24), newCourse);
         finishedTextExercise2.setTitle("Finished");
         newCourse.addExercises(finishedTextExercise2);
         newCourse = courseRepository.save(newCourse);
         exerciseRepository.save(finishedTextExercise2);
-        student = new User();
-        student.setGroups(Set.of("STUDENT"));
-        student.setLogin("student228");
-        student = userRepository.save(student);
-
-        instructor = new User();
-        instructor.setGroups(Set.of("INSTRUCTOR"));
-        instructor.setLogin("instructor228");
-        instructor = userRepository.save(instructor);
+        userUtilService.addUsers(TEST_PREFIX, 4, 0, 0, 1);
+        student = userUtilService.getUserByLogin(TEST_PREFIX + "student4");
+        instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
     }
 
     @Test
@@ -162,7 +170,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         orphanFeedback.setResult(orphanResult);
         orphanFeedback = feedbackRepository.save(orphanFeedback);
 
-        var submission = participationUtilService.addSubmission(newCourse.getExercises().stream().findFirst().orElseThrow(), new ProgrammingSubmission(), student.getLogin());
+        var submission = participationUtilService.addSubmission(textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst(), new ProgrammingSubmission(), student.getLogin());
 
         var nonOrphanFeedback = createFeedbackWithLinkedLongFeedback();
         var nonOrphanTextBlock = createTextBlockForFeedback(nonOrphanFeedback);
@@ -196,7 +204,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         orphanRating = ratingRepository.save(orphanRating);
 
         var responseBody = request.postWithResponseBody("/api/admin/delete-orphans", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
-                new LinkedMultiValueMap<>());
+            new LinkedMultiValueMap<>());
 
         assertThat(responseBody.jobType()).isEqualTo("deleteOrphans");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -221,7 +229,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Test
     @WithMockUser(roles = "ADMIN")
     void testDeletePlagiarismComparisons() throws Exception {
-        userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         // old course, should delete undecided plagiarism comparisons
         var textExercise1 = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
         var textPlagiarismResult1 = textExerciseUtilService.createTextPlagiarismResultForExercise(textExercise1);
@@ -296,7 +303,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
         var responseBody = request.postWithResponseBody("/api/admin/delete-plagiarism-comparisons", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
-                params);
+            params);
 
         assertThat(responseBody.jobType()).isEqualTo("deletePlagiarismComparisons");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -313,7 +320,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void testDeleteNonRatedResults() throws Exception {
         // create non rated results for an old course
-        var oldExercise = oldCourse.getExercises().stream().findFirst().orElseThrow();
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
         var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
         var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         ;
@@ -333,7 +340,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
 
         // create non rated results for the new course
-        var newExercise = newCourse.getExercises().stream().findFirst().orElseThrow();
+        var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
         var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
         var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         ;
@@ -381,7 +388,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @WithMockUser(roles = "ADMIN")
     void testDeleteOldRatedResults() throws Exception {
         // create rated results for an old course
-        var oldExercise = oldCourse.getExercises().stream().findFirst().orElseThrow();
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
         var oldStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(oldExercise, student.getLogin());
         var oldSubmission = participationUtilService.addSubmission(oldStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         ;
@@ -399,7 +406,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
 
         // create rated results for the new course
-        var newExercise = newCourse.getExercises().stream().findFirst().orElseThrow();
+        var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
         var newStudentParticipation = participationUtilService.createAndSaveParticipationForExercise(newExercise, student.getLogin());
         var newSubmission = participationUtilService.addSubmission(newStudentParticipation, ParticipationFactory.generateProgrammingSubmission(true));
         ;
@@ -475,6 +482,22 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         request.postWithoutResponseBody("/api/admin/delete-old-submission-versions", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
         request.postWithoutResponseBody("/api/admin/delete-old-feedback", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
         request.get("/api/admin/get-last-executions", HttpStatus.FORBIDDEN, List.class);
+    }
+
+    @Test
+    public void testTransactionalBehavior() {
+
+        long count = resultRepository.count();
+
+        var orphanResult = new Result();
+        resultRepository.save(orphanResult);
+
+        transactionTemplate.executeWithoutResult(status -> {
+            dataCleanupRepository.deleteOrphans();
+            status.setRollbackOnly();
+        });
+
+        assertEquals("Expected no entities get deleted after rollback", count + 1, resultRepository.count());
     }
 
     private Feedback createFeedbackWithLinkedLongFeedback() {

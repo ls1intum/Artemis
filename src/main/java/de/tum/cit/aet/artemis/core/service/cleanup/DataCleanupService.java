@@ -39,7 +39,6 @@ public class DataCleanupService {
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.ORPHANS, null, null));
     }
 
-    @Transactional // transactinal ok, because of delete statements
     public CleanupServiceExecutionRecordDTO deletePlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         var pcIds = dataCleanUpRepository.getUnnecessaryPlagiarismComparisons(deleteFrom, deleteTo);
         plagiarismComparisonRepository.deleteAllById(pcIds);
