@@ -8,6 +8,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -24,6 +25,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
@@ -48,6 +51,12 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private LectureUnitMetricsRepository lectureUnitMetricsRepository;
+
+    @Autowired
+    StudentScoreRepository studentScoreRepository;
+
+    @Autowired
+    ParticipantScoreRepository participantScoreRepository;
 
     private Course course;
 
@@ -75,7 +84,6 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
         userID = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
 
-        // course.getExercises().forEach(exercise -> studentScoreUtilService.createStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 0.5));
         course.getExercises().forEach(
                 exercise -> exercise.setTeams(Set.of(TeamFactory.generateTeamForExercise(exercise, "testTeam", "test", 3, userUtilService.getUserByLogin(STUDENT_OF_COURSE)))));
     }
@@ -150,14 +158,19 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnScore() throws Exception {
+            final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
+
+            exercises.forEach(exercise -> studentScoreUtilService.createStudentScoreIsRated(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 0.5));
+
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var score = result.exerciseMetrics().score();
 
-            final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
-            final var expectedScores = exercises.stream().collect(Collectors.toMap(Exercise::getId, exercise -> resultRepository
-                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exercise.getId(), userID).stream().mapToDouble(Result::getScore).sum()));
+            var expectedScores = exercises.stream()
+                    .map(exercise -> studentScoreRepository.findByExercise_IdAndUser_Id(exercise.getId(), userID)
+                            .map(studentScore -> Map.entry(exercise.getId(), studentScore.getLastRatedScore())))
+                    .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             assertThat(score).isEqualTo(expectedScores);
         }
@@ -247,18 +260,19 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnCompleted() throws Exception {
+            final var exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(userID);
 
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
             final var completed = result.exerciseMetrics().completed();
 
-            final var exercises = exerciseRepository.getAllExercisesUserParticipatedInWithEagerParticipationsSubmissionsResultsFeedbacksTestCasesByUserId(userID);
-
-            final var expectedCompleted = exercises.stream().map(Exercise::getId)
-                    .filter(id -> resultRepository.getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(id, userID).stream()
-                            .anyMatch(result1 -> result1.getScore() != null && result1.getScore() >= MIN_SCORE_GREEN))
+            final var expectedCompleted = exercises.stream().map(Exercise::getId).filter(id -> resultRepository
+                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(id, userID).stream().anyMatch(result1 -> result1.getScore() >= MIN_SCORE_GREEN))
                     .collect(Collectors.toSet());
+
+            final var expectedScores = exercises.stream().collect(Collectors.toMap(Exercise::getId, exercise -> resultRepository
+                    .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(exercise.getId(), userID).stream().mapToDouble(Result::getScore).sum()));
 
             assertThat(completed).isEqualTo(expectedCompleted);
         }

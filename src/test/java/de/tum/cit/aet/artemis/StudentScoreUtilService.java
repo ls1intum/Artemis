@@ -34,6 +34,16 @@ public class StudentScoreUtilService {
         studentScoreRepository.save(studentScore);
     }
 
+    public void createStudentScoreIsRated(Exercise exercise, User user, double score) {
+        final var studentScore = new StudentScore();
+        studentScore.setExercise(exercise);
+        studentScore.setUser(user);
+        studentScore.setLastScore(score);
+        studentScore.setLastPoints(exercise.getMaxPoints() * score / 100);
+        studentScore.setLastRatedScore(score);
+        studentScoreRepository.save(studentScore);
+    }
+
     /**
      * Creates student score for given exercise and user.
      *
