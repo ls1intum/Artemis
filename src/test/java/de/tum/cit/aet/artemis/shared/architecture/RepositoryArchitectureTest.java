@@ -15,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
@@ -159,5 +160,21 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
         noClasses().that().areAssignableTo(ArtemisJpaRepository.class).should().callMethod(Optional.class, "orElseThrow").orShould()
                 .callMethod(Optional.class, "orElseThrow", Supplier.class).because("ArtemisJpaRepository offers the method getValueElseThrow for this use case").check(allClasses);
 
+    }
+
+    // TODO: Discuss if we wat to introduce this rule
+    @Test
+    void usedInProductionCode() {
+        methods().that().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).should(new ArchCondition<>("be used by production code") {
+
+            @Override
+            public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
+                Set<JavaMethodCall> calls = javaMethod.getCallsOfSelf();
+                Set<JavaMethodCall> productionCalls = calls.stream().filter(call -> productionClasses.contain(call.getOriginOwner().getName())).collect(Collectors.toSet());
+                if (productionCalls.isEmpty()) {
+                    conditionEvents.add(SimpleConditionEvent.violated(javaMethod, "Method " + javaMethod.getFullName() + " is not used in production code"));
+                }
+            }
+        }).because("methods that are not used in production code should be moved to test repositories").check(productionClasses);
     }
 }
