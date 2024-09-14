@@ -35,7 +35,6 @@ describe('FeedbackAnalysisComponent', () => {
                 FeedbackAnalysisService,
             ],
         }).compileComponents();
-
         fixture = TestBed.createComponent(FeedbackAnalysisComponent);
         component = fixture.componentInstance;
         feedbackAnalysisService = fixture.debugElement.injector.get(FeedbackAnalysisService);

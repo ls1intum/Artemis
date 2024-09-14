@@ -15,7 +15,7 @@ export interface FeedbackDetail {
     taskNumber: number;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
     constructor() {
         super();

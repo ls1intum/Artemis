@@ -560,37 +560,42 @@ public class ResultService {
         List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
         String searchTerm = search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "";
 
-        long totalFeedbackCount = feedbackDetails.size();
-
-        Predicate<FeedbackDetailDTO> matchesSearchTerm = detail -> searchTerm.isEmpty() || detail.detailText().toLowerCase().contains(searchTerm)
-                || detail.testCaseName().toLowerCase().contains(searchTerm) || String.valueOf(detail.count()).contains(searchTerm)
-                || String.valueOf(detail.taskNumber()).contains(searchTerm) || String.valueOf(detail.relativeCount()).contains(searchTerm);
-
         feedbackDetails = feedbackDetails.stream().map(detail -> {
             double relativeCount = (detail.count() * 100.0) / distinctResultCount;
-            int taskNumber = IntStream.range(0, tasks.size())
-                    .filter(i -> tasks.stream().toList().get(i).getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(detail.testCaseName()))).findFirst().orElse(-1) + 1;
+            int taskNumber = determineTaskNumberOfTestCase(detail.testCaseName(), tasks);
 
             return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);
-        }).filter(matchesSearchTerm).collect(Collectors.toList());
+        }).filter(matchesSearchTerm(searchTerm)).sorted(getComparatorForFeedbackDetails(search)).toList();
 
+        return paginateFeedbackDetails(feedbackDetails, search.getPage(), search.getPageSize());
+    }
+
+    private Predicate<FeedbackDetailDTO> matchesSearchTerm(String searchTerm) {
+        return detail -> searchTerm.isEmpty() || detail.detailText().toLowerCase().contains(searchTerm) || detail.testCaseName().toLowerCase().contains(searchTerm)
+                || String.valueOf(detail.count()).contains(searchTerm) || String.valueOf(detail.taskNumber()).contains(searchTerm)
+                || String.valueOf(detail.relativeCount()).contains(searchTerm);
+    }
+
+    private Comparator<FeedbackDetailDTO> getComparatorForFeedbackDetails(SearchTermPageableSearchDTO<String> search) {
         Map<String, Comparator<FeedbackDetailDTO>> comparators = Map.of("count", Comparator.comparingLong(FeedbackDetailDTO::count), "detailText",
                 Comparator.comparing(FeedbackDetailDTO::detailText, String.CASE_INSENSITIVE_ORDER), "testCaseName",
                 Comparator.comparing(FeedbackDetailDTO::testCaseName, String.CASE_INSENSITIVE_ORDER), "taskNumber", Comparator.comparingInt(FeedbackDetailDTO::taskNumber),
                 "relativeCount", Comparator.comparingDouble(FeedbackDetailDTO::relativeCount));
-
         Comparator<FeedbackDetailDTO> comparator = comparators.getOrDefault(search.getSortedColumn(), (a, b) -> 0);
-        feedbackDetails.sort(search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed());
+        return search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed();
+    }
 
-        int pageSize = search.getPageSize();
-        int page = search.getPage();
+    private int determineTaskNumberOfTestCase(String testCaseName, Set<ProgrammingExerciseTask> tasks) {
+        return IntStream.range(0, tasks.size()).filter(i -> tasks.stream().toList().get(i).getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(testCaseName)))
+                .findFirst().orElse(-1) + 1;
+    }
 
+    private FeedbackAnalysisResponseDTO paginateFeedbackDetails(List<FeedbackDetailDTO> feedbackDetails, int page, int pageSize) {
         int start = (page - 1) * pageSize;
         int end = Math.min(start + pageSize, feedbackDetails.size());
-
         List<FeedbackDetailDTO> paginatedFeedbackDetails = feedbackDetails.subList(start, end);
 
         int totalPages = (feedbackDetails.size() + pageSize - 1) / pageSize;
-        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(paginatedFeedbackDetails, totalPages), totalFeedbackCount);
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(paginatedFeedbackDetails, totalPages), feedbackDetails.size());
     }
 }

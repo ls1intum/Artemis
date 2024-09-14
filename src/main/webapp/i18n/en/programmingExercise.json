@@ -334,7 +334,8 @@
                     "error": "An error occurred while loading the feedback.",
                     "feedbackModal": {
                         "header": "Error Details",
-                        "feedbackTitle": "Test Case Feedback"
+                        "feedbackTitle": "Test Case Feedback",
+                        "ok": "Ok"
                     }
                 },
                 "help": {

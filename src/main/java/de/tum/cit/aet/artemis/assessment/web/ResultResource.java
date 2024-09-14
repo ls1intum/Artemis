@@ -292,7 +292,7 @@ public class ResultResource {
      * @param search     The pageable search DTO containing page number, page size, sorting options, and a search term for filtering results.
      * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes the paginated feedback details and the total count of distinct results.
      */
-    @PostMapping("/exercises/{exerciseId}/feedback-details-paged")
+    @PostMapping("exercises/{exerciseId}/feedback-details-paged")
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestBody SearchTermPageableSearchDTO<String> search) {
         FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, search);

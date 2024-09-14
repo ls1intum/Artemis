@@ -332,7 +332,8 @@
                     "error": "Beim Laden des Feedback ist ein Fehler aufgetreten.",
                     "feedbackModal": {
                         "header": "Fehler Details",
-                        "feedbackTitle": "Testfall Feedback"
+                        "feedbackTitle": "Testfall Feedback",
+                        "ok": "Ok"
                     }
                 },
                 "help": {
