@@ -18,21 +18,19 @@
                         <span class="d-s-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters.size }"></span>
                     </button>
                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                        @for (category of existingCategories; track category){
-                        <li>
-                            <label>
-                                <input
-                                    id="filterPast"
-                                    class="ms-2 form-check-input"
-                                    (change)="toggleFilters(category.category!)"
-                                    [checked]="activeFilters.has(category.category!)"
-                                    type="checkbox"
-                                />
-                                <span class="ms-2" >
-                                     {{ category.category }}
-                                </span>
-                            </label>
-                        </li>
+                        @for (category of existingCategories; track category) {
+                            <li>
+                                <label class="d-flex align-items-center">
+                                    <input
+                                        id="filterPast"
+                                        class="ms-2 form-check-input"
+                                        (change)="toggleFilters(category.category!)"
+                                        [checked]="activeFilters.has(category.category!)"
+                                        type="checkbox"
+                                    />
+                                    <jhi-custom-exercise-category-badge [category]="category" style="margin-top: 10px; margin-left: 4px" />
+                                </label>
+                            </li>
                         }
                     </ul>
                 </div>
@@ -50,31 +48,31 @@
         <div class="table-responsive">
             <table class="table table-striped">
                 <thead>
-                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                    <th class="d-md-table-cell" jhiSortBy="id">
-                        <span jhiTranslate="global.field.id"></span>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="title">
-                        <span jhiTranslate="artemisApp.faq.table.questionTitle"></span>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="questionAnswer">
-                        <span jhiTranslate="artemisApp.faq.table.questionAnswer"></span>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th jhiSortBy="categories">
-                        <span jhiTranslate="artemisApp.faq.table.categories"></span>
-                        <fa-icon [icon]="faSort" />
-                    </th>
-                    <th></th>
-                </tr>
+                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                        <th class="d-md-table-cell" jhiSortBy="id">
+                            <span jhiTranslate="global.field.id"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="title">
+                            <span jhiTranslate="artemisApp.faq.table.questionTitle"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="questionAnswer">
+                            <span jhiTranslate="artemisApp.faq.table.questionAnswer"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th jhiSortBy="categories">
+                            <span jhiTranslate="artemisApp.faq.table.categories"></span>
+                            <fa-icon [icon]="faSort" />
+                        </th>
+                        <th></th>
+                    </tr>
                 </thead>
                 <tbody class="markdown-preview" id="faq-preview">
                     @for (faq of filteredFaq; track trackId(i, faq); let i = $index) {
                         <tr id="faq-{{ faq.id }}">
                             <td>
-                                <a [routerLink]="[faq.id,'edit']">{{ faq.id }}</a>
+                                <a [routerLink]="[faq.id, 'edit']">{{ faq.id }}</a>
                             </td>
                             <td>
                                 <a [routerLink]="[faq.id, 'edit']">{{ faq.questionTitle }}</a>
