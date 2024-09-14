@@ -227,6 +227,8 @@
             "archive": "Archivieren",
             "submit": "Absenden",
             "continueSubmission": "Weitermachen",
+            "viewTimeline": "Verlauf Anzeigen",
+            "hideTimeline": "Verlauf Ausblenden",
             "submitTooltip": "Du kannst mehrmals bis zur Einreichungsfrist abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
             "submitNoDueDateTooltip": "Du kannst mehrmals abgeben. Deine Bewertung ergibt sich immer aus der letzten Abgabe.",
             "submitDueDateMissedTooltip": "Die Einreichungsfrist ist abgelaufen. Weitere Abgaben werden nicht gewertet!",

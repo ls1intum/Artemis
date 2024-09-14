@@ -11,8 +11,7 @@
                         <jhi-button
                             id="toggleTimeline"
                             [icon]="faTimeline"
-                            [title]="showHistory ? 'Hide Timeline' : 'View Timeline'"
-                            [tooltip]="'Result History Timeline'"
+                            [title]="showHistory ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
                             (click)="showHistory = !showHistory"
                         />
                         @if (isActive) {
