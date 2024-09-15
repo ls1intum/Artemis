@@ -49,8 +49,8 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 comp = fixture.componentInstance;
 
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-                comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
 
+                fixture.componentRef.setInput('programmingExercise', new ProgrammingExercise(undefined, undefined));
                 fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
                     shortName: true,
                     categories: true,
@@ -75,26 +75,17 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 valueChanges: new Subject(),
                 valid: true,
             },
-        } as any as TableEditableFieldComponent;
-        comp.exerciseTitleChannelComponent = {
-            titleChannelNameComponent: {
-                formValidChanges: new Subject(),
-                formValid: true,
-            },
-        } as ExerciseTitleChannelNameComponent;
-        comp.shortNameField = { valueChanges: new Subject(), valid: true } as any as NgModel;
+        } as unknown as TableEditableFieldComponent;
         comp.checkoutSolutionRepositoryField = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.recreateBuildPlansField = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.updateTemplateFilesField = { valueChanges: new Subject(), valid: true } as any as NgModel;
         comp.tableEditableFields = { changes: new Subject<any>() } as any as QueryList<TableEditableFieldComponent>;
         comp.ngAfterViewInit();
         (comp.tableEditableFields.changes as Subject<any>).next({ toArray: () => [editableField] } as any as QueryList<TableEditableFieldComponent>);
-        comp.exerciseTitleChannelComponent.titleChannelNameComponent.formValidChanges.next(false);
-        (comp.shortNameField.valueChanges as Subject<boolean>).next(false);
         (comp.checkoutSolutionRepositoryField.valueChanges as Subject<boolean>).next(false);
         (comp.recreateBuildPlansField.valueChanges as Subject<boolean>).next(false);
         (comp.updateTemplateFilesField.valueChanges as Subject<boolean>).next(false);
         (editableField.editingInput.valueChanges as Subject<boolean>).next(false);
-        expect(calculateFormValidSpy).toHaveBeenCalledTimes(6);
+        expect(calculateFormValidSpy).toHaveBeenCalledTimes(4);
     });
 });
