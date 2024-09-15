@@ -9,6 +9,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.annotation.Rollback;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -60,7 +63,9 @@ import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
-class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
+class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+
+    private static final String TEST_PREFIX = "cleanup";
 
     private static final ZonedDateTime DELETE_FROM = ZonedDateTime.now().minusMonths(12);
 
@@ -117,6 +122,12 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
 
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
     private Course oldCourse;
 
     private Course newCourse;
@@ -154,7 +165,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Rollback
     @WithMockUser(roles = "ADMIN")
     void testDeleteOrphans() throws Exception {
         var orphanFeedback = createFeedbackWithLinkedLongFeedback();
@@ -230,7 +240,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeletePlagiarismComparisons() throws Exception {
         // old course, should delete undecided plagiarism comparisons
@@ -321,7 +330,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeleteNonRatedResults() throws Exception {
         // create non rated results for an old course
@@ -414,7 +422,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeleteOldRatedResults() throws Exception {
         // create rated results for an old course
@@ -503,7 +510,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
 
@@ -516,12 +522,12 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         var response = request.getList("/api/admin/get-last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
 
-        List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::toString).toList();
+        List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::label).toList();
 
         assertThat(response).isNotNull();
         assertThat(response).extracting(CleanupServiceExecutionRecordDTO::jobType).containsAll(enumJobTypes);
 
-        var orphansJob = response.stream().filter(elem -> elem.jobType().equals(CleanupJobType.ORPHANS.toString())).findFirst();
+        var orphansJob = response.stream().filter(elem -> elem.jobType().equals(CleanupJobType.ORPHANS.label())).findFirst();
 
         assertThat(orphansJob).isPresent();
         assertThat(now).isNotNull();
@@ -540,7 +546,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testTransactionalBehavior() {
 
         long count = resultRepository.count();
