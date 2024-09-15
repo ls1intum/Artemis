@@ -25,12 +25,12 @@
                     [renderButtonText]="false"
                     (delete)="deleteSelectedSlides()"
                     [dialogError]="dialogError$"
-                    [disabled]="selectedPages.size === 0"
+                    [disabled]="isPdfLoading || selectedPages.size === 0"
                 >
                     <fa-icon [icon]="faTrash" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.removePageButton"></span>
                 </button>
-                <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" />
+                <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" [disabled]="isPdfLoading" />
                 <button (click)="triggerFileInput()" class="btn btn-primary text-truncate">
                     <fa-icon [icon]="faFileImport" />
                     <span jhiTranslate="artemisApp.attachment.pdfPreview.appendFileButton"></span>
@@ -69,7 +69,7 @@
                 </a>
             </div>
             <div>
-                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="totalPages === 0">
+                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading || totalPages === 0">
                     <fa-icon [icon]="faSave"></fa-icon>
                     <span jhiTranslate="entity.action.save"></span>
                 </button>

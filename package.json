@@ -49,6 +49,7 @@
         "diff-match-patch-typescript": "1.1.0",
         "dompurify": "3.1.6",
         "export-to-csv": "1.4.0",
+        "fabric": "^6.4.2",
         "fast-json-patch": "3.1.1",
         "franc-min": "6.2.0",
         "html-diff-ts": "1.4.2",

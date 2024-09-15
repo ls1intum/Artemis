@@ -16,6 +16,7 @@ import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-
 import { jsPDF } from 'jspdf';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import { Image } from 'fabric';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -115,9 +116,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @returns A promise that resolves when the PDF is loaded.
      */
     async loadOrAppendPdf(fileUrl: string, append = false): Promise<void> {
-        if (append) {
-            this.isPdfLoading = true;
-        }
+        this.isPdfLoading = true;
         try {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
@@ -144,8 +143,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         } catch (error) {
             onError(this.alertService, error);
         } finally {
+            this.isPdfLoading = false;
             if (append) {
-                this.isPdfLoading = false;
                 this.fileInput.nativeElement.value = '';
             }
         }
@@ -464,14 +463,24 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
 
         const canvasElements = this.pdfContainer.nativeElement.querySelectorAll('canvas');
-        const scaleFactor = 1.0;
+        const scaleFactor = 0.5;
+
         Array.from(canvasElements).forEach((canvas, index) => {
             if (index > 0) doc.addPage();
-            const imgData = canvas.toDataURL('image/jpeg', scaleFactor);
+
+            const fabricImage = new Image(canvas, {
+                crossOrigin: 'anonymous',
+            });
+
+            const imgData = fabricImage.toDataURL({
+                format: 'jpeg',
+                quality: scaleFactor,
+            });
+
             const imgProps = doc.getImageProperties(imgData);
             const pdfWidth = doc.internal.pageSize.getWidth();
             const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+            doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
         });
 
         return doc.output('blob');
