@@ -31,6 +31,7 @@ import {
     faListCheck,
     faNetworkWired,
     faPersonChalkboard,
+    faQuestion,
     faSync,
     faTable,
     faTimes,
@@ -171,6 +172,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faChevronRight = faChevronRight;
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
+    faQuestion = faQuestion;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -329,6 +331,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 sidebarItems.push(learningPathItem);
             }
         }
+
+        if (this.course?.faqEnabled) {
+            const faqItem: SidebarItem = this.getFaqItem();
+            sidebarItems.push(faqItem);
+            if (this.course?.learningPathsEnabled) {
+                const learningPathItem: SidebarItem = this.getLearningPathItems();
+                sidebarItems.push(learningPathItem);
+            }
+        }
         return sidebarItems;
     }
 
@@ -432,6 +443,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hasInOrionProperty: false,
             showInOrionWindow: false,
             featureToggle: FeatureToggle.StudentCourseAnalyticsDashboard,
+            hidden: false,
+        };
+        return dashboardItem;
+    }
+
+    getFaqItem() {
+        const dashboardItem: SidebarItem = {
+            routerLink: 'faq',
+            icon: faQuestion,
+            title: 'Faq',
+            translation: 'artemisApp.courseOverview.menu.faq',
+            hasInOrionProperty: false,
+            showInOrionWindow: false,
             hidden: false,
         };
         return dashboardItem;

@@ -1,0 +1,43 @@
+<div>
+    <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg" [hidden]="false">
+        <!-- search bar -->
+        <input
+            #courseWideSearchInput
+            name="searchText"
+            id="search"
+            [(ngModel)]="courseWideSearchTerm"
+            class="form-control"
+            (keyup.enter)="onSearch()"
+            placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
+        />
+        <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="courseWideSearchTerm = ''" />
+        <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
+        <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+            <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
+                <fa-icon [icon]="faFilter" />
+                <span class="d-s-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters.size }"></span>
+            </button>
+            <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                @for (category of existingCategories; track category) {
+                    <li>
+                        <label class="d-flex align-items-center">
+                            <input
+                                id="filterPast"
+                                class="ms-2 form-check-input"
+                                (change)="toggleFilters(category.category!)"
+                                [checked]="activeFilters.has(category.category!)"
+                                type="checkbox"
+                            />
+                            <jhi-custom-exercise-category-badge [category]="category" style="margin-top: 10px; margin-left: 4px" />
+                        </label>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+    @for (faq of this.filteredFaq; track faq) {
+        <div class="mb-2 rounded-3 p-2 me-2 module-bg" [hidden]="false" style="width: 100%">
+            <jhi-course-faq-accordion [faq]="faq"></jhi-course-faq-accordion>
+        </div>
+    }
+</div>

@@ -1,0 +1,13 @@
+<div style="width: 100%">
+    <div class="faq-container" style="width: 100%">
+        <h1>{{faq().questionTitle}}</h1>
+        <div class="badge-container">
+            @for (category of faq().categories; track category){
+            <jhi-custom-exercise-category-badge [category]="category" style="margin-top: 10px; margin-left: 4px" />
+            }
+        </div>
+    </div>
+    <div class="faq-container" style="width: 100%">
+        <h3>{{faq().questionAnswer}}</h3>
+    </div>
+</div>
