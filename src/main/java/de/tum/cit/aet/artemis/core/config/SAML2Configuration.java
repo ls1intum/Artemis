@@ -38,7 +38,7 @@ import org.springframework.security.web.SecurityFilterChain;
  * Describes the security configuration for SAML2.
  */
 @Configuration
-@Profile("saml2")
+@Profile(Constants.PROFILE_SAML2)
 public class SAML2Configuration {
 
     private static final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);

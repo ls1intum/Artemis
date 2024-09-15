@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_ARTEMIS;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SAML2;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
@@ -48,7 +49,7 @@ import de.tum.cit.aet.artemis.programming.service.gitlabci.GitLabCITriggerServic
 
 @ResourceLock("AbstractSpringIntegrationGitlabCIGitlabSamlTest")
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, "gitlabci", "gitlab", "saml2", PROFILE_SCHEDULING, PROFILE_LTI })
+@ActiveProfiles({ SPRING_PROFILE_TEST, PROFILE_ARTEMIS, PROFILE_CORE, "gitlabci", "gitlab", PROFILE_SAML2, PROFILE_SCHEDULING, PROFILE_LTI })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends AbstractArtemisIntegrationTest {
 
