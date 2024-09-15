@@ -42,7 +42,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachmentSub: Subscription;
     attachmentUnitSub: Subscription;
     selectedPages: Set<number> = new Set();
-    isMergedPdfLoading = false;
+    isPdfLoading = false;
     attachmentToBeEdited?: Attachment;
 
     dialogErrorSource = new Subject<string>();
@@ -109,14 +109,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Determines if the delete action is disabled based on the selection of pages.
-     * @returns True if no pages are selected, false otherwise.
-     */
-    isRemovePagesDisabled(): boolean {
-        return this.selectedPages.size === 0;
-    }
-
-    /**
      * Loads or appends a PDF from a provided URL.
      * @param fileUrl The URL of the file to load or append.
      * @param append Whether the document should be appended to the existing one.
@@ -124,7 +116,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     async loadOrAppendPdf(fileUrl: string, append = false): Promise<void> {
         if (append) {
-            this.isMergedPdfLoading = true;
+            this.isPdfLoading = true;
         }
         try {
             const loadingTask = PDFJS.getDocument(fileUrl);
@@ -153,7 +145,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             onError(this.alertService, error);
         } finally {
             if (append) {
-                this.isMergedPdfLoading = false;
+                this.isPdfLoading = false;
+                this.fileInput.nativeElement.value = '';
             }
         }
     }
