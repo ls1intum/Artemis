@@ -164,9 +164,9 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     private generateRandomShortNameLetters(): string {
         const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-        const NUMBER_OF_RANDOM_LETTERS = 3;
+        const LENGTH_OF_RANDOM_STRING = 3;
         // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-        const randomLetters = Array.from({ length: NUMBER_OF_RANDOM_LETTERS }, () => alphabet.charAt(Math.floor(Math.random() * alphabet.length))).join('');
+        const randomLetters = Array.from({ length: LENGTH_OF_RANDOM_STRING }, () => alphabet.charAt(Math.floor(Math.random() * alphabet.length))).join('');
         return randomLetters;
     }
 }
