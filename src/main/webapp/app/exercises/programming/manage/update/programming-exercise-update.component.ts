@@ -10,9 +10,7 @@ import { ProgrammingExerciseService } from '../services/programming-exercise.ser
 import { FileService } from 'app/shared/http/file.service';
 import { TranslateService } from '@ngx-translate/core';
 import { switchMap, tap } from 'rxjs/operators';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/entities/exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -25,7 +23,6 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faExclamationCircle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -47,12 +44,7 @@ import { INPUT_FIELD_EDIT_MODE_MAPPING, ProgrammingExerciseInputField } from 'ap
     styleUrls: ['../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
-    protected readonly IncludedInOverallScore = IncludedInOverallScore;
-    protected readonly FeatureToggle = FeatureToggle;
-    protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly ProjectType = ProjectType;
     protected readonly documentationType: DocumentationType = 'Programming';
-    protected readonly AssessmentType = AssessmentType;
     protected readonly maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // No dots allowed for the blackbox project type, because the folder naming works slightly different here.
     protected readonly packageNamePatternForJavaBlackbox =
@@ -64,8 +56,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     protected readonly invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
     // length of < 3 is also accepted in order to provide more accurate validation error messages
     protected readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
-    protected readonly faQuestionCircle = faQuestionCircle;
-    protected readonly faExclamationCircle = faExclamationCircle;
 
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
     // with the restriction to a-z,A-Z,_ as "Java letter" and 0-9 as digits due to JavaScript/Browser Unicode character class limitations
@@ -843,7 +833,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }
     }
 
-    protected switchEditMode = () => {
+    switchEditMode = () => {
         this.isSimpleMode.update((isSimpleMode) => !isSimpleMode);
     };
 
