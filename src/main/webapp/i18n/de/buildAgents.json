@@ -12,6 +12,7 @@
             "recentBuildJobs": "Letzte Build Jobs",
             "running": "Laufend",
             "idle": "Inaktiv",
+            "paused": "Angehalten",
             "onlineAgents": "online Agent(en)",
             "of": "von",
             "buildJobsRunning": "Build Jobs laufen",

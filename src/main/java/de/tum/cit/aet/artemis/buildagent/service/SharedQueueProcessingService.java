@@ -266,7 +266,9 @@ public class SharedQueueProcessingService {
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
-        boolean active = numberOfCurrentBuildJobs > 0;
+        boolean hasJobs = numberOfCurrentBuildJobs > 0;
+        BuildAgentInformation.BuildAgentStatus status = isPaused ? BuildAgentInformation.BuildAgentStatus.PAUSED
+                : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
         BuildAgentInformation agent = buildAgentInformation.get(memberAddress);
         List<BuildJobQueueItem> recentBuildJobs;
         if (agent != null) {
@@ -285,7 +287,7 @@ public class SharedQueueProcessingService {
 
         String publicSshKey = buildAgentSSHKeyService.getPublicKeyAsString();
 
-        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, active, recentBuildJobs, publicSshKey);
+        return new BuildAgentInformation(memberAddress, maxNumberOfConcurrentBuilds, numberOfCurrentBuildJobs, processingJobsOfMember, status, recentBuildJobs, publicSshKey);
     }
 
     private List<BuildJobQueueItem> getProcessingJobsOfNode(String memberAddress) {
@@ -388,6 +390,7 @@ public class SharedQueueProcessingService {
         if (this.scheduledFuture != null && !this.scheduledFuture.isCancelled()) {
             this.scheduledFuture.cancel(false);
         }
+        updateLocalBuildAgentInformation();
 
         log.info("Gracefully cancelling running build jobs");
 
@@ -428,6 +431,7 @@ public class SharedQueueProcessingService {
         this.isPaused = false;
         this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
         this.scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+        updateLocalBuildAgentInformation();
     }
 
     /**

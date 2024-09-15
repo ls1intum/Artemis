@@ -8,8 +8,14 @@
                     <h3 id="build-agent-name" class="h3" style="margin-left: 20px">{{ buildAgent.name }}</h3>
                 </div>
                 <div>
-                    <button class="btn btn-success" (click)="resumeBuildAgent()" jhiTranslate="artemisApp.buildAgents.resume"></button>
-                    <button class="btn btn-danger" (click)="pauseBuildAgent()" jhiTranslate="artemisApp.buildAgents.pause"></button>
+                    <button class="btn btn-success" (click)="resumeBuildAgent()">
+                        <fa-icon [icon]="faPlay"></fa-icon>
+                        <span jhiTranslate="artemisApp.buildAgents.resume"></span>
+                    </button>
+                    <button class="btn btn-danger" (click)="pauseBuildAgent()">
+                        <fa-icon [icon]="faPause"></fa-icon>
+                        <span jhiTranslate="artemisApp.buildAgents.pause"></span>
+                    </button>
                 </div>
             </div>
             <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="[buildAgent!]">
@@ -34,10 +40,16 @@
                                 </span>
                             </ng-template>
                             <ng-template ngx-datatable-cell-template let-value="value">
-                                @if (value) {
-                                    <span jhiTranslate="artemisApp.buildAgents.running"></span>
-                                } @else {
-                                    <span jhiTranslate="artemisApp.buildAgents.idle"></span>
+                                @switch (value) {
+                                    @case ('ACTIVE') {
+                                        <span jhiTranslate="artemisApp.buildAgents.running"></span>
+                                    }
+                                    @case ('IDLE') {
+                                        <span jhiTranslate="artemisApp.buildAgents.idle"></span>
+                                    }
+                                    @case ('PAUSED') {
+                                        <span jhiTranslate="artemisApp.buildAgents.paused"></span>
+                                    }
                                 }
                             </ng-template>
                         </ngx-datatable-column>

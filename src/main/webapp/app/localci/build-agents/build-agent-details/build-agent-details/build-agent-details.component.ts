@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
-import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faExclamationCircle, faExclamationTriangle, faPause, faPlay, faTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { ActivatedRoute } from '@angular/router';
@@ -29,6 +29,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
     faTimes = faTimes;
+    faPause = faPause;
+    faPlay = faPlay;
 
     constructor(
         private websocketService: JhiWebsocketService,
