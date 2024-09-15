@@ -39,6 +39,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -49,8 +50,12 @@ import com.github.dockerjava.api.command.CopyArchiveFromContainerCmd;
 import com.github.dockerjava.api.command.ExecStartCmd;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Frame;
+import com.hazelcast.collection.IQueue;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.ProgrammingSubmissionTestRepository;
@@ -80,6 +85,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
     private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    @Qualifier("hazelcastInstance")
+    private HazelcastInstance hazelcastInstance;
 
     private LocalRepository studentAssignmentRepository;
 
@@ -469,5 +478,26 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
             assertThat(result.isSuccessful()).isFalse();
             return true;
         }), Mockito.eq(participation)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testPauseAndResumeBuildAgent() {
+        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        hazelcastInstance.getTopic("pauseBuildAgentTopic").publish(memberAddress);
+
+        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        await().until(() -> {
+            IQueue<BuildJobQueueItem> buildQueue = hazelcastInstance.getQueue("buildJobQueue");
+            IMap<String, BuildJobQueueItem> buildJobMap = hazelcastInstance.getMap("processingJobs");
+            BuildJobQueueItem buildJobQueueItem = buildQueue.peek();
+
+            return buildJobQueueItem != null && buildJobQueueItem.buildConfig().commitHashToBuild().equals(commitHash) && !buildJobMap.containsKey(buildJobQueueItem.id());
+        });
+
+        hazelcastInstance.getTopic("resumeBuildAgentTopic").publish(memberAddress);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
     }
 }

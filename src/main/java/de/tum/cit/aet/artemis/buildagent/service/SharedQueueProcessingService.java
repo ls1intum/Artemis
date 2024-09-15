@@ -431,6 +431,7 @@ public class SharedQueueProcessingService {
         this.isPaused = false;
         this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
         this.scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+        checkAvailabilityAndProcessNextBuild();
         updateLocalBuildAgentInformation();
     }
 

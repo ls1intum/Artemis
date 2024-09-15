@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.localvcci;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
@@ -344,5 +347,15 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         assertThat(response.successfulBuilds()).isEqualTo(1);
         assertThat(response.failedBuilds()).isEqualTo(1);
         assertThat(response.cancelledBuilds()).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
+    void testPauseBuildAgent() throws Exception {
+        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.name(), StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
+        await().until(() -> buildAgentInformation.get(agent1.name()).status() == BuildAgentInformation.BuildAgentStatus.PAUSED);
+
+        request.put("/api/admin/agent/" + URLEncoder.encode(agent1.name(), StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
+        await().until(() -> buildAgentInformation.get(agent1.name()).status() == BuildAgentInformation.BuildAgentStatus.IDLE);
     }
 }
