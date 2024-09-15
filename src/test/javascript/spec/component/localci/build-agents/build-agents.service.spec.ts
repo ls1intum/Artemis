@@ -112,6 +112,22 @@ describe('BuildAgentsService', () => {
         req.flush(expectedResponse);
     });
 
+    it('should pause build agent', () => {
+        service.pauseBuildAgent('buildAgent1').subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/pause`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({});
+    });
+
+    it('should resume build agent', () => {
+        service.resumeBuildAgent('buildAgent1').subscribe();
+
+        const req = httpMock.expectOne(`${service.adminResourceUrl}/agent/buildAgent1/resume`);
+        expect(req.request.method).toBe('PUT');
+        req.flush({});
+    });
+
     afterEach(() => {
         httpMock.verify(); // Verify that there are no outstanding requests.
     });
