@@ -1,4 +1,4 @@
-import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -7,7 +7,7 @@ import { InitializationState } from 'app/entities/participation/participation.mo
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { hasExerciseDueDatePassed, isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
@@ -39,6 +39,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() courseId: number;
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
+    @Input() isGeneratingFeedback: boolean;
+
+    @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
     @ContentChild('overrideCodeAndOnlineEditorButton') overrideCodeAndOnlineEditorButton: TemplateRef<any>;
@@ -61,14 +64,14 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     theiaPortalURL: string;
 
     // Icons
-    faFolderOpen = faFolderOpen;
-    faUsers = faUsers;
-    faEye = faEye;
-    faPlayCircle = faPlayCircle;
-    faRedo = faRedo;
-    faCodeBranch = faCodeBranch;
-    faDesktop = faDesktop;
-    faPenSquare = faPenSquare;
+    readonly faFolderOpen = faFolderOpen;
+    readonly faUsers = faUsers;
+    readonly faEye = faEye;
+    readonly faPlayCircle = faPlayCircle;
+    readonly faRedo = faRedo;
+    readonly faCodeBranch = faCodeBranch;
+    readonly faDesktop = faDesktop;
+    readonly faPenSquare = faPenSquare;
 
     private feedbackSent = false;
 
@@ -109,7 +112,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
 
                 // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
-                if (profileInfo.activeProfiles?.includes(PROFILE_THEIA)) {
+                if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.programmingExercise) {
                     this.theiaEnabled = true;
 
                     // Set variables now, sanitize later on
@@ -119,12 +122,25 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
                     if (this.theiaPortalURL === '') {
                         this.theiaEnabled = false;
                     }
+
+                    // Verify that the exercise allows the online IDE
+                    if (!this.programmingExercise.allowOnlineIde) {
+                        this.theiaEnabled = false;
+                    }
+
+                    // Verify that the exercise has a theia blueprint configured
+                    if (!this.programmingExercise.buildConfig?.theiaImage) {
+                        this.theiaEnabled = false;
+                    }
                 }
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
         } else if (this.exercise.type === ExerciseType.TEXT) {
             this.editorLabel = 'openTextEditor';
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+            });
         } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             this.editorLabel = 'uploadFile';
         }
@@ -159,7 +175,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
 
-        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true);
+        this.hasRatedGradedResult = !!this.gradedParticipation?.results?.some((result) => result.rated === true && result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
     }
 
     /**
@@ -241,15 +257,17 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     requestFeedback() {
         if (!this.assureConditionsSatisfied()) return;
-
-        const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
-        if (!window.confirm(confirmLockRepository)) {
-            return;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
+            if (!window.confirm(confirmLockRepository)) {
+                return;
+            }
         }
 
         this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {
+                    this.generatingFeedback.emit();
                     this.feedbackSent = true;
                     this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                 }
@@ -323,39 +341,57 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      */
     assureConditionsSatisfied(): boolean {
         this.updateParticipations();
-        const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
-        const someHiddenTestsPassed = latestResult?.score !== undefined;
-        const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
-        if (!someHiddenTestsPassed) {
-            window.alert(testsNotPassedWarning);
-            return false;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
+            const someHiddenTestsPassed = latestResult?.score !== undefined;
+            const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.notEnoughPoints');
+            if (!someHiddenTestsPassed) {
+                window.alert(testsNotPassedWarning);
+                return false;
+            }
         }
 
         const afterDueDate = !this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
         const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
         if (afterDueDate) {
-            window.alert(dueDateWarning);
+            this.alertService.warning(dueDateWarning);
             return false;
         }
 
         const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
         const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
         if (requestAlreadySent) {
-            window.alert(requestAlreadySentWarning);
+            this.alertService.warning(requestAlreadySentWarning);
             return false;
         }
 
         if (this.gradedParticipation?.results) {
             const athenaResults = this.gradedParticipation.results.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
-            const countOfSuccessfulRequests = athenaResults.filter((result) => result.successful === true).length;
+            const countOfSuccessfulRequests = athenaResults.length;
 
-            if (countOfSuccessfulRequests >= 20) {
+            if (countOfSuccessfulRequests >= 10) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                window.alert(rateLimitExceededWarning);
+                this.alertService.warning(rateLimitExceededWarning);
                 return false;
             }
         }
 
+        if (this.hasAthenaResultForlatestSubmission()) {
+            const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
+            this.alertService.warning(submitFirstWarning);
+            return false;
+        }
         return true;
+    }
+
+    hasAthenaResultForlatestSubmission(): boolean {
+        if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
+            // submissions.results is always undefined so this is neccessary
+            return (
+                this.gradedParticipation.submissions.last()?.id ===
+                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id
+            );
+        }
+        return false;
     }
 }

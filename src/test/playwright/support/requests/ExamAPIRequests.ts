@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';

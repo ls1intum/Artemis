@@ -8,14 +8,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 })
 class TestTranslateDirectiveComponent {}
 
-describe('TranslateDirective Tests', () => {
+describe('TranslateDirective', () => {
     let fixture: ComponentFixture<TestTranslateDirectiveComponent>;
     let translateService: TranslateService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot()],
-            declarations: [TranslateDirective, TestTranslateDirectiveComponent],
+            imports: [TranslateModule.forRoot(), TranslateDirective],
+            declarations: [TestTranslateDirectiveComponent],
         })
             .compileComponents()
             .then(() => {

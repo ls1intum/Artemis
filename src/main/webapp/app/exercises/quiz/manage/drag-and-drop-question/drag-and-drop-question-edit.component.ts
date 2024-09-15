@@ -39,6 +39,7 @@ import {
     faFont,
     faPencilAlt,
     faPlus,
+    faScissors,
     faTrash,
     faUndo,
     faUnlink,
@@ -48,8 +49,8 @@ import { faFileImage } from '@fortawesome/free-regular-svg-icons';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { MAX_QUIZ_QUESTION_POINTS } from 'app/shared/constants/input.constants';
 import { FileService } from 'app/shared/http/file.service';
-import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
-import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
+import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
 import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
@@ -82,7 +83,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     filePreviewPaths: Map<string, string> = new Map<string, string>();
     dropAllowed = false;
     showPreview = false;
-
+    readonly CLICK_LAYER_DIMENSION: number = 200;
     /** Status boolean for collapse status **/
     isQuestionCollapsed = false;
 
@@ -104,8 +105,8 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     mouse: DragAndDropMouseEvent;
 
-    hintAction = new MonacoQuizHintAction();
-    explanationAction = new MonacoQuizExplanationAction();
+    hintAction = new QuizHintAction();
+    explanationAction = new QuizExplanationAction();
 
     dragAndDropDomainActions = [this.explanationAction, this.hintAction];
 
@@ -126,6 +127,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
     faUpload = faUpload;
+    faScissors = faScissors;
 
     readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
 
@@ -272,16 +274,21 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     setBackgroundFile(event: any): void {
         const fileList: FileList = event.target.files as FileList;
         if (fileList.length) {
-            if (this.question.backgroundFilePath) {
-                this.removeFile.emit(this.question.backgroundFilePath);
-            }
             const file = fileList[0];
-            const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(file.name), this.filePool);
-            this.question.backgroundFilePath = fileName;
-            this.filePreviewPaths.set(fileName, URL.createObjectURL(file));
-            this.addNewFile.emit({ fileName, file });
-            this.changeDetector.detectChanges();
+            this.setBackgroundFileFromFile(file);
         }
+    }
+
+    setBackgroundFileFromFile(file: File) {
+        if (this.question.backgroundFilePath) {
+            this.removeFile.emit(this.question.backgroundFilePath);
+        }
+
+        const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(file.name), this.filePool);
+        this.question.backgroundFilePath = fileName;
+        this.filePreviewPaths.set(fileName, URL.createObjectURL(file));
+        this.addNewFile.emit({ fileName, file });
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -513,11 +520,15 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     /**
      * Add a Picture Drag Item with the selected file as its picture to the question
      */
-    createImageDragItem(event: any): void {
+    createImageDragItem(event: any): DragItem | undefined {
         const dragItemFile = this.getFileFromEvent(event);
         if (!dragItemFile) {
-            return;
+            return undefined;
         }
+        return this.createImageDragItemFromFile(dragItemFile);
+    }
+
+    createImageDragItemFromFile(dragItemFile: File): DragItem {
         const fileName = this.fileService.getUniqueFileName(this.fileService.getExtension(dragItemFile.name), this.filePool);
         this.addNewFile.emit({ fileName, file: dragItemFile });
         this.filePreviewPaths.set(fileName, URL.createObjectURL(dragItemFile));
@@ -531,6 +542,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.question.dragItems.push(dragItem);
 
         this.questionUpdated.emit();
+        return dragItem;
     }
 
     /**
@@ -843,9 +855,9 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             if (action === undefined && text.length > 0) {
                 this.question.text = text;
             }
-            if (action instanceof MonacoQuizExplanationAction) {
+            if (action instanceof QuizExplanationAction) {
                 this.question.explanation = text;
-            } else if (action instanceof MonacoQuizHintAction) {
+            } else if (action instanceof QuizHintAction) {
                 this.question.hint = text;
             }
         }
@@ -868,5 +880,120 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     prepareForSave(): void {
         this.cleanupQuestion();
         this.markdownEditor.parseMarkdown();
+    }
+
+    /**
+     * Create new drag items for each drop location in the background image
+     */
+    getImagesFromDropLocations() {
+        for (const someLocation of this.question.dropLocations!) {
+            // only crop if there is not mapping to this drop location
+            if (this.getMappingsForDropLocation(someLocation).length == 0) {
+                const image = new Image();
+                let dataUrl: string = '';
+                let bgWidth;
+                let bgHeight;
+                image.onload = () => {
+                    bgHeight = image.height;
+                    bgWidth = image.width;
+
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+
+                    if (context) {
+                        // The click layer is 200x200 so it need to be rescaled to the image
+                        const scalarHeight = bgHeight / this.CLICK_LAYER_DIMENSION;
+                        const scalarWidth = bgWidth / this.CLICK_LAYER_DIMENSION;
+                        canvas.width = someLocation.width! * scalarWidth;
+                        canvas.height = someLocation.height! * scalarHeight;
+                        context.drawImage(
+                            image,
+                            someLocation.posX! * scalarWidth,
+                            someLocation.posY! * scalarHeight,
+                            someLocation.width! * scalarWidth,
+                            someLocation.height! * scalarHeight,
+                            0,
+                            0,
+                            someLocation.width! * scalarWidth,
+                            someLocation.height! * scalarHeight,
+                        );
+
+                        dataUrl = canvas.toDataURL('image/png');
+                        const dragItemCreated = this.createImageDragItemFromFile(this.dataUrlToFile(dataUrl, 'placeholder' + someLocation.posX!))!;
+                        const dndMapping = new DragAndDropMapping(dragItemCreated, someLocation);
+                        this.question.correctMappings!.push(dndMapping);
+                    }
+                };
+                image.src = this.backgroundImage.src;
+            }
+        }
+        this.blankOutBackgroundImage();
+    }
+
+    /**
+     * Takes all drop locations and replaces their location with a white rectangle on the background image
+     */
+    blankOutBackgroundImage() {
+        const backgroundBlankingCanvas = document.createElement('canvas');
+        const backgroundBlankingContext = backgroundBlankingCanvas.getContext('2d');
+        const image = new Image();
+        let bgWidth;
+        let bgHeight;
+        image.onload = () => {
+            bgHeight = image.height;
+            bgWidth = image.width;
+
+            backgroundBlankingCanvas.width = bgWidth;
+            backgroundBlankingCanvas.height = bgHeight;
+            if (backgroundBlankingContext) {
+                const scalarHeight = bgHeight / this.CLICK_LAYER_DIMENSION;
+                const scalarWidth = bgWidth / this.CLICK_LAYER_DIMENSION;
+
+                backgroundBlankingContext.drawImage(image, 0, 0);
+                backgroundBlankingContext.fillStyle = 'white';
+
+                for (const someLocation of this.question.dropLocations!) {
+                    // Draw a white rectangle over the specified box location
+                    backgroundBlankingContext.fillRect(
+                        someLocation.posX! * scalarWidth,
+                        someLocation.posY! * scalarHeight,
+                        someLocation.width! * scalarWidth,
+                        someLocation.height! * scalarHeight,
+                    );
+                }
+                const dataUrlCanvas = backgroundBlankingCanvas.toDataURL('image/png');
+                this.setBackgroundFileFromFile(this.dataUrlToFile(dataUrlCanvas, 'background'));
+            }
+        };
+        image.src = this.backgroundImage.src;
+    }
+
+    /**
+     * Turns a data url into a blob
+     * @param dataUrl the data url string for which the file should be created
+     * @returns returns a blob created from the data url
+     */
+    dataUrlToBlob(dataUrl: string): Blob {
+        // Seperate metadata from base64-encoded content
+        const byteString = atob(dataUrl.split(',')[1]);
+        // Isolate the MIME type (e.g "image/png")
+        const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+            ia[i] = byteString.charCodeAt(i);
+        }
+        return new Blob([ab], { type: mimeString });
+    }
+
+    /**
+     * Creates a File object from  a blob given through a dataUrl
+     * @param dataUrl the data url string for which the file should be created
+     * @param fileName the name of the file to be created
+     * @returns returns a new file created from the data url
+     */
+    dataUrlToFile(dataUrl: string, fileName: string): File {
+        const blob = this.dataUrlToBlob(dataUrl);
+        return new File([blob], fileName, { type: blob.type });
     }
 }

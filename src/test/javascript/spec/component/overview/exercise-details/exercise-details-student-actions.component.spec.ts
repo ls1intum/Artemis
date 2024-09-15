@@ -9,11 +9,12 @@ import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.mode
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Team } from 'app/entities/team.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
@@ -34,6 +35,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { ArtemisTestModule } from '../../../test.module';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { PROFILE_THEIA } from 'app/app.constants';
+import { Submission } from 'app/entities/submission.model';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -55,6 +57,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         secondCorrectionEnabled: false,
         studentAssignedTeamIdComputed: false,
     };
+
     const teamExerciseWithoutTeamAssigned: Exercise = {
         ...exercise,
         mode: ExerciseMode.TEAM,
@@ -502,7 +505,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     );
 
     it('assureConditionsSatisfied should alert and return false if the feedback request has already been sent', () => {
-        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
         comp.exercise = {
             type: ExerciseType.PROGRAMMING,
             dueDate: dayjs().add(5, 'minutes'),
@@ -522,12 +526,14 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         const result = comp.assureConditionsSatisfied();
 
-        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAlreadySent');
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAlreadySent');
         expect(result).toBeFalse();
     });
 
     it('assureConditionsSatisfied should alert and return false if the request is made after the due date', () => {
-        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
         comp.exercise = {
             type: ExerciseType.PROGRAMMING,
             dueDate: dayjs().subtract(5, 'minutes'),
@@ -546,7 +552,37 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         const result = comp.assureConditionsSatisfied();
 
-        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAfterDueDate');
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestAfterDueDate');
+        expect(result).toBeFalse();
+    });
+
+    it('assureConditionsSatisfied should alert and return false if the latest submission already has athena result', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        const submission: Submission = { id: 42 };
+        comp.exercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+            studentParticipations: [
+                {
+                    id: 2,
+                    results: [
+                        {
+                            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                            score: 100,
+                            submission: submission,
+                        },
+                    ],
+                    submissions: [submission],
+                },
+            ] as StudentParticipation[],
+        } as TextExercise;
+
+        const result = comp.assureConditionsSatisfied();
+
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.submissionAlreadyHasAthenaResult');
         expect(result).toBeFalse();
     });
 
@@ -573,7 +609,8 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     });
 
     it('assureConditionsSatisfied should alert and return false if the maximum number of successful Athena results is reached', () => {
-        jest.spyOn(window, 'alert').mockImplementation(() => {});
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
         const numResults = 20;
         const results: Array<{ assessmentType: AssessmentType; successful: boolean }> = [];
 
@@ -601,23 +638,63 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         const result = comp.assureConditionsSatisfied();
 
-        expect(window.alert).toHaveBeenCalledWith('artemisApp.exercise.maxAthenaResultsReached');
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(result).toBeFalse();
     });
 
     it.each([
         [
-            'start theia button should be visible when profile is active and url is set',
+            'start theia button should be visible when profile is active and theia is configured',
             {
                 activeProfiles: [PROFILE_THEIA],
                 theiaPortalURL: 'https://theia.test',
             },
+            {
+                allowOnlineIde: true,
+            },
+            {
+                theiaImage: 'this-is-a-theia-image',
+            },
             true,
+        ],
+        [
+            'start theia button should not be visible when profile is active but theia is ill-configured',
+            {
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            },
+            {
+                allowOnlineIde: true,
+            },
+            {
+                theiaImage: undefined,
+            },
+            false,
+        ],
+        [
+            'start theia button should not be visible when profile is active but onlineIde is not activated',
+            {
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            },
+            {
+                allowOnlineIde: false,
+            },
+            {
+                theiaImage: 'this-is-an-old-image',
+            },
+            false,
         ],
         [
             'start theia button should not be visible when profile is active but url is not set',
             {
                 activeProfiles: [PROFILE_THEIA],
+            },
+            {
+                allowOnlineIde: true,
+            },
+            {
+                theiaImage: 'this-is-a-theia-image',
             },
             false,
         ],
@@ -626,12 +703,20 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             {
                 theiaPortalURL: 'https://theia.test',
             },
+            {
+                allowOnlineIde: true,
+            },
+            {
+                theiaImage: 'this-is-a-theia-image',
+            },
             false,
         ],
-    ])('%s', (description, profileInfo, expectedVisibility) => {
+    ])('%s', (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
-        comp.exercise = exercise;
+
+        // Expand the programmingExercise by given properties
+        comp.exercise = { ...exercise, ...programmingExercise, buildConfig: buildConfig } as ProgrammingExercise;
 
         fixture.detectChanges();
 

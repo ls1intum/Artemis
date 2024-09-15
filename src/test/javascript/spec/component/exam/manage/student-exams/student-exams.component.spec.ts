@@ -16,7 +16,7 @@ import { Course } from 'app/entities/course.model';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';

@@ -29,7 +29,7 @@ import { OrganizationManagementService } from 'app/admin/organization-management
 import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
-import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
