@@ -45,7 +45,7 @@ describe('TitleChannelNameComponent', () => {
     }));
 
     it('should only display title input field if channel name is hidden', () => {
-        component.hideChannelName = true;
+        fixture.componentRef.setInput('hideChannelName', true);
         fixture.detectChanges();
 
         const titleInput = fixture.debugElement.query(By.css('#field_title'));
