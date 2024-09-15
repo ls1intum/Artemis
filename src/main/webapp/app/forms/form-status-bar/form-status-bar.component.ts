@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, ViewChild, input } from '@angular/core';
 import { updateHeaderHeight } from 'app/shared/util/navbar.util';
 
 export type FormSectionStatus = {
@@ -13,8 +13,7 @@ export type FormSectionStatus = {
     styleUrl: './form-status-bar.component.scss',
 })
 export class FormStatusBarComponent implements AfterViewInit {
-    @Input()
-    formStatusSections: FormSectionStatus[];
+    formStatusSections = input<FormSectionStatus[]>([]);
 
     @ViewChild('statusBar', { static: false }) statusBar?: ElementRef;
 
