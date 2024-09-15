@@ -86,12 +86,12 @@ export class FAQComponent implements OnInit, OnDestroy {
     }
 
     toggleFilters(category: string) {
-        if (this.activeFilters.has(category)) {
-            this.activeFilters.delete(category);
-        } else {
-            this.activeFilters.add(category);
-        }
+        this.activeFilters = FaqService.toggleFilter(category, this.activeFilters);
         this.applyFilters();
+    }
+
+    private applyFilters(): void {
+        this.filteredFaq = FaqService.applyFilters(this.activeFilters, this.faqs);
     }
 
     sortRows() {
@@ -115,21 +115,5 @@ export class FAQComponent implements OnInit, OnDestroy {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
             this.existingCategories = existingCategories;
         });
-    }
-
-    private applyFilters(): void {
-        if (this.activeFilters.size === 0) {
-            // If no filters selected, show all faqs
-            this.filteredFaq = this.faqs;
-        } else {
-            this.filteredFaq = this.faqs.filter((faq) => this.hasFilteredCategory(faq, this.activeFilters));
-        }
-    }
-
-    public hasFilteredCategory(faq: Faq, filteredCategory: Set<string>) {
-        const categories = faq.categories?.map((category) => category.category);
-        if (categories) {
-            return categories.some((category) => filteredCategory.has(category!));
-        }
     }
 }

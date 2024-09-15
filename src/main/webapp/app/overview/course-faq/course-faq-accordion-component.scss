@@ -1,0 +1,18 @@
+.faq-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.faq-container h1 {
+    margin: 0;
+}
+
+.badge-container {
+    display: flex;
+    margin-left: auto;
+    gap: 4px;
+}
