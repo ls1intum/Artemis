@@ -67,7 +67,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         );
 
         effect(() => {
-            console.log('triggering effect');
             console.log(this.shortNameField());
             this.registerInputFields();
         });
@@ -113,9 +112,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     calculateFormValid() {
-        console.log('calculating form valid');
-        console.log(this.shortNameField());
-
         const isShortNameValid = this.shortNameField() === undefined || this.shortNameField()?.control.status === 'VALID';
         const isCheckoutSolutionRepositoryValid = this.isCheckoutSolutionRepositoryValid();
         const isRecreateBuildPlansValid = this.isRecreateBuildPlansValid();
