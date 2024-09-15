@@ -7,6 +7,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { CleanupServiceComponent } from 'app/admin/cleanup-service/cleanup-service.component';
 import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.model';
 import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service.ts';
+import { signal } from '@angular/core';
 
 describe('CleanupServiceComponent', () => {
     let comp: CleanupServiceComponent;
@@ -92,6 +93,7 @@ describe('CleanupServiceComponent', () => {
             deleteFrom: dayjs().subtract(6, 'months'),
             deleteTo: dayjs(),
             lastExecuted: undefined,
+            datesValid: signal(true),
         };
 
         const invalidOperation: CleanupOperation = {
@@ -99,9 +101,13 @@ describe('CleanupServiceComponent', () => {
             deleteFrom: dayjs(),
             deleteTo: dayjs().subtract(6, 'months'),
             lastExecuted: undefined,
+            datesValid: signal(true),
         };
 
-        expect(comp.areDatesValid(validOperation)).toBeTrue();
-        expect(comp.areDatesValid(invalidOperation)).toBeFalse();
+        comp.validateDates(validOperation);
+        comp.validateDates(invalidOperation);
+
+        expect(validOperation.datesValid()).toBeTrue();
+        expect(invalidOperation.datesValid()).toBeFalse();
     });
 });
