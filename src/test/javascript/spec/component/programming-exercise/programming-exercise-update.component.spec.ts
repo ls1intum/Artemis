@@ -1107,14 +1107,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         expect(comp.inputFieldSubscriptions).toHaveLength(5);
         comp.calculateFormStatusSections();
 
-        for (const section of comp.formStatusSections) {
+        for (const section of comp.formStatusSections()) {
             expect(section.valid).toBeTrue();
         }
 
         comp.exerciseInfoComponent.formValid = false;
         comp.exerciseInfoComponent.formValidChanges.next(false);
 
-        expect(comp.formStatusSections[0].valid).toBeFalse();
+        expect(comp.formStatusSections()[0].valid).toBeFalse();
 
         comp.exerciseLanguageComponent.formValidChanges.next(false);
         comp.exerciseGradingComponent.formValidChanges.next(false);
@@ -1127,10 +1127,10 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         comp.programmingExercise.allowOnlineEditor = false;
         comp.programmingExercise.allowOnlineIde = false;
         comp.calculateFormStatusSections();
-        expect(comp.formStatusSections[1].valid).toBeFalse();
+        expect(comp.formStatusSections()[1].valid).toBeFalse();
         comp.programmingExercise.allowOnlineEditor = true;
         comp.calculateFormStatusSections();
-        expect(comp.formStatusSections[1].valid).toBeTrue();
+        expect(comp.formStatusSections()[1].valid).toBeTrue();
 
         comp.ngOnDestroy();
 

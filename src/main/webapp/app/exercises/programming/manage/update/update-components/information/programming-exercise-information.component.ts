@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -27,10 +27,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
-    exerciseTitleChannelComponent = viewChild<ExerciseTitleChannelNameComponent>(ExerciseTitleChannelNameComponent);
+    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
 
-    shortNameField = viewChild<NgModel>('shortName');
+    @ViewChild('shortName') shortNameField: NgModel;
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
@@ -67,7 +67,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         );
 
         effect(() => {
-            console.log(this.shortNameField());
+            console.log(this.shortNameField);
             this.registerInputFields();
         });
     }
@@ -75,8 +75,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     registerInputFields() {
         this.inputFieldSubscriptions.forEach((subscription) => subscription?.unsubscribe());
 
-        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.shortNameField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent?.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.shortNameField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
@@ -112,13 +112,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     calculateFormValid() {
-        const isShortNameValid = this.shortNameField() === undefined || this.shortNameField()?.control.status === 'VALID';
+        const isShortNameValid = !this.shortNameField?.invalid;
         const isCheckoutSolutionRepositoryValid = this.isCheckoutSolutionRepositoryValid();
         const isRecreateBuildPlansValid = this.isRecreateBuildPlansValid();
         const isUpdateTemplateFilesValid = this.isUpdateTemplateFilesValid();
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         this.formValid = Boolean(
-            this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidSignal() &&
+            this.exerciseTitleChannelComponent?.titleChannelNameComponent?.formValidSignal() &&
                 isShortNameValid &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
