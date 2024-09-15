@@ -163,13 +163,17 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
     @Test
     @WithMockUser(roles = "ADMIN")
     void testDeleteOrphans() throws Exception {
+        var oldExercise = textExerciseRepository.findByCourseIdWithCategories(oldCourse.getId()).getFirst();
+
         var orphanFeedback = createFeedbackWithLinkedLongFeedback();
         var orphanTextBlock = createTextBlockForFeedback(orphanFeedback);
 
         StudentScore orphanStudentScore = new StudentScore();
+        orphanStudentScore.setExercise(oldExercise);
         orphanStudentScore = studentScoreRepository.save(orphanStudentScore);
 
         TeamScore orphanTeamScore = new TeamScore();
+        orphanTeamScore.setExercise(oldExercise);
         orphanTeamScore = teamScoreRepository.save(orphanTeamScore);
 
         var orphanResult = new Result();
@@ -195,9 +199,11 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
 
         StudentScore nonOrphanStudentScore = new StudentScore();
         nonOrphanStudentScore.setUser(student);
+        nonOrphanStudentScore.setExercise(oldExercise);
         nonOrphanStudentScore = studentScoreRepository.save(nonOrphanStudentScore);
 
         TeamScore nonOrphanTeamScore = new TeamScore();
+        nonOrphanTeamScore.setExercise(oldExercise);
         Team team = new Team();
         team.setShortName("team");
         nonOrphanTeamScore.setTeam(team);
@@ -349,6 +355,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
 
         ParticipantScore oldParticipantScore1 = new StudentScore();
+        oldParticipantScore1.setExercise(oldExercise);
         oldParticipantScore1.setExercise(oldExercise);
         oldParticipantScore1.setLastRatedResult(oldResult1);
         oldParticipantScore1 = participantScoreRepository.save(oldParticipantScore1);
