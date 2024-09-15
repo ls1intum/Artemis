@@ -13,7 +13,7 @@ export type FormSectionStatus = {
     styleUrl: './form-status-bar.component.scss',
 })
 export class FormStatusBarComponent implements AfterViewInit {
-    formStatusSections = input<FormSectionStatus[]>([]);
+    formStatusSections = input.required<FormSectionStatus[]>();
 
     @ViewChild('statusBar', { static: false }) statusBar?: ElementRef;
 
