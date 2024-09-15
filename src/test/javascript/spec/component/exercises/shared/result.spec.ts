@@ -24,6 +24,8 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { MIN_SCORE_GREEN, MIN_SCORE_ORANGE } from 'app/app.constants';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -47,6 +49,16 @@ describe('ResultComponent', () => {
         studentAssignedTeamIdComputed: false,
     };
     const modelingParticipation: StudentParticipation = { id: 4, type: ParticipationType.STUDENT, exercise: modelingExercise };
+
+    const textExercise: TextExercise = {
+        id: 5,
+        type: ExerciseType.TEXT,
+        numberOfAssessmentsOfCorrectionRounds: [],
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: false,
+    };
+
+    const textParticipation: StudentParticipation = { id: 6, type: ParticipationType.STUDENT, exercise: textExercise };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -112,6 +124,25 @@ describe('ResultComponent', () => {
         expect(component.resultIconClass).toEqual(faTimesCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.short');
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+    });
+
+    it('should set (automatic athena) results for text exercise', () => {
+        const submission1: Submission = { id: 1 };
+        const result1: Result = { id: 1, submission: submission1, score: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
+        const result2: Result = { id: 2 };
+        const participation1 = cloneDeep(textParticipation);
+        participation1.results = [result1, result2];
+        component.participation = participation1;
+        component.showUngradedResults = true;
+
+        fixture.detectChanges();
+
+        expect(component.result).toEqual(result1);
+        expect(component.result!.participation).toEqual(participation1);
+        expect(component.submission).toEqual(submission1);
+        expect(component.textColorClass).toBe('text-secondary');
+        expect(component.resultIconClass).toEqual(faQuestionCircle);
+        expect(component.resultString).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
     });
 
     it.each([

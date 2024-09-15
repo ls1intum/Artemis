@@ -1,0 +1,6 @@
+@if (checkAttribute) {
+    <fa-icon [icon]="faCheckCircle" [size]="size" [style]="{ color: iconColor ?? 'var(--green)' }" />
+} @else {
+    <fa-icon [icon]="faTimes" [size]="size" class="fs-5" [style]="{ color: iconColor ?? 'var(--markdown-preview-red)' }" />
+}
+&nbsp;

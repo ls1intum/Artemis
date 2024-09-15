@@ -47,6 +47,7 @@ import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standard
 import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
 import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
 import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
+import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -73,6 +74,7 @@ const ENTITY_STATES = [...adminState];
         KnowledgeAreaTreeComponent,
         StandardizedCompetencyFilterComponent,
         StandardizedCompetencyDetailComponent,
+        DeleteUsersButtonComponent,
     ],
     declarations: [
         AuditsComponent,

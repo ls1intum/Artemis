@@ -16,7 +16,7 @@
 logging:
     level:
         ROOT: DEBUG
-        de.tum.in.www1.artemis: DEBUG
+        de.tum.cit.aet.artemis: DEBUG
         tech.jhipster: DEBUG
         liquibase: ERROR
 
@@ -113,10 +113,12 @@ info:
             - programming_exercise_fail_tour: 'test'
             - programming_exercise_success_tour: 'test'
             - tutor_assessment_tour: 'Patterns in Software Engineering'
-    contact: artemis@xcit.tum.de  #default value, can be overridden if needed
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for development environment
     text-assessment-analytics-enabled: true
+    operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page and sent to the telemetry service (e.g. the name of the university "Technische Universität München")
+    operatorAdminName: Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
+    contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
 
 # Eureka configuration
 eureka:
@@ -133,9 +135,15 @@ theia:
 
     images:
         java:
-          Java-17: "ghcr.io/ls1intum/theia/java-17:latest"
-          Java-Test: "ghcr.io/ls1intum/theia/java-test:latest"
-          Java-Test2: "ghcr.io/ls1intum/theia/java-test:2"
+            Java-17: "ghcr.io/ls1intum/theia/java-17:latest"
+            Java-Test: "ghcr.io/ls1intum/theia/java-test:latest"
+            Java-Test2: "ghcr.io/ls1intum/theia/java-test:2"
         c:
             C: "ghcr.io/ls1intum/theia/c:latest"
 
+# Telemetry service: disabled for development
+artemis:
+    telemetry:
+        enabled: false # Disable sending any telemetry information to the telemetry service by setting this to false
+        sendAdminDetails: false # Include the admins email and name in the telemetry data. Set to false to disable
+        destination: telemetry.artemis.cit.tum.de

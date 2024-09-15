@@ -62,5 +62,15 @@ artemis:
         restricted-modules: module_text_test_restricted,module_programming_test_restricted
     apollon:
         conversion-service-url: http://localhost:8080
+    telemetry:
+        enabled: true
+        sendAdminDetails: true
+        destination: http://localhost:8081
     plagiarism-checks:
         plagiarism-results-limit: 100
+
+info:
+    operatorName: Some Artemis Operator # Must be set before starting the application in production. Shown in the about us page, and sent to the telemetry service
+    operatorAdminName: Some Universities Admin # Can be set to be shown in the about us page, and to be sent to the telemetry service
+    contact: admin@uni.de # The admins contact email address, shown in the about us page, and sent to the telemetry service
+

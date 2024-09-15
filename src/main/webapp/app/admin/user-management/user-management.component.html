@@ -45,6 +45,7 @@
                         </div>
                         <div class="col p-0">
                             <div class="d-flex justify-content-center justify-content-md-end">
+                                <jhi-delete-users-button (deletionCompleted)="this.deleteNotEnrolledUsersComplete()" />
                                 <button
                                     jhiDeleteButton
                                     [buttonSize]="medium"

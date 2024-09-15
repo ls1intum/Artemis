@@ -6,8 +6,8 @@ import { cloneDeep } from 'lodash-es';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { MonacoCorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-correct-multiple-choice-answer.action';
-import { MonacoWrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-wrong-multiple-choice-answer.action';
+import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
+import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -45,9 +45,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
         for (const answer of this.question.answerOptions!) {
             this.markdownMap.set(
                 answer.id!,
-                (answer.isCorrect ? MonacoCorrectMultipleChoiceAnswerAction.IDENTIFIER : MonacoWrongMultipleChoiceAnswerAction.IDENTIFIER) +
-                    ' ' +
-                    generateExerciseHintExplanation(answer),
+                (answer.isCorrect ? CorrectMultipleChoiceAnswerAction.IDENTIFIER : WrongMultipleChoiceAnswerAction.IDENTIFIER) + ' ' + generateExerciseHintExplanation(answer),
             );
         }
         this.questionText = this.getQuestionText(this.question);
@@ -104,9 +102,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
         const startOfThisPart = text.indexOf(answerOptionText);
         const box = text.substring(0, startOfThisPart);
         // Check if box says this answer option is correct or not
-        if (box === MonacoCorrectMultipleChoiceAnswerAction.IDENTIFIER) {
+        if (box === CorrectMultipleChoiceAnswerAction.IDENTIFIER) {
             answer.isCorrect = true;
-        } else if (box === MonacoWrongMultipleChoiceAnswerAction.IDENTIFIER) {
+        } else if (box === WrongMultipleChoiceAnswerAction.IDENTIFIER) {
             answer.isCorrect = false;
         } else {
             answer.isCorrect = undefined;
@@ -120,9 +118,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      */
     private static splitByCorrectIncorrectTag(text: string): string[] {
         const stringForSplit =
-            escapeStringForUseInRegex(`${MonacoCorrectMultipleChoiceAnswerAction.IDENTIFIER}`) +
-            '|' +
-            escapeStringForUseInRegex(`${MonacoWrongMultipleChoiceAnswerAction.IDENTIFIER}`);
+            escapeStringForUseInRegex(`${CorrectMultipleChoiceAnswerAction.IDENTIFIER}`) + '|' + escapeStringForUseInRegex(`${WrongMultipleChoiceAnswerAction.IDENTIFIER}`);
         const splitRegExp = new RegExp(stringForSplit, 'g');
         return text.split(splitRegExp);
     }
