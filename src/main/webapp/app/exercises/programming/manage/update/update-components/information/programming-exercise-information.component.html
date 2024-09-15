@@ -40,7 +40,7 @@
                 [disabled]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"
                 #shortName="ngModel"
             />
-            @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error) {
+            @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {
                 @if (shortName.invalid && (shortName.dirty || shortName.touched)) {
                     <div class="alert alert-danger">
                         <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>

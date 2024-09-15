@@ -29,7 +29,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
 
     exerciseTitleChannelComponent = viewChild<ExerciseTitleChannelNameComponent>(ExerciseTitleChannelNameComponent);
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
-    @ViewChild('shortName') shortNameField: NgModel;
+
+    shortNameField = viewChild<NgModel>('shortName');
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
@@ -64,11 +65,19 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 }
             }.bind(this),
         );
+
+        effect(() => {
+            console.log('triggering effect');
+            console.log(this.shortNameField());
+            this.registerInputFields();
+        });
     }
 
-    ngAfterViewInit() {
+    registerInputFields() {
+        this.inputFieldSubscriptions.forEach((subscription) => subscription?.unsubscribe());
+
         this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.shortNameField?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.shortNameField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
@@ -81,6 +90,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 this.updateShortName(newTitle);
             }
         });
+    }
+
+    ngAfterViewInit() {
+        this.registerInputFields();
     }
 
     updateShortName(newTitle: string) {
@@ -100,13 +113,17 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     calculateFormValid() {
+        console.log('calculating form valid');
+        console.log(this.shortNameField());
+
+        const isShortNameValid = this.shortNameField() === undefined || this.shortNameField()?.control.status === 'VALID';
         const isCheckoutSolutionRepositoryValid = this.isCheckoutSolutionRepositoryValid();
         const isRecreateBuildPlansValid = this.isRecreateBuildPlansValid();
         const isUpdateTemplateFilesValid = this.isUpdateTemplateFilesValid();
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         this.formValid = Boolean(
             this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidSignal() &&
-                !this.shortNameField?.invalid &&
+                isShortNameValid &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
                 isUpdateTemplateFilesValid &&
