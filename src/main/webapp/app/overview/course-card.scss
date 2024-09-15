@@ -1,9 +1,8 @@
 .card {
     // best possible height to fit header, information, and manage course button: 80px header + 200px card content
     height: 283px;
-    // needed, otherwise score chart will appear outside of the card
-    min-width: 320px;
-    max-width: 400px;
+    // ensure the card takes the full width of its column in the container
+    width: 100%;
     transition: transform 0.2s linear;
 
     &:hover {
@@ -20,6 +19,9 @@
         filter: alpha(opacity = 100);
         transition: 0.15s;
         background-color: var(--background-color-for-hover) !important;
+        // inner border radius : outer border radius - outer border thickness (8px - 1px)
+        border-top-left-radius: 7px;
+        border-top-right-radius: 7px;
 
         &:hover {
             background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
@@ -60,6 +62,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
+
+            .chart-text {
+                position: absolute;
+            }
 
             .chart-level {
                 z-index: 2;

@@ -13,9 +13,10 @@
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung",
-            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Punkte ({{ totalRelativeScore }}%)",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Punkte",
             "cardScore": "Punktzahl",
             "cardManageCourse": "Kurs Verwalten",
+            "noCoursesFound": "Keine Kurse gefunden",
             "enroll": {
                 "title": "Kurseinschreibung",
                 "enrollSuccessful": "Einschreibung erfolgreich",

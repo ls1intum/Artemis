@@ -1,10 +1,5 @@
 <div class="card rounded-4 flex-grow-1" [class.guided-tour]="hasGuidedTour">
-    <div
-        id="course-{{ course.id }}-header"
-        class="card-header rounded-top-4 text-white px-3"
-        [routerLink]="['/courses', course.id!]"
-        [ngStyle]="{ '--background-color-for-hover': courseColor }"
-    >
+    <div id="course-{{ course.id }}-header" class="card-header text-white px-3" [routerLink]="['/courses', course.id!]" [ngStyle]="{ '--background-color-for-hover': courseColor }">
         <div class="d-flex align-items-center justify-content-between gap-1">
             @if (course.courseIcon) {
                 <div class="col-auto">
@@ -40,7 +35,6 @@
                                         [translateValues]="{
                                             totalAbsoluteScore: totalAbsoluteScore,
                                             totalReachableScore: totalReachableScore,
-                                            totalRelativeScore: totalRelativeScore,
                                         }"
                                     ></div>
                                 </div>
@@ -64,7 +58,10 @@
                         }
                     </div>
                     @if (exerciseCount && (totalReachableScore || totalAbsoluteScore)) {
-                        <div class="align-self-center chart-container col-5">
+                        <div class="align-self-center chart-container col-5 mb-2">
+                            <div class="chart-text">
+                                <h4 class="mb-0">{{ totalRelativeScore }}%</h4>
+                            </div>
                             <ngx-charts-pie-chart
                                 id="score-chart"
                                 class="chart-level"
