@@ -18,19 +18,21 @@
                             <jhi-button
                                 id="Continue"
                                 [title]="'entity.action.continueSubmission'"
-                                [routerLink]="['/courses', this.course?.id, 'exercises', 'text-exercises', this.textExercise?.id!, 'participate', this.result.participation?.id]"
+                                [routerLink]="['/courses', course?.id, 'exercises', 'text-exercises', textExercise?.id!, 'participate', result.participation?.id]"
                             />
                         }
                     } @else {
-                        <jhi-button
-                            [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
-                            [icon]="faPenSquare"
-                            (onClick)="requestFeedback()"
-                            [disabled]="!submission.submitted || isGeneratingFeedback || this.isReadOnlyWithShowResult || this.hasLatestResult"
-                            [btnType]="ButtonType.PRIMARY"
-                            [isLoading]="isGeneratingFeedback"
-                            [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip'"
-                        />
+                        @if (textExercise.allowFeedbackRequests) {
+                            <jhi-button
+                                [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
+                                [icon]="faPenSquare"
+                                (onClick)="requestFeedback()"
+                                [disabled]="!submission.submitted || isGeneratingFeedback || isReadOnlyWithShowResult || hasLatestResult"
+                                [btnType]="ButtonType.PRIMARY"
+                                [isLoading]="isGeneratingFeedback"
+                                [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip'"
+                            />
+                        }
                     }
                     @if (!this.isReadOnlyWithShowResult) {
                         <jhi-button
