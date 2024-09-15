@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -153,6 +154,7 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
+    @Rollback
     @WithMockUser(roles = "ADMIN")
     void testDeleteOrphans() throws Exception {
         var orphanFeedback = createFeedbackWithLinkedLongFeedback();
