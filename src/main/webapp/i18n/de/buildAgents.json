@@ -14,7 +14,16 @@
             "idle": "Inaktiv",
             "onlineAgents": "online Agent(en)",
             "of": "von",
-            "buildJobsRunning": "Build Jobs laufen"
+            "buildJobsRunning": "Build Jobs laufen",
+            "alerts": {
+                "buildAgentPaused": "Anfrage zum Anhalten des Build-Agenten erfolgreich gesendet. Der Agent akzeptiert keine neuen BuildJobs und wird die aktuellen BuildJobs entweder ordnungsgemäß beenden oder nach 10 Sekunden abbrechen.",
+                "buildAgentResumed": "Anfrage zum Fortsetzen des BuildJobs erfolgreich gesendet. Der Agent wird wieder neue BuildJobs annehmen.",
+                "buildAgentPausedFailed": "Anhalten des Build-Agenten fehlgeschlagen.",
+                "buildAgentResumedFailed": "Fortsetzen des Build-Agenten fehlgeschlagen.",
+                "buildAgentWithoutName": "Der Name des Build-Agenten ist erforderlich."
+            },
+            "pause": "Anhalten",
+            "resume": "Fortsetzen"
         }
     }
 }

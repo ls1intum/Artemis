@@ -8,6 +8,7 @@ import { TriggeredByPushTo } from 'app/entities/programming/repository-info.mode
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
+import { AlertService, AlertType } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-build-agent-details',
@@ -34,6 +35,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         private buildAgentsService: BuildAgentsService,
         private route: ActivatedRoute,
         private buildQueueService: BuildQueueService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit() {
@@ -104,5 +106,53 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     viewBuildLogs(resultId: number): void {
         const url = `/api/build-log/${resultId}`;
         window.open(url, '_blank');
+    }
+
+    pauseBuildAgent() {
+        if (this.buildAgent.name) {
+            this.buildAgentsService.pauseBuildAgent(this.buildAgent.name).subscribe({
+                next: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.SUCCESS,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentPaused',
+                    });
+                },
+                error: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentPauseFailed',
+                    });
+                },
+            });
+        } else {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
+            });
+        }
+    }
+
+    resumeBuildAgent() {
+        if (this.buildAgent.name) {
+            this.buildAgentsService.resumeBuildAgent(this.buildAgent.name).subscribe({
+                next: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.SUCCESS,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentResumed',
+                    });
+                },
+                error: () => {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: 'artemisApp.buildAgents.alerts.buildAgentResumeFailed',
+                    });
+                },
+            });
+        } else {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.buildAgents.alerts.buildAgentWithoutName',
+            });
+        }
     }
 }

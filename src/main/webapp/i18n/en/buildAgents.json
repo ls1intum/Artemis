@@ -14,7 +14,16 @@
             "idle": "Idle",
             "onlineAgents": "online agent(s)",
             "of": "of",
-            "buildJobsRunning": "build jobs running"
+            "buildJobsRunning": "build jobs running",
+            "alerts": {
+                "buildAgentPaused": "Build agent pause request sent successfully. The agent will not accept new build jobs and will gracefully finish the current build jobs or will cancel them after 10 seconds.",
+                "buildAgentResumed": "Build agent resume request sent successfully. The agent will start accepting new build jobs.",
+                "buildAgentPausedFailed": "Failed to pause the build agent.",
+                "buildAgentResumedFailed": "Failed to resume the build agent.",
+                "buildAgentWithoutName": "Build agent name is required."
+            },
+            "pause": "Pause",
+            "resume": "Resume"
         }
     }
 }

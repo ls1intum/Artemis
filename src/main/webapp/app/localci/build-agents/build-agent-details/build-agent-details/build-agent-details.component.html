@@ -1,10 +1,16 @@
 <div>
     @if (buildAgent) {
         <div style="padding-bottom: 40px">
-            <div style="display: flex; align-items: center; padding-bottom: 20px">
-                <h3 id="build-agent-heading" jhiTranslate="artemisApp.buildAgents.details"></h3>
-                <span class="h3">:</span>
-                <h3 id="build-agent-name" class="h3" style="margin-left: 20px">{{ buildAgent.name }}</h3>
+            <div style="padding-bottom: 20px" class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <h3 id="build-agent-heading" jhiTranslate="artemisApp.buildAgents.details"></h3>
+                    <span class="h3">:</span>
+                    <h3 id="build-agent-name" class="h3" style="margin-left: 20px">{{ buildAgent.name }}</h3>
+                </div>
+                <div>
+                    <button class="btn btn-success" (click)="resumeBuildAgent()" jhiTranslate="artemisApp.buildAgents.resume"></button>
+                    <button class="btn btn-danger" (click)="pauseBuildAgent()" jhiTranslate="artemisApp.buildAgents.pause"></button>
+                </div>
             </div>
             <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="[buildAgent!]">
                 <ng-template let-settings="settings" let-controls="controls">
