@@ -332,6 +332,7 @@
                     "errorCategory": "Error Category",
                     "totalItems": "In total {{count}} items",
                     "error": "An error occurred while loading the feedback.",
+                    "search": "Search ...",
                     "feedbackModal": {
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",

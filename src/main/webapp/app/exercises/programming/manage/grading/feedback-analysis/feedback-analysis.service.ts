@@ -17,10 +17,6 @@ export interface FeedbackDetail {
 
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
-    constructor() {
-        super();
-    }
-
     search(pageable: SearchTermPageableSearch, options: { exerciseId: number }): Promise<FeedbackAnalysisResponse> {
         return this.post<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details-paged`, pageable);
     }

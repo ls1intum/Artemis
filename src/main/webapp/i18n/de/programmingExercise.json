@@ -330,6 +330,7 @@
                     "errorCategory": "Fehlerkategorie",
                     "totalItems": "Insgesamt {{count}} Elemente",
                     "error": "Beim Laden des Feedback ist ein Fehler aufgetreten.",
+                    "search": "Suche ...",
                     "feedbackModal": {
                         "header": "Fehler Details",
                         "feedbackTitle": "Testfall Feedback",

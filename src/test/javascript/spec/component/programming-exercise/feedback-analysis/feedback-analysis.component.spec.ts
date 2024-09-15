@@ -6,7 +6,6 @@ import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grad
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import '@angular/localize/init';
-import { signal } from '@angular/core';
 
 describe('FeedbackAnalysisComponent', () => {
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;
@@ -40,8 +39,8 @@ describe('FeedbackAnalysisComponent', () => {
         feedbackAnalysisService = fixture.debugElement.injector.get(FeedbackAnalysisService);
         searchSpy = jest.spyOn(feedbackAnalysisService, 'search').mockResolvedValue(feedbackResponseMock);
 
-        (component.exerciseId as any) = signal<number>(1);
-        (component.exerciseTitle as any) = signal<string>('Sample Exercise Title');
+        fixture.componentRef.setInput('exerciseId', 1);
+        fixture.componentRef.setInput('exerciseTitle', 'Sample Exercise Title');
 
         fixture.detectChanges();
     });
@@ -53,7 +52,7 @@ describe('FeedbackAnalysisComponent', () => {
     describe('on init', () => {
         it('should load data on initialization', async () => {
             await fixture.whenStable();
-            expect(searchSpy).toHaveBeenCalled();
+            expect(searchSpy).toHaveBeenCalledOnce();
             expect(component.content().resultsOnPage).toEqual(feedbackMock);
             expect(component.totalItems()).toBe(2);
         });
@@ -85,7 +84,7 @@ describe('FeedbackAnalysisComponent', () => {
 
             component.setPage(2);
             expect(component.page()).toBe(2);
-            expect(loadDataSpy).toHaveBeenCalled();
+            expect(loadDataSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -96,11 +95,11 @@ describe('FeedbackAnalysisComponent', () => {
             component.setSortedColumn('testCaseName');
             expect(component.sortedColumn()).toBe('testCaseName');
             expect(component.sortingOrder()).toBe('ASCENDING');
-            expect(loadDataSpy).toHaveBeenCalled();
+            expect(loadDataSpy).toHaveBeenCalledOnce();
 
             component.setSortedColumn('testCaseName');
             expect(component.sortingOrder()).toBe('DESCENDING');
-            expect(loadDataSpy).toHaveBeenCalled();
+            expect(loadDataSpy).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -111,7 +110,7 @@ describe('FeedbackAnalysisComponent', () => {
             component.searchTerm.set('test');
             component.search();
             expect(component.page()).toBe(1);
-            expect(loadDataSpy).toHaveBeenCalled();
+            expect(loadDataSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -123,7 +122,7 @@ describe('FeedbackAnalysisComponent', () => {
             const feedbackDetail = feedbackMock[0];
             component.openFeedbackModal(feedbackDetail);
 
-            expect(modalSpy).toHaveBeenCalled();
+            expect(modalSpy).toHaveBeenCalledOnce();
         });
     });
 });

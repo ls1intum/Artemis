@@ -2,11 +2,7 @@
     <th scope="col" class="clickable" (click)="setSortedColumn(column)">
         <span [jhiTranslate]="label"></span>
         @if (sortedColumn() === column) {
-            @if (sortingOrder() === SortingOrder.ASCENDING) {
-                <fa-icon [icon]="faSortUp"></fa-icon>
-            } @else {
-                <fa-icon [icon]="faSortDown"></fa-icon>
-            }
+            <fa-icon [icon]="sortIcon()"></fa-icon>
         }
     </th>
 </ng-template>
@@ -15,7 +11,14 @@
     <h2 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h2>
 
     <div class="d-flex align-items-center mb-3 position-relative">
-        <input type="search" class="form-control" [placeholder]="'Search feedback...'" aria-label="Search feedback" [(ngModel)]="searchTerm" (ngModelChange)="search()" />
+        <input
+            type="search"
+            class="form-control"
+            [placeholder]="'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.search' | artemisTranslate"
+            aria-label="Search feedback"
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="search()"
+        />
         <fa-icon [icon]="faMagnifyingGlass" class="search-icon"></fa-icon>
     </div>
 
@@ -47,7 +50,7 @@
                 <tr>
                     <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
                     <td>
-                        {{ item.detailText.length > 150 ? (item.detailText | slice: 0 : 100) + '...' : item.detailText }}
+                        {{ item.detailText.length > maxFeedbackDetailTextLength ? (item.detailText | slice: 0 : 100) + '...' : item.detailText }}
                     </td>
                     <td class="text-center">{{ item.taskNumber }}</td>
                     <td>{{ item.testCaseName }}</td>

@@ -39,6 +39,8 @@ export class FeedbackAnalysisComponent {
     readonly faMagnifyingGlass = faMagnifyingGlass;
     readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
     readonly SortingOrder = SortingOrder;
+    readonly maxFeedbackDetailTextLength = 150;
+    readonly sortIcon = computed(() => (this.sortingOrder() === SortingOrder.ASCENDING ? this.faSortUp : this.faSortDown));
 
     constructor() {
         effect(() => {
