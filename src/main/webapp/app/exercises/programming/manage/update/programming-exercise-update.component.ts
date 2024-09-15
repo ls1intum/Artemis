@@ -135,7 +135,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
-    formStatusSections: FormSectionStatus[];
+    formStatusSections = signal<FormSectionStatus[]>([]);
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
@@ -191,6 +191,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                     this.calculateFormStatusSections();
                 }
             }.bind(this),
+            { allowSignalWrites: true },
         );
     }
 
@@ -550,7 +551,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             updatedFormStatusSections.splice(MODE_SECTION_INDEX, MODE_SECTION_INDEX);
         }
 
-        this.formStatusSections = updatedFormStatusSections;
+        this.formStatusSections.set(updatedFormStatusSections);
     }
 
     private defineSupportedProgrammingLanguages() {
