@@ -49,7 +49,7 @@
             }
         </div>
     }
-    @if (programmingExercise().shortName && !shortNameField?.invalid) {
+    @if (programmingExercise().shortName && (this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID')) {
         <div class="form-group">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.preview.label"></label>
