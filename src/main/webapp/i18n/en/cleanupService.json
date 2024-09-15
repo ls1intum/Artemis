@@ -19,6 +19,9 @@
             "question": "Are you sure you want to execute the operation <strong>{{ title }}</strong>? This action can NOT be undone!",
             "typeOperationNameToConfirm": "Please type in the name of the operation to confirm."
         },
-        "notRunYet": "This operation has not been run yet"
+        "notRunYet": "This operation has not been run yet",
+        "error": {
+            "datesInvalid": "'Delete To' must be after 'Delete From'"
+        }
     }
 }

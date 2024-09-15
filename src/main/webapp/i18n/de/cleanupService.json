@@ -19,6 +19,9 @@
             "question": "Bist du sicher, dass du die Operation <strong>{{ title }}</strong> ausführen möchtest? Diese Aktion kann NICHT rückgängig gemacht werden!",
             "typeOperationNameToConfirm": "Bitte gib den Namen der Operation ein, um zu bestätigen."
         },
-        "notRunYet": "Diese Operation wurde noch nicht ausgeführt"
+        "notRunYet": "Diese Operation wurde noch nicht ausgeführt",
+        "error": {
+            "datesInvalid": "'Löschen bis' muss nach 'Löschen von' liegen"
+        }
     }
 }
