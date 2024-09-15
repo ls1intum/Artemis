@@ -140,7 +140,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                     LEFT JOIN p2.submissions s2
                 WHERE p2.exercise.id = :exerciseId
                     AND p2.student.login = :username
-                    AND (s2.type <> de.tum.in.www1.artemis.domain.enumeration.SubmissionType.ILLEGAL OR s2.type IS NULL)
+                    AND (s2.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s2.type IS NULL)
             )
             """)
     Optional<StudentParticipation> findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
