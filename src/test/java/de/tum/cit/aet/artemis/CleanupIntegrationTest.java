@@ -19,7 +19,6 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
-import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
@@ -354,16 +353,17 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
 
-        ParticipantScore oldParticipantScore1 = new StudentScore();
+        StudentScore oldParticipantScore1 = new StudentScore();
         oldParticipantScore1.setExercise(oldExercise);
-        oldParticipantScore1.setExercise(oldExercise);
+        oldParticipantScore1.setUser(student);
         oldParticipantScore1.setLastRatedResult(oldResult1);
-        oldParticipantScore1 = participantScoreRepository.save(oldParticipantScore1);
+        oldParticipantScore1 = studentScoreRepository.save(oldParticipantScore1);
 
-        ParticipantScore oldParticipantScore2 = new StudentScore();
+        StudentScore oldParticipantScore2 = new StudentScore();
+        oldParticipantScore2.setUser(student);
         oldParticipantScore2.setExercise(oldExercise);
         oldParticipantScore2.setLastResult(oldResult2);
-        oldParticipantScore2 = participantScoreRepository.save(oldParticipantScore1);
+        oldParticipantScore2 = studentScoreRepository.save(oldParticipantScore1);
 
         // create non rated results for the new course
         var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
@@ -385,15 +385,17 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
         participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
 
-        ParticipantScore newParticipantScore1 = new StudentScore();
+        StudentScore newParticipantScore1 = new StudentScore();
+        newParticipantScore1.setUser(student);
         newParticipantScore1.setExercise(newExercise);
         newParticipantScore1.setLastRatedResult(newResult1);
-        newParticipantScore1 = participantScoreRepository.save(newParticipantScore1);
+        newParticipantScore1 = studentScoreRepository.save(newParticipantScore1);
 
-        ParticipantScore newParticipantScore2 = new StudentScore();
+        StudentScore newParticipantScore2 = new StudentScore();
+        newParticipantScore2.setUser(student);
         newParticipantScore2.setExercise(newExercise);
         newParticipantScore2.setLastResult(newResult2);
-        newParticipantScore2 = participantScoreRepository.save(newParticipantScore2);
+        newParticipantScore2 = studentScoreRepository.save(newParticipantScore2);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("deleteFrom", DELETE_FROM.toString());
@@ -445,15 +447,17 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var oldTextBlock2 = createTextBlockForFeedback(oldFeedback2);
         participationUtilService.addFeedbackToResult(oldFeedback2, oldResult2);
 
-        ParticipantScore oldParticipantScore1 = new StudentScore();
+        StudentScore oldParticipantScore1 = new StudentScore();
+        oldParticipantScore1.setUser(student);
         oldParticipantScore1.setExercise(oldExercise);
         oldParticipantScore1.setLastRatedResult(oldResult1);
-        oldParticipantScore1 = participantScoreRepository.save(oldParticipantScore1);
+        oldParticipantScore1 = studentScoreRepository.save(oldParticipantScore1);
 
-        ParticipantScore oldParticipantScore2 = new StudentScore();
+        StudentScore oldParticipantScore2 = new StudentScore();
         oldParticipantScore2.setExercise(oldExercise);
         oldParticipantScore2.setLastResult(oldResult2);
-        oldParticipantScore2 = participantScoreRepository.save(oldParticipantScore2);
+        oldParticipantScore2.setUser(student);
+        oldParticipantScore2 = studentScoreRepository.save(oldParticipantScore2);
 
         // create rated results for the new course
         var newExercise = textExerciseRepository.findByCourseIdWithCategories(newCourse.getId()).getFirst();
@@ -473,15 +477,17 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         var newTextBlock2 = createTextBlockForFeedback(newFeedback2);
         participationUtilService.addFeedbackToResult(newFeedback2, newResult2);
 
-        ParticipantScore newParticipantScore1 = new StudentScore();
+        StudentScore newParticipantScore1 = new StudentScore();
+        newParticipantScore1.setUser(student);
         newParticipantScore1.setExercise(newExercise);
         newParticipantScore1.setLastRatedResult(newResult1);
-        newParticipantScore1 = participantScoreRepository.save(newParticipantScore1);
+        newParticipantScore1 = studentScoreRepository.save(newParticipantScore1);
 
-        ParticipantScore newParticipantScore2 = new StudentScore();
+        StudentScore newParticipantScore2 = new StudentScore();
+        newParticipantScore2.setUser(student);
         newParticipantScore2.setExercise(newExercise);
         newParticipantScore2.setLastResult(newResult2);
-        newParticipantScore2 = participantScoreRepository.save(newParticipantScore2);
+        newParticipantScore2 = studentScoreRepository.save(newParticipantScore2);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("deleteFrom", DELETE_FROM.toString());
