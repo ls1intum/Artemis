@@ -37,8 +37,6 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                     WHERE tb.feedback IN (SELECT f FROM Feedback f JOIN f.result WHERE f.result IS NULL)
                 """).executeUpdate();
         entityManager.createQuery("DELETE FROM Feedback f WHERE f.result IS NULL").executeUpdate();
-        entityManager.createQuery("DELETE FROM StudentScore ps WHERE ps.user IS NULL").executeUpdate();
-        entityManager.createQuery("DELETE FROM TeamScore ps WHERE ps.team IS NULL").executeUpdate();
         // all long feedback text records that are part of feedback that is part of an orphan result
         entityManager.createQuery("""
                     DELETE FROM LongFeedbackText lft

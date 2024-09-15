@@ -10,12 +10,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.annotation.Rollback;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -25,14 +23,11 @@ import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
-import de.tum.cit.aet.artemis.assessment.domain.TeamScore;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.core.domain.CleanupJobType;
@@ -43,7 +38,6 @@ import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository;
 import de.tum.cit.aet.artemis.core.repository.cleanup.DataCleanupRepository;
-import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
@@ -80,12 +74,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Autowired
     private LongFeedbackTextRepository longFeedbackTextRepository;
-
-    @Autowired
-    private StudentScoreRepository studentScoreRepository;
-
-    @Autowired
-    private TeamScoreRepository teamScoreRepository;
 
     @Autowired
     private RatingRepository ratingRepository;
@@ -154,17 +142,10 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Rollback
     @WithMockUser(roles = "ADMIN")
     void testDeleteOrphans() throws Exception {
         var orphanFeedback = createFeedbackWithLinkedLongFeedback();
         var orphanTextBlock = createTextBlockForFeedback(orphanFeedback);
-
-        StudentScore orphanStudentScore = new StudentScore();
-        orphanStudentScore = studentScoreRepository.save(orphanStudentScore);
-
-        TeamScore orphanTeamScore = new TeamScore();
-        orphanTeamScore = teamScoreRepository.save(orphanTeamScore);
 
         var orphanResult = new Result();
         orphanResult = resultRepository.save(orphanResult);
@@ -187,17 +168,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         nonOrphanFeedback.setResult(nonOrphanResult);
         nonOrphanFeedback = feedbackRepository.save(nonOrphanFeedback);
 
-        StudentScore nonOrphanStudentScore = new StudentScore();
-        nonOrphanStudentScore.setUser(student);
-        nonOrphanStudentScore = studentScoreRepository.save(nonOrphanStudentScore);
-
-        TeamScore nonOrphanTeamScore = new TeamScore();
-        Team team = new Team();
-        team.setShortName("team");
-        nonOrphanTeamScore.setTeam(team);
-        teamRepository.save(team);
-        nonOrphanTeamScore = teamScoreRepository.save(nonOrphanTeamScore);
-
         Rating nonOrphanRating = new Rating();
         nonOrphanRating.setResult(nonOrphanResult);
         nonOrphanRating = ratingRepository.save(nonOrphanRating);
@@ -215,22 +185,17 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         assertThat(longFeedbackTextRepository.existsById(orphanFeedback.getLongFeedback().orElseThrow().getId())).isFalse();
         assertThat(textBlockRepository.existsById(orphanTextBlock.getId())).isFalse();
         assertThat(feedbackRepository.existsById(orphanFeedback.getId())).isFalse();
-        assertThat(studentScoreRepository.existsById(orphanStudentScore.getId())).isFalse();
-        assertThat(teamScoreRepository.existsById(orphanTeamScore.getId())).isFalse();
         assertThat(resultRepository.existsById(orphanResult.getId())).isFalse();
         assertThat(ratingRepository.existsById(orphanRating.getId())).isFalse();
 
         assertThat(textBlockRepository.existsById(nonOrphanTextBlock.getId())).isTrue();
         assertThat(longFeedbackTextRepository.existsById(nonOrphanFeedback.getLongFeedback().orElseThrow().getId())).isTrue();
         assertThat(feedbackRepository.existsById(nonOrphanFeedback.getId())).isTrue();
-        assertThat(studentScoreRepository.existsById(nonOrphanStudentScore.getId())).isTrue();
-        assertThat(teamScoreRepository.existsById(nonOrphanTeamScore.getId())).isTrue();
         assertThat(ratingRepository.existsById(nonOrphanRating.getId())).isTrue();
         assertThat(resultRepository.existsById(nonOrphanResult.getId())).isTrue();
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeletePlagiarismComparisons() throws Exception {
         // old course, should delete undecided plagiarism comparisons
@@ -321,7 +286,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeleteNonRatedResults() throws Exception {
         // create non rated results for an old course
@@ -414,7 +378,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testDeleteOldRatedResults() throws Exception {
         // create rated results for an old course
@@ -503,7 +466,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     @WithMockUser(roles = "ADMIN")
     void testGetLastExecutions() throws Exception {
 
@@ -516,12 +478,12 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         var response = request.getList("/api/admin/get-last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
 
-        List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::toString).toList();
+        List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::label).toList();
 
         assertThat(response).isNotNull();
         assertThat(response).extracting(CleanupServiceExecutionRecordDTO::jobType).containsAll(enumJobTypes);
 
-        var orphansJob = response.stream().filter(elem -> elem.jobType().equals(CleanupJobType.ORPHANS.toString())).findFirst();
+        var orphansJob = response.stream().filter(elem -> elem.jobType().equals(CleanupJobType.ORPHANS.label())).findFirst();
 
         assertThat(orphansJob).isPresent();
         assertThat(now).isNotNull();
@@ -540,7 +502,6 @@ class CleanupIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     }
 
     @Test
-    @Disabled
     void testTransactionalBehavior() {
 
         long count = resultRepository.count();
