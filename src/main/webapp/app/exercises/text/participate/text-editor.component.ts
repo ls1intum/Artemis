@@ -14,10 +14,10 @@ import { TextSubmissionService } from 'app/exercises/text/participate/text-submi
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ButtonType } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
@@ -27,6 +27,7 @@ import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -141,7 +142,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.course = getCourseFromExercise(this.textExercise);
 
         if (participation.submissions?.length) {
-            this.submission = participation.submissions[0] as TextSubmission;
+            this.submission = participation.submissions.last() as TextSubmission;
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
             if (this.submission?.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
                 this.result = this.submission.latestResult!;
@@ -186,13 +187,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.isAlwaysActive = !!isAlwaysActive;
     }
 
+    get isAutomaticResult(): boolean {
+        return this.result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+    }
     /**
      * True, if the due date is after the current date, or there is no due date, or the exercise is always active
      */
     get isActive(): boolean {
         const isActive =
             !this.examMode &&
-            !this.result &&
+            (!this.result || this.isAutomaticResult) &&
             (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }

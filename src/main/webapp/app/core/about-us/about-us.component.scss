@@ -37,3 +37,13 @@
     flex: 0 0 50%;
     max-width: 50%;
 }
+
+.inline-block {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 20px;
+}
+
+.fixed-width {
+    width: 200px;
+}

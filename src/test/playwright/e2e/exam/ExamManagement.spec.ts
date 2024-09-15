@@ -3,7 +3,7 @@ import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID, newBrowserPage } from '../../support/utils';
 import { test } from '../../support/fixtures';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Commands } from '../../support/commands';
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';

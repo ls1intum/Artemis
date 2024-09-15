@@ -1,0 +1,15 @@
+dt {
+    font-weight: 500;
+}
+
+span {
+    color: var(--secondary);
+}
+
+.btn-default:hover {
+    border: 1px solid var(--primary);
+}
+
+.dropdown-toggle::after {
+    display: none;
+}

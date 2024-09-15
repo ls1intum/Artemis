@@ -1,5 +1,5 @@
 import { Observable, of } from 'rxjs';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { HttpResponse } from '@angular/common/http';
 
 type EntityResponseType = HttpResponse<TextSubmission>;

@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { faExclamationTriangle, faSort } from '@fortawesome/free-solid-svg-icons';
 
 @Component({

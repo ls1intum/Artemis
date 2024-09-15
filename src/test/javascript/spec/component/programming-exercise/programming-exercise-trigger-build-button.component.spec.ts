@@ -19,7 +19,7 @@ import { ArtemisProgrammingExerciseActionsModule } from 'app/exercises/programmi
 import { triggerChanges } from '../../helpers/utils/general.utils';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 describe('TriggerBuildButtonSpec', () => {

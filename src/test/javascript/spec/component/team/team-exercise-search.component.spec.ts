@@ -4,7 +4,7 @@ import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TeamExerciseSearchComponent } from 'app/exercises/shared/team/team-exercise-search/team-exercise-search.component';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 /**
