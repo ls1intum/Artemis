@@ -98,7 +98,7 @@ export class JhiLanguageHelper {
         return 'en';
     }
 
-    public getNavigatorReference(): any {
+    public getNavigatorReference(): Navigator {
         return navigator;
     }
 }

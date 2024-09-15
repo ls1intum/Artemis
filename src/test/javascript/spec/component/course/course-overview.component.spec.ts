@@ -31,7 +31,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AfterViewInit, ChangeDetectorRef, Component, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/shared/tab-bar/tab-bar';

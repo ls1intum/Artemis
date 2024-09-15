@@ -1,7 +1,7 @@
 import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -29,7 +29,7 @@ import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.com
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 
 @Component({
     selector: 'jhi-text-exercise-update',
@@ -66,8 +66,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     existingCategories: ExerciseCategory[];
     notificationText?: string;
 
-    domainActionsProblemStatement = [new MonacoFormulaAction()];
-    domainActionsExampleSolution = [new MonacoFormulaAction()];
+    domainActionsProblemStatement = [new FormulaAction()];
+    domainActionsExampleSolution = [new FormulaAction()];
 
     formSectionStatus: FormSectionStatus[];
 

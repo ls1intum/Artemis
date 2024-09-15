@@ -4,7 +4,7 @@ import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/pr
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 @Component({
     selector: 'jhi-programming-assessment-repo-export',

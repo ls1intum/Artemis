@@ -1,22 +1,52 @@
 <div class="d-flex justify-content-between">
-    <div id="header-author-date" class="d-flex align-items-center gap-2 flex-wrap">
+    <div id="header-author-date" class="post-header-author-date d-flex align-items-start gap-2 flex-wrap">
         @if (posting.author) {
-            <span
-                [jhiTranslate]="userRoleBadge"
-                ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}"
-                class="badge fs-xx-small rounded-3"
-                [ngClass]="'badge-' + userAuthority"
-                id="role-badge"
-            ></span>
-            <span class="fs-small fw-semibold">
-                {{ posting.author?.name }}
+            <span class="d-inline-flex align-items-start gap-2 flex-wrap">
+                <div class="post-profile-picture-wrap rounded-3">
+                    @if (posting.author.imageUrl === undefined) {
+                        <strong
+                            id="post-default-profile-picture"
+                            class="post-profile-picture rounded-3"
+                            [ngStyle]="{ 'background-color': userProfilePictureBackgroundColor }"
+                            [ngClass]="'post-profile-picture-' + userAuthority"
+                            >{{ userProfilePictureInitials }}</strong
+                        >
+                    } @else {
+                        <img
+                            id="post-profile-picture"
+                            [alt]="'Profile picture of ' + posting.author?.name"
+                            class="post-profile-picture rounded-3"
+                            [src]="posting.author.imageUrl"
+                            [ngStyle]="{ 'background-color': userProfilePictureBackgroundColor }"
+                            [ngClass]="'post-profile-picture-' + userAuthority"
+                        />
+                    }
+                    @if (currentUser !== undefined && posting.author.id === currentUser.id) {
+                        <a
+                            class="post-edit-profile-picture-overlay rounded-3 d-flex align-items-center justify-content-center"
+                            [routerLink]="['/user-settings']"
+                            routerLinkActive="active"
+                        >
+                            <fa-icon class="text-white" [icon]="faCog" />
+                        </a>
+                    }
+                </div>
+                <span class="fs-small d-inline-flex flex-column align-items-start">
+                    <span class="fw-semibold">{{ posting.author?.name }}</span>
+                    <span class="fs-x-small mt-1 text-body-secondary">
+                        <span class="me-1 fs-xx-small" [ngClass]="'post-authority-icon-' + userAuthority" id="role-badge">
+                            <fa-icon [icon]="userAuthorityIcon" />
+                        </span>
+                        <span ngbTooltip="{{ userAuthorityTooltip | artemisTranslate }}" [jhiTranslate]="userRoleBadge"></span>
+                    </span>
+                </span>
             </span>
         }
         <span>-</span>
         @if (postingIsOfToday) {
-            <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-x-small"></span>
+            <span [jhiTranslate]="todayFlag ?? ''" id="today-flag" class="fs-small"></span>
         }
-        <span class="fs-x-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+        <span class="fs-small" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
             {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
         </span>
         @if (!!isCommunicationPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting) {

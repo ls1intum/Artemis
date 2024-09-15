@@ -693,7 +693,7 @@ export class CourseManagementService {
         this.entityTitleService.setTitle(EntityType.COURSE, [course?.id], course?.title);
 
         course?.exercises?.forEach((exercise) => {
-            this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise.id], exercise.title);
+            this.entityTitleService.setExerciseTitle(exercise);
         });
         course?.lectures?.forEach((lecture) => this.entityTitleService.setTitle(EntityType.LECTURE, [lecture.id], lecture.title));
         course?.exams?.forEach((exam) => this.entityTitleService.setTitle(EntityType.EXAM, [exam.id], exam.title));
