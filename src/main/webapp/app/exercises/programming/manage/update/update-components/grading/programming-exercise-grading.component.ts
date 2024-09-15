@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, ViewChild, input } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, ViewChild, input, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
@@ -36,6 +36,8 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     @ViewChild('bonusPoints') bonusPointsField?: NgModel;
     @ViewChild('maxPenalty') maxPenaltyField?: NgModel;
 
+    formValidSignal = signal<boolean>(false);
+
     formValid: boolean;
     formEmpty: boolean;
     formValidChanges = new Subject<boolean>();
@@ -62,13 +64,16 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     }
 
     calculateFormStatus() {
-        this.formValid = Boolean(
+        const newFormValidValue = Boolean(
             this.maxScoreField?.valid &&
                 this.bonusPointsField?.valid &&
                 (this.maxPenaltyField?.valid || !this.programmingExercise.staticCodeAnalysisEnabled) &&
                 !this.submissionPolicyUpdateComponent?.invalid &&
                 this.lifecycleComponent?.formValid,
         );
+
+        this.formValidSignal.set(newFormValidValue);
+        this.formValid = newFormValidValue;
         this.formEmpty = this.lifecycleComponent?.formEmpty ?? false;
         this.formValidChanges.next(this.formValid);
     }

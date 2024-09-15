@@ -539,7 +539,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             },
             {
                 title: 'artemisApp.programmingExercise.wizardMode.detailedSteps.gradingStepTitle',
-                valid: Boolean(this.exerciseGradingComponent?.formValid && (this.isExamMode || this.exercisePlagiarismComponent?.formValid)),
+                valid: Boolean(
+                    this.exerciseGradingComponent?.formValid &&
+                        (this.isExamMode || !this.isEditFieldDisplayedRecord().plagiarismControl || this.exercisePlagiarismComponent?.formValid),
+                ),
                 empty: this.exerciseGradingComponent?.formEmpty,
             },
         ];
