@@ -200,7 +200,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         if (participation.submissions?.length) {
             if (submissionId) {
-                this.submission = participation.submissions.find((sub) => sub.id === submissionId)!;
+                const foundSubmission = participation.submissions.find((sub) => sub.id === submissionId)!;
+                if (foundSubmission) {
+                    this.submission = foundSubmission;
+                } else {
+                    this.submission = participation.submissions.sort(this.submissionSortFunction).last() as TextSubmission;
+                }
             } else {
                 this.submission = participation.submissions.sort(this.submissionSortFunction).last() as TextSubmission;
             }
@@ -466,4 +471,5 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const bValue = dayjs(b.submissionDate!).valueOf();
         return aValue - bValue;
     };
+    protected readonly Result = Result;
 }

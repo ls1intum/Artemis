@@ -134,6 +134,9 @@
                                                 : ('artemisApp.textExercise.assessedSubmissionInstructor' | artemisTranslate)
                                         }}:
                                     </b>
+                                    @if (Result.isAthenaAIResult(result)) {
+                                        <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
+                                    }
                                     <hr />
                                     <jhi-text-result [result]="result" [course]="course" />
                                     <hr />
