@@ -368,7 +368,7 @@ public class ParticipationResource {
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        if (!(exercise instanceof TextExercise) && !(exercise instanceof ProgrammingExercise) && !(exercise instanceof ModelingExercise)) {
+        if (exercise instanceof QuizExercise) {
             throw new BadRequestAlertException("Unsupported exercise type", "participation", "unsupported type");
         }
 
@@ -376,7 +376,6 @@ public class ParticipationResource {
     }
 
     private ResponseEntity<StudentParticipation> handleExerciseFeedbackRequest(Exercise exercise, Principal principal) {
-
         // Validate exercise and timing
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");

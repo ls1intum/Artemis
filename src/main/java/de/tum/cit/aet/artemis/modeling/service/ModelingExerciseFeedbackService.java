@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -34,8 +33,6 @@ import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 public class ModelingExerciseFeedbackService {
 
     private static final Logger log = LoggerFactory.getLogger(ModelingExerciseFeedbackService.class);
-
-    public static final String NON_GRADED_FEEDBACK_SUGGESTION = "NonGradedFeedbackSuggestion:";
 
     private final Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService;
 
@@ -113,7 +110,7 @@ public class ModelingExerciseFeedbackService {
         automaticResult.setSubmission(submission);
         automaticResult.setParticipation(participation);
         try {
-            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
+            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
 
             log.debug("Submission id: {}", submission.getId());
 
@@ -142,10 +139,10 @@ public class ModelingExerciseFeedbackService {
             automaticResult = this.resultRepository.save(automaticResult);
             resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
             submissionService.saveNewResult(submission, automaticResult);
-            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
+            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
         }
         catch (Exception e) {
-            log.error("Could not generate feedback", e);
+            log.error("Could not generate feedback for exercise ID: {} and participation ID: {}", modelingExercise.getId(), participation.getId(), e);
             throw new InternalServerErrorException("Something went wrong... AI Feedback could not be generated");
         }
     }

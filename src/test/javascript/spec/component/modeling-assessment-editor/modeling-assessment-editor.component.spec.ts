@@ -207,7 +207,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             paramMapSubject.next(
                 convertToParamMap({
                     submissionId: 'new',
-                    // Include other necessary params here
                     courseId: '1',
                     exerciseId: '1',
                 }),
@@ -232,7 +231,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             tick(500);
 
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
-            expect(component.submission).toBeDefined();
+            expect(component.submission).toBe(mockSubmission);
             expect(component.assessmentsAreValid).toBeFalse();
         }));
     });
