@@ -1,3 +1,4 @@
+import { WritableSignal } from '@angular/core';
 import dayjs from 'dayjs/esm';
 
 export type OperationName =
@@ -8,9 +9,10 @@ export type OperationName =
     | 'deleteOldSubmissionVersions'
     | 'deleteOldFeedback';
 
-export interface CleanupOperation {
+export class CleanupOperation {
     name: OperationName;
     deleteFrom: dayjs.Dayjs;
     deleteTo: dayjs.Dayjs;
     lastExecuted: dayjs.Dayjs | undefined;
+    datesValid: WritableSignal<boolean>;
 }

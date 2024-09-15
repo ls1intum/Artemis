@@ -27,7 +27,9 @@
                                         [labelName]="'cleanupService.table.deleteFrom' | artemisTranslate"
                                         [hideLabelName]="true"
                                         [(ngModel)]="operation.deleteFrom"
+                                        (valueChange)="validateDates(operation)"
                                         [shouldDisplayTimeZoneWarning]="false"
+                                        [error]="!operation.datesValid()"
                                     />
                                 </div>
                             }
@@ -40,12 +42,14 @@
                                         [labelName]="'cleanupService.table.deleteTo' | artemisTranslate"
                                         [hideLabelName]="true"
                                         [(ngModel)]="operation.deleteTo"
+                                        (valueChange)="validateDates(operation)"
                                         [shouldDisplayTimeZoneWarning]="false"
+                                        [error]="!operation.datesValid()"
                                     />
-                                    @if (!areDatesValid(operation)) {
-                                        <span class="invalid-feedback" jhiTranslate="entity.startDateError"></span>
-                                    }
                                 </div>
+                                @if (!operation.datesValid()) {
+                                    <span class="invalid-feedback" jhiTranslate="entity.startDateError"></span>
+                                }
                             }
                         </td>
                         <td>
@@ -59,7 +63,7 @@
                             <button
                                 id="execute-operation"
                                 jhiDeleteButton
-                                [disabled]="!areDatesValid(operation)"
+                                [disabled]="!operation.datesValid()"
                                 [entityTitle]="'cleanupService.operation.' + operation.name | artemisTranslate"
                                 deleteQuestion="cleanupService.execute.question"
                                 deleteConfirmationText="cleanupService.execute.typeOperationNameToConfirm"
