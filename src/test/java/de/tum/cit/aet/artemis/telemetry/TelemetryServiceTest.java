@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.telemetry;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.mockito.Mockito.spy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 import java.net.URI;
 
@@ -29,20 +31,20 @@ import de.tum.cit.aet.artemis.core.service.TelemetryService;
 @ExtendWith(MockitoExtension.class)
 class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
-    @Value("${artemis.telemetry.destination}")
-    private String destination;
-
     @Autowired
     private RestTemplate restTemplate;
+
+    @Autowired
+    private TelemetryService telemetryService;
 
     private MockRestServiceServer mockServer;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    @Autowired
-    private TelemetryService telemetryService;
-
     private TelemetryService telemetryServiceSpy;
+
+    @Value("${artemis.telemetry.destination}")
+    private String destination;
 
     @BeforeEach
     void init() {
@@ -56,7 +58,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
         telemetryServiceSpy.sendTelemetry();
-        mockServer.verify();
+        await().atMost(1, SECONDS).untilAsserted(() -> mockServer.verify());
     }
 
     @Test
@@ -65,7 +67,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
         telemetryServiceSpy.useTelemetry = false;
         telemetryServiceSpy.sendTelemetry();
-        mockServer.verify();
+        await().atMost(1, SECONDS).untilAsserted(() -> mockServer.verify());
     }
 
     @Test
@@ -73,6 +75,6 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withServerError().body(mapper.writeValueAsString("Failure!")));
         telemetryServiceSpy.sendTelemetry();
-        mockServer.verify();
+        await().atMost(1, SECONDS).untilAsserted(() -> mockServer.verify());
     }
 }
