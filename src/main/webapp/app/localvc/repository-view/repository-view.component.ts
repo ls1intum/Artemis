@@ -86,7 +86,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
             const auxiliaryRepositoryId = Number(params['auxiliaryRepositoryId']);
-            console.log(auxiliaryRepositoryId);
             this.repositoryType = participationId ? 'USER' : params['repositoryType'];
             if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
