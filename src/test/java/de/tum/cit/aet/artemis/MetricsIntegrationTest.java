@@ -30,12 +30,16 @@ import de.tum.cit.aet.artemis.atlas.dto.metrics.LectureUnitInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.ResourceTimestampDTO;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.competency.CompetencyUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseInformationDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseMetricsRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.lecture.LectureUtilService;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
+import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 
 class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -48,10 +52,25 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private CompetencyRepository competencyRepository;
 
     @Autowired
+    private ExerciseTestRepository exerciseTestRepository;
+
+    @Autowired
     private LectureUnitRepository lectureUnitRepository;
 
     @Autowired
-    StudentScoreRepository studentScoreRepository;
+    private StudentScoreRepository studentScoreRepository;
+
+    @Autowired
+    protected StudentScoreUtilService studentScoreUtilService;
+
+    @Autowired
+    protected LectureUtilService lectureUtilService;
+
+    @Autowired
+    protected CompetencyUtilService competencyUtilService;
+
+    @Autowired
+    protected LectureUnitService lectureUnitService;
 
     private Course course;
 
@@ -119,7 +138,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             assertThat(result.exerciseMetrics()).isNotNull();
             final var categories = result.exerciseMetrics().categories();
 
-            final var expectedCategories = exerciseRepository.findAllWithCategoriesByCourseId(course.getId()).stream()
+            final var expectedCategories = exerciseTestRepository.findAllWithCategoriesByCourseId(course.getId()).stream()
                     .collect(Collectors.toMap(Exercise::getId, Exercise::getCategories));
 
             assertThat(categories).isEqualTo(expectedCategories);
@@ -128,7 +147,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnAverageScores() throws Exception {
-            final var exercises = exerciseRepository.findAllExercisesByCourseIdWithEagerParticipation(course.getId());
+            final var exercises = exerciseTestRepository.findAllExercisesByCourseIdWithEagerParticipation(course.getId());
             exercises.forEach(exercise -> studentScoreUtilService.createStudentScoreIsRated(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 5));
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();

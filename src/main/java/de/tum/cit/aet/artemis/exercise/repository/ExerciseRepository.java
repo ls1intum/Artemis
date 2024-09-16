@@ -322,9 +322,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             """)
     Set<String> findAllCategoryNames(@Param("courseId") Long courseId);
 
-    @EntityGraph(attributePaths = "categories")
-    List<Exercise> findAllWithCategoriesByCourseId(Long courseId);
-
     @Query("""
             SELECT DISTINCT e
             FROM Exercise e
@@ -332,14 +329,6 @@ public interface ExerciseRepository extends ArtemisJpaRepository<Exercise, Long>
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithEagerParticipations(@Param("exerciseId") Long exerciseId);
-
-    @EntityGraph(attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
-    @Query("""
-            SELECT e
-            FROM Exercise e
-            WHERE e.course.id = :courseId
-            """)
-    Set<Exercise> findAllExercisesByCourseIdWithEagerParticipation(@Param("courseId") Long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig" })
     Optional<Exercise> findWithEagerCategoriesAndTeamAssignmentConfigById(Long exerciseId);
