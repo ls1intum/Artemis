@@ -18,7 +18,6 @@ import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.StudentScoreUtilService;
 import de.tum.cit.aet.artemis.assessment.ComplaintUtilService;
 import de.tum.cit.aet.artemis.assessment.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -191,9 +190,6 @@ public class CourseUtilService {
 
     @Autowired
     private GradingScaleUtilService gradingScaleUtilService;
-
-    @Autowired
-    private StudentScoreUtilService studentScoreUtilService;
 
     /**
      * Creates and saves a course with null id.

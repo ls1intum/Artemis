@@ -21,6 +21,12 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CompetencyInformationDTO(long id, String title, String description, CompetencyTaxonomy taxonomy, ZonedDateTime softDueDate, boolean optional, int masteryThreshold) {
 
+    /**
+     * Creates a CompetencyInformationDTO from a Competency.
+     *
+     * @param competency the Competency to create the DTO from
+     * @return the created DTO
+     */
     public static <C extends Competency> CompetencyInformationDTO of(C competency) {
         return new CompetencyInformationDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getTaxonomy(), competency.getSoftDueDate(),
                 competency.isOptional(), competency.getMasteryThreshold());

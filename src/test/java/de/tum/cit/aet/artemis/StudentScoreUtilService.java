@@ -34,6 +34,13 @@ public class StudentScoreUtilService {
         studentScoreRepository.save(studentScore);
     }
 
+    /**
+     * Creates rated and normal score (which are set equal) for given exercise and user.
+     *
+     * @param exercise the exercise to link the student score to
+     * @param user     the user that is linked to the score
+     * @param score    the score and rated score that the specified user has reached for the given exercise
+     */
     public void createStudentScoreIsRated(Exercise exercise, User user, double score) {
         final var studentScore = new StudentScore();
         studentScore.setExercise(exercise);
