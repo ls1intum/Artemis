@@ -29,7 +29,7 @@ describe('DataCleanupService', () => {
             expect(res.body).toEqual(mockExecutionRecord);
         });
 
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/admin/delete-orphans' });
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/admin/cleanup/delete-orphans' });
         expect(req.request.method).toBe('POST');
         req.flush(mockExecutionRecord);
     });
@@ -44,7 +44,7 @@ describe('DataCleanupService', () => {
 
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `api/admin/delete-plagiarism-comparisons?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+            url: `api/admin/cleanup/delete-plagiarism-comparisons?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
         });
 
         expect(req.request.method).toBe('POST');
@@ -63,7 +63,7 @@ describe('DataCleanupService', () => {
 
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `api/admin/delete-non-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+            url: `api/admin/cleanup/delete-non-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
         });
 
         expect(req.request.method).toBe('POST');
@@ -82,7 +82,7 @@ describe('DataCleanupService', () => {
 
         const req = httpMock.expectOne({
             method: 'POST',
-            url: `api/admin/delete-old-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+            url: `api/admin/cleanup/delete-old-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
         });
 
         expect(req.request.method).toBe('POST');
@@ -98,7 +98,7 @@ describe('DataCleanupService', () => {
             expect(res.body).toEqual(mockExecutionRecords);
         });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/get-last-executions' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/get-last-executions' });
         expect(req.request.method).toBe('GET');
         req.flush(mockExecutionRecords);
     });

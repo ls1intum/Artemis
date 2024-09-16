@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.service.cleanup.DataCleanupService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("api/admin/cleanup/")
 public class AdminOldDataCleanupResource {
 
     private static final Logger log = LoggerFactory.getLogger(AdminOldDataCleanupResource.class);

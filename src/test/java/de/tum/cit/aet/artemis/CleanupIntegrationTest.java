@@ -217,7 +217,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         orphanRating.setResult(orphanResult);
         orphanRating = ratingRepository.save(orphanRating);
 
-        var responseBody = request.postWithResponseBody("/api/admin/delete-orphans", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
+        var responseBody = request.postWithResponseBody("/api/admin/cleanup/delete-orphans", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
                 new LinkedMultiValueMap<>());
 
         assertThat(responseBody.jobType()).isEqualTo("deleteOrphans");
@@ -316,7 +316,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
-        var responseBody = request.postWithResponseBody("/api/admin/delete-plagiarism-comparisons", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
+        var responseBody = request.postWithResponseBody("/api/admin/cleanup/delete-plagiarism-comparisons", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
                 params);
 
         assertThat(responseBody.jobType()).isEqualTo("deletePlagiarismComparisons");
@@ -400,7 +400,8 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
-        var responseBody = request.postWithResponseBody("/api/admin/delete-non-rated-results", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null, params);
+        var responseBody = request.postWithResponseBody("/api/admin/cleanup/delete-non-rated-results", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
+                params);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteNonRatedResults");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -492,7 +493,8 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("deleteFrom", DELETE_FROM.toString());
         params.add("deleteTo", DELETE_TO.toString());
-        var responseBody = request.postWithResponseBody("/api/admin/delete-old-rated-results", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null, params);
+        var responseBody = request.postWithResponseBody("/api/admin/cleanup/delete-old-rated-results", null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK, null, null,
+                params);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteRatedResults");
         assertThat(responseBody.executionDate()).isNotNull();
@@ -529,7 +531,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         jobExecution.setDeletionTimestamp(now);
         cleanupJobExecutionRepository.save(jobExecution);
 
-        var response = request.getList("/api/admin/get-last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
+        var response = request.getList("/api/admin/cleanup/get-last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
 
         List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::label).toList();
 
@@ -545,13 +547,13 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
     @Test
     @WithMockUser(roles = "USER")
     void testUnauthorizedAccess() throws Exception {
-        request.postWithoutResponseBody("/api/admin/delete-orphans", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
-        request.postWithoutResponseBody("/api/admin/delete-plagiarism-comparisons", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
-        request.postWithoutResponseBody("/api/admin/delete-non-rated-results", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
-        request.postWithoutResponseBody("/api/admin/delete-old-rated-results", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
-        request.postWithoutResponseBody("/api/admin/delete-old-submission-versions", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
-        request.postWithoutResponseBody("/api/admin/delete-old-feedback", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
-        request.get("/api/admin/get-last-executions", HttpStatus.FORBIDDEN, List.class);
+        request.postWithoutResponseBody("/api/admin/cleanup/delete-orphans", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/admin/cleanup/delete-plagiarism-comparisons", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/admin/cleanup/delete-non-rated-results", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/admin/cleanup/delete-old-rated-results", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/admin/cleanup/delete-old-submission-versions", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/admin/cleanup/delete-old-feedback", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.get("/api/admin/cleanup/get-last-executions", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test

@@ -11,7 +11,7 @@ export interface CleanupServiceExecutionRecordDTO {
 
 @Injectable({ providedIn: 'root' })
 export class DataCleanupService {
-    private readonly adminResourceUrl = 'api/admin';
+    private readonly adminResourceUrl = 'api/admin/cleanup';
 
     constructor(private http: HttpClient) {}
 
