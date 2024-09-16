@@ -66,7 +66,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                     this.programmingExercise().shortName = shortnameWithRandomness;
                 }
 
-                this.updateShortNameSignal();
+                this.updateIsShortNameValid();
             }.bind(this),
             { allowSignalWrites: true },
         );
@@ -97,7 +97,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         });
 
         this.shortNameField()?.valueChanges?.subscribe(() => {
-            this.updateShortNameSignal();
+            this.updateIsShortNameValid();
         });
     }
 
@@ -171,7 +171,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         );
     }
 
-    private updateShortNameSignal() {
+    private updateIsShortNameValid() {
         this.isShortNameFieldValid.set(this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID');
     }
 
