@@ -8,9 +8,7 @@
 
 .border {
     padding: 5px;
-    border-left: var(--border-color) 1px solid;
-    border-right: var(--border-color) 1px solid;
-    border-bottom: var(--border-color) 1px solid;
+    border: var(--border-color) 1px solid;
     border-radius: 10px;
 }
 
