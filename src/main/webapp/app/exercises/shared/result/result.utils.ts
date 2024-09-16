@@ -327,11 +327,8 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
  * @param result the result. It must include a participation and exercise.
  */
 export const resultIsPreliminary = (result: Result) => {
-    if (
-        result.participation &&
-        result.participation.exercise &&
-        (result.participation.exercise.type === ExerciseType.TEXT || result.participation.exercise.type === ExerciseType.MODELING)
-    ) {
+    const exerciseType = result.participation?.exercise?.type;
+    if (exerciseType === ExerciseType.TEXT || exerciseType === ExerciseType.MODELING) {
         return result.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
     } else
         return (
