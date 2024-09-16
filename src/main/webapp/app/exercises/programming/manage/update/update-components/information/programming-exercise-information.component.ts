@@ -63,7 +63,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 let newShortName = this.exerciseTitle();
                 if (this.isImport()) {
                     newShortName = this.programmingExercise().shortName;
-                } else if (newShortName && newShortName.length > 3) {
+                }
+                if (newShortName && newShortName.length > 3) {
                     const sanitizedShortName = removeSpecialCharacters(newShortName ?? '').substring(0, 6);
                     // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
                     const shortnameWithRandomness = sanitizedShortName + this.shortNameRandomPart();
