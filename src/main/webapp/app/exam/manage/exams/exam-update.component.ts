@@ -24,6 +24,10 @@ import { examWorkingTime, normalWorkingTime } from 'app/exam/participate/exam.ut
     templateUrl: './exam-update.component.html',
 })
 export class ExamUpdateComponent implements OnInit, OnDestroy {
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
+
     exam: Exam;
     course: Course;
     isSaving: boolean;
@@ -41,11 +45,6 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
 
     readonly documentationType: DocumentationType = 'Exams';
-
-    // Icons
-    faSave = faSave;
-    faBan = faBan;
-    faExclamationTriangle = faExclamationTriangle;
 
     constructor(
         private route: ActivatedRoute,
@@ -471,6 +470,7 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
             dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
         );
     }
+
     /**
      * Default exam start text, which can be edited by instructors in the text editor
      */
