@@ -94,7 +94,6 @@ describe('ExamUpdateComponent', () => {
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
                     MockDirective(FeatureToggleDirective),
-                    // MockComponent(TitleChannelNameComponent),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -609,7 +608,15 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
+                imports: [
+                    RouterTestingModule.withRoutes(routes),
+                    MockModule(NgbModule),
+                    TranslateModule.forRoot(),
+                    FormsModule,
+                    HttpClientModule,
+                    ArtemisExamModePickerModule,
+                    TitleChannelNameComponent,
+                ],
                 declarations: [
                     ExamUpdateComponent,
                     ExamExerciseImportComponent,
@@ -626,7 +633,6 @@ describe('ExamUpdateComponent', () => {
                     MockComponent(DifficultyBadgeComponent),
                     MockComponent(DocumentationButtonComponent),
                     MockDirective(FeatureToggleDirective),
-                    MockComponent(TitleChannelNameComponent),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
