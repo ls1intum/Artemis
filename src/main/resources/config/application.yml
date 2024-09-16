@@ -90,7 +90,7 @@ artemis:
                 rust:
                     default: "ghcr.io/ls1intum/artemis-rust-docker:v0.9.70"
                 r:
-                    default: "local/artemis-r-docker"
+                    default: "ghcr.io/ls1intum/artemis-r-docker:v1.0.0"
 
 management:
     endpoints:
