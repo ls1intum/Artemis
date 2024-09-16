@@ -27,7 +27,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
 
-    @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
+    exerciseTitleChannelComponent = viewChild<ExerciseTitleChannelNameComponent>('titleChannelNameComponent');
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
 
     shortNameField = viewChild<NgModel>('shortName');
@@ -66,12 +66,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                     this.programmingExercise().shortName = shortnameWithRandomness;
                 }
 
-                this.isShortNameFieldValid.set(this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID');
+                this.updateShortNameSignal();
             }.bind(this),
+            { allowSignalWrites: true },
         );
 
         effect(() => {
-            if (this.shortNameField() !== undefined) {
+            if (this.shortNameField() || this.exerciseTitleChannelComponent()) {
             } // triggers effect
             this.registerInputFields();
         });
@@ -80,7 +81,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     registerInputFields() {
         this.inputFieldSubscriptions.forEach((subscription) => subscription?.unsubscribe());
 
-        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent?.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.shortNameField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
@@ -96,7 +97,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         });
 
         this.shortNameField()?.valueChanges?.subscribe(() => {
-            this.isShortNameFieldValid.set(this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID');
+            this.updateShortNameSignal();
         });
     }
 
@@ -126,7 +127,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const isUpdateTemplateFilesValid = this.isUpdateTemplateFilesValid();
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         this.formValid = Boolean(
-            this.exerciseTitleChannelComponent?.titleChannelNameComponent?.formValidSignal() &&
+            this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidSignal() &&
                 this.isShortNameFieldValid() &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
@@ -168,6 +169,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 !this.programmingExercise().programmingLanguage ||
                 !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
         );
+    }
+
+    private updateShortNameSignal() {
+        this.isShortNameFieldValid.set(this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID');
     }
 
     private generateRandomShortNameLetters(): string {
