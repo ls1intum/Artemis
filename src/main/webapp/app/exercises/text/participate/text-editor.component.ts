@@ -434,7 +434,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
     assureConditionsSatisfied(): boolean {
-        const afterDueDate = !this.textExercise.dueDate || dayjs().isSameOrAfter(this.textExercise.dueDate);
+        const afterDueDate = !!this.textExercise.dueDate && dayjs().isSameOrAfter(this.textExercise.dueDate);
         const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
         if (afterDueDate) {
             this.alertService.warning(dueDateWarning);
