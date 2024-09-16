@@ -88,6 +88,6 @@ export class FeedbackAnalysisComponent {
 
     openFeedbackModal(feedbackDetail: FeedbackDetail): void {
         const modalRef = this.modalService.open(FeedbackModalComponent, { centered: true });
-        modalRef.componentInstance.feedbackDetail = signal(feedbackDetail); // Pass the signal
+        modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
     }
 }
