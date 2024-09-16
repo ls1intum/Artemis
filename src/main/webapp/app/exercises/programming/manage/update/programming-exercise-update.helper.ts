@@ -9,6 +9,7 @@ export type ProgrammingExerciseInputField =
     | 'difficulty'
     | 'participationMode'
     | 'allowOfflineIde'
+    | 'allowOnlineCodeEditor'
     | 'allowOnlineIde'
 
     // language section
@@ -44,127 +45,49 @@ export type ProgrammingExerciseInputField =
     | 'presentationScore'
     | 'plagiarismControl';
 
-export type EditMode = 'SIMPLE' | 'ADVANCED';
-
-export type InputFieldOptions = { editModesToBeDisplayed: EditMode[] };
-
-export type InputFieldEditModeMapping = Record<ProgrammingExerciseInputField, InputFieldOptions>;
+export type InputFieldEditModeMapping = Record<ProgrammingExerciseInputField, boolean>;
 
 export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
     // General section
-    title: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    channelName: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    shortName: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    categories: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-
+    title: true,
+    channelName: false,
+    shortName: false,
+    categories: true,
     // Mode section
-    difficulty: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    participationMode: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    allowOfflineIde: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    allowOnlineIde: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-
+    difficulty: true,
+    participationMode: false,
+    allowOfflineIde: false,
+    allowOnlineCodeEditor: false,
+    allowOnlineIde: false,
+    // TODO THEIA
     // Language section
-    programmingLanguage: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    projectType: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    withExemplaryDependency: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    packageName: {
-        // if this field was removed from a mode, a reasonable default value would need to be set
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    enableStaticCodeAnalysis: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    sequentialTestRuns: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    customizeBuildScript: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-
+    programmingLanguage: true,
+    projectType: false,
+    withExemplaryDependency: false,
+    packageName: true,
+    enableStaticCodeAnalysis: false,
+    sequentialTestRuns: false,
+    customizeBuildScript: false,
     // Problem section
-    problemStatement: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    linkedCompetencies: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-
+    problemStatement: true,
+    linkedCompetencies: false,
     // Grading section
-    includeExerciseInCourseScoreCalculation: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    points: {
-        // if this field was removed from a mode, a reasonable default value would need to be set
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    bonusPoints: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    submissionPolicy: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    timeline: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    releaseDate: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    startDate: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    dueDate: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    runTestsAfterDueDate: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    assessmentDueDate: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    exampleSolutionPublicationDate: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    complaintOnAutomaticAssessment: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    manualFeedbackRequests: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    showTestNamesToStudents: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    includeTestsIntoExampleSolution: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    assessmentInstructions: {
-        editModesToBeDisplayed: ['SIMPLE', 'ADVANCED'],
-    },
-    presentationScore: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
-    plagiarismControl: {
-        editModesToBeDisplayed: ['ADVANCED'],
-    },
+    includeExerciseInCourseScoreCalculation: true,
+    points: true,
+    bonusPoints: true,
+    submissionPolicy: false,
+    timeline: true,
+    releaseDate: true,
+    startDate: false,
+    dueDate: true,
+    runTestsAfterDueDate: false,
+    assessmentDueDate: true,
+    exampleSolutionPublicationDate: false,
+    complaintOnAutomaticAssessment: false,
+    manualFeedbackRequests: false,
+    showTestNamesToStudents: false,
+    includeTestsIntoExampleSolution: false,
+    assessmentInstructions: true,
+    presentationScore: false,
+    plagiarismControl: false,
 };
