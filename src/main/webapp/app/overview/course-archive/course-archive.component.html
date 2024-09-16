@@ -1,25 +1,30 @@
-<div class="module-bg p-3 rounded-3 mb-3">
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex justify-content-start gap-1">
-            <h3 class="fw-medium mb-0" jhiTranslate="artemisApp.course.archive.title"></h3>
-            <fa-icon [icon]="faQuestionCircle" [size]="iconSize" class="text-secondary align-self-center" ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}" />
-        </div>
-        <div class="d-flex justfiy-content-between gap-3 align-items-center ms-1">
-            <div class="text-primary d-inline-flex">
-                <a (click)="onSort()" class="d-inline-flex align-items-center">
-                    @if (isSortAscending) {
-                        <fa-icon [icon]="faArrowDownAZ" />
-                    } @else {
-                        <fa-icon [icon]="faArrowUpAZ" />
-                    }
-                    <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
-                </a>
+@if (courses && courses.length) {
+    <div class="module-bg p-3 rounded-3 mb-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-start gap-1">
+                <h3 class="fw-medium mb-0" jhiTranslate="artemisApp.course.archive.title"></h3>
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    [size]="iconSize"
+                    class="text-secondary align-self-center"
+                    ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}"
+                />
             </div>
-            <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="my-0" />
+            <div class="d-flex justfiy-content-between gap-3 align-items-center ms-1">
+                <div class="text-primary d-inline-flex">
+                    <a (click)="onSort()" class="d-inline-flex align-items-center">
+                        @if (isSortAscending) {
+                            <fa-icon [icon]="faArrowDownAZ" />
+                        } @else {
+                            <fa-icon [icon]="faArrowUpAZ" />
+                        }
+                        <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
+                    </a>
+                </div>
+                <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="my-0" />
+            </div>
         </div>
     </div>
-</div>
-@if (courses) {
     <div class="module-bg py-3 rounded-3">
         <div class="table mb-0">
             @for (semester of semesters; track semester; let last = $last) {
@@ -43,5 +48,9 @@
                 }
             }
         </div>
+    </div>
+} @else {
+    <div class="d-flex justify-content-center">
+        <h4 class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.noCoursesPreviousSemester"></h4>
     </div>
 }
