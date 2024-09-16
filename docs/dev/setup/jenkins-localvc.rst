@@ -54,7 +54,7 @@ below into your ``application-artemis.yml`` or ``application-local.yml`` file (t
         login:
             account-name: TUM
     version-control:
-        url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
+        url: http://localhost:8080
         user: root
         password: dummy # has to be set, but does not matter for LocalVC
         build-agent-git-username: jenkins
@@ -160,7 +160,7 @@ In a production setup, you have to at least change the user credentials (in the 
                     username: artemis_admin
                     password: artemis_admin
             version-control:
-                url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
+                url: http://localhost:8080
                 user: root
                 password: dummy # have to be set, but does not matter for LocalVC
                 build-agent-git-username: jenkins
