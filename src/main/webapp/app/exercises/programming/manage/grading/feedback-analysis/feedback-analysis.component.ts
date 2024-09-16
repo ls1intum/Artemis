@@ -20,7 +20,7 @@ export class FeedbackAnalysisComponent {
     exerciseId: InputSignal<number> = input.required<number>();
 
     readonly page = signal<number>(1);
-    readonly pageSize = signal<number>(15);
+    readonly pageSize = signal<number>(20);
     searchTerm = signal<string>('');
     readonly sortingOrder = signal<SortingOrder>(SortingOrder.DESCENDING);
     readonly sortedColumn = signal<string>('count');
@@ -88,6 +88,6 @@ export class FeedbackAnalysisComponent {
 
     openFeedbackModal(feedbackDetail: FeedbackDetail): void {
         const modalRef = this.modalService.open(FeedbackModalComponent, { centered: true });
-        modalRef.componentInstance.feedbackDetail = feedbackDetail;
+        modalRef.componentInstance.feedbackDetail = signal(feedbackDetail); // Pass the signal
     }
 }

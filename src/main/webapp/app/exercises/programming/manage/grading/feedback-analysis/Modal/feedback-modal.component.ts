@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, InputSignal, inject, input } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
@@ -11,7 +11,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     standalone: true,
 })
 export class FeedbackModalComponent {
-    @Input() feedbackDetail!: FeedbackDetail;
+    feedbackDetail: InputSignal<FeedbackDetail> = input.required<FeedbackDetail>();
 
     activeModal: NgbActiveModal = inject(NgbActiveModal);
 }
