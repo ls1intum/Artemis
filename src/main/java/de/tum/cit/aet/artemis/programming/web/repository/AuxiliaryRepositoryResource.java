@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService.getDefaultBranchOfRepository;
 
 import java.security.Principal;
 import java.util.List;
@@ -47,7 +48,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
+import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
@@ -61,16 +62,12 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
-    private final LocalVCService localVcService;
-
     public AuxiliaryRepositoryResource(ProfileService profileService, UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             RepositoryService repositoryService, Optional<VersionControlService> versionControlService, ProgrammingExerciseRepository programmingExerciseRepository,
-            RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            LocalVCService localVcService) {
+            RepositoryAccessService repositoryAccessService, Optional<LocalVCServletService> localVCServletService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         super(profileService, userRepository, authCheckService, gitService, repositoryService, versionControlService, programmingExerciseRepository, repositoryAccessService,
                 localVCServletService);
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
-        this.localVcService = localVcService;
     }
 
     @Override
@@ -103,7 +100,8 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     @Override
     String getOrRetrieveBranchOfDomainObject(Long auxiliaryRepositoryId) {
         AuxiliaryRepository auxiliaryRep = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        return localVcService.getDefaultBranchOfRepository(auxiliaryRep.getVcsRepositoryUri());
+        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(auxiliaryRep.getRepositoryUri());
+        return getDefaultBranchOfRepository(localVCRepositoryUri);
     }
 
     @Override
