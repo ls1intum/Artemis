@@ -81,6 +81,7 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseFeedbackService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -368,7 +369,7 @@ public class ParticipationResource {
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-        if (exercise instanceof QuizExercise) {
+        if (exercise instanceof QuizExercise || exercise instanceof FileUploadExercise) {
             throw new BadRequestAlertException("Unsupported exercise type", "participation", "unsupported type");
         }
 
