@@ -73,7 +73,15 @@ describe('ExamUpdateComponent', () => {
     describe('create and edit exams', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
+                imports: [
+                    RouterTestingModule.withRoutes(routes),
+                    MockModule(NgbModule),
+                    TranslateModule.forRoot(),
+                    FormsModule,
+                    HttpClientModule,
+                    ArtemisExamModePickerModule,
+                    TitleChannelNameComponent,
+                ],
                 declarations: [
                     ExamUpdateComponent,
                     MockComponent(FormDateTimePickerComponent),
@@ -86,7 +94,7 @@ describe('ExamUpdateComponent', () => {
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
                     MockDirective(FeatureToggleDirective),
-                    MockComponent(TitleChannelNameComponent),
+                    // MockComponent(TitleChannelNameComponent),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
