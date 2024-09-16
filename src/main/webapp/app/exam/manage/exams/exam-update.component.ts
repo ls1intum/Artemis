@@ -27,24 +27,24 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
     protected readonly faSave = faSave;
     protected readonly faBan = faBan;
     protected readonly faExclamationTriangle = faExclamationTriangle;
+    protected readonly documentationType: DocumentationType = 'Exams';
 
     exam: Exam;
     course: Course;
     isSaving: boolean;
     isImport = false;
     isImportInSameCourse = false;
-    hideChannelNameInput = false;
 
+    hideChannelNameInput = false;
     private originalStartDate?: dayjs.Dayjs;
+
     private originalEndDate?: dayjs.Dayjs;
 
     private componentActive = true;
-
     // Link to the component enabling the selection of exercise groups and exercises for import
     @ViewChild(ExamExerciseImportComponent) examExerciseImportComponent: ExamExerciseImportComponent;
-    @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
 
-    readonly documentationType: DocumentationType = 'Exams';
+    @ViewChild('workingTimeConfirmationContent') public workingTimeConfirmationContent: TemplateRef<any>;
 
     constructor(
         private route: ActivatedRoute,
