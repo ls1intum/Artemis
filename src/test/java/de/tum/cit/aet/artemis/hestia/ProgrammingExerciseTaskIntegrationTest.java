@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -139,7 +140,7 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationIn
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
-        Set<ProgrammingExerciseTask> extractedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId());
+        List<ProgrammingExerciseTask> extractedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(programmingExercise.getId());
         Optional<ProgrammingExerciseTask> task1Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName1)).findFirst();
         Optional<ProgrammingExerciseTask> task2Optional = extractedTasks.stream().filter(task -> task.getTaskName().equals(taskName2)).findFirst();
         assertThat(task1Optional).isPresent();

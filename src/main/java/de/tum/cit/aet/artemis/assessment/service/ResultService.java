@@ -14,7 +14,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -555,7 +554,7 @@ public class ResultService {
      */
     public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, SearchTermPageableSearchDTO<String> search) {
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
 
         List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId);
         String searchTerm = search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "";
@@ -585,9 +584,9 @@ public class ResultService {
         return search.getSortingOrder() == SortingOrder.ASCENDING ? comparator : comparator.reversed();
     }
 
-    private int determineTaskNumberOfTestCase(String testCaseName, Set<ProgrammingExerciseTask> tasks) {
-        return IntStream.range(0, tasks.size()).filter(i -> tasks.stream().toList().get(i).getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(testCaseName)))
-                .findFirst().orElse(-1) + 1;
+    private int determineTaskNumberOfTestCase(String testCaseName, List<ProgrammingExerciseTask> tasks) {
+        return tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(testCaseName))).findFirst()
+                .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
     }
 
     private FeedbackAnalysisResponseDTO paginateFeedbackDetails(List<FeedbackDetailDTO> feedbackDetails, int page, int pageSize) {

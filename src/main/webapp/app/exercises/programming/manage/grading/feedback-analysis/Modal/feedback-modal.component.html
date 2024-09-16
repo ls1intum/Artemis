@@ -1,6 +1,8 @@
 <div class="modal-header">
-    <h4 jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.header"></h4>
+    <h4 class="m-0" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.header"></h4>
+    <button type="button" class="btn-close" aria-label="Close" (click)="activeModal.close()"></button>
 </div>
+<hr class="my-0" />
 <div class="modal-body">
     <div class="d-flex justify-content-between mb-3">
         <div class="border">
@@ -23,12 +25,4 @@
 
     <h5 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.feedbackTitle"></h5>
     <p>{{ feedbackDetail().detailText }}</p>
-</div>
-<div class="modal-footer">
-    <button
-        type="button"
-        class="btn btn-outline-primary"
-        jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.feedbackModal.ok"
-        (click)="activeModal.close()"
-    ></button>
 </div>

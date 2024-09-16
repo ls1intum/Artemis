@@ -8,18 +8,19 @@
 </ng-template>
 
 <div class="m-3">
-    <h2 class="mb-3" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h2>
+    <div class="row m-0 justify-content-between align-items-center">
+        <h3 class="m-0 col p-0" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
 
-    <div class="d-flex align-items-center mb-3 position-relative">
-        <input
-            type="search"
-            class="form-control"
-            [placeholder]="'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.search' | artemisTranslate"
-            aria-label="Search feedback"
-            [(ngModel)]="searchTerm"
-            (ngModelChange)="search()"
-        />
-        <fa-icon [icon]="faMagnifyingGlass" class="search-icon"></fa-icon>
+        <div class="col-md-auto d-flex align-items-center position-relative">
+            <input
+                type="search"
+                class="form-control"
+                [placeholder]="'artemisApp.programmingExercise.configureGrading.feedbackAnalysis.search' | artemisTranslate"
+                aria-label="Search feedback"
+                [ngModel]="searchTerm()"
+                (ngModelChange)="search($event)"
+            />
+        </div>
     </div>
 
     <table class="table table-striped mb-3">
@@ -56,7 +57,7 @@
                     <td>{{ item.testCaseName }}</td>
                     <td>Student Error</td>
                     <td class="text-center">
-                        <fa-icon [icon]="faMagnifyingGlassPlus" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
+                        <fa-icon [icon]="faUpRightAndDownLeftFromCenter" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
                     </td>
                 </tr>
             }

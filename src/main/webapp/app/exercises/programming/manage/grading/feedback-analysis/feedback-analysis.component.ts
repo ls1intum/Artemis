@@ -2,7 +2,7 @@ import { Component, InputSignal, computed, effect, inject, input, signal } from 
 import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faMagnifyingGlass, faMagnifyingGlassPlus, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faSortDown, faSortUp, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
@@ -21,7 +21,7 @@ export class FeedbackAnalysisComponent {
 
     readonly page = signal<number>(1);
     readonly pageSize = signal<number>(20);
-    searchTerm = signal<string>('');
+    readonly searchTerm = signal<string>('');
     readonly sortingOrder = signal<SortingOrder>(SortingOrder.DESCENDING);
     readonly sortedColumn = signal<string>('count');
 
@@ -36,8 +36,7 @@ export class FeedbackAnalysisComponent {
     readonly faSort = faSort;
     readonly faSortUp = faSortUp;
     readonly faSortDown = faSortDown;
-    readonly faMagnifyingGlass = faMagnifyingGlass;
-    readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
+    readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
     readonly sortIcon = computed(() => (this.sortingOrder() === SortingOrder.ASCENDING ? this.faSortUp : this.faSortDown));
@@ -81,9 +80,10 @@ export class FeedbackAnalysisComponent {
         this.loadData();
     }
 
-    search(): void {
+    async search(searchTerm: string): Promise<void> {
         this.page.set(1);
-        this.loadData();
+        this.searchTerm.set(searchTerm);
+        await this.loadData();
     }
 
     openFeedbackModal(feedbackDetail: FeedbackDetail): void {
