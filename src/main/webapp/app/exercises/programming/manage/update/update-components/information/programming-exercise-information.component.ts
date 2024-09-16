@@ -37,6 +37,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
 
     isShortNameFieldValid = signal<boolean>(false);
+    isShortNameFromAdvancedMode = signal<boolean>(false);
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
@@ -51,8 +52,14 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             function generateShortNameWhenInSimpleMode() {
                 const shouldNotGenerateShortName = !this.isSimpleMode() || this.programmingExerciseCreationConfig.isEdit;
                 if (shouldNotGenerateShortName) {
+                    this.isShortNameFromAdvancedMode.set(true);
                     return;
                 }
+                if (this.isShortNameFromAdvancedMode()) {
+                    this.isShortNameFieldValid.set(false);
+                    return;
+                }
+
                 let newShortName = this.exerciseTitle();
                 const isImport = this.programmingExerciseCreationConfig.isImportFromFile || this.programmingExerciseCreationConfig.isImportFromExistingExercise;
                 if (isImport) {
@@ -128,7 +135,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         this.formValid = Boolean(
             this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidSignal() &&
-                this.isShortNameFieldValid() &&
+                this.getIsShortNameFieldValid() &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
                 isUpdateTemplateFilesValid &&
@@ -172,7 +179,11 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     private updateIsShortNameValid() {
-        this.isShortNameFieldValid.set(this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID');
+        this.isShortNameFieldValid.set(this.getIsShortNameFieldValid());
+    }
+
+    private getIsShortNameFieldValid() {
+        return this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID';
     }
 
     private generateRandomShortNameLetters(): string {
