@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -15,6 +15,7 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { QueryList } from '@angular/core';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -34,6 +35,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 MockComponent(AddAuxiliaryRepositoryButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveKeysPipe),
+                MockModule(ArtemisProgrammingExerciseUpdateModule),
             ],
             providers: [
                 {
@@ -89,5 +91,27 @@ describe('ProgrammingExerciseInformationComponent', () => {
         (comp.updateTemplateFilesField.valueChanges as Subject<boolean>).next(false);
         (editableField.editingInput.valueChanges as Subject<boolean>).next(false);
         expect(calculateFormValidSpy).toHaveBeenCalledTimes(4);
+    });
+
+    describe('shortName generation effect', () => {
+        it('should use name from import', () => {
+            comp.programmingExercise().shortName = 'l01e01';
+            fixture.componentRef.setInput('isSimpleMode', true);
+            fixture.componentRef.setInput('isImport', true);
+
+            comp.programmingExercise().title = 'Test Exercise';
+            fixture.detectChanges();
+
+            expect(comp.programmingExercise().shortName).toBe('l01e01');
+        });
+
+        it('should derive name from title', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+
+            comp.programmingExercise().title = 'Test Exercise';
+            fixture.detectChanges();
+
+            expect(comp.programmingExercise().shortName).toMatch(/^TestEx\w{3}$/);
+        });
     });
 });
