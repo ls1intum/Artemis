@@ -75,10 +75,10 @@
                                 <a [routerLink]="[faq.id, 'edit']">{{ faq.id }}</a>
                             </td>
                             <td>
-                                <a [routerLink]="[faq.id, 'edit']">{{ faq.questionTitle }}</a>
+                                <p class="markdown-preview" [innerHTML]="faq.questionTitle | htmlForMarkdown"></p>
                             </td>
                             <td>
-                                <a [routerLink]="[faq.id, 'edit']">{{ faq.questionAnswer }}</a>
+                                <p class="markdown-preview" [innerHTML]="faq.questionAnswer | htmlForMarkdown"></p>
                             </td>
                             <td>
                                 @for (category of faq.categories; track category) {
