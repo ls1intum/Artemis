@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -163,6 +165,19 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") long exerciseId,
             @Param("username") String username, @Param("testRun") boolean testRun);
+
+    @Query("""
+            SELECT participation.repositoryUri
+            FROM ProgrammingExerciseStudentParticipation participation
+                JOIN TREAT (participation.exercise AS ProgrammingExercise) pe
+            WHERE participation.repositoryUri IS NOT NULL
+                AND (
+                    (pe.dueDate IS NOT NULL AND :latestDate <= pe.dueDate AND pe.dueDate <= :earliestDate)
+                    OR (pe.exerciseGroup IS NOT NULL AND :latestDate <= pe.exerciseGroup.exam.endDate AND pe.exerciseGroup.exam.endDate <= :earliestDate)
+                )
+            """)
+    Page<String> findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
+            Pageable pageable);
 
     @Query("""
             SELECT participation

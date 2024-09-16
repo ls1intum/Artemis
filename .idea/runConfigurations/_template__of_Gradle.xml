@@ -5,6 +5,7 @@
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
       <option name="externalSystemIdString" value="GRADLE" />
       <option name="scriptParameters" value="-x webapp" />
+      <option name="scriptParameters" value="-x nodeSetup -x npmSetup -x npmInstall -x webapp" />
       <option name="taskDescriptions">
         <list />
       </option>

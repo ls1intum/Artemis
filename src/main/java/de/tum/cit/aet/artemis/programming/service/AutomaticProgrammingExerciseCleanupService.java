@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 import static java.time.ZonedDateTime.now;
 
+import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -16,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +28,7 @@ import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 
@@ -43,6 +47,8 @@ public class AutomaticProgrammingExerciseCleanupService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final GitService gitService;
+
+    private static final int STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE = 500;
 
     @Value("${artemis.external-system-request.batch-size}")
     private int externalSystemRequestBatchSize;
@@ -96,35 +102,55 @@ public class AutomaticProgrammingExerciseCleanupService {
         SecurityUtils.setAuthorizationObject();
         log.info("Cleanup git repositories on Artemis server");
         // we are specifically interested in exercises older than 8 weeks
-        var endDate2 = ZonedDateTime.now().minusWeeks(8).truncatedTo(ChronoUnit.DAYS);
+        var earliestDate = ZonedDateTime.now().minusWeeks(8).truncatedTo(ChronoUnit.DAYS);
         // NOTE: for now we would like to cover more cases to also cleanup older repositories
-        var endDate1 = endDate2.minusYears(1).truncatedTo(ChronoUnit.DAYS);
+        var latestDate = earliestDate.minusYears(1).truncatedTo(ChronoUnit.DAYS);
 
-        // Cleanup all student repos in the REPOS folder (based on the student participations) 8 weeks after the exercise due date
-        log.info("Search for exercises with due date from {} until {}", endDate1, endDate2);
-        var programmingExercises = programmingExerciseRepository.findAllWithStudentParticipationByRecentDueDate(endDate1, endDate2);
-        programmingExercises.addAll(programmingExerciseRepository.findAllWithStudentParticipationByRecentExamEndDate(endDate1, endDate2));
-        log.info("Found {} programming exercises {} to clean {} local student repositories", programmingExercises.size(),
-                programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")),
-                programmingExercises.stream().mapToLong(programmingExercise -> programmingExercise.getStudentParticipations().size()).sum());
-        for (var programmingExercise : programmingExercises) {
-            for (var studentParticipation : programmingExercise.getStudentParticipations()) {
-                var programmingExerciseParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-                gitService.deleteLocalRepository(programmingExerciseParticipation.getVcsRepositoryUri());
-            }
-        }
+        // Cleanup all student repos in the REPOS folder (based on the student participations) 8 weeks after the exercise due date or exam end date
+        cleanStudentParticipationsRepositories(earliestDate, latestDate);
 
         // Cleanup template, tests and solution repos in the REPOS folder 8 weeks after the course or exam is over
-        log.info("Search for exercises with course or exam date from {} until {}", endDate1, endDate2);
-        programmingExercises = programmingExerciseRepository.findAllByRecentCourseEndDate(endDate1, endDate2);
-        programmingExercises.addAll(programmingExerciseRepository.findAllByRecentExamEndDate(endDate1, endDate2));
+        log.info("Search for exercises with course or exam date from {} until {}", latestDate, earliestDate);
+        var programmingExercises = programmingExerciseRepository.findAllByRecentCourseEndDate(latestDate, earliestDate);
+        programmingExercises.addAll(programmingExerciseRepository.findAllByRecentExamEndDate(latestDate, earliestDate));
         log.info("Found {} programming exercise to clean local template, test and solution: {}", programmingExercises.size(),
                 programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
-        for (var programmingExercise : programmingExercises) {
-            gitService.deleteLocalRepository(programmingExercise.getVcsTemplateRepositoryUri());
-            gitService.deleteLocalRepository(programmingExercise.getVcsSolutionRepositoryUri());
-            gitService.deleteLocalRepository(programmingExercise.getVcsTestRepositoryUri());
-            gitService.deleteLocalProgrammingExerciseReposFolder(programmingExercise);
+        if (!programmingExercises.isEmpty()) {
+            for (var programmingExercise : programmingExercises) {
+                gitService.deleteLocalRepository(programmingExercise.getVcsTemplateRepositoryUri());
+                gitService.deleteLocalRepository(programmingExercise.getVcsSolutionRepositoryUri());
+                gitService.deleteLocalRepository(programmingExercise.getVcsTestRepositoryUri());
+                gitService.deleteLocalProgrammingExerciseReposFolder(programmingExercise);
+            }
+            log.info("Finished cleaning local template, test and solution repositories");
+        }
+    }
+
+    private void cleanStudentParticipationsRepositories(ZonedDateTime earliestDate, ZonedDateTime latestDate) {
+        log.info("Search for exercises with due date from {} until {}", latestDate, earliestDate);
+        // Get all relevant participation ids
+        Pageable pageable = Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
+        Page<String> uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
+                pageable);
+        log.info("Found {} student participations to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
+        if (uriBatch.getTotalElements() > 0) {
+            do {
+                uriBatch.forEach(this::deleteLocalRepositoryByUriString);
+                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
+                        uriBatch.nextPageable());
+            }
+            while (uriBatch.hasNext());
+            log.info("Finished cleaning local student repositories");
+        }
+    }
+
+    private void deleteLocalRepositoryByUriString(String uri) {
+        try {
+            VcsRepositoryUri vcsRepositoryUrl = new VcsRepositoryUri(uri);
+            gitService.deleteLocalRepository(vcsRepositoryUrl);
+        }
+        catch (URISyntaxException e) {
+            log.error("Cannot create URI for repositoryUri: {} due to the following error: {}", uri, e.getMessage());
         }
     }
 

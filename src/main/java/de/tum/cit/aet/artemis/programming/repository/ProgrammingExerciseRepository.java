@@ -229,26 +229,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @Query("""
             SELECT DISTINCT pe
             FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.studentParticipations
-            WHERE pe.dueDate IS NOT NULL
-                AND :endDate1 <= pe.dueDate
-                AND pe.dueDate <= :endDate2
-            """)
-    List<ProgrammingExercise> findAllWithStudentParticipationByRecentDueDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
-
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.studentParticipations
-            WHERE pe.exerciseGroup IS NOT NULL
-                AND :endDate1 <= pe.exerciseGroup.exam.endDate
-                AND pe.exerciseGroup.exam.endDate <= :endDate2
-            """)
-    List<ProgrammingExercise> findAllWithStudentParticipationByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
-
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
                 LEFT JOIN FETCH pe.templateParticipation
                 LEFT JOIN FETCH pe.solutionParticipation
             WHERE pe.id = :exerciseId
