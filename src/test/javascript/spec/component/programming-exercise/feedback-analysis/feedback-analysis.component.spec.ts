@@ -108,7 +108,7 @@ describe('FeedbackAnalysisComponent', () => {
             const loadDataSpy = jest.spyOn(component, 'loadData' as any);
 
             component.searchTerm.set('test');
-            component.search();
+            await component.search(component.searchTerm());
             expect(component.page()).toBe(1);
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });

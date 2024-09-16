@@ -1,4 +1,4 @@
-import { Component, InputSignal, computed, effect, inject, input, signal } from '@angular/core';
+import { Component, InputSignal, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -43,7 +43,9 @@ export class FeedbackAnalysisComponent {
 
     constructor() {
         effect(() => {
-            this.loadData();
+            untracked(async () => {
+                await this.loadData();
+            });
         });
     }
 
