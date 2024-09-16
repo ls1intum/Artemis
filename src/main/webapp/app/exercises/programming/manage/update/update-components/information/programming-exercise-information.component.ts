@@ -67,7 +67,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         );
 
         effect(() => {
-            console.log(this.shortNameField);
+            if (this.shortNameField !== undefined) {
+            } // triggers effect
             this.registerInputFields();
         });
     }

@@ -56,6 +56,8 @@ describe('ProgrammingExerciseInformationComponent', () => {
                     categories: true,
                 });
                 fixture.componentRef.setInput('isSimpleMode', false);
+                fixture.componentRef.setInput('isExamMode', false);
+                fixture.componentRef.setInput('isImport', false);
             });
     });
 
