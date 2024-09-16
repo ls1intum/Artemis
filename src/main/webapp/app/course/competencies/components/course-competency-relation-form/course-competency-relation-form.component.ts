@@ -167,7 +167,6 @@ export class CourseCompetencyRelationFormComponent {
         });
         // merge matches relations into the adjacency map
         matchesRelations.forEach((relation) => adjacencyMap.set(relation.headCompetencyId!, this.getMatchesRelationNeighbours(adjacencyMap, relation)));
-        console.log(adjacencyMap);
         return adjacencyMap;
     }
 
