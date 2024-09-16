@@ -44,6 +44,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.CommitInfoDTO;
+import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
@@ -79,11 +80,13 @@ public class ProgrammingExerciseParticipationResource {
 
     private final StudentExamRepository studentExamRepository;
 
+    private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
+
     public ProgrammingExerciseParticipationResource(ProgrammingExerciseParticipationService programmingExerciseParticipationService, ResultRepository resultRepository,
             ParticipationRepository participationRepository, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             ProgrammingSubmissionService submissionService, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             ResultService resultService, ParticipationAuthorizationCheckService participationAuthCheckService, RepositoryService repositoryService,
-            StudentExamRepository studentExamRepository) {
+            StudentExamRepository studentExamRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository) {
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -95,6 +98,7 @@ public class ProgrammingExerciseParticipationResource {
         this.participationAuthCheckService = participationAuthCheckService;
         this.repositoryService = repositoryService;
         this.studentExamRepository = studentExamRepository;
+        this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
     }
 
     /**
@@ -312,17 +316,20 @@ public class ProgrammingExerciseParticipationResource {
      *
      * @param exerciseID     the id of the exercise for which to retrieve the commit history
      * @param repositoryType the type of the repository for which to retrieve the commit history
+     * @param repositoryId   the id of the repository
      * @return the ResponseEntity with status 200 (OK) and with body a list of commitInfo DTOs with the commits information of the repository
      */
     @GetMapping("programming-exercise/{exerciseID}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType) {
+    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType,
+            @RequestParam long repositoryId) {
         boolean isTemplateRepository = repositoryType.equals(RepositoryType.TEMPLATE);
         boolean isSolutionRepository = repositoryType.equals(RepositoryType.SOLUTION);
         boolean isTestRepository = repositoryType.equals(RepositoryType.TESTS);
+        boolean isAuxiliaryRepository = repositoryType.equals(RepositoryType.AUXILIARY);
         ProgrammingExerciseParticipation participation;
 
-        if (!isTemplateRepository && !isSolutionRepository && !isTestRepository) {
+        if (!isTemplateRepository && !isSolutionRepository && !isTestRepository && !isAuxiliaryRepository) {
             throw new BadRequestAlertException("Invalid repository type", ENTITY_NAME, "invalidRepositoryType");
         }
         else if (isTemplateRepository) {
@@ -332,6 +339,15 @@ public class ProgrammingExerciseParticipationResource {
             participation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(exerciseID);
         }
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        if (isAuxiliaryRepository) {
+            var auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(repositoryId);
+            if (!auxiliaryRepo.getExercise().getId().equals(exerciseID)) {
+                throw new BadRequestAlertException("Invalid repository id", ENTITY_NAME, "invalidRepositoryId");
+            }
+            return ResponseEntity.ok(programmingExerciseParticipationService.getAuxiliaryRepositoryCommitInfos(auxiliaryRepo));
+        }
+
         if (isTestRepository) {
             return ResponseEntity.ok(programmingExerciseParticipationService.getCommitInfosTestRepo(participation));
         }

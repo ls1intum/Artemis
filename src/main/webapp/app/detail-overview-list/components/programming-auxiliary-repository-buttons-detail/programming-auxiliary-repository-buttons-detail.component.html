@@ -1,9 +1,14 @@
 <ul>
-    @for (auxiliaryRepository of detail.data.auxiliaryRepositories; track auxiliaryRepository) {
+    @for (auxiliaryRepository of detail.data.auxiliaryRepositories; track auxiliaryRepository.id) {
         @if (auxiliaryRepository.id && auxiliaryRepository.repositoryUri && detail.data.exerciseId) {
             <li class="mt-2">
                 <span>Repository: {{ auxiliaryRepository.name }}</span>
-                <jhi-code-button class="ms-2" [smallButtons]="true" [repositoryUri]="auxiliaryRepository.repositoryUri" />
+                <jhi-code-button
+                    class="ms-2"
+                    [smallButtons]="true"
+                    [repositoryUri]="auxiliaryRepository.repositoryUri"
+                    [routerLinkForRepositoryView]="['.', 'repository', 'AUXILIARY', auxiliaryRepository.id]"
+                />
                 <jhi-programming-exercise-instructor-repo-download
                     class="ms-2"
                     [exerciseId]="detail.data.exerciseId"

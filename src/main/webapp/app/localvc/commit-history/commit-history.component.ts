@@ -24,6 +24,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     participationId: number;
     exerciseId: number;
     repositoryType: string;
+    repositoryId?: number;
     paramSub: Subscription;
     commits: CommitInfo[];
     commitsInfoSubscription: Subscription;
@@ -53,6 +54,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
             this.participationId = Number(params['participationId']);
             this.exerciseId = Number(params['exerciseId']);
             this.repositoryType = params['repositoryType'];
+            this.repositoryId = Number(params['repositoryId']);
             if (this.repositoryType) {
                 this.loadDifferentParticipation();
             } else {
@@ -88,6 +90,8 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
                     } else if (this.repositoryType === 'TESTS') {
                         this.isTestRepository = true;
                         this.participation = this.exercise.templateParticipation!;
+                    } else if (this.repositoryType === 'AUXILIARY') {
+                        this.participation = this.exercise.templateParticipation!;
                     }
                 }),
             )
@@ -121,26 +125,59 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Retrieves the commit history for the participation and filters out the commits that have no submission.
+     * Retrieves the commit history and handles it depending on repository type
      * The last commit is always the template commit and is added to the list of commits.
      * @private
      */
     private handleCommits() {
-        if (this.repositoryType) {
-            this.commitsInfoSubscription = this.programmingExerciseParticipationService
-                .retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType)
-                .subscribe((commits) => {
-                    this.commits = this.sortCommitsByTimestampDesc(commits);
-                    if (!this.isTestRepository) {
-                        this.setCommitResults();
-                    }
-                });
+        if (!this.repositoryType) {
+            this.handleParticipationCommits();
+        } else if (this.repositoryType === 'AUXILIARY') {
+            this.handleAuxiliaryRepositoryCommits();
         } else {
-            this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participation.id!).subscribe((commits) => {
-                this.commits = this.sortCommitsByTimestampDesc(commits);
-                this.setCommitResults();
-            });
+            this.handleTemplateSolutionTestRepositoryCommits();
         }
+    }
+
+    /**
+     * Retrieves the commit history and filters out the commits that have no submission.
+     * The last commit is always the template commit and is added to the list of commits.
+     * @private
+     */
+    private handleParticipationCommits() {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService.retrieveCommitHistoryForParticipation(this.participation.id!).subscribe((commits) => {
+            this.commits = this.sortCommitsByTimestampDesc(commits);
+            this.setCommitResults();
+        });
+    }
+
+    /**
+     * Retrieves the commit history for an auxiliary repository
+     * The last commit is always the template commit and is added to the list of commits.
+     * @private
+     */
+    private handleAuxiliaryRepositoryCommits() {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService
+            .retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryType, this.repositoryId!)
+            .subscribe((commits) => {
+                this.commits = this.sortCommitsByTimestampDesc(commits);
+            });
+    }
+
+    /**
+     * Retrieves the commit history for template/solution/test repositories.
+     * The last commit is always the template commit and is added to the list of commits.
+     * @private
+     */
+    private handleTemplateSolutionTestRepositoryCommits() {
+        this.commitsInfoSubscription = this.programmingExerciseParticipationService
+            .retrieveCommitHistoryForTemplateSolutionOrTests(this.exerciseId, this.repositoryType)
+            .subscribe((commits) => {
+                this.commits = this.sortCommitsByTimestampDesc(commits);
+                if (!this.isTestRepository) {
+                    this.setCommitResults();
+                }
+            });
     }
 
     /**

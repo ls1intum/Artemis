@@ -4,7 +4,7 @@
 @for (section of sections; track section) {
     <h3 class="section-headline" [id]="headlinesRecord[section.headline]">{{ section.headline | artemisTranslate }}</h3>
     <dl class="section-detail-list">
-        @for (detail of section.details; track detail) {
+        @for (detail of section.details; track $index) {
             @if (!!detail) {
                 @if (detail.title) {
                     <dt id="detail-title-{{ detail.title }}">

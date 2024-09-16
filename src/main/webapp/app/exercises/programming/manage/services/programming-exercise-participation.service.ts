@@ -155,6 +155,16 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     }
 
     retrieveCommitHistoryForTemplateSolutionOrTests(exerciseId: number, repositoryType: string): Observable<CommitInfo[]> {
+        console.log(repositoryType);
         return this.http.get<CommitInfo[]>(`${this.resourceUrl}${exerciseId}/commit-history/${repositoryType}`);
+    }
+
+    retrieveCommitHistoryForAuxiliaryRepository(exerciseId: number, repositoryType: string, auxiliaryRepositoryId: number): Observable<CommitInfo[]> {
+        console.log(repositoryType);
+        const params: { [key: string]: number | string } = {};
+        if (repositoryType) {
+            params['repositoryId'] = auxiliaryRepositoryId;
+        }
+        return this.http.get<CommitInfo[]>(`${this.resourceUrl}${exerciseId}/commit-history/${repositoryType}`, { params: params });
     }
 }

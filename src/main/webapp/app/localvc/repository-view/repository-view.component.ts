@@ -42,7 +42,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     routeCommitHistory: string;
     repositoryUri: string;
     repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
-
+    auxiliaryRepositoryId: number;
     result: Result;
     resultHasInlineFeedback = false;
     showInlineFeedback = false;
@@ -85,9 +85,13 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             this.participationCouldNotBeFetched = false;
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
+            const auxiliaryRepositoryId = Number(params['auxiliaryRepositoryId']);
+            console.log(auxiliaryRepositoryId);
             this.repositoryType = participationId ? 'USER' : params['repositoryType'];
             if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
+            } else if (this.repositoryType === 'AUXILIARY') {
+                this.loadAuxiliaryRepository(exerciseId, auxiliaryRepositoryId);
             } else {
                 this.loadDifferentParticipation(this.repositoryType, exerciseId);
             }
@@ -176,5 +180,29 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                 return participation;
             }),
         );
+    }
+
+    private loadAuxiliaryRepository(exerciseId: number, auxiliaryRepositoryId: number) {
+        this.programmingExerciseService
+            .findWithAuxiliaryRepository(exerciseId, auxiliaryRepositoryId)
+            .pipe(
+                tap((exerciseResponse) => {
+                    this.exercise = exerciseResponse.body!;
+                    const auxiliaryRepo = this.exercise.auxiliaryRepositories?.find((repo) => repo.id === auxiliaryRepositoryId);
+                    if (auxiliaryRepo) {
+                        this.domainService.setDomain([DomainType.AUXILIARY_REPOSITORY, auxiliaryRepo]);
+                        this.repositoryUri = auxiliaryRepo.repositoryUri!;
+                    }
+                }),
+            )
+            .subscribe({
+                next: () => {
+                    this.loadingParticipation = false;
+                },
+                error: () => {
+                    this.participationCouldNotBeFetched = true;
+                    this.loadingParticipation = false;
+                },
+            });
     }
 }

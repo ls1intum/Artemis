@@ -532,6 +532,26 @@ public class ProgrammingExerciseResource {
     }
 
     /**
+     * GET /programming-exercises/:exerciseId/with-auxiliary-repository/:auxiliaryRepositoryId
+     *
+     * @param exerciseId            the id of the programmingExercise to retrieve
+     * @param auxiliaryRepositoryId the id of the auxiliary repository of the exercise
+     * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
+     */
+    @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository/{auxiliaryRepositoryId}")
+    @EnforceAtLeastTutorInExercise
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId, @PathVariable long auxiliaryRepositoryId) {
+
+        log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
+        final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
+        if (programmingExercise.getAuxiliaryRepositories().stream().noneMatch(id -> id.getId() == auxiliaryRepositoryId)) {
+            throw new BadRequestAlertException("The auxiliary repository Id does not belong to the exercise.", "Exercise",
+                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_ID);
+        }
+        return ResponseEntity.ok(programmingExercise);
+    }
+
+    /**
      * DELETE /programming-exercises/:id : delete the "id" programmingExercise.
      *
      * @param exerciseId                   the id of the programmingExercise to delete
