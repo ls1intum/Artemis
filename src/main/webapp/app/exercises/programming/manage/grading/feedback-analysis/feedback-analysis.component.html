@@ -50,7 +50,7 @@
                 <tr>
                     <td class="text-center">{{ item.count }} ({{ item.relativeCount | number: '1.0-0' }}%)</td>
                     <td>
-                        {{ item.detailText.length > maxFeedbackDetailTextLength ? (item.detailText | slice: 0 : 100) + '...' : item.detailText }}
+                        {{ item.detailText.length > MAX_FEEDBACK_DETAIL_TEXT_LENGTH ? (item.detailText | slice: 0 : 100) + '...' : item.detailText }}
                     </td>
                     <td class="text-center">{{ item.taskNumber }}</td>
                     <td>{{ item.testCaseName }}</td>
