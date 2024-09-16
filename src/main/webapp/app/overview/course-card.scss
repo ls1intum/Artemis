@@ -1,54 +1,13 @@
 .card {
     // best possible height to fit header, information, and manage course button: 80px header + 200px card content
     height: 283px;
-    // needed, otherwise score chart will appear outside of the card
-    min-width: 320px;
-    max-width: 400px;
+    // ensure the card takes the full width of its column in the container
+    width: 100%;
     transition: transform 0.2s linear;
 
     &:hover {
         transform: scale(1.012);
         background-color: var(--hover-slightly-darker-body-bg);
-    }
-
-    .card-header {
-        // needed, otherwise hover effect won't work due to stretched-link class
-        z-index: 2;
-        position: relative;
-        height: 85px;
-        opacity: 1;
-        filter: alpha(opacity = 100);
-        transition: 0.15s;
-        background-color: var(--background-color-for-hover) !important;
-
-        &:hover {
-            background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
-        }
-
-        .container {
-            height: 80px;
-
-            .row {
-                height: 80px;
-            }
-        }
-
-        .card-title {
-            overflow: hidden;
-            padding-bottom: 1px;
-            // matches 4 lines
-            max-height: 76px;
-        }
-
-        .course-circle {
-            // same size as the course icons
-            height: 65px;
-            min-width: 65px;
-            background-color: var(--course-image-bg);
-            border-radius: 50%;
-            display: inline-block;
-            color: var(--bs-body-color);
-        }
     }
 
     .card-body {
@@ -60,6 +19,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
+
+            .chart-text {
+                position: absolute;
+            }
 
             .chart-level {
                 z-index: 2;
@@ -81,20 +44,4 @@
             text-overflow: ellipsis;
         }
     }
-}
-
-.container {
-    max-width: unset;
-}
-
-jhi-secured-image {
-    ::ng-deep img {
-        border-radius: 50%;
-        height: 65px;
-        width: auto;
-    }
-}
-
-.card-header-title {
-    max-width: 280px;
 }

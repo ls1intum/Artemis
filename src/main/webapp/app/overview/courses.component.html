@@ -32,10 +32,14 @@
         <div class="row">
             <h4 class="col m-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed"></h4>
         </div>
-        <div class="row mx-2">
-            @for (course of recentlyAccessedCourses; track course) {
-                <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: course }" />
-            }
+        <div class="container-fluid">
+            <div class="course-grid justify-content-center align-items-center">
+                @for (course of recentlyAccessedCourses; track course) {
+                    <div class="course-card-wrapper">
+                        <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: course }" />
+                    </div>
+                }
+            </div>
         </div>
         @if (regularCourses.length) {
             <div class="row">
@@ -51,21 +55,27 @@
             </div>
         </div>
     } @else {
-        <div class="row mx-2">
-            @for (course of regularCourses; track course) {
-                <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: course }" />
-            }
+        <div class="container-fluid">
+            <div class="course-grid pb-3 justify-content-center align-items-center">
+                @for (course of regularCourses; track course) {
+                    <div class="course-card-wrapper">
+                        <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: course }" />
+                    </div>
+                }
+            </div>
         </div>
     }
 </div>
 
-<div class="d-flex justify-content-center mt-3">
-    <div>
-        {{ 'artemisApp.studentDashboard.oldCourses' | artemisTranslate }}
-        <a [routerLink]="['/courses/archive']"> {{ 'artemisApp.studentDashboard.here' | artemisTranslate }}</a>
+@if (coursesLoaded) {
+    <div class="d-flex justify-content-center mt-3">
+        <div>
+            {{ 'artemisApp.studentDashboard.oldCourses' | artemisTranslate }}
+            <a [routerLink]="['/courses/archive']"> {{ 'artemisApp.studentDashboard.here' | artemisTranslate }}</a>
+        </div>
     </div>
-</div>
+}
 
 <ng-template #courseCardTemplate let-course>
-    <jhi-overview-course-card class="col-2 px-2 pb-3 d-flex justify-content-center" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
+    <jhi-overview-course-card [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
 </ng-template>

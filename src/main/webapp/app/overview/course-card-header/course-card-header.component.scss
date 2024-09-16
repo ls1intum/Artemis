@@ -1,6 +1,4 @@
 .card-header {
-    min-width: 320px;
-    max-width: 400px;
     // needed, otherwise hover effect won't work due to stretched-link class
     z-index: 2;
     position: relative;
@@ -9,6 +7,9 @@
     filter: alpha(opacity = 100);
     transition: 0.15s;
     background-color: var(--background-color-for-hover) !important;
+    // inner border radius : outer border radius - outer border thickness (8px - 1px)
+    border-top-left-radius: 7px;
+    border-top-right-radius: 7px;
 
     &:hover {
         background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;

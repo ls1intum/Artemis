@@ -22,7 +22,6 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     expandedSemesterStrings: { [key: string]: string };
     semesterCollapsed: { [key: string]: boolean };
     coursesBySemester: { [key: string]: Course[] };
-    courseColor: string;
     searchCourseText = '';
     isSortAscending = true;
     iconSize: SizeProp = 'lg';
@@ -63,9 +62,11 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
         this.semesterCollapsed = {};
         this.coursesBySemester = {};
 
+        let isCollapsed = false;
         for (const semester of this.semesters) {
-            this.semesterCollapsed[semester] = true;
+            this.semesterCollapsed[semester] = isCollapsed;
             this.coursesBySemester[semester] = this.courses.filter((course) => course.semester === semester);
+            isCollapsed = true;
         }
     }
 

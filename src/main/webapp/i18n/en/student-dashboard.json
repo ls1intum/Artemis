@@ -14,7 +14,7 @@
             "cardExerciseLabel": "Next Exercise",
             "oldCourses": "Looking for old courses? Click ",
             "here": "here",
-            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points ({{ totalRelativeScore }}%)",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points",
             "cardScore": "Score",
             "cardManageCourse": "Manage Course",
             "enroll": {

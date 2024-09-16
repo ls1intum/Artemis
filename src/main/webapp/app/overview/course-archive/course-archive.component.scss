@@ -2,32 +2,20 @@
     cursor: pointer;
 }
 
-@media screen and (max-width: 2550px) {
-    .col-2 {
-        width: 20% !important;
-    }
+.course-grid {
+    display: grid;
+    // cards can shrink to 325px
+    grid-template-columns: repeat(auto-fill, minmax(325px, 1fr));
+    grid-gap: 1rem;
+    justify-items: center;
 }
 
-@media screen and (max-width: 2000px) {
-    .col-2 {
-        width: 25% !important;
-    }
+.course-card-wrapper {
+    width: 100%;
+    max-width: 400px;
 }
 
-@media screen and (max-width: 1650px) {
-    .col-2 {
-        width: 33.33% !important;
-    }
-}
-
-@media screen and (max-width: 1172px) {
-    .col-2 {
-        width: 50% !important;
-    }
-}
-
-@media screen and (max-width: 819px) {
-    .col-2 {
-        width: 100% !important;
-    }
+.container-fluid {
+    // ensure that horizontal spacing in container is consistent
+    --bs-gutter-x: 2rem;
 }

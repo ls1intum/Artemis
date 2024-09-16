@@ -1,5 +1,5 @@
 <div class="card rounded-4 flex-grow-1" [class.guided-tour]="hasGuidedTour">
-    <jhi-course-card-header [course]="course" [courseColor]="courseColor" />
+    <jhi-course-card-header [course]="course" />
     <div class="card-body rounded-bottom-4 border-lightgrey pt-3">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
         <div class="d-flex flex-column justify-content-between gap-1">
@@ -15,7 +15,6 @@
                                         [translateValues]="{
                                             totalAbsoluteScore: totalAbsoluteScore,
                                             totalReachableScore: totalReachableScore,
-                                            totalRelativeScore: totalRelativeScore,
                                         }"
                                     ></div>
                                 </div>
@@ -39,7 +38,10 @@
                         }
                     </div>
                     @if (exerciseCount && (totalReachableScore || totalAbsoluteScore)) {
-                        <div class="align-self-center chart-container col-5">
+                        <div class="align-self-center chart-container col-5 mb-2">
+                            <div class="chart-text">
+                                <h4 class="mb-0">{{ totalRelativeScore }}%</h4>
+                            </div>
                             <ngx-charts-pie-chart
                                 id="score-chart"
                                 class="chart-level"
