@@ -75,7 +75,7 @@ below into your ``application-artemis.yml`` or ``application-local.yml`` file (t
        # e.g., Jenkins is only available in a local container network
        internal-urls:
            ci-url: http://jenkins:8080
-           vcs-url: http://localhost:8080
+           vcs-url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
        use-crumb: false
    server:
         port: 8080
@@ -182,7 +182,7 @@ In a production setup, you have to at least change the user credentials (in the 
         jenkins:
             internal-urls:
                 ci-url: http://jenkins:8080
-                vcs-url: http://localhost:8080
+                vcs-url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
 
 #. You're done. You can now run Artemis with the LocalVC/Jenkins environment.
 
