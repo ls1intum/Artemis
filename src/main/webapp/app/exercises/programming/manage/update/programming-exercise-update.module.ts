@@ -35,6 +35,7 @@ import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/man
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
+import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
 
 @NgModule({
     imports: [
@@ -63,6 +64,7 @@ import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/
         ProgrammingExerciseTheiaComponent,
         ProgrammingExerciseDifficultyComponent,
         SwitchEditModeButtonComponent,
+        TitleChannelNameModule,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,

@@ -23,7 +23,7 @@ import {
     ProgrammingLanguageFeature,
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
@@ -72,6 +72,8 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
+import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
+import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -91,7 +93,15 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, OwlDateTimeModule, NgbTooltipMocksModule, NgbAlertsMocksModule],
+            imports: [
+                ArtemisTestModule,
+                NgxDatatableModule,
+                OwlDateTimeModule,
+                NgbTooltipMocksModule,
+                NgbAlertsMocksModule,
+                ProgrammingExerciseInformationComponent,
+                TitleChannelNameComponent,
+            ],
             declarations: [
                 ProgrammingExerciseUpdateComponent,
                 // The following directives need to be imported raw because the SCA tests heavily rely on the UI interaction with the native inputs.
@@ -119,7 +129,6 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(GradingInstructionsDetailsComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(CompetencySelectionComponent),
-                MockComponent(ProgrammingExerciseInformationComponent),
                 MockComponent(ProgrammingExerciseModeComponent),
                 MockComponent(ProgrammingExerciseLanguageComponent),
                 MockComponent(ProgrammingExerciseGradingComponent),
@@ -136,6 +145,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ExerciseUpdateNotificationComponent),
                 MockComponent(ExerciseUpdatePlagiarismComponent),
                 MockComponent(SwitchEditModeButtonComponent),
+                MockModule(ExerciseTitleChannelNameModule),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

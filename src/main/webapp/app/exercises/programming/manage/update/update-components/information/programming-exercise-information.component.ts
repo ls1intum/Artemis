@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal, viewChild } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -30,11 +30,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild(ExerciseTitleChannelNameComponent) exerciseTitleChannelComponent: ExerciseTitleChannelNameComponent;
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
 
-    @ViewChild('shortName') shortNameField: NgModel;
+    shortNameField = viewChild<NgModel>('shortName');
     @ViewChild('checkoutSolutionRepository') checkoutSolutionRepositoryField?: NgModel;
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
     @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
+
+    isShortNameFieldValid = signal<boolean>(false);
 
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
@@ -63,11 +65,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                     const shortnameWithRandomness = sanitizedShortName + this.shortNameRandomPart();
                     this.programmingExercise().shortName = shortnameWithRandomness;
                 }
+
+                this.isShortNameFieldValid.set(this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID');
             }.bind(this),
         );
 
         effect(() => {
-            if (this.shortNameField !== undefined) {
+            if (this.shortNameField() !== undefined) {
             } // triggers effect
             this.registerInputFields();
         });
@@ -77,7 +81,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.inputFieldSubscriptions.forEach((subscription) => subscription?.unsubscribe());
 
         this.inputFieldSubscriptions.push(this.exerciseTitleChannelComponent?.titleChannelNameComponent?.formValidChanges.subscribe(() => this.calculateFormValid()));
-        this.inputFieldSubscriptions.push(this.shortNameField?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.shortNameField()?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
@@ -89,6 +93,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             if (this.isSimpleMode()) {
                 this.updateShortName(newTitle);
             }
+        });
+
+        this.shortNameField()?.valueChanges?.subscribe(() => {
+            this.isShortNameFieldValid.set(this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID');
         });
     }
 
@@ -113,14 +121,13 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     }
 
     calculateFormValid() {
-        const isShortNameValid = !this.shortNameField?.invalid;
         const isCheckoutSolutionRepositoryValid = this.isCheckoutSolutionRepositoryValid();
         const isRecreateBuildPlansValid = this.isRecreateBuildPlansValid();
         const isUpdateTemplateFilesValid = this.isUpdateTemplateFilesValid();
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
         this.formValid = Boolean(
             this.exerciseTitleChannelComponent?.titleChannelNameComponent?.formValidSignal() &&
-                isShortNameValid &&
+                this.isShortNameFieldValid() &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
                 isUpdateTemplateFilesValid &&
