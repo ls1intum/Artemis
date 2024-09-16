@@ -1,49 +1,50 @@
-export type ProgrammingExerciseInputField =
-    // general section
-    | 'title'
-    | 'channelName'
-    | 'shortName'
-    | 'categories'
+export enum ProgrammingExerciseInputField {
+    // General section
+    TITLE = 'title',
+    CHANNEL_NAME = 'channelName',
+    SHORT_NAME = 'shortName',
+    CATEGORIES = 'categories',
 
-    // mode section
-    | 'difficulty'
-    | 'participationMode'
-    | 'allowOfflineIde'
-    | 'allowOnlineCodeEditor'
-    | 'allowOnlineIde'
+    // Mode section
+    DIFFICULTY = 'difficulty',
+    PARTICIPATION_MODE = 'participationMode',
+    ALLOW_OFFLINE_IDE = 'allowOfflineIde',
+    ALLOW_ONLINE_CODE_EDITOR = 'allowOnlineCodeEditor',
+    ALLOW_ONLINE_IDE = 'allowOnlineIde',
 
-    // language section
-    | 'programmingLanguage'
-    | 'projectType'
-    | 'withExemplaryDependency'
-    | 'packageName'
-    | 'enableStaticCodeAnalysis'
-    | 'sequentialTestRuns'
-    | 'customizeBuildScript'
+    // Language section
+    PROGRAMMING_LANGUAGE = 'programmingLanguage',
+    PROJECT_TYPE = 'projectType',
+    WITH_EXEMPLARY_DEPENDENCY = 'withExemplaryDependency',
+    PACKAGE_NAME = 'packageName',
+    ENABLE_STATIC_CODE_ANALYSIS = 'enableStaticCodeAnalysis',
+    SEQUENTIAL_TEST_RUNS = 'sequentialTestRuns',
+    CUSTOMIZE_BUILD_SCRIPT = 'customizeBuildScript',
 
-    // problem section
-    | 'problemStatement'
-    | 'linkedCompetencies'
+    // Problem section
+    PROBLEM_STATEMENT = 'problemStatement',
+    LINKED_COMPETENCIES = 'linkedCompetencies',
 
-    // grading section
-    | 'includeExerciseInCourseScoreCalculation'
-    | 'points'
-    | 'bonusPoints'
-    | 'submissionPolicy'
-    | 'timeline'
-    | 'releaseDate'
-    | 'startDate'
-    | 'dueDate'
-    | 'runTestsAfterDueDate'
-    | 'assessmentDueDate'
-    | 'exampleSolutionPublicationDate'
-    | 'complaintOnAutomaticAssessment'
-    | 'manualFeedbackRequests'
-    | 'showTestNamesToStudents'
-    | 'includeTestsIntoExampleSolution'
-    | 'assessmentInstructions'
-    | 'presentationScore'
-    | 'plagiarismControl';
+    // Grading section
+    INCLUDE_EXERCISE_IN_COURSE_SCORE_CALCULATION = 'includeExerciseInCourseScoreCalculation',
+    POINTS = 'points',
+    BONUS_POINTS = 'bonusPoints',
+    SUBMISSION_POLICY = 'submissionPolicy',
+    TIMELINE = 'timeline',
+    RELEASE_DATE = 'releaseDate',
+    START_DATE = 'startDate',
+    DUE_DATE = 'dueDate',
+    RUN_TESTS_AFTER_DUE_DATE = 'runTestsAfterDueDate',
+    ASSESSMENT_DUE_DATE = 'assessmentDueDate',
+    EXAMPLE_SOLUTION_PUBLICATION_DATE = 'exampleSolutionPublicationDate',
+    COMPLAINT_ON_AUTOMATIC_ASSESSMENT = 'complaintOnAutomaticAssessment',
+    MANUAL_FEEDBACK_REQUESTS = 'manualFeedbackRequests',
+    SHOW_TEST_NAMES_TO_STUDENTS = 'showTestNamesToStudents',
+    INCLUDE_TESTS_INTO_EXAMPLE_SOLUTION = 'includeTestsIntoExampleSolution',
+    ASSESSMENT_INSTRUCTIONS = 'assessmentInstructions',
+    PRESENTATION_SCORE = 'presentationScore',
+    PLAGIARISM_CONTROL = 'plagiarismControl',
+}
 
 export type InputFieldEditModeMapping = Record<ProgrammingExerciseInputField, boolean>;
 
