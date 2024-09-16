@@ -47,7 +47,7 @@ export type ProgrammingExerciseInputField =
 
 export type InputFieldEditModeMapping = Record<ProgrammingExerciseInputField, boolean>;
 
-export const INPUT_FIELD_EDIT_MODE_MAPPING: InputFieldEditModeMapping = {
+export const IS_DISPLAYED_IN_SIMPLE_MODE: InputFieldEditModeMapping = {
     // General section
     title: true,
     channelName: false,

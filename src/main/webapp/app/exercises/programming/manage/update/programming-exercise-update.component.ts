@@ -36,7 +36,7 @@ import { ProgrammingExerciseLanguageComponent } from 'app/exercises/programming/
 import { ProgrammingExerciseGradingComponent } from 'app/exercises/programming/manage/update/update-components/grading/programming-exercise-grading.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { ImportOptions } from 'app/types/programming-exercises';
-import { INPUT_FIELD_EDIT_MODE_MAPPING, ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
@@ -76,13 +76,15 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     isSimpleMode = signal<boolean>(true);
 
     isEditFieldDisplayedRecord = computed(() => {
-        const inputFieldEditModeMapping = INPUT_FIELD_EDIT_MODE_MAPPING;
+        const inputFieldEditModeMapping = IS_DISPLAYED_IN_SIMPLE_MODE;
 
         const isEditFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
         Object.keys(inputFieldEditModeMapping).forEach((key) => {
-            const modeToBeIncluded = this.isSimpleMode() ? 'SIMPLE' : 'ADVANCED';
-            // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-            const isDisplayed = inputFieldEditModeMapping[key as ProgrammingExerciseInputField].editModesToBeDisplayed.includes(modeToBeIncluded);
+            let isDisplayed = true;
+            if (this.isSimpleMode()) {
+                isDisplayed = inputFieldEditModeMapping[key as ProgrammingExerciseInputField];
+            }
+
             isEditFieldDisplayedMapping[key as ProgrammingExerciseInputField] = isDisplayed;
         });
 
