@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, model, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
@@ -20,6 +20,8 @@ export class CourseCompetencyRelationFormComponent {
     readonly courseId = input.required<number>();
     readonly courseCompetencies = input.required<CourseCompetency[]>();
     readonly relations = model.required<CompetencyRelationDTO[]>();
+
+    readonly selectedRelationId = model.required<number | undefined>();
 
     protected readonly headCompetencyId = signal<number | undefined>(undefined);
     protected readonly tailCompetencyId = model<number | undefined>(undefined);
@@ -45,6 +47,33 @@ export class CourseCompetencyRelationFormComponent {
     });
 
     private readonly currentAdjacencyMap = computed(() => this.getAdjacencyMap(this.relations()));
+
+    constructor() {
+        effect(
+            () => {
+                if (this.selectedRelationId()) {
+                    this.selectRelation(this.selectedRelationId()!);
+                }
+            },
+            { allowSignalWrites: true },
+        );
+        effect(
+            () => {
+                const relationAlreadyExists = this.relationAlreadyExists();
+                untracked(() => {
+                    if (relationAlreadyExists) {
+                        const relation = this.relations().find(
+                            ({ headCompetencyId, tailCompetencyId }) => headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId(),
+                        );
+                        this.selectedRelationId.set(relation?.id);
+                    } else {
+                        this.selectedRelationId.set(undefined);
+                    }
+                });
+            },
+            { allowSignalWrites: true },
+        );
+    }
 
     public selectRelation(relationId: number): void {
         const relation = this.relations().find(({ id }) => id === relationId);
@@ -86,6 +115,36 @@ export class CourseCompetencyRelationFormComponent {
             });
             this.relations.update((relations) => [...relations, courseCompetencyRelation]);
             this.resetForm();
+            this.selectedRelationId.set(courseCompetencyRelation.id);
+        } catch (error) {
+            this.alertService.error(error.message);
+        } finally {
+            this.isLoading.set(false);
+        }
+    }
+
+    protected async updateRelation(): Promise<void> {
+        const currentRelation = this.relations().find(
+            ({ headCompetencyId, tailCompetencyId, relationType }) =>
+                headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId() && relationType === this.relationType(),
+        );
+        const newRelationType = this.relationType();
+        if (!newRelationType || !currentRelation) {
+            return;
+        }
+        try {
+            this.isLoading.set(true);
+            await this.courseCompetencyApiService.updateCourseCompetencyRelationsByCourseId(this.courseId(), currentRelation.id!, newRelationType);
+            this.relations.update((relations) => {
+                return relations.map((relation) => {
+                    if (relation.id == currentRelation.id) {
+                        return { ...relation, relationType: newRelationType };
+                    }
+                    return relation;
+                });
+            });
+            this.resetForm();
+            this.selectedRelationId.set(currentRelation.id);
         } catch (error) {
             this.alertService.error(error.message);
         } finally {

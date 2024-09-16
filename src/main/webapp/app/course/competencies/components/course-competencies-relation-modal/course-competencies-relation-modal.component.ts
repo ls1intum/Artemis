@@ -29,6 +29,8 @@ export class CourseCompetenciesRelationModalComponent {
     readonly courseId = input.required<number>();
     readonly courseCompetencies = input.required<CourseCompetency[]>();
 
+    readonly selectedRelationId = signal<number | undefined>(undefined);
+
     readonly isLoading = signal<boolean>(false);
     readonly relations = signal<CompetencyRelationDTO[]>([]);
 

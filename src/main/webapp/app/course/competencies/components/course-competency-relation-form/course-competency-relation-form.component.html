@@ -34,7 +34,7 @@
         @if (relationTypeAlreadyExists()) {
             <button (click)="deleteRelation()" class="btn btn-danger">Delete relation</button>
         } @else if (relationAlreadyExists()) {
-            <button class="btn btn-info">Update relation</button>
+            <button (click)="updateRelation()" class="btn btn-info">Update relation</button>
         } @else {
             <button (click)="createRelation()" [disabled]="!tailCompetencyId() || !headCompetencyId() || !relationType()" class="btn btn-primary">Create relation</button>
         }

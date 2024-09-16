@@ -22,6 +22,8 @@ export class CourseCompetenciesRelationGraphComponent {
     readonly courseCompetencies = input.required<CourseCompetency[]>();
     readonly relations = model.required<CompetencyRelationDTO[]>();
 
+    readonly selectedRelationId = model<number | undefined>(undefined);
+
     readonly onCourseCompetencySelection = output<number>();
     readonly onRelationSelection = output<number>();
 
@@ -42,6 +44,10 @@ export class CourseCompetenciesRelationGraphComponent {
             },
         }));
     });
+
+    protected selectRelation(relationId: number): void {
+        this.selectedRelationId.set(relationId);
+    }
 
     constructor() {
         effect(

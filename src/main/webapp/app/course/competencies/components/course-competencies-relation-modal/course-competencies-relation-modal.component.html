@@ -15,9 +15,15 @@
             </div>
         } @else {
             <div class="p-3">
-                <jhi-course-competency-relation-form [courseId]="courseId()" [(relations)]="relations" [courseCompetencies]="courseCompetencies()" />
+                <jhi-course-competency-relation-form
+                    [(selectedRelationId)]="selectedRelationId"
+                    [courseId]="courseId()"
+                    [(relations)]="relations"
+                    [courseCompetencies]="courseCompetencies()"
+                />
             </div>
             <jhi-course-competencies-relation-graph
+                [(selectedRelationId)]="selectedRelationId"
                 [(relations)]="relations"
                 [courseCompetencies]="courseCompetencies()"
                 (onRelationSelection)="selectRelation($event)"

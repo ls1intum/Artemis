@@ -150,4 +150,63 @@ export abstract class BaseApiHttpService {
     ): Promise<T> {
         return await this.request<T>(HttpMethod.Delete, url, options);
     }
+
+    /**
+     * Constructs a `PATCH` request that interprets the body as JSON and returns
+     * a Promise of an object of type `T`.
+     *
+     * @param url The endpoint URL excluding the base server url (/api).
+     * @param body The content to include in the body of the request.
+     * @param options The HTTP options to send with the request.
+     * @protected
+     *
+     * @return An `Promise` of type `Object` (T),
+     */
+    protected async patch<T>(
+        url: string,
+        body?: any,
+        options?: {
+            headers?:
+                | HttpHeaders
+                | {
+                      [header: string]: string | string[];
+                  };
+            params?:
+                | HttpParams
+                | {
+                      [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
+                  };
+        },
+    ): Promise<T> {
+        return await this.request<T>(HttpMethod.Patch, url, { body: body, ...options });
+    }
+
+    /**
+     * Constructs a `PUT` request that interprets the body as JSON and returns
+     * a Promise of an object of type `T`.
+     * @param url The endpoint URL excluding the base server url (/api).
+     * @param body The content to include in the body of the request.
+     * @param options The HTTP options to send with the request.
+     * @protected
+     *
+     * @return An `Promise` of type `Object` (T),
+     */
+    protected async put<T>(
+        url: string,
+        body?: any,
+        options?: {
+            headers?:
+                | HttpHeaders
+                | {
+                      [header: string]: string | string[];
+                  };
+            params?:
+                | HttpParams
+                | {
+                      [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
+                  };
+        },
+    ): Promise<T> {
+        return await this.request<T>(HttpMethod.Put, url, { body: body, ...options });
+    }
 }

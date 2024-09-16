@@ -4,6 +4,10 @@
         fill: var(--body-color);
     }
 
+    .selected {
+        stroke: var(--bs-primary);
+    }
+
     .text-path {
         fill: var(--body-color);
     }

@@ -23,8 +23,8 @@
             </svg:g>
         </ng-template>
         <ng-template #linkTemplate let-link>
-            <svg:g class="edge" (click)="onRelationSelection.emit(link.data.id)">
-                <svg:path class="line" stroke-width="2" marker-end="url(#arrow)" />
+            <svg:g class="edge" (click)="selectRelation(link.data.id)">
+                <svg:path class="line" [class.selected]="selectedRelationId() == link.data.id" stroke-width="2" marker-end="url(#arrow)" />
                 <svg:text class="edge-label" text-anchor="middle">
                     <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
                         {{ ('artemisApp.competency.relation.type.' + link.label | artemisTranslate).toUpperCase() }}
