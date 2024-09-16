@@ -63,7 +63,6 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         user: artemis_admin
         password: artemis_admin
         url: http://localhost:8082
-        secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
         vcs-credentials: artemis_gitlab_admin_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token
         artemis-authentication-token-value: artemis_admin
@@ -488,18 +487,7 @@ do either do it manually or using the following command:
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
    in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
-3. You need to generate the `secret-push-token`.
-
-   ..
-       Workaround as long as Github Issue 5973 (Default Push Notifications GitLab → Jenkins not working)
-       for now just generate the secret-push-token manually
-
-   As there is currently an `open issue with the presets for Jenkins in Development environments <https://github.com/ls1intum/Artemis/issues/5973>`__,
-   follow the steps described in
-   `Gitlab to Jenkins push notification token <#gitlab-to-jenkins-push-notification-token>`__ to generate the token.
-   In a production setup, you should use a random ``master.key`` in the file ``gitlab-jenkins-mysql.yml``.
-
-4. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+3. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
 
 .. code:: yaml
 
@@ -517,12 +505,11 @@ do either do it manually or using the following command:
             user: artemis_admin
             password: artemis_admin
             url: http://localhost:8082
-            secret-push-token: # pre-generated or replaced in Automated Jenkins Server step 3
             vcs-credentials: artemis_gitlab_admin_credentials
             artemis-authentication-token-key: artemis_notification_plugin_token
             artemis-authentication-token-value: artemis_admin
 
-5. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
+4. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
    Again, if you are using a development setup, the template in the beginning of this page already contains the
    correct values.
 
@@ -533,7 +520,7 @@ do either do it manually or using the following command:
             ci-url: http://jenkins:8080
             vcs-url: http://gitlab:80
 
-6. You're done. You can now run Artemis with the GitLab/Jenkins environment.
+5. You're done. You can now run Artemis with the GitLab/Jenkins environment.
 
 Manual Jenkins Server Setup
 """""""""""""""""""""""""""
@@ -897,48 +884,7 @@ the following steps:
    .. figure:: jenkins-gitlab/jenkins_test_project.png
       :align: center
 
-8.  Perform a *GET* request to the following URL (e.g. with Postman)
-    using Basic Authentication and the username and password you chose
-    for the Jenkins admin account:
-
-    ::
-
-        GET https://your.jenkins.domain/job/TestProject/config.xml
-
-    If you have xmllint installed, you can use this command, which will output the ``secret-push-token`` from
-    steps 9 and 10 (you may have to adjust the username and password):
-
-    .. code:: bash
-
-        curl -u artemis_admin:artemis_admin http://localhost:8082/job/TestProject/config.xml | xmllint --nowarning --xpath "//project/triggers/com.dabsquared.gitlabjenkins.GitLabPushTrigger/secretToken/text()" - | sed 's/^.\(.*\).$/\1/'
-
-9.  You will get the whole configuration XML of the just created build
-    plan, there you will find the following tag:
-
-    ::
-
-        <secretToken>{$some-long-encrypted-value}</secretToken>
-
-   .. figure:: jenkins-gitlab/jenkins_project_config_xml.png
-      :align: center
-
-      Job configuration XML
-
-10. Copy the ``secret-push-token value`` in the line
-    ``<secretToken>{secret-push-token}</secretToken>``. This is the encrypted value of the ``gitlab-push-token``
-    you generated in step 5.
-
-11. Now, you can delete this test project and input the following values
-    into your Artemis configuration *application-artemis.yml* (replace
-    the placeholders with the actual values you wrote down)
-
-    .. code:: yaml
-
-       artemis:
-           continuous-integration:
-               secret-push-token: $some-long-encrypted-value
-
-12. In a local setup, you have to disable CSRF otherwise some API endpoints will return HTTP Status 403 Forbidden.
+8. In a local setup, you have to disable CSRF otherwise some API endpoints will return HTTP Status 403 Forbidden.
     This is done be executing the following command:
     ``docker compose -f docker/<Jenkins setup to be launched>.yml exec -T jenkins dd of=/var/jenkins_home/init.groovy < docker/jenkins/jenkins-disable-csrf.groovy``
 
