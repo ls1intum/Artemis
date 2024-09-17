@@ -12,7 +12,6 @@ import { FaqService } from 'app/faq/faq.service';
 import { Faq } from 'app/entities/faq.model';
 import { FAQUpdateComponent } from 'app/faq/faq-update.component';
 
-
 @Injectable({ providedIn: 'root' })
 export class FAQResolve implements Resolve<Faq> {
     constructor(private faqService: FaqService) {}
@@ -28,7 +27,6 @@ export class FAQResolve implements Resolve<Faq> {
         return of(new Faq());
     }
 }
-
 
 export const faqRoutes: Routes = [
     {
@@ -60,7 +58,6 @@ export const faqRoutes: Routes = [
                         data: {
                             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'global.generic.create',
-
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -79,7 +76,6 @@ export const faqRoutes: Routes = [
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
-
                         ],
                     },
                 ],

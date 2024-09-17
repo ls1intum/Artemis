@@ -19,10 +19,10 @@ import {
     faListAlt,
     faNetworkWired,
     faPersonChalkboard,
+    faQuestion,
     faSpinner,
     faTable,
     faUserCheck,
-    faQuestion
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
@@ -78,7 +78,7 @@ export class CourseManagementCardComponent implements OnChanges {
     faAngleUp = faAngleUp;
     faPersonChalkboard = faPersonChalkboard;
     faSpinner = faSpinner;
-    faQuestion = faQuestion
+    faQuestion = faQuestion;
 
     courseColor: string;
 
