@@ -135,6 +135,7 @@ public class ModelingExerciseFeedbackService {
             automaticResult.setCompletionDate(ZonedDateTime.now());
 
             automaticResult.setScore(Math.clamp(totalFeedbacksScore, 0, 100));
+            automaticResult.setSuccessful(true);
 
             automaticResult = this.resultRepository.save(automaticResult);
             resultService.storeFeedbackInResult(automaticResult, feedbacks, true);
