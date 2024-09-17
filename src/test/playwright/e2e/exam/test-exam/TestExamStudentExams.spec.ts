@@ -43,7 +43,6 @@ test.describe('Test Exam - student exams', () => {
         exam = await examAPIRequests.createExam(examConfig);
         examExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
 
-        await participateInExam(studentThree, course, exam, false, false, examParticipation, examNavigation);
         await participateInExam(studentOne, course, exam, true, true, examParticipation, examNavigation);
         await participateInExam(studentTwo, course, exam, true, false, examParticipation, examNavigation);
         await participateInExam(studentThree, course, exam, false, false, examParticipation, examNavigation);
@@ -119,6 +118,7 @@ test.describe('Test Exam - student exams', () => {
     ) {
         if (!toStart) {
             await examParticipation.openExam(student, course, exam);
+            await examParticipation.almostStartExam();
         } else {
             await examParticipation.openExam(student, course, exam);
             await examParticipation.startExam();
