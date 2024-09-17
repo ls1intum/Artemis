@@ -1,6 +1,6 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.cit.aet.artemis.communication.repository;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Set;
 
@@ -11,8 +11,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.Faq;
-import de.tum.in.www1.artemis.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
  * Spring Data repository for the Faq entity.

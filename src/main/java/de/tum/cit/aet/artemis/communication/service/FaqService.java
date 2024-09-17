@@ -1,11 +1,11 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.cit.aet.artemis.communication.service;
 
-import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.repository.FaqRepository;
+import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 
 @Profile(PROFILE_CORE)
 @Service

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.cit.aet.artemis.communication.domain;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -19,6 +19,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import de.tum.cit.aet.artemis.core.domain.AbstractAuditingEntity;
+import de.tum.cit.aet.artemis.core.domain.Course;
 
 /**
  * A FAQ.

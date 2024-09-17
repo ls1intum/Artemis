@@ -3,9 +3,9 @@ package de.tum.in.www1.artemis.faq;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Faq;
-import de.tum.in.www1.artemis.domain.FaqState;
+import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
+import de.tum.cit.aet.artemis.core.domain.Course;
 
 public class FaqFactory {
 
