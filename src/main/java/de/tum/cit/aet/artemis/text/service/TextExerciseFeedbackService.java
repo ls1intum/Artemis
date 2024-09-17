@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
 import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -119,7 +118,8 @@ public class TextExerciseFeedbackService {
         automaticResult.setSubmission(textSubmission);
         automaticResult.setParticipation(participation);
         try {
-            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
+            // This broadcast signals the client that feedback is being generated, does not save empty result
+            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
 
             log.debug("Submission id: {}", textSubmission.getId());
 
@@ -171,7 +171,8 @@ public class TextExerciseFeedbackService {
             textBlockService.saveAll(textBlocks);
             textSubmission.setBlocks(textBlocks);
             submissionService.saveNewResult(textSubmission, automaticResult);
-            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
+            // This broadcast signals the client that feedback generation succeeded, result is saved in this case only
+            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
         }
         catch (Exception e) {
             log.error("Could not generate feedback", e);
@@ -179,7 +180,9 @@ public class TextExerciseFeedbackService {
             // but since we do not differentiate for athena feedback we use it to indicate a failed generation
             automaticResult.setSuccessful(false);
             automaticResult.setCompletionDate(null);
-            this.resultWebsocketService.broadcastNewResult((Participation) participation, automaticResult);
+            participation.addResult(automaticResult); // for proper change detection
+            // This broadcast signals the client that feedback generation failed, does not save empty result
+            this.resultWebsocketService.broadcastNewResult(participation, automaticResult);
         }
     }
 }

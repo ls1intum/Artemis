@@ -8,12 +8,14 @@
             <ng-container submitbutton>
                 @if (isOwnerOfParticipation) {
                     @if (isReadOnlyWithShowResult) {
-                        <jhi-button
-                            id="toggleTimeline"
-                            [icon]="faTimeline"
-                            [title]="showHistory ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
-                            (click)="showHistory = !showHistory"
-                        />
+                        @if ((sortedHistoryResults?.length || 0) > 1) {
+                            <jhi-button
+                                id="toggleTimeline"
+                                [icon]="faTimeline"
+                                [title]="showHistory ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
+                                (click)="showHistory = !showHistory"
+                            />
+                        }
                         @if (isActive) {
                             <jhi-button
                                 id="Continue"
@@ -22,7 +24,7 @@
                             />
                         }
                     } @else {
-                        @if (textExercise.allowFeedbackRequests) {
+                        @if (textExercise.allowFeedbackRequests && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
                             <jhi-button
                                 [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
                                 [icon]="faPenSquare"

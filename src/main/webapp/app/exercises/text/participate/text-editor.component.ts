@@ -40,6 +40,8 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
+    protected readonly Result = Result;
+    protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
 
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;
@@ -117,7 +119,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.updateParticipation(this.participation, this.submissionId);
             });
 
-            this.textService.getAll(participationId).subscribe({
+            this.textService.get(participationId).subscribe({
                 next: (data: StudentParticipation) => this.updateParticipation(data, this.submissionId),
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -471,5 +473,4 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const bValue = dayjs(b.submissionDate!).valueOf();
         return aValue - bValue;
     };
-    protected readonly Result = Result;
 }

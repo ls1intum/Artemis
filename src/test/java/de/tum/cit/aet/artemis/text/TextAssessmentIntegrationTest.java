@@ -532,7 +532,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participation.getSubmissions()).containsExactly(textSubmission);
         var submission = participation.getSubmissions().iterator().next();
         assertThat(submission.getResults()).hasSize(1);
-        assertThat(participation.getResults()).hasSize(1);
+        assertThat(participation.getResults()).hasSize(2);
     }
 
     @Test

@@ -170,6 +170,8 @@ export const evaluateTemplateStatus = (
                 // the assessment due date has passed (or there was none) (or it is not manual feedback)
                 if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === undefined) {
                     return ResultTemplateStatus.IS_GENERATING_FEEDBACK;
+                } else if (result?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result?.successful === false) {
+                    return ResultTemplateStatus.FEEDBACK_GENERATION_FAILED;
                 }
                 return ResultTemplateStatus.HAS_RESULT;
             } else {
