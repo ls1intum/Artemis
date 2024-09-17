@@ -95,6 +95,8 @@ public class SharedQueueProcessingService {
 
     private boolean isPaused = false;
 
+    private boolean processResults = true;
+
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler) {
         this.hazelcastInstance = hazelcastInstance;
@@ -331,7 +333,12 @@ public class SharedQueueProcessingService {
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
-            resultQueue.add(resultQueueItem);
+            if (processResults) {
+                resultQueue.add(resultQueueItem);
+            }
+            else {
+                log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
+            }
 
             // after processing a build job, remove it from the processing jobs
             processingJobs.remove(buildJob.id());
@@ -366,7 +373,12 @@ public class SharedQueueProcessingService {
             failedResult.setBuildLogEntries(buildLogs);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
-            resultQueue.add(resultQueueItem);
+            if (processResults) {
+                resultQueue.add(resultQueueItem);
+            }
+            else {
+                log.info("Build agent is paused. Not adding build result to result queue for build job: {}", buildJob);
+            }
 
             processingJobs.remove(buildJob.id());
             localProcessingJobs.decrementAndGet();
@@ -411,6 +423,7 @@ public class SharedQueueProcessingService {
                 return;
             }
 
+            this.processResults = false;
             Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
             List<BuildJobQueueItem> runningBuildJobs = processingJobs.getAll(runningBuildJobIds).values().stream().toList();
             runningBuildJobIds.forEach(buildJobManagementService::cancelBuildJob);
@@ -429,6 +442,7 @@ public class SharedQueueProcessingService {
 
         log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
         this.isPaused = false;
+        this.processResults = true;
         this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
         this.scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
         checkAvailabilityAndProcessNextBuild();
