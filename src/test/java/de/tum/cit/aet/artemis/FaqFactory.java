@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.faq;
+package de.tum.cit.aet.artemis;
 
 import java.util.HashSet;
 import java.util.Set;
