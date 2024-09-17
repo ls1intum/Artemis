@@ -3,26 +3,24 @@ import { CourseCompetenciesManagementTableComponent } from 'app/course/competenc
 import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Competency, CompetencyRelationDTO, CourseCompetencyType, dtoToCompetencyRelation } from 'app/entities/competency.model';
+import { CompetencyRelationDTO, CourseCompetency, CourseCompetencyType } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { onError } from 'app/shared/util/global.utils';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { Prerequisite } from 'app/entities/prerequisite.model';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { CourseCompetenciesRelationGraphComponent } from 'app/course/competencies/components/course-competencies-relation-graph/course-competencies-relation-graph.component';
 import { faEdit, faFileImport } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseCompetenciesRelationModalComponent } from 'app/course/competencies/components/course-competencies-relation-modal/course-competencies-relation-modal.component';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-course-competencies-instructor-page',
     standalone: true,
-    imports: [CourseCompetenciesManagementTableComponent, ArtemisSharedCommonModule, CourseCompetenciesRelationGraphComponent, ArtemisSharedComponentModule],
+    imports: [CourseCompetenciesManagementTableComponent, CourseCompetenciesRelationGraphComponent, FontAwesomeModule, ArtemisSharedComponentModule],
     templateUrl: './course-competencies-instructor-page.component.html',
-    styleUrl: './course-competencies-instructor-page.component.scss',
 })
 export class CourseCompetenciesInstructorPageComponent {
     protected readonly faFileImport = faFileImport;
@@ -40,9 +38,9 @@ export class CourseCompetenciesInstructorPageComponent {
 
     readonly courseId = toSignal(this.activatedRoute.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
 
-    readonly competencies = signal<Competency[]>([]);
-    readonly prerequisites = signal<Prerequisite[]>([]);
-    readonly courseCompetencies = computed(() => this.competencies().concat(this.prerequisites()));
+    readonly courseCompetencies = signal<CourseCompetency[]>([]);
+    readonly competencies = computed(() => this.courseCompetencies().filter((competency) => competency.type === CourseCompetencyType.COMPETENCY));
+    readonly prerequisites = computed(() => this.courseCompetencies().filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE));
     readonly relations = signal<CompetencyRelationDTO[]>([]);
 
     readonly standardizedCompetenciesEnabled = toSignal(this.featureToggleService.getFeatureToggleActive(FeatureToggle.StandardizedCompetencies), { requireSync: true });
@@ -50,30 +48,19 @@ export class CourseCompetenciesInstructorPageComponent {
     readonly isLoading = signal<boolean>(false);
 
     constructor() {
-        effect(() => this.loadData(this.courseId()), { allowSignalWrites: true });
+        effect(() => this.loadCourseCompetencies(this.courseId()), { allowSignalWrites: true });
     }
 
-    private async loadData(courseId: number) {
+    private async loadCourseCompetencies(courseId: number) {
         try {
             this.isLoading.set(true);
-            await this.loadCourseCompetencies(courseId);
-            await this.loadCourseCompetencyRelations(courseId);
+            const courseCompetencies = await this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId);
+            this.courseCompetencies.set(courseCompetencies);
         } catch (error) {
             onError(this.alertService, error);
         } finally {
             this.isLoading.set(false);
         }
-    }
-
-    private async loadCourseCompetencies(courseId: number) {
-        const courseCompetencies = await this.courseCompetencyApiService.getCourseCompetenciesByCourseId(courseId);
-        this.competencies.set(courseCompetencies.filter((competency) => competency.type === CourseCompetencyType.COMPETENCY));
-        this.prerequisites.set(courseCompetencies.filter((competency) => competency.type === CourseCompetencyType.PREREQUISITE));
-    }
-
-    private async loadCourseCompetencyRelations(courseId: number) {
-        const courseCompetencyRelations = await this.courseCompetencyApiService.getCourseCompetencyRelationsByCourseId(courseId);
-        this.relations.set(courseCompetencyRelations.map(dtoToCompetencyRelation));
     }
 
     protected openCourseCompetenciesRelationModal(): void {
@@ -84,5 +71,13 @@ export class CourseCompetenciesInstructorPageComponent {
         });
         modalRef.componentInstance.courseId = this.courseId;
         modalRef.componentInstance.courseCompetencies = this.courseCompetencies;
+    }
+
+    protected onCourseCompetencyDeletion(courseCompetencyId: number): void {
+        this.courseCompetencies.update((courseCompetencies) => courseCompetencies.filter((competency) => competency.id !== courseCompetencyId));
+    }
+
+    protected onCourseCompetenciesImport(importedCourseCompetencies: CourseCompetency[]) {
+        this.courseCompetencies.update((courseCompetencies) => [...courseCompetencies, ...importedCourseCompetencies]);
     }
 }

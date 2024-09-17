@@ -32,11 +32,26 @@
     </div>
     <div class="col-2 pe-0 d-flex justify-content-end">
         @if (relationTypeAlreadyExists()) {
-            <button (click)="deleteRelation()" class="btn btn-danger">Delete relation</button>
+            <button (click)="deleteRelation()" class="btn btn-danger">
+                @if (isLoading()) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span>Delete relation</span>
+            </button>
         } @else if (relationAlreadyExists()) {
-            <button (click)="updateRelation()" class="btn btn-info">Update relation</button>
+            <button (click)="updateRelation()" class="btn btn-info">
+                @if (isLoading()) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span>Update relation</span>
+            </button>
         } @else {
-            <button (click)="createRelation()" [disabled]="!tailCompetencyId() || !headCompetencyId() || !relationType()" class="btn btn-primary">Create relation</button>
+            <button (click)="createRelation()" [disabled]="!tailCompetencyId() || !headCompetencyId() || !relationType()" class="btn btn-primary">
+                @if (isLoading()) {
+                    <fa-icon [icon]="faSpinner" animation="spin" />
+                }
+                <span>Create relation</span>
+            </button>
         }
     </div>
 </div>

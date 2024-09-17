@@ -18,7 +18,7 @@
         <ng-template #nodeTemplate let-node>
             <svg:g [attr.width]="node.dimension.width" [attr.height]="node.dimension.height" (click)="onCourseCompetencySelection.emit(node.data.id)">
                 <svg:foreignObject class="node" [attr.width]="node.dimension.width" [attr.height]="node.dimension.height">
-                    <jhi-course-competencies-relation-node [courseCompetencyNode]="node" (onSizeSet)="setNodeDimension($event)" />
+                    <jhi-course-competency-relation-node [courseCompetencyNode]="node" (onSizeSet)="setNodeDimension($event)" />
                 </svg:foreignObject>
             </svg:g>
         </ng-template>

@@ -1,25 +1,29 @@
-import { Component, computed, inject, input, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { faEdit, faFileImport, faPlus, faRobot, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { CourseCompetency, CourseCompetencyType, getIcon } from 'app/entities/competency.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
+import { ImportAllCompetenciesComponent, ImportAllFromCourseResult } from 'app/course/competencies/competency-management/import-all-competencies.component';
+import { onError } from 'app/shared/util/global.utils';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { ImportCourseCompetenciesDirective } from 'app/course/competencies/components/import-course-competencies-directive/import-course-competencies.directive';
-import { CourseCompetencyType, getIcon } from 'app/entities/competency.model';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
     selector: 'jhi-course-competencies-management-table',
     standalone: true,
-    imports: [ArtemisSharedCommonModule, RouterLink, ArtemisMarkdownModule, ArtemisSharedModule],
+    imports: [RouterLink, ArtemisMarkdownModule, ArtemisSharedModule],
     templateUrl: './course-competencies-management-table.component.html',
     styleUrl: './course-competencies-management-table.component.scss',
 })
-export class CourseCompetenciesManagementTableComponent extends ImportCourseCompetenciesDirective {
+export class CourseCompetenciesManagementTableComponent {
     protected readonly getIcon = getIcon;
 
     protected readonly faRobot = faRobot;
@@ -30,29 +34,78 @@ export class CourseCompetenciesManagementTableComponent extends ImportCourseComp
 
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
+    private readonly modalService = inject(NgbModal);
+    private readonly alertService = inject(AlertService);
+    protected readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
 
-    readonly competencyType = input.required<CourseCompetencyType>();
+    readonly courseId = input.required<number>();
+    readonly courseCompetencies = input.required<CourseCompetency[]>();
+    readonly courseCompetencyType = input.required<CourseCompetencyType>();
     readonly standardizedCompetenciesEnabled = input.required<boolean>();
+
+    readonly onCourseCompetencyDeletion = output<number>();
+    readonly onCourseCompetenciesImport = output<CourseCompetency[]>();
 
     readonly dialogErrorSource = output<string>();
     readonly dialogError = outputToObservable(this.dialogErrorSource);
 
     private readonly profileInfo = toSignal(this.profileService.getProfileInfo());
-    private readonly irisCombinedCourseSettings = signal<IrisCourseSettings | undefined>(undefined);
+    private readonly irisCombinedSettings = signal<IrisCourseSettings | undefined>(undefined);
+    private readonly irisEnabled = computed(() => this.profileInfo()?.activeProfiles.includes(PROFILE_IRIS) ?? false);
     readonly irisCompetencyGenerationEnabled = computed(() => {
-        return (this.profileInfo()?.activeProfiles.includes(PROFILE_IRIS) ?? false) && (this.irisCombinedCourseSettings()?.irisCompetencyGenerationSettings?.enabled ?? false);
+        return this.irisEnabled() && (this.irisCombinedSettings()?.irisCompetencyGenerationSettings?.enabled ?? false);
     });
+
+    constructor() {
+        effect(() => this.loadIrisSettings(this.courseId()), { allowSignalWrites: true });
+    }
+
+    private async loadIrisSettings(courseId: number): Promise<void> {
+        if (this.irisEnabled()) {
+            try {
+                const irisCombinedSettings = await lastValueFrom(this.irisSettingsService.getCombinedCourseSettings(courseId));
+                this.irisCombinedSettings.set(irisCombinedSettings);
+            } catch (error) {
+                onError(this.alertService, error);
+            }
+        }
+    }
 
     protected async deleteCourseCompetency(courseCompetencyId: number): Promise<void> {
         try {
             await this.courseCompetencyApiService.deleteCourseCompetency(this.courseId(), courseCompetencyId);
             this.dialogErrorSource.emit('');
-            this.courseCompetencies.update((courseCompetencies) => courseCompetencies.filter((courseCompetency) => courseCompetency.id !== courseCompetencyId));
-            this.relations.update((relations) => {
-                return relations.filter((relation) => relation.headCompetencyId !== courseCompetencyId && relation.tailCompetencyId !== courseCompetencyId);
-            });
+            this.onCourseCompetencyDeletion.emit(courseCompetencyId);
         } catch (error) {
             this.dialogErrorSource.emit(error.message);
+        }
+    }
+
+    protected async openImportAllModal(courseCompetencyType: string): Promise<void> {
+        const modal = this.modalService.open(ImportAllCompetenciesComponent, { size: 'lg', backdrop: 'static' });
+        //unary operator is necessary as otherwise courseId is seen as a string and will not match.
+        modal.componentInstance.disabledIds = [+this.courseId()];
+        modal.componentInstance.competencyType = courseCompetencyType;
+        const result = await modal.result;
+        await this.importAllCompetencies(result as ImportAllFromCourseResult);
+    }
+
+    private async importAllCompetencies(result: ImportAllFromCourseResult): Promise<void> {
+        const courseTitle = result.courseForImportDTO.title ?? '';
+        try {
+            const importedCompetenciesWithTailRelation = await this.courseCompetencyApiService.importAll(this.courseId(), result.courseForImportDTO.id!, result.importRelations);
+            const importedCompetencies = importedCompetenciesWithTailRelation.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
+            if (importedCompetencies.length > 0) {
+                this.alertService.success('artemisApp.competency.importAll.success', {
+                    noOfCompetencies: importedCompetencies.length,
+                    courseTitle: courseTitle,
+                });
+                this.onCourseCompetenciesImport.emit(importedCompetencies);
+            } else {
+                this.alertService.warning('artemisApp.competency.importAll.warning', { courseTitle: courseTitle });
+            }
+        } catch (error) {
+            onError(this.alertService, error);
         }
     }
 }

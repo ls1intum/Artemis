@@ -21,7 +21,7 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
         return await this.get<CompetencyRelationDTO[]>(`${this.getBasePath(courseId)}/relations`);
     }
 
-    async updateCourseCompetencyRelationsByCourseId(courseId: number, relationId: number, newRelationType: CompetencyRelationType): Promise<void> {
+    async updateCourseCompetencyRelation(courseId: number, relationId: number, newRelationType: CompetencyRelationType): Promise<void> {
         return await this.patch<void>(`${this.getBasePath(courseId)}/relations/${relationId}`, newRelationType);
     }
 

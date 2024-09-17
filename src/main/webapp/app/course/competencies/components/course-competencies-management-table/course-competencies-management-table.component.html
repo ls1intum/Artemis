@@ -1,6 +1,6 @@
 <div>
     <div class="row m-0 align-items-center justify-content-between">
-        <h5 class="m-0 col-md-auto p-0" [jhiTranslate]="'artemisApp.' + competencyType() + '.title'"></h5>
+        <h5 class="m-0 col-md-auto p-0" [jhiTranslate]="'artemisApp.' + courseCompetencyType() + '.title'"></h5>
         <div class="col-md-auto p-0 d-flex">
             @if (irisCompetencyGenerationEnabled()) {
                 <a class="btn btn-sm btn-secondary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
@@ -11,28 +11,28 @@
             <div ngbDropdown class="ms-3">
                 <button id="importCompetenciesDropdown" class="btn btn-sm btn-secondary" ngbDropdownToggle>
                     <fa-icon [icon]="faFileImport" />
-                    <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importButton'"></span>
+                    <span [jhiTranslate]="'artemisApp.' + courseCompetencyType() + '.manage.importButton'"></span>
                 </button>
                 <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
-                    <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal(competencyType().toString())" ngbDropdownItem>
+                    <button class="btn" id="importAllCompetenciesButton" (click)="openImportAllModal(courseCompetencyType().toString())" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
-                        <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importAllButton'"></span>
+                        <span [jhiTranslate]="'artemisApp.' + courseCompetencyType() + '.manage.importAllButton'"></span>
                     </button>
-                    <a class="btn" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'import']" ngbDropdownItem>
+                    <a class="btn" [routerLink]="['/course-management', courseId(), courseCompetencyType() + '-management', 'import']" ngbDropdownItem>
                         <fa-icon [icon]="faFileImport" />
-                        <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importFromCoursesButton'"></span>
+                        <span [jhiTranslate]="'artemisApp.' + courseCompetencyType() + '.manage.importFromCoursesButton'"></span>
                     </a>
                     @if (standardizedCompetenciesEnabled()) {
-                        <a class="btn" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'import-standardized']" ngbDropdownItem>
+                        <a class="btn" [routerLink]="['/course-management', courseId(), courseCompetencyType() + '-management', 'import-standardized']" ngbDropdownItem>
                             <fa-icon [icon]="faFileImport" />
-                            <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.importStandardizedButton'"></span>
+                            <span [jhiTranslate]="'artemisApp.' + courseCompetencyType() + '.manage.importStandardizedButton'"></span>
                         </a>
                     }
                 </div>
             </div>
-            <a class="ms-3 btn btn-sm btn-secondary" [routerLink]="['/course-management', courseId(), competencyType() + '-management', 'create']">
+            <a class="ms-3 btn btn-sm btn-secondary" [routerLink]="['/course-management', courseId(), courseCompetencyType() + '-management', 'create']">
                 <fa-icon [icon]="faPlus" />
-                <span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.createButton'"></span>
+                <span [jhiTranslate]="'artemisApp.' + courseCompetencyType() + '.manage.createButton'"></span>
             </a>
         </div>
     </div>
@@ -84,7 +84,7 @@
                         <td>
                             <div class="d-flex justify-content-end">
                                 <a
-                                    [routerLink]="['/course-management', courseId(), competencyType() + '-management', competency.id, 'edit']"
+                                    [routerLink]="['/course-management', courseId(), courseCompetencyType() + '-management', competency.id, 'edit']"
                                     class="btn btn-sm btn-outline-secondary"
                                 >
                                     <fa-icon [icon]="faEdit" />
@@ -109,7 +109,7 @@
                         <td colspan="7">
                             <div class="text-center text-secondary">
                                 <small
-                                    ><em><span [jhiTranslate]="'artemisApp.' + competencyType() + '.manage.empty'"></span></em
+                                    ><em><span [jhiTranslate]="'artemisApp.' + courseCompetencyType() + '.manage.empty'"></span></em
                                 ></small>
                             </div>
                         </td>

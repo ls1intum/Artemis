@@ -2,7 +2,7 @@
     <div class="col p-3">
         <div class="row m-0">
             <span class="col p-0 h5 m-0 align-self-center">Course competency relations</span>
-            <fa-icon id="close-button" (click)="closeModal()" [icon]="closeIcon" class="col-md-auto h5 clickable m-0 p-1 pe-0" />
+            <button type="button" class="btn-close" aria-label="Close" (click)="closeModal()"></button>
         </div>
     </div>
     <hr class="m-0" />
@@ -16,18 +16,22 @@
         } @else {
             <div class="p-3">
                 <jhi-course-competency-relation-form
-                    [(selectedRelationId)]="selectedRelationId"
+                    [selectedRelationId]="selectedRelationId()"
                     [courseId]="courseId()"
-                    [(relations)]="relations"
+                    [relations]="relations()"
                     [courseCompetencies]="courseCompetencies()"
+                    (onRelationCreation)="addRelation($event)"
+                    (onRelationUpdate)="updateRelation($event)"
+                    (onRelationDeletion)="deleteRelation($event)"
+                    (onRelationDeselection)="deselectRelation()"
                 />
             </div>
             <jhi-course-competencies-relation-graph
-                [(selectedRelationId)]="selectedRelationId"
-                [(relations)]="relations"
+                [selectedRelationId]="selectedRelationId()"
+                [relations]="relations()"
                 [courseCompetencies]="courseCompetencies()"
-                (onRelationSelection)="selectRelation($event)"
                 (onCourseCompetencySelection)="selectCourseCompetency($event)"
+                (onRelationSelection)="selectRelation($event)"
             />
         }
     </div>

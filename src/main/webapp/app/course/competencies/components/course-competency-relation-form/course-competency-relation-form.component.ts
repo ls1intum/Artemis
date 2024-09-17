@@ -1,8 +1,9 @@
-import { Component, computed, effect, inject, input, model, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-competency-relation-form',
@@ -12,6 +13,8 @@ import { AlertService } from 'app/core/util/alert.service';
     styleUrl: './course-competency-relation-form.component.scss',
 })
 export class CourseCompetencyRelationFormComponent {
+    protected readonly faSpinner = faSpinner;
+
     protected readonly competencyRelationType = CompetencyRelationType;
 
     private readonly courseCompetencyApiService = inject(CourseCompetencyApiService);
@@ -19,27 +22,31 @@ export class CourseCompetencyRelationFormComponent {
 
     readonly courseId = input.required<number>();
     readonly courseCompetencies = input.required<CourseCompetency[]>();
-    readonly relations = model.required<CompetencyRelationDTO[]>();
+    readonly relations = input.required<CompetencyRelationDTO[]>();
+    readonly selectedRelationId = input.required<number | undefined>();
+    readonly onRelationDeselection = output<void>();
 
-    readonly selectedRelationId = model.required<number | undefined>();
+    readonly onRelationCreation = output<CompetencyRelationDTO>();
+    readonly onRelationUpdate = output<CompetencyRelationDTO>();
+    readonly onRelationDeletion = output<number>();
 
-    protected readonly headCompetencyId = signal<number | undefined>(undefined);
-    protected readonly tailCompetencyId = model<number | undefined>(undefined);
-    protected readonly relationType = model<CompetencyRelationType | undefined>(undefined);
+    readonly headCompetencyId = signal<number | undefined>(undefined);
+    readonly tailCompetencyId = model<number | undefined>(undefined);
+    readonly relationType = model<CompetencyRelationType | undefined>(undefined);
 
-    protected readonly isLoading = signal<boolean>(false);
+    readonly isLoading = signal<boolean>(false);
 
-    protected readonly relationAlreadyExists = computed(() =>
+    readonly relationAlreadyExists = computed(() =>
         this.relations().some((relation) => relation.headCompetencyId == this.headCompetencyId() && relation.tailCompetencyId == this.tailCompetencyId()),
     );
-    protected readonly relationTypeAlreadyExists = computed(() =>
+    readonly relationTypeAlreadyExists = computed(() =>
         this.relations().some(
             (relation) =>
                 relation.headCompetencyId == this.headCompetencyId() && relation.tailCompetencyId == this.tailCompetencyId() && relation.relationType == this.relationType(),
         ),
     );
 
-    protected readonly selectableTailCourseCompetencies = computed(() => {
+    readonly selectableTailCourseCompetencies = computed(() => {
         if (this.headCompetencyId() && this.relationType()) {
             return this.getSelectableTailCompetencies(this.headCompetencyId()!, this.relationType()!);
         }
@@ -54,22 +61,6 @@ export class CourseCompetencyRelationFormComponent {
                 if (this.selectedRelationId()) {
                     this.selectRelation(this.selectedRelationId()!);
                 }
-            },
-            { allowSignalWrites: true },
-        );
-        effect(
-            () => {
-                const relationAlreadyExists = this.relationAlreadyExists();
-                untracked(() => {
-                    if (relationAlreadyExists) {
-                        const relation = this.relations().find(
-                            ({ headCompetencyId, tailCompetencyId }) => headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId(),
-                        );
-                        this.selectedRelationId.set(relation?.id);
-                    } else {
-                        this.selectedRelationId.set(undefined);
-                    }
-                });
             },
             { allowSignalWrites: true },
         );
@@ -89,7 +80,7 @@ export class CourseCompetencyRelationFormComponent {
             this.relationType.set(undefined);
         } else {
             if (this.selectableTailCourseCompetencies().find(({ id }) => id === courseCompetencyId)) {
-                this.tailCompetencyId.set(Number(courseCompetencyId));
+                this.tailCompetencyId.set(courseCompetencyId);
             }
         }
     }
@@ -97,12 +88,14 @@ export class CourseCompetencyRelationFormComponent {
     protected selectHeadCourseCompetency(headId: string) {
         this.headCompetencyId.set(Number(headId));
         this.tailCompetencyId.set(undefined);
+        this.onRelationDeselection.emit();
     }
 
     protected resetForm() {
         this.headCompetencyId.set(undefined);
         this.tailCompetencyId.set(undefined);
         this.relationType.set(undefined);
+        this.onRelationDeselection.emit();
     }
 
     protected async createRelation(): Promise<void> {
@@ -113,9 +106,8 @@ export class CourseCompetencyRelationFormComponent {
                 tailCompetencyId: Number(this.tailCompetencyId()!),
                 relationType: this.relationType()!,
             });
-            this.relations.update((relations) => [...relations, courseCompetencyRelation]);
+            this.onRelationCreation.emit(courseCompetencyRelation);
             this.resetForm();
-            this.selectedRelationId.set(courseCompetencyRelation.id);
         } catch (error) {
             this.alertService.error(error.message);
         } finally {
@@ -125,26 +117,14 @@ export class CourseCompetencyRelationFormComponent {
 
     protected async updateRelation(): Promise<void> {
         const currentRelation = this.relations().find(
-            ({ headCompetencyId, tailCompetencyId, relationType }) =>
-                headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId() && relationType === this.relationType(),
+            ({ headCompetencyId, tailCompetencyId }) => headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId(),
         );
-        const newRelationType = this.relationType();
-        if (!newRelationType || !currentRelation) {
-            return;
-        }
         try {
             this.isLoading.set(true);
-            await this.courseCompetencyApiService.updateCourseCompetencyRelationsByCourseId(this.courseId(), currentRelation.id!, newRelationType);
-            this.relations.update((relations) => {
-                return relations.map((relation) => {
-                    if (relation.id == currentRelation.id) {
-                        return { ...relation, relationType: newRelationType };
-                    }
-                    return relation;
-                });
-            });
+            const newRelationType = this.relationType()!;
+            await this.courseCompetencyApiService.updateCourseCompetencyRelation(this.courseId(), currentRelation!.id!, newRelationType);
+            this.onRelationUpdate.emit({ ...currentRelation, relationType: newRelationType });
             this.resetForm();
-            this.selectedRelationId.set(currentRelation.id);
         } catch (error) {
             this.alertService.error(error.message);
         } finally {
@@ -159,11 +139,9 @@ export class CourseCompetencyRelationFormComponent {
                 ({ headCompetencyId, tailCompetencyId, relationType }) =>
                     headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId() && relationType === this.relationType(),
             );
-            if (deletedRelation) {
-                await this.courseCompetencyApiService.deleteCourseCompetencyRelation(this.courseId(), deletedRelation.id!);
-                this.relations.update((relations) => relations.filter(({ id }) => id !== deletedRelation.id));
-                this.resetForm();
-            }
+            await this.courseCompetencyApiService.deleteCourseCompetencyRelation(this.courseId(), deletedRelation!.id!);
+            this.onRelationDeletion.emit(deletedRelation!.id!);
+            this.resetForm();
         } catch (error) {
             this.alertService.error(error.message);
         } finally {

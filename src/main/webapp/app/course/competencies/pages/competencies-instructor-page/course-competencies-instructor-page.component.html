@@ -25,19 +25,21 @@
         <div class="p-2">
             <jhi-course-competencies-management-table
                 [courseId]="courseId()"
-                [(courseCompetencies)]="competencies"
-                [(relations)]="relations"
-                [competencyType]="CourseCompetencyType.COMPETENCY"
+                [courseCompetencies]="competencies()"
+                [courseCompetencyType]="CourseCompetencyType.COMPETENCY"
                 [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+                (onCourseCompetenciesImport)="onCourseCompetenciesImport($event)"
+                (onCourseCompetencyDeletion)="onCourseCompetencyDeletion($event)"
             />
         </div>
         <div class="p-2 mt-2">
             <jhi-course-competencies-management-table
                 [courseId]="courseId()"
-                [(courseCompetencies)]="prerequisites"
-                [(relations)]="relations"
-                [competencyType]="CourseCompetencyType.PREREQUISITE"
+                [courseCompetencies]="prerequisites()"
+                [courseCompetencyType]="CourseCompetencyType.PREREQUISITE"
                 [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+                (onCourseCompetenciesImport)="onCourseCompetenciesImport($event)"
+                (onCourseCompetencyDeletion)="onCourseCompetencyDeletion($event)"
             />
         </div>
     }
