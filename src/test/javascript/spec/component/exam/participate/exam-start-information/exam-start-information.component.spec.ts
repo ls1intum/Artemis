@@ -140,7 +140,7 @@ describe('ExamStartInformationComponent', () => {
         expect(component.startDate).toStrictEqual(examStartDate);
     });
 
-    it('should initialize start date for of the test exam correctly', () => {
+    it('should initialize start date of the test exam correctly', () => {
         const examStartDate = dayjs('2022-02-06 02:00:00');
         exam.testExam = true;
         component.exam = exam;
@@ -149,7 +149,7 @@ describe('ExamStartInformationComponent', () => {
         expect(component.startDate).toStrictEqual(examStartDate);
     });
 
-    it('should initialize end date for of the test exam correctly', () => {
+    it('should initialize end date of the test exam correctly', () => {
         const examEndDate = dayjs('2022-02-06 02:00:00').add(1, 'hours');
         exam.testExam = true;
         component.exam = exam;
