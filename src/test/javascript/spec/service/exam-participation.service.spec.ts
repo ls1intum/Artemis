@@ -19,7 +19,7 @@ import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 
 describe('ExamParticipationService', () => {
     let service: ExamParticipationService;
@@ -282,34 +282,36 @@ describe('ExamParticipationService', () => {
     });
 
     it('should throw error if submission is not in time', async () => {
+        const errorHeaders = new HttpHeaders({ 'x-null-error': 'submissionNotInTime' });
         const errorResponse = new HttpErrorResponse({
             status: 403,
-            headers: {
-                'x-null-error': 'error.submissionNotInTime',
-            },
+            headers: errorHeaders,
         });
 
         service
             .submitStudentExam(1, 1, studentExam)
             .pipe(take(1))
-            .subscribe((error) => expect(error.message).toBe('artemisApp.studentExam.submissionNotInTime'));
+            .subscribe({
+                error: (err) => expect(err.message).toBe('artemisApp.studentExam.submissionNotInTime'),
+            });
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush('Submission Not In Time', errorResponse);
     });
 
     it('should throw error if the exam was already submitted', async () => {
+        const errorHeaders = new HttpHeaders({ 'x-null-error': 'error.alreadySubmitted' });
         const errorResponse = new HttpErrorResponse({
             status: 409,
-            headers: {
-                'x-null-error': 'error.alreadySubmitted',
-            },
+            headers: errorHeaders,
         });
 
         service
             .submitStudentExam(1, 1, studentExam)
             .pipe(take(1))
-            .subscribe((error) => expect(error.message).toBe('artemisApp.studentExam.alreadySubmitted'));
+            .subscribe({
+                error: (err) => expect(err.message).toBe('artemisApp.studentExam.alreadySubmitted'),
+            });
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush('Already Submitted', errorResponse);
@@ -323,7 +325,9 @@ describe('ExamParticipationService', () => {
         service
             .submitStudentExam(1, 1, studentExam)
             .pipe(take(1))
-            .subscribe((error) => expect(error.message).toBe('artemisApp.studentExam.handInFailed'));
+            .subscribe({
+                error: (err) => expect(err.message).toBe('artemisApp.studentExam.handInFailed'),
+            });
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush('Hand-in failed', errorResponse);
