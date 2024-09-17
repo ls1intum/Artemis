@@ -71,19 +71,21 @@ export class RequestFeedbackButtonComponent implements OnInit {
     }
 
     requestFeedback() {
-        if (!this.assureConditionsSatisfied()) return;
+        this.assureConditionsSatisfied().subscribe((conditionsSatisfied: boolean) => {
+            if (!this.assureConditionsSatisfied()) return;
 
-        this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
-            next: (participation: StudentParticipation) => {
-                if (participation) {
-                    this.generatingFeedback.emit();
-                    this.feedbackSent = true;
-                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
-                }
-            },
-            error: (error) => {
-                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
-            },
+            this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
+                next: (participation: StudentParticipation) => {
+                    if (participation) {
+                        this.generatingFeedback.emit();
+                        this.feedbackSent = true;
+                        this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                    }
+                },
+                error: (error) => {
+                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                },
+            });
         });
     }
 
