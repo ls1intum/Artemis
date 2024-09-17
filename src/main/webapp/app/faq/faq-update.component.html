@@ -1,52 +1,48 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        @if (true) {
-            <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
+        <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
+            <div class="d-flex">
+                <div class="flex-grow-1">
+                    <div class="d-flex align-items-center">
+                        <h2 id="jhi-faq-heading" jhiTranslate="artemisApp.faq.home.createOrEditLabel"></h2>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="artemisApp.faq.table.questionTitle" for="field_course"></label>
+                    <div class="d-flex">
+                        <input id="field_titel" type="text" class="form-control" name="title" [(ngModel)]="faq.questionTitle" />
+                    </div>
+                </div>
+                <div class="form-group" id="field_description">
+                    <label class="form-control-label" jhiTranslate="artemisApp.faq.table.questionAnswer" for="field_description"></label>
+                    <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="faq.questionAnswer" />
+                </div>
+                <div class="form-group position-relative">
+                    <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
+                    <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
+                    <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
+                </div>
+                @if (faq.course) {
+                    <div class="form-group">
+                        <label class="form-control-label" jhiTranslate="artemisApp.faq.course" for="field_course"></label>
+                        <div class="d-flex">
+                            <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="faq.course.title" />
+                        </div>
+                    </div>
+                }
                 <div class="d-flex">
                     <div class="flex-grow-1">
-                        <div class="d-flex align-items-center">
-                            <h2 id="jhi-faq-heading" jhiTranslate="artemisApp.faq.home.createOrEditLabel"></h2>
-                        </div>
+                        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+                            <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                        </button>
+                        <button type="submit" id="save-entity" [disabled]="!canSave() || isSaving" class="btn btn-primary">
+                            <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
+                        </button>
                     </div>
                 </div>
-                <div>
-                    <div class="form-group">
-                        <label class="form-control-label" jhiTranslate="artemisApp.faq.table.questionTitle" for="field_course"></label>
-                        <div class="d-flex">
-                            <input id="field_titel" type="text" class="form-control" name="title" [(ngModel)]="faq.questionTitle" />
-                        </div>
-                    </div>
-                    <div class="form-group" id="field_description">
-                        <label class="form-control-label" jhiTranslate="artemisApp.faq.table.questionAnswer" for="field_description"></label>
-                        <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="faq.questionAnswer" />
-                    </div>
-                    <div class="form-group position-relative">
-                            <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>
-                            <jhi-help-icon text="artemisApp.exercise.categoriesTooltip" />
-                            <jhi-category-selector [categories]="exerciseCategories" [existingCategories]="existingCategories" (selectedCategories)="updateCategories($event)" />
-                    </div>
-                    @if (faq.course) {
-                        <div class="form-group">
-                            <label class="form-control-label" jhiTranslate="artemisApp.faq.course" for="field_course"></label>
-                            <div class="d-flex">
-                                <input id="field_course" disabled type="text" class="form-control" name="course" [(ngModel)]="faq.course.title" />
-                            </div>
-                        </div>
-                    }
-                    <div class="d-flex">
-                        <div class="flex-grow-1">
-                            <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-                                <fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
-                            </button>
-                            <button type="submit" id="save-entity" [disabled]="!canSave() || isSaving " class="btn btn-primary">
-                                <fa-icon [icon]="faSave" />&nbsp;<span jhiTranslate="entity.action.save"></span>
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-
-            </form>
-        }
+            </div>
+        </form>
     </div>
 </div>

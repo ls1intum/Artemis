@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -72,13 +71,13 @@ public class FaqResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("faqs")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Faq> createFaq(@RequestBody Faq faq) throws URISyntaxException {
         log.debug("REST request to save Faq : {}", faq);
         if (faq.getId() != null) {
             throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, faq.getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
 
         Faq savedFaq = faqRepository.save(faq);
         return ResponseEntity.created(new URI("/api/faqs/" + savedFaq.getId())).body(savedFaq);
@@ -92,13 +91,13 @@ public class FaqResource {
      *         Server Error) if the faq couldn't be updated
      */
     @PutMapping("faqs/{faqId}")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastInstructor
     public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq) {
         log.debug("REST request to update Faq : {}", faq);
         if (faq.getId() == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, faq.getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
         Faq result = faqRepository.save(faq);
         return ResponseEntity.ok().body(result);
     }
@@ -145,7 +144,7 @@ public class FaqResource {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(faqs);
@@ -163,7 +162,7 @@ public class FaqResource {
         log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
 
         Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
 

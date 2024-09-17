@@ -44,80 +44,76 @@
         </div>
     </div>
     <br />
-    @if (true) {
-        <div class="table-responsive">
-            <table class="table table-striped">
-                <thead>
-                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
-                        <th class="d-md-table-cell" jhiSortBy="id">
-                            <span jhiTranslate="global.field.id"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th jhiSortBy="title">
-                            <span jhiTranslate="artemisApp.faq.table.questionTitle"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th jhiSortBy="questionAnswer">
-                            <span jhiTranslate="artemisApp.faq.table.questionAnswer"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th jhiSortBy="categories">
-                            <span jhiTranslate="artemisApp.faq.table.categories"></span>
-                            <fa-icon [icon]="faSort" />
-                        </th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody class="markdown-preview" id="faq-preview">
-                    @for (faq of filteredFaq; track trackId(i, faq); let i = $index) {
-                        <tr id="faq-{{ faq.id }}">
-                            <td>
-                                <a [routerLink]="[faq.id, 'edit']">{{ faq.id }}</a>
-                            </td>
-                            <td>
-                                <p class="markdown-preview" [innerHTML]="faq.questionTitle | htmlForMarkdown"></p>
-                            </td>
-                            <td>
-                                <p class="markdown-preview" [innerHTML]="faq.questionAnswer | htmlForMarkdown"></p>
-                            </td>
-                            <td>
-                                <div style="display: flex">
-                                    @for (category of faq.categories; track category) {
-                                        <jhi-custom-exercise-category-badge [category]="category" />
-                                    }
-                                </div>
-                            </td>
 
-                            <td class="text-end">
-                                <div class="btn-group flex-btn-group-container">
-                                    <div class="btn-group-vertical me-1 mb-1">
-                                        @if (true) {
-                                            <a [routerLink]="[faq.id, 'edit']" class="btn btn-primary btn-sm">
-                                                <fa-icon [icon]="faPencilAlt" />
-                                                <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                                            </a>
-                                        }
-                                        @if (true) {
-                                            <button
-                                                class="mt-1"
-                                                jhiDeleteButton
-                                                id="delete-lecture"
-                                                [entityTitle]="faq.questionTitle || ''"
-                                                deleteQuestion="artemisApp.faq.delete.question"
-                                                deleteConfirmationText="artemisApp.faq.delete.typeNameToConfirm"
-                                                (delete)="deleteFaq(faq.id!)"
-                                                [dialogError]="dialogError$"
-                                            >
-                                                <fa-icon [icon]="faTrash" />
-                                            </button>
-                                        }
-                                    </div>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr jhiSort [(predicate)]="predicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                    <th class="d-md-table-cell" jhiSortBy="id">
+                        <span jhiTranslate="global.field.id"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="title">
+                        <span jhiTranslate="artemisApp.faq.table.questionTitle"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="questionAnswer">
+                        <span jhiTranslate="artemisApp.faq.table.questionAnswer"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th jhiSortBy="categories">
+                        <span jhiTranslate="artemisApp.faq.table.categories"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody class="markdown-preview" id="faq-preview">
+                @for (faq of filteredFaq; track trackId(i, faq); let i = $index) {
+                    <tr id="faq-{{ faq.id }}">
+                        <td>
+                            <a [routerLink]="[faq.id, 'edit']">{{ faq.id }}</a>
+                        </td>
+                        <td>
+                            <p class="markdown-preview" [innerHTML]="faq.questionTitle | htmlForMarkdown"></p>
+                        </td>
+                        <td>
+                            <p class="markdown-preview" [innerHTML]="faq.questionAnswer | htmlForMarkdown"></p>
+                        </td>
+                        <td>
+                            <div style="display: flex">
+                                @for (category of faq.categories; track category) {
+                                    <jhi-custom-exercise-category-badge [category]="category" />
+                                }
+                            </div>
+                        </td>
+
+                        <td class="text-end">
+                            <div class="btn-group flex-btn-group-container">
+                                <div class="btn-group-vertical me-1 mb-1">
+                                    <a [routerLink]="[faq.id, 'edit']" class="btn btn-primary btn-sm">
+                                        <fa-icon [icon]="faPencilAlt" />
+                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
+                                    </a>
+
+                                    <button
+                                        class="mt-1"
+                                        jhiDeleteButton
+                                        id="delete-lecture"
+                                        [entityTitle]="faq.questionTitle || ''"
+                                        deleteQuestion="artemisApp.faq.delete.question"
+                                        deleteConfirmationText="artemisApp.faq.delete.typeNameToConfirm"
+                                        (delete)="deleteFaq(faq.id!)"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faTrash" />
+                                    </button>
                                 </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 </div>

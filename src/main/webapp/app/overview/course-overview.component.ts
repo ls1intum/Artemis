@@ -452,7 +452,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         const dashboardItem: SidebarItem = {
             routerLink: 'faq',
             icon: faQuestion,
-            title: 'Faq',
+            title: 'Faqs',
             translation: 'artemisApp.courseOverview.menu.faq',
             hasInOrionProperty: false,
             showInOrionWindow: false,

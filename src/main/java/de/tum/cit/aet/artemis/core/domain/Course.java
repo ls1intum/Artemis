@@ -189,7 +189,7 @@ public class Course extends DomainObject {
     private boolean unenrollmentEnabled = false;
 
     @Column(name = "faq_enabled")
-    private boolean faqEnabled = false;
+    private Boolean faqEnabled = false;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
