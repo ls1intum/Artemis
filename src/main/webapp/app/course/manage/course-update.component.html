@@ -309,6 +309,15 @@
                     </div>
                 }
                 <div class="form-group">
+                    <div class="form-check">
+                        <input id="field_faq_enabled" class="form-check-input" type="checkbox" [(ngModel)]="faqEnabled" [ngModelOptions]="{ standalone: true }" />
+                        <label for="field_faq_Enabled" class="form-check-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.faqEnabled.label"></label>
+                        <fa-icon
+                            [icon]="faQuestionCircle"
+                            class="text-secondary"
+                            ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.faqEnabled.tooltip' | artemisTranslate }}"
+                        />
+                    </div>
                     <!-- Not part of model -->
                     <div class="form-check">
                         <input
@@ -372,15 +381,6 @@
                         <label class="form-control-label" jhiTranslate="artemisApp.course.learningPaths.label" for="field_learningPathsEnabled"></label>
                         <fa-icon [icon]="faQuestionCircle" class="text-secondary" ngbTooltip="{{ 'artemisApp.course.learningPaths.tooltip' | artemisTranslate }}" />
                     </div>
-                </div>
-                <div class="form-check">
-                    <input id="field_faq_enabled" class="form-check-input" type="checkbox" [(ngModel)]="faqEnabled" [ngModelOptions]="{ standalone: true }" />
-                    <label for="field_faq_Enabled" class="form-check-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.faqEnabled.label"></label>
-                    <fa-icon
-                        [icon]="faQuestionCircle"
-                        class="text-secondary"
-                        ngbTooltip="{{ 'artemisApp.course.courseCommunicationSetting.faqEnabled.tooltip' | artemisTranslate }}"
-                    />
                 </div>
                 @if (this.isAdmin) {
                     <div class="form-group" [jhiFeatureToggleHide]="FeatureToggle.StudentCourseAnalyticsDashboard">
