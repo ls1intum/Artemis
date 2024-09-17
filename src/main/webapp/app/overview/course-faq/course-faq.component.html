@@ -1,5 +1,5 @@
 <div>
-    <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg" [hidden]="false" style="display: flex; justify-content: end">
+    <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg" style="display: flex; justify-content: end">
         <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
             <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
                 <fa-icon [icon]="faFilter" />
@@ -10,7 +10,7 @@
                     <li>
                         <label class="d-flex align-items-center">
                             <input
-                                id="filterPast"
+                                id="'filter-' + category.category"
                                 class="ms-2 form-check-input"
                                 (change)="toggleFilters(category.category!)"
                                 [checked]="activeFilters.has(category.category!)"

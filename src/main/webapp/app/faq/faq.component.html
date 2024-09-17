@@ -22,7 +22,7 @@
                             <li>
                                 <label class="d-flex align-items-center">
                                     <input
-                                        id="filterPast"
+                                        id="category-{{ category.category }}"
                                         class="ms-2 form-check-input"
                                         (change)="toggleFilters(category.category!)"
                                         [checked]="activeFilters.has(category.category!)"
@@ -99,7 +99,7 @@
                                     <button
                                         class="mt-1"
                                         jhiDeleteButton
-                                        id="delete-lecture"
+                                        id="delete-faq"
                                         [entityTitle]="faq.questionTitle || ''"
                                         deleteQuestion="artemisApp.faq.delete.question"
                                         deleteConfirmationText="artemisApp.faq.delete.typeNameToConfirm"
