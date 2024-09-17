@@ -91,7 +91,6 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         course = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, true);
         courseWithTestRuns = courseUtilService.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResultsAndTestRunsAndTwoUsers(TEST_PREFIX, true);
-        ;
 
         userUtilService.createAndSaveUser(TEST_PREFIX + "user1337");
         userID = userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId();
