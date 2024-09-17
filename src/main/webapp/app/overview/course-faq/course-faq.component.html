@@ -1,15 +1,5 @@
 <div>
-    <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg" [hidden]="false">
-        <!-- search bar -->
-        <input
-            #courseWideSearchInput
-            name="searchText"
-            id="search"
-            [(ngModel)]="courseWideSearchTerm"
-            class="form-control"
-            (keyup.enter)="onSearch()"
-            placeholder="{{ 'artemisApp.metis.overview.searchBarDefault' | artemisTranslate }}"
-        />
+    <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg" [hidden]="false" style="display: flex; justify-content: end">
         <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="courseWideSearchTerm = ''" />
         <jhi-button id="search-submit" class="ms-1" [icon]="faSearch" (onClick)="onSearch()" />
         <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
