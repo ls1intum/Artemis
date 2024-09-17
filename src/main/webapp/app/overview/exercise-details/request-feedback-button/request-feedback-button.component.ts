@@ -17,6 +17,8 @@ import { isExamExercise } from 'app/shared/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { Observable, of } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -56,34 +58,43 @@ export class RequestFeedbackButtonComponent implements OnInit {
         this.updateParticipation();
     }
 
-    private updateParticipation() {
+    private updateParticipation(): Observable<StudentParticipation | undefined> {
         if (this.exercise().id) {
-            this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
-                this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
-            });
+            return this.exerciseService.getExerciseDetails(this.exercise().id!).pipe(
+                map((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+                    this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
+                    return this.participation;
+                }),
+            );
         }
+        return of(undefined);
     }
 
     requestFeedback() {
-        if (!this.assureConditionsSatisfied()) return;
-        if (this.exercise().type === ExerciseType.PROGRAMMING) {
-            const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
-            if (!window.confirm(confirmLockRepository)) {
+        this.assureConditionsSatisfied().subscribe((conditionsSatisfied: boolean) => {
+            if (!conditionsSatisfied) {
                 return;
             }
-        }
 
-        this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
-            next: (participation: StudentParticipation) => {
-                if (participation) {
-                    this.generatingFeedback.emit();
-                    this.feedbackSent = true;
-                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+            if (this.exercise().type === ExerciseType.PROGRAMMING) {
+                const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
+                if (!window.confirm(confirmLockRepository)) {
+                    return;
                 }
-            },
-            error: (error) => {
-                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
-            },
+            }
+
+            this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
+                next: (participation: StudentParticipation) => {
+                    if (participation) {
+                        this.generatingFeedback.emit();
+                        this.feedbackSent = true;
+                        this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                    }
+                },
+                error: (error) => {
+                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                },
+            });
         });
     }
 
@@ -95,49 +106,52 @@ export class RequestFeedbackButtonComponent implements OnInit {
      * 3. There is no already pending feedback request.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
-    assureConditionsSatisfied(): boolean {
-        this.updateParticipation();
-        if (this.exercise().type === ExerciseType.PROGRAMMING) {
-            const latestResult = this.participation?.results && this.participation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
-            const scoreNotNull = latestResult?.score !== undefined;
-            const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.submissionExists');
-            if (!scoreNotNull) {
-                window.alert(testsNotPassedWarning);
-                return false;
-            }
-        }
+    assureConditionsSatisfied(): Observable<boolean> {
+        return this.updateParticipation().pipe(
+            map(() => {
+                if (this.exercise().type === ExerciseType.PROGRAMMING) {
+                    const latestResult = this.participation?.results && this.participation.results.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
+                    const scoreNotNull = latestResult?.score !== undefined;
+                    const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.submissionExists');
+                    if (!scoreNotNull) {
+                        window.alert(testsNotPassedWarning);
+                        return false;
+                    }
+                }
 
-        const afterDueDate = !this.exercise().dueDate || dayjs().isSameOrAfter(this.exercise().dueDate);
-        const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
-        if (afterDueDate) {
-            this.alertService.warning(dueDateWarning);
-            return false;
-        }
+                const afterDueDate = !this.exercise().dueDate || dayjs().isSameOrAfter(this.exercise().dueDate);
+                const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
+                if (afterDueDate) {
+                    this.alertService.warning(dueDateWarning);
+                    return false;
+                }
 
-        const requestAlreadySent = (this.participation?.individualDueDate && this.participation.individualDueDate.isBefore(Date.now())) ?? false;
-        const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
-        if (requestAlreadySent) {
-            this.alertService.warning(requestAlreadySentWarning);
-            return false;
-        }
+                const requestAlreadySent = (this.participation?.individualDueDate && this.participation.individualDueDate.isBefore(Date.now())) ?? false;
+                const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
+                if (requestAlreadySent) {
+                    this.alertService.warning(requestAlreadySentWarning);
+                    return false;
+                }
 
-        if (this.participation?.results) {
-            const athenaResults = this.participation.results!.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA' && result.successful);
-            const countOfSuccessfulRequests = athenaResults.length;
+                if (this.participation?.results) {
+                    const athenaResults = this.participation.results!.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA' && result.successful);
+                    const countOfSuccessfulRequests = athenaResults.length;
 
-            if (countOfSuccessfulRequests >= 20) {
-                const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                this.alertService.warning(rateLimitExceededWarning);
-                return false;
-            }
-        }
+                    if (countOfSuccessfulRequests >= 20) {
+                        const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
+                        this.alertService.warning(rateLimitExceededWarning);
+                        return false;
+                    }
+                }
 
-        if (this.exercise().type !== ExerciseType.PROGRAMMING && this.hasAthenaResultForLatestSubmission()) {
-            const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
-            this.alertService.warning(submitFirstWarning);
-            return false;
-        }
-        return true;
+                if (this.exercise().type !== ExerciseType.PROGRAMMING && this.hasAthenaResultForLatestSubmission()) {
+                    const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
+                    this.alertService.warning(submitFirstWarning);
+                    return false;
+                }
+                return true;
+            }),
+        );
     }
 
     hasAthenaResultForLatestSubmission(): boolean {
