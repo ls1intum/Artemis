@@ -248,8 +248,11 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
     }
 
     if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-        if (result.successful == undefined) {
+        if (isAIResultAndIsBeingProcessed(result)) {
             return 'text-primary';
+        }
+        if (isAIResultAndFailed(result)) {
+            return 'text-danger';
         }
         return 'text-secondary';
     }
@@ -258,11 +261,11 @@ export const getTextColorClass = (result: Result | undefined, templateStatus: Re
         return 'result-late';
     }
 
-    if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {
+    if (isBuildFailedAndResultIsAutomatic(result)) {
         return 'text-danger';
     }
 
-    if (resultIsPreliminary(result) || isAIResultAndIsBeingProcessed(result) || isAIResultAndTimedOut(result)) {
+    if (resultIsPreliminary(result)) {
         return 'text-secondary';
     }
 
@@ -294,18 +297,19 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         return faQuestionCircle;
     }
 
-    if (result.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-        if (result.successful === undefined) {
-            return faCircleNotch;
-        }
-        return faQuestionCircle;
+    if (isAIResultAndProcessed(result)) {
+        return faCheckCircle;
     }
 
     if (isBuildFailedAndResultIsAutomatic(result) || isAIResultAndFailed(result)) {
         return faTimesCircle;
     }
 
-    if (resultIsPreliminary(result) || isAIResultAndTimedOut(result) || isAIResultAndIsBeingProcessed(result)) {
+    if (isAIResultAndIsBeingProcessed(result)) {
+        return faCircleNotch;
+    }
+
+    if (resultIsPreliminary(result) || isAIResultAndTimedOut(result)) {
         return faQuestionCircle;
     }
 

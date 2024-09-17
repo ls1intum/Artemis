@@ -6,6 +6,7 @@ import dayjs from 'dayjs/esm';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { orderBy as _orderBy } from 'lodash-es';
+import { isAIResultAndIsBeingProcessed } from 'app/exercises/shared/result/result.utils';
 
 /**
  * Check if the participation has changed.
@@ -102,7 +103,11 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
  * @param participation
  * @param showUngradedResults
  */
-export function getLatestResultOfStudentParticipation(participation: StudentParticipation | undefined, showUngradedResults: boolean): Result | undefined {
+export function getLatestResultOfStudentParticipation(
+    participation: StudentParticipation | undefined,
+    showUngradedResults: boolean,
+    showAthenaPreliminaryFeedback: boolean = false,
+): Result | undefined {
     if (!participation) {
         return undefined;
     }
@@ -112,7 +117,9 @@ export function getLatestResultOfStudentParticipation(participation: StudentPart
         participation.results = _orderBy(participation.results, 'completionDate', 'desc');
     }
     // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
-    const latestResult = participation.results?.find(({ rated }) => showUngradedResults || rated === true);
+    const latestResult = participation.results?.find(
+        (result) => showUngradedResults || result.rated === true || (showAthenaPreliminaryFeedback && !!isAIResultAndIsBeingProcessed(result)),
+    );
     // Make sure that the participation result is connected to the newest result.
     return latestResult ? { ...latestResult, participation: participation } : undefined;
 }

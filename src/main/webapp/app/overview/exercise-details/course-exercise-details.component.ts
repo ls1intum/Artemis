@@ -1,7 +1,7 @@
 import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription, combineLatest } from 'rxjs';
+import { combineLatest, Subscription } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
@@ -198,7 +198,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.exerciseCategories = this.exercise.categories ?? [];
         this.allowComplaintsForAutomaticAssessments = false;
         this.plagiarismCaseInfo = newExerciseDetails.plagiarismCaseInfo;
-
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
             const isAfterDateForComplaint =
@@ -243,7 +242,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private filterUnfinishedResults(participations?: StudentParticipation[]) {
         participations?.forEach((participation: Participation) => {
             if (participation.results) {
-                participation.results = participation.results.filter((result: Result) => result.completionDate && result.successful !== undefined);
+                participation.results = participation.results.filter((result: Result) => result.completionDate);
             }
         });
     }
@@ -254,7 +253,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.sortedHistoryResults = this.studentParticipations
                 .flatMap((participation) => participation.results ?? [])
                 .sort(this.resultSortFunction)
-                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful == undefined));
+                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && dayjs().isBefore(result.completionDate)));
         }
     }
 

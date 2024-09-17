@@ -229,7 +229,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
 
-        if (countOfAthenaResultsInProcessOrSuccessful >= 3) {
+        if (countOfAthenaResultsInProcessOrSuccessful >= 20) {
             throw new BadRequestAlertException("Cannot send additional AI feedback requests now. Try again later!", "participation", "preconditions not met");
         }
         if (countOfSuccessfulRequests >= 20) {
