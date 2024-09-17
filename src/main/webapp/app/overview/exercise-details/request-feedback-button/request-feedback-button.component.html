@@ -4,7 +4,7 @@
             class="btn btn-primary"
             (click)="requestFeedback()"
             [class.btn-sm]="smallButtons()"
-            [disabled]="!participation?.submissions?.last()?.submitted || isGeneratingFeedback"
+            [disabled]="!participation?.submissions?.last()?.submitted || isGeneratingFeedback()"
             [id]="'request-feedback-' + exercise().id"
             [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
         >

@@ -122,17 +122,17 @@ export class RequestFeedbackButtonComponent implements OnInit {
         }
 
         if (this.participation?.results) {
-            const athenaResults = this.participation.results!.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA');
+            const athenaResults = this.participation.results!.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA' && result.successful);
             const countOfSuccessfulRequests = athenaResults.length;
 
-            if (countOfSuccessfulRequests >= 10) {
+            if (countOfSuccessfulRequests >= 20) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
                 this.alertService.warning(rateLimitExceededWarning);
                 return false;
             }
         }
 
-        if (this.hasAthenaResultForLatestSubmission()) {
+        if (this.exercise().type !== ExerciseType.PROGRAMMING && this.hasAthenaResultForLatestSubmission()) {
             const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
             this.alertService.warning(submitFirstWarning);
             return false;
