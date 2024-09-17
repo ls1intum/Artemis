@@ -49,7 +49,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.core.web.TeamWebsocketService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
