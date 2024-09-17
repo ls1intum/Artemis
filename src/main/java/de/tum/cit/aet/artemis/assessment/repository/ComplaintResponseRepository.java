@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.assessment.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -24,8 +23,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Repository
 public interface ComplaintResponseRepository extends ArtemisJpaRepository<ComplaintResponse, Long> {
-
-    Optional<ComplaintResponse> findByComplaint_Id(Long complaintId);
 
     /**
      * This magic method counts the number of complaints responses by complaint type associated to a course id

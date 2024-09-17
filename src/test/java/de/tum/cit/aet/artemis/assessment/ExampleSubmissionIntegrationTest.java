@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -52,10 +53,13 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
     private static final String TEST_PREFIX = "examplesubmissionintegration";
 
     @Autowired
-    private GradingCriterionRepository gradingCriterionRepo;
+    private GradingCriterionRepository gradingCriterionRepository;
 
     @Autowired
-    private ExampleSubmissionRepository exampleSubmissionRepo;
+    ExampleSubmissionRepository exampleSubmissionRepository;
+
+    @Autowired
+    private ExampleSubmissionTestRepository exampleSubmissionTestRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
@@ -99,7 +103,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
                 ExampleSubmission.class, HttpStatus.OK);
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedExampleSubmission.getSubmission().getId(), emptyModel);
-        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
+        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionTestRepository.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
@@ -108,7 +112,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
                 HttpStatus.OK);
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedExampleSubmission.getSubmission().getId(), validModel);
-        storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
+        storedExampleSubmission = exampleSubmissionTestRepository.findBySubmissionId(returnedExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
     }
@@ -124,7 +128,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
                 returnedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(updateExistingExampleSubmission.getSubmission().getId(), emptyModel);
-        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(updateExistingExampleSubmission.getSubmission().getId());
+        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionTestRepository.findBySubmissionId(updateExistingExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
@@ -133,7 +137,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
                 updatedExampleSubmission, ExampleSubmission.class, HttpStatus.OK);
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(returnedUpdatedExampleSubmission.getSubmission().getId(), validModel);
-        storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(returnedUpdatedExampleSubmission.getSubmission().getId());
+        storedExampleSubmission = exampleSubmissionTestRepository.findBySubmissionId(returnedUpdatedExampleSubmission.getSubmission().getId());
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
     }
@@ -148,12 +152,12 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         Long submissionId = returnedExampleSubmission.getSubmission().getId();
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
-        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(submissionId);
+        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionTestRepository.findBySubmissionId(submissionId);
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
         request.delete("/api/example-submissions/" + storedExampleSubmission.get().getId(), HttpStatus.OK);
-        assertThat(exampleSubmissionRepo.findAllByExerciseId(modelingExercise.getId())).isEmpty();
+        assertThat(exampleSubmissionRepository.findAllByExerciseId(modelingExercise.getId())).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -167,12 +171,12 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         Long submissionId = returnedExampleSubmission.getSubmission().getId();
 
         modelingExerciseUtilService.checkModelingSubmissionCorrectlyStored(submissionId, validModel);
-        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionRepo.findBySubmissionId(submissionId);
+        Optional<ExampleSubmission> storedExampleSubmission = exampleSubmissionTestRepository.findBySubmissionId(submissionId);
         assertThat(storedExampleSubmission).as("example submission correctly stored").isPresent();
         assertThat(storedExampleSubmission.orElseThrow().getSubmission().isExampleSubmission()).as("submission flagged as example submission").isTrue();
 
         request.delete("/api/example-submissions/" + storedExampleSubmission.get().getId(), HttpStatus.OK);
-        assertThat(exampleSubmissionRepo.findAllByExerciseId(modelingExercise.getId())).isEmpty();
+        assertThat(exampleSubmissionRepository.findAllByExerciseId(modelingExercise.getId())).isEmpty();
     }
 
     @Test
@@ -293,7 +297,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         long randomId = 1233;
         request.putWithResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + randomId + "/example-text-assessment", dto, Result.class,
                 HttpStatus.NOT_FOUND);
-        assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
+        assertThat(exampleSubmissionTestRepository.findBySubmissionId(randomId)).isEmpty();
     }
 
     @Test
@@ -312,7 +316,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
         long randomId = 1233;
         request.putWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto, Result.class,
                 HttpStatus.BAD_REQUEST);
-        assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
+        assertThat(exampleSubmissionTestRepository.findBySubmissionId(randomId)).isEmpty();
     }
 
     private ExampleSubmission importExampleSubmission(Long exerciseId, Long submissionId, HttpStatus expectedStatus) throws Exception {
@@ -380,7 +384,7 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationIndepend
 
     private void testGradingCriteriaAreImported(Exercise exercise) throws Exception {
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(exercise);
-        gradingCriterionRepo.saveAll(gradingCriteria);
+        gradingCriterionRepository.saveAll(gradingCriteria);
         var studentParticipation = participationUtilService.addAssessmentWithFeedbackWithGradingInstructionsForExercise(exercise, TEST_PREFIX + "instructor1");
         Submission originalSubmission = studentParticipation.findLatestSubmission().orElseThrow();
         Optional<Result> orginalResult = resultRepository.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());

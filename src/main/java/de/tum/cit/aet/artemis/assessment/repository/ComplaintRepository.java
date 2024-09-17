@@ -210,15 +210,6 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     void deleteByResult_Id(long resultId);
 
     /**
-     * Given a user id, retrieve all complaints related to assessments made by that assessor
-     *
-     * @param assessorId - the id of the assessor
-     * @return a list of complaints
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Assessor_Id(Long assessorId);
-
-    /**
      * Given an exercise id, retrieve all complaints related to that exercise
      *
      * @param exerciseId - the id of the exercise
