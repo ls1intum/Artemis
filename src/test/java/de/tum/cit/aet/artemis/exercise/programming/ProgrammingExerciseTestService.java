@@ -2383,7 +2383,7 @@ public class ProgrammingExerciseTestService {
         createProgrammingParticipationWithSubmissionAndResult(examExercise, "student3", 100D, ZonedDateTime.now().minusDays(2L), false);
         createProgrammingParticipationWithSubmissionAndResult(examExercise, "student4", 80D, ZonedDateTime.now().minusDays(6L), false);
 
-        automaticProgrammingExerciseCleanupService.cleanupGitRepositoriesOnArtemisServer();
+        automaticProgrammingExerciseCleanupService.cleanupGitWorkingCopiesOnArtemisServer();
         // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as SpyBean
     }
 

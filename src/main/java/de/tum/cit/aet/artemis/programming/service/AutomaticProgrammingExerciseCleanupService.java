@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -88,17 +89,17 @@ public class AutomaticProgrammingExerciseCleanupService {
             log.error("Exception occurred during cleanupBuildPlansOnContinuousIntegrationServer", ex);
         }
         try {
-            cleanupGitRepositoriesOnArtemisServer();
+            cleanupGitWorkingCopiesOnArtemisServer();
         }
         catch (Exception ex) {
-            log.error("Exception occurred during cleanupGitRepositoriesOnArtemisServer", ex);
+            log.error("Exception occurred during cleanupGitWorkingCopiesOnArtemisServer", ex);
         }
     }
 
     /**
      * cleans up old local git repositories on the Artemis server
      */
-    public void cleanupGitRepositoriesOnArtemisServer() {
+    public void cleanupGitWorkingCopiesOnArtemisServer() {
         SecurityUtils.setAuthorizationObject();
         log.info("Cleanup git repositories on Artemis server");
         // we are specifically interested in exercises older than 8 weeks
@@ -134,12 +135,11 @@ public class AutomaticProgrammingExerciseCleanupService {
                 pageable);
         log.info("Found {} student participations to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
         if (uriBatch.getTotalElements() > 0) {
-            do {
-                uriBatch.forEach(this::deleteLocalRepositoryByUriString);
-                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
-                        uriBatch.nextPageable());
-            }
-            while (uriBatch.hasNext());
+            var ignored = Stream.iterate(uriBatch, Page::hasNext, page -> {
+                page.forEach(this::deleteLocalRepositoryByUriString);
+                return programmingExerciseStudentParticipationRepository.findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
+                        page.nextPageable());
+            });
             log.info("Finished cleaning local student repositories");
         }
     }
