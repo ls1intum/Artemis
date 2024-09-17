@@ -172,8 +172,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 JOIN TREAT (participation.exercise AS ProgrammingExercise) pe
             WHERE participation.repositoryUri IS NOT NULL
                 AND (
-                    (pe.dueDate IS NOT NULL AND :latestDate <= pe.dueDate AND pe.dueDate <= :earliestDate)
-                    OR (pe.exerciseGroup IS NOT NULL AND :latestDate <= pe.exerciseGroup.exam.endDate AND pe.exerciseGroup.exam.endDate <= :earliestDate)
+                    (pe.dueDate IS NOT NULL AND :earliestDate <= pe.dueDate AND pe.dueDate <= :latestDate)
+                    OR (pe.exerciseGroup IS NOT NULL AND :earliestDate <= pe.exerciseGroup.exam.endDate AND pe.exerciseGroup.exam.endDate <= :latestDate)
                 )
             """)
     Page<String> findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,

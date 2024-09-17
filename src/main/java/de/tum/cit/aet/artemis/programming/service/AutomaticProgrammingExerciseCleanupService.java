@@ -103,17 +103,17 @@ public class AutomaticProgrammingExerciseCleanupService {
         SecurityUtils.setAuthorizationObject();
         log.info("Cleanup git repositories on Artemis server");
         // we are specifically interested in exercises older than 8 weeks
-        var earliestDate = ZonedDateTime.now().minusWeeks(8).truncatedTo(ChronoUnit.DAYS);
+        var latestDate = ZonedDateTime.now().minusWeeks(8).truncatedTo(ChronoUnit.DAYS);
         // NOTE: for now we would like to cover more cases to also cleanup older repositories
-        var latestDate = earliestDate.minusYears(1).truncatedTo(ChronoUnit.DAYS);
+        var earliestDate = latestDate.minusYears(1).truncatedTo(ChronoUnit.DAYS);
 
         // Cleanup all student repos in the REPOS folder (based on the student participations) 8 weeks after the exercise due date or exam end date
         cleanStudentParticipationsRepositories(earliestDate, latestDate);
 
         // Cleanup template, tests and solution repos in the REPOS folder 8 weeks after the course or exam is over
-        log.info("Search for exercises with course or exam date from {} until {}", latestDate, earliestDate);
-        var programmingExercises = programmingExerciseRepository.findAllByRecentCourseEndDate(latestDate, earliestDate);
-        programmingExercises.addAll(programmingExerciseRepository.findAllByRecentExamEndDate(latestDate, earliestDate));
+        log.info("Search for exercises with course or exam date from {} until {}", earliestDate, latestDate);
+        var programmingExercises = programmingExerciseRepository.findAllByRecentCourseEndDate(earliestDate, latestDate);
+        programmingExercises.addAll(programmingExerciseRepository.findAllByRecentExamEndDate(earliestDate, latestDate));
         log.info("Found {} programming exercise to clean local template, test and solution: {}", programmingExercises.size(),
                 programmingExercises.stream().map(ProgrammingExercise::getProjectKey).collect(Collectors.joining(", ")));
         if (!programmingExercises.isEmpty()) {
@@ -128,18 +128,16 @@ public class AutomaticProgrammingExerciseCleanupService {
     }
 
     private void cleanStudentParticipationsRepositories(ZonedDateTime earliestDate, ZonedDateTime latestDate) {
-        log.info("Search for exercises with due date from {} until {}", latestDate, earliestDate);
+        log.info("Search for exercises with due date from {} until {}", earliestDate, latestDate);
         // Get all relevant participation ids
         Pageable pageable = Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
         Page<String> uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
                 pageable);
         log.info("Found {} student participations to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
         if (uriBatch.getTotalElements() > 0) {
-            var ignored = Stream.iterate(uriBatch, Page::hasNext, page -> {
-                page.forEach(this::deleteLocalRepositoryByUriString);
-                return programmingExerciseStudentParticipationRepository.findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
-                        page.nextPageable());
-            });
+            var batchStream = Stream.iterate(uriBatch, Page::hasNext, page -> programmingExerciseStudentParticipationRepository
+                    .findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate, page.nextPageable()));
+            batchStream.forEach(page -> page.forEach(this::deleteLocalRepositoryByUriString));
             log.info("Finished cleaning local student repositories");
         }
     }
