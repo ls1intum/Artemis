@@ -153,6 +153,15 @@ public class ProgrammingExerciseParticipationService {
         return participationOptional.get();
     }
 
+    /**
+     * Tries to retrieve a programming exercise participation for the given programming exercise, username
+     *
+     * @param exercise        the programming exercise for which to find a participation.
+     * @param username        of the user to which the participation belongs.
+     * @param withSubmissions true if the participation should be loaded with its submissions.
+     * @return the participation for the given programming exercise and user.
+     * @throws EntityNotFoundException if there is no participation for the given exercise and user.
+     */
     @NotNull
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginOrThrow(ProgrammingExercise exercise, String username,
             boolean withSubmissions) {
