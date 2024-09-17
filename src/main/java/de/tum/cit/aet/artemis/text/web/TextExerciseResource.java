@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -413,6 +414,13 @@ public class TextExerciseResource {
             participation.setResults(new HashSet<>(results));
         }
 
+        if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
+            // We want to have the preliminary feedback before the assessment due date too
+            Set<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA)
+                    .collect(Collectors.toSet());
+            participation.setResults(athenaResults);
+        }
+
         Set<Submission> submissions = participation.getSubmissions();
         participation.setSubmissions(new HashSet<>());
         for (Submission submission : submissions) {
@@ -424,7 +432,7 @@ public class TextExerciseResource {
 
                 if (!ExerciseDateService.isAfterAssessmentDueDate(textExercise)) {
                     // We want to have the preliminary feedback before the assessment due date too
-                    List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
+                    List<Result> athenaResults = submission.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
                     textSubmission.setResults(athenaResults);
                 }
 
@@ -443,12 +451,9 @@ public class TextExerciseResource {
                         result.filterSensitiveInformation();
                     }
 
-                    // only send the one latest result to the client
+                    // only send the one latest result to the client per submission
                     textSubmission.setResults(List.of(result));
-                    // participation.setResults(Set.of(result));
-                    participation.addResult(result);
                 }
-
                 participation.addSubmission(textSubmission);
             }
             if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
