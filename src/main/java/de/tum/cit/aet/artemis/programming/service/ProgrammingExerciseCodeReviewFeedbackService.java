@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static java.time.ZonedDateTime.now;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -127,7 +128,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         try {
 
-            setIndividualDueDateAndLockRepository(participation, programmingExercise, false);
             this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
             // now the client should be able to see new result
 
@@ -158,9 +158,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         feedback.setDetailText(individualFeedbackItem.description());
                         feedback.setHasLongFeedbackText(false);
                         feedback.setType(FeedbackType.AUTOMATIC);
-                        feedback.setCredits(0.0);
+                        feedback.setCredits(individualFeedbackItem.credits());
                         return feedback;
-                    }).toList();
+                    }).sorted(Comparator.comparing(Feedback::getCredits)).toList();
 
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());
@@ -175,9 +175,6 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
             automaticResult.setCompletionDate(ZonedDateTime.now());
             this.resultRepository.save(automaticResult);
             this.programmingMessagingService.notifyUserAboutNewResult(automaticResult, participation);
-        }
-        finally {
-            unlockRepository(participation, programmingExercise);
         }
     }
 

@@ -119,11 +119,15 @@
                         <div class="d-flex justify-content-end m-1">
                             <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
                         </div>
-                        @if (exercise?.assessmentType !== AssessmentType.AUTOMATIC) {
-                            <p jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
-                        }
-                        @if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
-                            <p jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
+                        @if (result?.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
+                            @if (exercise?.assessmentType !== AssessmentType.AUTOMATIC) {
+                                <p jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
+                            }
+                            @if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
+                                <p jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
+                            }
+                        } @else {
+                            <p jhiTranslate="artemisApp.result.preliminaryTooltipAthena"></p>
                         }
                     </div>
                 }

@@ -406,8 +406,8 @@ public class ParticipationResource {
 
         // Check if feedback has already been requested
         var currentDate = now();
-        var participationIndividualDueDate = participation.getIndividualDueDate();
-        if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
+        var latestResult = participation.findLatestResult();
+        if (latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate().isAfter(now())) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 
