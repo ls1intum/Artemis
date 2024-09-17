@@ -19,6 +19,7 @@ import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradeType } from 'app/entities/grading-scale.model';
+import { HttpErrorResponse } from '@angular/common/http';
 
 describe('ExamParticipationService', () => {
     let service: ExamParticipationService;
@@ -43,6 +44,7 @@ describe('ExamParticipationService', () => {
 
         exam = new Exam();
         studentExam = new StudentExam();
+        studentExam.exercises = [];
         quizSubmission = new QuizSubmission();
     });
 
@@ -264,5 +266,66 @@ describe('ExamParticipationService', () => {
             .subscribe((resp) => expect(resp).toMatchObject({ body: [studentExam] }));
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
+    });
+
+    it('should submit a StudentExam successfully', async () => {
+        const studentExamCopy = Object.assign({}, studentExam);
+        const returnedFromService = Object.assign({}, studentExamCopy);
+        service
+            .submitStudentExam(1, 1, studentExamCopy)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toBeUndefined());
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        expect(req.request.url).toBe('api/courses/1/exams/1/student-exams/submit');
+        req.flush(returnedFromService);
+    });
+
+    it('should throw error if submission is not in time', async () => {
+        const errorResponse = new HttpErrorResponse({
+            status: 403,
+            headers: {
+                'x-null-error': 'error.submissionNotInTime',
+            },
+        });
+
+        service
+            .submitStudentExam(1, 1, studentExam)
+            .pipe(take(1))
+            .subscribe((error) => expect(error.message).toBe('artemisApp.studentExam.submissionNotInTime'));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush('Submission Not In Time', errorResponse);
+    });
+
+    it('should throw error if the exam was already submitted', async () => {
+        const errorResponse = new HttpErrorResponse({
+            status: 409,
+            headers: {
+                'x-null-error': 'error.alreadySubmitted',
+            },
+        });
+
+        service
+            .submitStudentExam(1, 1, studentExam)
+            .pipe(take(1))
+            .subscribe((error) => expect(error.message).toBe('artemisApp.studentExam.alreadySubmitted'));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush('Already Submitted', errorResponse);
+    });
+
+    it('should throw a generic error if submission fails for any other reason', async () => {
+        const errorResponse = new HttpErrorResponse({
+            status: 500,
+        });
+
+        service
+            .submitStudentExam(1, 1, studentExam)
+            .pipe(take(1))
+            .subscribe((error) => expect(error.message).toBe('artemisApp.studentExam.handInFailed'));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush('Hand-in failed', errorResponse);
     });
 });
