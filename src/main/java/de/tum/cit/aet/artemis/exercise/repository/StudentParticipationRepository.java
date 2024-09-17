@@ -808,12 +808,14 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT DISTINCT p
             FROM StudentExam se
+                JOIN se.exam e
                 JOIN se.studentParticipations p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
                 LEFT JOIN FETCH r.assessor
             WHERE p.testRun = FALSE
                 AND se.id IN :studentExamId
+                AND e.testExam = TRUE
             """)
     List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(
             @Param("studentExamId") long studentExamId);
@@ -821,11 +823,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT DISTINCT p
                 FROM StudentExam se
+                    JOIN se.exam e
                     JOIN se.studentParticipations p
                     LEFT JOIN FETCH p.submissions s
                     LEFT JOIN FETCH s.results r
                 WHERE p.testRun = FALSE
                     AND se.id IN :studentExamId
+                    AND e.testExam = TRUE
             """)
     List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentExamId") long studentExamId);
 

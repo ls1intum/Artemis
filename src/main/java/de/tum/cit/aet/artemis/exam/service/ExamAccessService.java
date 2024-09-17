@@ -92,10 +92,10 @@ public class ExamAccessService {
         }
 
         if (exam.isTestExam()) {
-            return handleTestExam(exam, course, currentUser);
+            return getOrGenerateTestExam(exam, course, currentUser);
         }
         else {
-            return handleExam(examId, currentUser.getId());
+            return getNormalExam(examId, currentUser.getId());
         }
         // NOTE: the check examRepository.isUserRegisteredForExam is not necessary because we already checked before that there is a student exam in this case for the current user
     }
@@ -109,7 +109,7 @@ public class ExamAccessService {
      * @throws BadRequestAlertException If the exam had already ended
      * @throws IllegalStateException    If the user has more than one unfinished student exam
      */
-    private StudentExam handleTestExam(Exam exam, Course course, User currentUser) {
+    private StudentExam getOrGenerateTestExam(Exam exam, Course course, User currentUser) {
         StudentExam studentExam;
 
         if (this.examDateService.isExamOver(exam)) {
@@ -143,7 +143,7 @@ public class ExamAccessService {
      * @param userId the id of the User
      * @return the StudentExam
      */
-    private StudentExam handleExam(Long examId, Long userId) {
+    private StudentExam getNormalExam(Long examId, Long userId) {
         // Check that the student exam exists
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findByExamIdAndUserId(examId, userId);
         // If an studentExam can be found, we can proceed

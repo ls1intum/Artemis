@@ -143,13 +143,22 @@ public class ParticipationService {
     }
 
     /**
-     * This method is triggered when a student starts an exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
-     * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
+     * This method is triggered when a student or participant starts an exercise. It creates a `StudentParticipation` which connects the corresponding participant
+     * (either a user or team) and exercise. Additionally, for programming exercises, it configures related repository and build plan setup.
+     * For other exercise types such as modeling, text, quiz, or file-upload exercises, it also initializes and stores the corresponding submission if necessary.
+     * <p>
+     * The method handles different scenarios based on whether the exercise is part of a test exam, course exercise, or a regular exam.
+     * In the case of a test exam, previous participations are marked as finished, and a new participation is created. For regular exercises,
+     * the method ensures that either a new participation is created or an existing one is reused.
+     * <p>
+     * For programming exercises, additional steps like repository setup are handled by the `startProgrammingExercise` method.
+     * For other exercises (e.g., modeling, text, file-upload, or quiz), the participation is initialized accordingly, and, if required,
+     * an initial submission is created.
      *
-     * @param exercise                the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
-     * @param participant             the user or team who starts the exercise
-     * @param createInitialSubmission whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
-     * @return the participation connecting the given exercise and user
+     * @param exercise                the exercise that is being started. For programming exercises, template and solution participations should be eagerly loaded.
+     * @param participant             the user or team starting the exercise
+     * @param createInitialSubmission whether an initial empty submission should be created for non-programming exercises such as text, modeling, quiz, or file-upload
+     * @return the `StudentParticipation` connecting the given exercise and participant
      */
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
 
