@@ -119,7 +119,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         // save result and transmit it over websockets to notify the client about the status
         var automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
-        automaticResult.setRated(false);
+        automaticResult.setRated(true);
         automaticResult.setScore(100.0);
         automaticResult.setSuccessful(null);
         automaticResult.setCompletionDate(ZonedDateTime.now().plusMinutes(5)); // we do not want to show dates without a completion date, but we want the students to know their
