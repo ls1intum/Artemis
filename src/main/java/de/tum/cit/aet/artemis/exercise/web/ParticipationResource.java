@@ -423,7 +423,7 @@ public class ParticipationResource {
             updatedParticipation = textExerciseFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(), participation, (TextExercise) exercise);
         }
         else if (exercise instanceof ModelingExercise) {
-            updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(), participation, (ModelingExercise) exercise);
+            updatedParticipation = modelingExerciseFeedbackService.handleNonGradedFeedbackRequest(participation, (ModelingExercise) exercise);
         }
         else {
             updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
