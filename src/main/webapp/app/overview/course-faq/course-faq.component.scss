@@ -5,3 +5,9 @@
 .module-bg {
     background-color: var(--module-bg);
 }
+
+.scroll-container {
+    max-height: 80vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}

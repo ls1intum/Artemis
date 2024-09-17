@@ -81,9 +81,11 @@
                                 <p class="markdown-preview" [innerHTML]="faq.questionAnswer | htmlForMarkdown"></p>
                             </td>
                             <td>
-                                @for (category of faq.categories; track category) {
-                                    <jhi-custom-exercise-category-badge [category]="category" />
-                                }
+                                <div style="display: flex">
+                                    @for (category of faq.categories; track category) {
+                                        <jhi-custom-exercise-category-badge [category]="category" />
+                                    }
+                                </div>
                             </td>
 
                             <td class="text-end">

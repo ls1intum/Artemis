@@ -35,9 +35,11 @@
             </ul>
         </div>
     </div>
-    @for (faq of this.filteredFaq; track faq) {
-        <div class="mb-2 rounded-3 p-2 me-2 module-bg" [hidden]="false" style="width: 100%">
-            <jhi-course-faq-accordion [faq]="faq"></jhi-course-faq-accordion>
-        </div>
-    }
+    <div class="scroll-container">
+        @for (faq of this.filteredFaq; track faq) {
+            <div class="mb-2 rounded-3 p-2 me-2 module-bg" [hidden]="false" style="width: 100%">
+                <jhi-course-faq-accordion [faq]="faq"></jhi-course-faq-accordion>
+            </div>
+        }
+    </div>
 </div>
