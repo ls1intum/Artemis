@@ -346,7 +346,8 @@
         "tutorialGroups": "Übungsgruppen",
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",
-        "communication": "Kommunikation"
+        "communication": "Kommunikation",
+        "faq": "FAQ"
     },
     "connectionStatus": {
         "connected": "Verbunden",

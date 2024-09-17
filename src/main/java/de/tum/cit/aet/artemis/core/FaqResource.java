@@ -140,7 +140,7 @@ public class FaqResource {
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
      */
     @GetMapping("courses/{courseId}/faqs")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<Faq>> getFaqForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
 
@@ -152,9 +152,9 @@ public class FaqResource {
     }
 
     @GetMapping("courses/{courseId}/faq-categories")
-    @EnforceAtLeastEditor
+    @EnforceAtLeastStudent
     public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all Faqs for the course with id : {}", courseId);
+        log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
