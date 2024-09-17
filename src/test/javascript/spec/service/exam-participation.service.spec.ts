@@ -270,7 +270,6 @@ describe('ExamParticipationService', () => {
 
     it('should submit a StudentExam successfully', async () => {
         const studentExamCopy = Object.assign({}, studentExam);
-        const returnedFromService = Object.assign({}, studentExamCopy);
         service
             .submitStudentExam(1, 1, studentExamCopy)
             .pipe(take(1))
@@ -278,7 +277,7 @@ describe('ExamParticipationService', () => {
 
         const req = httpMock.expectOne({ method: 'POST' });
         expect(req.request.url).toBe('api/courses/1/exams/1/student-exams/submit');
-        req.flush(returnedFromService);
+        req.flush(null);
     });
 
     it('should throw error if submission is not in time', async () => {
