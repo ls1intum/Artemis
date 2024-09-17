@@ -43,6 +43,7 @@ test.describe('Test Exam - student exams', () => {
         exam = await examAPIRequests.createExam(examConfig);
         examExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
 
+        await participateInExam(studentThree, course, exam, false, false, examParticipation, examNavigation);
         await participateInExam(studentOne, course, exam, true, true, examParticipation, examNavigation);
         await participateInExam(studentTwo, course, exam, true, false, examParticipation, examNavigation);
         await participateInExam(studentThree, course, exam, false, false, examParticipation, examNavigation);
@@ -69,14 +70,17 @@ test.describe('Test Exam - student exams', () => {
 
             await studentExamManagement.checkExamStudent(studentOne.username);
             await studentExamManagement.checkExamStudent(studentTwo.username);
+            await studentExamManagement.checkExamStudent(studentThree.username);
 
-            await expect(studentExamManagement.getStudentExamRows()).toHaveCount(2);
+            await expect(studentExamManagement.getStudentExamRows()).toHaveCount(3);
 
             await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Started', 'Yes');
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Started', 'Yes');
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Started', 'No');
 
             await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Submitted', 'Yes');
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Submitted', 'No');
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Submitted', 'No');
 
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Used working time', '0s');
         });
