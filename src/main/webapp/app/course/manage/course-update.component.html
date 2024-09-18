@@ -310,8 +310,8 @@
                 }
                 <div class="form-group">
                     <div class="form-check">
-                        <input id="field_faq_enabled" class="form-check-input" type="checkbox" [(ngModel)]="faqEnabled" [ngModelOptions]="{ standalone: true }" />
-                        <label for="field_faq_enabled" class="form-check-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.faqEnabled.label"></label>
+                        <input type="checkbox" class="form-check-input" name="faqEnabled" [checked]="faqEnabled" id="field_faq_enabled" formControlName="faqEnabled" />
+                        <label for="field_faq_enabled" class="form-control-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.faqEnabled.label"></label>
                         <fa-icon
                             [icon]="faQuestionCircle"
                             class="text-secondary"

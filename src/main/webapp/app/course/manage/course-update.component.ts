@@ -193,6 +193,7 @@ export class CourseUpdateComponent implements OnInit {
                 studentCourseAnalyticsDashboardEnabled: new FormControl(this.course.studentCourseAnalyticsDashboardEnabled),
                 onlineCourse: new FormControl(this.course.onlineCourse),
                 complaintsEnabled: new FormControl(this.complaintsEnabled),
+                faqEnabled: new FormControl(this.faqEnabled),
                 requestMoreFeedbackEnabled: new FormControl(this.requestMoreFeedbackEnabled),
                 maxPoints: new FormControl(this.course.maxPoints, {
                     validators: [Validators.min(1)],
@@ -285,7 +286,6 @@ export class CourseUpdateComponent implements OnInit {
         if (this.courseForm.controls['organizations'] !== undefined) {
             this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
         }
-
         let file = undefined;
         if (this.courseImageUploadFile && this.croppedImage) {
             const base64Data = this.croppedImage.replace('data:image/png;base64,', '');

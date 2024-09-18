@@ -109,7 +109,7 @@
                 },
                 "faqEnabled": {
                     "label": "FAQ Enabled",
-                    "tooltip": "Enables the creation of FAQ entries where instructors can collect frequently asked questions. Students can access this knowledge base to review independently and clarify their questions."
+                    "tooltip": "Enables the creation of FAQ entries where instructors can compile frequently asked questions in an organized manner. Students can access this knowledge base to independently review topics and resolve their questions on their own."
                 }
             },
             "enrollmentEnabled": {

@@ -109,7 +109,7 @@
                 },
                 "faqEnabled": {
                     "label": "FAQ aktivieren",
-                    "tooltip": "Ermöglicht das Erstellen von FAQ-Einträgen, in denen Lehrende häufig gestellte Fragen sammeln. Studierende können auf diese Wissenssammlung zugreifen, um eigenständig nachzuarbeiten und ihre Fragen zu klären."
+                    "tooltip": "Ermöglicht das Anlegen von FAQ-Einträgen, in denen Lehrende häufig gestellte Fragen übersichtlich sammeln. Studierende können auf diese Wissensbasis zugreifen, um selbstständig Themen nachzuarbeiten und offene Fragen eigenständig zu klären."
                 }
             },
             "enrollmentEnabled": {
