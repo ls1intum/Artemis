@@ -27,7 +27,7 @@
                 <svg:path class="line" [class.selected]="selectedRelationId() == link.data.id" stroke-width="2" marker-end="url(#arrow)" />
                 <svg:text class="edge-label" text-anchor="middle">
                     <textPath class="text-path" [attr.href]="'#' + link.id" [style.dominant-baseline]="link.dominantBaseline" startOffset="50%">
-                        {{ ('artemisApp.competency.relation.type.' + link.label | artemisTranslate).toUpperCase() }}
+                        {{ ('artemisApp.courseCompetency.relations.relationTypes.' + link.label | artemisTranslate).toUpperCase() }}
                     </textPath>
                 </svg:text>
             </svg:g>

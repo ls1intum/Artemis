@@ -15,11 +15,12 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CourseCompetenciesRelationModalComponent } from 'app/course/competencies/components/course-competencies-relation-modal/course-competencies-relation-modal.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-course-competencies-instructor-page',
     standalone: true,
-    imports: [CourseCompetenciesManagementTableComponent, CourseCompetenciesRelationGraphComponent, FontAwesomeModule, ArtemisSharedComponentModule],
+    imports: [CourseCompetenciesManagementTableComponent, CourseCompetenciesRelationGraphComponent, FontAwesomeModule, ArtemisSharedComponentModule, TranslateDirective],
     templateUrl: './course-competencies-instructor-page.component.html',
 })
 export class CourseCompetenciesInstructorPageComponent {

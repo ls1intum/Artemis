@@ -1,30 +1,26 @@
 <div class="course-competency-relation-form-container row m-0 p-3 align-items-end">
     <div class="form-group col m-0 ps-0">
-        <label for="head" jhiTranslate="artemisApp.competency.relation.headCompetency"></label>
+        <label for="head" jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyLabel"></label>
         <select class="form-select mt-1" id="head" name="head" [ngModel]="headCompetencyId()" (ngModelChange)="selectHeadCourseCompetency($event)">
-            <option [value]="undefined" disabled>Select head course competency</option>
+            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.headCourseCompetencyDefaultOption"></option>
             @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
                 <option [value]="courseCompetency.id">{{ courseCompetency.title }}</option>
             }
         </select>
     </div>
     <div class="form-group col m-0">
-        <label for="type" jhiTranslate="artemisApp.competency.relation.relationType"></label>
+        <label for="type" jhiTranslate="artemisApp.courseCompetency.relations.form.relationTypeLabel"></label>
         <select class="form-select mt-1" id="type" name="type" [(ngModel)]="relationType">
-            <option [value]="undefined" disabled>Select relation type</option>
+            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.relationTypeDefaultOption"></option>
             @for (relationType of competencyRelationType | keyvalue; track relationType) {
-                <option
-                    [value]="relationType.value"
-                    [jhiTranslate]="'artemisApp.competency.relation.type.' + relationType.value"
-                    [title]="'artemisApp.competency.relation.typeExplanation.' + relationType.value | artemisTranslate"
-                ></option>
+                <option [value]="relationType.value" [jhiTranslate]="'artemisApp.courseCompetency.relations.relationTypes.' + relationType.value"></option>
             }
         </select>
     </div>
     <div class="form-group col m-0">
-        <label for="tail" jhiTranslate="artemisApp.competency.relation.tailCompetency"></label>
+        <label for="tail" jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyLabel"></label>
         <select class="form-select mt-1" id="tail" name="tail" [(ngModel)]="tailCompetencyId">
-            <option [value]="undefined" disabled>Select tail course competency</option>
+            <option [value]="undefined" disabled jhiTranslate="artemisApp.courseCompetency.relations.form.tailCourseCompetencyDefaultOption"></option>
             @for (courseCompetency of selectableTailCourseCompetencies(); track courseCompetency.id) {
                 <option [value]="courseCompetency.id">{{ courseCompetency.title }}</option>
             }
@@ -36,21 +32,21 @@
                 @if (isLoading()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 }
-                <span>Delete relation</span>
+                <span jhiTranslate="artemisApp.courseCompetency.relations.form.deleteRelationButtonLabel"></span>
             </button>
         } @else if (relationAlreadyExists()) {
             <button (click)="updateRelation()" class="btn btn-info">
                 @if (isLoading()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 }
-                <span>Update relation</span>
+                <span jhiTranslate="artemisApp.courseCompetency.relations.form.updateRelationButtonLabel"></span>
             </button>
         } @else {
             <button (click)="createRelation()" [disabled]="!tailCompetencyId() || !headCompetencyId() || !relationType()" class="btn btn-primary">
                 @if (isLoading()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
                 }
-                <span>Create relation</span>
+                <span jhiTranslate="artemisApp.courseCompetency.relations.form.createRelationButtonLabel"></span>
             </button>
         }
     </div>

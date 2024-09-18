@@ -1,17 +1,17 @@
 <div class="col">
     <div class="d-flex mb-2 justify-content-between align-items-center p-2">
         <div class="d-flex align-items-center justify-content-center">
-            <h4 class="m-0 me-2">Course competency Management</h4>
+            <h4 class="m-0 me-2" jhiTranslate="artemisApp.courseCompetency.manage.title"></h4>
             <jhi-documentation-button [type]="documentationType" />
         </div>
         <div class="d-flex">
             <button class="btn btn-sm btn-primary" id="openCourseCompetencyRelationsButton" (click)="openCourseCompetenciesRelationModal()">
                 <fa-icon [icon]="faEdit" />
-                <span>Edit course competency relations</span>
+                <span jhiTranslate="artemisApp.courseCompetency.manage.editRelationsButtonLabel"></span>
             </button>
             <button class="ms-3 btn btn-sm btn-primary" id="importAllCourseCompetenciesButton">
                 <fa-icon [icon]="faFileImport" />
-                <span>Import all of course</span>
+                <span jhiTranslate="artemisApp.courseCompetency.manage.importAllButtonLabel"></span>
             </button>
         </div>
     </div>

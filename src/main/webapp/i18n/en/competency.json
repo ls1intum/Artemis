@@ -174,7 +174,9 @@
             "softDueDate": "Recommended until",
             "masteryThreshold": "Mastery threshold",
             "manage": {
-                "importAllButton": "Import all of a course"
+                "title": "Course competency management",
+                "importAllButtonLabel": "Import all of a course",
+                "editRelationsButtonLabel": "Edit Course Competency Relations"
             },
             "importAll": {
                 "title": "Import all Competencies and Prerequisites from another course",
@@ -223,6 +225,35 @@
                 "softDueDate": "Recommended until",
                 "masteredStudents": "Mastered students",
                 "optional": "Optional"
+            },
+            "relations": {
+                "modalTitle": "Course competency relations",
+                "relationTypes": {
+                    "ASSUMES": "Assumes",
+                    "EXTENDS": "Extends",
+                    "MATCHES": "Matches"
+                },
+                "form": {
+                    "headCourseCompetencyLabel": "Head course Competency",
+                    "headCourseCompetencyDefaultOption": "Select head course competency",
+                    "tailCourseCompetencyLabel": "Tail course Competency",
+                    "tailCourseCompetencyDefaultOption": "Select tail course competency",
+                    "relationTypeLabel": "Relation Type",
+                    "relationTypeDefaultOption": "Select relation type",
+                    "deleteRelationButtonLabel": "Delete Relation",
+                    "updateRelationButtonLabel": "Update Relation",
+                    "createRelationButtonLabel": "Create Relation"
+                },
+                "graph": {
+                    "nodeTypes": {
+                        "competency": "C",
+                        "prerequisite": "P"
+                    },
+                    "tooltips": {
+                        "competency": "This node represents a Competency",
+                        "prerequisite": "This node represents a Prerequisite"
+                    }
+                }
             }
         },
         "prerequisite": {

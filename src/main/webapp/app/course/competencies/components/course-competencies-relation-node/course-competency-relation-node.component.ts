@@ -3,11 +3,14 @@ import { SizeUpdate } from 'app/course/learning-paths/components/competency-node
 import { Node } from '@swimlane/ngx-graph';
 import { CourseCompetencyType } from 'app/entities/competency.model';
 import { NgClass } from '@angular/common';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-course-competency-relation-node',
     standalone: true,
-    imports: [NgClass],
+    imports: [NgClass, TranslateDirective, NgbTooltipModule, ArtemisSharedModule],
     templateUrl: './course-competency-relation-node.component.html',
     styleUrl: './course-competency-relation-node.component.scss',
 })
