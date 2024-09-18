@@ -43,48 +43,49 @@
                 <tr>
                     <th class="col-md-auto">#</th>
                     <th class="col">
-                        <span jhiTranslate="artemisApp.competency.title"></span>
+                        <span jhiTranslate="artemisApp.courseCompetency.managementTableColumns.title"></span>
                     </th>
                     <th class="col-4">
-                        <span jhiTranslate="artemisApp.competency.description"></span>
+                        <span jhiTranslate="artemisApp.courseCompetency.managementTableColumns.description"></span>
                     </th>
                     <th class="col">
-                        <span>Soft due date</span>
+                        <span jhiTranslate="artemisApp.courseCompetency.managementTableColumns.softDueDate"></span>
                     </th>
                     <th class="col">
-                        <span jhiTranslate="artemisApp.competency.masteredStudents"></span>
+                        <span jhiTranslate="artemisApp.courseCompetency.managementTableColumns.masteredStudents"></span>
                     </th>
                     <th class="col-1">
-                        <span jhiTranslate="artemisApp.competency.optional"></span>
+                        <span jhiTranslate="artemisApp.courseCompetency.managementTableColumns.optional"></span>
                     </th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
-                @for (competency of courseCompetencies(); track competency.id) {
+                @for (courseCompetency of courseCompetencies(); track courseCompetency.id) {
                     <tr>
-                        <td class="col-md-auto">{{ competency.id }}</td>
+                        <td class="col-md-auto">{{ courseCompetency.id }}</td>
                         <td class="col">
                             <div class="d-flex align-items-center">
-                                <fa-icon [icon]="getIcon(competency.taxonomy)" />
-                                <a class="ms-2" [routerLink]="['/courses', courseId(), 'competencies', competency.id]">
-                                    {{ competency.title }}
+                                @let taxonomy = courseCompetency.taxonomy ?? 'none';
+                                <fa-icon [icon]="getIcon(courseCompetency.taxonomy)" [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + taxonomy | artemisTranslate" />
+                                <a class="ms-2" [routerLink]="['/courses', courseId(), 'competencies', courseCompetency.id]">
+                                    {{ courseCompetency.title }}
                                 </a>
                             </div>
                         </td>
-                        <td class="col markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></td>
-                        <td class="col">{{ competency.softDueDate | artemisDate }}</td>
+                        <td class="col markdown-preview" [innerHTML]="courseCompetency.description | htmlForMarkdown"></td>
+                        <td class="col">{{ courseCompetency.softDueDate | artemisDate }}</td>
                         <td class="col">
-                            {{ (competency.courseProgress?.numberOfMasteredStudents ?? 0) / (competency.courseProgress?.numberOfStudents ?? 1) }}
+                            {{ (courseCompetency.courseProgress?.numberOfMasteredStudents ?? 0) / (courseCompetency.courseProgress?.numberOfStudents ?? 1) }}
                             %
                         </td>
                         <td class="col-1">
-                            <span [jhiTranslate]="'global.generic.' + (competency.optional ? 'yes' : 'no')"></span>
+                            <span [jhiTranslate]="'global.generic.' + (courseCompetency.optional ? 'yes' : 'no')"></span>
                         </td>
                         <td>
                             <div class="d-flex justify-content-end">
                                 <a
-                                    [routerLink]="['/course-management', courseId(), courseCompetencyType() + '-management', competency.id, 'edit']"
+                                    [routerLink]="['/course-management', courseId(), courseCompetencyType() + '-management', courseCompetency.id, 'edit']"
                                     class="btn btn-sm btn-outline-secondary"
                                 >
                                     <fa-icon [icon]="faEdit" />
@@ -92,10 +93,10 @@
                                 </a>
                                 <button
                                     jhiDeleteButton
-                                    [entityTitle]="competency.title ?? ''"
-                                    [deleteQuestion]="'artemisApp.competency.competencyCard.delete.question'"
-                                    [deleteConfirmationText]="'artemisApp.competency.competencyCard.delete.typeNameToConfirm'"
-                                    (delete)="deleteCourseCompetency(competency.id!)"
+                                    [entityTitle]="courseCompetency.title ?? ''"
+                                    [deleteQuestion]="'artemisApp.' + courseCompetencyType() + '.delete.question'"
+                                    [deleteConfirmationText]="'artemisApp.' + courseCompetencyType() + '.delete.confirmationText'"
+                                    (delete)="deleteCourseCompetency(courseCompetency.id!)"
                                     [dialogError]="dialogError"
                                     class="ms-3 btn btn-sm"
                                 >

@@ -225,7 +225,7 @@ describe('CourseCompetenciesManagementTable', () => {
             result: modalResult,
         } as any);
         jest.spyOn(courseCompetencyApiService, 'importAll').mockRejectedValue(new Error('Error'));
-        const errorSpy = jest.spyOn(alertService, 'addAlert');
+        const errorSpy = jest.spyOn(alertService, 'error');
 
         const importAllButton = fixture.nativeElement.querySelector('#importAllCompetenciesButton');
         importAllButton.click();

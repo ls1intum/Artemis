@@ -15,11 +15,12 @@ import { onError } from 'app/shared/util/global.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { lastValueFrom } from 'rxjs';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @Component({
     selector: 'jhi-course-competencies-management-table',
     standalone: true,
-    imports: [RouterLink, ArtemisMarkdownModule, ArtemisSharedModule],
+    imports: [RouterLink, ArtemisMarkdownModule, ArtemisSharedModule, ArtemisSharedComponentModule],
     templateUrl: './course-competencies-management-table.component.html',
     styleUrl: './course-competencies-management-table.component.scss',
 })
@@ -87,25 +88,25 @@ export class CourseCompetenciesManagementTableComponent {
         modal.componentInstance.disabledIds = [+this.courseId()];
         modal.componentInstance.competencyType = courseCompetencyType;
         const result = await modal.result;
-        await this.importAllCompetencies(result as ImportAllFromCourseResult);
+        await this.importAllCourseCompetencies(result as ImportAllFromCourseResult);
     }
 
-    private async importAllCompetencies(result: ImportAllFromCourseResult): Promise<void> {
+    private async importAllCourseCompetencies(result: ImportAllFromCourseResult): Promise<void> {
         const courseTitle = result.courseForImportDTO.title ?? '';
         try {
             const importedCompetenciesWithTailRelation = await this.courseCompetencyApiService.importAll(this.courseId(), result.courseForImportDTO.id!, result.importRelations);
             const importedCompetencies = importedCompetenciesWithTailRelation.map((dto) => dto.competency).filter((element): element is CourseCompetency => !!element);
             if (importedCompetencies.length > 0) {
-                this.alertService.success('artemisApp.competency.importAll.success', {
-                    noOfCompetencies: importedCompetencies.length,
+                this.alertService.success(`artemisApp.${this.courseCompetencyType()}.importAll.success`, {
+                    noOfCourseCompetencies: importedCompetencies.length,
                     courseTitle: courseTitle,
                 });
                 this.onCourseCompetenciesImport.emit(importedCompetencies);
             } else {
-                this.alertService.warning('artemisApp.competency.importAll.warning', { courseTitle: courseTitle });
+                this.alertService.warning(`artemisApp.${this.courseCompetencyType()}.importAll.warning`, { courseTitle: courseTitle });
             }
         } catch (error) {
-            onError(this.alertService, error);
+            this.alertService.error(error);
         }
     }
 }

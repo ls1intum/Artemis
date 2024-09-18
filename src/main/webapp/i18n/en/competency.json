@@ -38,9 +38,7 @@
                 "importStandardizedButton": "Import standardized competencies",
                 "createButton": "Create competency",
                 "generateButton": "Generate Competencies",
-                "empty": "No competencies exist for this course",
-                "deleteRelationModalTitle": "Confirm Delete",
-                "deleteRelationModalText": "Are you sure you want to delete the relation between \"{{titleTail}}\" and \"{{titleHead}}\"?"
+                "empty": "No competencies exist for this course"
             },
             "import": {
                 "title": "Import Competencies",
@@ -113,6 +111,10 @@
             },
             "edit": {
                 "title": "Edit a competency"
+            },
+            "delete": {
+                "question": "Do you really want to delete the competency <strong>{{ title }}</strong>? You can not undo this action!",
+                "confirmationText": "Please enter the name of the competency for confirmation."
             },
             "link": {
                 "title": "Linked Competencies",
@@ -214,6 +216,13 @@
                 "ANALYZE": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
                 "EVALUATE": "appraise, argue, choose, defend, judge, select, support, value, critique",
                 "CREATE": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
+            },
+            "managementTableColumns": {
+                "title": "Title",
+                "description": "Description",
+                "softDueDate": "Recommended until",
+                "masteredStudents": "Mastered students",
+                "optional": "Optional"
             }
         },
         "prerequisite": {
@@ -255,6 +264,10 @@
             },
             "edit": {
                 "title": "Edit a Prerequisite"
+            },
+            "delete": {
+                "question": "Do you really want to delete the prerequisite <strong>{{ title }}</strong>? You can not undo this action!",
+                "confirmationText": "Please enter the name of the prerequisite for confirmation."
             },
             "importAll": {
                 "title": "Import all Prerequisites from another course",

@@ -5,7 +5,7 @@
             "deleted": "Kompetenz gelöscht",
             "updated": "Kompetenz bearbeitet",
             "competencyButton": "Kompetenzen",
-            "title": "Titel",
+            "title": "Kompetenzen",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
             "softDueDate": "Empfohlen bis",
@@ -98,7 +98,7 @@
                     "SHORT_NAME": "Kurzname",
                     "doImport": "Auswählen"
                 },
-                "success": "{{ noOfCompetencies }} Kompetezen aus dem Kurs \"{{ courseTitle }}\" importiert.",
+                "success": "{{ noOfCourseCompetencies }} Kompetezen aus dem Kurs \"{{ courseTitle }}\" importiert.",
                 "warning": "Es wurden keine Kompetenzen für den Kurs \"{{ courseTitle }}\" gefunden."
             },
             "create": {
@@ -113,6 +113,10 @@
             },
             "edit": {
                 "title": "Bearbeite eine Kompetenz"
+            },
+            "delete": {
+                "question": "Willst du wirklich die Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                "confirmationText": "Bitte gib zur Bestätigung den Namen der Kompetenz ein."
             },
             "link": {
                 "title": "Verbundene Kompetenzen",
@@ -191,6 +195,13 @@
                 "EVALUATE": "beurteilen, argumentieren, wählen, verteidigen, bewerten, auswählen, unterstützen, einschätzen, kritisieren",
                 "CREATE": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
             },
+            "managementTableColumns": {
+                "title": "Titel",
+                "description": "Beschreibung",
+                "softDueDate": "Empfohlen bis",
+                "masteredStudents": "Studierende mit Kompetenz",
+                "optional": "Optional"
+            },
             "create": {
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs",
                 "suggestedTaxonomy": "Vorschlag",
@@ -238,6 +249,18 @@
                 "selectedTableHeader": "Ausgewählte Kompetenzen",
                 "selectedTableEmpty": "Keine Kompetenzen zum Import als Voraussetzungen ausgewählt"
             },
+            "importAll": {
+                "title": "Alle Voraussetzungen eines Kurses importieren",
+                "search": "Suche nach einem Kurs:",
+                "table": {
+                    "TITLE": "Titel",
+                    "SEMESTER": "Semester",
+                    "SHORT_NAME": "Kurzname",
+                    "doImport": "Auswählen"
+                },
+                "success": "{{ noOfCourseCompetencies }} Voraussetzungen aus dem Kurs \"{{ courseTitle }}\" importiert.",
+                "warning": "Es wurden keine Voraussetzungen für den Kurs \"{{ courseTitle }}\" gefunden."
+            },
             "create": {
                 "title": "Erstelle eine neue Voraussetzung",
                 "titlePlaceholder": "Gib der Voraussetzung einen Titel",
@@ -250,6 +273,10 @@
             },
             "edit": {
                 "title": "Bearbeite eine Voraussetzung"
+            },
+            "delete": {
+                "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                "confirmationText": "Bitte gib zur Bestätigung den Namen der Voraussetzung ein."
             },
             "competencyCard": {
                 "delete": {
