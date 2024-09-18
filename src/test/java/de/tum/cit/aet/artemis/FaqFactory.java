@@ -9,12 +9,12 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 
 public class FaqFactory {
 
-    public static Faq generateFaq(Course course) {
+    public static Faq generateFaq(Course course, FaqState state, String title, String answer) {
         Faq faq = new Faq();
         faq.setCourse(course);
-        faq.setFaqState(FaqState.ACCEPTED);
-        faq.setQuestionAnswer("Answer");
-        faq.setQuestionTitle("Title");
+        faq.setFaqState(state);
+        faq.setQuestionTitle(title);
+        faq.setQuestionAnswer(answer);
         faq.setCategories(generateFaqCategories());
         return faq;
     }

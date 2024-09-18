@@ -21,7 +21,7 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-catego
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
-    styleUrls: ['../course-overview.scss', './course-faq.component.scss'],
+    styleUrls: ['../course-overview.scss', './course-faq.component.scss', '../../faq/faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
     providers: [MetisService],
     standalone: true,

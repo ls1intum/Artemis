@@ -34,7 +34,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 1, numberOfTutors, 0, 1);
         List<Course> courses = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(courses.getFirst().getId());
-        this.faq = FaqFactory.generateFaq(course1);
+        this.faq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "answer", "title");
         faqRepository.save(this.faq);
         // Add users that are not in the course
         userUtilService.createAndSaveUser(TEST_PREFIX + "student42");
@@ -64,7 +64,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFaq_correctRequestBody_shouldCreateFaq() throws Exception {
-        Faq newFaq = FaqFactory.generateFaq(course1);
+        Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
         Faq returnedFaq = request.postWithResponseBody("/api/faqs", newFaq, Faq.class, HttpStatus.CREATED);
         assertThat(returnedFaq).isNotNull();
         assertThat(returnedFaq.getId()).isNotNull();
@@ -99,6 +99,8 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(updatedFaq.getQuestionAnswer()).isEqualTo("Update");
         assertThat(updatedFaq.getFaqState()).isEqualTo(FaqState.PROPOSED);
         assertThat(updatedFaq.getCategories()).isEqualTo(newCategories);
+        assertThat(updatedFaq.getCreatedDate()).isNotNull();
+        assertThat(updatedFaq.getLastModifiedDate()).isNotNull();
     }
 
     @Test

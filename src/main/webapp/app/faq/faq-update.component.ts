@@ -57,7 +57,7 @@ export class FAQUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.activatedRoute.parent!.data.subscribe((data) => {
+        this.activatedRoute.parent?.data.subscribe((data) => {
             // Create a new faq to use unless we fetch an existing faq
             const faq = data['faq'];
             this.faq = faq ?? new Faq();
@@ -91,7 +91,6 @@ export class FAQUpdateComponent implements OnInit {
             this.subscribeToSaveResponse(this.faqService.update(this.faq));
         } else {
             // Newly created faq must have a channel name, which cannot be undefined
-            console.log(this.faq);
             this.subscribeToSaveResponse(this.faqService.create(this.faq));
         }
     }
@@ -114,12 +113,17 @@ export class FAQUpdateComponent implements OnInit {
             this.faqService.find(faq.id!).subscribe({
                 next: (response: HttpResponse<Faq>) => {
                     this.isSaving = false;
-                    this.faq = response.body!;
+                    const faqBody = response.body;
+                    if (faqBody) {
+                        this.faq = faqBody;
+                    }
                     this.alertService.success(`FAQ with title ${faq.questionTitle} was successfully created.`);
+                    this.router.navigate(['course-management', faq.course!.id, 'faqs']);
                 },
             });
         } else {
             this.isSaving = false;
+            this.alertService.success(`FAQ with title ${faq.questionTitle} was successfully updated.`);
             this.router.navigate(['course-management', faq.course!.id, 'faqs']);
         }
     }
@@ -130,7 +134,7 @@ export class FAQUpdateComponent implements OnInit {
      */
     protected onSaveError(errorRes: HttpErrorResponse) {
         this.isSaving = false;
-        if (errorRes.error && errorRes.error.title) {
+        if (errorRes.error?.title) {
             this.alertService.addErrorAlert(errorRes.error.title, errorRes.error.message, errorRes.error.params);
         } else {
             onError(this.alertService, errorRes);

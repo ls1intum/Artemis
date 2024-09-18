@@ -67,7 +67,7 @@ export class FAQComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy(): void {
-        this.dialogErrorSource.unsubscribe();
+        this.dialogErrorSource.complete();
     }
 
     trackId(index: number, item: Faq) {
