@@ -87,6 +87,7 @@ public class LtiDeepLinkingService {
         uriComponentsBuilder.queryParam("jwt", jwt);
         uriComponentsBuilder.queryParam("id", lti13DeepLinkingResponse.deploymentId());
         uriComponentsBuilder.queryParam("deepLinkUri", UriComponent.encode(returnUrl, UriComponent.Type.QUERY_PARAM));
+        uriComponentsBuilder.queryParam("lti", true);
 
         return uriComponentsBuilder.build().toUriString();
 
@@ -112,8 +113,8 @@ public class LtiDeepLinkingService {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/exercises/%s", courseId, exerciseId);
         // set LTI query parameter
-        String launchUrlWithQueryParam = launchUrl + "?lti=true";
-        return exerciseOpt.map(exercise -> createContentItem(exerciseOpt.get(), launchUrlWithQueryParam)).orElse(null);
+        // String launchUrlWithQueryParam = launchUrl + "?lti=true";
+        return exerciseOpt.map(exercise -> createContentItem(exerciseOpt.get(), launchUrl)).orElse(null);
     }
 
     private Map<String, Object> createContentItem(Exercise exercise, String url) {
