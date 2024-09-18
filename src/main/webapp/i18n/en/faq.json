@@ -5,7 +5,7 @@
                 "title": "FAQ",
                 "createLabel": "Create a new FAQ",
                 "filterLabel": "Filter",
-                "createOrEditLabel": "FAQ erstellen oder bearbeiten"
+                "createOrEditLabel": "Create or edit FAQ"
             },
             "created": "The FAQ was successfully created",
             "updated": "The FAQ was successfully updated",

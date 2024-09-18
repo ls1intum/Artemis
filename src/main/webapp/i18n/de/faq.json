@@ -7,7 +7,7 @@
                 "filterLabel": "Filter",
                 "createOrEditLabel": "FAQ erstellen oder bearbeiten"
             },
-            "created": "Das FAQ wurde erfoglreich erstellt",
+            "created": "Das FAQ wurde erfolgreich erstellt",
             "updated": "Das FAQ wurde erfolgreich aktualisiert",
             "deleted": "Das FAQ wurde erfolgreich gelöscht",
             "delete": {

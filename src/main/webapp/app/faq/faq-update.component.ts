@@ -154,6 +154,9 @@ export class FAQUpdateComponent implements OnInit {
     }
 
     canSave() {
-        return this.faq.questionTitle && this.faq.questionAnswer;
+        if (this.faq.questionTitle && this.faq.questionAnswer) {
+            return this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0;
+        }
+        return false;
     }
 }
