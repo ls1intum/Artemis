@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.communication.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Set;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -32,4 +34,7 @@ public class FaqService {
         return faqRepository.save(faq);
     }
 
+    public Set<String> findAllCategoriesByCourseId(Long courseId) {
+        faqRepository.findAllCategoriesByCourseId(courseId);
+    }
 }

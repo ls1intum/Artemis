@@ -92,9 +92,9 @@ public class FaqResource {
      */
     @PutMapping("faqs/{faqId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq, @PathVariable String faqId) {
+    public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq, @PathVariable Long faqId) {
         log.debug("REST request to update Faq : {}", faq);
-        if (faqId == null) {
+        if (faqId == null || faqId.equals(faq.getId())) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
@@ -130,7 +130,7 @@ public class FaqResource {
 
         log.debug("REST request to delete faq {}", faqId);
         Faq faq = faqRepository.findById(faqId).orElseThrow();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, faq.getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
         faqService.deleteById(faqId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }
@@ -164,7 +164,7 @@ public class FaqResource {
 
         Course course = getCourseForRequest(courseId);
 
-        Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
+        Set<String> faqs = faqService.findAllCategoriesByCourseId(courseId);
 
         return ResponseEntity.ok().body(faqs);
     }
