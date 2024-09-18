@@ -111,7 +111,9 @@ public class LtiDeepLinkingService {
     private Map<String, Object> setContentItem(String courseId, String exerciseId) {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
         String launchUrl = String.format(artemisServerUrl + "/courses/%s/exercises/%s", courseId, exerciseId);
-        return exerciseOpt.map(exercise -> createContentItem(exerciseOpt.get(), launchUrl)).orElse(null);
+        // set LTI query parameter
+        String launchUrlWithQueryParam = launchUrl + "?lti=true";
+        return exerciseOpt.map(exercise -> createContentItem(exerciseOpt.get(), launchUrlWithQueryParam)).orElse(null);
     }
 
     private Map<String, Object> createContentItem(Exercise exercise, String url) {

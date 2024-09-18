@@ -27,6 +27,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     isTestServer: boolean = false;
     isExamStarted: boolean = false;
     isTestRunExam: boolean = false;
+    isLti: boolean = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -91,6 +92,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             }
             if (event instanceof NavigationEnd) {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
+                this.checkLtiParameter();
             }
             if (event instanceof NavigationError && event.error.status === 404) {
                 // noinspection JSIgnoredPromiseFromCall
@@ -112,6 +114,11 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         });
 
         this.themeService.initialize();
+    }
+
+    private checkLtiParameter() {
+        const urlTree = this.router.parseUrl(this.router.url);
+        this.isLti = urlTree.queryParams['lti'] !== undefined;
     }
 
     /**
