@@ -40,6 +40,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.GradingCriterion;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
@@ -62,6 +63,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastEditor;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastInstructor;
+import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastStudent;
 import de.tum.in.www1.artemis.security.annotations.EnforceAtLeastTutor;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastTutorInExercise;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -529,6 +531,23 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExercise(exerciseId, withSubmissionResults, withGradingCriteria);
         return ResponseEntity.ok(programmingExercise);
+    }
+
+    /**
+     * GET /programming-exercises : Returns the courseId and exerciseId of the exercise with the given short names.
+     *
+     * @return the courseId and exerciseId of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with those short names exists
+     */
+    @GetMapping("programming-exercises/project-key/{projectKey}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Exercise> getExerciseByProjectKey(@PathVariable String projectKey) {
+        try {
+            final Exercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
+            return ResponseEntity.ok(exercise);
+        }
+        catch (EntityNotFoundException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     /**
