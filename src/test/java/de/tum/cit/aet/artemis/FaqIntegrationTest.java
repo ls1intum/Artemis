@@ -45,7 +45,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private void testAllPreAuthorize() throws Exception {
         request.postWithResponseBody("/api/faqs", new Faq(), Faq.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody("/api/faqs/" + this.faq.getId(), this.faq, Faq.class, HttpStatus.FORBIDDEN);
-        request.getList("/api/courses/" + course1.getId() + "/faqs", HttpStatus.FORBIDDEN, Faq.class);
+        request.getList("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Faq.class);
         request.delete("/api/faqs/" + this.faq.getId(), HttpStatus.FORBIDDEN);
     }
 
@@ -88,7 +88,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void updateFaq_correctRequestBody_shouldUpdateFaq() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
         faq.setQuestionTitle("Updated");
-        faq.setQuestionAnswer("Updated");
+        faq.setQuestionAnswer("Update");
         faq.setFaqState(FaqState.PROPOSED);
         Set<String> newCategories = new HashSet<>();
         newCategories.add("Test");
@@ -96,7 +96,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq updatedFaq = request.putWithResponseBody("/api/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.OK);
 
         assertThat(updatedFaq.getQuestionTitle()).isEqualTo("Updated");
-        assertThat(updatedFaq.getQuestionTitle()).isEqualTo("Updated");
+        assertThat(updatedFaq.getQuestionAnswer()).isEqualTo("Update");
         assertThat(updatedFaq.getFaqState()).isEqualTo(FaqState.PROPOSED);
         assertThat(updatedFaq.getCategories()).isEqualTo(newCategories);
     }

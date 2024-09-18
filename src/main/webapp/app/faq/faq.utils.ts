@@ -6,11 +6,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { FaqService } from 'app/faq/faq.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
 
-export function loadCourseFaqCategories(
-    courseId: number | undefined,
-    alertService: AlertService,
-    faqService: FaqService
-): Observable<FaqCategory[]> {
+export function loadCourseFaqCategories(courseId: number | undefined, alertService: AlertService, faqService: FaqService): Observable<FaqCategory[]> {
     if (courseId === undefined) {
         return new Observable<ExerciseCategory[]>((observer) => {
             observer.complete();

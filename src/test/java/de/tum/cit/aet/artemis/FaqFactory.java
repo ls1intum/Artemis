@@ -20,9 +20,12 @@ public class FaqFactory {
     }
 
     public static Set<String> generateFaqCategories() {
-        HashSet<String> categories = new HashSet<>();
+        Set<String> categories = new HashSet<>();
         categories.add("this is a category");
         categories.add("this is also a category");
         return categories;
+    }
+
+    private FaqFactory() {
     }
 }

@@ -15,7 +15,7 @@
                         id="filter-dropdown-button"
                     >
                         <fa-icon [icon]="faFilter" />
-                        <span class="d-s-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters.size }"></span>
+                        <span class="d-sm-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters.size }"></span>
                     </button>
                     <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
                         @for (category of existingCategories; track category) {
@@ -28,14 +28,14 @@
                                         [checked]="activeFilters.has(category.category!)"
                                         type="checkbox"
                                     />
-                                    <jhi-custom-exercise-category-badge [category]="category" style="margin-top: 10px; margin-left: 4px" />
+                                    <jhi-custom-exercise-category-badge [category]="category" class="category-badge" />
                                 </label>
                             </li>
                         }
                     </ul>
                 </div>
                 <div class="d-flex-end text-end">
-                    <a id="jh-create-entity" class="btn btn-primary jh-create-entity create-faq mb-1" [routerLink]="['new']">
+                    <a id="create-faq" class="btn btn-primary jh-create-entity create-faq mb-1" [routerLink]="['new']">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.faq.home.createLabel"></span>
                     </a>
@@ -81,7 +81,7 @@
                             <p class="markdown-preview" [innerHTML]="faq.questionAnswer | htmlForMarkdown"></p>
                         </td>
                         <td>
-                            <div style="display: flex">
+                            <div class="category-container">
                                 @for (category of faq.categories; track category) {
                                     <jhi-custom-exercise-category-badge [category]="category" />
                                 }
@@ -99,7 +99,7 @@
                                     <button
                                         class="mt-1"
                                         jhiDeleteButton
-                                        id="delete-faq"
+                                        id="delete-faq-{{ faq.id }}"
                                         [entityTitle]="faq.questionTitle || ''"
                                         deleteQuestion="artemisApp.faq.delete.question"
                                         deleteConfirmationText="artemisApp.faq.delete.typeNameToConfirm"

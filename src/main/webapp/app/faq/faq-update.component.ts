@@ -30,7 +30,7 @@ export class FAQUpdateComponent implements OnInit {
     faq: Faq;
     isSaving: boolean;
     existingCategories: FaqCategory[] = [];
-    exerciseCategories: FaqCategory[] = [];
+    faqCategories: FaqCategory[] = [];
 
     courses: Course[];
 
@@ -67,7 +67,7 @@ export class FAQUpdateComponent implements OnInit {
                 this.loadCourseFaqCategories(course.id);
             }
             if (faq.categories) {
-                this.exerciseCategories = faq.categories;
+                this.faqCategories = faq.categories;
             }
         });
     }
@@ -139,7 +139,7 @@ export class FAQUpdateComponent implements OnInit {
 
     updateCategories(categories: FaqCategory[]) {
         this.faq.categories = categories;
-        this.exerciseCategories = categories;
+        this.faqCategories = categories;
     }
 
     private loadCourseFaqCategories(courseId: number) {
