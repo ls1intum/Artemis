@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 
+/**
+ * REST service for managing Faqs.
+ */
 @Profile(PROFILE_CORE)
 @Service
 public class FaqService {
@@ -23,7 +26,7 @@ public class FaqService {
     /**
      * Deletes the given faq
      *
-     * @param faqId the faqId of to be deleted faq
+     * @param faqId the ID of the FAQ to be deleted
      */
     public void deleteById(long faqId) {
         faqRepository.deleteById(faqId);
@@ -34,7 +37,7 @@ public class FaqService {
         return faqRepository.save(faq);
     }
 
-    public Set<String> findAllCategoriesByCourseId(Long courseId) {
-        faqRepository.findAllCategoriesByCourseId(courseId);
+    public Set<String> findAllCategoriesByCourseId(long courseId) {
+        return faqRepository.findAllCategoriesByCourseId(courseId);
     }
 }
