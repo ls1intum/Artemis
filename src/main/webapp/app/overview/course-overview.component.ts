@@ -335,11 +335,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         if (this.course?.faqEnabled) {
             const faqItem: SidebarItem = this.getFaqItem();
             sidebarItems.push(faqItem);
-            if (this.course?.learningPathsEnabled) {
-                const learningPathItem: SidebarItem = this.getLearningPathItems();
-                sidebarItems.push(learningPathItem);
-            }
         }
+
+        if (this.course?.learningPathsEnabled) {
+            const learningPathItem: SidebarItem = this.getLearningPathItems();
+            sidebarItems.push(learningPathItem);
+        }
+
         return sidebarItems;
     }
 
@@ -449,16 +451,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     getFaqItem() {
-        const dashboardItem: SidebarItem = {
+        const faqItem: SidebarItem = {
             routerLink: 'faq',
             icon: faQuestion,
-            title: 'Faqs',
+            title: 'FAQs',
             translation: 'artemisApp.courseOverview.menu.faq',
             hasInOrionProperty: false,
             showInOrionWindow: false,
             hidden: false,
         };
-        return dashboardItem;
+        return faqItem;
     }
 
     getDefaultItems() {

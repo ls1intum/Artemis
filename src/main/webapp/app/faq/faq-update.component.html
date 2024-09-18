@@ -15,9 +15,9 @@
                         <input id="field_titel" type="text" class="form-control" name="title" [(ngModel)]="faq.questionTitle" />
                     </div>
                 </div>
-                <div class="form-group" id="field_description">
+                <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.faq.table.questionAnswer" for="field_description"></label>
-                    <jhi-markdown-editor-monaco class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="faq.questionAnswer" />
+                    <jhi-markdown-editor-monaco id="field_description" class="markdown-editor" [domainActions]="domainActionsDescription" [(markdown)]="faq.questionAnswer" />
                 </div>
                 <div class="form-group position-relative">
                     <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories"></label>

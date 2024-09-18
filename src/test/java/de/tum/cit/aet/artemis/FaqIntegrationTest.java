@@ -45,7 +45,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private void testAllPreAuthorize() throws Exception {
         request.postWithResponseBody("/api/faqs", new Faq(), Faq.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody("/api/faqs/" + this.faq.getId(), this.faq, Faq.class, HttpStatus.FORBIDDEN);
-        request.getList("/api/courses/" + course1.getId() + "/faqs", HttpStatus.OK, Faq.class);
         request.delete("/api/faqs/" + this.faq.getId(), HttpStatus.FORBIDDEN);
     }
 

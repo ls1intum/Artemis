@@ -79,7 +79,7 @@ public class FaqResource {
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
 
-        Faq savedFaq = faqRepository.save(faq);
+        Faq savedFaq = faqService.save(faq);
         return ResponseEntity.created(new URI("/api/faqs/" + savedFaq.getId())).body(savedFaq);
     }
 
@@ -92,13 +92,14 @@ public class FaqResource {
      */
     @PutMapping("faqs/{faqId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq) {
+    public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq, @PathVariable String faqId) {
         log.debug("REST request to update Faq : {}", faq);
-        if (faq.getId() == null) {
+        if (faqId == null) {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
-        Faq result = faqRepository.save(faq);
+        Faq existingFaq = faqRepository.findById(faq.getId()).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
+        Faq result = faqService.save(faq);
         return ResponseEntity.ok().body(result);
     }
 
@@ -113,6 +114,7 @@ public class FaqResource {
     public ResponseEntity<Faq> getFaq(@PathVariable Long faqId) {
         log.debug("REST request to get faq {}", faqId);
         Faq faq = faqRepository.findById(faqId).orElseThrow();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, faq.getCourse(), null);
         return ResponseEntity.ok(faq);
     }
 
@@ -127,8 +129,9 @@ public class FaqResource {
     public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId) {
 
         log.debug("REST request to delete faq {}", faqId);
+        Faq faq = faqRepository.findById(faqId).orElseThrow();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, faq.getCourse(), null);
         faqService.deleteById(faqId);
-
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }
 
@@ -143,9 +146,7 @@ public class FaqResource {
     public ResponseEntity<Set<Faq>> getFaqForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
 
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-
+        Course course = getCourseForRequest(courseId);
         Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(faqs);
     }
@@ -161,12 +162,22 @@ public class FaqResource {
     public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
 
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        Course course = getCourseForRequest(courseId);
 
         Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
 
         return ResponseEntity.ok().body(faqs);
+    }
+
+    /**
+     *
+     * @param courseId the courseId of the course
+     * @return the course with the id courseId, unless it exists
+     */
+    private Course getCourseForRequest(Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        return course;
     }
 
 }

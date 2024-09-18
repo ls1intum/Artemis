@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 
 @Profile(PROFILE_CORE)
@@ -25,6 +26,10 @@ public class FaqService {
     public void deleteById(long faqId) {
         faqRepository.deleteById(faqId);
 
+    }
+
+    public Faq save(Faq faq) {
+        return faqRepository.save(faq);
     }
 
 }
