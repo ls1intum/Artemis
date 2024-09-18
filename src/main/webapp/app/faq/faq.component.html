@@ -35,7 +35,7 @@
                     </ul>
                 </div>
                 <div class="d-flex-end text-end">
-                    <a id="create-faq" class="btn btn-primary create-faq mb-1" [routerLink]="['new']">
+                    <a id="create-faq" class="btn btn-primary mb-1" [routerLink]="['new']">
                         <fa-icon [icon]="faPlus" />
                         <span jhiTranslate="artemisApp.faq.home.createLabel"></span>
                     </a>
@@ -68,7 +68,7 @@
                     <th></th>
                 </tr>
             </thead>
-            <tbody class="markdown-preview" id="faq-preview">
+            <tbody id="faq-preview">
                 @for (faq of filteredFaq; track trackId(i, faq); let i = $index) {
                     <tr id="faq-{{ faq.id }}">
                         <td>
@@ -90,6 +90,8 @@
 
                         <td class="text-end">
                             <div class="btn-group flex-btn-group-container">
+                                b
+
                                 <div class="btn-group-vertical me-1 mb-1">
                                     <a [routerLink]="[faq.id, 'edit']" class="btn btn-primary btn-sm">
                                         <fa-icon [icon]="faPencilAlt" />

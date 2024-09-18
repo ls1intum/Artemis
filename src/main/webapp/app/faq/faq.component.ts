@@ -63,7 +63,7 @@ export class FAQComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
-        this.loadCourseExerciseCategories(this.courseId);
+        this.loadCourseFaqCategories(this.courseId);
     }
 
     ngOnDestroy(): void {
@@ -113,7 +113,7 @@ export class FAQComponent implements OnInit, OnDestroy {
             });
     }
 
-    private loadCourseExerciseCategories(courseId: number) {
+    private loadCourseFaqCategories(courseId: number) {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
             this.existingCategories = existingCategories;
         });

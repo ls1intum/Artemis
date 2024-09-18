@@ -39,7 +39,6 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     activeFilters = new Set<string>();
 
     sidebarData: SidebarData;
-    profileSubscription?: Subscription;
     isCollapsed = false;
     isProduction = true;
     isTestServer = false;
@@ -95,7 +94,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-        this.profileSubscription?.unsubscribe();
+        this.parentParamSubscription?.unsubscribe();
     }
 
     onSearch() {

@@ -7,9 +7,9 @@
                 "filterLabel": "Filter",
                 "createOrEditLabel": "FAQ erstellen oder bearbeiten"
             },
-            "created": "FAQ erstellt mit ID {{ param }}",
-            "updated": "FAQ aktualisiert mit ID {{ param }}",
-            "deleted": "FAQ gelöscht mit ID {{ param }}",
+            "created": "Das FAQ wurde erfoglreich erstellt",
+            "updated": "Das FAQ wurde erfolgreich aktualisiert",
+            "deleted": "Das FAQ wurde erfolgreich gelöscht",
             "delete": {
                 "question": "Soll das FAQ <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen des FAQ zur Bestätigung ein."

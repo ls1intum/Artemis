@@ -11,7 +11,7 @@ import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-ico
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { Faq } from 'app/entities/faq.model';
 import { FaqService } from 'app/faq/faq.service';
-
+import { TranslateService } from '@ngx-translate/core';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
@@ -50,6 +50,7 @@ export class FAQUpdateComponent implements OnInit {
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
+        private translateService: TranslateService,
     ) {}
 
     /**
@@ -117,13 +118,13 @@ export class FAQUpdateComponent implements OnInit {
                     if (faqBody) {
                         this.faq = faqBody;
                     }
-                    this.alertService.success(`FAQ with title ${faq.questionTitle} was successfully created.`);
+                    this.alertService.success(this.translateService.instant('artemisApp.faq.created', { id: faq.id }));
                     this.router.navigate(['course-management', faq.course!.id, 'faqs']);
                 },
             });
         } else {
             this.isSaving = false;
-            this.alertService.success(`FAQ with title ${faq.questionTitle} was successfully updated.`);
+            this.alertService.success(this.translateService.instant('artemisApp.faq.updated', { id: faq.id }));
             this.router.navigate(['course-management', faq.course!.id, 'faqs']);
         }
     }
