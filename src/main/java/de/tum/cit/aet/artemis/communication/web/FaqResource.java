@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.service.FaqService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -47,17 +46,14 @@ public class FaqResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
-    private final FaqRepository faqRepository;
-
     private final FaqService faqService;
 
     private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    public FaqResource(FaqRepository faqRepository, FaqService faqService, CourseRepository courseRepository, AuthorizationCheckService authCheckService) {
+    public FaqResource(FaqService faqService, CourseRepository courseRepository, AuthorizationCheckService authCheckService) {
 
-        this.faqRepository = faqRepository;
         this.faqService = faqService;
         this.courseRepository = courseRepository;
         this.authCheckService = authCheckService;
@@ -98,7 +94,7 @@ public class FaqResource {
             throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
-        Faq existingFaq = faqRepository.findById(faq.getId()).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
+        Faq existingFaq = faqService.findById(faqId).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
         Faq result = faqService.save(faq);
         return ResponseEntity.ok().body(result);
     }
@@ -113,7 +109,7 @@ public class FaqResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Faq> getFaq(@PathVariable Long faqId) {
         log.debug("REST request to get faq {}", faqId);
-        Faq faq = faqRepository.findById(faqId).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
+        Faq faq = faqService.findById(faqId).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, faq.getCourse(), null);
         return ResponseEntity.ok(faq);
     }
@@ -129,7 +125,7 @@ public class FaqResource {
     public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId) {
 
         log.debug("REST request to delete faq {}", faqId);
-        Faq faq = faqRepository.findById(faqId).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
+        Faq faq = faqService.findById(faqId).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
         faqService.deleteById(faqId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
@@ -147,7 +143,7 @@ public class FaqResource {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
 
         Course course = getCourseForRequest(courseId);
-        Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
+        Set<Faq> faqs = faqService.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(faqs);
     }
 

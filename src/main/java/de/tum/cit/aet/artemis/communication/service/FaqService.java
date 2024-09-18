@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -39,5 +40,13 @@ public class FaqService {
 
     public Set<String> findAllCategoriesByCourseId(long courseId) {
         return faqRepository.findAllCategoriesByCourseId(courseId);
+    }
+
+    public Optional<Faq> findById(Long faqId) {
+        return faqRepository.findById(faqId);
+    }
+
+    public Set<Faq> findAllByCourseId(Long courseId) {
+        return faqRepository.findAllByCourseId(courseId);
     }
 }
