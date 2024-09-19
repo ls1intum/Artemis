@@ -94,7 +94,6 @@ public class ModelingExerciseFeedbackService {
     public void generateAutomaticNonGradedFeedback(StudentParticipation participation, ModelingExercise modelingExercise) {
         log.debug("Using athena to generate (modeling exercise) feedback request: {}", modelingExercise.getId());
 
-        // athena takes over the control here
         Optional<Submission> submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId())
                 .findLatestSubmission();
 
