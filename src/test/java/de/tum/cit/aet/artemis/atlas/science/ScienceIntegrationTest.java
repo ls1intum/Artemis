@@ -13,15 +13,15 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceEventDTO;
-import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
+import de.tum.cit.aet.artemis.core.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ScienceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
-    private ScienceEventRepository scienceEventRepository;
+    private ScienceEventTestRepository scienceEventRepository;
 
     @Autowired
     private FeatureToggleService featureToggleService;

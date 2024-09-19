@@ -41,15 +41,15 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
-import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.web.LearningPathResource;
 import de.tum.cit.aet.artemis.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.competency.util.LearningPathUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.test_repository.CompetencyProgressTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.LearningPathTestRepository;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -74,7 +74,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
-    private LearningPathRepository learningPathRepository;
+    private LearningPathTestRepository learningPathRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -98,7 +98,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private LearningPathUtilService learningPathUtilService;
 
     @Autowired
-    private CompetencyProgressRepository competencyProgressRepository;
+    private CompetencyProgressTestRepository competencyProgressRepository;
 
     @Autowired
     private CompetencyRelationRepository competencyRelationRepository;
