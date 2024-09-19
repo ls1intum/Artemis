@@ -54,8 +54,8 @@ import com.github.dockerjava.api.command.InspectImageResponse;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ParticipationVCSAccessToken;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -92,7 +92,7 @@ public class LocalVCLocalCITestService {
     private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
 
     @Autowired
-    private ResultRepository resultRepository;
+    private ResultTestRepository resultRepository;
 
     @Value("${artemis.version-control.url}")
     private URL localVCBaseUrl;

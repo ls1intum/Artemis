@@ -5,10 +5,10 @@ import java.util.Set;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
+import de.tum.cit.aet.artemis.core.repository.UserRepository;
 
 @Repository
-public interface UserTestRepository extends ArtemisJpaRepository<User, Long> {
+public interface UserTestRepository extends UserRepository {
 
     Set<User> findAllByGroupsNotEmpty();
 }
