@@ -19,7 +19,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     courses: Course[];
     semesters: string[];
-    expandedSemesterStrings: { [key: string]: string };
+    fullFormOfSemesterStrings: { [key: string]: string };
     semesterCollapsed: { [key: string]: boolean };
     coursesBySemester: { [key: string]: Course[] };
     searchCourseText = '';
@@ -52,20 +52,26 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
                 this.courses = response.body || [];
                 this.courses = sortCourses(this.courses);
                 this.semesters = this.courseService.getUniqueSemesterNamesSorted(this.courses);
+                console.log('this.semesters: ' + this.semesters);
                 this.mapCoursesIntoSemesters();
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
     }
 
+    /**
+     * maps existing courses to each semester
+     */
     private mapCoursesIntoSemesters(): void {
         this.semesterCollapsed = {};
         this.coursesBySemester = {};
+        this.fullFormOfSemesterStrings = {};
 
         let isCollapsed = false;
         for (const semester of this.semesters) {
             this.semesterCollapsed[semester] = isCollapsed;
             this.coursesBySemester[semester] = this.courses.filter((course) => course.semester === semester);
+            this.fullFormOfSemesterStrings[semester] = semester.startsWith('WS') ? 'artemisApp.course.archive.winterSemester' : 'artemisApp.course.archive.summerSemester';
             isCollapsed = true;
         }
     }
@@ -88,20 +94,13 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
             this.isSortAscending = !this.isSortAscending;
         }
     }
-
+    /**
+     * if the searched text is matched with a course title, expand the accordion, otherwise collapse
+     */
     expandOrCollapseBasedOnSearchValue(): void {
         for (const semester of this.semesters) {
             const hasMatchingCourse = this.coursesBySemester[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText.toLowerCase()));
             this.semesterCollapsed[semester] = !hasMatchingCourse;
-        }
-    }
-
-    mapSemesterString(semester: string): string {
-        const year = semester.slice(2);
-        if (semester.startsWith('WS')) {
-            return `Wintersemester 20${year}`;
-        } else {
-            return `Sommersemester 20${year}`;
         }
     }
 }

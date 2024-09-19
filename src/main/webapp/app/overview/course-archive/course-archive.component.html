@@ -28,8 +28,13 @@
     <div class="module-bg py-3 rounded-3">
         <div class="mb-0">
             @for (semester of semesters; track semester; let last = $last) {
-                <div class="d-flex justify-content-between align-items-center px-3 mb-2" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]" role="button">
-                    <span class="fw-bold"> {{ mapSemesterString(semester) }}</span>
+                <div
+                    class="d-flex justify-content-between align-items-center px-3"
+                    [ngClass]="{ 'mb-2': !last }"
+                    (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]"
+                    role="button"
+                >
+                    <span class="fw-bold" jhiTranslate="{{ fullFormOfSemesterStrings[semester] }}" [translateValues]="{ param: semester.slice(2) }"></span>
                     <fa-icon [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
                 </div>
                 @if (!semesterCollapsed[semester]) {
