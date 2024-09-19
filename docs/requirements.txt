@@ -5,3 +5,4 @@ sphinxcontrib-bibtex==2.6.3
 requests==2.32.3
 zipp==3.20.2
 docutils==0.20.1
+urllib3==2.2.3
