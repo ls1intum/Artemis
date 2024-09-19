@@ -29,8 +29,8 @@
         <div class="mb-0">
             @for (semester of semesters; track semester; let last = $last) {
                 <div
-                    class="d-flex justify-content-between align-items-center px-3"
-                    [ngClass]="{ 'mb-2': !last }"
+                    class="d-flex justify-content-between align-items-center px-3 mb-2"
+                    [ngClass]="{ 'mb-2': !(last && semesterCollapsed[semester]) }"
                     (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]"
                     role="button"
                 >
