@@ -159,6 +159,9 @@ public class LocalCIResultProcessingService {
 
                 if (participationOptional.isPresent()) {
                     ProgrammingExerciseParticipation participation = (ProgrammingExerciseParticipation) participationOptional.get();
+                    if (participation.getExercise() == null) {
+                        participation.setExercise(programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation));
+                    }
 
                     if (result != null) {
                         programmingMessagingService.notifyUserAboutNewResult(result, participation);
@@ -168,15 +171,15 @@ public class LocalCIResultProcessingService {
                         programmingMessagingService.notifyUserAboutSubmissionError((Participation) participation,
                                 new BuildTriggerWebsocketError("Result could not be processed", participation.getId()));
                     }
-                }
-            }
 
-            if (!buildLogs.isEmpty()) {
-                if (savedBuildJob != null) {
-                    buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId());
-                }
-                else {
-                    log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
+                    if (!buildLogs.isEmpty()) {
+                        if (savedBuildJob != null) {
+                            buildLogEntryService.saveBuildLogsToFile(buildLogs, savedBuildJob.getBuildJobId(), participation.getProgrammingExercise());
+                        }
+                        else {
+                            log.warn("Couldn't save build logs as build job {} was not saved", buildJob.id());
+                        }
+                    }
                 }
             }
 
