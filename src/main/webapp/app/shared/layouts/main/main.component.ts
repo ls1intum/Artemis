@@ -27,7 +27,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     isTestServer: boolean = false;
     isExamStarted: boolean = false;
     isTestRunExam: boolean = false;
-    isLti: boolean = false;
+    isLti: boolean = true;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -118,7 +118,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
 
     private checkLtiParameter() {
         const urlTree = this.router.parseUrl(this.router.url);
-        this.isLti = urlTree.queryParams['lti'] !== undefined;
+        this.isLti = urlTree.queryParams['lti'] === 'true';
     }
 
     /**
