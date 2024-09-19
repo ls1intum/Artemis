@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,11 +37,12 @@ public class AdminOldDataCleanupResource {
     }
 
     /**
+     * DELETE admin/cleanup/delete-orphans
      * Deletes orphaned data in the Artemis database.
      *
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
-    @PostMapping("delete-orphans")
+    @DeleteMapping("delete-orphans")
     @EnforceAdmin
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteOrphans() {
         log.debug("REST request to delete orphaned data in Artemis database");
@@ -50,13 +51,14 @@ public class AdminOldDataCleanupResource {
     }
 
     /**
+     * DELETE admin/cleanup/delete-plagiarism-comparisons
      * Deletes plagiarism comparisons within the specified date range.
      *
      * @param deleteFrom the start date of the deletion range
      * @param deleteTo   the end date of the deletion range
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
-    @PostMapping("delete-plagiarism-comparisons")
+    @DeleteMapping("delete-plagiarism-comparisons")
     @EnforceAdmin
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deletePlagiarismComparisons(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
@@ -66,13 +68,14 @@ public class AdminOldDataCleanupResource {
     }
 
     /**
+     * DELETE admin/cleanup/delete-non-rated-results
      * Deletes non-rated results within the specified date range.
      *
      * @param deleteFrom the start date of the deletion range
      * @param deleteTo   the end date of the deletion range
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
-    @PostMapping("delete-non-rated-results")
+    @DeleteMapping("delete-non-rated-results")
     @EnforceAdmin
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteNonRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
@@ -82,13 +85,14 @@ public class AdminOldDataCleanupResource {
     }
 
     /**
+     * DELETE admin/cleanup/delete-old-rated-results
      * Deletes old rated results within the specified date range.
      *
      * @param deleteFrom the start date of the deletion range
      * @param deleteTo   the end date of the deletion range
      * @return a {@link ResponseEntity} containing the result of the cleanup operation
      */
-    @PostMapping("delete-old-rated-results")
+    @DeleteMapping("delete-old-rated-results")
     @EnforceAdmin
     public ResponseEntity<CleanupServiceExecutionRecordDTO> deleteOldRatedResults(@RequestParam("deleteFrom") ZonedDateTime deleteFrom,
             @RequestParam("deleteTo") ZonedDateTime deleteTo) {
@@ -98,6 +102,7 @@ public class AdminOldDataCleanupResource {
     }
 
     /**
+     * GET admin/cleanup/get-last-executions
      * Retrieves the last execution records of the data cleanup operations.
      *
      * @return a {@link ResponseEntity} containing a list of execution records
