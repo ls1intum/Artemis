@@ -20,7 +20,7 @@ export class DataCleanupService {
      * @returns An observable of type HttpResponse<CleanupServiceExecutionRecordDTO>.
      */
     deleteOrphans(): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-orphans`, null, {
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-orphans`, {
             observe: 'response',
         });
     }
@@ -33,7 +33,7 @@ export class DataCleanupService {
     deletePlagiarismComparisons(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         const deleteFromString = convertDateFromClient(deleteFrom)!;
         const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-plagiarism-comparisons`, null, {
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-plagiarism-comparisons`, {
             params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
@@ -47,7 +47,7 @@ export class DataCleanupService {
     deleteNonRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         const deleteFromString = convertDateFromClient(deleteFrom)!;
         const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-non-rated-results`, null, {
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-non-rated-results`, {
             params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
@@ -61,7 +61,7 @@ export class DataCleanupService {
     deleteOldRatedResults(deleteFrom: dayjs.Dayjs, deleteTo: dayjs.Dayjs): Observable<HttpResponse<CleanupServiceExecutionRecordDTO>> {
         const deleteFromString = convertDateFromClient(deleteFrom)!;
         const deleteToString = convertDateFromClient(deleteTo)!;
-        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-old-rated-results`, null, {
+        return this.http.delete<CleanupServiceExecutionRecordDTO>(`${this.adminResourceUrl}/delete-old-rated-results`, {
             params: { deleteFrom: deleteFromString, deleteTo: deleteToString },
             observe: 'response',
         });
