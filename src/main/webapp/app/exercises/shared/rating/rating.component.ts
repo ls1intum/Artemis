@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { Result } from 'app/entities/result.model';
@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
     templateUrl: './rating.component.html',
     styleUrls: ['./rating.component.scss'],
 })
-export class RatingComponent implements OnInit {
+export class RatingComponent implements OnInit, OnChanges {
     public rating: number;
     public disableRating = false;
     @Input() result?: Result;
@@ -22,10 +22,19 @@ export class RatingComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
+        this.loadRating();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes['result'] && !changes['result'].isFirstChange()) {
+            this.loadRating();
+        }
+    }
+
+    loadRating() {
         if (!this.result?.id || !this.result.participation || !this.accountService.isOwnerOfParticipation(this.result.participation as StudentParticipation)) {
             return;
         }
-
         this.ratingService.getRating(this.result.id).subscribe((rating) => {
             this.rating = rating ?? 0;
         });

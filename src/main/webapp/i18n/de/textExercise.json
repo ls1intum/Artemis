@@ -46,8 +46,8 @@
                 "medianOfSubmissions": "Median der # bewerteten Abgaben: {{ median }}",
                 "numberOfTutorsInvolved": "Anzahl der beteiligten Tutor:innen"
             },
-            "allowPreliminaryAthenaFeedbackRequests": "Automatische vorlaüfige AI-Feedbackanfragen erlauben",
-            "allowPreliminaryAthenaFeedbackRequestsTooltip": "Studierende können vor dem Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet."
+            "allowPreliminaryAthenaFeedbackRequests": "Automatische vorläufige AI-Feedbackanfragen erlauben",
+            "allowPreliminaryAthenaFeedbackRequestsTooltip": "Studierende können vor der Einreichungsfrist um Feedback bitten. Die Anfragen werden von Athena bearbeitet."
         }
     }
 }

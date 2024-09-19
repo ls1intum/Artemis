@@ -184,7 +184,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
      * @param submissionId The id of the submission of choice. undefined value defaults to the latest submission
      */
     private updateParticipation(participation: StudentParticipation, submissionId: number | undefined = undefined) {
-        this.participation = participation;
+        if (participation) {
+            this.participation = participation;
+        }
         this.textExercise = this.participation.exercise as TextExercise;
         this.examMode = !!this.textExercise.exerciseGroup;
         this.textExercise.studentParticipations = [this.participation];
@@ -348,9 +350,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.submission.participation!.submissions = [this.submission];
                 const results = this.participation.results;
                 this.participation = this.submission.participation as StudentParticipation;
-                if (results) {
-                    this.participation.results = results;
-                }
+                this.participation.results = results;
                 this.participation.exercise = this.textExercise;
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
@@ -429,10 +429,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
     /**
      * Checks if the conditions for requesting automatic non-graded feedback are satisfied.
-     * The student can request automatic non-graded feedback under the following conditions:
+     * The student can request automatic feedback under the following conditions:
      * 1. They have a graded submission.
      * 2. The deadline for the exercise has not been exceeded.
-     * 3. There is no already pending feedback request.
+     * 3. There is no other ai feedback for the given submission.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
     assureConditionsSatisfied(): boolean {

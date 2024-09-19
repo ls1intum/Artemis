@@ -16,7 +16,7 @@
                                 (click)="showHistory = !showHistory"
                             />
                         }
-                        @if (isActive) {
+                        @if (isActive || !textExercise.dueDate) {
                             <jhi-button
                                 id="Continue"
                                 [title]="'entity.action.continueSubmission'"

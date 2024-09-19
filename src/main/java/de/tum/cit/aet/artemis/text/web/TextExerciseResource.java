@@ -423,6 +423,7 @@ public class TextExerciseResource {
 
         Set<Submission> submissions = participation.getSubmissions();
         participation.setSubmissions(new HashSet<>());
+
         for (Submission submission : submissions) {
             if (submission != null) {
                 TextSubmission textSubmission = (TextSubmission) submission;
@@ -451,20 +452,22 @@ public class TextExerciseResource {
                         result.filterSensitiveInformation();
                     }
 
-                    // only send the one latest result to the client per submission
+                    // only send the one latest result to the client
                     textSubmission.setResults(List.of(result));
                 }
                 participation.addSubmission(textSubmission);
             }
-            if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
-                participation.filterSensitiveInformation();
-            }
-
-            textExercise.filterSensitiveInformation();
-            if (textExercise.isExamExercise()) {
-                textExercise.getExam().setCourse(null);
-            }
         }
+
+        if (!(authCheckService.isAtLeastInstructorForExercise(textExercise, user) || participation.isOwnedBy(user))) {
+            participation.filterSensitiveInformation();
+        }
+
+        textExercise.filterSensitiveInformation();
+        if (textExercise.isExamExercise()) {
+            textExercise.getExam().setCourse(null);
+        }
+
         return ResponseEntity.ok(participation);
     }
 
