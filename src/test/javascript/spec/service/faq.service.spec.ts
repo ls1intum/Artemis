@@ -1,0 +1,139 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpResponse } from '@angular/common/http';
+import { take } from 'rxjs/operators';
+import { ArtemisTestModule } from '../test.module';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { Course } from 'app/entities/course.model';
+import { Faq, FaqState } from 'app/entities/faq.model';
+import { FaqCategory } from 'app/entities/faq-category.model';
+import { FaqService } from 'app/faq/faq.service';
+
+describe('Faq Service', () => {
+    let httpMock: HttpTestingController;
+    let service: FaqService;
+    const resourceUrl = 'api/faqs';
+    let expectedResult: any;
+    let elemDefault: Faq;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, HttpClientTestingModule],
+            providers: [
+                { provide: LocalStorageService, useClass: MockSyncStorage },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+        service = TestBed.inject(FaqService);
+        httpMock = TestBed.inject(HttpTestingController);
+
+        expectedResult = {} as HttpResponse<Faq>;
+        elemDefault = new Faq();
+        elemDefault.questionTitle = 'Title';
+        elemDefault.course = new Course();
+        elemDefault.questionAnswer = 'Answer';
+        elemDefault.id = 1;
+        elemDefault.faqState = FaqState.ACCEPTED;
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+    });
+
+    describe('Service methods', () => {
+        it('should create a faq in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
+            service
+                .create(elemDefault)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: resourceUrl,
+                method: 'POST',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should update a faq in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const expected = { ...returnedFromService };
+            const faqId = elemDefault.id!;
+            service
+                .update(elemDefault)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `${resourceUrl}/${faqId}`,
+                method: 'PUT',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should find a faq in the database', async () => {
+            const category = {
+                color: '#6ae8ac',
+                category: 'category1',
+            } as FaqCategory;
+            const returnedFromService = { ...elemDefault, categories: [JSON.stringify(category)] };
+            const expected = { ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] };
+            const faqId = elemDefault.id!;
+            service
+                .find(faqId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `${resourceUrl}/${faqId}`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should find faqs by courseId in the database', async () => {
+            const category = {
+                color: '#6ae8ac',
+                category: 'category1',
+            } as FaqCategory;
+            const returnedFromService = [{ ...elemDefault, categories: [JSON.stringify(category)] }];
+            const expected = [{ ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] }];
+            const courseId = 1;
+            service
+                .findAllByCourseId(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/courses/${courseId}/faqs`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
+        it('should find all categories by courseId in the database', async () => {
+            const category = {
+                color: '#6ae8ac',
+                category: 'category1',
+            } as FaqCategory;
+            const returnedFromService = { categories: [JSON.stringify(category)] };
+            const expected = { ...returnedFromService };
+            const courseId = 1;
+            service
+                .findAllCategoriesByCourseId(courseId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/courses/${courseId}/faq-categories`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+    });
+});

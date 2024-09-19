@@ -3,10 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Faq, FaqState } from 'app/entities/faq.model';
-import { Exercise } from 'app/entities/exercise.model';
 import { FaqCategory } from 'app/entities/faq-category.model';
 import { AlertService } from 'app/core/util/alert.service';
-import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 type EntityResponseType = HttpResponse<Faq>;
 type EntityArrayResponseType = HttpResponse<Faq[]>;
@@ -48,7 +46,7 @@ export class FaqService {
             .get<Faq[]>(this.resourceUrl + `/${courseId}/faqs`, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityArrayResponseType) => FaqService.convertExerciseCategoryArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
     }
 
     delete(faqId: number): Observable<HttpResponse<void>> {
@@ -66,7 +64,7 @@ export class FaqService {
      */
     static convertFaqCategoriesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body && res.body.categories) {
-            FaqService.parseExerciseCategories(res.body);
+            FaqService.parseFaqCategories(res.body);
         }
         return res;
     }
@@ -79,7 +77,7 @@ export class FaqService {
         return faq.categories?.map((category) => JSON.stringify(category) as unknown as FaqCategory);
     }
 
-    convertFaqCategoriesAsStringFromServer(categories: string[]): ExerciseCategory[] {
+    convertFaqCategoriesAsStringFromServer(categories: string[]): FaqCategory[] {
         return categories.map((category) => JSON.parse(category));
     }
 
@@ -87,35 +85,24 @@ export class FaqService {
      * Converts the faq category json strings into FaqCategory objects (if it exists).
      * @param res the response
      */
-    static convertExerciseCategoryArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertFaqCategoryArrayFromServer<E extends Faq, EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
-            res.body.forEach((exercise: E) => FaqService.parseExerciseCategories(exercise));
+            res.body.forEach((faq: E) => FaqService.parseFaqCategories(faq));
         }
         return res;
     }
 
     /**
      * Parses the faq categories JSON string into {@link FaqCategory} objects.
-     * @param faq - the exercise
+     * @param faq - the faq
      */
-    static parseExerciseCategories(faq?: Faq) {
+    static parseFaqCategories(faq?: Faq) {
         if (faq?.categories) {
             faq.categories = faq.categories.map((category) => {
                 const categoryObj = JSON.parse(category as unknown as string);
                 return new FaqCategory(categoryObj.category, categoryObj.color);
             });
         }
-    }
-
-    static parseFaqCategoriesString(categories?: string[]) {
-        let faqCategories: FaqCategory[] = [];
-        if (categories) {
-            faqCategories = categories.map((category) => {
-                const categoryObj = JSON.parse(category as unknown as string);
-                return new FaqCategory(categoryObj.category, categoryObj.color);
-            });
-        }
-        return faqCategories;
     }
 
     /**
