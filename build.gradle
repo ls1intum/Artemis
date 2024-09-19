@@ -506,6 +506,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         exclude group: "com.vaadin.external.google", module: "android-json"
+        exclude group: "org.xmlunit", module: "xmlunit-core"
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
