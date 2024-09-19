@@ -1458,8 +1458,8 @@ public class CourseResource {
 
     @GetMapping("courses/{courseId}/existing-exercise-details")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId) {
-        log.debug("REST request to get TODO in course : {}", courseId);
+    public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean includeShortNames) {
+        log.debug("REST request to get details of existing exercises in course : {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
 
         Set<String> alreadyTakenExerciseNames = new HashSet<>();
@@ -1467,7 +1467,9 @@ public class CourseResource {
 
         course.getExercises().forEach((exercise -> {
             alreadyTakenExerciseNames.add(exercise.getTitle());
-            alreadyTakenShortNames.add(exercise.getShortName());
+            if (includeShortNames) {
+                alreadyTakenShortNames.add(exercise.getShortName());
+            }
         }));
 
         return ResponseEntity.ok(new CourseExistingExerciseDetails(alreadyTakenExerciseNames.toArray(String[]::new), alreadyTakenShortNames.toArray(String[]::new)));
