@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetails;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -96,6 +97,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -1452,5 +1454,22 @@ public class CourseResource {
         }
         long unacceptedComplaints = complaintService.countUnacceptedComplaintsByParticipantAndCourseId(participant, courseId);
         return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
+    }
+
+    @GetMapping("courses/{courseId}/existing-exercise-details")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId) {
+        log.debug("REST request to get TODO in course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+
+        Set<String> alreadyTakenExerciseNames = new HashSet<>();
+        Set<String> alreadyTakenShortNames = new HashSet<>();
+
+        course.getExercises().forEach((exercise -> {
+            alreadyTakenExerciseNames.add(exercise.getTitle());
+            alreadyTakenShortNames.add(exercise.getShortName());
+        }));
+
+        return ResponseEntity.ok(new CourseExistingExerciseDetails(alreadyTakenExerciseNames.toArray(String[]::new), alreadyTakenShortNames.toArray(String[]::new)));
     }
 }
