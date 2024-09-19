@@ -1,16 +1,19 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
+import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import dayjs from 'dayjs/esm';
+import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { CourseScores } from 'app/course/course-scores/course-scores';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -18,15 +21,19 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['course-card.scss'],
 })
 export class CourseCardComponent implements OnChanges {
-    protected readonly faArrowRight = faArrowRight;
-
+    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     @Input() course: Course;
     @Input() hasGuidedTour: boolean;
 
     CachingStrategy = CachingStrategy;
 
     nextRelevantExercise?: Exercise;
+    nextExerciseDueDate?: dayjs.Dayjs;
+    nextExerciseIcon: IconProp;
+    nextExerciseTooltip: string;
     exerciseCount = 0;
+    lectureCount = 0;
+    examCount = 0;
 
     totalRelativeScore: number;
     totalReachableScore: number;
@@ -63,6 +70,9 @@ export class CourseCardComponent implements OnChanges {
 
             if (nextExercises.length > 0 && nextExercises[0]) {
                 this.nextRelevantExercise = nextExercises[0];
+                this.updateNextDueDate();
+                this.nextExerciseIcon = getIcon(this.nextRelevantExercise!.type);
+                this.nextExerciseTooltip = getIconTooltip(this.nextRelevantExercise!.type);
             }
 
             const totalScoresForCourse: CourseScores | undefined = this.scoresStorageService.getStoredTotalScores(this.course.id!);
@@ -78,6 +88,10 @@ export class CourseCardComponent implements OnChanges {
             this.ngxDoughnutData[1].value = scoreNotReached;
             this.ngxDoughnutData = [...this.ngxDoughnutData];
         }
+
+        this.lectureCount = this.course.numberOfLectures ?? this.course.lectures?.length ?? 0;
+        this.examCount = this.course.numberOfExams ?? this.course.exams?.length ?? 0;
+        this.courseColor = this.course.color || this.ARTEMIS_DEFAULT_COLOR;
     }
 
     /**
@@ -95,5 +109,17 @@ export class CourseCardComponent implements OnChanges {
     navigateToExams(event: Event) {
         event.stopPropagation();
         this.router.navigate(['courses', this.course.id, 'exams']);
+    }
+
+    private updateNextDueDate() {
+        let nextExerciseDueDate = undefined;
+        if (this.nextRelevantExercise) {
+            if (this.nextRelevantExercise.studentParticipations && this.nextRelevantExercise.studentParticipations.length > 0) {
+                nextExerciseDueDate = getExerciseDueDate(this.nextRelevantExercise, this.nextRelevantExercise.studentParticipations[0]);
+            } else {
+                nextExerciseDueDate = this.nextRelevantExercise.dueDate;
+            }
+        }
+        this.nextExerciseDueDate = nextExerciseDueDate;
     }
 }

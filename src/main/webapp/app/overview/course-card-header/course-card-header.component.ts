@@ -3,6 +3,11 @@ import { Course } from 'app/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 
+/** TODO '@edkaya': New course card design also uses this header design.
+ * Therefore, this component will be reused in course-card.component.html
+ * after new course cards are merged into develop. I will refactor its html
+ * and scss file to avoid duplicates to maintain reusability in the follow-up.
+ * */
 @Component({
     selector: 'jhi-course-card-header',
     templateUrl: './course-card-header.component.html',

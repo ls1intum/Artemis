@@ -1,8 +1,5 @@
 .card {
-    // best possible height to fit header, information, and manage course button: 80px header + 200px card content
-    height: 283px;
-    // ensure the card takes the full width of its column in the container
-    width: 100%;
+    min-height: 320px;
     transition: transform 0.2s linear;
 
     &:hover {
@@ -10,10 +7,75 @@
         background-color: var(--hover-slightly-darker-body-bg);
     }
 
-    .card-body {
-        .information-box-wrapper {
-            height: 135px;
+    .card-header {
+        position: relative;
+        padding: 0;
+        height: 80px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 1;
+        filter: alpha(opacity = 100);
+        transition: 0.15s;
+        background-color: var(--background-color-for-hover) !important;
+
+        &:hover {
+            background-color: color-mix(in srgb, var(--background-color-for-hover), transparent 15%) !important;
         }
+
+        .header-col {
+            height: 80px;
+            display: flex;
+            align-items: center;
+        }
+
+        .image-col {
+            justify-content: flex-start;
+        }
+
+        .title-col {
+            justify-content: center;
+        }
+
+        .course-info-col {
+            justify-content: flex-end;
+
+            .course-info-amounts {
+                display: flex;
+                flex-direction: column;
+                line-height: 20px;
+                white-space: nowrap;
+                z-index: 1;
+
+                a {
+                    color: white;
+                    font-weight: unset;
+                }
+            }
+        }
+
+        .container {
+            height: 80px;
+
+            .row {
+                height: 80px;
+                justify-content: space-between;
+            }
+        }
+
+        .card-title {
+            overflow: hidden;
+            padding-bottom: 1px;
+            max-height: 80px;
+        }
+    }
+
+    .card-body {
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
 
         .chart-container {
             display: flex;
@@ -30,18 +92,88 @@
             }
         }
 
-        .btn-wrapper {
-            // needed, otherwise button won't work due to stretched-link class
-            z-index: 2;
-            position: relative;
+        .points {
+            display: block;
+            max-width: 11ch;
         }
 
-        .exercise-title {
-            display: inline-block;
-            max-width: 100%;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+        canvas {
+            cursor: pointer;
+            z-index: 1;
+            width: 150px;
+            height: 150px;
         }
+
+        .no-statistics {
+            display: flex;
+            height: 200px;
+            justify-content: center;
+            flex-direction: column;
+            margin-bottom: 0;
+        }
+    }
+
+    .card-footer {
+        position: relative;
+        padding: 0;
+        height: 50px;
+
+        .container {
+            height: 50px;
+
+            .row {
+                height: 50px;
+            }
+        }
+
+        .next-exercise-col {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            .next-exercise-icon {
+                z-index: 1;
+                font-size: large;
+            }
+
+            .next-exercise-title {
+                font-weight: bolder;
+                font-size: large;
+                margin-bottom: 0;
+                display: inline-block;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+                max-width: 40ch;
+                padding-left: 15px;
+            }
+
+            h6 {
+                margin-bottom: 0;
+            }
+        }
+
+        .no-exercise {
+            display: flex;
+            height: 50px;
+            align-items: center;
+            padding-left: 30px;
+
+            h6 {
+                margin-bottom: 0;
+            }
+        }
+    }
+}
+
+.container {
+    max-width: unset;
+}
+
+jhi-secured-image {
+    ::ng-deep img {
+        border-radius: 50%;
+        height: 65px;
+        width: auto;
     }
 }
