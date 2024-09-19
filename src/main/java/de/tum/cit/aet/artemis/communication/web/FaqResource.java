@@ -24,6 +24,7 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.service.FaqService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
@@ -91,10 +92,10 @@ public class FaqResource {
     public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq, @PathVariable Long faqId) {
         log.debug("REST request to update Faq : {}", faq);
         if (faqId == null || !faqId.equals(faq.getId())) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
+            throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
-        Faq existingFaq = faqService.findById(faqId).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
+        Faq existingFaq = faqService.findById(faqId).orElseThrow(() -> new EntityNotFoundException("FAQ not found", faqId));
         Faq result = faqService.save(faq);
         return ResponseEntity.ok().body(result);
     }
@@ -109,7 +110,7 @@ public class FaqResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Faq> getFaq(@PathVariable Long faqId) {
         log.debug("REST request to get faq {}", faqId);
-        Faq faq = faqService.findById(faqId).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
+        Faq faq = faqService.findById(faqId).orElseThrow(() -> new EntityNotFoundException("FAQ not found", faqId));
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, faq.getCourse(), null);
         return ResponseEntity.ok(faq);
     }
@@ -125,7 +126,7 @@ public class FaqResource {
     public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId) {
 
         log.debug("REST request to delete faq {}", faqId);
-        Faq faq = faqService.findById(faqId).orElseThrow(() -> new BadRequestAlertException("FAQ not found", ENTITY_NAME, "idNotFound"));
+        Faq faq = faqService.findById(faqId).orElseThrow(() -> new EntityNotFoundException("FAQ not found", faqId));
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
         faqService.deleteById(faqId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
@@ -143,6 +144,7 @@ public class FaqResource {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
 
         Course course = getCourseForRequest(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         Set<Faq> faqs = faqService.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(faqs);
     }
@@ -159,7 +161,7 @@ public class FaqResource {
         log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
 
         Course course = getCourseForRequest(courseId);
-
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         Set<String> faqs = faqService.findAllCategoriesByCourseId(courseId);
 
         return ResponseEntity.ok().body(faqs);
@@ -171,9 +173,7 @@ public class FaqResource {
      * @return the course with the id courseId, unless it exists
      */
     private Course getCourseForRequest(Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
-        return course;
+        return courseRepository.findByIdElseThrow(courseId);
     }
 
 }
