@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -667,9 +668,7 @@ public class ProgrammingExerciseRepositoryService {
         var buildConfig = programmingExercise.getBuildConfig();
 
         // replace checkout directory placeholders
-        String studentWorkingDirectory = buildConfig.getAssignmentCheckoutPath() != null && !buildConfig.getAssignmentCheckoutPath().isBlank()
-                ? buildConfig.getAssignmentCheckoutPath()
-                : Constants.ASSIGNMENT_REPO_NAME;
+        String studentWorkingDirectory = !StringUtils.isBlank(buildConfig.getAssignmentCheckoutPath()) ? buildConfig.getAssignmentCheckoutPath() : Constants.ASSIGNMENT_REPO_NAME;
         if (studentWorkingDirectory.startsWith("/")) {
             studentWorkingDirectory = studentWorkingDirectory.substring(1);
         }

@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -205,7 +206,7 @@ public class BuildScriptProviderService {
      * @return the original string with the placeholders replaced
      */
     public String replacePlaceholders(String originalString, String assignmentRepo, String solutionRepo, String testRepo) {
-        assignmentRepo = assignmentRepo != null && !assignmentRepo.isBlank() ? assignmentRepo : Constants.ASSIGNMENT_REPO_NAME;
+        assignmentRepo = !StringUtils.isBlank(assignmentRepo) ? assignmentRepo : Constants.ASSIGNMENT_REPO_NAME;
         solutionRepo = solutionRepo != null && !solutionRepo.isBlank() ? solutionRepo : Constants.SOLUTION_REPO_NAME;
         testRepo = testRepo != null && !testRepo.isBlank() ? testRepo : Constants.TEST_REPO_NAME;
 

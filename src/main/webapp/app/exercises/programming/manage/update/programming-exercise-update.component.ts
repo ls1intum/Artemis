@@ -1118,7 +1118,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     }
 
     private testCheckoutPathsPattern(checkoutPath: (string | undefined)[]): boolean {
-        return checkoutPath.every((path) => path === undefined || path === '' || this.invalidDirectoryNamePattern.test(path));
+        return checkoutPath.every((path) => path === undefined || path.trim() === '' || this.invalidDirectoryNamePattern.test(path));
     }
 
     private createProgrammingExerciseForImportFromFile() {

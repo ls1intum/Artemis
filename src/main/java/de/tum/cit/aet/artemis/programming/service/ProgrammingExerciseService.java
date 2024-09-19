@@ -442,6 +442,7 @@ public class ProgrammingExerciseService {
     }
 
     private boolean isValidCheckoutPath(String checkoutPath) {
+        // Checkout paths are optional for the assignment, solution, and test repositories. If not set, the default path is used.
         if (checkoutPath == null) {
             return true;
         }

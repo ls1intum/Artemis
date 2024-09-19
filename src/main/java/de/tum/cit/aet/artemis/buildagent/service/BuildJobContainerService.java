@@ -25,6 +25,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -287,11 +288,11 @@ public class BuildJobContainerService {
             Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String assignmentCheckoutPath,
             String testCheckoutPath, String solutionCheckoutPath) {
 
-        assignmentCheckoutPath = (assignmentCheckoutPath != null && !assignmentCheckoutPath.isEmpty()) ? assignmentCheckoutPath
+        assignmentCheckoutPath = (!StringUtils.isBlank(assignmentCheckoutPath)) ? assignmentCheckoutPath
                 : RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
         String defaultTestCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-        testCheckoutPath = (!defaultTestCheckoutPath.isEmpty() && testCheckoutPath != null && !testCheckoutPath.isEmpty()) ? testCheckoutPath : defaultTestCheckoutPath;
+        testCheckoutPath = (!StringUtils.isBlank(defaultTestCheckoutPath) && StringUtils.isBlank(testCheckoutPath)) ? testCheckoutPath : defaultTestCheckoutPath;
 
         // Make sure to create the working directory in case it does not exist.
         // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
@@ -304,7 +305,7 @@ public class BuildJobContainerService {
         // Copy the assignment repository to the container and move it to the assignment checkout path
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         if (solutionRepositoryPath != null) {
-            solutionCheckoutPath = (solutionCheckoutPath != null && !solutionCheckoutPath.isEmpty()) ? solutionCheckoutPath
+            solutionCheckoutPath = (!StringUtils.isBlank(solutionCheckoutPath)) ? solutionCheckoutPath
                     : RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
             addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
         }

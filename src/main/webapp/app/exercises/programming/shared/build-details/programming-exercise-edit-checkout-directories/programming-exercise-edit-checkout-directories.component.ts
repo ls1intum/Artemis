@@ -45,7 +45,9 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     reset() {
         const submissionBuildPlan = this.submissionBuildPlanCheckoutRepositories();
         this.isAssigmentRepositoryEditable =
-            !!submissionBuildPlan?.exerciseCheckoutDirectory && submissionBuildPlan?.exerciseCheckoutDirectory !== '' && submissionBuildPlan?.exerciseCheckoutDirectory !== '/';
+            !!submissionBuildPlan?.exerciseCheckoutDirectory &&
+            submissionBuildPlan?.exerciseCheckoutDirectory.trim() !== '' &&
+            submissionBuildPlan?.exerciseCheckoutDirectory !== '/';
         if (this.isAssigmentRepositoryEditable) {
             this.assignmentCheckoutPath =
                 this.programmingExercise().buildConfig?.assignmentCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.exerciseCheckoutDirectory) || '';
@@ -53,14 +55,16 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
             this.assignmentCheckoutPath = '';
         }
         this.isTestRepositoryEditable =
-            !!submissionBuildPlan?.testCheckoutDirectory && submissionBuildPlan?.testCheckoutDirectory !== '' && submissionBuildPlan?.testCheckoutDirectory !== '/';
+            !!submissionBuildPlan?.testCheckoutDirectory && submissionBuildPlan?.testCheckoutDirectory.trim() !== '' && submissionBuildPlan?.testCheckoutDirectory !== '/';
         if (this.isTestRepositoryEditable) {
             this.testCheckoutPath = this.programmingExercise().buildConfig?.testCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.testCheckoutDirectory) || '';
         } else {
             this.testCheckoutPath = '/';
         }
         this.isSolutionRepositoryEditable =
-            !!submissionBuildPlan?.solutionCheckoutDirectory && submissionBuildPlan?.solutionCheckoutDirectory !== '' && submissionBuildPlan?.solutionCheckoutDirectory !== '/';
+            !!submissionBuildPlan?.solutionCheckoutDirectory &&
+            submissionBuildPlan?.solutionCheckoutDirectory.trim() !== '' &&
+            submissionBuildPlan?.solutionCheckoutDirectory !== '/';
         if (this.isSolutionRepositoryEditable) {
             this.solutionCheckoutPath =
                 this.programmingExercise().buildConfig?.solutionCheckoutPath || this.removeLeadingSlash(submissionBuildPlan?.solutionCheckoutDirectory) || '';
@@ -102,7 +106,7 @@ export class ProgrammingExerciseEditCheckoutDirectoriesComponent {
     }
 
     areValuesUnique(values: (string | undefined)[]): boolean {
-        const filteredValues = values.filter((value): value is string => value !== undefined && value !== '');
+        const filteredValues = values.filter((value): value is string => value !== undefined && value.trim() !== '');
         const uniqueValues = new Set(filteredValues);
         return filteredValues.length === uniqueValues.size;
     }

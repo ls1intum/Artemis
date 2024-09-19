@@ -63,8 +63,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     shouldReplacePlaceholders(): boolean {
         return (
-            (!!this.programmingExercise.buildConfig?.assignmentCheckoutPath && this.programmingExercise.buildConfig?.assignmentCheckoutPath !== '') ||
-            (!!this.programmingExercise.buildConfig?.testCheckoutPath && this.programmingExercise.buildConfig?.testCheckoutPath !== '') ||
+            (!!this.programmingExercise.buildConfig?.assignmentCheckoutPath && this.programmingExercise.buildConfig?.assignmentCheckoutPath.trim() !== '') ||
+            (!!this.programmingExercise.buildConfig?.testCheckoutPath && this.programmingExercise.buildConfig?.testCheckoutPath.trim() !== '') ||
             !!this.programmingExercise.buildConfig?.buildScript?.includes('${studentParentWorkingDirectoryName}') ||
             !!this.programmingExercise.buildConfig?.buildScript?.includes('${testWorkingDirectory}')
         );

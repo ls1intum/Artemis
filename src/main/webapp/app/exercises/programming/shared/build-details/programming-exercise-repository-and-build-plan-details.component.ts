@@ -128,9 +128,9 @@ export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implement
     private isBuildConfigAvailable(buildConfig?: ProgrammingExerciseBuildConfig): boolean {
         return (
             buildConfig !== undefined &&
-            ((buildConfig.assignmentCheckoutPath !== undefined && buildConfig.assignmentCheckoutPath !== '') ||
-                (buildConfig.testCheckoutPath !== undefined && buildConfig.testCheckoutPath !== '') ||
-                (buildConfig.solutionCheckoutPath !== undefined && buildConfig.solutionCheckoutPath !== ''))
+            ((buildConfig.assignmentCheckoutPath !== undefined && buildConfig.assignmentCheckoutPath.trim() !== '') ||
+                (buildConfig.testCheckoutPath !== undefined && buildConfig.testCheckoutPath.trim() !== '') ||
+                (buildConfig.solutionCheckoutPath !== undefined && buildConfig.solutionCheckoutPath.trim() !== ''))
         );
     }
 
