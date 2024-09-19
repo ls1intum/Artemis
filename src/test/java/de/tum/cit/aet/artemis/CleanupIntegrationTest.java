@@ -217,7 +217,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         orphanRating.setResult(orphanResult);
         orphanRating = ratingRepository.save(orphanRating);
 
-        var responseBody = request.delete("/api/admin/cleanup/delete-orphans", null, null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
+        var responseBody = request.delete("/api/admin/cleanup/delete-orphans", new LinkedMultiValueMap<>(), null, CleanupServiceExecutionRecordDTO.class, HttpStatus.OK);
 
         assertThat(responseBody.jobType()).isEqualTo("deleteOrphans");
         assertThat(responseBody.executionDate()).isNotNull();
