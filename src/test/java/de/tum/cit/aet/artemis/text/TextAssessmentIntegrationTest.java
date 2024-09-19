@@ -572,6 +572,21 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationIndependent
         assertThat(participation.getSubmissions().iterator().next().getResults()).isEmpty();
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getDataForTextEditor_beforeAssessmentDueDate_athenaResults() throws Exception {
+        exerciseUtilService.updateAssessmentDueDate(textExercise.getId(), now().plusDays(1));
+
+        TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
+        textSubmission = textExerciseUtilService.saveTextSubmissionWithAthenaResult(textExercise, textSubmission, TEST_PREFIX + "student1");
+
+        StudentParticipation participation = request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
+
+        assertThat(participation.getResults()).hasSize(1);
+        assertThat(participation.getSubmissions()).hasSize(1);
+        assertThat(participation.getSubmissions().iterator().next().getResults()).hasSize(1);
+    }
+
     private void getExampleResultForTutor(HttpStatus expectedStatus, boolean isExample) throws Exception {
         TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(isExample);
