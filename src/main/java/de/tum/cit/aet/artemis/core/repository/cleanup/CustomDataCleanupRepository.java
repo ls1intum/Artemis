@@ -15,7 +15,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class CustomDataCleanupRepository implements DataCleanupRepository {
 
-    // transactinal ok, because of delete statements
 
     @PersistenceContext
     private EntityManager entityManager;
