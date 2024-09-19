@@ -18,7 +18,8 @@
             "archive": {
                 "title": "Archive",
                 "sort": "Sort",
-                "tip": "The archive enables you to view all your past courses, organized by semester. Click on a semester to expand and see the courses you were enrolled in during that period."
+                "tip": "The archive enables you to view all your past courses, organized by semester. Click on a semester to expand and see the courses you were enrolled in during that period.",
+                "noCoursesPreviousSemester": "No courses found from previous semesters"
             },
             "showActive": "Show only active courses",
             "totalScore": "Total Score:",

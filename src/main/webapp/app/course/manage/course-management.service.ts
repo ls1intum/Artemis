@@ -343,18 +343,11 @@ export class CourseManagementService {
         );
     }
 
-    getCoursesForArchive(req?: any): Observable<HttpResponse<Course[]>> {
-        const options = createRequestOption(req); // This will handle query params if needed
-        return this.http.get<Course[]>(`${this.resourceUrl}/archive`, { params: options, observe: 'response' }).pipe(
-            tap((res: HttpResponse<Course[]>) => {
-                if (res.body) {
-                    res.body.forEach((course) => {
-                        // If you need to perform any action on each course
-                        console.log(course);
-                    });
-                }
-            }),
-        );
+    /**
+     * find all courses for the archive using a GET request
+     */
+    getCoursesForArchive(): Observable<HttpResponse<Course[]>> {
+        return this.http.get<Course[]>(`${this.resourceUrl}/archive`, { observe: 'response' }).pipe();
     }
 
     /**

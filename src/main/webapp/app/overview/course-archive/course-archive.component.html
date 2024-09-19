@@ -26,9 +26,9 @@
         </div>
     </div>
     <div class="module-bg py-3 rounded-3">
-        <div class="table mb-0">
+        <div class="mb-0">
             @for (semester of semesters; track semester; let last = $last) {
-                <div class="d-flex justify-content-between align-items-center px-3" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]">
+                <div class="d-flex justify-content-between align-items-center px-3 mb-2" (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]" role="button">
                     <span class="fw-bold"> {{ mapSemesterString(semester) }}</span>
                     <fa-icon [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
                 </div>
@@ -51,6 +51,6 @@
     </div>
 } @else {
     <div class="d-flex justify-content-center">
-        <h4 class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.noCoursesPreviousSemester"></h4>
+        <h4 class="text-secondary text-center" jhiTranslate="artemisApp.course.archive.noCoursesPreviousSemester"></h4>
     </div>
 }
