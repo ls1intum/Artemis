@@ -135,7 +135,7 @@ public class AutomaticProgrammingExerciseCleanupService {
                 pageable);
         log.info("Found {} student participations to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
         if (uriBatch.getTotalElements() > 0) {
-            var batchStream = Stream.iterate(uriBatch, Page::hasNext, page -> programmingExerciseStudentParticipationRepository
+            var batchStream = Stream.iterate(uriBatch, page -> page.getNumber() <= page.getTotalPages(), page -> programmingExerciseStudentParticipationRepository
                     .findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate, page.nextPageable()));
             batchStream.forEach(page -> page.forEach(this::deleteLocalRepositoryByUriString));
             log.info("Finished cleaning local student repositories");
