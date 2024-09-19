@@ -140,7 +140,6 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
         if (chatSession.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        // TODO support more exercise types
         var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(chatSession.getExercise().getId());
         var latestSubmission = getLatestSubmissionIfExists(exercise, chatSession.getUser());
 

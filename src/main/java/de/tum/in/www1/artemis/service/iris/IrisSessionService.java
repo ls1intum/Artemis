@@ -11,12 +11,14 @@ import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
 import de.tum.in.www1.artemis.domain.iris.session.IrisCourseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
+import de.tum.in.www1.artemis.domain.iris.session.IrisTextExerciseChatSession;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.iris.session.IrisChatBasedFeatureInterface;
 import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisRateLimitedFeatureInterface;
 import de.tum.in.www1.artemis.service.iris.session.IrisSubFeatureInterface;
+import de.tum.in.www1.artemis.service.iris.session.IrisTextExerciseChatSessionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 /**
@@ -28,13 +30,16 @@ public class IrisSessionService {
 
     private final UserRepository userRepository;
 
+    private final IrisTextExerciseChatSessionService irisTextExerciseChatSessionService;
+
     private final IrisExerciseChatSessionService irisExerciseChatSessionService;
 
     private final IrisCourseChatSessionService irisCourseChatSessionService;
 
-    public IrisSessionService(UserRepository userRepository, IrisExerciseChatSessionService irisExerciseChatSessionService,
-            IrisCourseChatSessionService irisCourseChatSessionService) {
+    public IrisSessionService(UserRepository userRepository, IrisTextExerciseChatSessionService irisTextExerciseChatSessionService,
+            IrisExerciseChatSessionService irisExerciseChatSessionService, IrisCourseChatSessionService irisCourseChatSessionService) {
         this.userRepository = userRepository;
+        this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisCourseChatSessionService = irisCourseChatSessionService;
     }
@@ -129,6 +134,7 @@ public class IrisSessionService {
     @SuppressWarnings("unchecked")
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
         return switch (session) {
+            case IrisTextExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTextExerciseChatSessionService, chatSession);
             case IrisExerciseChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisExerciseChatSessionService, chatSession);
             case IrisCourseChatSession courseChatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisCourseChatSessionService, courseChatSession);
             case null, default -> throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());

@@ -133,7 +133,7 @@ public class IrisExerciseChatSessionResource {
 
     private static ProgrammingExercise validateExercise(Exercise exercise) {
         if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
-            // TODO: Change this
+            // TODO: Remove this once we are only fetching ProgrammingExercises from the DB anyway
             throw new ConflictException("Iris is only supported for programming exercises", "Iris", "irisProgrammingExercise");
         }
         if (exercise.isExamExercise()) {

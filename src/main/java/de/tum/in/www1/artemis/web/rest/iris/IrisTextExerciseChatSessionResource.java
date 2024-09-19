@@ -20,8 +20,6 @@ import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.iris.IrisTextExerciseChatSessionRepository;
 import de.tum.in.www1.artemis.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
-import de.tum.in.www1.artemis.service.connectors.pyris.PyrisHealthIndicator;
-import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.IrisSessionService;
 import de.tum.in.www1.artemis.service.iris.session.IrisTextExerciseChatSessionService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
@@ -41,10 +39,6 @@ public class IrisTextExerciseChatSessionResource {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final PyrisHealthIndicator pyrisHealthIndicator;
-
-    private final IrisRateLimitService irisRateLimitService;
-
     private final TextExerciseRepository textExerciseRepository;
 
     private final IrisTextExerciseChatSessionService irisTextExerciseChatSessionService;
@@ -53,13 +47,11 @@ public class IrisTextExerciseChatSessionResource {
 
     protected IrisTextExerciseChatSessionResource(IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository, UserRepository userRepository,
             TextExerciseRepository textExerciseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService, IrisTextExerciseChatSessionService irisTextExerciseChatSessionService) {
+            IrisTextExerciseChatSessionService irisTextExerciseChatSessionService) {
         this.irisTextExerciseChatSessionRepository = irisTextExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
-        this.pyrisHealthIndicator = pyrisHealthIndicator;
-        this.irisRateLimitService = irisRateLimitService;
         this.textExerciseRepository = textExerciseRepository;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
     }
@@ -106,6 +98,7 @@ public class IrisTextExerciseChatSessionResource {
 
         irisSettingsService.isEnabledForElseThrow(IrisSubSettingsType.TEXT_EXERCISE_CHAT, textExercise);
         var user = userRepository.getUserWithGroupsAndAuthorities();
+        user.hasAcceptedIrisElseThrow();
 
         var session = irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
         var uriString = "/api/iris/sessions/" + session.getId();

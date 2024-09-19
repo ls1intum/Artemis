@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
+import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedTextExerciseChatSubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
@@ -176,6 +177,23 @@ public class IrisSubSettingsService {
         }
 
         return selectedVariant;
+    }
+
+    /**
+     * Combines the chat settings of multiple {@link IrisSettings} objects.
+     * If minimal is true, the returned object will only contain the enabled and rateLimit fields.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined chat settings.
+     */
+    public IrisCombinedTextExerciseChatSubSettingsDTO combineTextExerciseChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisTextExerciseChatSettings);
+        var rateLimit = getCombinedRateLimit(settingsList);
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
+        return new IrisCombinedTextExerciseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
     /**
