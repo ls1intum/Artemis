@@ -52,7 +52,6 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
                 this.courses = response.body || [];
                 this.courses = sortCourses(this.courses);
                 this.semesters = this.courseService.getUniqueSemesterNamesSorted(this.courses);
-                console.log('this.semesters: ' + this.semesters);
                 this.mapCoursesIntoSemesters();
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
