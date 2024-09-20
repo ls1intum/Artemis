@@ -352,10 +352,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
                 this.result = getLatestSubmissionResult(this.submission)!;
-                this.result?.participation = this.participation;
-
+                if (this.result) {
+                    this.result.participation = this.participation;
+                }
                 this.isSaving = false;
-
                 if (!this.isAllowedToSubmitAfterDueDate) {
                     this.alertService.success('entity.action.submitSuccessfulAlert');
                     this.hasLatestResult = false;
