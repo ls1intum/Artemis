@@ -9,126 +9,130 @@
                 'container-closed': isNavbarCollapsed,
             }"
         >
-            <mat-sidenav
-                disableClose
-                [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }"
-                class="module-bg rounded-end rounded-3"
-                opened="true"
-                mode="side"
-                [hidden]="isExamStarted"
-            >
-                <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed }">
-                    <div>
-                        <!-- Course Icon + Title -->
-                        <div id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
-                            <div ngbDropdown container="body" class="d-flex">
-                                @if (course) {
-                                    @if (courses?.length) {
-                                        <div ngbDropdownToggle class="pointer">
-                                            <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course.courseIcon, courseTitle: course.title }" />
-                                        </div>
-                                    } @else {
-                                        <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course.courseIcon, courseTitle: course.title }" />
-                                    }
-                                }
-
-                                <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
-                                    @for (course of courses; track course) {
-                                        <button ngbDropdownItem (click)="switchCourse(course)" class="d-flex align-items-center py-1 px-2">
-                                            <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course.courseIcon, courseTitle: course.title }" />
-                                            <div class="h6 fw-normal mb-0 course-title text-wrap">{{ course?.title }}</div>
-                                        </button>
-                                    }
-                                </div>
-                            </div>
-                            @if (!isNavbarCollapsed) {
-                                <div id="test-course-title" class="course-title h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
-                            }
-                        </div>
-                        <!-- NavItems -->
+            @if (!isLti) {
+                <mat-sidenav
+                    disableClose
+                    [ngClass]="{ 'sidenav-height-dev': !isProduction || isTestServer }"
+                    class="module-bg rounded-end rounded-3"
+                    opened="true"
+                    mode="side"
+                    [hidden]="isExamStarted"
+                >
+                    <div class="sidebar-container d-flex h-100 justify-content-between flex-column" [ngClass]="{ collapsed: isNavbarCollapsed }">
                         <div>
-                            <hr class="mt-0" />
-                            <ul ngbDropdown #itemsDrop="ngbDropdown" container="body" placement="right" class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
-                                @for (sidebarItem of sidebarItems; track sidebarItem) {
-                                    <li class="nav-item" [hidden]="sidebarItem.hidden">
-                                        @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
-                                            <ng-template *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
+                            <!-- Course Icon + Title -->
+                            <div id="container" class="d-flex p-3 align-items-center text-decoration-none" [title]="course?.title">
+                                <div ngbDropdown container="body" class="d-flex">
+                                    @if (course) {
+                                        @if (courses?.length) {
+                                            <div ngbDropdownToggle class="pointer">
+                                                <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course.courseIcon, courseTitle: course.title }" />
+                                            </div>
                                         } @else {
-                                            <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
+                                            <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course.courseIcon, courseTitle: course.title }" />
                                         }
-                                    </li>
-                                }
-                                <li ngbDropdownToggle class="nav-item">
-                                    <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3">
-                                        <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
-                                        <span
-                                            class="more"
-                                            [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
-                                            [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
-                                        ></span>
+                                    }
+
+                                    <div ngbDropdownMenu class="dropdown-menu py-1 ms-n2">
+                                        @for (course of courses; track course) {
+                                            <button ngbDropdownItem (click)="switchCourse(course)" class="d-flex align-items-center py-1 px-2">
+                                                <ng-template *ngTemplateOutlet="courseImage; context: { $implicit: course.courseIcon, courseTitle: course.title }" />
+                                                <div class="h6 fw-normal mb-0 course-title text-wrap">{{ course?.title }}</div>
+                                            </button>
+                                        }
                                     </div>
-                                </li>
-                                <div ngbDropdownMenu class="dropdown-content" [ngClass]="{ fixedContentSize: hiddenItems.length >= 4 }">
-                                    @for (hiddenItem of hiddenItems; track hiddenItem) {
-                                        <li class="nav-item">
-                                            @if (hiddenItem.hasInOrionProperty && hiddenItem.showInOrionWindow !== undefined) {
-                                                <ng-template *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: hiddenItem, iconTextTemplate: navIconAndTextHidden }" />
+                                </div>
+                                @if (!isNavbarCollapsed) {
+                                    <div id="test-course-title" class="course-title h6 mb-0 fw-bold text-body auto-collapse">{{ course?.title }}</div>
+                                }
+                            </div>
+                            <!-- NavItems -->
+                            <div>
+                                <hr class="mt-0" />
+                                <ul ngbDropdown #itemsDrop="ngbDropdown" container="body" placement="right" class="navbar-nav justify-content-end flex-grow-1 text-decoration-none">
+                                    @for (sidebarItem of sidebarItems; track sidebarItem) {
+                                        <li class="nav-item" [hidden]="sidebarItem.hidden">
+                                            @if (sidebarItem.hasInOrionProperty && sidebarItem.showInOrionWindow !== undefined) {
+                                                <ng-template *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
                                             } @else {
-                                                <ng-template *ngTemplateOutlet="navItem; context: { $implicit: hiddenItem, iconTextTemplate: navIconAndTextHidden }" />
+                                                <ng-template *ngTemplateOutlet="navItem; context: { $implicit: sidebarItem, iconTextTemplate: navIconAndText }" />
                                             }
                                         </li>
                                     }
-                                    @if (courseActionItems?.length && anyItemHidden) {
-                                        @for (courseActionItem of courseActionItems; track courseActionItem) {
+                                    <li ngbDropdownToggle class="nav-item">
+                                        <div [hidden]="!anyItemHidden" class="three-dots nav-link px-3">
+                                            <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
+                                            <span
+                                                class="more"
+                                                [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
+                                                [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
+                                            ></span>
+                                        </div>
+                                    </li>
+                                    <div ngbDropdownMenu class="dropdown-content" [ngClass]="{ fixedContentSize: hiddenItems.length >= 4 }">
+                                        @for (hiddenItem of hiddenItems; track hiddenItem) {
                                             <li class="nav-item">
-                                                <a
-                                                    class="nav-link nav-link-sidebar px-3 py-2"
-                                                    [ngClass]="{ collapsed: isNavbarCollapsed }"
-                                                    (click)="courseActionItemClick(courseActionItem)"
-                                                    [title]="courseActionItem.title"
-                                                >
-                                                    <ng-template *ngTemplateOutlet="navIconAndTextHidden; context: { $implicit: courseActionItem }" />
-                                                </a>
+                                                @if (hiddenItem.hasInOrionProperty && hiddenItem.showInOrionWindow !== undefined) {
+                                                    <ng-template
+                                                        *ngTemplateOutlet="navItemOrionFilter; context: { $implicit: hiddenItem, iconTextTemplate: navIconAndTextHidden }"
+                                                    />
+                                                } @else {
+                                                    <ng-template *ngTemplateOutlet="navItem; context: { $implicit: hiddenItem, iconTextTemplate: navIconAndTextHidden }" />
+                                                }
                                             </li>
                                         }
-                                    }
+                                        @if (courseActionItems?.length && anyItemHidden) {
+                                            @for (courseActionItem of courseActionItems; track courseActionItem) {
+                                                <li class="nav-item">
+                                                    <a
+                                                        class="nav-link nav-link-sidebar px-3 py-2"
+                                                        [ngClass]="{ collapsed: isNavbarCollapsed }"
+                                                        (click)="courseActionItemClick(courseActionItem)"
+                                                        [title]="courseActionItem.title"
+                                                    >
+                                                        <ng-template *ngTemplateOutlet="navIconAndTextHidden; context: { $implicit: courseActionItem }" />
+                                                    </a>
+                                                </li>
+                                            }
+                                        }
+                                    </div>
+                                </ul>
+                            </div>
+                        </div>
+                        <!-- Course Action Items  -->
+                        <div>
+                            @if (courseActionItems?.length && !anyItemHidden) {
+                                <div ngbDropdown placement="top" class="navbar-nav mb-2">
+                                    <li class="nav-item">
+                                        @for (courseActionItem of courseActionItems; track courseActionItem) {
+                                            <a
+                                                class="nav-link nav-link-sidebar px-3"
+                                                [ngClass]="{ collapsed: isNavbarCollapsed }"
+                                                (click)="courseActionItemClick(courseActionItem)"
+                                                [title]="courseActionItem.title"
+                                            >
+                                                <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: courseActionItem }" />
+                                            </a>
+                                        }
+                                    </li>
                                 </div>
-                            </ul>
-                        </div>
-                    </div>
-                    <!-- Course Action Items  -->
-                    <div>
-                        @if (courseActionItems?.length && !anyItemHidden) {
-                            <div ngbDropdown placement="top" class="navbar-nav mb-2">
-                                <li class="nav-item">
-                                    @for (courseActionItem of courseActionItems; track courseActionItem) {
-                                        <a
-                                            class="nav-link nav-link-sidebar px-3"
-                                            [ngClass]="{ collapsed: isNavbarCollapsed }"
-                                            (click)="courseActionItemClick(courseActionItem)"
-                                            [title]="courseActionItem.title"
-                                        >
-                                            <ng-template *ngTemplateOutlet="navIconAndText; context: { $implicit: courseActionItem }" />
-                                        </a>
-                                    }
-                                </li>
-                            </div>
-                        }
-                        <!-- Collapse Chevron -->
-                        <div
-                            class="double-arrow mb-2"
-                            [ngClass]="{ 'menu-closed': isNavbarCollapsed }"
-                            [ngbTooltip]="(isNavbarCollapsed ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
-                            (click)="toggleCollapseState()"
-                        >
-                            <div [attr.aria-expanded]="!isNavbarCollapsed" aria-controls="collapseBasic">
-                                <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
-                                <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                            }
+                            <!-- Collapse Chevron -->
+                            <div
+                                class="double-arrow mb-2"
+                                [ngClass]="{ 'menu-closed': isNavbarCollapsed }"
+                                [ngbTooltip]="(isNavbarCollapsed ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
+                                (click)="toggleCollapseState()"
+                            >
+                                <div [attr.aria-expanded]="!isNavbarCollapsed" aria-controls="collapseBasic">
+                                    <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
+                                    <fa-icon class="fa-xs" [icon]="faChevronRight" />
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </mat-sidenav>
+                </mat-sidenav>
+            }
             <mat-sidenav-content
                 [ngClass]="{
                     'exam-wrapper': isExamStarted,
@@ -137,38 +141,40 @@
                 }"
             >
                 @if (course) {
-                    <div
-                        id="course-title-bar-test"
-                        class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top"
-                        [ngStyle]="{ display: isExamStarted ? 'none' : 'flex' }"
-                    >
-                        <div class="align-self-center d-flex">
-                            @if (hasSidebar) {
-                                <button
-                                    [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
-                                    triggers="hover"
-                                    class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
-                                    (click)="toggleSidebar()"
-                                >
-                                    <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary" size="lg" />
-                                </button>
-                            }
-                            <div class="align-self-center">{{ 'artemisApp.courseOverview.menu.' + pageTitle | artemisTranslate }}</div>
+                    @if (!isLti) {
+                        <div
+                            id="course-title-bar-test"
+                            class="h5 module-bg m-3 mt-0 px-3 py-2 rounded rounded-3 justify-content-between sticky-top"
+                            [ngStyle]="{ display: isExamStarted ? 'none' : 'flex' }"
+                        >
+                            <div class="align-self-center d-flex">
+                                @if (hasSidebar) {
+                                    <button
+                                        [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
+                                        triggers="hover"
+                                        class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
+                                        (click)="toggleSidebar()"
+                                    >
+                                        <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary" size="lg" />
+                                    </button>
+                                }
+                                <div class="align-self-center">{{ 'artemisApp.courseOverview.menu.' + pageTitle | artemisTranslate }}</div>
+                            </div>
+                            <div class="d-flex">
+                                @if (isNotManagementView && course.isAtLeastTutor) {
+                                    <div id="manage-button">
+                                        <a class="btn btn-secondary" [routerLink]="['/course-management', course.id]" jhiTranslate="artemisApp.courseOverview.manage"></a>
+                                    </div>
+                                }
+                                @if (showRefreshButton) {
+                                    <button class="btn btn-primary btn-md ms-3" (click)="loadCourse(true)" [disabled]="refreshingCourse">
+                                        <fa-icon [icon]="faSync" [animation]="refreshingCourse ? 'spin' : undefined" />
+                                        <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
+                                    </button>
+                                }
+                            </div>
                         </div>
-                        <div class="d-flex">
-                            @if (isNotManagementView && course.isAtLeastTutor) {
-                                <div id="manage-button">
-                                    <a class="btn btn-secondary" [routerLink]="['/course-management', course.id]" jhiTranslate="artemisApp.courseOverview.manage"></a>
-                                </div>
-                            }
-                            @if (showRefreshButton) {
-                                <button class="btn btn-primary btn-md ms-3" (click)="loadCourse(true)" [disabled]="refreshingCourse">
-                                    <fa-icon [icon]="faSync" [animation]="refreshingCourse ? 'spin' : undefined" />
-                                    <span class="d-none d-sm-inline" jhiTranslate="artemisApp.exercise.refresh">Refresh</span>
-                                </button>
-                            }
-                        </div>
-                    </div>
+                    }
                     <div
                         class="course-body-container"
                         [ngClass]="{
