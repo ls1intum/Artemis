@@ -68,15 +68,16 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
     @Override
     public List<Long> getUnnecessaryPlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         return entityManager.createQuery("""
-                      SELECT pc.id FROM PlagiarismComparison pc
+                      SELECT pc.id
+                      FROM PlagiarismComparison pc
                       JOIN Submission s1 ON pc.submissionA.submissionId = s1.id
                       JOIN Submission s2 ON pc.submissionB.submissionId = s2.id
                       JOIN s1.participation p1
                       JOIN s2.participation p2
-                      JOIN p1.exercise e1
-                      JOIN p2.exercise e2
-                      JOIN e1.course c1
-                      JOIN e2.course c2
+                      LEFT JOIN p1.exercise e1
+                      LEFT JOIN p2.exercise e2
+                      LEFT JOIN e1.course c1
+                      LEFT JOIN e2.course c2
                       WHERE pc.status = de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE AND
                       LEAST(c1.endDate, c2.endDate) < :deleteTo AND
                       GREATEST(c1.startDate, c2.startDate) > :deleteFrom
