@@ -91,7 +91,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
-import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.util.LocalRepository;
@@ -617,10 +616,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Result invokedTextResult = resultCaptor.getAllValues().get(1);
         assertThat(invokedTextResult).isNotNull();
         assertThat(invokedTextResult.getId()).isNotNull();
+        assertThat(invokedTextResult.isSuccessful()).isTrue();
         assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
-        TextSubmission textSubmission = (TextSubmission) invokedTextResult.getSubmission();
-        Set<TextBlock> blocks = textSubmission.getBlocks();
-        assertThat(blocks.size()).isEqualTo(1);
         assertThat(invokedTextResult.getFeedbacks()).hasSize(1);
     }
 

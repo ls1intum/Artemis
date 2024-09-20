@@ -37,8 +37,6 @@ public class TextExerciseFeedbackService {
 
     private static final Logger log = LoggerFactory.getLogger(TextExerciseFeedbackService.class);
 
-    public static final String NON_GRADED_FEEDBACK_SUGGESTION = "NonGradedFeedbackSuggestion:";
-
     private final Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService;
 
     private final ResultWebsocketService resultWebsocketService;
