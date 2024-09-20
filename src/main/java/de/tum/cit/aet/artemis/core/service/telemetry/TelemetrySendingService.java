@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
+package de.tum.cit.aet.artemis.core.service.telemetry;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
+import de.tum.cit.aet.artemis.core.service.ProfileService;
+
 @Service
 @Profile(PROFILE_SCHEDULING)
 public class TelemetrySendingService {
@@ -28,16 +30,23 @@ public class TelemetrySendingService {
     private static final Logger log = LoggerFactory.getLogger(TelemetrySendingService.class);
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TelemetryData(String version, String serverUrl, String operator, String contact, List<String> profiles, String adminName) {
+    public record TelemetryData(String version, String serverUrl, String operator, List<String> profiles, boolean isProductionInstance, String dataSource, long numberOfNodes,
+            long buildAgentCount, String contact, String adminName) {
     }
 
     private final Environment env;
 
     private final RestTemplate restTemplate;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate) {
+    private final EurekaClientService eurekaClientService;
+
+    private final ProfileService profileService;
+
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, EurekaClientService eurekaClientService, ProfileService profileService) {
         this.env = env;
         this.restTemplate = restTemplate;
+        this.eurekaClientService = eurekaClientService;
+        this.profileService = profileService;
     }
 
     @Value("${artemis.version}")
@@ -61,6 +70,15 @@ public class TelemetrySendingService {
     @Value("${artemis.telemetry.destination}")
     private String destination;
 
+    @Value("${spring.datasource.url}")
+    private String datasourceUrl;
+
+    @Value("${eureka.client.enabled}")
+    private boolean eurekaEnabled;
+
+    @Value("${artemis.continuous-integration.concurrent-build-size}")
+    private long buildAgentCount;
+
     /**
      * Assembles the telemetry data, and sends it to the external telemetry server.
      *
@@ -70,11 +88,21 @@ public class TelemetrySendingService {
     public void sendTelemetryByPostRequest() throws Exception {
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         TelemetryData telemetryData;
+        var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
+        long numberOfInstances = 1;
+        if (eurekaEnabled) {
+            // Wait one minute to give other nodes time to connect to the Eureka registry
+            Thread.sleep(60000);
+            numberOfInstances = eurekaClientService.getNumberOfReplicas();
+        }
+
         if (sendAdminDetails) {
-            telemetryData = new TelemetryData(version, serverUrl, operator, contact, activeProfiles, operatorAdminName);
+            telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), dataSource, numberOfInstances, buildAgentCount,
+                    contact, operatorAdminName);
         }
         else {
-            telemetryData = new TelemetryData(version, serverUrl, operator, null, activeProfiles, null);
+            telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), dataSource, numberOfInstances, buildAgentCount,
+                    null, null);
         }
 
         HttpHeaders headers = new HttpHeaders();

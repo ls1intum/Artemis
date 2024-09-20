@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service;
+package de.tum.cit.aet.artemis.core.service.telemetry;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
 
@@ -11,6 +11,8 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 @Service
 @Profile(PROFILE_SCHEDULING)
@@ -40,7 +42,7 @@ public class TelemetryService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
-        if (!useTelemetry || profileService.isDevActive()) {
+        if (!useTelemetry) { // || profileService.isDevActive()) {
             return;
         }
 
