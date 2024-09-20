@@ -43,6 +43,7 @@ public class BuildLogResource {
     public ResponseEntity<Resource> getBuildLogForBuildJob(@PathVariable String buildJobId) {
         log.debug("REST request to get the build log for build job {}", buildJobId);
         HttpHeaders responseHeaders = new HttpHeaders();
+
         FileSystemResource buildLog = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJobId);
         if (buildLog == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
