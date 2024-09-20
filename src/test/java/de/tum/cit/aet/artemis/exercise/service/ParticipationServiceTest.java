@@ -141,7 +141,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
         List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results);
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
         assertThat(resultBuildJobMap).hasSize(0);
         assertThat(participation).isNotNull();
         assertThat(participation.getSubmissions()).hasSize(1);

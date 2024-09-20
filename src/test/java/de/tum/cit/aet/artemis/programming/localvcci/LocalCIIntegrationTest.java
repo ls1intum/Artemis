@@ -444,7 +444,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
             assertThat(resultBuildJobSet.iterator().next().buildJobId()).isEqualTo(buildJob.getBuildJobId());
 
             // Assert that the corresponding build job are stored in the file system
-            assertThat(buildLogEntryService.buildJobHasLogFile(buildJob.getBuildJobId())).isTrue();
+            assertThat(buildLogEntryService.buildJobHasLogFile(buildJob.getBuildJobId(), studentParticipation.getProgrammingExercise())).isTrue();
 
             // Retrieve the build logs from the file system
             buildLogs = buildLogEntryService.retrieveBuildLogsFromFileForBuildJob(buildJob.getBuildJobId());

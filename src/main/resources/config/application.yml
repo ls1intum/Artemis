@@ -69,7 +69,7 @@ artemis:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-21"
                 empty:
-                    default: "ls1tum/artemis-maven-template:java17-21"
+                    default: "ubuntu:24.04"
                 python:
                     default: "ls1tum/artemis-python-docker:latest"
                 c:
@@ -89,6 +89,8 @@ artemis:
                     default: "ls1tum/artemis-ocaml-docker:v1"
                 rust:
                     default: "ghcr.io/ls1intum/artemis-rust-docker:v0.9.70"
+                javascript:
+                    default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
 
 management:
     endpoints:

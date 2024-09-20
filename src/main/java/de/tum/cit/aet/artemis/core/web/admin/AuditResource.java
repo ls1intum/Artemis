@@ -24,7 +24,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.core.service.AuditEventService;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -49,7 +48,7 @@ public class AuditResource {
      */
     @GetMapping("audits")
     @EnforceAdmin
-    public ResponseEntity<List<AuditEvent>> getAll(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<AuditEvent>> getAll(Pageable pageable) {
         Page<AuditEvent> page = auditEventService.findAll(pageable);
         HttpHeaders headers = generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
@@ -65,8 +64,7 @@ public class AuditResource {
      */
     @GetMapping(value = "audits", params = { "fromDate", "toDate" })
     @EnforceAdmin
-    public ResponseEntity<List<AuditEvent>> getByDates(@RequestParam(value = "fromDate") LocalDate fromDate, @RequestParam(value = "toDate") LocalDate toDate,
-            @ApiParam Pageable pageable) {
+    public ResponseEntity<List<AuditEvent>> getByDates(@RequestParam(value = "fromDate") LocalDate fromDate, @RequestParam(value = "toDate") LocalDate toDate, Pageable pageable) {
 
         Instant from = fromDate.atStartOfDay(ZoneId.systemDefault()).toInstant();
         Instant to = toDate.atStartOfDay(ZoneId.systemDefault()).plusDays(1).toInstant();

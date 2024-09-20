@@ -953,4 +953,14 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             return fetchPath;
         }
     }
+
+    /**
+     * Find a programming exercise by its id and throw an Exception if it cannot be found
+     *
+     * @param programmingExerciseId of the programming exercise.
+     * @return The programming exercise related to the given id
+     */
+    default ProgrammingExercise findByIdElseThrow(long programmingExerciseId) {
+        return getValueElseThrow(findById(programmingExerciseId));
+    }
 }
