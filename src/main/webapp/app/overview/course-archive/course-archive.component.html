@@ -12,11 +12,11 @@
             </div>
             <div class="d-flex justfiy-content-between gap-3 align-items-center ms-1">
                 <div class="text-primary d-inline-flex">
-                    <a (click)="onSort()" class="d-inline-flex align-items-center">
+                    <a id="sort-test" (click)="onSort()" class="d-inline-flex align-items-center test-sort">
                         @if (isSortAscending) {
-                            <fa-icon [icon]="faArrowDownAZ" />
+                            <fa-icon id="icon-test" [icon]="faArrowDownAZ" />
                         } @else {
-                            <fa-icon [icon]="faArrowUpAZ" />
+                            <fa-icon id="icon-test" [icon]="faArrowUpAZ" />
                         }
                         <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
                     </a>
