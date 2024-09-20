@@ -194,7 +194,7 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void enforcePrimaryBeanAnnotationOnTestRepositories() {
-        classes().that().resideInAPackage("....").should().beAnnotatedWith(Primary.class)
+        classes().that().resideInAPackage("..test_repository..").should().beAnnotatedWith(Primary.class)
                 .because("Test repositories should be annotated with @Primary to override the production repository beans").check(testClasses);
     }
 
