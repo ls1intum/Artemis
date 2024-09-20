@@ -91,6 +91,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
+import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.util.LocalRepository;
@@ -601,7 +602,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationRepo.save(textParticipation);
 
         Result resultText1 = participationUtilService.createSubmissionAndResult(textParticipation, 100, true);
-        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, resultText1.getSubmission());
+        TextSubmission submission = (TextSubmission) resultText1.getSubmission();
+        submission.setText("some random text");
+        Result resultText2 = participationUtilService.addResultToParticipation(textParticipation, submission);
         resultText2.setSuccessful(true);
         resultText2.setAssessmentType(AssessmentType.MANUAL);
         resultText2.setCompletionDate(ZonedDateTime.now());
@@ -615,6 +618,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedTextResult).isNotNull();
         assertThat(invokedTextResult.getId()).isNotNull();
         assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
+        TextSubmission textSubmission = (TextSubmission) invokedTextResult.getSubmission();
+        Set<TextBlock> blocks = textSubmission.getBlocks();
+        assertThat(blocks.size()).isEqualTo(1);
         assertThat(invokedTextResult.getFeedbacks()).hasSize(1);
     }
 

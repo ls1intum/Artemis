@@ -26,6 +26,7 @@
                     } @else {
                         @if (textExercise.allowFeedbackRequests && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
                             <jhi-button
+                                id="request-feedback"
                                 [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
                                 [icon]="faPenSquare"
                                 (onClick)="requestFeedback()"
@@ -54,7 +55,7 @@
     <div class="mb-2">
         @if (isReadOnlyWithShowResult) {
             @if (showHistory) {
-                <div class="row mb-2">
+                <div id="result-history" class="row mb-2">
                     <jhi-result-history [results]="sortedHistoryResults" [exercise]="textExercise" />
                 </div>
             }

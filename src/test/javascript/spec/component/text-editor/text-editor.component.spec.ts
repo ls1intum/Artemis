@@ -42,6 +42,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { By } from '@angular/platform-browser';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -467,6 +468,41 @@ describe('TextEditorComponent', () => {
         } as StudentParticipation;
         const result = comp.assureConditionsSatisfied();
         expect(result).toBeTrue();
+    });
+
+    it('should show request ai feedback if there is no due date', () => {
+        comp.isReadOnlyWithShowResult = false;
+        comp.isOwnerOfParticipation = true;
+        comp.textExercise = textExercise;
+        comp.textExercise.allowFeedbackRequests = true;
+        comp.textExercise.dueDate = undefined;
+        comp.submission = { id: 5, submitted: true };
+        comp.hasLatestResult = false;
+        fixture.detectChanges();
+        const resultHistoryElement: DebugElement = fixture.debugElement.query(By.css('#request-feedback'));
+        expect(resultHistoryElement).toBeTruthy();
+    });
+
+    it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
+        comp.isReadOnlyWithShowResult = true;
+        comp.textExercise = textExercise;
+        fixture.detectChanges();
+
+        const submitButton = fixture.debugElement.query(By.css('#submit'));
+        expect(submitButton).toBeFalsy();
+    });
+
+    it('should render the submit button when isReadOnlyWithShowResult is false', () => {
+        comp.isOwnerOfParticipation = true;
+        comp.isReadOnlyWithShowResult = false;
+        comp.isAlwaysActive = true;
+        comp.textExercise = textExercise;
+        comp.submission = { id: 5, submitted: true };
+
+        fixture.detectChanges();
+
+        const submitButton = fixture.debugElement.query(By.css('#submit'));
+        expect(submitButton).toBeTruthy();
     });
 
     it('should destroy', () => {
