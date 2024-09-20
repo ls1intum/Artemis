@@ -4,7 +4,6 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
-import de.tum.cit.aet.artemis.assessment.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.OnlineCourseConfigurationRepository;
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -18,9 +17,8 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
  * {@link de.tum.cit.aet.artemis.core.config.DatabaseConfiguration}.
  */
 @TestConfiguration
-@EnableJpaRepositories(basePackageClasses = { OnlineCourseConfigurationRepository.class, ParticipationTestRepository.class,
-        ProgrammingExerciseStudentParticipationTestRepository.class, ProgrammingExerciseTestRepository.class, ProgrammingSubmissionTestRepository.class,
-        UserTestRepository.class, }, repositoryBaseClass = RepositoryImpl.class)
+@EnableJpaRepositories(basePackageClasses = { OnlineCourseConfigurationRepository.class, ProgrammingExerciseStudentParticipationTestRepository.class,
+        ProgrammingExerciseTestRepository.class, ProgrammingSubmissionTestRepository.class, UserTestRepository.class, }, repositoryBaseClass = RepositoryImpl.class)
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
 public class TestRepositoryConfiguration {
 }

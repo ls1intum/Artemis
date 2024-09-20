@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -24,6 +25,20 @@ public interface UserTestRepository extends UserRepository {
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse();
+
+    @Query("""
+            SELECT user.id
+            FROM User user
+            WHERE user.isDeleted = FALSE
+            """)
+    List<Long> findUserIdsByIsDeletedIsFalse(Pageable pageable);
+
+    @Query("""
+            SELECT COUNT(user)
+            FROM User user
+            WHERE user.isDeleted = FALSE
+            """)
+    long countUsersByIsDeletedIsFalse();
 
     /**
      * Retrieves a paginated list of {@link User} entities that are not marked as deleted,
@@ -44,6 +59,9 @@ public interface UserTestRepository extends UserRepository {
 
     @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
     Optional<User> findOneWithLearningPathsByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
+    Optional<User> findWithLearningPathsById(long userId);
 
     /**
      * Find user with eagerly loaded learning paths by its id

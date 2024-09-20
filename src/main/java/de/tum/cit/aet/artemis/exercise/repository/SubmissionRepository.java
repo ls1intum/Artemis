@@ -71,8 +71,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
 
     Optional<Submission> findByParticipationIdOrderBySubmissionDateDesc(long participationId);
 
-    List<Submission> findByParticipation_Exercise_ExerciseGroup_Exam_Id(long examId);
-
     /**
      * Get all submissions of a participation and eagerly load results
      *
@@ -343,21 +341,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
     List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
-     * Calculate the number of submitted submissions for the given exercise. This query uses the participations to make sure that each student is only counted once
-     *
-     * @param exerciseId the exercise id we are interested in
-     * @return the number of submissions belonging to the exercise id, which have the submitted flag set to true
-     */
-    @Query("""
-            SELECT COUNT(DISTINCT p)
-            FROM StudentParticipation p
-                JOIN p.submissions s
-            WHERE p.exercise.id = :exerciseId
-                AND s.submitted = TRUE
-            """)
-    long countByExerciseIdSubmitted(@Param("exerciseId") long exerciseId);
-
-    /**
      * Calculate the number of submissions for the given exercise by the given student.
      *
      * @param exerciseId   the exercise id we are interested in
@@ -542,14 +525,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 )
             """)
     Page<Submission> findLatestSubmittedSubmissionsByExerciseId(@Param("exerciseId") long exerciseId, Pageable pageable);
-
-    /**
-     * Gets all submitted Submissions for the given exercise. Note that you usually only want the latest submissions.
-     *
-     * @param exerciseId the ID of the exercise
-     * @return Set of Submissions
-     */
-    Set<Submission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
 
     /**
      * GChecks if unassessed Quiz Submissions exist for the given exam

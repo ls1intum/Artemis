@@ -138,9 +138,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     Optional<Course> findWithEagerLearningPathsAndLearningPathCompetencies(@Param("courseId") long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "competencies", "prerequisites", "learningPaths", "learningPaths.competencies" })
-    Optional<Course> findWithEagerLearningPathsAndCompetenciesAndPrerequisitesById(long courseId);
-
     // Note: we load attachments directly because otherwise, they will be loaded in subsequent DB calls due to the EAGER relationship
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerLecturesById(long courseId);

@@ -6,7 +6,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -18,7 +17,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
@@ -29,10 +27,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 @Profile(PROFILE_CORE)
 @Repository
 public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>, JpaSpecificationExecutor<BuildJob> {
-
-    Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
-
-    Optional<BuildJob> findBuildJobByResult(Result result);
 
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     List<BuildJob> findWithDataByIdIn(List<Long> ids);

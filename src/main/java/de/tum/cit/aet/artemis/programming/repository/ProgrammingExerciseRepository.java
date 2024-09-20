@@ -246,15 +246,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findAllWithStudentParticipationByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.templateParticipation
-                LEFT JOIN FETCH pe.solutionParticipation
-            WHERE pe.id = :exerciseId
-            """)
-    Optional<ProgrammingExercise> findWithEagerTemplateAndSolutionParticipationsById(@Param("exerciseId") long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(long exerciseId);
 
@@ -270,9 +261,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations.team.students", "buildConfig" })
-    Optional<ProgrammingExercise> findWithAllParticipationsAndBuildConfigById(long exerciseId);
 
     @Query("""
             SELECT pe
@@ -495,12 +483,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     long countAllSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
 
-    List<ProgrammingExercise> findAllByCourse_InstructorGroupNameIn(Set<String> groupNames);
-
-    List<ProgrammingExercise> findAllByCourse_EditorGroupNameIn(Set<String> groupNames);
-
-    List<ProgrammingExercise> findAllByCourse_TeachingAssistantGroupNameIn(Set<String> groupNames);
-
     // Note: we have to use left join here to avoid issues in the where clause, there can be at most one indirection (e.g. c1.editorGroupName) in the WHERE clause when using "OR"
     // Multiple different indirection in the WHERE clause (e.g. pe.course.instructorGroupName and ex.course.instructorGroupName) would not work
     @Query("""
@@ -532,9 +514,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
 
     @EntityGraph(type = LOAD, attributePaths = { "plagiarismDetectionConfig", "teamAssignmentConfig", "buildConfig" })
     Optional<ProgrammingExercise> findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(long exerciseId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "buildConfig" })
-    Optional<ProgrammingExercise> findWithBuildConfigById(long exerciseId);
 
     long countByShortNameAndCourse(String shortName, Course course);
 
@@ -572,11 +551,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @NotNull
     default ProgrammingExercise findByIdWithPlagiarismDetectionConfigTeamConfigAndBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
         return getValueElseThrow(findWithPlagiarismDetectionConfigTeamConfigAndBuildConfigById(programmingExerciseId), programmingExerciseId);
-    }
-
-    @NotNull
-    default ProgrammingExercise findByIdWithBuildConfigElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        return getValueElseThrow(findWithBuildConfigById(programmingExerciseId), programmingExerciseId);
     }
 
     /**
@@ -858,19 +832,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
         ProgrammingExercise programmingExercise = getProgrammingExerciseFromParticipation(participation);
         if (programmingExercise == null) {
             throw new EntityNotFoundException("No programming exercise found for the participation with id " + participation.getId());
-        }
-        return programmingExercise;
-    }
-
-    /**
-     * Fetch the programming exercise with the build config, or throw an EntityNotFoundException if it cannot be found.
-     *
-     * @param programmingExercise The programming exercise to fetch the build config for.
-     * @return The programming exercise with the build config.
-     */
-    default ProgrammingExercise getProgrammingExerciseWithBuildConfigElseThrow(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getBuildConfig() == null || !Hibernate.isInitialized(programmingExercise.getBuildConfig())) {
-            return getValueElseThrow(findWithBuildConfigById(programmingExercise.getId()), programmingExercise.getId());
         }
         return programmingExercise;
     }

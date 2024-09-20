@@ -54,17 +54,17 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.dto.ModelingAssessmentDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ModelClusterRepository;
 import de.tum.cit.aet.artemis.modeling.repository.ModelElementRepository;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.modeling.service.compass.CompassService;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.PlagiarismUtilService;
@@ -82,7 +82,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
 
     @Autowired
-    private ModelingSubmissionRepository modelingSubmissionRepo;
+    private ModelingSubmissionTestRepository modelingSubmissionRepo;
 
     @Autowired
     private ParticipationService participationService;
@@ -100,7 +100,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     private ExamRepository examRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private SubmissionRepository submissionRepository;

@@ -162,9 +162,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "irisAccepted" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
-    Optional<User> findWithLearningPathsById(long userId);
-
     Long countByIsDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
@@ -680,20 +677,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
 
         return new PageImpl<>(users, pageable, total);
     }
-
-    @Query("""
-            SELECT user.id
-            FROM User user
-            WHERE user.isDeleted = FALSE
-            """)
-    List<Long> findUserIdsByIsDeletedIsFalse(Pageable pageable);
-
-    @Query("""
-            SELECT COUNT(user)
-            FROM User user
-            WHERE user.isDeleted = FALSE
-            """)
-    long countUsersByIsDeletedIsFalse();
 
     @Modifying
     @Transactional // ok because of modifying query

@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.service.ExamLiveEventsService;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
+import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.AbstractBaseProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
@@ -52,7 +52,7 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     protected OAuth2JWKSService oAuth2JWKSService;
 
     @SpyBean
-    protected LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+    protected LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     @SpyBean
     protected ExamLiveEventsService examLiveEventsService;

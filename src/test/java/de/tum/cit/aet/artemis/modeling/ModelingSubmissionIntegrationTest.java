@@ -47,8 +47,8 @@ import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.modeling.service.compass.CompassService;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -72,7 +72,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    private ModelingSubmissionRepository modelingSubmissionRepo;
+    private ModelingSubmissionTestRepository modelingSubmissionRepo;
 
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
