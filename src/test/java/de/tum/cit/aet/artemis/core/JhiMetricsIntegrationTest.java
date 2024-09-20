@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis;
+package de.tum.cit.aet.artemis.core;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
