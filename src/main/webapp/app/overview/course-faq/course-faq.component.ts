@@ -39,6 +39,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     activeFilters = new Set<string>();
 
     sidebarData: SidebarData;
+    hasCategories = false;
     isCollapsed = false;
     isProduction = true;
     isTestServer = false;
@@ -68,6 +69,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     private loadCourseExerciseCategories(courseId: number) {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
             this.existingCategories = existingCategories;
+            this.hasCategories = existingCategories.length > 0;
         });
     }
 

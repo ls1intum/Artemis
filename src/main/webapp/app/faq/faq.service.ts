@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { FAQ, FaqState } from 'app/entities/faq.model';
+import { FAQ, FAQState } from 'app/entities/faq.model';
 import { FAQCategory } from 'app/entities/faq-category.model';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -20,7 +20,7 @@ export class FAQService {
 
     create(faq: FAQ): Observable<EntityResponseType> {
         const copy = FAQService.convertFaqFromClient(faq);
-        faq.faqState = FaqState.ACCEPTED;
+        faq.faqState = FAQState.ACCEPTED;
         return this.http.post<FAQ>(`api/faqs`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;

@@ -8,7 +8,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { FAQ } from 'app/entities/faq.model';
+import { FAQ, FAQState } from 'app/entities/faq.model';
 import { FAQService } from 'app/faq/faq.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FAQCategory } from 'app/entities/faq-category.model';
@@ -28,8 +28,8 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 export class FAQUpdateComponent implements OnInit {
     faq: FAQ;
     isSaving: boolean;
-    existingCategories: FAQCategory[] = [];
-    faqCategories: FAQCategory[] = [];
+    existingCategories: FAQCategory[];
+    faqCategories: FAQCategory[];
 
     domainActionsDescription = [new FormulaAction()];
 
@@ -86,7 +86,7 @@ export class FAQUpdateComponent implements OnInit {
         if (this.faq.id !== undefined) {
             this.subscribeToSaveResponse(this.faqService.update(this.faq));
         } else {
-            // Newly created faq must have a channel name, which cannot be undefined
+            this.faq.faqState = FAQState.ACCEPTED;
             this.subscribeToSaveResponse(this.faqService.create(this.faq));
         }
     }

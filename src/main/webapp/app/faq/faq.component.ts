@@ -28,6 +28,7 @@ export class FAQComponent implements OnInit, OnDestroy {
     filteredFaqs: FAQ[];
     existingCategories: FAQCategory[];
     courseId: number;
+    hasCategories: boolean = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -116,6 +117,7 @@ export class FAQComponent implements OnInit, OnDestroy {
     private loadCourseFaqCategories(courseId: number) {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
             this.existingCategories = existingCategories;
+            this.hasCategories = existingCategories.length > 0;
         });
     }
 }

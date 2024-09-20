@@ -17,22 +17,24 @@
                         <fa-icon [icon]="faFilter" />
                         <span class="d-sm-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters.size }"></span>
                     </button>
-                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
-                        @for (category of existingCategories; track category) {
-                            <li>
-                                <label class="d-flex align-items-center">
-                                    <input
-                                        id="category-{{ category.category }}"
-                                        class="ms-2 form-check-input"
-                                        (change)="toggleFilters(category.category!)"
-                                        [checked]="activeFilters.has(category.category!)"
-                                        type="checkbox"
-                                    />
-                                    <jhi-custom-exercise-category-badge [category]="category" class="category-badge" />
-                                </label>
-                            </li>
-                        }
-                    </ul>
+                    @if (hasCategories) {
+                        <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                            @for (category of existingCategories; track category) {
+                                <li>
+                                    <label class="d-flex align-items-center">
+                                        <input
+                                            id="category-{{ category.category }}"
+                                            class="ms-2 form-check-input"
+                                            (change)="toggleFilters(category.category!)"
+                                            [checked]="activeFilters.has(category.category!)"
+                                            type="checkbox"
+                                        />
+                                        <jhi-custom-exercise-category-badge [category]="category" class="category-badge" />
+                                    </label>
+                                </li>
+                            }
+                        </ul>
+                    }
                 </div>
                 <div class="d-flex-end justify-content-end">
                     <a id="create-faq" class="btn btn-primary mb-1" [routerLink]="['new']">

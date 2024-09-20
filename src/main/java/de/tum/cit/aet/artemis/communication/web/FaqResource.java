@@ -83,7 +83,8 @@ public class FaqResource {
     /**
      * PUT /faqs/{faqId} : Updates an existing faq.
      *
-     * @param faq the faq to update
+     * @param faq   the faq to update
+     * @param faqId id of the faq to be updated
      * @return the ResponseEntity with status 200 (OK) and with body the updated faq, or with status 400 (Bad Request) if the faq is not valid, or with status 500 (Internal
      *         Server Error) if the faq couldn't be updated
      */

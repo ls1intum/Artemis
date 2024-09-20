@@ -99,7 +99,6 @@ describe('FaqComponent', () => {
         faqComponent = faqComponentFixture.componentInstance;
 
         faqService = TestBed.inject(FAQService);
-
         faqComponentFixture.detectChanges();
     });
 
@@ -120,7 +119,7 @@ describe('FaqComponent', () => {
         expect(faqComponent.filteredFaqs).toEqual(faqComponent.faqs);
     });
 
-    it('should filter for past lectures', () => {
+    it('should filter for faqs lectures', () => {
         faqComponentFixture.detectChanges();
         faqComponent.toggleFilters('category1');
         expect(faqComponent.filteredFaqs).toBeArrayOfSize(1);

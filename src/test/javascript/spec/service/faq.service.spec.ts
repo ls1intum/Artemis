@@ -8,7 +8,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
-import { FAQ, FaqState } from 'app/entities/faq.model';
+import { FAQ, FAQState } from 'app/entities/faq.model';
 import { FAQCategory } from 'app/entities/faq-category.model';
 import { FAQService } from 'app/faq/faq.service';
 
@@ -37,7 +37,7 @@ describe('Faq Service', () => {
         elemDefault.course = new Course();
         elemDefault.questionAnswer = 'Answer';
         elemDefault.id = 1;
-        elemDefault.faqState = FaqState.ACCEPTED;
+        elemDefault.faqState = FAQState.ACCEPTED;
     });
 
     afterEach(() => {
