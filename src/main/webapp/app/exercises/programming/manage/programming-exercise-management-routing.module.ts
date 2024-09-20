@@ -18,6 +18,7 @@ import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
+import { VcsRepositoryAccessLogViewComponent } from 'app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -184,6 +185,18 @@ export const routes: Routes = [
         canActivate: [LocalVCGuard],
     },
     {
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/vcs-access-log',
+        component: VcsRepositoryAccessLogViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
+    },
+    {
         path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/commit-history/:commitHash',
         component: CommitDetailsViewComponent,
         data: {
@@ -212,6 +225,18 @@ export const routes: Routes = [
         component: CommitHistoryComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/vcs-access-log',
+        component: VcsRepositoryAccessLogViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},
