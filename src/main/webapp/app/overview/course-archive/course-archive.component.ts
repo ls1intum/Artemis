@@ -8,11 +8,16 @@ import { Subscription } from 'rxjs';
 import { faAngleDown, faAngleUp, faArrowDownAZ, faArrowUpAZ, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { sortCourses } from 'app/shared/util/course.util';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
 
 @Component({
     selector: 'course-archive',
     templateUrl: './course-archive.component.html',
     styleUrls: ['./course-archive.component.scss'],
+    standalone: true,
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, CourseCardHeaderComponent],
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {
     private archiveCourseSubscription: Subscription;
