@@ -30,6 +30,7 @@ import de.jplag.JPlagResult;
 import de.jplag.Language;
 import de.jplag.c.CLanguage;
 import de.jplag.clustering.ClusteringOptions;
+import de.jplag.cpp.CPPLanguage;
 import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
 import de.jplag.kotlin.KotlinLanguage;
@@ -313,6 +314,7 @@ public class ProgrammingPlagiarismDetectionService {
             case PYTHON -> new PythonLanguage();
             case SWIFT -> new SwiftLanguage();
             case KOTLIN -> new KotlinLanguage();
+            case C_PLUS_PLUS -> new CPPLanguage();
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };
