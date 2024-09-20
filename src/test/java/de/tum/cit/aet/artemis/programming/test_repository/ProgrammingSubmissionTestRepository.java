@@ -12,15 +12,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 /**
  * Spring Data JPA repository for the ProgrammingSubmission entity tests.
  */
 @Repository
-public interface ProgrammingSubmissionTestRepository extends ArtemisJpaRepository<ProgrammingSubmission, Long> {
+public interface ProgrammingSubmissionTestRepository extends ProgrammingSubmissionRepository {
 
     @EntityGraph(type = LOAD, attributePaths = "results")
     @Query("""

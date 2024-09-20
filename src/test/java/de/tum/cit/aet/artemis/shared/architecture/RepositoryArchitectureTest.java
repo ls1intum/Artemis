@@ -188,4 +188,42 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
             }
         }).because("methods that are not used in production code should be moved to test repositories").check(allClasses);
     }
+
+    @Test
+    void enforceStructureOfTestRepositories() {
+        var excludedRepositories = Set.of("de.tum.cit.aet.artemis.lti.test_repository.OnlineCourseConfigurationTestRepository"); // OnlineCourseConfigurationTestRepository does not
+                                                                                                                                 // have an accompanying production repository
+        classes().that().resideInAPackage("..test_repository..").should().beInterfaces().andShould().beAssignableTo(JpaRepository.class)
+                .andShould(new ArchCondition<>("extend a repository from production code with matching name excluding last 'Test'") {
+
+                    @Override
+                    public void check(JavaClass javaClass, ConditionEvents events) {
+                        if (excludedRepositories.contains(javaClass.getName())) {
+                            return;
+                        }
+                        String testClassName = javaClass.getSimpleName();
+                        String productionClassName = replaceLast(testClassName, "Test", "");
+                        boolean matchesProductionClass = productionClasses.stream().anyMatch(productionClass -> productionClass.getSimpleName().equals(productionClassName));
+                        if (!matchesProductionClass) {
+                            events.add(SimpleConditionEvent.violated(javaClass, "Test repository " + testClassName + " does not match any production repository class name"));
+                        }
+                        var interfaces = javaClass.getRawInterfaces().stream().map(JavaClass::getSimpleName).collect(Collectors.toSet());
+                        if (!interfaces.contains(productionClassName)) {
+                            events.add(
+                                    SimpleConditionEvent.violated(javaClass, "Test repository " + testClassName + " does not extend production repository " + productionClassName));
+                        }
+                    }
+                }).check(testClasses);
+    }
+
+    // Utility method to replace the last occurrence of a substring
+    private String replaceLast(String string, String substring, String replacement) {
+        int lastIndex = string.lastIndexOf(substring);
+        if (lastIndex == -1) {
+            return string;
+        }
+        StringBuilder sb = new StringBuilder(string);
+        sb.replace(lastIndex, lastIndex + substring.length(), replacement);
+        return sb.toString();
+    }
 }

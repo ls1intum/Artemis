@@ -76,7 +76,6 @@ import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
-import de.tum.cit.aet.artemis.atlas.test_repository.OnlineCourseConfigurationRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
@@ -142,6 +141,7 @@ import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.test_repository.OnlineCourseConfigurationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
@@ -232,7 +232,7 @@ public class CourseTestService {
     private ParticipantScoreRepository participantScoreRepository;
 
     @Autowired
-    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+    private OnlineCourseConfigurationTestRepository onlineCourseConfigurationRepository;
 
     @Autowired
     private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
