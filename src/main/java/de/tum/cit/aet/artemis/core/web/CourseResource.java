@@ -97,7 +97,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
@@ -1457,17 +1457,17 @@ public class CourseResource {
     }
 
     @GetMapping("courses/{courseId}/existing-exercise-details")
-    @EnforceAtLeastStudentInCourse
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean includeShortNames) {
         log.debug("REST request to get details of existing exercises in course : {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
+        Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
 
         Set<String> alreadyTakenExerciseNames = new HashSet<>();
         Set<String> alreadyTakenShortNames = new HashSet<>();
 
         course.getExercises().forEach((exercise -> {
             alreadyTakenExerciseNames.add(exercise.getTitle());
-            if (includeShortNames) {
+            if (includeShortNames && exercise.getShortName() != null) {
                 alreadyTakenShortNames.add(exercise.getShortName());
             }
         }));
