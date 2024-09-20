@@ -454,6 +454,10 @@ dependencies {
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
 
+    implementation "org.jgrapht:jgrapht-core:1.5.2"
+    // use the latest version explicitly to avoid security vulnerabilities (currently Artemis and JPlag rely on jgrapht 1.5.2 which relies on apfloat)
+    implementation "org.apfloat:apfloat:1.14.0"
+
     // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.3.0-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
