@@ -23,7 +23,6 @@ import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotificati
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
@@ -51,7 +50,7 @@ public class SystemNotificationResource {
      */
     @GetMapping("system-notifications")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<SystemNotification>> getAllSystemNotifications(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<SystemNotification>> getAllSystemNotifications(Pageable pageable) {
         log.debug("REST request to get all Courses the user has access to");
         final Page<SystemNotification> page = systemNotificationRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);

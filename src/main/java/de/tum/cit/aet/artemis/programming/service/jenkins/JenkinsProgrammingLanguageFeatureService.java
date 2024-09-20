@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.C;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.EMPTY;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.HASKELL;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVA;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.JAVASCRIPT;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTLIN;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.R;
@@ -42,6 +43,7 @@ public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of(FACT, GCC), false, false));
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, true, List.of(), false, false));
         programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, false, false, false, false, List.of(), false, false));
+        programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, false, false, false, false, List.of(), false, false));
         programmingLanguageFeatures.put(R, new ProgrammingLanguageFeature(R, false, false, true, false, false, List.of(), false, false));
     }
 }
