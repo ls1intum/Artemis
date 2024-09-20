@@ -347,7 +347,7 @@ export class CourseManagementService {
      * find all courses for the archive using a GET request
      */
     getCoursesForArchive(): Observable<HttpResponse<Course[]>> {
-        return this.http.get<Course[]>(`${this.resourceUrl}/archive`, { observe: 'response' }).pipe();
+        return this.http.get<Course[]>(`${this.resourceUrl}/archive`, { observe: 'response' });
     }
 
     /**
