@@ -231,8 +231,9 @@ dependencies {
     //    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation files("libs/jenkins-client-0.4.1.jar")
     // The following 4 dependencies are explicitly integrated as transitive dependencies of jenkins-client-0.4.0.jar
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.4"
-    implementation "org.apache.httpcomponents.core5:httpcore5:5.3"
+    // NOTE: we cannot upgrade to the latest version for org.apache.httpcomponents because of exceptions in Docker Java
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.3.1"    // also used by Docker Java
+    implementation "org.apache.httpcomponents.core5:httpcore5:5.2.5"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
     implementation("org.dom4j:dom4j:2.1.4") {
         // Note: avoid org.xml.sax.SAXNotRecognizedException: unrecognized feature http://xml.org/sax/features/external-general-entities
