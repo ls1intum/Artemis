@@ -85,7 +85,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     faEye = faEye;
     participationUpdateListener: Subscription;
     sortedHistoryResults: Result[];
-    hasLatestResult: boolean = false;
+    hasAthenaResultForLatestSubmission: boolean = false;
     showHistory: boolean = false;
     submissionId: number | undefined;
 
@@ -144,7 +144,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         this.alertService.error('artemisApp.exercise.athenaFeedbackFailed');
                     } else {
                         this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
-                        this.hasLatestResult = true;
+                        this.hasAthenaResultForLatestSubmission = true;
                     }
                 }
                 this.updateParticipation(this.participation);
@@ -222,7 +222,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             ) {
                 this.result = this.submission.latestResult!;
                 this.result.participation = participation;
-                this.hasLatestResult = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
+                this.hasAthenaResultForLatestSubmission = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
             }
             // if one of the submissions results has a complaint, we get it
             this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
@@ -336,9 +336,16 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
 
         this.isSaving = true;
         this.submission = this.submissionForAnswer(this.answer);
-        setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
+        const submissionToCreateOrUpdate = this.submission;
+        // id undefined creates a new submission and setting results to undefined prevents foreign key constraints when deleting results from submission
+        if (this.hasAthenaResultForLatestSubmission) {
+            submissionToCreateOrUpdate.id = undefined;
+            submissionToCreateOrUpdate.results = undefined;
+        } else {
+            setLatestSubmissionResult(submissionToCreateOrUpdate, getLatestSubmissionResult(this.submission));
+        }
 
-        this.textSubmissionService.update(this.submission, this.textExercise.id!).subscribe({
+        this.textSubmissionService.update(submissionToCreateOrUpdate, this.textExercise.id!).subscribe({
             next: (response) => {
                 this.submission = response.body!;
                 setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
@@ -358,7 +365,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.isSaving = false;
                 if (!this.isAllowedToSubmitAfterDueDate) {
                     this.alertService.success('entity.action.submitSuccessfulAlert');
-                    this.hasLatestResult = false;
+                    this.hasAthenaResultForLatestSubmission = false;
                 } else {
                     this.alertService.warning('entity.action.submitDueDateMissedAlert');
                 }
@@ -442,7 +449,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         if (this.participation.results) {
             const athenaResults = this.participation.results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA);
             const countOfSuccessfulRequests = athenaResults.length;
-
             if (countOfSuccessfulRequests >= 10) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
                 this.alertService.warning(rateLimitExceededWarning);
@@ -450,7 +456,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             }
         }
 
-        if (this.hasLatestResult) {
+        if (this.hasAthenaResultForLatestSubmission) {
             const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
             this.alertService.warning(submitFirstWarning);
             return false;

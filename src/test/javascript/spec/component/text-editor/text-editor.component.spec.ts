@@ -427,7 +427,7 @@ describe('TextEditorComponent', () => {
             dueDate: dayjs().add(5, 'minutes'),
         } as TextExercise;
 
-        comp.hasLatestResult = true;
+        comp.hasAthenaResultForLatestSubmission = true;
 
         comp.participation = {
             id: 2,
@@ -463,7 +463,7 @@ describe('TextEditorComponent', () => {
             dueDate: dayjs().add(5, 'minutes'),
         } as TextExercise;
 
-        comp.hasLatestResult = true;
+        comp.hasAthenaResultForLatestSubmission = true;
 
         comp.participation = {
             id: 2,
@@ -510,7 +510,7 @@ describe('TextEditorComponent', () => {
         comp.textExercise.allowFeedbackRequests = true;
         comp.textExercise.dueDate = undefined;
         comp.submission = { id: 5, submitted: true };
-        comp.hasLatestResult = false;
+        comp.hasAthenaResultForLatestSubmission = false;
         fixture.detectChanges();
         const resultHistoryElement: DebugElement = fixture.debugElement.query(By.css('#request-feedback'));
         expect(resultHistoryElement).toBeTruthy();
