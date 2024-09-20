@@ -41,7 +41,7 @@ export const faqRoutes: Routes = [
                 },
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: '',
+                    pageTitle: 'artemisApp.faq.home.title',
                 },
                 canActivate: [UserRouteAccessService],
             },

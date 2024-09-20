@@ -4,7 +4,6 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -32,11 +31,7 @@ export class FAQUpdateComponent implements OnInit {
     existingCategories: FAQCategory[] = [];
     faqCategories: FAQCategory[] = [];
 
-    courses: Course[];
-
     domainActionsDescription = [new FormulaAction()];
-    file: File;
-    fileName: string;
 
     // Icons
     faQuestionCircle = faQuestionCircle;

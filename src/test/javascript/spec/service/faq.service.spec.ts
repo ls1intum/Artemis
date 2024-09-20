@@ -9,12 +9,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
 import { Faq, FaqState } from 'app/entities/faq.model';
-import { FaqCategory } from 'app/entities/faq-category.model';
-import { FaqService } from 'app/faq/faq.service';
+import { FAQCategory } from 'app/entities/faq-category.model';
+import { FAQService } from 'app/faq/faq.service';
 
 describe('Faq Service', () => {
     let httpMock: HttpTestingController;
-    let service: FaqService;
+    let service: FAQService;
     const resourceUrl = 'api/faqs';
     let expectedResult: any;
     let elemDefault: Faq;
@@ -28,7 +28,7 @@ describe('Faq Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        service = TestBed.inject(FaqService);
+        service = TestBed.inject(FAQService);
         httpMock = TestBed.inject(HttpTestingController);
 
         expectedResult = {} as HttpResponse<Faq>;
@@ -80,9 +80,9 @@ describe('Faq Service', () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
-            } as FaqCategory;
+            } as FAQCategory;
             const returnedFromService = { ...elemDefault, categories: [JSON.stringify(category)] };
-            const expected = { ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] };
+            const expected = { ...elemDefault, categories: [new FAQCategory('category1', '#6ae8ac')] };
             const faqId = elemDefault.id!;
             service
                 .find(faqId)
@@ -100,9 +100,9 @@ describe('Faq Service', () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
-            } as FaqCategory;
+            } as FAQCategory;
             const returnedFromService = [{ ...elemDefault, categories: [JSON.stringify(category)] }];
-            const expected = [{ ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] }];
+            const expected = [{ ...elemDefault, categories: [new FAQCategory('category1', '#6ae8ac')] }];
             const courseId = 1;
             service
                 .findAllByCourseId(courseId)
@@ -120,7 +120,7 @@ describe('Faq Service', () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
-            } as FaqCategory;
+            } as FAQCategory;
             const returnedFromService = { categories: [JSON.stringify(category)] };
             const expected = { ...returnedFromService };
             const courseId = 1;
