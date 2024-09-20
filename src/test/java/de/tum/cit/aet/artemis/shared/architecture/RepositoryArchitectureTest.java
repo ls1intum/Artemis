@@ -30,7 +30,9 @@ import org.springframework.stereotype.Service;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaField;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import com.tngtech.archunit.core.domain.JavaType;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
@@ -192,8 +194,14 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void enforcePrimaryBeanAnnotationOnTestRepositories() {
-        classes().that().resideInAPackage("..test_repository..").should().beAnnotatedWith(Primary.class)
+        classes().that().resideInAPackage("....").should().beAnnotatedWith(Primary.class)
                 .because("Test repositories should be annotated with @Primary to override the production repository beans").check(testClasses);
+    }
+
+    @Test
+    void enforceUsageOfTestRepository() {
+        classes().should(notUseRepositoriesWithSubclasses()).because("Test Repositories should be used over production repositories, if such a repository exist.")
+                .check(testClasses);
     }
 
     @Test
@@ -232,5 +240,35 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
         StringBuilder sb = new StringBuilder(string);
         sb.replace(lastIndex, lastIndex + substring.length(), replacement);
         return sb.toString();
+    }
+
+    private ArchCondition<JavaClass> notUseRepositoriesWithSubclasses() {
+        return new ArchCondition<>("not use repositories with subclasses") {
+
+            @Override
+            public void check(JavaClass testClass, ConditionEvents events) {
+                for (JavaField field : testClass.getAllFields()) {
+                    JavaType fieldType = field.getRawType();
+
+                    if (isRepository(fieldType)) {
+                        JavaClass repositoryClass = fieldType.toErasure();
+
+                        if (!repositoryClass.getSubclasses().isEmpty()) {
+                            String message = String.format("Test class %s uses repository %s which has subclasses: %s", testClass.getName(), repositoryClass.getName(),
+                                    repositoryClass.getSubclasses());
+                            events.add(SimpleConditionEvent.violated(testClass, message));
+                        }
+                    }
+                }
+            }
+
+            private boolean isRepository(JavaType javaType) {
+                JavaClass javaClass = javaType.toErasure();
+                // Check if the type is a repository by seeing if it implements JpaRepository
+                return javaClass.isAssignableTo(JpaRepository.class);
+                // Alternatively, if your repositories are in a specific package, you can use:
+                // return javaClass.getPackageName().startsWith("com.yourapp.repositories");
+            }
+        };
     }
 }
