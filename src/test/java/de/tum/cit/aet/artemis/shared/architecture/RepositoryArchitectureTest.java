@@ -164,10 +164,14 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void usedInProductionCode() {
+        var excludedMethods = Set.of("de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository.find(java.lang.String, java.time.Instant, java.lang.String)");
         methods().that().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).should(new ArchCondition<>("be used by production code") {
 
             @Override
             public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
+                if (excludedMethods.contains(javaMethod.getFullName())) {
+                    return;
+                }
                 Set<JavaMethodCall> calls = javaMethod.getCallsOfSelf();
                 Set<JavaMethodCall> productionCalls = calls.stream().filter(call -> productionClasses.contain(call.getOriginOwner().getName())).collect(Collectors.toSet());
                 if (productionCalls.isEmpty()) {

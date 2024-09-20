@@ -29,7 +29,7 @@ import org.springframework.scheduling.config.ScheduledTaskHolder;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
+import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -39,7 +39,7 @@ class DataExportScheduleServiceTest extends AbstractSpringIntegrationIndependent
     private static final String TEST_PREFIX = "dataexportscheduleservice";
 
     @Autowired
-    private DataExportRepository dataExportRepository;
+    private DataExportTestRepository dataExportRepository;
 
     @Autowired
     private DataExportScheduleService dataExportScheduleService;

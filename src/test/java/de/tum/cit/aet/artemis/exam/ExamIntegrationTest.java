@@ -63,12 +63,12 @@ import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamSessionDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamWithIdAndCourseDTO;
 import de.tum.cit.aet.artemis.exam.dto.SuspiciousExamSessionsDTO;
-import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamDateService;
 import de.tum.cit.aet.artemis.exam.service.ExamService;
+import de.tum.cit.aet.artemis.exam.test_repository.ExamLiveEventTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -113,7 +113,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     private ExamService examService;
 
     @Autowired
-    private ExamLiveEventRepository examLiveEventRepository;
+    private ExamLiveEventTestRepository examLiveEventRepository;
 
     @Autowired
     private ExamDateService examDateService;
