@@ -37,9 +37,9 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
-class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class NotificationScheduleIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
-    private static final String TEST_PREFIX = "notificationschedserv";
+    private static final String TEST_PREFIX = "notificationschedint";
 
     @Autowired
     private InstanceMessageReceiveService instanceMessageReceiveService;

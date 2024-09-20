@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 import io.github.classgraph.AnnotationEnumValue;
 import io.github.classgraph.ClassGraph;
 
-class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationIndependentTest {
+class NotificationPlaceholderSignatureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     /**
      * If this test fails, you have changed the notification placeholder files. This may have dramatic consequences on the mobile applications (iOS & Android) and the database.
@@ -59,7 +59,7 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
             // Signature as JSON.
             var actualSignature = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(signatures);
             var expectedSignature = readPlaceholderText(
-                    Objects.requireNonNull(NotificationPlaceholderSignatureTest.class.getClassLoader().getResource("placeholder-signatures.json")));
+                    Objects.requireNonNull(NotificationPlaceholderSignatureIntegrationTest.class.getClassLoader().getResource("placeholder-signatures.json")));
 
             assertThat(expectedSignature).isEqualTo(actualSignature);
         }
@@ -69,7 +69,8 @@ class NotificationPlaceholderSignatureTest extends AbstractSpringIntegrationInde
         return Files.readString(Paths.get(url.toURI()));
     }
 
-    private record ClassSignature(String notificationType, List<NotificationPlaceholderSignatureTest.FieldDescription> fieldDescriptions) implements Comparable<ClassSignature> {
+    private record ClassSignature(String notificationType, List<NotificationPlaceholderSignatureIntegrationTest.FieldDescription> fieldDescriptions)
+            implements Comparable<ClassSignature> {
 
         @Override
         public int compareTo(ClassSignature classSignature) {

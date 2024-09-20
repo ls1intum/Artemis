@@ -36,9 +36,9 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class NotificationSettingsServiceTest extends AbstractSpringIntegrationIndependentTest {
+class NotificationSettingsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
-    private static final String TEST_PREFIX = "notificationsettingsservice";
+    private static final String TEST_PREFIX = "notificationsettingsint";
 
     @Autowired
     private NotificationSettingsService notificationSettingsService;
