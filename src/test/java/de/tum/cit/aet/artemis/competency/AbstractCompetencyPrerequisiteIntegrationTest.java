@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
@@ -135,6 +136,11 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         teamTextExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(courseCompetency), true);
 
         creatingLectureUnitsOfLecture(courseCompetency);
+    }
+
+    // AfterEach
+    void tearDownTestScenario() {
+        Mockito.reset(programmingExerciseImportService);
     }
 
     CompetencyRelation createRelation(CourseCompetency tail, CourseCompetency head, RelationType type) {
