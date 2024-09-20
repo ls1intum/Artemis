@@ -148,6 +148,19 @@ export class CourseCreationPage {
     }
 
     /**
+     * Sets if complaints are enabled
+     * @param complaints if complaints should be enabled
+     */
+    async setEnableFaqs(faqs: boolean) {
+        const selector = this.page.locator('#field_faq_enabled');
+        if (faqs) {
+            await selector.check();
+        } else {
+            await selector.uncheck();
+        }
+    }
+
+    /**
      * Sets maximum amount of complaints
      * @param maxComplaints the maximum complaints
      */
