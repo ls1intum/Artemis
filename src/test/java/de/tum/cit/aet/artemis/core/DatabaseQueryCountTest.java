@@ -42,6 +42,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationIndependentTest {
         userUtilService.addUsers(TEST_PREFIX, 1, NUMBER_OF_TUTORS, 0, 0);
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student.setGroups(Set.of(TEST_PREFIX + "tumuser"));
+        userRepository.save(student);
     }
 
     @Test
