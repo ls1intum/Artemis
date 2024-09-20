@@ -662,7 +662,7 @@ public class CourseService {
     public List<Course> getAllCoursesForCourseArchive() {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseRepository.findAll();
-        return courses.stream().filter(course -> authCheckService.isAtLeastStudentInCourse(course, user) && course.getSemester() != null).collect(Collectors.toList());
+        return courses.stream().filter(course -> authCheckService.isAtLeastStudentInCourse(course, user) && course.getSemester() != null).toList();
     }
 
     /**
