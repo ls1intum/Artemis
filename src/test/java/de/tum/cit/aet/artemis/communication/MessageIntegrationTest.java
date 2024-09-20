@@ -57,7 +57,7 @@ import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -78,7 +78,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ConversationMessageRepository conversationMessageRepository;
 
     @Autowired
-    private OneToOneChatRepository oneToOneChatRepository;
+    private OneToOneChatTestRepository oneToOneChatRepository;
 
     @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;

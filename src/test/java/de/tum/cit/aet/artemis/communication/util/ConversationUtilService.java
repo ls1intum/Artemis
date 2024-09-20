@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRe
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -73,7 +73,7 @@ public class ConversationUtilService {
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
-    private OneToOneChatRepository oneToOneChatRepository;
+    private OneToOneChatTestRepository oneToOneChatRepository;
 
     @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;

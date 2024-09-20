@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -47,9 +46,6 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
 
     @Autowired
     private ExerciseHintService exerciseHintService;

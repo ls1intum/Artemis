@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to learning paths for use in integration tests.
@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 public class LearningPathUtilService {
 
     @Autowired
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @Autowired
     private LearningPathService learningPathService;

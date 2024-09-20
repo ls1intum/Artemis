@@ -488,11 +488,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
         return getValueElseThrow(findWithEagerLearningPathsAndLearningPathCompetencies(courseId), courseId);
     }
 
-    @NotNull
-    default Course findWithEagerLearningPathsAndCompetenciesAndPrerequisitesByIdElseThrow(long courseId) {
-        return getValueElseThrow(findWithEagerLearningPathsAndCompetenciesAndPrerequisitesById(courseId), courseId);
-    }
-
     Page<Course> findByTitleIgnoreCaseContaining(String partialTitle, Pageable pageable);
 
     /**

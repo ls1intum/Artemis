@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintAction;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -51,7 +51,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     private ComplaintRepository complaintRepository;
 
     @Autowired
-    private ComplaintResponseRepository complaintResponseRepository;
+    private ComplaintResponseTestRepository complaintResponseTestRepository;
 
     private Complaint complaint;
 
@@ -136,7 +136,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void createLock_noFailureCondition_shouldCreateEmptyComplaintResponse() throws Exception {
         request.postWithoutLocation("/api/complaints/" + complaint.getId() + "/response", null, HttpStatus.CREATED, null);
-        Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+        Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseTestRepository.findByComplaintId(complaint.getId());
         assertThat(optionalComplaintResponse).isPresent();
         ComplaintResponse complaintResponse = optionalComplaintResponse.get();
         assertThat(complaintResponse.getComplaint().isAccepted()).isNull(); // not handled yet
@@ -174,7 +174,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     void createLock_alreadyConnectedToComplaintResponse_shouldThrowIllegalArgumentException() throws Exception {
         ComplaintResponse complaintResponse = new ComplaintResponse();
         complaintResponse.setComplaint(complaint);
-        complaintResponseRepository.saveAndFlush(complaintResponse);
+        complaintResponseTestRepository.saveAndFlush(complaintResponse);
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.RESOLVE_COMPLAINT);
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -214,7 +214,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private void assertThatLockWasReplaced(ComplaintResponse originalLock, String loginOfNewLockCreator) {
-        Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+        Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseTestRepository.findByComplaintId(complaint.getId());
         assertThat(optionalComplaintResponse).isPresent();
         ComplaintResponse complaintResponse = optionalComplaintResponse.get();
         assertThat(complaintResponse.getComplaint().isAccepted()).isNull(); // not handled yet
@@ -223,7 +223,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(complaintResponse.isCurrentlyLocked()).isTrue(); // should be locked now
         assertThat(complaintResponse.lockEndDate()).isNotNull(); // lock end date should be available
         assertThat(originalLock.getId()).isNotEqualTo(complaintResponse.getId()); // lock should have been replaced
-        assertThat(complaintResponseRepository.existsById(originalLock.getId())).isFalse(); // lock should have been replaced
+        assertThat(complaintResponseTestRepository.existsById(originalLock.getId())).isFalse(); // lock should have been replaced
     }
 
     @Test
@@ -235,7 +235,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.BAD_REQUEST);
         // initial lock should still exist
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
@@ -252,7 +252,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
         request.patch("/api/complaints/" + 0 + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
@@ -264,7 +264,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         complaint = complaintRepository.saveAndFlush(complaint);
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
@@ -274,7 +274,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.FORBIDDEN);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
@@ -283,10 +283,10 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         initialLockComplaintResponse.setSubmittedTime(ZonedDateTime.now());
-        complaintResponseRepository.saveAndFlush(initialLockComplaintResponse);
+        complaintResponseTestRepository.saveAndFlush(initialLockComplaintResponse);
         ComplaintResponseUpdateDTO complaintResponseUpdate = new ComplaintResponseUpdateDTO(null, null, ComplaintAction.REFRESH_LOCK);
         request.patch("/api/complaints/" + complaint.getId() + "/response", complaintResponseUpdate, HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     // === TESTING REMOVE LOCK ===
@@ -297,7 +297,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.OK);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
     }
 
     @Test
@@ -306,7 +306,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.OK);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
     }
 
     @Test
@@ -315,7 +315,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.BAD_REQUEST);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
@@ -324,7 +324,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.OK);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
     }
 
     @Test
@@ -333,7 +333,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         request.delete("/api/complaints/" + 0 + "/response", HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
@@ -344,7 +344,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         complaint.setAccepted(true);
         complaintRepository.saveAndFlush(complaint);
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
@@ -359,9 +359,9 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         initialLockComplaintResponse.setSubmittedTime(ZonedDateTime.now());
-        complaintResponseRepository.saveAndFlush(initialLockComplaintResponse);
+        complaintResponseTestRepository.saveAndFlush(initialLockComplaintResponse);
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
@@ -370,7 +370,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor1", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.FORBIDDEN);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
@@ -379,7 +379,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         request.delete("/api/complaints/" + complaint.getId() + "/response", HttpStatus.OK);
-        assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
+        assertThat(complaintResponseTestRepository.existsById(initialLockComplaintResponse.getId())).isFalse();
     }
 
     // === TESTING RESOLVE COMPLAINT ===
@@ -432,7 +432,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         initialLockComplaintResponse.setSubmittedTime(ZonedDateTime.now());
         initialLockComplaintResponse.setResponseText("NotEmpty");
-        complaintResponseRepository.saveAndFlush(initialLockComplaintResponse);
+        complaintResponseTestRepository.saveAndFlush(initialLockComplaintResponse);
 
         ComplaintResponseUpdateDTO initialLockComplaintResponseUpdated = new ComplaintResponseUpdateDTO("Accepted", true, ComplaintAction.RESOLVE_COMPLAINT);
 
@@ -523,7 +523,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     }
 
     private void validateThatComplaintIsResolved(String loginOfResolver) {
-        Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseRepository.findByComplaint_Id(complaint.getId());
+        Optional<ComplaintResponse> optionalComplaintResponse = complaintResponseTestRepository.findByComplaintId(complaint.getId());
         assertThat(optionalComplaintResponse).isPresent();
         ComplaintResponse complaintResponse = optionalComplaintResponse.get();
         assertThat(complaintResponse.getComplaint().isAccepted()).isTrue();
@@ -537,7 +537,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         complaintResponse.setComplaint(complaint);
         User tutor = userRepository.findOneByLogin(lockOwnerLogin).orElseThrow();
         complaintResponse.setReviewer(tutor);
-        complaintResponse = complaintResponseRepository.saveAndFlush(complaintResponse);
+        complaintResponse = complaintResponseTestRepository.saveAndFlush(complaintResponse);
 
         // manually modifying the created date set by entity listener
         if (runOut) {

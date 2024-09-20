@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.assessment.dto.ComplaintAction;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -66,7 +66,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     private ComplaintRepository complaintRepo;
 
     @Autowired
-    private ComplaintResponseRepository complaintResponseRepo;
+    private ComplaintResponseTestRepository complaintResponseTestRepository;
 
     @Autowired
     private ExamRepository examRepository;
@@ -357,7 +357,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(complaintRepo.findByResultId(textSubmission.getLatestResult().getId())).isPresent();
 
         Complaint finalExamExerciseComplaint = examExerciseComplaint;
-        await().untilAsserted(() -> assertThat(complaintResponseRepo.findByComplaint_Id(finalExamExerciseComplaint.getId())).isPresent());
+        await().untilAsserted(() -> assertThat(complaintResponseTestRepository.findByComplaintId(finalExamExerciseComplaint.getId())).isPresent());
     }
 
     @Test
@@ -422,7 +422,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     void getComplaintByResultid_student_sensitiveDataHidden() throws Exception {
         complaint = complaintRepo.save(complaint);
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
-        complaintResponseRepo.save(complaintResponse);
+        complaintResponseTestRepository.save(complaintResponse);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("submissionId", modelingSubmission.getId().toString());
 
