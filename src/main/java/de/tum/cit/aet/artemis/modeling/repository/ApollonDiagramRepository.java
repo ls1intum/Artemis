@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.modeling.repository;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_APOLLON;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
 
@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
 /**
  * Spring Data JPA repository for the ApollonDiagram entity.
  */
-@Profile(PROFILE_APOLLON)
+@Profile(PROFILE_CORE)
 @Repository
 public interface ApollonDiagramRepository extends ArtemisJpaRepository<ApollonDiagram, Long> {
 

@@ -783,6 +783,31 @@ public class RequestUtilService {
     }
 
     /**
+     * Sends a multipart put request with a mandatory json file and an optional file.
+     *
+     * @param path           the path to send the request to
+     * @param responseType   the expected response type as class
+     * @param body           the payload
+     * @param expectedStatus the expected status
+     * @param params         the optional parameters for the request
+     * @param <T>            the type of the main object to send
+     * @param <R>            the type of the response object
+     * @return the response as object of the given type or null if the status is not 2xx
+     * @throws Exception if the request fails
+     */
+    public <T, R> R delete(String path, MultiValueMap<String, String> params, T body, Class<R> responseType, HttpStatus expectedStatus) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        MvcResult res = performMvcRequest(MockMvcRequestBuilders.delete(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody).params(params))
+                .andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        if (!expectedStatus.is2xxSuccessful()) {
+            assertThat(res.getResponse().containsHeader("location")).as("no location header on failed request").isFalse();
+            return null;
+        }
+        return mapper.readValue(res.getResponse().getContentAsString(), responseType);
+    }
+
+    /**
      * The Security Context gets cleared after a REST call.
      * To prevent issues with further queries and rest calls in a test we restore the security context from the test security context holder
      */

@@ -24,17 +24,17 @@ describe('DataCleanupService', () => {
         httpMock.verify();
     });
 
-    it('should send POST request to delete orphans', () => {
+    it('should send DELETE request to delete orphans', () => {
         service.deleteOrphans().subscribe((res) => {
             expect(res.body).toEqual(mockExecutionRecord);
         });
 
-        const req = httpMock.expectOne({ method: 'POST', url: 'api/admin/delete-orphans' });
-        expect(req.request.method).toBe('POST');
+        const req = httpMock.expectOne({ method: 'DELETE', url: 'api/admin/cleanup/delete-orphans' });
+        expect(req.request.method).toBe('DELETE');
         req.flush(mockExecutionRecord);
     });
 
-    it('should send POST request to delete plagiarism comparisons with date range', () => {
+    it('should send DELETE request to delete plagiarism comparisons with date range', () => {
         const deleteFrom = '2024-03-07T13:06:36.100Z';
         const deleteTo = '2024-03-08T13:06:36.100Z';
 
@@ -43,17 +43,17 @@ describe('DataCleanupService', () => {
         });
 
         const req = httpMock.expectOne({
-            method: 'POST',
-            url: `api/admin/delete-plagiarism-comparisons?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+            method: 'DELETE',
+            url: `api/admin/cleanup/delete-plagiarism-comparisons?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
         });
 
-        expect(req.request.method).toBe('POST');
+        expect(req.request.method).toBe('DELETE');
         expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
         expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockExecutionRecord);
     });
 
-    it('should send POST request to delete non-rated results with date range', () => {
+    it('should send DELETE request to delete non-rated results with date range', () => {
         const deleteFrom = '2024-03-07T13:06:36.100Z';
         const deleteTo = '2024-03-08T13:06:36.100Z';
 
@@ -62,17 +62,17 @@ describe('DataCleanupService', () => {
         });
 
         const req = httpMock.expectOne({
-            method: 'POST',
-            url: `api/admin/delete-non-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+            method: 'DELETE',
+            url: `api/admin/cleanup/delete-non-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
         });
 
-        expect(req.request.method).toBe('POST');
+        expect(req.request.method).toBe('DELETE');
         expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
         expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockExecutionRecord);
     });
 
-    it('should send POST request to delete old rated results with date range', () => {
+    it('should send DELETE request to delete old rated results with date range', () => {
         const deleteFrom = '2024-03-07T13:06:36.100Z';
         const deleteTo = '2024-03-08T13:06:36.100Z';
 
@@ -81,24 +81,24 @@ describe('DataCleanupService', () => {
         });
 
         const req = httpMock.expectOne({
-            method: 'POST',
-            url: `api/admin/delete-old-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
+            method: 'DELETE',
+            url: `api/admin/cleanup/delete-old-rated-results?deleteFrom=${deleteFrom}&deleteTo=${deleteTo}`,
         });
 
-        expect(req.request.method).toBe('POST');
+        expect(req.request.method).toBe('DELETE');
         expect(req.request.params.get('deleteFrom')).toBe(deleteFrom);
         expect(req.request.params.get('deleteTo')).toBe(deleteTo);
         req.flush(mockExecutionRecord);
     });
 
-    it('should send POST request to get last executions', () => {
+    it('should send GET request to get last executions', () => {
         const mockExecutionRecords = [mockExecutionRecord];
 
         service.getLastExecutions().subscribe((res) => {
             expect(res.body).toEqual(mockExecutionRecords);
         });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/get-last-executions' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/get-last-executions' });
         expect(req.request.method).toBe('GET');
         req.flush(mockExecutionRecords);
     });

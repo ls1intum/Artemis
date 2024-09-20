@@ -15,11 +15,13 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class CustomDataCleanupRepository implements DataCleanupRepository {
 
-    // transactinal ok, because of delete statements
-
     @PersistenceContext
     private EntityManager entityManager;
 
+    /**
+     * Deletes orphaned entities that are no longer associated with valid results or participations.
+     * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     */
     @Override
     public void deleteOrphans() {
         // long text feedback and text block entities reference feedback
@@ -65,6 +67,14 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
         entityManager.createQuery("DELETE FROM Result r WHERE r.participation IS NULL AND r.submission IS NULL").executeUpdate();
     }
 
+    /**
+     * Retrieves a list of unnecessary plagiarism comparison IDs for a specific date range.
+     * The method selects comparisons where the plagiarism status is 'NONE' and the courses' start and end dates fall within the provided range.
+     *
+     * @param deleteFrom The start of the date range for filtering unnecessary plagiarism comparisons.
+     * @param deleteTo   The end of the date range for filtering unnecessary plagiarism comparisons.
+     * @return A list of Long values representing the IDs of unnecessary plagiarism comparisons.
+     */
     @Override
     public List<Long> getUnnecessaryPlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         return entityManager.createQuery("""
@@ -84,6 +94,13 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                 """, Long.class).setParameter("deleteTo", deleteTo).setParameter("deleteFrom", deleteFrom).getResultList();
     }
 
+    /**
+     * Deletes non-rated results within the specified date range, along with associated long feedback texts,
+     * text blocks, feedback items, and participant scores.
+     *
+     * @param deleteFrom The start of the date range for deleting non-rated results.
+     * @param deleteTo   The end of the date range for deleting non-rated results.
+     */
     @Override
     public void deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         // old long feedback text that is not part of latest rated results
@@ -175,6 +192,13 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                 """).setParameter("deleteTo", deleteTo).setParameter("deleteFrom", deleteFrom).executeUpdate();
     }
 
+    /**
+     * Deletes rated results, excluding the latest rated result for each participation, for courses conducted within the specified date range.
+     * Also deletes associated long feedback texts, text blocks, feedback items, and participant scores.
+     *
+     * @param deleteFrom The start of the date range for deleting rated results.
+     * @param deleteTo   The end of the date range for deleting rated results.
+     */
     @Override
     public void deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         // delete all rated results that are not latest rated for a participation for courses conducted within a specific date range, also delete all related feedback entities

@@ -1,6 +1,6 @@
 {
     "cleanupService": {
-        "title": "Cleanup service",
+        "title": "Aufräumdienst",
         "table": {
             "operation": "Operationsname",
             "deleteFrom": "Löschen von",
