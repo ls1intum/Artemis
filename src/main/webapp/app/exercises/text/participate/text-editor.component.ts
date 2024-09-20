@@ -222,9 +222,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             ) {
                 this.result = this.submission.latestResult!;
                 this.result.participation = participation;
-                if (this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA) {
-                    this.hasLatestResult = true;
-                }
+                this.hasLatestResult = this.submission.latestResult!.assessmentType === AssessmentType.AUTOMATIC_ATHENA;
             }
             // if one of the submissions results has a complaint, we get it
             this.resultWithComplaint = getFirstResultWithComplaint(this.submission);
@@ -254,11 +252,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 });
             }
         }
-        if (this.participationUpdateListener) {
-            this.participationUpdateListener.unsubscribe();
-            if (this.participation) {
-                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.textExercise);
-            }
+
+        this.participationUpdateListener?.unsubscribe();
+        if (this.participation) {
+            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.textExercise);
         }
     }
 
@@ -355,9 +352,8 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.participationWebsocketService.addParticipation(this.participation, this.textExercise);
                 this.textExercise.studentParticipations = [this.participation];
                 this.result = getLatestSubmissionResult(this.submission)!;
-                if (this.result) {
-                    this.result.participation = this.participation;
-                }
+                this.result?.participation = this.participation;
+
                 this.isSaving = false;
 
                 if (!this.isAllowedToSubmitAfterDueDate) {
