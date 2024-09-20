@@ -27,8 +27,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
+import com.tngtech.archunit.base.DescribedPredicate;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaMethod;
-import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
@@ -91,18 +92,18 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
 
     @Test
     void testNoUnusedRepositoryMethods() {
-        ArchRule unusedMethods = noMethods().that().areAnnotatedWith(Query.class).and().areDeclaredInClassesThat().areInterfaces().and().areDeclaredInClassesThat()
-                .areAnnotatedWith(Repository.class).should(new ArchCondition<>("not be referenced") {
+        ArchRule unusedMethods = noMethods().that().areDeclaredInClassesThat().areInterfaces().and().areDeclaredInClassesThat().areAnnotatedWith(Repository.class)
+                .should(new ArchCondition<>("not be referenced") {
 
                     @Override
                     public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
-                        Set<JavaMethodCall> calls = javaMethod.getCallsOfSelf();
+                        var calls = javaMethod.getAccessesToSelf();
                         if (calls.isEmpty()) {
                             conditionEvents.add(SimpleConditionEvent.violated(javaMethod, "Method is not used"));
                         }
                     }
                 }).because("unused methods should be removed from repositories to keep a clean code base.");
-        unusedMethods.check(productionClasses);
+        unusedMethods.check(allClasses);
     }
 
     @Test
@@ -165,19 +166,26 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
     @Test
     void usedInProductionCode() {
         var excludedMethods = Set.of("de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository.find(java.lang.String, java.time.Instant, java.lang.String)");
-        methods().that().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).should(new ArchCondition<>("be used by production code") {
+        methods().that().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).and().areDeclaredInClassesThat(new DescribedPredicate<>("") {
+
+            @Override
+            public boolean test(JavaClass javaClass) {
+                return productionClasses.contain(javaClass.getName());
+            }
+        }).should(new ArchCondition<>("be used by production code") {
 
             @Override
             public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
                 if (excludedMethods.contains(javaMethod.getFullName())) {
                     return;
                 }
-                Set<JavaMethodCall> calls = javaMethod.getCallsOfSelf();
-                Set<JavaMethodCall> productionCalls = calls.stream().filter(call -> productionClasses.contain(call.getOriginOwner().getName())).collect(Collectors.toSet());
-                if (productionCalls.isEmpty()) {
+
+                var calls = javaMethod.getAccessesToSelf();
+                var productionCalls = calls.stream().filter(call -> productionClasses.contain(call.getOriginOwner().getName())).collect(Collectors.toSet());
+                if (productionCalls.isEmpty() && !calls.isEmpty()) {
                     conditionEvents.add(SimpleConditionEvent.violated(javaMethod, "Method " + javaMethod.getFullName() + " is not used in production code"));
                 }
             }
-        }).because("methods that are not used in production code should be moved to test repositories").check(productionClasses);
+        }).because("methods that are not used in production code should be moved to test repositories").check(allClasses);
     }
 }

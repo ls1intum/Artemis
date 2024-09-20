@@ -10,8 +10,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.validation.constraints.NotNull;
-
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -45,11 +43,6 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
             WHERE p.lastResult IS NULL
             """)
     List<ParticipantScore> findAllOutdated();
-
-    @NotNull
-    @Override
-    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
-    List<ParticipantScore> findAll();
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAllByExercise(Exercise exercise);
