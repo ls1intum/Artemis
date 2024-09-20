@@ -11,7 +11,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { FAQUpdateComponent } from 'app/faq/faq-update.component';
 import { FAQService } from 'app/faq/faq.service';
-import { Faq } from 'app/entities/faq.model';
+import { FAQ } from 'app/entities/faq.model';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
@@ -70,7 +70,7 @@ describe('FaqUpdateComponent', () => {
     });
 
     it('should create faq', fakeAsync(() => {
-        faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
+        faqUpdateComponent.faq = { questionTitle: 'test1' } as FAQ;
 
         const createSpy = jest.spyOn(faqService, 'create').mockReturnValue(
             of(
@@ -81,7 +81,7 @@ describe('FaqUpdateComponent', () => {
                         course: {
                             id: 1,
                         },
-                    } as Faq,
+                    } as FAQ,
                 }),
             ),
         );
@@ -98,10 +98,10 @@ describe('FaqUpdateComponent', () => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
 
         faqUpdateComponentFixture.detectChanges();
-        faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
+        faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as FAQ;
 
         const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(
-            of<HttpResponse<Faq>>(
+            of<HttpResponse<FAQ>>(
                 new HttpResponse({
                     body: {
                         id: 6,
@@ -109,7 +109,7 @@ describe('FaqUpdateComponent', () => {
                         course: {
                             id: 1,
                         },
-                    } as Faq,
+                    } as FAQ,
                 }),
             ),
         );

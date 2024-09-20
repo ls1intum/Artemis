@@ -9,7 +9,7 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import { FAQService } from 'app/faq/faq.service';
-import { Faq } from 'app/entities/faq.model';
+import { FAQ } from 'app/entities/faq.model';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
@@ -24,24 +24,24 @@ describe('FaqComponent', () => {
 
     let faqService: FAQService;
 
-    let faq1: Faq;
-    let faq2: Faq;
-    let faq3: Faq;
+    let faq1: FAQ;
+    let faq2: FAQ;
+    let faq3: FAQ;
 
     beforeEach(() => {
-        faq1 = new Faq();
+        faq1 = new FAQ();
         faq1.id = 1;
         faq1.questionTitle = 'questionTitle';
         faq1.questionAnswer = 'questionAnswer';
         faq1.categories = [new FAQCategory('category1', '#94a11c')];
 
-        faq2 = new Faq();
+        faq2 = new FAQ();
         faq2.id = 2;
         faq2.questionTitle = 'questionTitle';
         faq2.questionAnswer = 'questionAnswer';
         faq2.categories = [new FAQCategory('category2', '#0ab84f')];
 
-        faq3 = new Faq();
+        faq3 = new FAQ();
         faq3.id = 3;
         faq3.questionTitle = 'questionTitle';
         faq3.questionAnswer = 'questionAnswer';

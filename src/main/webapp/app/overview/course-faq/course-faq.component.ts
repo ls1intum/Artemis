@@ -9,7 +9,7 @@ import { SidebarData } from 'app/types/sidebar';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
-import { Faq } from 'app/entities/faq.model';
+import { FAQ } from 'app/entities/faq.model';
 import { FAQService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -32,9 +32,9 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     private parentParamSubscription: Subscription;
 
     courseId: number;
-    faqs: Faq[];
+    faqs: FAQ[];
 
-    filteredFaq: Faq[];
+    filteredFaq: FAQ[];
     existingCategories: FAQCategory[];
     activeFilters = new Set<string>();
 
@@ -74,9 +74,9 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     private loadFaqs() {
         this.faqService
             .findAllByCourseId(this.courseId)
-            .pipe(map((res: HttpResponse<Faq[]>) => res.body))
+            .pipe(map((res: HttpResponse<FAQ[]>) => res.body))
             .subscribe({
-                next: (res: Faq[]) => {
+                next: (res: FAQ[]) => {
                     this.faqs = res;
                     this.applyFilters();
                 },
@@ -91,11 +91,11 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     }
 
     toggleFilters(category: string) {
-        this.activeFilters = FAQService.toggleFilter(category, this.activeFilters);
+        this.activeFilters = this.faqService.toggleFilter(category, this.activeFilters);
         this.applyFilters();
     }
 
     private applyFilters(): void {
-        this.filteredFaq = FAQService.applyFilters(this.activeFilters, this.faqs);
+        this.filteredFaq = this.faqService.applyFilters(this.activeFilters, this.faqs);
     }
 }

@@ -1,6 +1,6 @@
 import { Component, OnDestroy, input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { Faq } from 'app/entities/faq.model';
+import { FAQ } from 'app/entities/faq.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { Subject } from 'rxjs/internal/Subject';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
@@ -15,7 +15,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 })
 export class CourseFaqAccordionComponent implements OnDestroy {
     private ngUnsubscribe = new Subject<void>();
-    faq = input.required<Faq>();
+    faq = input.required<FAQ>();
 
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();

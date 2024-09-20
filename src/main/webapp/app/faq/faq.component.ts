@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { Faq } from 'app/entities/faq.model';
+import { FAQ } from 'app/entities/faq.model';
 import { faEdit, faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -24,8 +24,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
     imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule],
 })
 export class FAQComponent implements OnInit, OnDestroy {
-    faqs: Faq[];
-    filteredFaqs: Faq[];
+    faqs: FAQ[];
+    filteredFaqs: FAQ[];
     existingCategories: FAQCategory[];
     courseId: number;
 
@@ -70,7 +70,7 @@ export class FAQComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.complete();
     }
 
-    trackId(index: number, item: Faq) {
+    trackId(index: number, item: FAQ) {
         return item.id;
     }
 
@@ -88,12 +88,12 @@ export class FAQComponent implements OnInit, OnDestroy {
     }
 
     toggleFilters(category: string) {
-        this.activeFilters = FAQService.toggleFilter(category, this.activeFilters);
+        this.activeFilters = this.faqService.toggleFilter(category, this.activeFilters);
         this.applyFilters();
     }
 
     private applyFilters(): void {
-        this.filteredFaqs = FAQService.applyFilters(this.activeFilters, this.faqs);
+        this.filteredFaqs = this.faqService.applyFilters(this.activeFilters, this.faqs);
     }
 
     sortRows() {
@@ -103,9 +103,9 @@ export class FAQComponent implements OnInit, OnDestroy {
     private loadAll() {
         this.faqService
             .findAllByCourseId(this.courseId)
-            .pipe(map((res: HttpResponse<Faq[]>) => res.body))
+            .pipe(map((res: HttpResponse<FAQ[]>) => res.body))
             .subscribe({
-                next: (res: Faq[]) => {
+                next: (res: FAQ[]) => {
                     this.faqs = res;
                     this.applyFilters();
                 },

@@ -8,13 +8,11 @@ export enum FaqState {
     PROPOSED,
 }
 
-export class Faq implements BaseEntity {
+export class FAQ implements BaseEntity {
     public id?: number;
     public questionTitle?: string;
     public questionAnswer?: string;
     public faqState?: FaqState;
     public course?: Course;
     public categories?: FAQCategory[];
-
-    constructor() {}
 }

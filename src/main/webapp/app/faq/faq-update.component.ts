@@ -8,7 +8,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { Faq } from 'app/entities/faq.model';
+import { FAQ } from 'app/entities/faq.model';
 import { FAQService } from 'app/faq/faq.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FAQCategory } from 'app/entities/faq-category.model';
@@ -26,7 +26,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, ArtemisCategorySelectorModule],
 })
 export class FAQUpdateComponent implements OnInit {
-    faq: Faq;
+    faq: FAQ;
     isSaving: boolean;
     existingCategories: FAQCategory[] = [];
     faqCategories: FAQCategory[] = [];
@@ -56,7 +56,7 @@ export class FAQUpdateComponent implements OnInit {
         this.activatedRoute.parent?.data.subscribe((data) => {
             // Create a new faq to use unless we fetch an existing faq
             const faq = data['faq'];
-            this.faq = faq ?? new Faq();
+            this.faq = faq ?? new FAQ();
             const course = data['course'];
             if (course) {
                 this.faq.course = course;
@@ -94,9 +94,9 @@ export class FAQUpdateComponent implements OnInit {
     /**
      * @param result The Http response from the server
      */
-    protected subscribeToSaveResponse(result: Observable<HttpResponse<Faq>>) {
+    protected subscribeToSaveResponse(result: Observable<HttpResponse<FAQ>>) {
         result.subscribe({
-            next: (response: HttpResponse<Faq>) => this.onSaveSuccess(response.body!),
+            next: (response: HttpResponse<FAQ>) => this.onSaveSuccess(response.body!),
             error: (error: HttpErrorResponse) => this.onSaveError(error),
         });
     }
@@ -104,10 +104,10 @@ export class FAQUpdateComponent implements OnInit {
     /**
      * Action on successful faq creation or edit
      */
-    protected onSaveSuccess(faq: Faq) {
+    protected onSaveSuccess(faq: FAQ) {
         if (!this.faq.id) {
             this.faqService.find(faq.id!).subscribe({
-                next: (response: HttpResponse<Faq>) => {
+                next: (response: HttpResponse<FAQ>) => {
                     this.isSaving = false;
                     const faqBody = response.body;
                     if (faqBody) {

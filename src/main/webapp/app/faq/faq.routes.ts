@@ -9,22 +9,22 @@ import { CourseManagementResolve } from 'app/course/manage/course-management-res
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { FAQComponent } from 'app/faq/faq.component';
 import { FAQService } from 'app/faq/faq.service';
-import { Faq } from 'app/entities/faq.model';
+import { FAQ } from 'app/entities/faq.model';
 import { FAQUpdateComponent } from 'app/faq/faq-update.component';
 
 @Injectable({ providedIn: 'root' })
-export class FAQResolve implements Resolve<Faq> {
+export class FAQResolve implements Resolve<FAQ> {
     constructor(private faqService: FAQService) {}
 
-    resolve(route: ActivatedRouteSnapshot): Observable<Faq> {
+    resolve(route: ActivatedRouteSnapshot): Observable<FAQ> {
         const faqId = route.params['faqId'];
         if (faqId) {
             return this.faqService.find(faqId).pipe(
-                filter((response: HttpResponse<Faq>) => response.ok),
-                map((faq: HttpResponse<Faq>) => faq.body!),
+                filter((response: HttpResponse<FAQ>) => response.ok),
+                map((faq: HttpResponse<FAQ>) => faq.body!),
             );
         }
-        return of(new Faq());
+        return of(new FAQ());
     }
 }
 

@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Faq, FaqState } from 'app/entities/faq.model';
+import { FAQ, FaqState } from 'app/entities/faq.model';
 import { FAQCategory } from 'app/entities/faq-category.model';
 import { AlertService } from 'app/core/util/alert.service';
 
-type EntityResponseType = HttpResponse<Faq>;
-type EntityArrayResponseType = HttpResponse<Faq[]>;
+type EntityResponseType = HttpResponse<FAQ>;
+type EntityArrayResponseType = HttpResponse<FAQ[]>;
 
 @Injectable({ providedIn: 'root' })
 export class FAQService {
@@ -18,19 +18,19 @@ export class FAQService {
         protected alertService: AlertService,
     ) {}
 
-    create(faq: Faq): Observable<EntityResponseType> {
+    create(faq: FAQ): Observable<EntityResponseType> {
         const copy = FAQService.convertFaqFromClient(faq);
         faq.faqState = FaqState.ACCEPTED;
-        return this.http.post<Faq>(`api/faqs`, copy, { observe: 'response' }).pipe(
+        return this.http.post<FAQ>(`api/faqs`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
             }),
         );
     }
 
-    update(faq: Faq): Observable<EntityResponseType> {
+    update(faq: FAQ): Observable<EntityResponseType> {
         const copy = FAQService.convertFaqFromClient(faq);
-        return this.http.put<Faq>(`api/faqs/${faq.id}`, copy, { observe: 'response' }).pipe(
+        return this.http.put<FAQ>(`api/faqs/${faq.id}`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
             }),
@@ -38,12 +38,12 @@ export class FAQService {
     }
 
     find(faqId: number): Observable<EntityResponseType> {
-        return this.http.get<Faq>(`api/faqs/${faqId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => FAQService.convertFaqCategoriesFromServer(res)));
+        return this.http.get<FAQ>(`api/faqs/${faqId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => FAQService.convertFaqCategoriesFromServer(res)));
     }
 
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Faq[]>(this.resourceUrl + `/${courseId}/faqs`, {
+            .get<FAQ[]>(`${this.resourceUrl}/${courseId}/faqs`, {
                 observe: 'response',
             })
             .pipe(map((res: EntityArrayResponseType) => FAQService.convertFaqCategoryArrayFromServer(res)));
@@ -54,7 +54,7 @@ export class FAQService {
     }
 
     findAllCategoriesByCourseId(courseId: number) {
-        return this.http.get<string[]>(this.resourceUrl + `/${courseId}/faq-categories`, {
+        return this.http.get<string[]>(`${this.resourceUrl}/${courseId}/faq-categories`, {
             observe: 'response',
         });
     }
@@ -73,7 +73,7 @@ export class FAQService {
      * Converts a faqs categories into a json string (to send them to the server). Does nothing if no categories exist
      * @param faq the faq
      */
-    static stringifyFaqCategories(faq: Faq) {
+    static stringifyFaqCategories(faq: FAQ) {
         return faq.categories?.map((category) => JSON.stringify(category) as unknown as FAQCategory);
     }
 
@@ -85,7 +85,7 @@ export class FAQService {
      * Converts the faq category json strings into FaqCategory objects (if it exists).
      * @param res the response
      */
-    static convertFaqCategoryArrayFromServer<E extends Faq, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertFaqCategoryArrayFromServer<E extends FAQ, EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
             res.body.forEach((faq: E) => FAQService.parseFaqCategories(faq));
         }
@@ -96,7 +96,7 @@ export class FAQService {
      * Parses the faq categories JSON string into {@link FAQCategory} objects.
      * @param faq - the faq
      */
-    static parseFaqCategories(faq?: Faq) {
+    static parseFaqCategories(faq?: FAQ) {
         if (faq?.categories) {
             faq.categories = faq.categories.map((category) => {
                 const categoryObj = JSON.parse(category as unknown as string);
@@ -107,17 +107,15 @@ export class FAQService {
 
     /**
      * Prepare client-faq to be uploaded to the server
-     * @param { Faq } faq - faq that will be modified
+     * @param { FAQ } faq - faq that will be modified
      */
-    static convertFaqFromClient<F extends Faq>(faq: F): Faq {
-        const copy = Object.assign(faq, {});
+    static convertFaqFromClient<F extends FAQ>(faq: F): FAQ {
+        const copy = Object.assign({}, faq);
         copy.categories = FAQService.stringifyFaqCategories(copy);
-        if (copy.categories) {
-        }
         return copy;
     }
 
-    static toggleFilter(category: string, activeFilters: Set<string>) {
+    toggleFilter(category: string, activeFilters: Set<string>) {
         if (activeFilters.has(category)) {
             activeFilters.delete(category);
             return activeFilters;
@@ -127,8 +125,8 @@ export class FAQService {
         }
     }
 
-    static applyFilters(activeFilters: Set<string>, faqs: Faq[]): Faq[] {
-        let filteredFaq: Faq[];
+    applyFilters(activeFilters: Set<string>, faqs: FAQ[]): FAQ[] {
+        let filteredFaq: FAQ[];
         if (activeFilters.size === 0) {
             // If no filters selected, show all faqs
             filteredFaq = faqs;
@@ -138,7 +136,7 @@ export class FAQService {
         return filteredFaq;
     }
 
-    public static hasFilteredCategory(faq: Faq, filteredCategory: Set<string>) {
+    hasFilteredCategory(faq: FAQ, filteredCategory: Set<string>) {
         const categories = faq.categories?.map((category) => category.category);
         if (categories) {
             return categories.some((category) => filteredCategory.has(category!));
