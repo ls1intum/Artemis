@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.test_repository;
+package de.tum.cit.aet.artemis.assessment.test_repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 

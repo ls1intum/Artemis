@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.test_repository;
+package de.tum.cit.aet.artemis.atlas.test_repository;
 
 import java.util.Set;
 
