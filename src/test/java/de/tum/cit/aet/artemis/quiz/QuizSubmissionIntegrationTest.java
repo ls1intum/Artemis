@@ -63,11 +63,11 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchJoinDTO;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
-import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizBatchService;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizStatisticService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -86,10 +86,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private QuizExerciseService quizExerciseService;
 
     @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseTestRepository;
 
     @Autowired
-    private QuizSubmissionRepository quizSubmissionRepository;
+    private QuizSubmissionTestRepository quizSubmissionTestRepository;
 
     @Autowired
     private ParticipationRepository participationRepository;
@@ -153,7 +153,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(NUMBER_OF_STUDENTS);
 
         // update the statistics
-        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizStatisticService.recalculateStatistics(quizExerciseWithStatistic);
 
         // Test the statistics
@@ -265,7 +265,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         }
 
         // update the statistics
-        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizStatisticService.recalculateStatistics(quizExerciseWithStatistic);
 
         var quizPointStatistic = quizExerciseWithStatistic.getQuizPointStatistic();
@@ -326,7 +326,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExerciseService.save(quizExercise);
 
         // at the beginning there are no submissions and participants
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
         assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
 
         // submit 10 times for 10 different students
@@ -339,11 +339,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         }
 
         // all submission are saved to the database
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
         assertThat(participationRepository.findByExerciseId(quizExercise.getId())).hasSize(NUMBER_OF_STUDENTS);
 
         // update the statistics
-        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizStatisticService.recalculateStatistics(quizExerciseWithStatistic);
 
         // Test the statistics
@@ -397,7 +397,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         quizExerciseServer.setIsOpenForPractice(false);
         quizExerciseService.save(quizExerciseServer);
 
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseServer.getId())).isEmpty();
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExerciseServer.getId())).isEmpty();
 
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExerciseServer.getQuizQuestions()) {
@@ -424,7 +424,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExerciseServer = QuizExerciseFactory.createQuizForExam(exerciseGroup);
         quizExerciseService.save(quizExerciseServer);
 
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseServer.getId())).isEmpty();
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExerciseServer.getId())).isEmpty();
 
         QuizSubmission quizSubmission = QuizExerciseFactory.generateSubmissionForThreeQuestions(quizExerciseServer, 1, true, null);
         // exam quiz not open for practice --> bad request expected
@@ -514,10 +514,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         }
 
         // in the preview the submission will not be saved to the database
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
 
         // update the statistics
-        QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        QuizExercise quizExerciseWithStatistic = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
         quizStatisticService.recalculateStatistics(quizExerciseWithStatistic);
 
         // all stats must be 0 because we have a preview here
@@ -584,7 +584,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         // set the quiz end to now and ...
         log.debug("// End the quiz and delete it");
-        quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExercise).isNotNull();
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         quizExercise = exerciseRepository.saveAndFlush(quizExercise);
@@ -616,7 +616,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         participationUtilService.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         quizExerciseService.reEvaluate(quizExercise, quizExercise, generateMultipartFilesFromQuizExercise(quizExercise));
-        assertThat(quizSubmissionRepository.findByQuizExerciseId(quizExercise.getId())).isPresent();
+        assertThat(quizSubmissionTestRepository.findByQuizExerciseId(quizExercise.getId())).isPresent();
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
         assertThat(results).hasSize(1);
@@ -624,7 +624,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         assertThat(result.getScore()).isEqualTo(11.1);
 
-        quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
+        quizSubmission = quizSubmissionTestRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             // MC submitted answers 0 points as one correct and one false -> ALL_OR_NOTHING
             // or
@@ -770,7 +770,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             quizExercise = quizExerciseService.save(quizExercise);
 
             // at the beginning there are no submissions and no participants
-            assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
+            assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
             assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
 
             request.postWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/start-participation", null, StudentParticipation.class, HttpStatus.OK);

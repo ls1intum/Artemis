@@ -4,10 +4,12 @@ import java.util.Optional;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 
+@Repository
 public interface TutorialGroupTestRepository extends TutorialGroupRepository {
 
     @Query("""
@@ -21,5 +23,4 @@ public interface TutorialGroupTestRepository extends TutorialGroupRepository {
     Optional<TutorialGroup> findByTitleAndCourseIdWithTeachingAssistantAndRegistrations(@Param("title") String title, @Param("courseId") Long courseId);
 
     boolean existsByTitleAndCourseId(String title, Long courseId);
-
 }

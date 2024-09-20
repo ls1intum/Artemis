@@ -46,7 +46,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
                 .getId();
 
         // then
-        newTutorialGroupCoveringDST = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        newTutorialGroupCoveringDST = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         this.assertTutorialGroupPersistedWithSchedule(newTutorialGroupCoveringDST, scheduleToCreate);
 
         var sessions = this.getTutorialGroupSessionsAscending(persistedTutorialGroupId);
@@ -71,7 +71,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), newTutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
 
         // then
-        newTutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        newTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
 
         var sessions = this.getTutorialGroupSessionsAscending(persistedTutorialGroupId);
         assertThat(sessions).hasSize(2);
@@ -96,7 +96,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
                 .postWithResponseBody(getTutorialGroupsPath(exampleCourseId), newTutorialGroupCoveringHoliday, TutorialGroup.class, HttpStatus.CREATED).getId();
 
         // then
-        newTutorialGroupCoveringHoliday = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        newTutorialGroupCoveringHoliday = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         this.assertTutorialGroupPersistedWithSchedule(newTutorialGroupCoveringHoliday, scheduleToCreate);
 
         var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(newTutorialGroupCoveringHoliday.getId()).orElseThrow();
@@ -156,7 +156,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
-        var persistedTutorialGroup = tutorialGroupRepository.findByIdElseThrow(tutorialGroup.getId());
+        var persistedTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(tutorialGroup.getId());
         var sessions = this.getTutorialGroupSessionsAscending(persistedTutorialGroup.getId());
         assertThat(sessions).hasSize(2);
         var firstAugustMondaySession = sessions.getFirst();
@@ -192,18 +192,18 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // given
         var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
-        tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
         var sessionIds = tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet());
         var scheduleId = tutorialGroup.getTutorialGroupSchedule().getId();
 
         // when
-        tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         tutorialGroup.setCapacity(2000);
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
-        tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
         assertThat(tutorialGroup.getCapacity()).isEqualTo(2000);
         assertThat(tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(sessionIds);
         assertThat(tutorialGroup.getTutorialGroupSchedule().getId()).isEqualTo(scheduleId);
@@ -215,18 +215,18 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // given
         var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
-        tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
         var sessionIds = tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet());
         var scheduleId = tutorialGroup.getTutorialGroupSchedule().getId();
 
         // when
-        tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         tutorialGroup.getTutorialGroupSchedule().setLocation("updated");
         var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
-        tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdWithSessionsElseThrow(persistedTutorialGroupId);
         assertThat(tutorialGroup.getTutorialGroupSchedule().getLocation()).isEqualTo("updated");
         assertThat(tutorialGroup.getTutorialGroupSessions().stream().map(DomainObject::getId).collect(Collectors.toSet())).containsExactlyInAnyOrderElementsOf(sessionIds);
         assertThat(tutorialGroup.getTutorialGroupSchedule().getId()).isEqualTo(scheduleId);
@@ -241,7 +241,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // given
         var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
-        tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
 
         this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, FOURTH_AUGUST_MONDAY_00_00);
 
@@ -256,7 +256,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroup.class, HttpStatus.OK);
 
         // then
-        tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(3);
         var firstAugustMondaySession = sessions.getFirst();
@@ -278,7 +278,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
         this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, THIRD_AUGUST_MONDAY_00_00);
-        tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         // when
         tutorialGroup.setTutorialGroupSchedule(null);
 
@@ -298,7 +298,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var tutorialGroup = this.buildTutorialGroupWithExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY, "tutor1");
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
         this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, THIRD_AUGUST_MONDAY_00_00);
-        tutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
 
         // when
         request.delete(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), HttpStatus.NO_CONTENT);
@@ -306,7 +306,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).isEmpty();
         assertThat(tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId())).isEmpty();
-        assertThat(tutorialGroupRepository.findById(tutorialGroup.getId())).isEmpty();
+        assertThat(tutorialGroupTestRepository.findById(tutorialGroup.getId())).isEmpty();
     }
 
 }

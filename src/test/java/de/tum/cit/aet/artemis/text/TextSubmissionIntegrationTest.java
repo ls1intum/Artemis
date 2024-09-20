@@ -47,7 +47,7 @@ import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonReposito
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
@@ -56,7 +56,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private static final String TEST_PREFIX = "textsubmissionintegration";
 
     @Autowired
-    private TextSubmissionRepository submissionRepository;
+    private TextSubmissionTestRepository testSubmissionTestRepository;
 
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
@@ -118,12 +118,14 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student3")
     void testRepositoryMethods() {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> submissionRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(Long.MAX_VALUE));
-
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> submissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> testSubmissionTestRepository.findByIdWithParticipationExerciseResultAssessorElseThrow(Long.MAX_VALUE));
 
         assertThatExceptionOfType(EntityNotFoundException.class)
-                .isThrownBy(() -> submissionRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(Long.MAX_VALUE));
+                .isThrownBy(() -> testSubmissionTestRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(Long.MAX_VALUE));
+
+        assertThatExceptionOfType(EntityNotFoundException.class)
+                .isThrownBy(() -> testSubmissionTestRepository.getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(Long.MAX_VALUE));
     }
 
     @Test
@@ -432,7 +434,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         textSubmission.setText(newSubmissionText);
         request.put(submitPath, textSubmission, HttpStatus.OK);
 
-        final var submissionInDb = submissionRepository.findById(textSubmission.getId());
+        final var submissionInDb = testSubmissionTestRepository.findById(textSubmission.getId());
         assertThat(submissionInDb).isPresent();
         assertThat(submissionInDb.get().getText()).isEqualTo(newSubmissionText);
     }
@@ -476,7 +478,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitExercise_submissionIsAlreadyCreated_badRequest() throws Exception {
-        textSubmission = submissionRepository.save(textSubmission);
+        textSubmission = testSubmissionTestRepository.save(textSubmission);
         request.post("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, HttpStatus.BAD_REQUEST);
     }
 
