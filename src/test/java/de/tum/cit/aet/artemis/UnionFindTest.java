@@ -68,7 +68,7 @@ class UnionFindTest {
     }
 
     @Test
-    void testComplexeSequence() {
+    void testComplexSequence() {
         unionFind.union(1, 2);
         unionFind.union(3, 4);
         unionFind.union(1, 3);
