@@ -36,6 +36,7 @@ import de.jplag.kotlin.KotlinLanguage;
 import de.jplag.options.JPlagOptions;
 import de.jplag.python3.PythonLanguage;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
+import de.jplag.rlang.RLanguage;
 import de.jplag.swift.SwiftLanguage;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -313,6 +314,7 @@ public class ProgrammingPlagiarismDetectionService {
             case PYTHON -> new PythonLanguage();
             case SWIFT -> new SwiftLanguage();
             case KOTLIN -> new KotlinLanguage();
+            case R -> new RLanguage();
             default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
                     "ProgrammingExercise", "notSupported");
         };

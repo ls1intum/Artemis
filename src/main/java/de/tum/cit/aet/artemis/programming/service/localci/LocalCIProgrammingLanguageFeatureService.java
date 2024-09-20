@@ -49,6 +49,6 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(OCAML, new ProgrammingLanguageFeature(OCAML, false, false, false, false, true, List.of(), false, true));
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, false, true, true, false, List.of(PLAIN), false, true));
         programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, false, false, false, false, List.of(), false, true));
-        programmingLanguageFeatures.put(R, new ProgrammingLanguageFeature(R, false, false, false, false, false, List.of(), false, true));
+        programmingLanguageFeatures.put(R, new ProgrammingLanguageFeature(R, false, false, true, false, false, List.of(), false, true));
     }
 }
