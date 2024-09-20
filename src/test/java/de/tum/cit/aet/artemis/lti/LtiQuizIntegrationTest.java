@@ -38,9 +38,9 @@ import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizMode;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.service.QuizSubmissionService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -53,7 +53,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private QuizExerciseService quizExerciseService;
 
     @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseTestRepository;
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -110,7 +110,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         verifyNoInteractions(lti13Service);
 
         // End the quiz right now
-        quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizExercise = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExercise).isNotNull();
         quizExercise.setDueDate(ZonedDateTime.now());
         exerciseRepository.saveAndFlush(quizExercise);
@@ -166,7 +166,7 @@ class LtiQuizIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
         QuizExercise quizExerciseServer = createQuizExerciseWithFiles(quizExercise);
         assertThat(quizExerciseServer).isNotNull();
-        QuizExercise quizExerciseDatabase = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
+        QuizExercise quizExerciseDatabase = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(quizExerciseServer.getId());
         assertThat(quizExerciseServer).isNotNull();
         assertThat(quizExerciseDatabase).isNotNull();
 
