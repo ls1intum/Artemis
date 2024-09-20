@@ -66,7 +66,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     /**
      * maps existing courses to each semester
      */
-    private mapCoursesIntoSemesters(): void {
+    mapCoursesIntoSemesters(): void {
         this.semesterCollapsed = {};
         this.coursesBySemester = {};
         this.fullFormOfSemesterStrings = {};
