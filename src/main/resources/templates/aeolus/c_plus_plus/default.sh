@@ -10,20 +10,17 @@ setup_the_build_environment () {
   # Build and run all tests
   # ------------------------------
 
-  # Updating assignment and test-reports ownership...
-  sudo chown artemis_user:artemis_user assignment/ -R
+  # Updating ownership...
+  sudo chown -R artemis_user:artemis_user .
   mkdir test-reports
-  chown artemis_user:artemis_user test-reports/ -R
 
   # assignment
-  cd tests
   REQ_FILE=requirements.txt
   if [ -f "$REQ_FILE" ]; then
       pip3 install --user -r requirements.txt || true
   else
       echo "$REQ_FILE does not exist"
   fi
-  cd ..
 }
 
 setup_makefile () {
@@ -35,7 +32,7 @@ setup_makefile () {
   # Setup makefile
   # ------------------------------
 
-  shadowFilePath="../tests/testUtils/c/shadow_exec.c"
+  shadowFilePath="../testUtils/c/shadow_exec.c"
 
   foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
 
@@ -45,7 +42,7 @@ setup_makefile () {
   rm -f assignment/GNUmakefile
   rm -f assignment/makefile
 
-  cp -f tests/Makefile assignment/Makefile || exit 2
+  cp -f Makefile assignment/Makefile || exit 2
   sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
 }
 
@@ -61,7 +58,6 @@ build_and_run_all_tests () {
   gcc -c -Wall assignment/*.c || error=true
   if [ ! $error ]
   then
-      cd tests || exit 0
       python3 Tests.py || true
   fi
 }

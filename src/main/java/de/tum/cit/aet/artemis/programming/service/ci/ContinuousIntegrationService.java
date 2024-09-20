@@ -230,8 +230,8 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY, RUST, JAVASCRIPT -> "";
-                    case C, VHDL, ASSEMBLER, OCAML, C_PLUS_PLUS -> "tests";
+                    case JAVA, PYTHON, HASKELL, KOTLIN, SWIFT, EMPTY, RUST, JAVASCRIPT, C_PLUS_PLUS -> "";
+                    case C, VHDL, ASSEMBLER, OCAML -> "tests";
                     case C_SHARP, SQL, R, TYPESCRIPT, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA, DART, PHP ->
                         throw new UnsupportedOperationException("Unsupported programming language: " + language);
                 };

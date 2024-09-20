@@ -8,8 +8,8 @@ from testUtils.Tester import Tester
 
 def main():
     # Makefile location:
-    # Artemis expects it to be located in ../assignment
-    makefileLocation: str = "../assignment"
+    # Artemis expects it to be located in "assignment"
+    makefileLocation: str = "assignment"
 
     # Create a new instance of the tester:
     tester: Tester = Tester()
@@ -51,7 +51,7 @@ def main():
     # Run the actual tests:
     tester.run()
     # Export the results into the JUnit XML format:
-    tester.exportResult("../test-reports/tests-results.xml")
+    tester.exportResult("test-reports/tests-results.xml")
 
 
 if __name__ == "__main__":
