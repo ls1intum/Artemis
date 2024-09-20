@@ -69,7 +69,7 @@ artemis:
                     # possible overrides: maven, gradle
                     default: "ls1tum/artemis-maven-template:java17-21"
                 empty:
-                    default: "ls1tum/artemis-maven-template:java17-21"
+                    default: "ubuntu:24.04"
                 python:
                     default: "ls1tum/artemis-python-docker:latest"
                 c:
