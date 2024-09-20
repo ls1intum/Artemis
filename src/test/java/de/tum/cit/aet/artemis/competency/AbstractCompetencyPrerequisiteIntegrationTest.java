@@ -2,7 +2,10 @@ package de.tum.cit.aet.artemis.competency;
 
 import static de.tum.cit.aet.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -16,6 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -36,6 +40,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
+import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
 import de.tum.cit.aet.artemis.lecture.LectureUtilService;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
@@ -48,6 +53,9 @@ import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -87,6 +95,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     @Autowired
     protected CourseCompetencyRepository courseCompetencyRepository;
+
+    @SpyBean
+    protected ProgrammingExerciseImportService programmingExerciseImportService;
 
     protected Course course;
 
@@ -189,6 +200,13 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         textExercise.setCompetencies(competencies);
 
         return exerciseRepository.save(textExercise);
+    }
+
+    private ProgrammingExercise createProgrammingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate) {
+        ProgrammingExercise programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(releaseDate, dueDate, course, ProgrammingLanguage.JAVA);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
+        programmingExercise.setCompetencies(Set.of(courseCompetency));
+        return exerciseRepository.save(programmingExercise);
     }
 
     abstract CourseCompetency getCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception;
@@ -548,6 +566,9 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
+        ProgrammingExercise programmingExercise = createProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now());
+        doReturn(programmingExercise).when(programmingExerciseImportService).importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
+
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course.getId()), false, true, true, Optional.empty(), false);
         importAllCall(course2.getId(), importOptions, HttpStatus.CREATED);
 
@@ -555,6 +576,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         assertThat(course2.getExercises()).hasSize(2);
         assertThat(course2.getLectures()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
+        verify(programmingExerciseImportService).importProgrammingExercise(any(), any(), eq(false), eq(false), eq(false));
     }
 
     // Test
