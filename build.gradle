@@ -114,16 +114,35 @@ modernizer {
     exclusions = ["java/util/Optional.get:()Ljava/lang/Object;"]
 }
 
-// Execute the test cases: ./gradlew test
-// Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
+tasks.register('localCiLocalVcTests', Test) {
+    useJUnitPlatform {
+        includeTags 'LocalCILocalVCTest'
+    }
+}
+
+/**
+ * Execute the test cases: ./gradlew test
+ * Execute only architecture tests: ./gradlew test -DincludeTags="ArchitectureTest"
+ *
+ * Execute AbstractSpringIntegrationLocalCILocalVCTest: ./gradlew test -DincludeTags="LocalCILocalVCTest"
+ *
+ * Note: ./gradlew test first executes all tests except the AbstractSpringIntegrationLocalCILocalVCTests, and afterwards
+ * the AbstractSpringIntegrationLocalCILocalVCTests. Background: Running them in parallel causes flaky and
+ * non-reproducible test results.
+ */
 test {
-    if (System.getProperty("includeTags")) {
-        useJUnitPlatform {
+    useJUnitPlatform {
+        if (System.getProperty("includeTags")) {
             includeTags System.getProperty("includeTags")
+        } else {
+            exclude "**/*IT*", "**/*IntTest*"
+            excludeTags 'LocalCILocalVCTest'
         }
-    } else {
-        useJUnitPlatform()
-        exclude "**/*IT*", "**/*IntTest*"
+    }
+
+    // If the user explicitly runs the LocalCILocalVCTest, we don't need to run it afterwards, again
+    if (!System.getProperty("includeTags")?.contains("LocalCILocalVCTest")) {
+        finalizedBy localCiLocalVcTests
     }
 
     testLogging {
@@ -133,6 +152,8 @@ test {
     reports.html.required = false
     minHeapSize = "1024m" // initial heap size
     maxHeapSize = "3072m" // maximum heap size
+
+    // mustRunAfter localCiLocalVcTests
 }
 
 tasks.register("testReport", TestReport) {
