@@ -82,8 +82,8 @@ import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -247,7 +247,7 @@ public class CourseTestService {
     private ChannelRepository channelRepository;
 
     @Autowired
-    private ConversationRepository conversationRepository;
+    private ConversationTestRepository conversationRepository;
 
     @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;

@@ -162,7 +162,6 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
 
     }
 
-    // TODO: Discuss if we wat to introduce this rule
     @Test
     void usedInProductionCode() {
         methods().that().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).should(new ArchCondition<>("be used by production code") {

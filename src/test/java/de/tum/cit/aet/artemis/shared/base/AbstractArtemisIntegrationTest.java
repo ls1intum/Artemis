@@ -37,12 +37,12 @@ import de.tum.cit.aet.artemis.communication.service.notifications.TutorialGroupN
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.ApplePushNotificationService;
 import de.tum.cit.aet.artemis.communication.service.notifications.push_notifications.FirebasePushNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.service.ScheduleService;
 import de.tum.cit.aet.artemis.core.service.ZipFileService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -192,7 +192,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ResultTestRepository resultRepository;
 
     @Autowired
-    protected CourseRepository courseRepository;
+    protected CourseTestRepository courseRepository;
 
     @BeforeEach
     void mockMailService() {

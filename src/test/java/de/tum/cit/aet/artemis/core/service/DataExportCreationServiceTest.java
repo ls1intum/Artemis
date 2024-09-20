@@ -48,7 +48,7 @@ import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.science.util.ScienceUtilService;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -153,7 +153,7 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
     private QuizExerciseUtilService quizExerciseUtilService;
 
     @Autowired
-    private PostRepository postRepository;
+    private PostTestRepository postRepository;
 
     @Autowired
     private AnswerPostRepository answerPostRepository;

@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
-import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
@@ -42,7 +42,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "reactionintegration";
 
     @Autowired
-    private ReactionRepository reactionRepository;
+    private ReactionTestRepository reactionRepository;
 
     @Autowired
     private PostRepository postRepository;
