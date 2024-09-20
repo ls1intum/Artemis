@@ -242,9 +242,9 @@ public interface ContinuousIntegrationService {
             @Override
             public String forProgrammingLanguage(ProgrammingLanguage language) {
                 return switch (language) {
-                    case HASKELL, OCAML, R -> "solution";
-                    case JAVA, PYTHON, KOTLIN, SWIFT, EMPTY, C, VHDL, ASSEMBLER, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL, ADA,
-                            DART, PHP ->
+                    case HASKELL, OCAML -> "solution";
+                    case JAVA, PYTHON, KOTLIN, SWIFT, EMPTY, C, VHDL, ASSEMBLER, JAVASCRIPT, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, RUST, GO, MATLAB, BASH, RUBY, POWERSHELL,
+                            ADA, DART, PHP ->
                         throw new IllegalArgumentException("The solution repository is not checked out during the template/submission build plan for " + language);
                 };
             }
