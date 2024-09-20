@@ -12,7 +12,22 @@
             "ASSEMBLER": "Assembler",
             "SWIFT": "Swift",
             "OCAML": "OCaml",
-            "EMPTY": "Empty"
+            "JAVASCRIPT": "JavaScript",
+            "C_SHARP": "C#",
+            "C_PLUS_PLUS": "C++",
+            "SQL": "SQL",
+            "R": "R",
+            "TYPESCRIPT": "TypeScript",
+            "RUST": "Rust",
+            "GO": "Go",
+            "MATLAB": "MATLAB",
+            "BASH": "Bash",
+            "RUBY": "Ruby",
+            "POWERSHELL": "PowerShell",
+            "ADA": "Ada",
+            "DART": "Dart",
+            "PHP": "PHP",
+            "EMPTY": "Other"
         }
     }
 }
