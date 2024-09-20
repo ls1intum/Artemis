@@ -68,8 +68,9 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
     }
 
     /**
-     * Retrieves a list of unnecessary plagiarism comparison IDs for a specific date range.
-     * The method selects comparisons where the plagiarism status is 'NONE' and the courses' start and end dates fall within the provided range.
+     * Retrieves a list of unnecessary plagiarism comparison IDs based on the associated course's date range.
+     * A plagiarism comparison is considered unnecessary if its status is 'NONE' and the related course's
+     * start and end dates fall within the provided range. Also deletes orphan objects.
      *
      * @param deleteFrom The start of the date range for filtering unnecessary plagiarism comparisons.
      * @param deleteTo   The end of the date range for filtering unnecessary plagiarism comparisons.
@@ -78,21 +79,20 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
     @Override
     public List<Long> getUnnecessaryPlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         return entityManager.createQuery("""
-                      SELECT pc.id
-                      FROM PlagiarismComparison pc
-                      JOIN Submission s1 ON pc.submissionA.submissionId = s1.id
-                      JOIN Submission s2 ON pc.submissionB.submissionId = s2.id
-                      JOIN s1.participation p1
-                      JOIN s2.participation p2
-                      LEFT JOIN p1.exercise e1
-                      LEFT JOIN p2.exercise e2
-                      LEFT JOIN e1.course c1
-                      LEFT JOIN e2.course c2
-                      WHERE pc.status = de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE AND
-                      LEAST(c1.endDate, c2.endDate) < :deleteTo AND
-                      GREATEST(c1.startDate, c2.startDate) > :deleteFrom
-                """, Long.class).setParameter("deleteTo", deleteTo).setParameter("deleteFrom", deleteFrom).getResultList();
+            SELECT pc.id
+            FROM PlagiarismComparison pc
+            JOIN pc.plagiarismResult pr
+            JOIN pr.exercise ex
+            JOIN ex.course c
+            WHERE pc.status = de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE AND
+                  c.endDate < :deleteTo AND
+                  c.startDate > :deleteFrom
+        """, Long.class)
+            .setParameter("deleteTo", deleteTo)
+            .setParameter("deleteFrom", deleteFrom)
+            .getResultList();
     }
+
 
     /**
      * Deletes non-rated results within the specified date range, along with associated long feedback texts,
