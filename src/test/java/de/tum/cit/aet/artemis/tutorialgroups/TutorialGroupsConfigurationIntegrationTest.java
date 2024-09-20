@@ -230,7 +230,7 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // given
         var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
         var tutorialGroupWithSchedule = setUpTutorialGroupWithSchedule(courseId, "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroupWithSchedule.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroupWithSchedule.getId()).orElseThrow();
         this.buildAndSaveExampleIndividualTutorialGroupSession(tutorialGroupWithSchedule.getId(), FIRST_SEPTEMBER_MONDAY_00_00);
         tutorialGroupUtilService.addTutorialGroupFreePeriod(configuration.getId(), FOURTH_AUGUST_MONDAY_00_00, FOURTH_AUGUST_MONDAY_00_00, "Holiday");
 

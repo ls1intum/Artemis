@@ -54,7 +54,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var standardTimeSession = sessions.getFirst();
         var daylightSavingsTimeSession = sessions.get(1);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroupCoveringDST.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(newTutorialGroupCoveringDST.getId()).orElseThrow();
 
         this.assertScheduledSessionIsActiveOnDate(standardTimeSession, mondayBeforeDSTSwitch, persistedTutorialGroupId, persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(daylightSavingsTimeSession, mondayAfterDSTSwitch, persistedTutorialGroupId, persistedSchedule);
@@ -78,7 +78,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var firstAugustMondaySession = sessions.getFirst();
         var thirdAugustMondaySession = sessions.get(1);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroup.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(newTutorialGroup.getId()).orElseThrow();
         this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY, persistedTutorialGroupId, persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(thirdAugustMondaySession, THIRD_AUGUST_MONDAY, persistedTutorialGroupId, persistedSchedule);
     }
@@ -99,7 +99,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         newTutorialGroupCoveringHoliday = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
         this.assertTutorialGroupPersistedWithSchedule(newTutorialGroupCoveringHoliday, scheduleToCreate);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(newTutorialGroupCoveringHoliday.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(newTutorialGroupCoveringHoliday.getId()).orElseThrow();
 
         var sessions = this.getTutorialGroupSessionsAscending(persistedTutorialGroupId);
         assertThat(sessions).hasSize(2);
@@ -162,7 +162,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var firstAugustMondaySession = sessions.getFirst();
         var secondAugustMondaySession = sessions.get(1);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(persistedTutorialGroup.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(persistedTutorialGroup.getId()).orElseThrow();
 
         this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(secondAugustMondaySession, SECOND_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
@@ -183,7 +183,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).hasSize(1);
-        assertThat(tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId())).isEmpty();
+        assertThat(tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId())).isEmpty();
     }
 
     @Test
@@ -263,7 +263,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var thirdAugustMondaySession = sessions.get(1);
         var fourthAugustMondaySession = sessions.get(2);
 
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
         this.assertScheduledSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
         this.assertScheduledSessionIsActiveOnDate(thirdAugustMondaySession, THIRD_AUGUST_MONDAY, tutorialGroup.getId(), persistedSchedule);
@@ -305,7 +305,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroup.getId())).isEmpty();
-        assertThat(tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId())).isEmpty();
+        assertThat(tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId())).isEmpty();
         assertThat(tutorialGroupRepository.findById(tutorialGroup.getId())).isEmpty();
     }
 
