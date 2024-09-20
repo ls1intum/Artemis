@@ -94,8 +94,8 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                         FROM Feedback f
                         JOIN f.result r
                         JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
+                        LEFT JOIN p.exercise e
+                        LEFT JOIN e.course c
                         WHERE r.rated=false
                         AND c.endDate < :deleteTo
                         AND c.startDate > :deleteFrom
@@ -110,8 +110,8 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                         FROM Feedback f
                         JOIN f.result r
                         JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
+                        LEFT JOIN p.exercise e
+                        LEFT JOIN e.course c
                         WHERE r.rated=false
                         AND c.endDate < :deleteTo
                         AND c.startDate > :deleteFrom
@@ -139,8 +139,8 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                         SELECT r
                         FROM Result r
                         JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
+                        LEFT JOIN p.exercise e
+                        LEFT JOIN e.course c
                         WHERE r.rated=false AND c.endDate < :deleteTo
                         AND c.startDate > :deleteFrom
                     )
@@ -152,8 +152,8 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                         SELECT r
                         FROM Result r
                         JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
+                        LEFT JOIN p.exercise e
+                        LEFT JOIN e.course c
                         WHERE r.rated=false AND c.endDate < :deleteTo
                         AND c.startDate > :deleteFrom
                     )
@@ -187,8 +187,8 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                         FROM Feedback f
                         JOIN f.result r
                         JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
+                        LEFT JOIN p.exercise e
+                        LEFT JOIN e.course c
                         WHERE f.result.id NOT IN (
                             SELECT MAX(r2.id)
                             FROM Result r2
@@ -207,8 +207,8 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                         FROM Feedback f
                         JOIN f.result r
                         JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
+                        LEFT JOIN p.exercise e
+                        LEFT JOIN e.course c
                         WHERE f.result.id NOT IN (
                             SELECT MAX(r2.id)
                             FROM Result r2
@@ -226,8 +226,8 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                         SELECT r
                         FROM Result r
                         JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
+                        LEFT JOIN p.exercise e
+                        LEFT JOIN e.course c
                         WHERE r.id NOT IN (
                             SELECT MAX(r2.id)
                             FROM Result r2
@@ -244,8 +244,8 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                         SELECT r
                         FROM Result r
                         JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
+                        LEFT JOIN p.exercise e
+                        LEFT JOIN e.course c
                         WHERE r.id NOT IN (
                             SELECT MAX(r2.id)
                             FROM Result r2
@@ -261,8 +261,8 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
                         SELECT r
                         FROM Result r
                         JOIN r.participation p
-                        JOIN p.exercise e
-                        JOIN e.course c
+                        LEFT JOIN p.exercise e
+                        LEFT JOIN e.course c
                         WHERE r.id NOT IN (
                             SELECT MAX(r2.id)
                             FROM Result r2
