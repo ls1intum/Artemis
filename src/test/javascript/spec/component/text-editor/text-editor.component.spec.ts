@@ -528,7 +528,7 @@ describe('TextEditorComponent', () => {
         jest.spyOn(comp, 'assureConditionsSatisfied').mockReturnValue(true);
         const courseExerciseServiceSpy = jest.spyOn(courseExerciseService, 'requestFeedback');
         comp.requestFeedback();
-        expect(component.assureConditionsSatisfied).toHaveBeenCalled();
+        expect(comp.assureConditionsSatisfied).toHaveBeenCalled();
         expect(courseExerciseServiceSpy).toHaveBeenCalled();
     });
 
