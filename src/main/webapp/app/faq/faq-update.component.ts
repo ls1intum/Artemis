@@ -10,9 +10,9 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 import { Faq } from 'app/entities/faq.model';
-import { FaqService } from 'app/faq/faq.service';
+import { FAQService } from 'app/faq/faq.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FAQCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
@@ -29,8 +29,8 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 export class FAQUpdateComponent implements OnInit {
     faq: Faq;
     isSaving: boolean;
-    existingCategories: FaqCategory[] = [];
-    faqCategories: FaqCategory[] = [];
+    existingCategories: FAQCategory[] = [];
+    faqCategories: FAQCategory[] = [];
 
     courses: Course[];
 
@@ -45,7 +45,7 @@ export class FAQUpdateComponent implements OnInit {
 
     constructor(
         protected alertService: AlertService,
-        protected faqService: FaqService,
+        protected faqService: FAQService,
         protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -142,7 +142,7 @@ export class FAQUpdateComponent implements OnInit {
         }
     }
 
-    updateCategories(categories: FaqCategory[]) {
+    updateCategories(categories: FAQCategory[]) {
         this.faq.categories = categories;
         this.faqCategories = categories;
     }

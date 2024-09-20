@@ -8,13 +8,13 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { FAQComponent } from 'app/faq/faq.component';
-import { FaqService } from 'app/faq/faq.service';
+import { FAQService } from 'app/faq/faq.service';
 import { Faq } from 'app/entities/faq.model';
 import { FAQUpdateComponent } from 'app/faq/faq-update.component';
 
 @Injectable({ providedIn: 'root' })
 export class FAQResolve implements Resolve<Faq> {
-    constructor(private faqService: FaqService) {}
+    constructor(private faqService: FAQService) {}
 
     resolve(route: ActivatedRouteSnapshot): Observable<Faq> {
         const faqId = route.params['faqId'];

@@ -1,4 +1,4 @@
-export class FaqCategory {
+export class FAQCategory {
     public color?: string;
 
     public category?: string;
@@ -8,7 +8,7 @@ export class FaqCategory {
         this.category = category;
     }
 
-    equals(otherExerciseCategory: FaqCategory): boolean {
+    equals(otherExerciseCategory: FAQCategory): boolean {
         return this.color === otherExerciseCategory.color && this.category === otherExerciseCategory.category;
     }
 
@@ -16,7 +16,7 @@ export class FaqCategory {
      * @param otherExerciseCategory
      * @returns the alphanumerical order of the two exercise categories based on their display text
      */
-    compare(otherExerciseCategory: FaqCategory): number {
+    compare(otherExerciseCategory: FAQCategory): number {
         if (this.category === otherExerciseCategory.category) {
             return 0;
         }

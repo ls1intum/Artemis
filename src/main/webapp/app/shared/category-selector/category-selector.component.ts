@@ -7,7 +7,7 @@ import { FormControl } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { Observable, map, startWith } from 'rxjs';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FAQCategory } from 'app/entities/faq-category.model';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
@@ -23,12 +23,12 @@ export class CategorySelectorComponent implements OnChanges {
     /**
      * the selected categories, which can be manipulated by the user in the UI
      */
-    @Input() categories: ExerciseCategory[] | FaqCategory[];
+    @Input() categories: ExerciseCategory[] | FAQCategory[];
 
     /**
      * the existing categories used for auto-completion, might include duplicates
      */
-    @Input() existingCategories: ExerciseCategory[] | FaqCategory[];
+    @Input() existingCategories: ExerciseCategory[] | FAQCategory[];
 
     @Output() selectedCategories = new EventEmitter<ExerciseCategory[]>();
 

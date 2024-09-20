@@ -5,10 +5,10 @@ import { Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute } from '@angular/router';
-import { FaqService } from 'app/faq/faq.service';
+import { FAQService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FAQCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
@@ -25,8 +25,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 })
 export class FAQComponent implements OnInit, OnDestroy {
     faqs: Faq[];
-    filteredFaq: Faq[];
-    existingCategories: FaqCategory[];
+    filteredFaqs: Faq[];
+    existingCategories: FAQCategory[];
     courseId: number;
 
     private dialogErrorSource = new Subject<string>();
@@ -51,7 +51,7 @@ export class FAQComponent implements OnInit, OnDestroy {
     faSort = faSort;
 
     constructor(
-        protected faqService: FaqService,
+        protected faqService: FAQService,
         private route: ActivatedRoute,
         private alertService: AlertService,
         private sortService: SortService,
@@ -88,16 +88,16 @@ export class FAQComponent implements OnInit, OnDestroy {
     }
 
     toggleFilters(category: string) {
-        this.activeFilters = FaqService.toggleFilter(category, this.activeFilters);
+        this.activeFilters = FAQService.toggleFilter(category, this.activeFilters);
         this.applyFilters();
     }
 
     private applyFilters(): void {
-        this.filteredFaq = FaqService.applyFilters(this.activeFilters, this.faqs);
+        this.filteredFaqs = FAQService.applyFilters(this.activeFilters, this.faqs);
     }
 
     sortRows() {
-        this.sortService.sortByProperty(this.filteredFaq, this.predicate, this.ascending);
+        this.sortService.sortByProperty(this.filteredFaqs, this.predicate, this.ascending);
     }
 
     private loadAll() {

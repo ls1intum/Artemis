@@ -3,14 +3,14 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { Faq, FaqState } from 'app/entities/faq.model';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FAQCategory } from 'app/entities/faq-category.model';
 import { AlertService } from 'app/core/util/alert.service';
 
 type EntityResponseType = HttpResponse<Faq>;
 type EntityArrayResponseType = HttpResponse<Faq[]>;
 
 @Injectable({ providedIn: 'root' })
-export class FaqService {
+export class FAQService {
     public resourceUrl = 'api/courses';
 
     constructor(
@@ -19,7 +19,7 @@ export class FaqService {
     ) {}
 
     create(faq: Faq): Observable<EntityResponseType> {
-        const copy = FaqService.convertFaqFromClient(faq);
+        const copy = FAQService.convertFaqFromClient(faq);
         faq.faqState = FaqState.ACCEPTED;
         return this.http.post<Faq>(`api/faqs`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
@@ -29,7 +29,7 @@ export class FaqService {
     }
 
     update(faq: Faq): Observable<EntityResponseType> {
-        const copy = FaqService.convertFaqFromClient(faq);
+        const copy = FAQService.convertFaqFromClient(faq);
         return this.http.put<Faq>(`api/faqs/${faq.id}`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
@@ -38,7 +38,7 @@ export class FaqService {
     }
 
     find(faqId: number): Observable<EntityResponseType> {
-        return this.http.get<Faq>(`api/faqs/${faqId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => FaqService.convertFaqCategoriesFromServer(res)));
+        return this.http.get<Faq>(`api/faqs/${faqId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => FAQService.convertFaqCategoriesFromServer(res)));
     }
 
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
@@ -46,11 +46,11 @@ export class FaqService {
             .get<Faq[]>(this.resourceUrl + `/${courseId}/faqs`, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => FAQService.convertFaqCategoryArrayFromServer(res)));
     }
 
-    delete(faqId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`api/faqs/${faqId}`, { observe: 'response' });
+    delete(faqId: number): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`api/faqs/${faqId}`, { observe: 'response' });
     }
 
     findAllCategoriesByCourseId(courseId: number) {
@@ -64,7 +64,7 @@ export class FaqService {
      */
     static convertFaqCategoriesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body && res.body.categories) {
-            FaqService.parseFaqCategories(res.body);
+            FAQService.parseFaqCategories(res.body);
         }
         return res;
     }
@@ -74,10 +74,10 @@ export class FaqService {
      * @param faq the faq
      */
     static stringifyFaqCategories(faq: Faq) {
-        return faq.categories?.map((category) => JSON.stringify(category) as unknown as FaqCategory);
+        return faq.categories?.map((category) => JSON.stringify(category) as unknown as FAQCategory);
     }
 
-    convertFaqCategoriesAsStringFromServer(categories: string[]): FaqCategory[] {
+    convertFaqCategoriesAsStringFromServer(categories: string[]): FAQCategory[] {
         return categories.map((category) => JSON.parse(category));
     }
 
@@ -87,20 +87,20 @@ export class FaqService {
      */
     static convertFaqCategoryArrayFromServer<E extends Faq, EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
-            res.body.forEach((faq: E) => FaqService.parseFaqCategories(faq));
+            res.body.forEach((faq: E) => FAQService.parseFaqCategories(faq));
         }
         return res;
     }
 
     /**
-     * Parses the faq categories JSON string into {@link FaqCategory} objects.
+     * Parses the faq categories JSON string into {@link FAQCategory} objects.
      * @param faq - the faq
      */
     static parseFaqCategories(faq?: Faq) {
         if (faq?.categories) {
             faq.categories = faq.categories.map((category) => {
                 const categoryObj = JSON.parse(category as unknown as string);
-                return new FaqCategory(categoryObj.category, categoryObj.color);
+                return new FAQCategory(categoryObj.category, categoryObj.color);
             });
         }
     }
@@ -111,7 +111,7 @@ export class FaqService {
      */
     static convertFaqFromClient<F extends Faq>(faq: F): Faq {
         const copy = Object.assign(faq, {});
-        copy.categories = FaqService.stringifyFaqCategories(copy);
+        copy.categories = FAQService.stringifyFaqCategories(copy);
         if (copy.categories) {
         }
         return copy;

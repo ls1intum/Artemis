@@ -10,10 +10,10 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
 import { Faq } from 'app/entities/faq.model';
-import { FaqService } from 'app/faq/faq.service';
+import { FAQService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { FaqCategory } from 'app/entities/faq-category.model';
+import { FAQCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
@@ -35,7 +35,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     faqs: Faq[];
 
     filteredFaq: Faq[];
-    existingCategories: FaqCategory[];
+    existingCategories: FAQCategory[];
     activeFilters = new Set<string>();
 
     sidebarData: SidebarData;
@@ -53,7 +53,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         private router: Router,
-        private faqService: FaqService,
+        private faqService: FAQService,
         private alertService: AlertService,
     ) {}
 
@@ -91,11 +91,11 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     }
 
     toggleFilters(category: string) {
-        this.activeFilters = FaqService.toggleFilter(category, this.activeFilters);
+        this.activeFilters = FAQService.toggleFilter(category, this.activeFilters);
         this.applyFilters();
     }
 
     private applyFilters(): void {
-        this.filteredFaq = FaqService.applyFilters(this.activeFilters, this.faqs);
+        this.filteredFaq = FAQService.applyFilters(this.activeFilters, this.faqs);
     }
 }
