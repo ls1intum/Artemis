@@ -652,6 +652,13 @@ public class CourseService {
         return courseRepository.findAllCoursesByManagementGroupNames(userGroups);
     }
 
+    /**
+     * Fetches all courses, filters out courses that the user does not have
+     * access to based on their role, and excludes any courses that do not
+     * belong to a specific semester.
+     *
+     * @return A list of courses for the course archive
+     */
     public List<Course> getAllCoursesForCourseArchive() {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseRepository.findAll();

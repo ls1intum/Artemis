@@ -555,6 +555,11 @@ public class CourseResource {
         return ResponseEntity.ok(courseService.getAllCoursesForManagementOverview(onlyActive));
     }
 
+    /**
+     * GET /courses/archive : get all courses for course archive
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body a list of courses (the user has access to)
+     */
     @GetMapping("courses/archive")
     @EnforceAtLeastStudent
     public ResponseEntity<List<Course>> getCoursesForArchive() {
