@@ -79,20 +79,16 @@ public class CustomDataCleanupRepository implements DataCleanupRepository {
     @Override
     public List<Long> getUnnecessaryPlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         return entityManager.createQuery("""
-            SELECT pc.id
-            FROM PlagiarismComparison pc
-            JOIN pc.plagiarismResult pr
-            JOIN pr.exercise ex
-            JOIN ex.course c
-            WHERE pc.status = de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE AND
-                  c.endDate < :deleteTo AND
-                  c.startDate > :deleteFrom
-        """, Long.class)
-            .setParameter("deleteTo", deleteTo)
-            .setParameter("deleteFrom", deleteFrom)
-            .getResultList();
+                    SELECT pc.id
+                    FROM PlagiarismComparison pc
+                    JOIN pc.plagiarismResult pr
+                    JOIN pr.exercise ex
+                    JOIN ex.course c
+                    WHERE pc.status = de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE AND
+                          c.endDate < :deleteTo AND
+                          c.startDate > :deleteFrom
+                """, Long.class).setParameter("deleteTo", deleteTo).setParameter("deleteFrom", deleteFrom).getResultList();
     }
-
 
     /**
      * Deletes non-rated results within the specified date range, along with associated long feedback texts,
