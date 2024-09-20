@@ -159,7 +159,6 @@ describe('CourseArchiveComponent', () => {
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
 
-            // we expand the newest semester at first, others are collapsed
             expect(component.fullFormOfSemesterStrings).toStrictEqual({
                 'WS23/24': 'artemisApp.course.archive.winterSemester',
                 'WS22/23': 'artemisApp.course.archive.winterSemester',
