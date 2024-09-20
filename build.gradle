@@ -131,7 +131,7 @@ tasks.register('localCiLocalVcTests', Test) {
  * non-reproducible test results.
  */
 test {
-    def runIntegrationSeparated = System.getProperty("runIntegrationSeparated") as boolean ?: false
+    def runIntegrationSeparated = true // System.getProperty("runIntegrationSeparated") as boolean ?: false
 
     useJUnitPlatform {
         if (System.getProperty("includeTags")) {
