@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
 
 @Repository
+@Primary
 public interface TextSubmissionTestRepository extends TextSubmissionRepository {
 
     /**

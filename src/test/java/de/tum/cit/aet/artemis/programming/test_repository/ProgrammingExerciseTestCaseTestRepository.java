@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.test_repository;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,6 +12,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 
 @Repository
+@Primary
 public interface ProgrammingExerciseTestCaseTestRepository extends ProgrammingExerciseTestCaseRepository {
 
     Optional<ProgrammingExerciseTestCase> findByExerciseIdAndTestName(long exerciseId, String testName);

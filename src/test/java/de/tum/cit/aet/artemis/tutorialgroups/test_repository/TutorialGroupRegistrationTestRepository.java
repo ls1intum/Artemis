@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.tutorialgroups.test_repository;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 
 @Repository
+@Primary
 public interface TutorialGroupRegistrationTestRepository extends TutorialGroupRegistrationRepository {
 
     @Transactional // ok because of delete

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.test_repository;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,6 +12,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 
 @Repository
+@Primary
 public interface SubmissionTestRepository extends SubmissionRepository {
 
     /**

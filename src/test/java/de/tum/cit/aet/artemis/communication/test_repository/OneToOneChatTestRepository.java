@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.communication.test_repository;
 
 import java.util.Optional;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -11,6 +12,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChat
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 @Repository
+@Primary
 public interface OneToOneChatTestRepository extends OneToOneChatRepository {
 
     @Query("""

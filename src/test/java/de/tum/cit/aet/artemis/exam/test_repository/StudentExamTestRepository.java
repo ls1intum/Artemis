@@ -4,6 +4,7 @@ import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -13,6 +14,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 
 @Repository
+@Primary
 public interface StudentExamTestRepository extends StudentExamRepository {
 
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(Long examId);

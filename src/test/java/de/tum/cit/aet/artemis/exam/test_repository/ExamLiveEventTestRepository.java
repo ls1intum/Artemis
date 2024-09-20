@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exam.test_repository;
 
 import java.util.List;
 
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -10,6 +11,7 @@ import de.tum.cit.aet.artemis.exam.domain.event.ExamLiveEvent;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 
 @Repository
+@Primary
 public interface ExamLiveEventTestRepository extends ExamLiveEventRepository {
 
     /**

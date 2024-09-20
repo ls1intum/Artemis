@@ -10,6 +10,7 @@ import java.util.Set;
 import jakarta.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,6 +21,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 @Repository
+@Primary
 public interface ProgrammingExerciseTestRepository extends ProgrammingExerciseRepository {
 
     @Query("""
