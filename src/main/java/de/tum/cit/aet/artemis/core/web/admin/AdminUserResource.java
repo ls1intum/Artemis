@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
@@ -237,7 +236,7 @@ public class AdminUserResource {
      */
     @GetMapping("users")
     @EnforceAdmin
-    public ResponseEntity<List<UserDTO>> getAllUsers(@ApiParam UserPageableSearchDTO userSearch) {
+    public ResponseEntity<List<UserDTO>> getAllUsers(UserPageableSearchDTO userSearch) {
         final Page<UserDTO> page = userRepository.getAllManagedUsers(userSearch);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);

@@ -1,7 +1,7 @@
-<h3 id="garbageCollectorMetrics" jhiTranslate="metrics.jvm.gc.title"></h3>
+<h3 id="garbageCollectorMetricsTitle" jhiTranslate="metrics.jvm.gc.title"></h3>
 <div class="row">
     <div class="col-md-4">
-        @if (garbageCollectorMetrics) {
+        @if (garbageCollectorMetrics && garbageCollectorMetrics['jvm.gc.live.data.size']) {
             <div>
                 <span>
                     GC Live Data Size/GC Max Data Size ({{ garbageCollectorMetrics['jvm.gc.live.data.size'] / 1048576 | number: '1.0-0' }}M /
@@ -19,8 +19,10 @@
             </div>
         }
     </div>
-    <div class="col-md-4">
-        @if (garbageCollectorMetrics) {
+</div>
+<div class="row">
+    @if (garbageCollectorMetrics && garbageCollectorMetrics['jvm.gc.memory.promoted']) {
+        <div class="col-md-4">
             <div>
                 <span>
                     GC Memory Promoted/GC Memory Allocated ({{ garbageCollectorMetrics['jvm.gc.memory.promoted'] / 1048576 | number: '1.0-0' }}M /
@@ -36,8 +38,10 @@
                     <span> {{ (100 * garbageCollectorMetrics['jvm.gc.memory.promoted']) / garbageCollectorMetrics['jvm.gc.memory.allocated'] | number: '1.0-2' }}% </span>
                 </ngb-progressbar>
             </div>
-        }
-    </div>
+        </div>
+    }
+</div>
+<div class="row">
     <div id="garbageCollectorMetrics" class="col-md-4">
         @if (garbageCollectorMetrics) {
             <div class="row">
@@ -50,6 +54,8 @@
             </div>
         }
     </div>
+</div>
+<div class="row">
     @if (!updating && garbageCollectorMetrics) {
         <div class="table-responsive">
             <table class="table table-striped" aria-describedby="garbageCollectorMetrics">
@@ -67,17 +73,19 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>jvm.gc.pause</td>
-                        <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause'].count }}</td>
-                        <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause'].mean | number: '1.0-3' }}</td>
-                        <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.0'] | number: '1.0-3' }}</td>
-                        <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.5'] | number: '1.0-3' }}</td>
-                        <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.75'] | number: '1.0-3' }}</td>
-                        <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.95'] | number: '1.0-3' }}</td>
-                        <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.99'] | number: '1.0-3' }}</td>
-                        <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause'].max | number: '1.0-3' }}</td>
-                    </tr>
+                    @if (garbageCollectorMetrics['jvm.gc.pause']) {
+                        <tr>
+                            <td>jvm.gc.pause</td>
+                            <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause'].count }}</td>
+                            <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause'].mean | number: '1.0-3' }}</td>
+                            <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.0'] | number: '1.0-3' }}</td>
+                            <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.5'] | number: '1.0-3' }}</td>
+                            <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.75'] | number: '1.0-3' }}</td>
+                            <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.95'] | number: '1.0-3' }}</td>
+                            <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause']['0.99'] | number: '1.0-3' }}</td>
+                            <td class="text-right">{{ garbageCollectorMetrics['jvm.gc.pause'].max | number: '1.0-3' }}</td>
+                        </tr>
+                    }
                 </tbody>
             </table>
         </div>
