@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification;
+package de.tum.cit.aet.artemis.communication.notifications.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotificatio
 import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants;
 import de.tum.cit.aet.artemis.communication.domain.notification.SingleUserNotification;
-import de.tum.cit.aet.artemis.communication.notification.util.NotificationFactory;
+import de.tum.cit.aet.artemis.communication.notifications.integration.util.NotificationFactory;
 import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;

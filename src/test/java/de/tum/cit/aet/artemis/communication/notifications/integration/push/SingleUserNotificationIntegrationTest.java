@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification.push;
+package de.tum.cit.aet.artemis.communication.notifications.integration.push;
 
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_ADD_USER_CHANNEL;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.CONVERSATION_ADD_USER_GROUP_CHAT;

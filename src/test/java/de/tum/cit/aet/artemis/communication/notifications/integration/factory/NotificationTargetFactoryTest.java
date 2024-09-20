@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification.factory;
+package de.tum.cit.aet.artemis.communication.notifications.integration.factory;
 
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.FILE_SUBMISSION_SUCCESSFUL_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationTargetFactory.COURSES_TEXT;

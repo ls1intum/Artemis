@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification;
+package de.tum.cit.aet.artemis.communication.notifications.integration;
 
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED;

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification.push;
+package de.tum.cit.aet.artemis.communication.notifications.integration.push;
 
 import org.junit.jupiter.api.parallel.ResourceLock;
 import org.springframework.beans.factory.annotation.Autowired;

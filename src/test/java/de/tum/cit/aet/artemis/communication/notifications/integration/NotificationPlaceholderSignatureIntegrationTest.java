@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification;
+package de.tum.cit.aet.artemis.communication.notifications.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

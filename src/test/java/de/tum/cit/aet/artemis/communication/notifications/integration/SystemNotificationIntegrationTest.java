@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification;
+package de.tum.cit.aet.artemis.communication.notifications.integration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -14,7 +14,7 @@ import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotification;
-import de.tum.cit.aet.artemis.communication.notification.util.NotificationFactory;
+import de.tum.cit.aet.artemis.communication.notifications.integration.util.NotificationFactory;
 import de.tum.cit.aet.artemis.communication.repository.SystemNotificationRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 

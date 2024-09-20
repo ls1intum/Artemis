@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification.factory;
+package de.tum.cit.aet.artemis.communication.notifications.integration.factory;
 
 import static de.tum.cit.aet.artemis.communication.domain.NotificationPriority.HIGH;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationPriority.MEDIUM;

@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification;
+package de.tum.cit.aet.artemis.communication.notifications.integration;
 
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.ATTACHMENT_CHANGE;
 import static de.tum.cit.aet.artemis.communication.domain.NotificationType.COURSE_ARCHIVE_STARTED;

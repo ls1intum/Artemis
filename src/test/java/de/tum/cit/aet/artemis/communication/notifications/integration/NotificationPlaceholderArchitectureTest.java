@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification;
+package de.tum.cit.aet.artemis.communication.notifications.integration;
 
 import static com.tngtech.archunit.base.DescribedPredicate.allElements;
 import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;

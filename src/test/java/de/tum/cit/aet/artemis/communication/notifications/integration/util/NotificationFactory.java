@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.communication.notification.util;
+package de.tum.cit.aet.artemis.communication.notifications.integration.util;
 
 import java.time.ZonedDateTime;
 
