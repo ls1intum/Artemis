@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -42,7 +42,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     private static final String INCORRECT_PASSWORD = "incorrectPassword123";
 
     @Autowired
-    protected ProgrammingExerciseRepository programmingExerciseRepository;
+    protected ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     protected UserTestRepository userRepository;
