@@ -11,6 +11,9 @@ import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
  * Test configuration to enable JPA repositories for the respective test-only repositories.
  * This configuration is used to not rely on the scanned package paths in the main application
  * {@link de.tum.cit.aet.artemis.core.config.DatabaseConfiguration}.
+ * </br>
+ * <strong>Important</strong>* You need to annotate every TestRepository with {@link org.springframework.context.annotation.Primary}
+ * to override the production repository beans. // ToDo: Add arch-test
  */
 @TestConfiguration
 @EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis.assessment.test_repository", "de.tum.cit.aet.artemis.atlas.test_repository",

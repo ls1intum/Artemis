@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -187,6 +188,12 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
                 }
             }
         }).because("methods that are not used in production code should be moved to test repositories").check(allClasses);
+    }
+
+    @Test
+    void enforcePrimaryBeanAnnotationOnTestRepositories() {
+        classes().that().resideInAPackage("..test_repository..").should().beAnnotatedWith(Primary.class)
+                .because("Test repositories should be annotated with @Primary to override the production repository beans").check(testClasses);
     }
 
     @Test
