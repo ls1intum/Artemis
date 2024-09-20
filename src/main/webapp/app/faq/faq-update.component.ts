@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { CourseManagementService } from '../course/manage/course-management.service';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -41,7 +40,6 @@ export class FAQUpdateComponent implements OnInit {
     constructor(
         protected alertService: AlertService,
         protected faqService: FAQService,
-        protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,

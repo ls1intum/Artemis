@@ -118,22 +118,19 @@ export class FAQService {
     toggleFilter(category: string, activeFilters: Set<string>) {
         if (activeFilters.has(category)) {
             activeFilters.delete(category);
-            return activeFilters;
         } else {
             activeFilters.add(category);
-            return activeFilters;
         }
+        return activeFilters;
     }
 
     applyFilters(activeFilters: Set<string>, faqs: FAQ[]): FAQ[] {
-        let filteredFaq: FAQ[];
         if (activeFilters.size === 0) {
             // If no filters selected, show all faqs
-            filteredFaq = faqs;
+            return faqs;
         } else {
-            filteredFaq = faqs.filter((faq) => this.hasFilteredCategory(faq, activeFilters));
+            return faqs.filter((faq) => this.hasFilteredCategory(faq, activeFilters));
         }
-        return filteredFaq;
     }
 
     hasFilteredCategory(faq: FAQ, filteredCategory: Set<string>) {

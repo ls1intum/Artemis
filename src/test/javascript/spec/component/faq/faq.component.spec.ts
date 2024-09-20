@@ -116,7 +116,7 @@ describe('FaqComponent', () => {
         //is actually called when debugging, i dont get why it is 0. Need help
         expect(findAllSpy).toHaveBeenCalledOnce();
         expect(findAllSpy).toHaveBeenCalledWith(1);
-        expect(faqComponent.faqs).toBeArrayOfSize(3);
+        expect(faqComponent.faqs).toHaveLength(3);
     });
 
     it('should delete faq', () => {
@@ -127,7 +127,7 @@ describe('FaqComponent', () => {
 
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith(faq1.id!);
-        expect(faqComponent.faqs).toBeArrayOfSize(2);
+        expect(faqComponent.faqs).toHaveLength(2);
         expect(faqComponent.faqs).not.toContain(faq1);
         expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs);
     });

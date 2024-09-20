@@ -11,7 +11,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { FAQUpdateComponent } from 'app/faq/faq-update.component';
 import { FAQService } from 'app/faq/faq.service';
-import { FAQ } from 'app/entities/faq.model';
+import { FAQ, FAQState } from 'app/entities/faq.model';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
@@ -91,7 +91,7 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponentFixture.detectChanges();
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ questionTitle: 'test1' });
+        expect(createSpy).toHaveBeenCalledWith({ faqState: FAQState.ACCEPTED, questionTitle: 'test1' });
     }));
 
     it('should edit a faq', fakeAsync(() => {
