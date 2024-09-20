@@ -91,8 +91,6 @@ public class TelemetrySendingService {
         var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
         long numberOfInstances = 1;
         if (eurekaEnabled) {
-            // Wait one minute to give other nodes time to connect to the Eureka registry
-            Thread.sleep(60000);
             numberOfInstances = eurekaClientService.getNumberOfReplicas();
         }
 

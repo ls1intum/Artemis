@@ -290,10 +290,9 @@ jhipster:
 aeolus:
     url: http://mock-aeolus-url:8090
 
-
 # Eureka configuration
 eureka:
     client:
-        enabled: false
+        enabled: true
         service-url:
-            defaultZone: http://admin:admin}@localhost:8761/eureka/
+            defaultZone: http://admin:admin@localhost:8761/eureka/
