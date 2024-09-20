@@ -7,43 +7,21 @@ setup_the_build_environment () {
 
   # ------------------------------
   # Task Description:
-  # Build and run all tests
+  # Setup the build environment
   # ------------------------------
 
-  # Updating ownership...
-  sudo chown -R artemis_user:artemis_user .
   mkdir test-reports
 
-  # assignment
+  # Updating ownership...
+  chown -R artemis_user:artemis_user .
+
   REQ_FILE=requirements.txt
   if [ -f "$REQ_FILE" ]; then
-      pip3 install --user -r requirements.txt || true
+      python3 -m venv /venv
+      /venv/bin/pip3 install -r "$REQ_FILE"
   else
       echo "$REQ_FILE does not exist"
   fi
-}
-
-setup_makefile () {
-  echo '⚙️ executing setup_makefile'
-  #!/usr/bin/env bash
-
-  # ------------------------------
-  # Task Description:
-  # Setup makefile
-  # ------------------------------
-
-  shadowFilePath="../testUtils/c/shadow_exec.c"
-
-  foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
-
-  foundSource=`grep -m 1 'SOURCE\s*=' assignment/Makefile`
-  foundSource="$foundSource $shadowFilePath"
-
-  rm -f assignment/GNUmakefile
-  rm -f assignment/makefile
-
-  cp -f Makefile assignment/Makefile || exit 2
-  sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
 }
 
 build_and_run_all_tests () {
@@ -52,14 +30,15 @@ build_and_run_all_tests () {
 
   # ------------------------------
   # Task Description:
-  # Build and run all tests if the compilation succeeds
+  # Build and run all tests
   # ------------------------------
-  sudo chown artemis_user:artemis_user .
-  gcc -c -Wall assignment/*.c || error=true
-  if [ ! $error ]
-  then
-      python3 Tests.py || true
+
+  if [ -d /venv ]; then
+      . /venv/bin/activate
   fi
+
+  # Run tests as unprivileged user
+  runuser -u artemis_user python3 Tests.py
 }
 
 main () {
@@ -70,8 +49,6 @@ main () {
   _script_name=${BASH_SOURCE[0]:-$0}
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; setup_the_build_environment"
-  cd "${AEOLUS_INITIAL_DIRECTORY}"
-  bash -c "source ${_script_name} aeolus_sourcing; setup_makefile"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; build_and_run_all_tests"
 }

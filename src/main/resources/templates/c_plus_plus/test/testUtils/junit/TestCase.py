@@ -2,7 +2,7 @@ from datetime import timedelta
 from enum import Enum
 from xml.etree import ElementTree as Et
 
-from testUtils.Utils import shortenText, sanitizeXml
+from testUtils.Utils import shortenText
 
 
 class Result(Enum):
@@ -40,14 +40,14 @@ class TestCase:
         if self.result != Result.SUCCESS:
             result: Et.Element = Et.SubElement(case, self.result.value)
             result.set("message", self.message)
-            result.text = sanitizeXml(self.genErrFailureMessage())
+            result.text = self.genErrFailureMessage()
 
         if self.stdout:
             stdout: Et.Element = Et.SubElement(case, "system-out")
-            stdout.text = sanitizeXml(shortenText(self.stdout, maxCharsPerOutput) + "\n")
+            stdout.text = shortenText(self.stdout, maxCharsPerOutput) + "\n"
         if self.stderr:
             stderr: Et.Element = Et.SubElement(case, "system-err")
-            stderr.text = sanitizeXml(shortenText(self.stderr, maxCharsPerOutput) + "\n")
+            stderr.text = shortenText(self.stderr, maxCharsPerOutput) + "\n"
 
     def genErrFailureMessage(self, maxChars=5000):
         oneThird: int = int(maxChars / 3)
@@ -72,4 +72,4 @@ class TestCase:
             testerMsg += shortenText(self.testerOutput, maxChars - len(testerMsg) - len(stderrMsg) - len(stdoutMsg)) + "\n"
         else:
             testerMsg += "No tester output found!\n"
-        return sanitizeXml(self.message + stdoutMsg + stderrMsg + testerMsg)
+        return self.message + stdoutMsg + stderrMsg + testerMsg

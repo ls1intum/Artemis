@@ -6,6 +6,7 @@ from os import makedirs, path
 from signal import alarm, SIG_IGN, SIGALRM, signal
 from traceback import print_exc
 from typing import Dict, List, Optional
+from xml.etree import ElementTree as Et
 
 from testUtils.junit.TestCase import Result, TestCase
 from testUtils.junit.TestSuite import TestSuite
@@ -30,6 +31,7 @@ class AbstractTest(ABC):
     timeoutSec: int
     case: Optional[TestCase]
     suite: Optional[TestSuite]
+    additionalSuites: List[Et.Element]
 
     def __init__(self, name: str, requirements: List[str] = None, timeoutSec: int = -1):
         """
@@ -51,7 +53,7 @@ class AbstractTest(ABC):
         self.case: Optional[TestCase] = None
         self.suite: Optional[TestSuite] = None
 
-    def start(self, testResults: Dict[str, Result], suite: TestSuite):
+    def start(self, testResults: Dict[str, Result], suite: TestSuite, additionalSuites: List[TestSuite]):
         """
         Starts the test run.
 
@@ -65,6 +67,7 @@ class AbstractTest(ABC):
         """
 
         self.suite = suite
+        self.additionalSuites = additionalSuites
         self.case = TestCase(self.name)
 
         # Check if all test requirements (other tests) are fulfilled:

@@ -1,6 +1,32 @@
 api: v0.0.1
+metadata:
+  name: C++
+  id: c_plus_plus
+  description: Test using the GBS Tester
 actions:
   - name: setup_the_build_environment
+    script: |-
+      #!/usr/bin/env bash
+
+      # ------------------------------
+      # Task Description:
+      # Setup the build environment
+      # ------------------------------
+
+      mkdir test-reports
+
+      # Updating ownership...
+      chown -R artemis_user:artemis_user .
+
+      REQ_FILE=requirements.txt
+      if [ -f "$REQ_FILE" ]; then
+          python3 -m venv /venv
+          /venv/bin/pip3 install -r "$REQ_FILE"
+      else
+          echo "$REQ_FILE does not exist"
+      fi
+    runAlways: false
+  - name: build_and_run_all_tests
     script: |-
       #!/usr/bin/env bash
 
@@ -9,54 +35,12 @@ actions:
       # Build and run all tests
       # ------------------------------
 
-      # Updating ownership...
-      sudo chown -R artemis_user:artemis_user .
-      mkdir test-reports
-
-      # assignment
-      REQ_FILE=requirements.txt
-      if [ -f "$REQ_FILE" ]; then
-          pip3 install --user -r requirements.txt || true
-      else
-          echo "$REQ_FILE does not exist"
+      if [ -d /venv ]; then
+          . /venv/bin/activate
       fi
-    runAlways: false
-  - name: setup_makefile
-    script: |-
-      #!/usr/bin/env bash
 
-      # ------------------------------
-      # Task Description:
-      # Setup makefile
-      # ------------------------------
-
-      shadowFilePath="../testUtils/c/shadow_exec.c"
-
-      foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
-
-      foundSource=`grep -m 1 'SOURCE\s*=' assignment/Makefile`
-      foundSource="$foundSource $shadowFilePath"
-
-      rm -f assignment/GNUmakefile
-      rm -f assignment/makefile
-
-      cp -f Makefile assignment/Makefile || exit 2
-      sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
-    runAlways: false
-  - name: build_and_run_all_tests
-    script: |-
-      #!/usr/bin/env bash
-
-      # ------------------------------
-      # Task Description:
-      # Build and run all tests if the compilation succeeds
-      # ------------------------------
-      sudo chown artemis_user:artemis_user .
-      gcc -c -Wall assignment/*.c || error=true
-      if [ ! $error ]
-      then
-          python3 Tests.py || true
-      fi
+      # Run tests as unprivileged user
+      runuser -u artemis_user python3 Tests.py
     runAlways: false
     results:
       - name: junit_test-reports/tests-results.xml

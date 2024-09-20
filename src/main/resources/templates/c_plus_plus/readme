@@ -1,25 +1,15 @@
-# Hello World
+1. [task][CMake runs correctly](TestConfigure)
+2. [task][Your code compiles](CompileSort)
+3. [task][Code is formatted with clang-format](clang-format(sort.cpp))
 
-In dieser Aufgabe werden Sie Ihr erstes C Programm erstellen.
-Die Aufgabenstellung entnehmen Sie bitte [https://gbs.cm.in.tum.de](https://gbs.cm.in.tum.de).
 
-#### Allgemein
-
-1. [task][kompilieren](TestCompile)
-2. [task][rückgabewert == 0](TestReturnCode)
-3. [task][ausgabe prüfen](TestOutput)
-
-#### Address Sanitizer
-
-1. [task][kompilieren mit address sanitizer](TestCompileASan)
-2. [task][ausgabe prüfen mit address sanitizer](TestOutputASan)
-
-#### Undefined Behavior Sanitizer
-
-1. [task][kompilieren mit undefined behavior sanitizer](TestCompileUBSan)
-2. [task][ausgabe prüfen mit undefined behavior sanitizer](TestOutputUBSan)
-
-#### Leak Sanitizer
-
-1. [task][kompilieren mit leak sanitizer](TestCompileLeak)
-2. [task][ausgabe prüfen mit leak sanitizer](TestOutputLSan)
+# Sorting Algorithms
+[task][All algorithms sort correctly](TestCatch2(sort-test))
+1. [task][Selection Sort](sorting_algorithms/selection_sort,sorting_algorithms/all_elements_equal/selection_sort,sorting_algorithms/reverse-sorted_values/selection_sort,sorting_algorithms/single_values/selection_sort,sorting_algorithms/empty_input/selection_sort,sorting_algorithms/large_input/selection_sort)
+2. [task][Insertion Sort](sorting_algorithms/insertion_sort,sorting_algorithms/all_elements_equal/insertion_sort,sorting_algorithms/reverse-sorted_values/insertion_sort,sorting_algorithms/single_values/insertion_sort,sorting_algorithms/empty_input/insertion_sort,sorting_algorithms/large_input/insertion_sort)
+3. [task][Quicksort](sorting_algorithms/quicksort,sorting_algorithms/all_elements_equal/quicksort,sorting_algorithms/reverse-sorted_values/quicksort,sorting_algorithms/single_values/quicksort,sorting_algorithms/empty_input/quicksort,sorting_algorithms/large_input/quicksort)
+4. [task][Mergesort](sorting_algorithms/mergesort,sorting_algorithms/all_elements_equal/mergesort,sorting_algorithms/reverse-sorted_values/mergesort,sorting_algorithms/single_values/mergesort,sorting_algorithms/empty_input/mergesort,sorting_algorithms/large_input/mergesort)
+5. [task][Mergesort Inplace](sorting_algorithms/mergesort_inplace,sorting_algorithms/all_elements_equal/mergesort_inplace,sorting_algorithms/reverse-sorted_values/mergesort_inplace,sorting_algorithms/single_values/mergesort_inplace,sorting_algorithms/empty_input/mergesort_inplace,sorting_algorithms/large_input/mergesort_inplace)
+6. [task][Heapsort](sorting_algorithms/heapsort,sorting_algorithms/all_elements_equal/heapsort,sorting_algorithms/reverse-sorted_values/heapsort,sorting_algorithms/single_values/heapsort,sorting_algorithms/empty_input/heapsort,sorting_algorithms/large_input/heapsort)
+7. [task][Explicit Heapsort](sorting_algorithms/heapsort_explicit,sorting_algorithms/all_elements_equal/heapsort_explicit,sorting_algorithms/reverse-sorted_values/heapsort_explicit,sorting_algorithms/single_values/heapsort_explicit,sorting_algorithms/empty_input/heapsort_explicit,sorting_algorithms/large_input/heapsort_explicit)
+8. [task][Bogosort](bogosort,bogosort/empty_input,bogosort/single_value)

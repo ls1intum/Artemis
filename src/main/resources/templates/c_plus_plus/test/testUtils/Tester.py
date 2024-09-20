@@ -1,20 +1,23 @@
-from typing import Dict
+from typing import Dict, List
 
 from testUtils.AbstractTest import AbstractTest
 from testUtils.junit.Junit import Junit
 from testUtils.junit.TestCase import Result
 from testUtils.junit.TestSuite import TestSuite
+from xml.etree import ElementTree as Et
 from testUtils.Utils import clearTesterOutputCache, getTesterOutput, printTester, resetStdoutLimit, setStdoutLimitEnabled
 
 
 class Tester:
     name: str
     suite: TestSuite
+    additionalSuites: List[Et.Element]
     tests: Dict[str, AbstractTest]
 
     def __init__(self, name: str = "GBS-Tester-1.36"):
         self.name = name
         self.suite = TestSuite(name)
+        self.additionalSuites = []
         self.tests = dict()
 
     def run(self):
@@ -40,7 +43,7 @@ class Tester:
             setStdoutLimitEnabled(True)
             clearTesterOutputCache()
 
-            test.start(testResults, self.suite)
+            test.start(testResults, self.suite, self.additionalSuites)
 
             setStdoutLimitEnabled(False)
             printTester(f"Finished test case '{name}' in {test.case.time.total_seconds()} seconds.")
@@ -74,5 +77,5 @@ class Tester:
         Exports the test results into a JUnit format and stores it at the given outputPath.
         """
 
-        junit: Junit = Junit(self.suite)
+        junit: Junit = Junit(self.suite, self.additionalSuites)
         junit.toXml(outputPath)

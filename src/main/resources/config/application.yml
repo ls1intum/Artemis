@@ -92,7 +92,7 @@ artemis:
                 javascript:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
                 c_plus_plus:
-                    default: "ls1tum/artemis-c-docker:latest"
+                    default: "ghcr.io/ls1intum/artemis-cpp-docker:v1.0.0"
 
 management:
     endpoints:

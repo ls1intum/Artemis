@@ -30,61 +30,29 @@ private void runTestSteps() {
 private void test() {
     stage('Setup') {
         sh '''
-        cd $WORKSPACE
-        # Updating assignment and test-reports ownership...
-        chown artemis_user:artemis_user assignment/ -R
-        rm -rf test-reports
         mkdir test-reports
-        chown artemis_user:artemis_user test-reports/ -R
 
-        # assignment
-        cd tests
+        # Updating ownership...
+        chown -R artemis_user:artemis_user .
+
         REQ_FILE=requirements.txt
         if [ -f "$REQ_FILE" ]; then
-            pip3 install --user -r requirements.txt
+            python3 -m venv /venv
+            /venv/bin/pip3 install -r "$REQ_FILE"
         else
             echo "$REQ_FILE does not exist"
         fi
-        exit 0
-        '''
-    }
-
-    stage('Prepare Build') {
-        sh '''
-        #!/usr/bin/env bash
-
-        shadowFilePath="../tests/testUtils/c/shadow_exec.c"
-
-        foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\\s*=' assignment/Makefile`
-
-        foundSource=`grep -m 1 'SOURCE\\s*=' assignment/Makefile`
-        foundSource="$foundSource $shadowFilePath"
-
-        rm -f assignment/GNUmakefile
-        rm -f assignment/makefile
-
-        cp -f tests/Makefile assignment/Makefile || exit 2
-        sed -i "s~\\bINCLUDEDIRS\\s*=.*~${foundIncludeDirs}~; s~\\bSOURCE\\s*=.*~${foundSource}~" assignment/Makefile
         '''
     }
 
     stage('Compile and Test') {
-        sh  '''
-        #!/bin/bash
-
-        gcc -c -Wall assignment/*.c || error=true
-        if [ ! $error ]
-        then
-            # Actual build process:
-            cd tests
-            python3 Tests.py s
-            rm Tests.py
-            rm -rf ./tests
-            exit 0
-        else
-            # Compilation error
-            exit 1
+        sh '''
+        if [ -d /venv ]; then
+            . /venv/bin/activate
         fi
+
+        # Run tests as unprivileged user
+        runuser -u artemis_user python3 Tests.py
         '''
     }
 }

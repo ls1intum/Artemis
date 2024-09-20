@@ -1,10 +1,4 @@
-*
+cmake-build-*/
 
-!*.h
-!*.c
-!*.sh
-!Makefile
-!.gitignore
-!.gitattributes
-
-!*/
+.vscode/
+.idea/
