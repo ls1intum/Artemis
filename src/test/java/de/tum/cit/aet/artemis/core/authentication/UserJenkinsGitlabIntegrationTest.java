@@ -396,7 +396,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateUserGroups() throws Exception {
         userTestService.student.setPassword(passwordService.hashPassword("this is a password"));
-        userRepository.save(userTestService.student);
+        userTestRepository.save(userTestService.student);
         userTestService.updateUserGroups();
     }
 
@@ -439,7 +439,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
-        Optional<User> registeredUser = userTestService.getUserRepository().findOneWithGroupsAndAuthoritiesByLogin(user.getLogin());
+        Optional<User> registeredUser = userTestService.getUserTestRepository().findOneWithGroupsAndAuthoritiesByLogin(user.getLogin());
         assertThat(registeredUser).isPresent();
 
         // Update user and assert
@@ -457,7 +457,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     void shouldBlockUserInGitlabIfAccountNotActivated() throws Exception {
         String password = "this is a password";
         userTestService.student.setPassword(passwordService.hashPassword(password));
-        userRepository.save(userTestService.student);
+        userTestRepository.save(userTestService.student);
         var oldLogin = userTestService.student.getLogin();
         User user = userTestService.student;
         user.setLogin("new-login");
@@ -468,7 +468,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
         request.put("/api/admin/users", new ManagedUserVM(user, password), HttpStatus.OK);
 
-        UserRepository userRepository = userTestService.getUserRepository();
+        UserRepository userRepository = userTestService.getUserTestRepository();
         final var userInDB = userRepository.findById(user.getId());
         assertThat(userInDB).isPresent();
         assertThat(userInDB.get().getLogin()).isEqualTo(user.getLogin());

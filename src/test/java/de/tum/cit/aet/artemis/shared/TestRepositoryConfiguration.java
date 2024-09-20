@@ -3,13 +3,9 @@ package de.tum.cit.aet.artemis.shared;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
-import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
-import de.tum.cit.aet.artemis.lti.test_repository.OnlineCourseConfigurationTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 
 /**
  * Test configuration to enable JPA repositories for the respective test-only repositories.
@@ -17,8 +13,12 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
  * {@link de.tum.cit.aet.artemis.core.config.DatabaseConfiguration}.
  */
 @TestConfiguration
-@EnableJpaRepositories(basePackageClasses = { OnlineCourseConfigurationTestRepository.class, ProgrammingExerciseStudentParticipationTestRepository.class,
-        ProgrammingExerciseTestRepository.class, ProgrammingSubmissionTestRepository.class, UserTestRepository.class, }, repositoryBaseClass = RepositoryImpl.class)
+@EnableJpaRepositories(basePackages = { "de.tum.cit.aet.artemis.assessment.test_repository", "de.tum.cit.aet.artemis.atlas.test_repository",
+        "de.tum.cit.aet.artemis.communication.test_repository", "de.tum.cit.aet.artemis.core.test_repository", "de.tum.cit.aet.artemis.exam.test_repository",
+        "de.tum.cit.aet.artemis.exercise.test_repository", "de.tum.cit.aet.artemis.lecture.test_repository", "de.tum.cit.aet.artemis.lti.test_repository",
+        "de.tum.cit.aet.artemis.modeling.test_repository", "de.tum.cit.aet.artemis.programming.test_repository", "de.tum.cit.aet.artemis.quiz.test_repository",
+        "de.tum.cit.aet.artemis.text.test_repository" }, repositoryBaseClass = RepositoryImpl.class)
 @EnableJpaAuditing(auditorAwareRef = "springSecurityAuditorAware")
+@EnableTransactionManagement
 public class TestRepositoryConfiguration {
 }

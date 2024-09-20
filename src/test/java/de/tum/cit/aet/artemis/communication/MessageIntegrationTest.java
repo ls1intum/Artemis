@@ -55,8 +55,8 @@ import de.tum.cit.aet.artemis.communication.domain.notification.Notification;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationNotificationRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -81,7 +81,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private OneToOneChatTestRepository oneToOneChatRepository;
 
     @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
+    private ConversationParticipantTestRepository conversationParticipantRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -153,7 +153,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post createdPost = createPostAndAwaitAsyncCode(postToSave);
         checkCreatedMessagePost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
-        var requestingUser = userRepository.getUser();
+        var requestingUser = userTestRepository.getUser();
 
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, createdPost.getConversation().getId(), null, false, false, false, null, null);
         assertThat(conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId())).hasSize(1);
@@ -316,15 +316,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFindMessagesWithPageSizes(int pageSize) {
 
-        var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
-        var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student2").orElseThrow();
+        var student1 = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
+        var student2 = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student2").orElseThrow();
         List<Post> posts = conversationUtilService.createPostsWithAnswersAndReactionsAndConversation(course, student1, student2, NUMBER_OF_POSTS, TEST_PREFIX);
         long conversationId = posts.getFirst().getConversation().getId();
         for (Post post : posts) {
             assertThat(post.getConversation().getId()).isNotNull();
             assertThat(post.getConversation().getId()).isEqualTo(conversationId);
         }
-        var requestingUser = userRepository.getUser();
+        var requestingUser = userTestRepository.getUser();
 
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(course.getId(), null, null, posts.getFirst().getConversation().getId(), null, false, false, false, null,
                 null);
@@ -345,7 +345,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(persistedCourse.getCourseInformationSharingConfiguration()).isEqualTo(CourseInformationSharingConfiguration.DISABLED);
 
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
-        var requestingUser = userRepository.getUser();
+        var requestingUser = userTestRepository.getUser();
 
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, postToSave.getConversation().getId(), null, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
@@ -371,7 +371,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
         // attempt to save new post under someone else's conversation
         postToSave.setConversation(existingConversationMessages.getFirst().getConversation());
-        var requestingUser = userRepository.getUser();
+        var requestingUser = userTestRepository.getUser();
 
         PostContextFilterDTO postContextFilter = new PostContextFilterDTO(courseId, null, null, postToSave.getConversation().getId(), null, false, false, false, null, null);
         var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged(), requestingUser.getId()).getSize();
@@ -695,8 +695,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private Post createPostWithOneToOneChat(String userPrefix) {
-        var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student1").orElseThrow();
-        var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student2").orElseThrow();
+        var student1 = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student1").orElseThrow();
+        var student2 = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student2").orElseThrow();
         var chat = new OneToOneChat();
         chat.setCourse(course);
         chat.setCreator(student1);

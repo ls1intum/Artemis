@@ -14,11 +14,11 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -37,13 +37,13 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentT
     private ComplaintResponseService complaintResponseService;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Autowired
     private ComplaintRepository complaintRepository;
 
     @Autowired
-    private ResultRepository resultRepository;
+    private ResultTestRepository resultRepository;
 
     @Autowired
     private UserUtilService userUtilService;

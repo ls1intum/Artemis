@@ -23,12 +23,12 @@ import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseTestService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -58,10 +58,10 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     CourseTestService courseTestService;
 
     @Autowired
-    UserRepository userRepository;
+    UserTestRepository userRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    CourseTestRepository courseRepository;
 
     @Autowired
     TutorialGroupTestRepository tutorialGroupTestRepository;
@@ -88,7 +88,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     ChannelRepository channelRepository;
 
     @Autowired
-    ConversationParticipantRepository conversationParticipantRepository;
+    ConversationParticipantTestRepository conversationParticipantRepository;
 
     @Autowired
     TutorialGroupChannelManagementService tutorialGroupChannelManagementService;

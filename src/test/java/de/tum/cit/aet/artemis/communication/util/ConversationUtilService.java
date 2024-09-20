@@ -25,15 +25,15 @@ import de.tum.cit.aet.artemis.communication.domain.conversation.Conversation;
 import de.tum.cit.aet.artemis.communication.domain.conversation.GroupChat;
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
-import de.tum.cit.aet.artemis.communication.repository.ReactionRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -61,7 +61,7 @@ public class ConversationUtilService {
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
-    private CourseRepository courseRepo;
+    private CourseTestRepository courseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -76,19 +76,19 @@ public class ConversationUtilService {
     private OneToOneChatTestRepository oneToOneChatRepository;
 
     @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
+    private ConversationParticipantTestRepository conversationParticipantRepository;
 
     @Autowired
-    private PostRepository postRepository;
+    private PostTestRepository postRepository;
 
     @Autowired
-    private ReactionRepository reactionRepository;
+    private ReactionTestRepository reactionRepository;
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
 
     @Autowired
-    private ConversationRepository conversationRepository;
+    private ConversationTestRepository conversationRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;

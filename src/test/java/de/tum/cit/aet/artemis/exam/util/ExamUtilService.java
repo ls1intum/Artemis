@@ -16,13 +16,13 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -45,8 +45,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseFactory;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
@@ -79,16 +79,16 @@ public class ExamUtilService {
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
-    private CourseRepository courseRepo;
+    private CourseTestRepository courseRepo;
 
     @Autowired
-    private StudentExamRepository studentExamRepository;
+    private StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepo;
+    private StudentParticipationTestRepository studentParticipationRepo;
 
     @Autowired
     private ExamRepository examRepository;
@@ -103,7 +103,7 @@ public class ExamUtilService {
     private ExamUserRepository examUserRepository;
 
     @Autowired
-    private UserRepository userRepo;
+    private UserTestRepository userRepo;
 
     @Autowired
     private ExerciseGroupRepository exerciseGroupRepository;
@@ -130,7 +130,7 @@ public class ExamUtilService {
     private UserUtilService userUtilService;
 
     @Autowired
-    private ConversationRepository conversationRepository;
+    private ConversationTestRepository conversationRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;

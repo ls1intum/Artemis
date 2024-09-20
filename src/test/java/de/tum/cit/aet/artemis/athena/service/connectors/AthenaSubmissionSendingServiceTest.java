@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -53,7 +53,7 @@ class AthenaSubmissionSendingServiceTest extends AbstractAthenaTest {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private UserUtilService userUtilService;

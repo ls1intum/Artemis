@@ -54,9 +54,9 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
@@ -117,7 +117,7 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private PageableSearchUtilService pageableSearchUtilService;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private ParticipationService participationService;
@@ -366,7 +366,7 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldGetCompetencyCourseProgressWhenTeamExercise() throws Exception {
-            User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+            User tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
             var teams = teamUtilService.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 2, tutor, 1);
 
             createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.getFirst(), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
@@ -385,9 +385,9 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldGetCompetencyCourseProgress() throws Exception {
-            User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-            User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
-            User instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
+            User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+            User instructor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "instructor1").orElseThrow();
 
             createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
             createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 50, false);
@@ -417,7 +417,7 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void getCompetencyStudentProgressShouldReturnProgress() throws Exception {
-            User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).orElseThrow(), student1, true);
 
             createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);
@@ -447,7 +447,7 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
             // Therefore creating the participant scores manually
             participantScoreScheduleService.shutdown();
 
-            User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             Result textResult = createTextExerciseParticipationSubmissionAndResult(textExercise, student1, textExercise.getMaxPoints(), 0.0, 90, true);
             Result programming1Result = createProgrammingExerciseParticipationSubmissionAndResult(programmingExercises[0], student1, 85, true, 10);
             Result programming2Result = createProgrammingExerciseParticipationSubmissionAndResult(programmingExercises[1], student1, 75, false, 1);

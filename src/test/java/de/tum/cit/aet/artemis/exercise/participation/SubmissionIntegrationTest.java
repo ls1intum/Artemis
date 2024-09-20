@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -35,7 +35,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private static final String TEST_PREFIX = "submissionintegration";
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;

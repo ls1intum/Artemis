@@ -71,7 +71,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         user.setActivated(false);
         user.setFirstName("Old Firstname");
         user.setActivationKey(testActivationKey);
-        user = userRepository.save(user);
+        user = userTestRepository.save(user);
 
         // setup user to register
         user.setFirstName("New Firstname");
@@ -89,7 +89,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
         // Assert that old user data was deleted and user was written to db
-        Optional<User> updatedUser = userRepository.findOneByLogin(user.getLogin());
+        Optional<User> updatedUser = userTestRepository.findOneByLogin(user.getLogin());
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getFirstName()).isEqualTo("New Firstname");
         assertThat(updatedUser.get().getActivated()).isFalse();
@@ -105,7 +105,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         // create activated user in repo
         User user = UserFactory.generateActivatedUser("ab123cde");
         user.setFirstName("Old Firstname");
-        user = userRepository.save(user);
+        user = userTestRepository.save(user);
 
         // setup user to register
         user.setFirstName("New Firstname");
@@ -121,7 +121,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.BAD_REQUEST, null);
 
         // Assert that old user data is still there
-        Optional<User> updatedUser = userRepository.findOneByLogin(user.getLogin());
+        Optional<User> updatedUser = userTestRepository.findOneByLogin(user.getLogin());
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getFirstName()).isEqualTo("Old Firstname");
         assertThat(updatedUser.get().getActivated()).isTrue();
@@ -144,7 +144,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
 
         // The account shouldn't be saved
-        assertThat(userRepository.findOneByLogin(user.getLogin())).isEmpty();
+        assertThat(userTestRepository.findOneByLogin(user.getLogin())).isEmpty();
 
         // make another request
         doReturn(new org.gitlab4j.api.models.User().withId(1L)).when(mock(UserApi.class)).getUser(user.getLogin());
@@ -152,7 +152,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
 
         // The account shouldn't be saved
-        assertThat(userRepository.findOneByLogin(user.getLogin())).isEmpty();
+        assertThat(userTestRepository.findOneByLogin(user.getLogin())).isEmpty();
     }
 
     @Test
@@ -171,7 +171,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
-        assertThat(userRepository.findOneByLogin(user.getLogin())).isPresent();
+        assertThat(userTestRepository.findOneByLogin(user.getLogin())).isPresent();
     }
 
     @Test
@@ -190,7 +190,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), true);
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.INTERNAL_SERVER_ERROR, null);
 
-        assertThat(userRepository.findOneByLogin(user.getLogin())).isEmpty();
+        assertThat(userTestRepository.findOneByLogin(user.getLogin())).isEmpty();
     }
 
     @Test
@@ -209,7 +209,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
-        Optional<User> registeredUser = userRepository.findOneByLogin(user.getLogin());
+        Optional<User> registeredUser = userTestRepository.findOneByLogin(user.getLogin());
         assertThat(registeredUser).isPresent();
 
         // Activate the user
@@ -234,7 +234,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         gitlabRequestMockProvider.mockDeactivateUser(user.getLogin(), false);
         request.postWithoutLocation("/api/public/register", userVM, HttpStatus.CREATED, null);
 
-        Optional<User> registeredUser = userRepository.findOneByLogin(user.getLogin());
+        Optional<User> registeredUser = userTestRepository.findOneByLogin(user.getLogin());
         assertThat(registeredUser).isPresent();
 
         // Activate the user
@@ -289,7 +289,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
             User user = UserFactory.generateActivatedUser(login);
             user.setEmail(email);
             user.setActivated(false);
-            userRepository.save(user);
+            userTestRepository.save(user);
         }
     }
 

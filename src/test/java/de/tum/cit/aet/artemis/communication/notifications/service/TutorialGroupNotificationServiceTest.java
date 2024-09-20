@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.communication.repository.NotificationSettingReposi
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -40,8 +40,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
+import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupRegistrationTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
 
 class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -55,13 +55,13 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationInde
     private TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
 
     @Autowired
-    private TutorialGroupRepository tutorialGroupRepository;
+    private TutorialGroupTestRepository tutorialGroupRepository;
 
     @Autowired
-    private TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+    private TutorialGroupRegistrationTestRepository tutorialGroupRegistrationRepository;
 
     @Autowired
-    UserRepository userRepository;
+    UserTestRepository userRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;

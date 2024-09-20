@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.tutorialgroups.util.TutorialGroupUtilService;
@@ -51,7 +51,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     private PasswordService passwordService;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -99,11 +99,11 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
 
-        student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).orElseThrow();
+        student = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(USERNAME).orElseThrow();
         final var encodedPassword = passwordService.hashPassword(USER_PASSWORD);
         student.setPassword(encodedPassword);
         student.setInternal(true);
-        userRepository.save(student);
+        userTestRepository.save(student);
     }
 
     @AfterEach
@@ -139,7 +139,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @NotNull
     private User createUserWithRestApi(Set<Authority> authorities) throws Exception {
-        userRepository.findOneByLogin("user1").ifPresent(userRepository::delete);
+        userTestRepository.findOneByLogin("user1").ifPresent(userTestRepository::delete);
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockGetUserID();
         tutorialGroupUtilService.addTutorialCourse();
@@ -266,7 +266,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(student.getLogin(), student, newGroups, oldGroups, false);
 
         final var response = request.putWithResponseBody("/api/admin/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(passwordService.checkPasswordMatch(managedUserVM.getPassword(), updatedUserIndDB.getPassword())).isTrue();
 

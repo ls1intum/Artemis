@@ -52,14 +52,14 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -74,7 +74,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     private final Double offsetByTenThousandth = 0.0001;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     private ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
@@ -92,7 +92,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -695,7 +695,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         assessmentNote.setNote("note");
         manualResult.setAssessmentNote(assessmentNote);
 
-        User user = userRepository.getUser();
+        User user = userTestRepository.getUser();
         manualResult.setAssessor(user);
 
         manualResult = request.putWithResponseBody("/api/participations/" + manualResult.getParticipation().getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
@@ -929,7 +929,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void overrideProgrammingAssessmentAfterComplaint() throws Exception {
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
+        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
 
         // Starting participation
         StudentParticipation participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise, student1);
@@ -944,7 +944,7 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationInde
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // assess this submission
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElse(null);
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElse(null);
         Result initialResult = ParticipationFactory.generateResult(true, 50);
         initialResult.setAssessor(tutor1);
         initialResult.setHasComplaint(true);

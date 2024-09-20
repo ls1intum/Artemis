@@ -281,7 +281,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         Long individualTextExerciseId = textExercise.getId();
         textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 70, true);
 
         GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
@@ -328,7 +328,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         Long individualTextExerciseId = textExercise.getId();
-        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 50, true);
 
         var coursePlagiarismCase = new PlagiarismCase();

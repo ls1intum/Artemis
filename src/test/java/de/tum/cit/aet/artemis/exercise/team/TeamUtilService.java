@@ -11,8 +11,8 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -28,7 +28,7 @@ public class TeamUtilService {
     private UserUtilService userUtilService;
 
     @Autowired
-    private UserRepository userRepo;
+    private UserTestRepository userRepo;
 
     @Autowired
     private TeamRepository teamRepo;

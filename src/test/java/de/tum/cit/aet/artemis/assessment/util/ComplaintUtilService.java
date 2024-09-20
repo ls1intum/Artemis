@@ -9,10 +9,10 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
@@ -28,16 +28,16 @@ public class ComplaintUtilService {
     private UserUtilService userUtilService;
 
     @Autowired
-    private ResultRepository resultRepo;
+    private ResultTestRepository resultTestRepository;
 
     @Autowired
     private ComplaintRepository complaintRepo;
 
     @Autowired
-    private ComplaintResponseRepository complaintResponseRepo;
+    private ComplaintResponseTestRepository complaintResponseRepo;
 
     @Autowired
-    private UserRepository userRepo;
+    private UserTestRepository userRepo;
 
     /**
      * Crates and saves a complaint and response for the given result and user.
@@ -53,7 +53,7 @@ public class ComplaintUtilService {
      */
     public void generateComplaintAndResponses(String userPrefix, int currentIndex, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result,
             User currentUser) {
-        result = resultRepo.save(result);
+        result = resultTestRepository.save(result);
         if (numberOfComplaints >= currentIndex) {
             Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT) : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
             complaint.setResult(result);
@@ -96,7 +96,7 @@ public class ComplaintUtilService {
     public void addComplaints(String studentLogin, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().participation(participation);
-            dummyResult = resultRepo.save(dummyResult);
+            dummyResult = resultTestRepository.save(dummyResult);
             Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(studentLogin)).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }
@@ -113,7 +113,7 @@ public class ComplaintUtilService {
         Result result = submission.getLatestResult();
         if (result != null) {
             result.hasComplaint(true);
-            resultRepo.save(result);
+            resultTestRepository.save(result);
         }
         Complaint complaint = new Complaint().participant(userUtilService.getUserByLogin(userLogin)).result(result).complaintType(complaintType);
         complaintRepo.save(complaint);
@@ -130,7 +130,7 @@ public class ComplaintUtilService {
     public void addTeamComplaints(Team team, Participation participation, int numberOfComplaints, ComplaintType complaintType) {
         for (int i = 0; i < numberOfComplaints; i++) {
             Result dummyResult = new Result().participation(participation);
-            dummyResult = resultRepo.save(dummyResult);
+            dummyResult = resultTestRepository.save(dummyResult);
             Complaint complaint = new Complaint().participant(team).result(dummyResult).complaintType(complaintType);
             complaintRepo.save(complaint);
         }

@@ -29,11 +29,11 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.CodeHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHintActivation;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ExerciseHintRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -46,7 +46,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private ExerciseHintRepository exerciseHintRepository;
 
     @Autowired
-    private ProgrammingExerciseRepository exerciseRepository;
+    private ProgrammingExerciseTestRepository exerciseRepository;
 
     @Autowired
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
@@ -58,7 +58,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     private ExerciseHintActivationRepository exerciseHintActivationRepository;
 
     @Autowired
-    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+    private ProgrammingExerciseTestCaseTestRepository programmingExerciseTestCaseRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
@@ -105,7 +105,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void queryAllAvailableHintsForAnExercise() throws Exception {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userTestRepository.getUserWithGroupsAndAuthorities();
         studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getLogin());
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
@@ -119,7 +119,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void queryAllActivatedHintsForAnExercise() throws Exception {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userTestRepository.getUserWithGroupsAndAuthorities();
         var ueha = new ExerciseHintActivation();
         ueha.setExerciseHint(exerciseHint);
         ueha.setUser(user);
@@ -137,7 +137,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void activateHintForAnExercise() throws Exception {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userTestRepository.getUserWithGroupsAndAuthorities();
         studentParticipation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, user.getLogin());
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
@@ -156,7 +156,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateActivatedHintForAnExercise() throws Exception {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userTestRepository.getUserWithGroupsAndAuthorities();
         var ueha = new ExerciseHintActivation();
         ueha.setExerciseHint(exerciseHint);
         ueha.setUser(user);
@@ -172,7 +172,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void rateActivatedHintForAnExerciseBadRequest() throws Exception {
-        var user = userRepository.getUserWithGroupsAndAuthorities();
+        var user = userTestRepository.getUserWithGroupsAndAuthorities();
         var ueha = new ExerciseHintActivation();
         ueha.setExerciseHint(exerciseHint);
         ueha.setUser(user);

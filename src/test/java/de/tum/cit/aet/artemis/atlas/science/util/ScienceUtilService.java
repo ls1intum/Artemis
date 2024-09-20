@@ -9,13 +9,13 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
-import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 
 @Service
 public class ScienceUtilService {
 
     @Autowired
-    private ScienceEventRepository scienceEventRepository;
+    private ScienceEventTestRepository scienceEventRepository;
 
     /**
      * Creates a science event with the passed type and resource id.

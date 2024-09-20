@@ -21,10 +21,10 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
@@ -37,13 +37,13 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.modeling.ModelingPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 
@@ -60,7 +60,7 @@ public class ModelingExerciseUtilService {
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
     @Autowired
-    private CourseRepository courseRepo;
+    private CourseTestRepository courseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -69,13 +69,13 @@ public class ModelingExerciseUtilService {
     private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
-    private ResultRepository resultRepo;
+    private ResultTestRepository resultRepo;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepo;
+    private StudentParticipationTestRepository studentParticipationRepo;
 
     @Autowired
-    private ModelingSubmissionRepository modelingSubmissionRepo;
+    private ModelingSubmissionTestRepository modelingSubmissionRepo;
 
     @Autowired
     private FeedbackRepository feedbackRepo;

@@ -53,7 +53,7 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationIn
         for (int i = 1; i <= TUTOR_COUNT; i++) {
             var tutor = userUtilService.getUserByLogin(TEST_PREFIX + "tutor" + i);
             tutor.setGroups(Set.of("leaderboardgroup"));
-            userRepository.save(tutor);
+            userTestRepository.save(tutor);
         }
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var tutor1 = userUtilService.getUserByLogin(TEST_PREFIX + "tutor1");

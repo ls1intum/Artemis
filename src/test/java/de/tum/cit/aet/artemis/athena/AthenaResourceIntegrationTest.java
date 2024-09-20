@@ -31,21 +31,21 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.modeling.repository.ModelingExerciseRepository;
-import de.tum.cit.aet.artemis.modeling.repository.ModelingSubmissionRepository;
+import de.tum.cit.aet.artemis.modeling.test_repository.ModelingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class AthenaResourceIntegrationTest extends AbstractAthenaTest {
@@ -65,19 +65,19 @@ class AthenaResourceIntegrationTest extends AbstractAthenaTest {
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
     @Autowired
-    private TextSubmissionRepository textSubmissionRepository;
+    private TextSubmissionTestRepository textSubmissionRepository;
 
     @Autowired
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
-    private ModelingSubmissionRepository modelingSubmissionRepository;
+    private ModelingSubmissionTestRepository modelingSubmissionRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;

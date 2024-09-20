@@ -16,7 +16,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -36,7 +36,7 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest 
     private static final String TEST_PREFIX = "teamwebsocketservice";
 
     @Autowired
-    private UserRepository userRepo;
+    private UserTestRepository userRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;

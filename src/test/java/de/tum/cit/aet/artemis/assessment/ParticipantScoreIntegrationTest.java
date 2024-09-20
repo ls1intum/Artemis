@@ -32,9 +32,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -70,7 +70,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
     private LectureUnitRepository lectureUnitRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
@@ -122,9 +122,9 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationLocalCILo
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
-        student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
 
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         Long idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
 
         // Creating result for student1

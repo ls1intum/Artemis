@@ -17,12 +17,12 @@ import org.springframework.util.ResourceUtils;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -43,9 +43,9 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.OnlineUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.VideoUnitRepository;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
 
@@ -60,7 +60,7 @@ public class LectureUtilService {
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
     @Autowired
-    private CourseRepository courseRepo;
+    private CourseTestRepository courseRepo;
 
     @Autowired
     private LectureRepository lectureRepo;
@@ -81,7 +81,7 @@ public class LectureUtilService {
     private AttachmentRepository attachmentRepository;
 
     @Autowired
-    private SlideRepository slideRepository;
+    private SlideTestRepository slideRepository;
 
     @Autowired
     private TextUnitRepository textUnitRepository;
@@ -96,7 +96,7 @@ public class LectureUtilService {
     private CourseUtilService courseUtilService;
 
     @Autowired
-    private ConversationRepository conversationRepository;
+    private ConversationTestRepository conversationRepository;
 
     @Autowired
     private LectureUnitCompletionRepository lectureUnitCompletionRepository;

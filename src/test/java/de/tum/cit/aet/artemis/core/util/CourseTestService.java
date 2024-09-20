@@ -70,18 +70,18 @@ import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
-import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.DefaultChannelType;
 import de.tum.cit.aet.artemis.communication.dto.ChannelDTO;
-import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
 import de.tum.cit.aet.artemis.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.competency.util.PrerequisiteUtilService;
@@ -103,13 +103,13 @@ import de.tum.cit.aet.artemis.core.dto.TutorLeaderboardDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
 import de.tum.cit.aet.artemis.core.dto.UserPublicInfoDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
 import de.tum.cit.aet.artemis.core.service.export.DataExportUtil;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -127,10 +127,10 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
@@ -140,7 +140,7 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
-import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
+import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import de.tum.cit.aet.artemis.lti.test_repository.OnlineCourseConfigurationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -172,7 +172,7 @@ public class CourseTestService {
     private Path courseArchivesDirPath;
 
     @Autowired
-    private CourseRepository courseRepo;
+    private CourseTestRepository courseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -181,13 +181,13 @@ public class CourseTestService {
     private LectureRepository lectureRepo;
 
     @Autowired
-    private ResultRepository resultRepo;
+    private ResultTestRepository resultRepo;
 
     @Autowired
     private CustomAuditEventRepository auditEventRepo;
 
     @Autowired
-    private UserRepository userRepo;
+    private UserTestRepository userRepo;
 
     @Autowired
     private ExamRepository examRepo;
@@ -202,7 +202,7 @@ public class CourseTestService {
     private ZipFileTestUtilService zipFileTestUtilService;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private ComplaintRepository complaintRepo;
@@ -235,7 +235,7 @@ public class CourseTestService {
     private OnlineCourseConfigurationTestRepository onlineCourseConfigurationRepository;
 
     @Autowired
-    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+    private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -250,10 +250,10 @@ public class CourseTestService {
     private ConversationTestRepository conversationRepository;
 
     @Autowired
-    private ConversationParticipantRepository conversationParticipantRepository;
+    private ConversationParticipantTestRepository conversationParticipantRepository;
 
     @Autowired
-    private ParticipationRepository participationRepository;
+    private ParticipationTestRepository participationRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -292,7 +292,7 @@ public class CourseTestService {
     private TeamUtilService teamUtilService;
 
     @Autowired
-    private LearningPathRepository learningPathRepository;
+    private LearningPathTestRepository learningPathRepository;
 
     @Autowired
     private ParticipantScoreScheduleService participantScoreScheduleService;

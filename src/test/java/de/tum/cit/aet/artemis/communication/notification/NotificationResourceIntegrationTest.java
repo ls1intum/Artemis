@@ -53,7 +53,7 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student1.setLastNotificationRead(ZonedDateTime.now().minusDays(1));
-        userRepository.save(student1);
+        userTestRepository.save(student1);
     }
 
     @AfterEach
@@ -64,7 +64,7 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetNotifications_recipientEvaluation() throws Exception {
-        User recipient = userRepository.getUser();
+        User recipient = userTestRepository.getUser();
         SingleUserNotification notification1 = NotificationFactory.generateSingleUserNotification(ZonedDateTime.now(), recipient);
         notificationRepository.save(notification1);
         SingleUserNotification notification2 = NotificationFactory.generateSingleUserNotification(ZonedDateTime.now(), userUtilService.getUserByLogin(TEST_PREFIX + "student2"));
@@ -204,7 +204,7 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         // i.e. the show all notifications regardless of their creation/notification date
         student1.setHideNotificationsUntil(null);
-        userRepository.save(student1);
+        userTestRepository.save(student1);
 
         GroupNotification futureNotification = NotificationFactory.generateGroupNotification(timeNow.plusHours(1), course1, GroupNotificationType.STUDENT);
         notificationRepository.save(futureNotification);
@@ -225,7 +225,7 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationIndep
 
         User student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         student1.setHideNotificationsUntil(timeNow);
-        userRepository.save(student1);
+        userTestRepository.save(student1);
 
         GroupNotification futureNotification = NotificationFactory.generateGroupNotification(timeNow.plusHours(1), course1, GroupNotificationType.STUDENT);
         notificationRepository.save(futureNotification);

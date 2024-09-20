@@ -60,7 +60,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
-        User user = userRepository.getUser();
+        User user = userTestRepository.getUser();
 
         try (SshClient client = SshClient.setUpDefaultClient()) {
             client.start();
@@ -88,7 +88,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = generateKeyPair();
 
-        User user = userRepository.getUser();
+        User user = userTestRepository.getUser();
 
         assertThatThrownBy(() -> {
 
@@ -149,7 +149,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         var numberOfSessions = serverSessions.size();
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
-        User user = userRepository.getUser();
+        User user = userTestRepository.getUser();
 
         SshClient client = SshClient.setUpDefaultClient();
         client.start();
@@ -176,7 +176,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     private KeyPair setupKeyPairAndAddToUser() throws GeneralSecurityException, IOException {
 
-        User user = userRepository.getUser();
+        User user = userTestRepository.getUser();
 
         KeyPair rsaKeyPair = generateKeyPair();
         String sshPublicKey = writePublicKeyToString(rsaKeyPair.getPublic(), user.getLogin() + "@host");
@@ -186,8 +186,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         PublicKey publicKey = keyEntry.resolvePublicKey(null, null, null);
         String keyHash = HashUtils.getSha512Fingerprint(publicKey);
 
-        userRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
-        user = userRepository.getUser();
+        userTestRepository.updateUserSshPublicKeyHash(user.getId(), keyHash, sshPublicKey);
+        user = userTestRepository.getUser();
 
         assertThat(user.getSshPublicKey()).isEqualTo(sshPublicKey);
         return rsaKeyPair;

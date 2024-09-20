@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
@@ -26,10 +26,10 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
+import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupRegistrationTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to tutorial groups for use in integration tests.
@@ -54,10 +54,10 @@ public class TutorialGroupUtilService {
     private Optional<String> tutorialGroupInstructors;
 
     @Autowired
-    private CourseRepository courseRepo;
+    private CourseTestRepository courseRepo;
 
     @Autowired
-    private TutorialGroupRepository tutorialGroupRepository;
+    private TutorialGroupTestRepository tutorialGroupRepository;
 
     @Autowired
     private TutorialGroupSessionRepository tutorialGroupSessionRepository;
@@ -69,7 +69,7 @@ public class TutorialGroupUtilService {
     private TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository;
 
     @Autowired
-    private TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+    private TutorialGroupRegistrationTestRepository tutorialGroupRegistrationRepository;
 
     /**
      * Creates and saves a Course for TutorialGroup tests.

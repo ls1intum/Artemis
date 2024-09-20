@@ -9,8 +9,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
+import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -28,7 +28,7 @@ public class LearningPathUtilService {
     private LearningPathService learningPathService;
 
     @Autowired
-    private LearningPathRepository learningPathRepository;
+    private LearningPathTestRepository learningPathRepository;
 
     @Autowired
     private CompetencyRepository competencyRepository;

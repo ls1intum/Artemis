@@ -28,16 +28,16 @@ import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.PostContextFilterDTO;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.GroupChatRepository;
-import de.tum.cit.aet.artemis.communication.repository.conversation.OneToOneChatRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
@@ -48,13 +48,13 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 abstract class AbstractConversationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
-    CourseRepository courseRepository;
+    CourseTestRepository courseRepository;
 
     @Autowired
-    UserRepository userRepository;
+    UserTestRepository userRepository;
 
     @Autowired
-    ConversationRepository conversationRepository;
+    ConversationTestRepository conversationRepository;
 
     @Autowired
     ConversationParticipantTestRepository conversationParticipantRepository;
@@ -66,7 +66,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationIndepen
     GroupChatRepository groupChatRepository;
 
     @Autowired
-    OneToOneChatRepository oneToOneChatRepository;
+    OneToOneChatTestRepository oneToOneChatRepository;
 
     @Autowired
     ConversationMessageRepository conversationMessageRepository;

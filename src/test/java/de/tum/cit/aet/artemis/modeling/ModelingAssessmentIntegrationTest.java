@@ -36,9 +36,9 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.AssessmentUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
+import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -54,9 +54,9 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -88,7 +88,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     private ParticipationService participationService;
 
     @Autowired
-    private ExampleSubmissionRepository exampleSubmissionRepository;
+    private ExampleSubmissionTestRepository exampleSubmissionRepository;
 
     @Autowired
     private CompassService compassService;
@@ -103,10 +103,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
     private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private ComplaintResponseRepository complaintResponseRepository;
+    private ComplaintResponseTestRepository complaintResponseRepository;
 
     @Autowired
     private ComplaintRepository complaintRepository;
@@ -1483,7 +1483,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         modelingExercise = exerciseRepository.saveAndFlush(modelingExercise);
 
         // creating participation of student1 by starting the exercise
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
+        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
         StudentParticipation studentParticipation = participationService.startExercise(modelingExercise, student1, false);
 
         // creating submission of student1
@@ -1495,7 +1495,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationLocalCI
         submission = submissionRepository.saveAndFlush(submission);
 
         // creating assessment by tutor1
-        User tutor1 = userRepository.findOneByLogin("tutor1").orElse(null);
+        User tutor1 = userTestRepository.findOneByLogin("tutor1").orElse(null);
         Result firstResult = ParticipationFactory.generateResult(true, 50);
         firstResult.setAssessor(tutor1);
         firstResult.setHasComplaint(true);

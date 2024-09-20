@@ -18,12 +18,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.assessment.web.ResultResource;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -51,7 +51,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     private ParticipationService participationService;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
@@ -72,7 +72,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     private ResultService resultService;
 
     @Autowired
-    private ResultRepository resultRepository;
+    private ResultTestRepository resultRepository;
 
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;

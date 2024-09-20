@@ -30,7 +30,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabException;
 import de.tum.cit.aet.artemis.programming.service.gitlab.GitLabPersonalAccessTokenManagementService;
@@ -45,7 +45,7 @@ class GitLabPersonalAccessTokenManagementServiceTest extends AbstractSpringInteg
     private GitLabPersonalAccessTokenManagementService gitLabPersonalAccessTokenManagementService;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Autowired
     private UserUtilService userUtilService;

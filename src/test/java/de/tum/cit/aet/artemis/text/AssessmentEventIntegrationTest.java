@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -31,7 +31,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
     private TextSubmissionTestRepository textSubmissionTestRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
@@ -56,7 +56,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 1, 1);
         course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
-        tutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
+        tutor = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
         // we exactly create 1 exercise, 1 participation and 1 submission (which was submitted), so the following code should be fine
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).iterator().next();

@@ -52,9 +52,9 @@ class Lti13LaunchIntegrationTest extends AbstractSpringIntegrationIndependentTes
     @BeforeEach
     void init() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
+        var user = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").orElseThrow();
         user.setInternal(false);
-        userRepository.save(user);
+        userTestRepository.save(user);
     }
 
     @Test

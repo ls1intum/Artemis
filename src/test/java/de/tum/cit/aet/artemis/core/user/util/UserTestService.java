@@ -29,7 +29,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
-import de.tum.cit.aet.artemis.atlas.repository.ScienceEventRepository;
+import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -39,16 +39,16 @@ import de.tum.cit.aet.artemis.core.dto.UserInitializationDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.ManagedUserVM;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ParticipationVCSAccessTokenRepository;
@@ -68,7 +68,7 @@ public class UserTestService {
     private AuthorityRepository authorityRepository;
 
     @Autowired
-    private UserTestRepository userRepository;
+    private UserTestRepository userTestRepository;
 
     @Autowired
     private PasswordService passwordService;
@@ -77,7 +77,7 @@ public class UserTestService {
     private CacheManager cacheManager;
 
     @Autowired
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @Autowired
     protected RequestUtilService request;
@@ -98,7 +98,7 @@ public class UserTestService {
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     @Autowired
-    private ScienceEventRepository scienceEventRepository;
+    private ScienceEventTestRepository scienceEventRepository;
 
     @Autowired
     private MockMvc mockMvc;
@@ -123,20 +123,20 @@ public class UserTestService {
     private ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
     @Autowired
-    private ParticipationRepository participationRepository;
+    private ParticipationTestRepository participationRepository;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
         this.mockDelegate = mockDelegate;
 
         List<User> users = userUtilService.addUsers(testPrefix, NUMBER_OF_STUDENTS, NUMBER_OF_TUTORS, NUMBER_OF_EDITORS, NUMBER_OF_INSTRUCTORS);
-        student = userRepository.getUserByLoginElseThrow(testPrefix + "student1");
+        student = userTestRepository.getUserByLoginElseThrow(testPrefix + "student1");
         student.setInternal(true);
-        student = userRepository.save(student);
-        student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        student = userTestRepository.save(student);
+        student = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
 
@@ -148,7 +148,7 @@ public class UserTestService {
     }
 
     public void tearDown() throws IOException {
-        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+        userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
     }
 
     public User getStudent() {
@@ -194,24 +194,24 @@ public class UserTestService {
     public void deleteUser_isSuccessful() throws Exception {
         student.setRegistrationNumber("123");
         student.setImageUrl("https://www.somewebsite.com/image.jpg");
-        userRepository.save(student);
+        userTestRepository.save(student);
 
         request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
 
-        final var deletedUser = userRepository.findById(student.getId()).orElseThrow();
+        final var deletedUser = userTestRepository.findById(student.getId()).orElseThrow();
         assertThatUserWasSoftDeleted(student, deletedUser);
     }
 
     // Test
     public void deleteSelf_isNotSuccessful(String currentUserLogin) throws Exception {
         request.delete("/api/admin/users/" + currentUserLogin, HttpStatus.BAD_REQUEST);
-        final var deletedUser = userRepository.findById(student.getId()).orElseThrow();
+        final var deletedUser = userTestRepository.findById(student.getId()).orElseThrow();
         assertThatUserWasNotSoftDeleted(student, deletedUser);
     }
 
     // Test
     public void deleteUsers(String currentUserLogin) throws Exception {
-        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+        userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);
 
         var users = Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
@@ -223,7 +223,7 @@ public class UserTestService {
         request.delete("/api/admin/users", HttpStatus.OK, params);
 
         for (var user : users) {
-            final var deletedUser = userRepository.findById(user.getId()).orElseThrow();
+            final var deletedUser = userTestRepository.findById(user.getId()).orElseThrow();
 
             if (deletedUser.getLogin().equals(currentUserLogin)) {
                 assertThatUserWasNotSoftDeleted(user, deletedUser);
@@ -237,7 +237,7 @@ public class UserTestService {
     // Test
     public void updateUser_asAdmin_isSuccessful() throws Exception {
         student.setInternal(true);
-        student = userRepository.save(student);
+        student = userTestRepository.save(student);
         final var newPassword = "bonobo42";
         final var newEmail = "bonobo42@tum.com";
         final var newFirstName = "Bruce";
@@ -262,7 +262,7 @@ public class UserTestService {
         var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
         final var response = request.putWithResponseBody("/api/admin/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserIndDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(response).isNotNull();
         assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
@@ -288,18 +288,18 @@ public class UserTestService {
         assertThat(response).isNotNull();
 
         // do not allow empty authorities
-        final var updatedUserInDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+        final var updatedUserInDB = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
         assertThat(updatedUserInDB.getAuthorities()).containsExactly(new Authority(Role.STUDENT.getAuthority()));
     }
 
     // Test
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         student.setPassword(null);
-        final var oldPassword = userRepository.findById(student.getId()).orElseThrow().getPassword();
+        final var oldPassword = userTestRepository.findById(student.getId()).orElseThrow().getPassword();
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/admin/users", new ManagedUserVM(student), HttpStatus.OK);
-        final var userInDB = userRepository.findById(student.getId()).orElseThrow();
+        final var userInDB = userTestRepository.findById(student.getId()).orElseThrow();
 
         assertThat(oldPassword).as("Password did not change").isEqualTo(userInDB.getPassword());
     }
@@ -311,7 +311,7 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(oldLogin, student, null, student.getGroups());
 
         request.put("/api/admin/users", new ManagedUserVM(student), HttpStatus.OK);
-        final var userInDB = userRepository.findById(student.getId()).orElseThrow();
+        final var userInDB = userTestRepository.findById(student.getId()).orElseThrow();
 
         assertThat(userInDB.getLogin()).isEqualTo(student.getLogin());
         assertThat(userInDB.getId()).isEqualTo(student.getId());
@@ -324,9 +324,9 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
-        final var userInDB = userRepository.findById(oldId).orElseThrow();
+        final var userInDB = userTestRepository.findById(oldId).orElseThrow();
         assertThat(userInDB).isNotEqualTo(student);
-        assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
+        assertThat(userTestRepository.findById(oldId + 1)).isNotEqualTo(student);
     }
 
     // Test
@@ -337,9 +337,9 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
-        final var userInDB = userRepository.findById(oldId).orElseThrow();
+        final var userInDB = userTestRepository.findById(oldId).orElseThrow();
         assertThat(userInDB).isNotEqualTo(student);
-        assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
+        assertThat(userTestRepository.findById(oldId + 1)).isNotEqualTo(student);
     }
 
     // Test
@@ -349,7 +349,7 @@ public class UserTestService {
 
         request.put("/api/admin/users", new ManagedUserVM(student), HttpStatus.OK);
 
-        var updatedUser = userRepository.findById(student.getId());
+        var updatedUser = userTestRepository.findById(student.getId());
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getFirstName()).isEqualTo("changed");
     }
@@ -362,7 +362,7 @@ public class UserTestService {
 
         // First we create a new user with group
         student.setGroups(Set.of("instructor"));
-        student = userRepository.save(student);
+        student = userTestRepository.save(student);
 
         // We will then update the user by modifying the groups
         var updatedUser = student;
@@ -370,7 +370,7 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), updatedUser, null, student.getGroups());
         request.put("/api/admin/users", new ManagedUserVM(updatedUser, "this is a password"), HttpStatus.OK);
 
-        var updatedUserOrEmpty = userRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
+        var updatedUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(updatedUser.getLogin());
         assertThat(updatedUserOrEmpty).isPresent();
 
         updatedUser = updatedUserOrEmpty.get();
@@ -390,7 +390,7 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student, password), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).orElseThrow();
+        final var userInDB = userTestRepository.findById(response.getId()).orElseThrow();
         assertThat(passwordService.checkPasswordMatch(password, userInDB.getPassword())).isTrue();
         student.setId(response.getId());
 
@@ -435,7 +435,7 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student, student.getPassword()), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).orElseThrow();
+        final var userInDB = userTestRepository.findById(response.getId()).orElseThrow();
         userInDB.setPassword(password);
         student.setId(response.getId());
         response.setPassword(password);
@@ -446,13 +446,13 @@ public class UserTestService {
 
     // Test
     public void createUser_asAdmin_hasId() throws Exception {
-        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+        userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
         student.setId((long) 1337);
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
-        student = userRepository.save(student);
+        student = userTestRepository.save(student);
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
@@ -548,7 +548,7 @@ public class UserTestService {
 
     // Test
     public void createUser_asAdmin_failInExternalVcsUserManagement_internalError() throws Exception {
-        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+        userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
         student.setId(null);
         student.setLogin("batman");
@@ -563,7 +563,7 @@ public class UserTestService {
 
     // Test
     public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
-        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+        userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
         student.setId(null);
         student.setEmail("batman@invalid.tum");
@@ -574,14 +574,14 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).orElseThrow();
+        final var userInDB = userTestRepository.findById(response.getId()).orElseThrow();
 
         assertThat(userInDB.getPassword()).isNotBlank();
     }
 
     // Test
     public void createUser_withExternalUserManagement() throws Exception {
-        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+        userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
         var newUser = student;
         newUser.setId(null);
@@ -592,16 +592,16 @@ public class UserTestService {
 
         request.post("/api/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
 
-        var createdUser = userRepository.findOneByEmailIgnoreCase(newUser.getEmail());
+        var createdUser = userTestRepository.findOneByEmailIgnoreCase(newUser.getEmail());
         assertThat(createdUser).isPresent();
         assertThat(createdUser.get().getId()).isNotNull();
     }
 
     // Test
     public void createUserWithGroups() throws Exception {
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesElseThrow(Long.MAX_VALUE));
 
-        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
+        assertThatExceptionOfType(EntityNotFoundException.class).isThrownBy(() -> userTestRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(Long.MAX_VALUE));
 
         var course = courseUtilService.addEmptyCourse();
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
@@ -609,7 +609,7 @@ public class UserTestService {
         course.setInstructorGroupName("instructor2");
         courseRepository.save(course);
 
-        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+        userTestRepository.findOneByLogin("batman").ifPresent(userTestRepository::delete);
 
         var newUser = student;
         newUser.setId(null);
@@ -621,7 +621,7 @@ public class UserTestService {
 
         request.post("/api/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
 
-        var createdUserOrEmpty = userRepository.findOneWithGroupsAndAuthoritiesByLogin(newUser.getLogin());
+        var createdUserOrEmpty = userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(newUser.getLogin());
         assertThat(createdUserOrEmpty).isPresent();
 
         var createdUser = createdUserOrEmpty.get();
@@ -631,8 +631,8 @@ public class UserTestService {
 
     // Test
     public void getUsers_asAdmin_isSuccessful() throws Exception {
-        var usersDb = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-        userRepository.saveAll(usersDb);
+        var usersDb = userTestRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse().stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+        userTestRepository.saveAll(usersDb);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -670,7 +670,7 @@ public class UserTestService {
     // Test
     public void getUserViaFilter_asAdmin_isSuccessful() throws Exception {
         student.setGroups(Collections.emptySet());
-        userRepository.save(student);
+        userTestRepository.save(student);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -785,7 +785,7 @@ public class UserTestService {
         repoUser.setInternal(true);
         repoUser.setActivated(false);
         repoUser.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
-        final User user = userRepository.save(repoUser);
+        final User user = userTestRepository.save(repoUser);
 
         if (mock) {
             // Mock user creation and update calls to prevent issues in GitLab/Jenkins tests
@@ -816,7 +816,7 @@ public class UserTestService {
         user.setInternal(true);
         user.setActivated(true);
         user.setGroups(Set.of(LtiService.LTI_GROUP_NAME));
-        userRepository.save(user);
+        userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
@@ -836,7 +836,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(false);
-        userRepository.save(user);
+        userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
         assertThat(dto.password()).isNull();
@@ -854,7 +854,7 @@ public class UserTestService {
         user.setPassword(password);
         user.setInternal(false);
         user.setActivated(false);
-        userRepository.save(user);
+        userTestRepository.save(user);
 
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
 
@@ -879,11 +879,11 @@ public class UserTestService {
         // adding valid key should work correctly
         String validSshKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEbgjoSpKnry5yuMiWh/uwhMG2Jq5Sh8Uw9vz+39or2i email@abc.de";
         request.putWithResponseBody("/api/account/ssh-public-key", validSshKey, String.class, HttpStatus.OK, true);
-        assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
+        assertThat(userTestRepository.getUser().getSshPublicKey()).isEqualTo(validSshKey);
 
         // deleting the key shoul work correctly
         request.delete("/api/account/ssh-public-key", HttpStatus.OK);
-        assertThat(userRepository.getUser().getSshPublicKey()).isEqualTo(null);
+        assertThat(userTestRepository.getUser().getSshPublicKey()).isEqualTo(null);
     }
 
     // Test
@@ -941,8 +941,8 @@ public class UserTestService {
         assertThat(user.getVcsAccessTokenExpiryDate()).isNull();
     }
 
-    public UserRepository getUserRepository() {
-        return userRepository;
+    public UserRepository getUserTestRepository() {
+        return userTestRepository;
     }
 
     /**
@@ -999,14 +999,14 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             user1.setGroups(Collections.emptySet());
             user2.setGroups(Set.of("tumuser"));
-            userRepository.saveAll(List.of(user1, user2));
+            userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user1).contains(user2);
         }
@@ -1023,14 +1023,14 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             user1.setGroups(Collections.emptySet());
             user2.setGroups(Set.of("tumuser"));
-            userRepository.saveAll(List.of(user1, user2));
+            userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user1).doesNotContain(user2);
         }
@@ -1044,15 +1044,15 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            User admin = userRepository.getUserByLoginElseThrow("admin");
+            User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User admin = userTestRepository.getUserByLoginElseThrow("admin");
             user1.setActivated(true);
             user2.setActivated(false);
-            userRepository.saveAll(List.of(user1, user2, admin));
+            userTestRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user1, admin).doesNotContain(user2);
         }
@@ -1068,14 +1068,14 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             user1.setActivated(true);
             user2.setActivated(false);
-            userRepository.saveAll(List.of(user1, user2));
+            userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user2).doesNotContain(user1);
         }
@@ -1091,15 +1091,15 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
-            User admin = userRepository.getUserByLoginElseThrow("admin");
+            User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User admin = userTestRepository.getUserByLoginElseThrow("admin");
             user1.setInternal(true);
             user2.setInternal(false);
-            userRepository.saveAll(List.of(user1, user2, admin));
+            userTestRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user1, admin).doesNotContain(user2);
         }
@@ -1115,14 +1115,14 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             user1.setInternal(true);
             user2.setInternal(false);
-            userRepository.saveAll(List.of(user1, user2));
+            userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user2).doesNotContain(user1);
         }
@@ -1138,14 +1138,14 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             user1.setInternal(true);
             user2.setInternal(false);
-            userRepository.saveAll(List.of(user1, user2));
+            userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
@@ -1165,14 +1165,14 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             user1.setRegistrationNumber(null);
             user2.setRegistrationNumber(null);
-            userRepository.saveAll(List.of(user1, user2));
+            userTestRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
@@ -1192,15 +1192,15 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+            userTestRepository.deleteAll(userTestRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             userUtilService.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
-            User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
-            User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
+            User user1 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
+            User user2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             user1.setRegistrationNumber("5461351");
             user2.setRegistrationNumber("");
-            User admin = userRepository.getUserByLoginElseThrow("admin");
-            userRepository.saveAll(List.of(user1, user2, admin));
+            User admin = userTestRepository.getUserByLoginElseThrow("admin");
+            userTestRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(admin).doesNotContain(user1, user2);
         }

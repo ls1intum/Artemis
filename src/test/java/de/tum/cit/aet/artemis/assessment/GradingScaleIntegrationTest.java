@@ -62,7 +62,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         userUtilService.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         var instructor = userUtilService.getUserByLogin(TEST_PREFIX + "instructor1");
         instructor.setGroups(Set.of("gradingscaleintegrationinstructors"));
-        userRepository.save(instructor);
+        userTestRepository.save(instructor);
 
         course = courseUtilService.addEmptyCourse();
         course.setInstructorGroupName("gradingscaleintegrationinstructors");

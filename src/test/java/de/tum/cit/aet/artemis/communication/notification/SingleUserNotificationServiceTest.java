@@ -67,7 +67,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
@@ -122,7 +122,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     private ExerciseRepository exerciseRepository;
 
     @Autowired
-    private ResultRepository resultRepository;
+    private ResultTestRepository resultRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;

@@ -48,13 +48,13 @@ import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.localvcci.LocalVCLocalCITestService;
 import de.tum.cit.aet.artemis.programming.localvcci.util.TestBuildAgentConfiguration;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingMessagingService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService;
 import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 
 // Must start up an actual web server such that the tests can communicate with the ArtemisGitServlet using JGit.
@@ -106,7 +106,7 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
     protected SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     @Autowired
-    protected ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    protected ProgrammingExerciseStudentParticipationTestRepository programmingExerciseStudentParticipationRepository;
 
     @Autowired
     protected UserUtilService userUtilService;

@@ -52,7 +52,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
 
     @AfterEach
     void clearExistingUser() {
-        userRepository.findOneByLogin(STUDENT_NAME).ifPresent(userRepository::delete);
+        userTestRepository.findOneByLogin(STUDENT_NAME).ifPresent(userTestRepository::delete);
     }
 
     @AfterEach
@@ -164,9 +164,9 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         assertStudentExists();
 
         // Change Password
-        User student = userRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
+        User student = userTestRepository.findUserWithGroupsAndAuthoritiesByLogin(STUDENT_NAME).orElseThrow();
         student.setPassword(passwordService.hashPassword(STUDENT_PASSWORD));
-        userRepository.saveAndFlush(student);
+        userTestRepository.saveAndFlush(student);
 
         // Try to login ..
         TestSecurityContextHolder.clearContext();
@@ -226,7 +226,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSa
         user.setLogin(STUDENT_NAME);
         user.setActivated(true);
         user.setEmail(identifyingEmail);
-        userRepository.save(user);
+        userTestRepository.save(user);
     }
 
     private Saml2AuthenticatedPrincipal createPrincipal(String registrationNumber) {

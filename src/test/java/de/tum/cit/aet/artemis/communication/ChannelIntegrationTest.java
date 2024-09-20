@@ -34,8 +34,8 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
+import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroups.util.TutorialGroupUtilService;
 
 class ChannelIntegrationTest extends AbstractConversationTest {
@@ -43,7 +43,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private static final String TEST_PREFIX = "chtest";
 
     @Autowired
-    TutorialGroupRepository tutorialGroupRepository;
+    TutorialGroupTestRepository tutorialGroupRepository;
 
     @Autowired
     TutorialGroupChannelManagementService tutorialGroupChannelManagementService;

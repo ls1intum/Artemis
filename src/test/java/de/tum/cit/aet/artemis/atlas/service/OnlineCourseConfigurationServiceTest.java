@@ -22,13 +22,13 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
-import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
+import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 
 class OnlineCourseConfigurationServiceTest {
 
     @Mock
-    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+    private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     private OnlineCourseConfigurationService onlineCourseConfigurationService;
 

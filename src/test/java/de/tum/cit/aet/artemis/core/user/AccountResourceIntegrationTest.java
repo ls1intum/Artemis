@@ -171,7 +171,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         User user = UserFactory.generateActivatedUser("ab123cdm");
         user.setActivated(false);
         user.setActivationKey(testActivationKey);
-        user = userRepository.save(user);
+        user = userTestRepository.save(user);
 
         // make request
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -179,7 +179,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         request.get("/api/public/activate", HttpStatus.OK, String.class, params);
 
         // check result
-        Optional<User> updatedUser = userRepository.findById(user.getId());
+        Optional<User> updatedUser = userTestRepository.findById(user.getId());
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get()).isNotNull();
         assertThat(updatedUser.get().getActivated()).isTrue();
@@ -248,7 +248,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         request.put("/api/account", new UserDTO(user), HttpStatus.OK);
 
         // check if update successful
-        Optional<User> updatedUser = userRepository.findOneByLogin(AUTHENTICATEDUSER);
+        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getFirstName()).isEqualTo(updatedFirstName);
     }
@@ -294,7 +294,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         request.postWithoutLocation("/api/account/change-password", pwChange, HttpStatus.OK, null);
 
         // check if update successful
-        Optional<User> updatedUser = userRepository.findOneByLogin(AUTHENTICATEDUSER);
+        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(passwordService.checkPasswordMatch(updatedPassword, updatedUser.get().getPassword())).isTrue();
     }
@@ -306,7 +306,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // create user in repo
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setInternal(false);
-        userRepository.save(user);
+        userTestRepository.save(user);
 
         // Password Data
         String updatedPassword = "12345678";
@@ -341,14 +341,14 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // create user in repo
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setLangKey("en");
-        User storedUser = userRepository.save(user);
+        User storedUser = userTestRepository.save(user);
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
         // make request
         request.postStringWithoutLocation("/api/public/account/change-language", "de", HttpStatus.OK, null);
 
         // check result
-        Optional<User> updatedUser = userRepository.findOneByLogin(AUTHENTICATEDUSER);
+        Optional<User> updatedUser = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(updatedUser).isPresent();
         assertThat(updatedUser.get().getLangKey()).isEqualTo("de");
     }
@@ -359,7 +359,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // create user in repo
         User user = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
         user.setLangKey("en");
-        User storedUser = userRepository.save(user);
+        User storedUser = userTestRepository.save(user);
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
         // make request
@@ -372,7 +372,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // create user in repo
         User createdUser = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
 
-        Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
@@ -387,7 +387,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // create user in repo
         User createdUser = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
 
-        Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
@@ -397,7 +397,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
 
     private void verifyPasswordReset(User createdUser, String resetKeyBefore) throws Exception {
         // check user data
-        Optional<User> userPasswordResetInit = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        Optional<User> userPasswordResetInit = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userPasswordResetInit).isPresent();
         String resetKey = userPasswordResetInit.get().getResetKey();
 
@@ -414,7 +414,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         request.postWithoutLocation("/api/public/account/reset-password/finish", finishResetData, HttpStatus.OK, null);
 
         // get updated user
-        Optional<User> userPasswordResetFinished = userRepository.findOneByLogin(AUTHENTICATEDUSER);
+        Optional<User> userPasswordResetFinished = userTestRepository.findOneByLogin(AUTHENTICATEDUSER);
         assertThat(userPasswordResetFinished).isPresent();
         assertThat(passwordService.checkPasswordMatch(newPassword, userPasswordResetFinished.get().getPassword())).isTrue();
     }
@@ -424,7 +424,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         // create user in repo
         User createdUser = userUtilService.createAndSaveUser(AUTHENTICATEDUSER);
 
-        Optional<User> userBefore = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        Optional<User> userBefore = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
@@ -432,7 +432,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         request.postStringWithoutLocation("/api/public/account/reset-password/init", "invalidemail", HttpStatus.OK, null);
 
         // check user data
-        Optional<User> userPasswordResetInit = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
+        Optional<User> userPasswordResetInit = userTestRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
         assertThat(userPasswordResetInit).isPresent();
         String resetKey = userPasswordResetInit.get().getResetKey();
 
@@ -448,7 +448,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationIndependen
         user.setLogin(login);
         user.setEmail(email);
         user.setInternal(false);
-        userRepository.saveAndFlush(user);
+        userTestRepository.saveAndFlush(user);
 
         request.postStringWithoutLocation("/api/public/account/reset-password/init", email, HttpStatus.BAD_REQUEST, null);
     }

@@ -102,7 +102,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         importedTeams = importedTeamsWithBody.getFirst();
         importedTeamsBody = importedTeamsWithBody.getSecond();
         // Select a tutor for the teams
-        tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        tutor = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
     }
 
     private void testImportTeamsIntoExercise(ImportType type, TeamImportStrategyType importStrategyType, List<Team> body, List<Team> addedTeams) throws Exception {
@@ -290,7 +290,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
         request.put(importFromListUrl(), getTeamsIntoLoginOnlyTeams(teams), HttpStatus.BAD_REQUEST);
 
         // If user does not have an identifier: registration number or login, the request should fail
-        userRepository.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
+        userTestRepository.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
         request.put(importFromListUrl(), getTeamsIntoOneIdentifierTeams(teams, null), HttpStatus.BAD_REQUEST);
 
         // If user's registration number points to same user with a login in request, it should fail
@@ -352,7 +352,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationIndependentTest
                 registrationPrefix);
         var users = generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
         users.forEach(u -> userUtilService.cleanUpRegistrationNumberForUser(u));
-        userRepository.saveAll(users);
+        userTestRepository.saveAll(users);
         List<Team> teamsWithLogins = getTeamsIntoLoginOnlyTeams(generatedTeams.subList(0, 2));
         List<Team> teamsWithRegistrationNumbers = getTeamsIntoRegistrationNumberOnlyTeams(generatedTeams.subList(2, 3));
         List<Team> body = Stream.concat(teamsWithLogins.stream(), teamsWithRegistrationNumbers.stream()).toList();

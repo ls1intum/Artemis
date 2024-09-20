@@ -22,7 +22,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.user.PasswordService;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
@@ -54,9 +53,6 @@ public class UserUtilService {
     private static final Set<Authority> instructorAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority);
 
     private static final Set<Authority> adminAuthorities = Set.of(userAuthority, tutorAuthority, editorAuthority, instructorAuthority, adminAuthority);
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private AuthorityRepository authorityRepository;
@@ -137,7 +133,7 @@ public class UserUtilService {
                 user.setGroups(Set.of(groups));
                 user.setAuthorities(authorities);
             }
-            user = userRepo.save(user);
+            user = userTestRepository.save(user);
             generatedUsers.add(user);
         }
         return generatedUsers;
@@ -181,7 +177,7 @@ public class UserUtilService {
      */
     public User setRegistrationNumberOfUserAndSave(User user, String registrationNumber) {
         user.setRegistrationNumber(registrationNumber);
-        return userRepo.save(user);
+        return userTestRepository.save(user);
     }
 
     /**
@@ -195,7 +191,7 @@ public class UserUtilService {
     public User setUserVcsAccessTokenAndExpiryDateAndSave(User user, String vcsAccessToken, ZonedDateTime expiryDate) {
         user.setVcsAccessToken(vcsAccessToken);
         user.setVcsAccessTokenExpiryDate(expiryDate);
-        return userRepo.save(user);
+        return userTestRepository.save(user);
     }
 
     /**
@@ -206,7 +202,7 @@ public class UserUtilService {
     public void deleteUserVcsAccessToken(User userWithUserToken) {
         userWithUserToken.setVcsAccessTokenExpiryDate(null);
         userWithUserToken.setVcsAccessToken(null);
-        userRepo.save(userWithUserToken);
+        userTestRepository.save(userWithUserToken);
     }
 
     /**
@@ -262,7 +258,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userRepo.save(user);
+        return userTestRepository.save(user);
     }
 
     /**
@@ -293,7 +289,7 @@ public class UserUtilService {
             // save the user with the newly created values (to override previous changes) with the same ID
             user.setId(getUserByLogin(login).getId());
         }
-        return userRepo.save(user);
+        return userTestRepository.save(user);
     }
 
     /**
@@ -361,10 +357,10 @@ public class UserUtilService {
             Set<User> currentUsers = userTestRepository.findAllByGroupsNotEmpty();
             log.debug("Removing {} users from all courses...", currentUsers.size());
             currentUsers.forEach(user -> user.setGroups(Set.of()));
-            userRepo.saveAll(currentUsers);
+            userTestRepository.saveAll(currentUsers);
             log.debug("Removing {} users from all courses. Done", currentUsers.size());
             log.debug("Save {} users to database...", usersToAdd.size());
-            usersToAdd = userRepo.saveAll(usersToAdd);
+            usersToAdd = userTestRepository.saveAll(usersToAdd);
             log.debug("Save {} users to database. Done", usersToAdd.size());
         }
 
@@ -381,7 +377,7 @@ public class UserUtilService {
     public void addStudents(String prefix, int from, int to) {
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(UserFactory.USER_PASSWORD),
                 new String[] { "tumuser", "testgroup", prefix + "tumuser" }, studentAuthorities, from, to);
-        userRepo.saveAll(students);
+        userTestRepository.saveAll(students);
     }
 
     /**
@@ -394,10 +390,10 @@ public class UserUtilService {
             return;
         }
 
-        var existingUserWithRegistrationNumber = userRepo.findOneWithGroupsAndAuthoritiesByRegistrationNumber(user.getRegistrationNumber());
+        var existingUserWithRegistrationNumber = userTestRepository.findOneWithGroupsAndAuthoritiesByRegistrationNumber(user.getRegistrationNumber());
         if (existingUserWithRegistrationNumber.isPresent()) {
             existingUserWithRegistrationNumber.get().setRegistrationNumber(null);
-            userRepo.save(existingUserWithRegistrationNumber.get());
+            userTestRepository.save(existingUserWithRegistrationNumber.get());
         }
     }
 
@@ -411,7 +407,7 @@ public class UserUtilService {
         if (!userExistsWithLogin(instructorName)) {
             var newUsers = generateAndSaveActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
             if (!newUsers.isEmpty()) {
-                var instructor = userRepo.save(newUsers.getFirst());
+                var instructor = userTestRepository.save(newUsers.getFirst());
                 assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
             }
         }
@@ -427,7 +423,7 @@ public class UserUtilService {
         if (!userExistsWithLogin(editorName)) {
             var newUsers = generateAndSaveActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1);
             if (!newUsers.isEmpty()) {
-                var editor = userRepo.save(newUsers.getFirst());
+                var editor = userTestRepository.save(newUsers.getFirst());
                 assertThat(editor.getId()).as("Editor has been created").isNotNull();
             }
         }
@@ -443,7 +439,7 @@ public class UserUtilService {
         if (!userExistsWithLogin(taName)) {
             var newUsers = generateAndSaveActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1);
             if (!newUsers.isEmpty()) {
-                var ta = userRepo.save(newUsers.getFirst());
+                var ta = userTestRepository.save(newUsers.getFirst());
                 assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
             }
         }
@@ -459,7 +455,7 @@ public class UserUtilService {
         if (!userExistsWithLogin(studentName)) {
             var newUsers = generateAndSaveActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1);
             if (!newUsers.isEmpty()) {
-                var student = userRepo.save(newUsers.getFirst());
+                var student = userTestRepository.save(newUsers.getFirst());
                 assertThat(student.getId()).as("Student has been created").isNotNull();
             }
         }
@@ -475,7 +471,7 @@ public class UserUtilService {
      * @return user with the provided logih
      */
     public User getUserByLoginWithoutAuthorities(String login) {
-        return userRepo.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+        return userTestRepository.findOneByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
     /**
@@ -486,7 +482,7 @@ public class UserUtilService {
      */
     public User getUserByLogin(String login) {
         // we convert to lowercase for convenience, because logins have to be lower case
-        return userRepo.findOneWithGroupsAndAuthoritiesByLogin(login.toLowerCase())
+        return userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(login.toLowerCase())
                 .orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
@@ -497,7 +493,7 @@ public class UserUtilService {
      * @return True, if a User with the given login exists, false otherwise
      */
     public boolean userExistsWithLogin(String login) {
-        return userRepo.findOneByLogin(login).isPresent();
+        return userTestRepository.findOneByLogin(login).isPresent();
     }
 
     /**
@@ -508,7 +504,7 @@ public class UserUtilService {
     public void removeUserFromAllCourses(String login) {
         User user = getUserByLogin(login);
         user.setGroups(Set.of());
-        userRepo.save(user);
+        userTestRepository.save(user);
     }
 
     /**
@@ -525,22 +521,22 @@ public class UserUtilService {
         for (int i = 1; i <= numberOfStudents; i++) {
             var user = getUserByLogin(userPrefix + "student" + i);
             user.setGroups(Set.of(userPrefix + "student" + userSuffix));
-            userRepo.save(user);
+            userTestRepository.save(user);
         }
         for (int i = 1; i <= numberOfTutors; i++) {
             var user = getUserByLogin(userPrefix + "tutor" + i);
             user.setGroups(Set.of(userPrefix + "tutor" + userSuffix));
-            userRepo.save(user);
+            userTestRepository.save(user);
         }
         for (int i = 1; i <= numberOfEditors; i++) {
             var user = getUserByLogin(userPrefix + "editor" + i);
             user.setGroups(Set.of(userPrefix + "editor" + userSuffix));
-            userRepo.save(user);
+            userTestRepository.save(user);
         }
         for (int i = 1; i <= numberOfInstructors; i++) {
             var user = getUserByLogin(userPrefix + "instructor" + i);
             user.setGroups(Set.of(userPrefix + "instructor" + userSuffix));
-            userRepo.save(user);
+            userTestRepository.save(user);
         }
     }
 }

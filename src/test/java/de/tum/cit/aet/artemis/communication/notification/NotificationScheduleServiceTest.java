@@ -21,7 +21,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.NotificationSetting;
 import de.tum.cit.aet.artemis.communication.repository.NotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.NotificationSettingRepository;
@@ -54,7 +54,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
     private NotificationSettingRepository notificationSettingRepository;
 
     @Autowired
-    private ResultRepository resultRepository;
+    private ResultTestRepository resultRepository;
 
     @Autowired
     private UserUtilService userUtilService;

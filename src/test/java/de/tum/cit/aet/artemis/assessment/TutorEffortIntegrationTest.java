@@ -18,7 +18,7 @@ import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepositor
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -33,7 +33,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
     private TextSubmissionTestRepository textSubmissionTestRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
@@ -60,7 +60,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         textSubmission = textSubmissionTestRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
         var instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor");
         instructor.setGroups(Set.of(course.getInstructorGroupName()));
-        userRepository.save(instructor);
+        userTestRepository.save(instructor);
     }
 
     /**

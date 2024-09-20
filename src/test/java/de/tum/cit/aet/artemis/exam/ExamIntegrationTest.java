@@ -77,7 +77,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
@@ -88,9 +88,9 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizGroup;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
 import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
-import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPoolRepository;
 import de.tum.cit.aet.artemis.quiz.service.QuizPoolService;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
 import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -104,7 +104,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     private static final String TEST_PREFIX = "examint";
 
     @Autowired
-    private QuizExerciseRepository quizExerciseRepository;
+    private QuizExerciseTestRepository quizExerciseRepository;
 
     @Autowired
     private ExamRepository examRepository;
@@ -122,7 +122,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     private StudentExamTestRepository studentExamRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private SubmissionTestRepository submissionRepository;
@@ -200,7 +200,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
         User instructor10 = userUtilService.getUserByLogin(TEST_PREFIX + "instructor10");
         instructor10.setGroups(Set.of(course10.getInstructorGroupName()));
-        userRepository.save(instructor10);
+        userTestRepository.save(instructor10);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
         participantScoreScheduleService.activate();

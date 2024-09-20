@@ -27,13 +27,13 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestC
 import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.programming.localvcci.AbstractLocalCILocalVCIntegrationTest;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.TestwiseCoverageReportEntryRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.behavioral.BehavioralTestCaseService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 
@@ -50,7 +50,7 @@ class BehavioralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
     private HestiaUtilTestService hestiaUtilTestService;
 
     @Autowired
-    private ProgrammingExerciseTestCaseRepository testCaseRepository;
+    private ProgrammingExerciseTestCaseTestRepository testCaseRepository;
 
     @Autowired
     private ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;

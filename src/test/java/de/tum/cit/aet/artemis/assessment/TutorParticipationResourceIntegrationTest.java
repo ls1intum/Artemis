@@ -12,7 +12,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
 import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -28,7 +28,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     private TutorParticipationTestRepository tutorParticipationRepository;
 
     @Autowired
-    private ExampleSubmissionRepository exampleSubmissionRepository;
+    private ExampleSubmissionTestRepository exampleSubmissionRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;

@@ -55,15 +55,15 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.service.export.DataExportCreationService;
+import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -116,13 +116,13 @@ class DataExportCreationServiceTest extends AbstractSpringIntegrationJenkinsGitl
     private ExamRepository examRepository;
 
     @Autowired
-    private StudentExamRepository studentExamRepository;
+    private StudentExamTestRepository studentExamRepository;
 
     @Autowired
     private ExerciseRepository exerciseRepository;
 
     @Autowired
-    private DataExportRepository dataExportRepository;
+    private DataExportTestRepository dataExportRepository;
 
     @Autowired
     private DataExportCreationService dataExportCreationService;

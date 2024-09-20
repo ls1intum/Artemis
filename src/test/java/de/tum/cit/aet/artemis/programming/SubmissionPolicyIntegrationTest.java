@@ -30,9 +30,9 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseGradingService;
 import de.tum.cit.aet.artemis.programming.service.ci.notification.dto.CommitDTO;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
@@ -42,7 +42,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
     private static final String TEST_PREFIX = "submissionpolicyintegration";
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     private ProgrammingExerciseGradingService gradingService;
@@ -245,7 +245,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, "commit2");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, "commit3");
         gitlabRequestMockProvider.enableMockingOfRequests();
-        mockRepositoryWritePermissionsForStudent(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2"), programmingExercise, HttpStatus.OK);
+        mockRepositoryWritePermissionsForStudent(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2"), programmingExercise, HttpStatus.OK);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy(), HttpStatus.OK);
     }
 
@@ -261,7 +261,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(25.0), participation2, TEST_PREFIX + "commit2");
         programmingExerciseUtilService.addProgrammingSubmissionToResultAndParticipation(new Result().score(30.0), participation2, TEST_PREFIX + "commit3");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-" + TEST_PREFIX + "student2";
-        User student2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
+        User student2 = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student2");
         gitlabRequestMockProvider.enableMockingOfRequests();
         mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student2));
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy(), HttpStatus.OK);
@@ -506,7 +506,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationJenkinsGi
     }
 
     private void mockGitlabRequests(ProgrammingExerciseParticipation participation) throws Exception {
-        User student = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
+        User student = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "student1");
         gitlabRequestMockProvider.enableMockingOfRequests();
         mockSetRepositoryPermissionsToReadOnly(participation.getVcsRepositoryUri(), programmingExercise.getProjectKey(), Set.of(student));
     }

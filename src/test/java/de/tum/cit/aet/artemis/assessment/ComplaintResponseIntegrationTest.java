@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -45,7 +45,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     private ParticipationService participationService;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private ComplaintRepository complaintRepository;
@@ -70,7 +70,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         textExercise = exerciseRepository.saveAndFlush(textExercise);
 
         // creating participation of student1 by starting the exercise
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         StudentParticipation studentParticipation = participationService.startExercise(textExercise, student1, false);
         // creating submission of student1
         TextSubmission submission = new TextSubmission();
@@ -81,7 +81,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
         submission.text("hello world");
         submission = submissionRepository.saveAndFlush(submission);
         // creating assessment by tutor1
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         Result result = ParticipationFactory.generateResult(true, 50D);
         result.setAssessor(tutor1);
         result.setHasComplaint(true);
@@ -535,7 +535,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationIndepend
     private ComplaintResponse createLockOnComplaint(String lockOwnerLogin, boolean runOut) {
         ComplaintResponse complaintResponse = new ComplaintResponse();
         complaintResponse.setComplaint(complaint);
-        User tutor = userRepository.findOneByLogin(lockOwnerLogin).orElseThrow();
+        User tutor = userTestRepository.findOneByLogin(lockOwnerLogin).orElseThrow();
         complaintResponse.setReviewer(tutor);
         complaintResponse = complaintResponseTestRepository.saveAndFlush(complaintResponse);
 

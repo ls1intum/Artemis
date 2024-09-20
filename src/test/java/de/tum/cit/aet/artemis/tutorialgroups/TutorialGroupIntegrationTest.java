@@ -32,7 +32,7 @@ import com.google.common.collect.ImmutableSet;
 
 import de.tum.cit.aet.artemis.communication.domain.DisplayPriority;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -53,7 +53,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     private ConversationUtilService conversationUtilService;
 
     @Autowired
-    private PostRepository postRepository;
+    private PostTestRepository postRepository;
 
     private User instructor1;
 

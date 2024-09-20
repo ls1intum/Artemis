@@ -24,7 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
-import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
@@ -40,8 +40,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -66,10 +66,10 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ExamRepository examRepository;
 
     @Autowired
-    private ParticipationRepository participationRepository;
+    private ParticipationTestRepository participationRepository;
 
     @Autowired
-    private TutorParticipationRepository tutorParticipationRepo;
+    private TutorParticipationTestRepository tutorParticipationRepo;
 
     @Autowired
     private ExerciseService exerciseService;
@@ -164,7 +164,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
                 .isThrownBy(() -> exerciseService.findOneWithDetailsForStudents(Long.MAX_VALUE, userUtilService.getUserByLogin(TEST_PREFIX + "student1")));
         var course = courseUtilService.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, NUMBER_OF_TUTORS).getFirst(); // the course with exercises
         var exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
-        var student = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
+        var student = userTestRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(Set.of(), student)).isEmpty();
         var exercise = exercises.iterator().next();
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
@@ -172,7 +172,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).hasSize(exercises.size() - 1);
 
-        var tutor = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "tutor1");
+        var tutor = userTestRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "tutor1");
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), tutor)).hasSize(exercises.size());
 
         course.setOnlineCourse(true);
@@ -618,7 +618,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private List<User> findTutors(Course course) {
         List<User> tutors = new ArrayList<>();
-        Page<User> allUsers = userRepository.findAllWithGroupsByIsDeletedIsFalse(Pageable.unpaged());
+        Page<User> allUsers = userTestRepository.findAllWithGroupsByIsDeletedIsFalse(Pageable.unpaged());
         for (User user : allUsers) {
             if (user.getGroups().contains(course.getTeachingAssistantGroupName())) {
                 tutors.add(user);

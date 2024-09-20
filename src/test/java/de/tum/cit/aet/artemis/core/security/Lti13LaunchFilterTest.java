@@ -48,8 +48,8 @@ import de.tum.cit.aet.artemis.core.exception.LtiEmailAlreadyInUseException;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.config.Lti13LaunchFilter;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
-import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
+import de.tum.cit.aet.artemis.lti.test_repository.LtiPlatformConfigurationTestRepository;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcAuthenticationToken;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
@@ -84,7 +84,7 @@ class Lti13LaunchFilterTest {
     private OidcIdToken idToken;
 
     @Mock
-    private LtiPlatformConfigurationRepository ltiPlatformConfigurationRepository;
+    private LtiPlatformConfigurationTestRepository ltiPlatformConfigurationRepository;
 
     private Lti13LaunchFilter launchFilter;
 

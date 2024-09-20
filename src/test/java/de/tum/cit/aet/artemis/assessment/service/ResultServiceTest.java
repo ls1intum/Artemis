@@ -26,8 +26,8 @@ import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilServi
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseStudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -36,7 +36,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     private static final String TEST_PREFIX = "resultservice";
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     private ExamRepository examRepository;
@@ -45,7 +45,7 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
     private ResultService resultService;
 
     @Autowired
-    private ProgrammingExerciseStudentParticipationRepository participationRepository;
+    private ProgrammingExerciseStudentParticipationTestRepository participationRepository;
 
     @Autowired
     private UserUtilService userUtilService;

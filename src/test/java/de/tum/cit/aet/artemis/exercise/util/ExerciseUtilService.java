@@ -18,12 +18,12 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -39,8 +39,8 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
@@ -71,10 +71,22 @@ public class ExerciseUtilService {
     private StudentParticipationTestRepository studentParticipationRepo;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private ResultRepository resultRepo;
+    private ResultTestRepository resultRepo;
+
+    @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private AnswerPostRepository answerPostRepository;
+
+    @Autowired
+    private PostTestRepository postRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -96,18 +108,6 @@ public class ExerciseUtilService {
 
     @Autowired
     private FileUploadExerciseUtilService fileUploadExerciseUtilService;
-
-    @Autowired
-    private ChannelRepository channelRepository;
-
-    @Autowired
-    private AnswerPostRepository answerPostRepository;
-
-    @Autowired
-    private PostRepository postRepository;
-
-    @Autowired
-    private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
     private ConversationUtilService conversationUtilService;

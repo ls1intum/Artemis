@@ -17,8 +17,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -107,10 +107,10 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
 
         // We need our own courseService here that overshadows the one from the CourseServiceTest, so that the new property is applied to it.
         @Autowired
-        private CourseRepository courseRepository;
+        private CourseTestRepository courseRepository;
 
         @Autowired
-        private UserRepository userRepository;
+        private UserTestRepository userRepository;
 
         private User student1;
 
@@ -208,7 +208,7 @@ class AuthorizationCheckServiceTest extends AbstractSpringIntegrationJenkinsGitl
         private AuthorizationCheckService authCheckService;
 
         @Autowired
-        private CourseRepository courseRepository;
+        private CourseTestRepository courseRepository;
 
         private User student;
 

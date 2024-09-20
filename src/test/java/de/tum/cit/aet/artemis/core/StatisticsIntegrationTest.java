@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.assessment.util.GradingScaleFactory;
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.GraphType;
 import de.tum.cit.aet.artemis.core.domain.SpanType;
@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseManagementStatisticsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
@@ -53,7 +53,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    private PostRepository postRepository;
+    private PostTestRepository postRepository;
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
@@ -65,7 +65,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
     private GradingScaleRepository gradingScaleRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -199,8 +199,8 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
         var laterTextExerciseId = laterTextExercise.getId();
         var earlierTextExerciseId = earlierTextExercise.getId();
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
         // Creating result for student1 and student2 for the later exercise
         participationUtilService.createParticipationSubmissionAndResult(laterTextExerciseId, student1, 10.0, 0.0, 50, true);
@@ -247,8 +247,8 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
 
         var firstTextExerciseId = textExercise.getId();
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
-        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
         // Creating result for student1 and student2 for firstExercise
         participationUtilService.createParticipationSubmissionAndResult(firstTextExerciseId, student1, 10.0, 0.0, 50, true);
@@ -280,7 +280,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
         assertThat(result.maxPointsOfExercise()).isEqualTo(10);
         assertThat(result.numberOfExerciseScores()).isEqualTo(2);
         assertThat(result.numberOfParticipations()).isEqualTo(2);
-        assertThat(result.numberOfStudentsOrTeamsInCourse()).isEqualTo(userRepository.countUserInGroup(course.getStudentGroupName()));
+        assertThat(result.numberOfStudentsOrTeamsInCourse()).isEqualTo(userTestRepository.countUserInGroup(course.getStudentGroupName()));
         assertThat(result.numberOfPosts()).isEqualTo(1);
         assertThat(result.numberOfResolvedPosts()).isEqualTo(1);
         var expectedScoresResult = new int[10];

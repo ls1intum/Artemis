@@ -26,9 +26,9 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.repository.AuthorityRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -45,7 +45,7 @@ class LdapAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCI
     protected ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
-    protected UserRepository userRepository;
+    protected UserTestRepository userRepository;
 
     @Autowired
     protected AuthorityRepository authorityRepository;

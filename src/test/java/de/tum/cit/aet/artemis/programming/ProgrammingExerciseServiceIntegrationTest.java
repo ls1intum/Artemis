@@ -27,9 +27,9 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ExerciseHint;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -47,7 +47,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     private ExerciseIntegrationTestService exerciseIntegrationTestService;

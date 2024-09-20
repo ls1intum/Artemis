@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -44,7 +44,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
-    private PostRepository postRepository;
+    private PostTestRepository postRepository;
 
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
@@ -276,7 +276,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private void addPost() {
         Post post = new Post();
-        post.setAuthor(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
+        post.setAuthor(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
         post.setTitle("Title Plagiarism Case Post");
         post.setContent("Content Plagiarism Case Post");
         post.setVisibleForStudents(true);

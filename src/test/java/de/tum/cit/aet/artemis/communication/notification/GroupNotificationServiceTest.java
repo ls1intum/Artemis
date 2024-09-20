@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.communication.repository.NotificationSettingReposi
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -92,7 +92,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
     private GroupNotificationScheduleService groupNotificationScheduleService;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Autowired
     private CourseUtilService courseUtilService;

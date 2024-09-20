@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -41,7 +41,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
     protected ExamRepository examRepository;
 
     @Autowired
-    protected StudentExamRepository studentExamRepository;
+    protected StudentExamTestRepository studentExamRepository;
 
     @Autowired
     protected UserUtilService userUtilService;
@@ -129,7 +129,7 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
         instructor2 = users.stream().filter(user -> instructor2Login.equals(user.getLogin())).findFirst().orElseThrow();
         // Remove instructor2 from the instructor group of the course.
         instructor2.setGroups(Set.of());
-        userRepository.save(instructor2);
+        userTestRepository.save(instructor2);
 
         course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);

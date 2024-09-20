@@ -42,7 +42,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -60,7 +60,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     private static final String TEST_PREFIX = "assessmentcomplaintintegration";
 
     @Autowired
-    private SubmissionRepository submissionRepo;
+    private SubmissionTestRepository submissionRepo;
 
     @Autowired
     private ComplaintRepository complaintRepo;

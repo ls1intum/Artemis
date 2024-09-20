@@ -30,8 +30,8 @@ import de.tum.cit.aet.artemis.core.domain.DataExport;
 import de.tum.cit.aet.artemis.core.domain.DataExportState;
 import de.tum.cit.aet.artemis.core.dto.DataExportDTO;
 import de.tum.cit.aet.artemis.core.dto.RequestDataExportDTO;
-import de.tum.cit.aet.artemis.core.repository.DataExportRepository;
 import de.tum.cit.aet.artemis.core.service.export.DataExportService;
+import de.tum.cit.aet.artemis.core.test_repository.DataExportTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,7 +42,7 @@ class DataExportResourceIntegrationTest extends AbstractSpringIntegrationIndepen
     private static final String TEST_DATA_EXPORT_BASE_FILE_PATH = "src/test/resources/test-data/data-export/data-export.zip";
 
     @Autowired
-    private DataExportRepository dataExportRepository;
+    private DataExportTestRepository dataExportRepository;
 
     @Autowired
     private DataExportService dataExportService;

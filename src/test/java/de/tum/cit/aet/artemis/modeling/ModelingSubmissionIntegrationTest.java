@@ -22,7 +22,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
@@ -41,9 +41,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -69,7 +69,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     private TeamRepository teamRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private ModelingSubmissionTestRepository modelingSubmissionRepo;
@@ -84,7 +84,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     private ExamRepository examRepository;
 
     @Autowired
-    private StudentExamRepository studentExamRepository;
+    private StudentExamTestRepository studentExamRepository;
 
     @Autowired
     private CompassService compassService;
@@ -96,7 +96,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
-    private PostRepository postRepository;
+    private PostTestRepository postRepository;
 
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
@@ -275,8 +275,8 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         team.setName("Team");
         team.setShortName(TEST_PREFIX + "team");
         team.setExercise(useCaseExercise);
-        team.addStudents(userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
-        team.addStudents(userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
         teamRepository.save(useCaseExercise, team);
 
         participationUtilService.addTeamParticipationForExercise(useCaseExercise, team.getId());
@@ -465,7 +465,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
         plagiarismCase.setExercise(classExercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         Post post = new Post();
-        post.setAuthor(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
+        post.setAuthor(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
         post.setTitle("Title Plagiarism Case Post");
         post.setContent("Content Plagiarism Case Post");
         post.setVisibleForStudents(true);

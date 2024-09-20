@@ -34,9 +34,9 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -54,7 +54,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
     private Long idOfStudent1;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private StudentScoreRepository studentScoreRepository;
@@ -94,7 +94,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
 
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         idOfStudent1 = student1.getId();
         // creating course
         Course course = courseUtilService.createCourse();
@@ -102,7 +102,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = textExerciseUtilService.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfTeamTextExercise = teamExercise.getId();
-        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User tutor1 = userTestRepository.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
         idOfTeam1 = teamUtilService.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
     }
 
@@ -406,7 +406,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             idOfExercise = idOfTeamTextExercise;
         }
         else {
-            participant = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            participant = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             idOfExercise = idOfIndividualTextExercise;
         }
 
@@ -443,7 +443,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
             idOfExercise = idOfTeamTextExercise;
         }
         else {
-            participant = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+            participant = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
             idOfExercise = idOfIndividualTextExercise;
         }
 

@@ -20,7 +20,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -34,9 +34,9 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
@@ -62,7 +62,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private SubmissionVersionRepository submissionVersionRepository;
 
     @Autowired
-    private StudentParticipationRepository participationRepository;
+    private StudentParticipationTestRepository participationRepository;
 
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
@@ -74,7 +74,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
     private PlagiarismCaseRepository plagiarismCaseRepository;
 
     @Autowired
-    private PostRepository postRepository;
+    private PostTestRepository postRepository;
 
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
@@ -155,7 +155,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         plagiarismCase.setExercise(finishedTextExercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         Post post = new Post();
-        post.setAuthor(userRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
+        post.setAuthor(userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "instructor1"));
         post.setTitle("Title Plagiarism Case Post");
         post.setContent("Content Plagiarism Case Post");
         post.setVisibleForStudents(true);
@@ -361,8 +361,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationIndependent
         team.setName("Team");
         team.setShortName("team");
         team.setExercise(releasedTextExercise);
-        team.addStudents(userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
-        team.addStudents(userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        team.addStudents(userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow());
         teamRepository.save(releasedTextExercise, team);
 
         StudentParticipation participation = participationUtilService.addTeamParticipationForExercise(releasedTextExercise, team.getId());

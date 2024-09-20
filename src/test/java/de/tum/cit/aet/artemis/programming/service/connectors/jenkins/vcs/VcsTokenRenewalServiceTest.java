@@ -23,7 +23,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mockito;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsTokenManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsTokenRenewalService;
 
@@ -31,12 +31,12 @@ class VcsTokenRenewalServiceTest {
 
     private VcsTokenManagementService vcsTokenManagementService;
 
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @BeforeEach
     void setUp() {
         vcsTokenManagementService = Mockito.mock(VcsTokenManagementService.class);
-        userRepository = Mockito.mock(UserRepository.class);
+        userRepository = Mockito.mock(UserTestRepository.class);
     }
 
     @AfterEach

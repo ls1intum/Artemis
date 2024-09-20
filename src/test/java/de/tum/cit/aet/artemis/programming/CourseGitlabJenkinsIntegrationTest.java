@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseTestService;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
@@ -36,7 +36,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     private CourseTestService courseTestService;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -225,15 +225,15 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         // Create editor in the course
         User user = userUtilService.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-editor-group"));
-        userRepository.save(user);
+        userTestRepository.save(user);
 
         user = userUtilService.createAndSaveUser("new-ta");
         user.setGroups(Set.of("new-ta-group"));
-        userRepository.save(user);
+        userTestRepository.save(user);
 
         user = userUtilService.createAndSaveUser("new-instructor");
         user.setGroups(Set.of("new-instructor-group"));
-        userRepository.save(user);
+        userTestRepository.save(user);
 
         gitlabRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTaGroup);
         jenkinsRequestMockProvider.mockUpdateCoursePermissions(course, oldInstructorGroup, course.getEditorGroupName(), course.getTeachingAssistantGroupName(), false, false);
@@ -254,7 +254,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         // Create editor in the course
         User user = userUtilService.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
-        user = userRepository.save(user);
+        user = userTestRepository.save(user);
 
         gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, true);
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
@@ -269,7 +269,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         // Create editor in the course
         User user = userUtilService.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
-        user = userRepository.save(user);
+        user = userTestRepository.save(user);
 
         gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
         request.performMvcRequest(courseTestService.buildUpdateCourse(course.getId(), course)).andExpect(status().isInternalServerError()).andReturn();
@@ -287,7 +287,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         var exercise = courseExercise.stream().findFirst();
         assertThat(exercise).isPresent();
 
-        var user = userRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
+        var user = userTestRepository.findAllWithGroupsAndAuthoritiesByIsDeletedIsFalseAndGroupsContains(course.getTeachingAssistantGroupName()).stream().findFirst();
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToUpdateOldGroupMembers(exercise.get(), user.get());
@@ -301,13 +301,13 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
      * @param groups    the groups to change
      */
     private void changeUserGroup(String userLogin, Set<String> groups) {
-        Optional<User> user = userRepository.findOneWithGroupsByLogin(userLogin);
+        Optional<User> user = userTestRepository.findOneWithGroupsByLogin(userLogin);
         assertThat(user).isPresent();
 
         User updatedUser = user.get();
         updatedUser.setGroups(groups);
 
-        userRepository.save(updatedUser);
+        userTestRepository.save(updatedUser);
     }
 
     @Test
@@ -316,7 +316,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         course.setInstructorGroupName("new-instructor-group");
 
-        Optional<User> user = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
+        Optional<User> user = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
         assertThat(user).isPresent();
 
         gitlabRequestMockProvider.mockFailToGetUserWhenUpdatingOldMembers(user.get());
@@ -329,7 +329,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
         course.setInstructorGroupName("new-instructor-group");
 
-        Optional<User> user = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
+        Optional<User> user = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "instructor1");
         assertThat(user).isPresent();
 
         var exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).stream().findFirst();
@@ -571,7 +571,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         course = courseRepository.save(course);
         programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
 
-        Optional<User> optionalTutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1");
+        Optional<User> optionalTutor = userTestRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1");
         assertThat(optionalTutor).isPresent();
 
         String tutorGroup = course.getTeachingAssistantGroupName();

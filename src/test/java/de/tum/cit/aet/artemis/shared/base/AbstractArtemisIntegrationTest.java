@@ -183,7 +183,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ExerciseUtilService exerciseUtilService;
 
     @Autowired
-    protected UserTestRepository userRepository;
+    protected UserTestRepository userTestRepository;
 
     @Autowired
     protected ExerciseRepository exerciseRepository;

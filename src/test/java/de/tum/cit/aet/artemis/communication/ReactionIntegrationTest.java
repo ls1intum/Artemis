@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.PostSortCriterion;
 import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.communication.repository.ConversationMessageRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ReactionTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -45,7 +45,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     private ReactionTestRepository reactionRepository;
 
     @Autowired
-    private PostRepository postRepository;
+    private PostTestRepository postRepository;
 
     @Autowired
     private ConversationMessageRepository conversationMessageRepository;
@@ -511,7 +511,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         reaction.setEmojiId("smiley");
         reaction.setPost(postReactedOn);
         Reaction savedReaction = reactionRepository.save(reaction);
-        User user = userRepository.getUserWithGroupsAndAuthorities(userPrefix + "student2");
+        User user = userTestRepository.getUserWithGroupsAndAuthorities(userPrefix + "student2");
         savedReaction.setUser(user);
         reactionRepository.save(savedReaction);
         return savedReaction;
