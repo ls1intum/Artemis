@@ -1,5 +1,5 @@
 import { Component, Inject, OnDestroy, OnInit, Renderer2 } from '@angular/core';
-import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
@@ -8,6 +8,7 @@ import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { LtiService } from 'app/shared/service/lti.service';
 
 @Component({
     selector: 'jhi-main',
@@ -27,7 +28,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     isTestServer: boolean = false;
     isExamStarted: boolean = false;
     isTestRunExam: boolean = false;
-    isLti: boolean = true;
+    isLti: boolean = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -40,6 +41,8 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         @Inject(DOCUMENT)
         private document: Document,
         private renderer: Renderer2,
+        private route: ActivatedRoute,
+        private ltiService: LtiService,
     ) {
         this.setupErrorHandling().then(undefined);
         this.setupAnalytics().then(undefined);
@@ -112,13 +115,15 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isTestRunExam = isStarted;
         });
 
+        //this.isLti = this.route.snapshot.queryParamMap.get('lti') === 'true';
         this.checkLtiParameter();
+
         this.themeService.initialize();
     }
 
     private checkLtiParameter() {
-        const urlTree = this.router.parseUrl(this.router.url);
-        this.isLti = urlTree.queryParams['lti'] === 'true';
+        this.isLti = this.route.snapshot.queryParamMap.get('lti') === 'true';
+        this.ltiService.setLti(this.isLti);
     }
 
     /**
