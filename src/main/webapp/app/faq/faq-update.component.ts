@@ -62,9 +62,7 @@ export class FAQUpdateComponent implements OnInit {
                 this.faq.course = course;
                 this.loadCourseFaqCategories(course.id);
             }
-            if (faq.categories) {
-                this.faqCategories = faq.categories;
-            }
+            this.faqCategories = faq?.categories ? faq.categories : [];
         });
     }
 

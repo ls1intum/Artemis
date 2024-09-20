@@ -135,5 +135,40 @@ describe('Faq Service', () => {
             req.flush(returnedFromService);
             expect(expectedResult.body).toEqual(expected);
         });
+
+        it('should set add active filter correctly', async () => {
+            let activeFilters = new Set<string>();
+            activeFilters = service.toggleFilter('category1', activeFilters);
+
+            expect(activeFilters).toContain('category1');
+            expect(activeFilters.size).toBe(1);
+        });
+
+        it('should remove active filter correctly', async () => {
+            let activeFilters = new Set<string>();
+            activeFilters.add('category1');
+            activeFilters = service.toggleFilter('category1', activeFilters);
+
+            expect(activeFilters).not.toContain('category1');
+            expect(activeFilters.size).toBe(0);
+        });
+
+        it('should apply faqFilter  correctly', async () => {
+            const activeFilters = new Set<string>();
+            activeFilters.add('test');
+            const faq1 = new FAQ();
+            faq1.categories = [new FAQCategory('test', 'red'), new FAQCategory('test2', 'blue')];
+
+            const faq11 = new FAQ();
+            faq11.categories = [new FAQCategory('test', 'red'), new FAQCategory('test2', 'blue')];
+
+            const faq2 = new FAQ();
+            faq2.categories = [new FAQCategory('testing', 'red'), new FAQCategory('test2', 'blue')];
+            let filteredFaq = [faq1, faq11, faq2];
+            filteredFaq = service.applyFilters(activeFilters, filteredFaq);
+
+            expect(filteredFaq).toBeArrayOfSize(2);
+            expect(filteredFaq).toContainAllValues([faq1, faq11]);
+        });
     });
 });

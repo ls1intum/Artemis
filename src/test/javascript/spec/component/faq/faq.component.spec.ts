@@ -88,6 +88,9 @@ describe('FaqComponent', () => {
                             }),
                         );
                     },
+                    applyFilters: () => {
+                        return [faq2, faq3];
+                    },
                 }),
             ],
         }).compileComponents();
@@ -106,6 +109,16 @@ describe('FaqComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should fetch faqs when initialized', () => {
+        const findAllSpy = jest.spyOn(faqService, 'findAllByCourseId');
+
+        faqComponentFixture.detectChanges();
+        //is actually called when debugging, i dont get why it is 0. Need help
+        expect(findAllSpy).toHaveBeenCalledOnce();
+        expect(findAllSpy).toHaveBeenCalledWith(1);
+        expect(faqComponent.faqs).toBeArrayOfSize(3);
+    });
+
     it('should delete faq', () => {
         const deleteSpy = jest.spyOn(faqService, 'delete');
 
@@ -116,13 +129,6 @@ describe('FaqComponent', () => {
         expect(deleteSpy).toHaveBeenCalledWith(faq1.id!);
         expect(faqComponent.faqs).toBeArrayOfSize(2);
         expect(faqComponent.faqs).not.toContain(faq1);
-        expect(faqComponent.filteredFaqs).toEqual(faqComponent.faqs);
-    });
-
-    it('should filter for faqs lectures', () => {
-        faqComponentFixture.detectChanges();
-        faqComponent.toggleFilters('category1');
-        expect(faqComponent.filteredFaqs).toBeArrayOfSize(1);
-        expect(faqComponent.filteredFaqs).toContainAllValues([faq1]);
+        expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs);
     });
 });
