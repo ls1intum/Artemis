@@ -168,8 +168,12 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
 
             @Override
             public void check(JavaMethod javaMethod, ConditionEvents conditionEvents) {
-                Set<JavaMethodCall> calls = javaMethod.getCallsOfSelf();
-                Set<JavaMethodCall> productionCalls = calls.stream().filter(call -> productionClasses.contain(call.getOriginOwner().getName())).collect(Collectors.toSet());
+                var calls = javaMethod.getAccessesToSelf();
+                if (calls.isEmpty()) {
+                    return;
+                }
+
+                var productionCalls = calls.stream().filter(call -> productionClasses.contain(call.getOriginOwner().getName())).collect(Collectors.toSet());
                 if (productionCalls.isEmpty()) {
                     conditionEvents.add(SimpleConditionEvent.violated(javaMethod, "Method " + javaMethod.getFullName() + " is not used in production code"));
                 }
