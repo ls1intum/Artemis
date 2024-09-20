@@ -43,6 +43,8 @@ import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-st
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { By } from '@angular/platform-browser';
+import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 describe('TextEditorComponent', () => {
     let comp: TextEditorComponent;
@@ -51,6 +53,7 @@ describe('TextEditorComponent', () => {
     let textService: TextEditorService;
     let textSubmissionService: TextSubmissionService;
     let getTextForParticipationStub: jest.SpyInstance;
+    let courseExerciseService: CourseExerciseService;
 
     const route = { snapshot: { paramMap: convertToParamMap({ participationId: 42 }) } } as ActivatedRoute;
     const textExercise = { id: 1 } as TextExercise;
@@ -93,6 +96,7 @@ describe('TextEditorComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TextSubmissionService, useClass: MockTextSubmissionService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
             ],
         })
             .compileComponents()
@@ -103,6 +107,7 @@ describe('TextEditorComponent', () => {
                 textService = debugElement.injector.get(TextEditorService);
                 textSubmissionService = TestBed.inject(TextSubmissionService);
                 getTextForParticipationStub = jest.spyOn(textService, 'get');
+                courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
             });
     });
 
@@ -256,6 +261,34 @@ describe('TextEditorComponent', () => {
         comp.submit();
         expect(textSubmissionService.update).toHaveBeenCalledOnce();
         expect(comp.isSaving).toBeFalsy();
+    });
+
+    it('should alert successful on submit if not isAllowedToSubmitAfterDueDate', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'success');
+        comp.participation = { id: 1 };
+        comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
+        comp.textExercise = { id: 1 } as TextExercise;
+        comp.answer = 'abc';
+        comp.isAllowedToSubmitAfterDueDate = false;
+        jest.spyOn(textSubmissionService, 'update');
+        comp.submit();
+        expect(textSubmissionService.update).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should warn alert on submit if submitDueDateMissedAlert', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        comp.participation = { id: 1 };
+        comp.submission = { id: 1, participation: { id: 1 } as Participation } as TextSubmission;
+        comp.textExercise = { id: 1 } as TextExercise;
+        comp.answer = 'abc';
+        comp.isAllowedToSubmitAfterDueDate = true;
+        jest.spyOn(textSubmissionService, 'update');
+        comp.submit();
+        expect(textSubmissionService.update).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should return submission for answer', () => {
@@ -481,6 +514,22 @@ describe('TextEditorComponent', () => {
         fixture.detectChanges();
         const resultHistoryElement: DebugElement = fixture.debugElement.query(By.css('#request-feedback'));
         expect(resultHistoryElement).toBeTruthy();
+    });
+
+    it('should not call courseExerciseService.requestFeedback if assureConditionsSatisfied returns false', () => {
+        jest.spyOn(comp, 'assureConditionsSatisfied').mockReturnValue(false);
+        const courseExerciseServiceSpy = jest.spyOn(courseExerciseService, 'requestFeedback');
+        comp.requestFeedback();
+        expect(comp.assureConditionsSatisfied).toHaveBeenCalled();
+        expect(courseExerciseServiceSpy).not.toHaveBeenCalled();
+    });
+
+    it('should call courseExerciseService.requestFeedback if assureConditionsSatisfied returns true', () => {
+        jest.spyOn(comp, 'assureConditionsSatisfied').mockReturnValue(true);
+        const courseExerciseServiceSpy = jest.spyOn(courseExerciseService, 'requestFeedback');
+        comp.requestFeedback();
+        expect(component.assureConditionsSatisfied).toHaveBeenCalled();
+        expect(courseExerciseServiceSpy).toHaveBeenCalled();
     });
 
     it('should not render the submit button when isReadOnlyWithShowResult is true', () => {
