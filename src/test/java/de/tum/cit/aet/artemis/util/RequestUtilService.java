@@ -783,7 +783,7 @@ public class RequestUtilService {
     }
 
     /**
-     * Sends a multipart put request with a mandatory json file and an optional file.
+     * Sends a multipart delete request with a mandatory json file and an optional file.
      *
      * @param path           the path to send the request to
      * @param responseType   the expected response type as class
