@@ -76,6 +76,7 @@ public class AthenaDTOConverterService {
                 return ProgrammingExerciseDTO.of(programmingExercise, artemisServerUrl);
             }
             case MODELING -> {
+                // ToDo: Modeling should use the same approach as Text and Programming
                 // Fetch grading criteria for modeling exercise
                 var gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
                 exercise.setGradingCriteria(gradingCriteria);

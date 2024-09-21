@@ -41,7 +41,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.athena.api.AthenaModuleApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -152,7 +152,7 @@ public class ProgrammingExerciseResource {
 
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    private final Optional<AthenaModuleService> athenaModuleService;
+    private final AthenaModuleApi athenaModuleApi;
 
     private final Environment environment;
 
@@ -165,8 +165,7 @@ public class ProgrammingExerciseResource {
             GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository, GitService gitService, AuxiliaryRepositoryService auxiliaryRepositoryService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService,
-            Environment environment) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, ChannelRepository channelRepository, AthenaModuleApi athenaModuleApi, Environment environment) {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -189,7 +188,7 @@ public class ProgrammingExerciseResource {
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.channelRepository = channelRepository;
-        this.athenaModuleService = athenaModuleService;
+        this.athenaModuleApi = athenaModuleApi;
         this.environment = environment;
     }
 
@@ -246,8 +245,12 @@ public class ProgrammingExerciseResource {
         programmingExerciseService.validateNewProgrammingExerciseSettings(programmingExercise, course);
 
         // Check that only allowed athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(programmingExercise, course, ENTITY_NAME),
-                () -> programmingExercise.setFeedbackSuggestionModule(null));
+        if (athenaModuleApi.isActive()) {
+            athenaModuleApi.checkOrResetModulesUsed(programmingExercise, course, ENTITY_NAME);
+        }
+        else {
+            programmingExercise.setFeedbackSuggestionModule(null);
+        }
 
         try {
             // Setup all repositories etc
@@ -340,10 +343,9 @@ public class ProgrammingExerciseResource {
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, programmingExerciseBeforeUpdate, ENTITY_NAME);
 
         // Check that only allowed Athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
-                () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
+        athenaModuleApi.checkOrResetModulesUsed(updatedProgrammingExercise, course, ENTITY_NAME);
         // Changing Athena module after the due date has passed is not allowed
-        athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME));
+        athenaModuleApi.ensureValidAthenaModuleChange(programmingExerciseBeforeUpdate, updatedProgrammingExercise, ENTITY_NAME);
 
         // Ignore changes to the default branch
         updatedProgrammingExercise.getBuildConfig().setBranch(programmingExerciseBeforeUpdate.getBuildConfig().getBranch());

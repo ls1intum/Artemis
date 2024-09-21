@@ -28,7 +28,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
-import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
+import de.tum.cit.aet.artemis.athena.api.AthenaSubmissionSelectionApi;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -115,9 +115,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             ExerciseDateService exerciseDateService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ComplaintRepository complaintRepository,
             ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ParticipationAuthorizationCheckService participationAuthCheckService,
-            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
+            FeedbackService feedbackService, SubmissionPolicyRepository submissionPolicyRepository, AthenaSubmissionSelectionApi athenaSubmissionSelectionApi) {
         super(submissionRepository, userRepository, authCheckService, resultRepository, studentParticipationRepository, participationService, feedbackRepository, examDateService,
-                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionService);
+                exerciseDateService, courseRepository, participationRepository, complaintRepository, feedbackService, athenaSubmissionSelectionApi);
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingMessagingService = programmingMessagingService;

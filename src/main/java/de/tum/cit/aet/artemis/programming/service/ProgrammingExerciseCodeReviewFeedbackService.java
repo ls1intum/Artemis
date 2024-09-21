@@ -6,7 +6,6 @@ import static java.time.ZonedDateTime.now;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
@@ -20,7 +19,7 @@ import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
-import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSuggestionsService;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
@@ -45,7 +44,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     private final GroupNotificationService groupNotificationService;
 
-    private final Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService;
+    private final AthenaFeedbackApi athenaFeedbackApi;
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
@@ -59,12 +58,11 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
-            Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService, ResultService resultService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
+    public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService, AthenaFeedbackApi athenaFeedbackApi, SubmissionService submissionService,
+            ResultService resultService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ResultRepository resultRepository,
             ProgrammingExerciseParticipationService programmingExerciseParticipationService1, ProgrammingMessagingService programmingMessagingService) {
         this.groupNotificationService = groupNotificationService;
-        this.athenaFeedbackSuggestionsService = athenaFeedbackSuggestionsService;
+        this.athenaFeedbackApi = athenaFeedbackApi;
         this.submissionService = submissionService;
         this.resultService = resultService;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -85,7 +83,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
      */
     public ProgrammingExerciseStudentParticipation handleNonGradedFeedbackRequest(Long exerciseId, ProgrammingExerciseStudentParticipation participation,
             ProgrammingExercise programmingExercise) {
-        if (this.athenaFeedbackSuggestionsService.isPresent()) {
+        if (this.athenaFeedbackApi.isActive()) {
             this.checkRateLimitOrThrow(participation);
             CompletableFuture.runAsync(() -> this.generateAutomaticNonGradedFeedback(participation, programmingExercise));
             return participation;
@@ -133,8 +131,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
             log.debug("Submission id: {}", submission.getId());
 
-            var athenaResponse = this.athenaFeedbackSuggestionsService.orElseThrow().getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission,
-                    false);
+            var athenaResponse = this.athenaFeedbackApi.getProgrammingFeedbackSuggestions(programmingExercise, (ProgrammingSubmission) submission, false);
 
             List<Feedback> feedbacks = athenaResponse.stream().filter(individualFeedbackItem -> individualFeedbackItem.filePath() != null)
                     .filter(individualFeedbackItem -> individualFeedbackItem.description() != null).map(individualFeedbackItem -> {

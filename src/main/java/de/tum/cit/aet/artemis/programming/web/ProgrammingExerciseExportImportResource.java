@@ -41,7 +41,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.athena.api.AthenaModuleApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -127,15 +127,15 @@ public class ProgrammingExerciseExportImportResource {
 
     private final ConsistencyCheckService consistencyCheckService;
 
-    private final Optional<AthenaModuleService> athenaModuleService;
+    private final AthenaModuleApi athenaModuleApi;
 
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
             ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
             AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ExamAccessService examAccessService, CourseRepository courseRepository,
-            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService,
-            Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi) {
+            ProgrammingExerciseImportFromFileService programmingExerciseImportFromFileService, ConsistencyCheckService consistencyCheckService, AthenaModuleApi athenaModuleApi,
+            CompetencyProgressApi competencyProgressApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -150,7 +150,7 @@ public class ProgrammingExerciseExportImportResource {
         this.courseRepository = courseRepository;
         this.programmingExerciseImportFromFileService = programmingExerciseImportFromFileService;
         this.consistencyCheckService = consistencyCheckService;
-        this.athenaModuleService = athenaModuleService;
+        this.athenaModuleApi = athenaModuleApi;
         this.competencyProgressApi = competencyProgressApi;
     }
 
@@ -240,7 +240,10 @@ public class ProgrammingExerciseExportImportResource {
         // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
         // If Athena is disabled and the service is not present, we also disable feedback suggestions
         try {
-            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(newExercise, course, ENTITY_NAME), () -> newExercise.setFeedbackSuggestionModule(null));
+            if (athenaModuleApi.isActive()) {
+                athenaModuleApi.checkOrResetModulesUsed(newExercise, course, ENTITY_NAME);
+                newExercise.setFeedbackSuggestionModule(null);
+            }
         }
         catch (BadRequestAlertException e) {
             newExercise.setFeedbackSuggestionModule(null);

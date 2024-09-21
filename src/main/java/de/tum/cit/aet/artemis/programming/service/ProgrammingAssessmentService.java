@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.assessment.service.AssessmentService;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintResponseService;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.assessment.web.ResultWebsocketService;
-import de.tum.cit.aet.artemis.athena.service.AthenaFeedbackSendingService;
+import de.tum.cit.aet.artemis.athena.api.AthenaFeedbackApi;
 import de.tum.cit.aet.artemis.communication.service.notifications.SingleUserNotificationService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -42,17 +42,17 @@ public class ProgrammingAssessmentService extends AssessmentService {
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
-    private final Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService;
+    private final AthenaFeedbackApi athenaFeedbackApi;
 
     public ProgrammingAssessmentService(ComplaintResponseService complaintResponseService, ComplaintRepository complaintRepository, FeedbackRepository feedbackRepository,
             ResultRepository resultRepository, StudentParticipationRepository studentParticipationRepository, ResultService resultService, SubmissionService submissionService,
             SubmissionRepository submissionRepository, ExamDateService examDateService, UserRepository userRepository, GradingCriterionRepository gradingCriterionRepository,
             Optional<LtiNewResultService> ltiNewResultService, SingleUserNotificationService singleUserNotificationService, ResultWebsocketService resultWebsocketService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, Optional<AthenaFeedbackSendingService> athenaFeedbackSendingService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, AthenaFeedbackApi athenaFeedbackApi) {
         super(complaintResponseService, complaintRepository, feedbackRepository, resultRepository, studentParticipationRepository, resultService, submissionService,
                 submissionRepository, examDateService, userRepository, ltiNewResultService, singleUserNotificationService, resultWebsocketService);
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
-        this.athenaFeedbackSendingService = athenaFeedbackSendingService;
+        this.athenaFeedbackApi = athenaFeedbackApi;
     }
 
     /**
@@ -138,11 +138,11 @@ public class ProgrammingAssessmentService extends AssessmentService {
     }
 
     /**
-     * Send feedback to Athena (if enabled for both the Artemis instance and the exercise).
+     * Send feedback to Athena (if enabled for the exercise).
      */
     private void sendFeedbackToAthena(final ProgrammingExercise exercise, final ProgrammingSubmission programmingSubmission, final List<Feedback> feedbacks) {
-        if (athenaFeedbackSendingService.isPresent() && exercise.areFeedbackSuggestionsEnabled()) {
-            athenaFeedbackSendingService.get().sendFeedback(exercise, programmingSubmission, feedbacks);
+        if (exercise.areFeedbackSuggestionsEnabled()) {
+            athenaFeedbackApi.sendFeedback(exercise, programmingSubmission, feedbacks);
         }
     }
 

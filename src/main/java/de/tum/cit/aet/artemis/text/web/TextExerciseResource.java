@@ -39,7 +39,7 @@ import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
-import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
+import de.tum.cit.aet.artemis.athena.api.AthenaModuleApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -150,7 +150,7 @@ public class TextExerciseResource {
 
     private final ChannelRepository channelRepository;
 
-    private final Optional<AthenaModuleService> athenaModuleService;
+    private final AthenaModuleApi athenaModuleApi;
 
     private final CompetencyProgressApi competencyProgressApi;
 
@@ -161,7 +161,7 @@ public class TextExerciseResource {
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, PlagiarismDetectionService plagiarismDetectionService, CourseRepository courseRepository,
-            ChannelService channelService, ChannelRepository channelRepository, Optional<AthenaModuleService> athenaModuleService, CompetencyProgressApi competencyProgressApi) {
+            ChannelService channelService, ChannelRepository channelRepository, AthenaModuleApi athenaModuleApi, CompetencyProgressApi competencyProgressApi) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -185,7 +185,7 @@ public class TextExerciseResource {
         this.courseRepository = courseRepository;
         this.channelService = channelService;
         this.channelRepository = channelRepository;
-        this.athenaModuleService = athenaModuleService;
+        this.athenaModuleApi = athenaModuleApi;
         this.competencyProgressApi = competencyProgressApi;
     }
 
@@ -219,7 +219,7 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         // Check that only allowed athena modules are used
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaModuleApi.checkOrResetModulesUsed(textExercise, course, ENTITY_NAME);
 
         TextExercise result = textExerciseRepository.save(textExercise);
 
@@ -271,9 +271,9 @@ public class TextExerciseResource {
 
         // Check that only allowed athena modules are used
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(textExerciseBeforeUpdate);
-        athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
+        athenaModuleApi.checkOrResetModulesUsed(textExercise, course, ENTITY_NAME);
         // Changing Athena module after the due date has passed is not allowed
-        athenaModuleService.ifPresent(ams -> ams.checkValidAthenaModuleChange(textExerciseBeforeUpdate, textExercise, ENTITY_NAME));
+        athenaModuleApi.ensureValidAthenaModuleChange(textExerciseBeforeUpdate, textExercise, ENTITY_NAME);
 
         channelService.updateExerciseChannel(textExerciseBeforeUpdate, textExercise);
 
@@ -512,8 +512,7 @@ public class TextExerciseResource {
         // Athena: Check that only allowed athena modules are used, if not we catch the exception and disable feedback suggestions for the imported exercise
         // If Athena is disabled and the service is not present, we also disable feedback suggestions
         try {
-            athenaModuleService.ifPresentOrElse(ams -> ams.checkHasAccessToAthenaModule(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME),
-                    () -> importedExercise.setFeedbackSuggestionModule(null));
+            athenaModuleApi.checkOrResetModulesUsed(importedExercise, importedExercise.getCourseViaExerciseGroupOrCourseMember(), ENTITY_NAME);
         }
         catch (BadRequestAlertException e) {
             importedExercise.setFeedbackSuggestionModule(null);
