@@ -90,8 +90,8 @@ describe('CourseArchiveComponent', () => {
             const emptyCourses: Course[] = [];
             const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
 
-            component.ngOnInit();
             const req = httpMock.expectOne({ method: 'GET', url: `api/courses/archive` });
+            component.ngOnInit();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             req.flush(null);
