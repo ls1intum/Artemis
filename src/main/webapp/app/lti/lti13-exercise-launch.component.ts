@@ -34,13 +34,14 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
      * perform an LTI launch with state and id_token query parameters
      */
     ngOnInit(): void {
-        this.ltiService.setLti(true);
         this.sendRequest();
     }
 
     sendRequest(): void {
         const state = this.route.snapshot.queryParamMap.get('state');
         const idToken = this.route.snapshot.queryParamMap.get('id_token');
+
+        this.ltiService.setLti(true);
 
         if (!state || !idToken) {
             console.error('Required parameter for LTI launch missing');
