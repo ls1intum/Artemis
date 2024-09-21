@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -45,16 +45,16 @@ public class LectureService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, ChannelRepository channelRepository, ChannelService channelService,
-            Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressService competencyProgressService) {
+            Optional<PyrisWebhookService> pyrisWebhookService, CompetencyProgressApi competencyProgressApi) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.channelRepository = channelRepository;
         this.channelService = channelService;
         this.pyrisWebhookService = pyrisWebhookService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -157,7 +157,7 @@ public class LectureService {
 
         if (updateCompetencyProgress) {
             lecture.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
-                    .forEach(lectureUnit -> competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnit, Optional.empty()));
+                    .forEach(lectureUnit -> competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(lectureUnit, Optional.empty()));
         }
 
         Channel lectureChannel = channelRepository.findChannelByLectureId(lecture.getId());

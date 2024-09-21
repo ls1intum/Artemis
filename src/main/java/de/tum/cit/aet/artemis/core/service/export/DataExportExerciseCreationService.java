@@ -66,7 +66,7 @@ public class DataExportExerciseCreationService {
 
     private static final String EXERCISE_PREFIX = "exercise_";
 
-    static final String CSV_FILE_EXTENSION = ".csv";
+    public static final String CSV_FILE_EXTENSION = ".csv";
 
     private final Path repoClonePath;
 

@@ -6,9 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.config.migration.MigrationEntry;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
@@ -19,14 +17,11 @@ public class MigrationEntry20240614_140000 extends MigrationEntry {
 
     private final CourseRepository courseRepository;
 
-    private final CompetencyRepository competencyRepository;
+    private final CompetencyProgressApi competencyProgressApi;
 
-    private final CompetencyProgressService competencyProgressService;
-
-    public MigrationEntry20240614_140000(CourseRepository courseRepository, CompetencyRepository competencyRepository, CompetencyProgressService competencyProgressService) {
+    public MigrationEntry20240614_140000(CourseRepository courseRepository, CompetencyProgressApi competencyProgressApi) {
         this.courseRepository = courseRepository;
-        this.competencyRepository = competencyRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     @Override
@@ -35,11 +30,7 @@ public class MigrationEntry20240614_140000 extends MigrationEntry {
 
         log.info("Updating competency progress for {} active courses", activeCourses.size());
 
-        activeCourses.forEach(course -> {
-            List<Competency> competencies = competencyRepository.findByCourseIdOrderById(course.getId());
-            // Asynchronously update the progress for each competency
-            competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
-        });
+        competencyProgressApi.updateProgressForCourse(activeCourses);
     }
 
     @Override
