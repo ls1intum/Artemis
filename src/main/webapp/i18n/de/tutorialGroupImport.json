@@ -41,7 +41,7 @@
                 "multipleregistrations": "Mehrere Registrierungen in CSV für Studierenden"
             },
             "csvFile": {
-                "label": "Wähle eine .csv-Datei aus",
+                "label": "Wähle eine CSV-Datei aus",
                 "validationFailed": "Bitte die Datei reparieren, sie wird aufgrund des folgenden Fehlers nicht als gültig angesehen: ",
                 "parseCSVButton": "CSV einlesen"
             },

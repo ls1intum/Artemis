@@ -5,10 +5,10 @@
             "dialogTitle": "Nutzer Importieren nach:",
             "introText": "Mit diesem Dialog können Nutzer importiert werden.",
             "dialogText": "Jeder Eintrag in der Datei muss einen Wert für die Matrikelnummer, den Login oder die E-Mail beinhalten.<br>Werte für Vor- und Nachnamen sind optional.",
-            "csvExampleText": "Beispiel für eine gültige CSV Datei:",
+            "csvExampleText": "Beispiel für eine gültige CSV-Datei:",
             "csvFile": {
-                "label": ".csv Datei auswählen",
-                "tooltip": "Bitte wähle die .csv Datei mit den Nutzern zum Import aus. Pro Eintrag muss entweder die 'LOGIN', 'REGISTRATION_NUMBER' oder 'E-MAIL' Spalte ausgefüllt sein. Folgendes Format muss dabei beachtet werden: Login, Matrikelnummer, E-Mail, Vorname, Nachname. Du musst diese in der obersten Spalte angeben!"
+                "label": "CSV-Datei auswählen",
+                "tooltip": "Bitte wähle die CSV-Datei mit den Nutzern zum Import aus. Pro Eintrag muss entweder die 'LOGIN', 'REGISTRATION_NUMBER' oder 'E-MAIL' Spalte ausgefüllt sein. Folgendes Format muss dabei beachtet werden: Login, Matrikelnummer, E-Mail, Vorname, Nachname. Du musst diese in der obersten Spalte angeben!"
             },
             "usersForImport": {
                 "label": "Nutzer zum Importieren",
