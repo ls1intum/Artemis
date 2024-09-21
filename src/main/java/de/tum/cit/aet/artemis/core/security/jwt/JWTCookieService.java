@@ -5,11 +5,8 @@ import static de.tum.cit.aet.artemis.core.security.jwt.JWTFilter.JWT_COOKIE_NAME
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.Collection;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -18,15 +15,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class JWTCookieService {
 
-    private static final String DEVELOPMENT_PROFILE = "dev";
-
     private final TokenProvider tokenProvider;
 
-    private final Environment environment;
-
-    public JWTCookieService(TokenProvider tokenProvider, Environment environment) {
+    public JWTCookieService(TokenProvider tokenProvider) {
         this.tokenProvider = tokenProvider;
-        this.environment = environment;
     }
 
     /**
@@ -58,10 +50,6 @@ public class JWTCookieService {
      * @return the response cookie that should be set containing the jwt
      */
     private ResponseCookie buildJWTCookie(String jwt, Duration duration) {
-
-        Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
-        boolean isSecure = !activeProfiles.contains(DEVELOPMENT_PROFILE);
-
         // TODO Add Partitioned flag for third party cookies, read: https://developer.mozilla.org/en-US/docs/Web/Privacy/Privacy_sandbox/Partitioned_cookies
         return ResponseCookie.from(JWT_COOKIE_NAME, jwt).httpOnly(true) // Must be httpOnly
                 .sameSite("None") // Must be None to allow cross-site requests to Artemis from the VS Code plugin
