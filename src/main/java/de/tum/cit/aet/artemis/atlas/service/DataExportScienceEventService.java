@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.service.export;
+package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.service.export.DataExportExerciseCreationService.CSV_FILE_EXTENSION;
@@ -38,6 +38,7 @@ public class DataExportScienceEventService {
      * @param workingDirectory the directory where the export file should be created
      * @throws IOException if the file cannot be created
      */
+    // ToDo: Refactor to use a common interface and make the science part optional
     public void createScienceEventExport(String login, Path workingDirectory) throws IOException {
         var scienceEvents = scienceEventRepository.findAllByIdentity(login);
         createScienceEventExportFile(workingDirectory, scienceEvents);
