@@ -16,7 +16,7 @@
 logging:
     level:
         ROOT: DEBUG
-        de.tum.in.www1.artemis: DEBUG
+        de.tum.cit.aet.artemis: DEBUG
         tech.jhipster: DEBUG
         liquibase: ERROR
 

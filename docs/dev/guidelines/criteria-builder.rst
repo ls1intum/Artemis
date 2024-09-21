@@ -13,7 +13,7 @@ In order to use Criteria Builder and benefit from Specifications, we need to adj
 
         @Generated(value = "org.hibernate.jpamodelgen.JPAMetaModelEntityProcessor")
         @StaticMetamodel(User.class)
-        public abstract class User_ extends de.tum.in.www1.artemis.domain.AbstractAuditingEntity_ {
+        public abstract class User_ extends de.tum.cit.aet.artemis.domain.AbstractAuditingEntity_ {
 
             public static volatile SingularAttribute<User, String> lastName;
             public static volatile SingularAttribute<User, Instant> resetDate;

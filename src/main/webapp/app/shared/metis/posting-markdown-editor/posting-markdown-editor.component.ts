@@ -18,18 +18,18 @@ import { LectureService } from 'app/lecture/lecture.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import { isCommunicationEnabled } from 'app/entities/course.model';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
-import { MonacoBoldAction } from 'app/shared/monaco-editor/model/actions/monaco-bold.action';
-import { MonacoItalicAction } from 'app/shared/monaco-editor/model/actions/monaco-italic.action';
-import { MonacoUnderlineAction } from 'app/shared/monaco-editor/model/actions/monaco-underline.action';
-import { MonacoQuoteAction } from 'app/shared/monaco-editor/model/actions/monaco-quote.action';
-import { MonacoCodeAction } from 'app/shared/monaco-editor/model/actions/monaco-code.action';
-import { MonacoCodeBlockAction } from 'app/shared/monaco-editor/model/actions/monaco-code-block.action';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { QuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MonacoChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-channel-reference.action';
-import { MonacoUserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-user-mention.action';
-import { MonacoExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-exercise-reference.action';
-import { MonacoLectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/monaco-lecture-attachment-reference.action';
+import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
+import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
+import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
+import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 
 @Component({
     selector: 'jhi-posting-markdown-editor',
@@ -52,8 +52,8 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     @Input() isInputLengthDisplayed = true;
     @Input() suppressNewlineOnEnter = true;
     @Output() valueChange = new EventEmitter();
-    lectureAttachmentReferenceAction: MonacoLectureAttachmentReferenceAction;
-    defaultActions: MonacoEditorAction[];
+    lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
+    defaultActions: TextEditorAction[];
     content?: string;
     previewMode = false;
 
@@ -72,21 +72,21 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      */
     ngOnInit(): void {
         const messagingOnlyActions = isCommunicationEnabled(this.metisService.getCourse())
-            ? [new MonacoUserMentionAction(this.courseManagementService, this.metisService), new MonacoChannelReferenceAction(this.metisService, this.channelService)]
+            ? [new UserMentionAction(this.courseManagementService, this.metisService), new ChannelReferenceAction(this.metisService, this.channelService)]
             : [];
 
         this.defaultActions = [
-            new MonacoBoldAction(),
-            new MonacoItalicAction(),
-            new MonacoUnderlineAction(),
-            new MonacoQuoteAction(),
-            new MonacoCodeAction(),
-            new MonacoCodeBlockAction(),
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new QuoteAction(),
+            new CodeAction(),
+            new CodeBlockAction(),
             ...messagingOnlyActions,
-            new MonacoExerciseReferenceAction(this.metisService),
+            new ExerciseReferenceAction(this.metisService),
         ];
 
-        this.lectureAttachmentReferenceAction = new MonacoLectureAttachmentReferenceAction(this.metisService, this.lectureService);
+        this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService);
     }
 
     ngAfterViewInit(): void {

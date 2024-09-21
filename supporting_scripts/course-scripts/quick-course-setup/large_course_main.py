@@ -7,6 +7,7 @@ from create_course import create_course
 from create_users import create_students, user_credentials
 from add_users_to_course import add_students_to_groups_of_course
 from manage_programming_exercise import create_programming_exercise, add_participation, commit, exercise_Ids
+from randomize_results_after import run_cleanup
 
 # Load configuration and constants
 config = configparser.ConfigParser()
@@ -67,6 +68,9 @@ def main() -> None:
 
             commit(user_session, participation_id, CLIENT_URL, COMMITS_PER_STUDENT)
             logging.info(f"Added commit for {username} in the programming exercise {exercise_Id} successfully")
+
+    # This is a measure in case developers forget to revert changes to programming exercise template
+    run_cleanup()
 
 if __name__ == "__main__":
     main()
