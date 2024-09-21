@@ -493,7 +493,7 @@
                 "realExam": "Exam",
                 "testExam": "Test Exam",
                 "examMode": "Mode",
-                "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students recieve automated feedback after submitting. NOTE: This cannot be changed later on!",
+                "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students receive automated feedback after submitting. NOTE: This cannot be changed later on!",
                 "startDate": "Start of working window",
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"

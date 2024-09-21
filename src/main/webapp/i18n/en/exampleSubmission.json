@@ -10,13 +10,13 @@
                 "title": "Legend",
                 "positiveScore": "Positive score",
                 "negativeScore": "Negative score",
-                "incorrectAssessment": "Incorrect assessment️",
+                "incorrectAssessment": "Incorrect assessment",
                 "feedbackWithoutScore": "Feedback without score"
             },
             "feedback": {
                 "CORRECT": "Correct assessment 👍",
                 "INCORRECT_SCORE": "Incorrect score",
-                "UNNECESSARY_FEEDBACK": "Unneccessary feedback",
+                "UNNECESSARY_FEEDBACK": "Unnecessary feedback",
                 "MISSING_GRADING_INSTRUCTION": "Missing assessment instruction",
                 "INCORRECT_GRADING_INSTRUCTION": "Incorrect assessment instruction",
                 "EMPTY_NEGATIVE_FEEDBACK": "Feedback is required for negative score"

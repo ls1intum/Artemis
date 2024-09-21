@@ -44,7 +44,7 @@
                 "resetToGradedParticipation": "Reset to graded participation",
                 "success": "Resetting repository was successful. You can start over now."
             },
-            "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will setup a separate repository for you to clone.",
+            "practiceModeTooltip": "The practice mode allows you to keep working on the exercise after the submission due date for self-practice. This will not affect your grading! Artemis will set up a separate repository for you to clone.",
             "code": "Code",
             "cloneRatedRepository": "Clone your repository for this exercise:",
             "clonePracticeRepository": "Clone your practice repository for this exercise:",
