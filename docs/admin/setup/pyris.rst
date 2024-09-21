@@ -152,7 +152,7 @@ Local Environment Setup
      - ``endpoint``: The URL to connect to the model.
      - ``api_version``: The API version to use with the model.
      - ``azure_deployment``: The deployment name of the model on Azure.
-     - ``tools``: The tools supported by the model.
+     - ``tools``: The tools supported by the model. For now, we do not provide any predefined tools, but the field is necessary for the models with tool calling capabilities.
 
      **Notes on ``gpt_version_equivalent``:**
 
@@ -188,6 +188,7 @@ Using Docker
 
 - Ensure Docker and Docker Compose are installed on your machine.
 - Clone the Pyris repository to your local machine.
+- Create the necessary configuration files as described in the previous section.
 
 **Docker Compose Files**
 
@@ -305,23 +306,6 @@ Using Docker
      - **Pyris Configuration**: Update ``application.yml`` and ``llm-config.yml``.
      - **Weaviate Configuration**: Adjust settings in ``weaviate.yml``.
      - **Nginx Configuration**: Modify Nginx settings in ``nginx.yml`` and related config files.
-
-4. **Additional Notes**
-
-   - **Accessing Services Internally**
-
-     - Within Docker, services can communicate using service names (e.g., ``pyris-app``, ``weaviate``).
-
-   - **SSL Certificates**
-
-     - Ensure SSL certificates are valid and properly secured.
-     - Update paths in the Docker Compose file if necessary.
-
-   - **Scaling**
-
-     - For increased load, consider scaling services or using orchestration tools like Kubernetes.
-
-This setup should help you run the Pyris application in both development and production environments with Docker. Ensure you modify the configuration files as per your specific requirements before deploying.
 
 Troubleshooting
 ---------------
