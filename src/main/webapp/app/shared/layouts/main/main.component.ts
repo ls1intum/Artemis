@@ -122,9 +122,12 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     }
 
     private checkLtiParameter() {
+        /*
         this.route.queryParams.subscribe((params) => {
             this.isLti = params['lti'] === 'true';
         });
+         */
+        this.isLti = window.self !== window.top;
         this.ltiService.setLti(this.isLti);
     }
 
