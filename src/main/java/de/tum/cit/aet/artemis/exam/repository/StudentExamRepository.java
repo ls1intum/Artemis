@@ -232,22 +232,13 @@ public interface StudentExamRepository extends ArtemisJpaRepository<StudentExam,
     /**
      * Return the StudentExam for the given examId and userId, if possible. For test exams, the latest Student Exam is returned.
      *
-     * @param examId   id of the exam
-     * @param userId   id of the user
-     * @param testExam boolean indicating if the exam is a test exam
+     * @param examId id of the exam
+     * @param userId id of the user
      * @return the student exam
      * @throws EntityNotFoundException if no student exams could be found
      */
-    default StudentExam findOneByExamIdAndUserIdElseThrow(long examId, long userId, boolean testExam) {
-        Optional<StudentExam> studentExam;
-        if (testExam) {
-            studentExam = this.findFirstByExamIdAndUserIdOrderByIdDesc(examId, userId);
-        }
-        else {
-            studentExam = this.findByExamIdAndUserId(examId, userId);
-        }
-
-        return getValueElseThrow(studentExam);
+    default StudentExam findOneByExamIdAndUserIdElseThrow(long examId, long userId) {
+        return getValueElseThrow(this.findFirstByExamIdAndUserIdOrderByIdDesc(examId, userId));
     }
 
     /**

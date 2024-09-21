@@ -109,17 +109,10 @@ public class ExamDateService {
         if (studentParticipation.isTestRun()) {
             return false;
         }
-
-        Optional<StudentExam> optionalStudentExam;
-        // There are multiple test exams possible for one exam, which implies that there are multiple student exams for one exam.
-        // For test exams we try to find the latest student exam
-        // For real exams we try to find the only existing student exam
-        if (exam.isTestExam()) {
-            optionalStudentExam = studentExamRepository.findFirstByExamIdAndUserIdOrderByIdDesc(exam.getId(), studentParticipation.getParticipant().getId());
-        }
-        else {
-            optionalStudentExam = studentExamRepository.findByExamIdAndUserId(exam.getId(), studentParticipation.getParticipant().getId());
-        }
+        // Students can participate in a test exam multiple times, meaning there can be multiple student exams for a single exam.
+        // For test exams, we aim to find the latest student exam.
+        // For real exams, we aim to find the only existing student exam.
+        Optional<StudentExam> optionalStudentExam = studentExamRepository.findFirstByExamIdAndUserIdOrderByIdDesc(exam.getId(), studentParticipation.getParticipant().getId());
 
         if (optionalStudentExam.isPresent()) {
             StudentExam studentExam = optionalStudentExam.get();

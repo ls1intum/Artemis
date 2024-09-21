@@ -166,22 +166,11 @@ public class ProgrammingExerciseParticipationService {
     public ProgrammingExerciseStudentParticipation findStudentParticipationByExerciseAndStudentLoginOrThrow(ProgrammingExercise exercise, String username,
             boolean withSubmissions) {
 
-        if (exercise.isTestExamExercise()) {
-            if (withSubmissions) {
-                return studentParticipationRepository.findFirstWithSubmissionsByExerciseIdAndStudentLoginOrThrow(exercise.getId(), username);
-            }
-            else {
-                return studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrThrow(exercise.getId(), username);
-            }
+        if (withSubmissions) {
+            return studentParticipationRepository.findFirstWithSubmissionsByExerciseIdAndStudentLoginOrThrow(exercise.getId(), username);
         }
         else {
-            if (withSubmissions) {
-                return studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginOrThrow(exercise.getId(), username);
-            }
-            else {
-                return studentParticipationRepository.findByExerciseIdAndStudentLoginOrThrow(exercise.getId(), username);
-            }
-
+            return studentParticipationRepository.findFirstByExerciseIdAndStudentLoginOrThrow(exercise.getId(), username);
         }
     }
 
@@ -213,21 +202,11 @@ public class ProgrammingExerciseParticipationService {
 
         Optional<ProgrammingExerciseStudentParticipation> participationOptional;
 
-        if (exercise.isTestExamExercise()) {
-            if (withSubmissions) {
-                participationOptional = studentParticipationRepository.findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
-            }
-            else {
-                participationOptional = studentParticipationRepository.findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(exercise.getId(), username, isTestRun);
-            }
+        if (withSubmissions) {
+            participationOptional = studentParticipationRepository.findFirstWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
         }
         else {
-            if (withSubmissions) {
-                participationOptional = studentParticipationRepository.findWithSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
-            }
-            else {
-                participationOptional = studentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, isTestRun);
-            }
+            participationOptional = studentParticipationRepository.findFirstByExerciseIdAndStudentLoginAndTestRunOrderByIdDesc(exercise.getId(), username, isTestRun);
         }
 
         if (participationOptional.isEmpty()) {

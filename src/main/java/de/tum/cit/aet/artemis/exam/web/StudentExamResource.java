@@ -561,9 +561,7 @@ public class StudentExamResource {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get the exam live events for exam {} by user {}", examId, currentUser.getLogin());
 
-        boolean testExam = examRepository.isTestExam(examId);
-
-        StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserIdElseThrow(examId, currentUser.getId(), testExam);
+        StudentExam studentExam = studentExamRepository.findOneByExamIdAndUserIdElseThrow(examId, currentUser.getId());
 
         if (studentExam.isTestRun()) {
             throw new BadRequestAlertException("Test runs do not have live events", ENTITY_NAME, "testRunNoLiveEvents");

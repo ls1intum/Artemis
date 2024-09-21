@@ -95,4 +95,16 @@ export class ProgrammingExamSummaryComponent implements OnInit {
             this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
         });
     }
+
+    get routerLinkForRepositoryView(): string {
+        if (this.routerLink.includes('test-exam')) {
+            // For test exams, the routerLink follows the format: /courses/{courseId}/exams/{examId}/test-exam/{studentExam}
+            // We need to remove /test-exam/{studentExam} to construct the correct repository link.
+            const parts = this.routerLink.split('/');
+            const examLink = parts.slice(0, parts.length - 2).join('/');
+            return examLink + '/exercises/' + this.exercise.id + '/repository/' + this.participation.id;
+        } else {
+            return this.routerLink + '/exercises/' + this.exercise.id + '/repository/' + this.participation.id;
+        }
+    }
 }

@@ -509,10 +509,4 @@ public interface ExamRepository extends ArtemisJpaRepository<Exam, Long> {
             """)
     Set<Exam> findActiveExams(@Param("courseIds") Set<Long> courseIds, @Param("userId") long userId, @Param("visible") ZonedDateTime visible, @Param("end") ZonedDateTime end);
 
-    @Query("""
-            SELECT e.testExam
-            FROM Exam e
-            WHERE e.id = :examId
-            """)
-    boolean isTestExam(@Param("examId") long examId);
 }
