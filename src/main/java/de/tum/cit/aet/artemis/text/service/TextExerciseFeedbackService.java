@@ -70,7 +70,7 @@ public class TextExerciseFeedbackService {
         long countOfAthenaResults = athenaResults.size();
 
         if (countOfAthenaResults >= 10) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
+            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditionsNotMet");
         }
     }
 
