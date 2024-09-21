@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.lti.services.connectors;
+package de.tum.cit.aet.artemis.lti.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -38,7 +38,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lti.config.Lti13TokenRetriever;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
-import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import uk.ac.ox.ctl.lti13.lti.Claims;
 
