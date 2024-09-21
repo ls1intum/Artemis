@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service;
+package de.tum.cit.aet.artemis.atlas.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.MIN_SCORE_GREEN;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
