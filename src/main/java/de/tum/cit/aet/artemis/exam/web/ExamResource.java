@@ -112,7 +112,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -513,7 +512,7 @@ public class ExamResource {
      */
     @GetMapping("exams/active")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Exam>> getAllActiveExams(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Exam>> getAllActiveExams(Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Page<Exam> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
