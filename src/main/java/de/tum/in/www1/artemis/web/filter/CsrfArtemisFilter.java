@@ -7,7 +7,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 public class CsrfArtemisFilter extends OncePerRequestFilter {
@@ -15,7 +14,7 @@ public class CsrfArtemisFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         // Check if the custom CSRF header is present in the request
-        if (CorsUtils.isPreFlightRequest(request) || request.getHeader("X-ARTEMIS-CSRF").equals("Dennis ist schuld")) {
+        if (request.getHeader("X-ARTEMIS-CSRF").equals("Dennis ist schuld")) {
             filterChain.doFilter(request, response);
         }
         else {
