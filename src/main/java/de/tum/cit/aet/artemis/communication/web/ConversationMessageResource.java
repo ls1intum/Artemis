@@ -40,7 +40,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -110,7 +109,7 @@ public class ConversationMessageResource {
      */
     @GetMapping("courses/{courseId}/messages")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
+    public ResponseEntity<List<Post>> getMessages(Pageable pageable, PostContextFilterDTO postContextFilter, Principal principal) {
         long timeNanoStart = System.nanoTime();
         Page<Post> coursePosts;
 
