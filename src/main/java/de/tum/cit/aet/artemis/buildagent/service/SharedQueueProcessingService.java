@@ -25,6 +25,7 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -93,9 +94,12 @@ public class SharedQueueProcessingService {
      */
     private ScheduledFuture<?> scheduledFuture;
 
-    private boolean isPaused = false;
+    private volatile boolean isPaused = false;
 
-    private boolean processResults = true;
+    private volatile boolean processResults = true;
+
+    @Value("${artemis.continuous-integration.pause-grace-period-seconds:15}")
+    private int pauseGracePeriodSeconds;
 
     public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
             BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, TaskScheduler taskScheduler) {
@@ -412,7 +416,7 @@ public class SharedQueueProcessingService {
         else {
             // Sleep for 10 seconds to allow the build jobs to be finished. If they are not finished, they will be cancelled.
             try {
-                Thread.sleep(10000);
+                Thread.sleep(pauseGracePeriodSeconds * 1000L);
             }
             catch (InterruptedException e) {
                 log.error("Error while pausing build agent", e);
@@ -443,7 +447,12 @@ public class SharedQueueProcessingService {
         log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
         this.isPaused = false;
         this.processResults = true;
+        // We remove the listener and scheduledTask first to avoid race conditions
+        this.removeListener();
         this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        if (this.scheduledFuture != null && !this.scheduledFuture.isCancelled()) {
+            this.scheduledFuture.cancel(false);
+        }
         this.scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
         checkAvailabilityAndProcessNextBuild();
         updateLocalBuildAgentInformation();
