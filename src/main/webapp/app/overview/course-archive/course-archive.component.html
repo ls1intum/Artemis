@@ -10,13 +10,13 @@
                     ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}"
                 />
             </div>
-            <div class="d-flex justfiy-content-between gap-3 align-items-center ms-1">
+            <div class="d-flex justify-content-between gap-3 align-items-center ms-1">
                 <div class="text-primary d-inline-flex">
-                    <a id="sort-test" (click)="onSort()" class="d-inline-flex align-items-center test-sort">
+                    <a id="sort-test" (click)="onSort()" class="d-inline-flex align-items-center">
                         @if (isSortAscending) {
-                            <fa-icon id="icon-test" [icon]="faArrowDownAZ" />
+                            <fa-icon id="icon-test-down" [icon]="faArrowDownAZ" />
                         } @else {
-                            <fa-icon id="icon-test" [icon]="faArrowUpAZ" />
+                            <fa-icon id="icon-test-up" [icon]="faArrowUpAZ" />
                         }
                         <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
                     </a>
@@ -32,6 +32,7 @@
                     class="d-flex justify-content-between align-items-center px-3 mb-2"
                     [ngClass]="{ 'mb-2': !(last && semesterCollapsed[semester]) }"
                     (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]"
+                    tabindex="0"
                     role="button"
                 >
                     <span class="fw-bold" jhiTranslate="{{ fullFormOfSemesterStrings[semester] }}" [translateValues]="{ param: semester.slice(2) }"></span>

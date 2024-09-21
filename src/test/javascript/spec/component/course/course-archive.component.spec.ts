@@ -19,7 +19,7 @@ import { By } from '@angular/platform-browser';
 import { CourseArchiveComponent } from 'app/overview/course-archive/course-archive.component';
 import { CourseCardHeaderComponent } from 'app/overview/course-card-header/course-card-header.component';
 
-const course1: Course = { id: 1, semester: 'WS21/22' };
+const course1: Course = { id: 1, semester: 'WS21/22', title: 'iPraktikum' };
 const course2: Course = { id: 2, semester: 'WS21/22' };
 const course3: Course = { id: 3, semester: 'SS22' };
 const course4: Course = { id: 4, semester: 'SS22' };
@@ -90,8 +90,8 @@ describe('CourseArchiveComponent', () => {
             const emptyCourses: Course[] = [];
             const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/archive` });
             component.ngOnInit();
+            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/archive` });
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             req.flush(null);
@@ -126,7 +126,7 @@ describe('CourseArchiveComponent', () => {
                 'WS23/24': [course5],
                 'WS22/23': [course7],
                 SS22: [course3, course4],
-                'WS21/22': [course1, course2],
+                'WS21/22': [course2, course1],
                 SS19: [course6],
             });
         });
@@ -168,6 +168,29 @@ describe('CourseArchiveComponent', () => {
             });
         });
 
+        it('should collapse semester groups based on the search value correctly', () => {
+            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
+            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+            component.ngOnInit();
+
+            expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
+            expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
+
+            const expandOrCollapseBasedOnSearchValueSpy = jest.spyOn(component, 'expandOrCollapseBasedOnSearchValue');
+            component.setSearchValue('iPraktikum');
+
+            expect(expandOrCollapseBasedOnSearchValueSpy).toHaveBeenCalledOnce();
+            // Every semester accordion should be collapsed except WS21/22, because iPraktikum is in semester WS21/22
+            expect(component.semesterCollapsed).toStrictEqual({
+                'WS23/24': true,
+                'WS22/23': true,
+                SS22: true,
+                'WS21/22': false,
+                SS19: true,
+            });
+        });
+
         it('should toggle sort order and update the icon accordingly', async () => {
             const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
@@ -197,8 +220,9 @@ describe('CourseArchiveComponent', () => {
             expect(component.semesters[1]).toBe('WS21/22');
             expect(component.semesters[0]).toBe('SS19');
 
-            const iconComponent = fixture.debugElement.query(By.css('#icon-test')).componentInstance;
+            const iconComponent = fixture.debugElement.query(By.css('#icon-test-up')).componentInstance;
 
+            expect(iconComponent).not.toBeNull();
             expect(iconComponent.icon).toBe(component.faArrowUpAZ);
         });
     });
