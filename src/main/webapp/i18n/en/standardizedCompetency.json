@@ -52,7 +52,7 @@
                     "format": {
                         "title": "Required File Format",
                         "text1": "Standardized competencies can be imported from a JSON file into Artemis. After selecting a file, you can then verify that the knowledge areas and competencies were read correctly.",
-                        "text2": "The JSON file must contain an object with the keys <code>knowledgeAreas</code> and <code>sources</code>. The former contains all knowledge areas and standardized competencies to import and the latter contains all source details of the competencies imported.",
+                        "text2": "The JSON file must contain an object with the keys <code>knowledgeAreas</code> and <code>sources</code>. The former contains all knowledge areas and standardized competencies to import, and the latter contains all source details of the competencies imported.",
                         "text3": "Example of a valid import file (except for the comments):"
                     },
                     "count": "Read {{competencies}} competencies and {{knowledgeAreas}} knowledge areas from the file",

@@ -25,7 +25,7 @@
             "text4_2": "<b>Movable Functionality:</b> You have the flexibility to move the widget around. Simply click and hold on the widget and drag it to the desired position.",
             "text4_3": "<b>Resize the Widget:</b> Click and drag the borders of the widget in different directions to make it smaller or larger, depending on your preference.",
             "text4_4": "<b>Full Screen Feature:</b> You can expand the widget to full screen mode by clicking on the full screen button (top right corner of the widget).",
-            "text4_5": "<b>Clear chat history:</b> You can clear your chat history by clicking on the trash can button (top right corner of the widget). Thereby, all previous messages are deleted and you can start a new conversation.",
+            "text4_5": "<b>Clear chat history:</b> You can clear your chat history by clicking on the trash can button (top right corner of the widget). Thereby, all previous messages are deleted, and you can start a new conversation.",
             "supportText": "(If you have any problems using the widget or messaging Iris, please create an issue on GitHub: https://github.com/ls1intum/Artemis)",
             "clearSession": {
                 "title": "Clear chat history",

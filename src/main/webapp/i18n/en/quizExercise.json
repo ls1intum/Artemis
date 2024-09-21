@@ -141,7 +141,7 @@
             "preview": "Preview Quiz",
             "solution": "Sample Solution",
             "quizIsOverText": "The quiz has ended. Please wait. If the results do not load automatically within 60s, please refresh the page.",
-            "notParticipatedText": "The quiz has ended and you did not participate. There are no results to display.",
+            "notParticipatedText": "The quiz has ended, and you did not participate. There are no results to display.",
             "statisticsNotPublished": "The instructor has not published any statistics.",
             "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear after the quiz has ended.<br><br>If the results are not displayed automatically within 60s after the end of the quiz, please reload the page.",
             "evaluateQuizExercise": "Evaluate quiz",
@@ -230,7 +230,7 @@
             },
             "scoringTypeExplanation": {
                 "title": "Scoring Types",
-                "all_or_nothing": "All correct options must be selected and all incorrect options must not be selected to achieve the full score. If a mistake is made the participant achieves 0 points. There is no score in between.",
+                "all_or_nothing": "All correct options must be selected, and all incorrect options must not be selected to achieve the full score. If a mistake is made the participant achieves 0 points. There is no score in between.",
                 "proportional_with_penalty": "Each correct answer is awarded with a fraction of the total score. To avoid guesswork, the same fraction is subtracted from the achieved points for each mistake. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. Each wrong answer option subtracts 0.6 points. A student with 3 correct and 2 wrong answers would then receive 0.6 points.",
                 "proportional_without_penalty": "Each correct answer is awarded with a fraction of the total score. No points are deducted for mistakes. Example: if the question contains 3 points and 5 answer options, each correct answer option is awarded with 0.6 points. A student with 3 correct and 2 wrong answers would then receive 1.8 points."
             },
@@ -272,7 +272,7 @@
             },
             "explanationAnswered": "You have answered this question",
             "explanationNotAnswered": "You have not answered this question",
-            "submissionWarning": "Are you sure you want to submit? You have not answered all questions and you still have some time left!",
+            "submissionWarning": "Are you sure you want to submit? You have not answered all questions, and you still have some time left!",
             "quizLiveModal": {
                 "title": "Go-Live of a new Quiz Exercise",
                 "body": "The Quiz {{quizName}} for Course {{courseName}} is now live! Click on the 'Go to Quiz' button in order to access the quiz.",
