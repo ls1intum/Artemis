@@ -27,6 +27,8 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { artemisIconPack } from 'src/main/webapp/content/icons/icons';
 import { ScrollingModule } from '@angular/cdk/scrolling';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { CsrfInterceptor } from 'app/core/csrf/csrf.interceptor';
 
 // NOTE: this module should only include the most important modules for normal users, all course management, admin and account functionality should be lazy loaded if possible
 @NgModule({
@@ -61,6 +63,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
         SystemNotificationComponent,
         LoadingNotificationComponent,
     ],
+    providers: [{ provide: HTTP_INTERCEPTORS, useClass: CsrfInterceptor, multi: true }],
     bootstrap: [JhiMainComponent],
 })
 export class ArtemisAppModule {

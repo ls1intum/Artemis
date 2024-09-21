@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.security.jwt.JWTFilter.JWT_COOKIE_NAME;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.Arrays;
+import java.util.Collection;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
@@ -56,10 +58,14 @@ public class JWTCookieService {
      * @return the response cookie that should be set containing the jwt
      */
     private ResponseCookie buildJWTCookie(String jwt, Duration duration) {
-        // although secure specifies cookies only for https, it still works with localhost
+
+        Collection<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
+        boolean isSecure = !activeProfiles.contains(DEVELOPMENT_PROFILE);
+
+        // TODO Add Partitioned flag for third party cookies, read: https://developer.mozilla.org/en-US/docs/Web/Privacy/Privacy_sandbox/Partitioned_cookies
         return ResponseCookie.from(JWT_COOKIE_NAME, jwt).httpOnly(true) // Must be httpOnly
                 .sameSite("None") // Must be None to allow cross-site requests to Artemis from the VS Code plugin
-                .secure(true) // Must be secure
+                .secure(isSecure) // Must be secure
                 .path("/") // Must be "/" to be sent in ALL request
                 .maxAge(duration) // Duration should match the duration of the jwt
                 .build(); // Build cookie

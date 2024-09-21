@@ -40,6 +40,7 @@ import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.ProfileService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.web.filter.CsrfArtemisFilter;
 import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 
 @Configuration
@@ -53,6 +54,8 @@ public class SecurityConfiguration {
     private final PasswordService passwordService;
 
     private final CorsFilter corsFilter;
+
+    private final CsrfArtemisFilter csrfArtemisFilter = new CsrfArtemisFilter();
 
     private final ProfileService profileService;
 
@@ -171,7 +174,9 @@ public class SecurityConfiguration {
             // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
             .csrf(AbstractHttpConfigurer::disable)
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
+            // sets the filter chain: CorsFilter -> CsrfArtemisFilter -> UsernamePasswordAuthenticationFilter
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+            .addFilterBefore(csrfArtemisFilter, UsernamePasswordAuthenticationFilter.class)
             // Configures exception handling with a custom entry point and access denied handler for authentication issues.
             .exceptionHandling(handler -> handler.authenticationEntryPoint(securityProblemSupport).accessDeniedHandler(securityProblemSupport))
             // Adds a custom filter for Single Page Applications (SPA), i.e. the client, after the basic authentication filter.

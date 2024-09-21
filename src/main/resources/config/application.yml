@@ -281,7 +281,6 @@ info:
 jhipster:
     clientApp:
         name: 'artemisApp'
-    # By default CORS is disabled. Uncomment to enable.
     cors:
         allowed-methods: "*"
         allowed-headers: "*"
