@@ -281,7 +281,7 @@ public abstract class RepositoryResource {
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
-            repositoryService.commitChanges(repository, user);
+            repositoryService.commitChanges(repository, user, domainId);
             // Trigger a build, and process the result. Only implemented for local CI.
             // For GitLab + Jenkins, webhooks were added when creating the repository,
             // that notify the CI system when the commit happens and thus trigger the build.

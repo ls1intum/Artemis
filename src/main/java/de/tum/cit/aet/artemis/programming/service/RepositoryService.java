@@ -47,6 +47,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.VcsRepositoryUri;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
+import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
 
 /**
  * Service that provides utilities for managing files in a git repository.
@@ -59,11 +60,14 @@ public class RepositoryService {
 
     private final ProfileService profileService;
 
+    private final Optional<VcsAccessLogService> vcsAccessLogService;
+
     private static final Logger log = LoggerFactory.getLogger(RepositoryService.class);
 
-    public RepositoryService(GitService gitService, ProfileService profileService) {
+    public RepositoryService(GitService gitService, ProfileService profileService, Optional<VcsAccessLogService> vcsAccessLogService) {
         this.gitService = gitService;
         this.profileService = profileService;
+        this.vcsAccessLogService = vcsAccessLogService;
     }
 
     /**
@@ -468,11 +472,15 @@ public class RepositoryService {
      *
      * @param repository for which to execute the commit.
      * @param user       the user who has committed the changes in the online editor
+     * @param domainId   the id of the domain Object (participation) owning the repository
      * @throws GitAPIException if the staging/committing process fails.
      */
-    public void commitChanges(Repository repository, User user) throws GitAPIException {
+    public void commitChanges(Repository repository, User user, Long domainId) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, "Changes by Online Editor", true, user);
+        if (vcsAccessLogService.isPresent()) {
+            vcsAccessLogService.get().storeCodeEditorAccessLog(repository, user, domainId);
+        }
     }
 
     /**
