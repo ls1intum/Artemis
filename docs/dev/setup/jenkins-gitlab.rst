@@ -3,6 +3,12 @@
 Jenkins and GitLab Setup
 ------------------------
 
+.. warning::
+
+    GitLab support will be removed with Artemis 8.0.0.
+    Please use :ref:`LocalVC and Jenkins <Jenkins and LocalVC Setup>` instead for new installations with Jenkins as the CI system.
+    For existing Jenkins and GitLab Setups, you can migrate to LocalVC with this `not merged Pull Request <https://github.com/ls1intum/Artemis/pull/8972>`__.
+
 This section describes how to set up a programming exercise environment
 based on Jenkins and GitLab. Optional commands are in curly brackets ``{}``.
 
@@ -465,8 +471,8 @@ Automated Jenkins Server Setup
 The following steps describe how to deploy a pre-configured version of the Jenkins server.
 This is ideal as a quickstart for developers. For a more detailed setup, see
 `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
-In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config.yml``) and
-generate random access tokens and push tokens.
+In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config-gitlab.yml``) and
+generate random access tokens.
 
 1. Create a new access token in GitLab named ``Jenkins`` and give it **api** and **read_repository** rights. You can
 do either do it manually or using the following command:
@@ -479,46 +485,46 @@ do either do it manually or using the following command:
 
 2. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
-    .. code:: bash
+   .. code:: bash
 
-       JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d jenkins
-       docker compose -f docker/<Jenkins setup to be launched>.yml up -d
+      JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose -f docker/<Jenkins setup to be launched>.yml up --build -d jenkins
+      docker compose -f docker/<Jenkins setup to be launched>.yml up -d
 
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
-   in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
+   in ``jenkins-casc-config-gitlab.yml`` (defaults to ``artemis_admin`` as both username and password).
 
-3. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+3. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config-gitlab.yml``:
 
-.. code:: yaml
+   .. code:: yaml
 
-    artemis:
-        user-management:
-            use-external: false
-            internal-admin:
-                username: artemis_admin
-                password: artemis_admin
-        version-control:
-            url: http://localhost:8081
-            user: artemis_admin
-            password: artemis_admin
-        continuous-integration:
-            user: artemis_admin
-            password: artemis_admin
-            url: http://localhost:8082
-            vcs-credentials: artemis_gitlab_admin_credentials
-            artemis-authentication-token-key: artemis_notification_plugin_token
-            artemis-authentication-token-value: artemis_admin
+       artemis:
+           user-management:
+               use-external: false
+               internal-admin:
+                   username: artemis_admin
+                   password: artemis_admin
+           version-control:
+               url: http://localhost:8081
+               user: artemis_admin
+               password: artemis_admin
+           continuous-integration:
+               user: artemis_admin
+               password: artemis_admin
+               url: http://localhost:8082
+               vcs-credentials: artemis_gitlab_admin_credentials
+               artemis-authentication-token-key: artemis_notification_plugin_token
+               artemis-authentication-token-value: artemis_admin
 
 4. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
    Again, if you are using a development setup, the template in the beginning of this page already contains the
    correct values.
 
-.. code:: yaml
+   .. code:: yaml
 
-    jenkins:
-        internal-urls:
-            ci-url: http://jenkins:8080
-            vcs-url: http://gitlab:80
+       jenkins:
+           internal-urls:
+               ci-url: http://jenkins:8080
+               vcs-url: http://gitlab:80
 
 5. You're done. You can now run Artemis with the GitLab/Jenkins environment.
 
@@ -685,6 +691,18 @@ Start Jenkins
                user: your.chosen.username
                password: your.chosen.password
 
+11. In a local setup, you have to disable CSRF otherwise some API endpoints will return HTTP Status 403 Forbidden.
+    This is done be executing the following command:
+    ``docker compose -f docker/<Jenkins setup to be launched>.yml exec -T jenkins dd of=/var/jenkins_home/init.groovy < docker/jenkins/jenkins-disable-csrf.groovy``
+
+    The last step is to disable the ``use-crumb`` option in ``application-local.yml``:
+
+    .. code:: yaml
+
+       jenkins:
+           use-crumb: false
+
+
 Required Jenkins Plugins
 """"""""""""""""""""""""
 
@@ -698,22 +716,19 @@ The list of plugins is maintained in ``docker/jenkins/plugins.yml``.
 You will need to install the following plugins (apart from the
 recommended ones that got installed during the setup process):
 
-1.  `GitLab <https://plugins.jenkins.io/gitlab-plugin/>`__ for enabling
-    webhooks to and from GitLab
-
-2.  `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
+1.  `Timestamper <https://plugins.jenkins.io/timestamper/>`__ for adding the
     time to every line of the build output (Timestamper might already be installed)
 
-3.  `Pipeline <https://plugins.jenkins.io/workflow-aggregator/>`__ for defining the
+2.  `Pipeline <https://plugins.jenkins.io/workflow-aggregator/>`__ for defining the
     build description using declarative files (Pipeline might already be installed)
 
     **Note:** This is a suite of plugins that will install multiple plugins
 
-4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to
+3. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to
    use Docker for your build agents you may also need to install
    `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
 
-5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions
+4. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions
    for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
 
 
@@ -855,45 +870,6 @@ GitLab Repository Access
            continuous-integration:
                vcs-credentials: the.id.of.the.username.and.password.credentials.from.jenkins
 
-GitLab to Jenkins push notification token
-"""""""""""""""""""""""""""""""""""""""""
-
-GitLab has to notify Jenkins build plans if there are any new commits to
-the repository. The push notification that gets sent here is secured by
-a token generated by Jenkins. In order to get this token, you have to do
-the following steps:
-
-1.  Create a new item in Jenkins (use the Freestyle project type) and
-    name it **TestProject**
-
-2.  In the project configuration, go to *Build Triggers → Build when a
-    change is pushed to GitLab* and activate this option
-
-3.  Click on *Advanced*.
-
-4.  You will now have a couple of new options here, one of them being a
-    “**Secret token**”.
-
-5.  Click on the “*Generate*” button right below the text box for that
-    token.
-
-6.  Copy the generated value, let’s call it **$gitlab-push-token**
-
-7.  Apply these change to the plan (i.e. click on *Apply*)
-
-   .. figure:: jenkins-gitlab/jenkins_test_project.png
-      :align: center
-
-8. In a local setup, you have to disable CSRF otherwise some API endpoints will return HTTP Status 403 Forbidden.
-    This is done be executing the following command:
-    ``docker compose -f docker/<Jenkins setup to be launched>.yml exec -T jenkins dd of=/var/jenkins_home/init.groovy < docker/jenkins/jenkins-disable-csrf.groovy``
-
-    The last step is to disable the ``use-crumb`` option in ``application-local.yml``:
-
-    .. code:: yaml
-
-       jenkins:
-           use-crumb: false
 
 Upgrading Jenkins
 """""""""""""""""
@@ -956,7 +932,7 @@ You should also update the Jenkins plugins regularly due to security
 reasons. You can update them directly in the Web User Interface in the
 Plugin Manager.
 
-.. _jenkins_build_agents:
+.. _jenkins_build_agents_gitlab:
 
 Build agents
 ^^^^^^^^^^^^
