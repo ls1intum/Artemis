@@ -137,7 +137,7 @@ describe('Text Submission Viewer Component', () => {
     it('filters files of type FILE', () => {
         const filtered = comp.filterFiles(files);
 
-        expect(filtered).toHaveLength(3);
+        expect(filtered).toHaveLength(4);
         expect(filtered).not.toContain('src/');
     });
 
