@@ -102,9 +102,9 @@ export class ProgrammingExamSummaryComponent implements OnInit {
             // We need to remove /test-exam/{studentExam} to construct the correct repository link.
             const parts = this.routerLink.split('/');
             const examLink = parts.slice(0, parts.length - 2).join('/');
-            return examLink + '/exercises/' + this.exercise.id + '/repository/' + this.participation.id;
+            return `${examLink}/exercises/${this.exercise.id}/repository/${this.participation.id}`;
         } else {
-            return this.routerLink + '/exercises/' + this.exercise.id + '/repository/' + this.participation.id;
+            return `${this.routerLink}/exercises/${this.exercise.id}/repository/${this.participation.id}`;
         }
     }
 }
