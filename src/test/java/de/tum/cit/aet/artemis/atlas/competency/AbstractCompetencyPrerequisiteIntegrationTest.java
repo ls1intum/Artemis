@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.competency;
+package de.tum.cit.aet.artemis.atlas.competency;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,9 +26,9 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
-import de.tum.cit.aet.artemis.competency.util.CompetencyProgressUtilService;
-import de.tum.cit.aet.artemis.competency.util.PrerequisiteUtilService;
-import de.tum.cit.aet.artemis.competency.util.StandardizedCompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.util.CompetencyProgressUtilService;
+import de.tum.cit.aet.artemis.atlas.util.PrerequisiteUtilService;
+import de.tum.cit.aet.artemis.atlas.util.StandardizedCompetencyUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;

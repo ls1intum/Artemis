@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.competency;
+package de.tum.cit.aet.artemis.atlas.competency;
 
 import static de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency.FIRST_VERSION;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
-import de.tum.cit.aet.artemis.competency.util.StandardizedCompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.util.StandardizedCompetencyUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationIndependentTest {

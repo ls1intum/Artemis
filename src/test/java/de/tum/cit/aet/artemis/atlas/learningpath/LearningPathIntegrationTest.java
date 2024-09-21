@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.competency;
+package de.tum.cit.aet.artemis.atlas.learningpath;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,9 +45,9 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.test_repository.CompetencyProgressTestRepository;
 import de.tum.cit.aet.artemis.atlas.test_repository.LearningPathTestRepository;
+import de.tum.cit.aet.artemis.atlas.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.util.LearningPathUtilService;
 import de.tum.cit.aet.artemis.atlas.web.LearningPathResource;
-import de.tum.cit.aet.artemis.competency.util.CompetencyUtilService;
-import de.tum.cit.aet.artemis.competency.util.LearningPathUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;

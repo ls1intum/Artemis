@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.competency.util;
+package de.tum.cit.aet.artemis.atlas.util;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

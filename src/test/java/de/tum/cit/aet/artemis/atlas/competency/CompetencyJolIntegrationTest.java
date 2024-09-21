@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.competency;
+package de.tum.cit.aet.artemis.atlas.competency;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,8 +17,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
-import de.tum.cit.aet.artemis.competency.util.CompetencyProgressUtilService;
-import de.tum.cit.aet.artemis.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.util.CompetencyProgressUtilService;
+import de.tum.cit.aet.artemis.atlas.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
