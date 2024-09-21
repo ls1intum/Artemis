@@ -449,10 +449,11 @@ public class ResultService {
     /**
      * Get a map of result ids to the respective build job ids if build log files for this build job exist.
      *
-     * @param results the results for which to check the availability of build logs
+     * @param results       the results for which to check the availability of build logs
+     * @param participation the participation the results belong to
      * @return a map of result ids to respective build job ids if the build log files exist, null otherwise
      */
-    public Map<Long, String> getLogsAvailabilityForResults(List<Result> results) {
+    public Map<Long, String> getLogsAvailabilityForResults(List<Result> results, Participation participation) {
 
         Map<Long, String> logsAvailability = new HashMap<>();
 
@@ -465,7 +466,7 @@ public class ResultService {
             String buildJobId = resultBuildJobSet.get(resultId);
             if (buildJobId != null) {
 
-                if (buildLogEntryService.buildJobHasLogFile(buildJobId)) {
+                if (buildLogEntryService.buildJobHasLogFile(buildJobId, ((ProgrammingExerciseParticipation) participation).getProgrammingExercise())) {
                     logsAvailability.put(resultId, buildJobId);
                 }
                 else {
