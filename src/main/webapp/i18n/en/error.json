@@ -83,7 +83,7 @@
         },
         "idNull": "Invalid ID",
         "unexpectedError": "An unexpected error occurred: {{error}}",
-        "manualCodeHintOperation": "This endpoint does not allow to change code hints manually.",
+        "manualCodeHintOperation": "This endpoint does not allow changing code hints manually.",
         "exerciseNotDefined": "The exercise is not defined.",
         "exerciseIdMismatch": "The exercise ids do not match.",
         "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement.",
