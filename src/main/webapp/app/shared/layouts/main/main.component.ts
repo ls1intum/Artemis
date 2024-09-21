@@ -115,9 +115,12 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isTestRunExam = isStarted;
         });
 
+        /*
         this.ltiService.isLti$.subscribe((isLti) => {
             this.isLti = isLti;
         });
+         */
+        this.checkLtiParameter();
 
         this.themeService.initialize();
     }

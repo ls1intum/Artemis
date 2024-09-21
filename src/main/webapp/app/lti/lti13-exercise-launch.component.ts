@@ -49,7 +49,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             return;
         }
 
-        const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
+        const requestBody = new HttpParams().set('state', state).set('id_token', idToken).set('lti', true);
 
         this.http
             .post<LtiLaunchResponse>('api/public/lti13/auth-login', requestBody.toString(), {
