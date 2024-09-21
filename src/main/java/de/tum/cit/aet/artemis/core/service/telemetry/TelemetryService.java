@@ -24,11 +24,17 @@ public class TelemetryService {
 
     private final TelemetrySendingService telemetrySendingService;
 
+    @Value("${artemis.telemetry.destination}")
+    private String destination;
+
     @Value("${artemis.telemetry.enabled}")
     public boolean useTelemetry;
 
-    @Value("${artemis.telemetry.destination}")
-    private String destination;
+    @Value("${artemis.telemetry.sendAdminDetails}")
+    public boolean sendAdminDetails;
+
+    @Value("${eureka.client.enabled}")
+    public boolean eurekaEnabled;
 
     public TelemetryService(ProfileService profileService, TelemetrySendingService telemetrySendingService) {
         this.profileService = profileService;
@@ -48,7 +54,7 @@ public class TelemetryService {
 
         log.info("Sending telemetry information");
         try {
-            telemetrySendingService.sendTelemetryByPostRequest();
+            telemetrySendingService.sendTelemetryByPostRequest(eurekaEnabled, sendAdminDetails);
         }
         catch (JsonProcessingException e) {
             log.warn("JsonProcessingException in sendTelemetry.", e);

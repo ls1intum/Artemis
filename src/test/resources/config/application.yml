@@ -293,6 +293,6 @@ aeolus:
 # Eureka configuration
 eureka:
     client:
-        enabled: true
+        enabled: false
         service-url:
             defaultZone: http://admin:admin@localhost:8761/eureka/

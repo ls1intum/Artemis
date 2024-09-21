@@ -62,19 +62,13 @@ public class TelemetrySendingService {
     private String operatorAdminName;
 
     @Value("${info.contact}")
-    private String contact;
-
-    @Value("${artemis.telemetry.sendAdminDetails}")
-    private boolean sendAdminDetails;
+    private String operatorContact;
 
     @Value("${artemis.telemetry.destination}")
     private String destination;
 
     @Value("${spring.datasource.url}")
     private String datasourceUrl;
-
-    @Value("${eureka.client.enabled}")
-    private boolean eurekaEnabled;
 
     @Value("${artemis.continuous-integration.concurrent-build-size}")
     private long buildAgentCount;
@@ -85,23 +79,24 @@ public class TelemetrySendingService {
      * @throws Exception if the writing the telemetry data to a json format fails, or the connection to the telemetry server fails
      */
     @Async
-    public void sendTelemetryByPostRequest() throws Exception {
-        List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
-        TelemetryData telemetryData;
-        var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
+    public void sendTelemetryByPostRequest(boolean eurekaEnabled, boolean sendAdminDetails) throws Exception {
+
         long numberOfInstances = 1;
         if (eurekaEnabled) {
             numberOfInstances = eurekaClientService.getNumberOfReplicas();
         }
 
+        TelemetryData telemetryData;
+        var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
+        List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        String contact = null;
+        String adminName = null;
         if (sendAdminDetails) {
-            telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), dataSource, numberOfInstances, buildAgentCount,
-                    contact, operatorAdminName);
+            contact = operatorContact;
+            adminName = operatorAdminName;
         }
-        else {
-            telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), dataSource, numberOfInstances, buildAgentCount,
-                    null, null);
-        }
+        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), dataSource, numberOfInstances, buildAgentCount,
+                contact, adminName);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.telemetry;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.spy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -56,7 +57,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private String eurekaRequestUrl;
 
-    private byte[] appliciationsBody;
+    private byte[] applicationsBody;
 
     @BeforeEach
     void init() throws JsonProcessingException {
@@ -66,26 +67,39 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         }
         catch (Exception ignored) {
+            // Exception can be ignored because defaultZoneUrl is guaranteed to be valid in the test environment
         }
-
         telemetryServiceSpy = spy(telemetryService);
-
-        appliciationsBody = mapper.writeValueAsBytes(Map.of("applications", List.of(Map.of("name", "ARTEMIS", "instances", List.of(Map.of()) // Mocking an instance object
-        ))));
-        MockRestServiceServer.MockRestServiceServerBuilder builder = MockRestServiceServer.bindTo(restTemplate);
-        builder.ignoreExpectOrder(true);
-        mockServer = builder.build();
+        applicationsBody = mapper.writeValueAsBytes(Map.of("applications", List.of(Map.of("name", "ARTEMIS", "instances", List.of(Map.of())))));
+        mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
 
         telemetryServiceSpy.useTelemetry = true;
+        telemetryServiceSpy.eurekaEnabled = true;
     }
 
     @Test
     void testSendTelemetry_TelemetryEnabled() throws Exception {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(eurekaRequestUrl))).andExpect(method(HttpMethod.GET))
                 .andExpect(header(HttpHeaders.AUTHORIZATION, "Basic YWRtaW46YWRtaW4="))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(appliciationsBody));
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(applicationsBody));
 
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
+                .andExpect(request -> assertThat(request.getBody().toString()).contains("adminName"))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
+        telemetryServiceSpy.sendTelemetry();
+
+        await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
+    }
+
+    @Test
+    void testSendTelemetry_TelemetryEnabledWithoutPersonalData() throws Exception {
+        telemetryServiceSpy.sendAdminDetails = false;
+        mockServer.expect(ExpectedCount.once(), requestTo(new URI(eurekaRequestUrl))).andExpect(method(HttpMethod.GET))
+                .andExpect(header(HttpHeaders.AUTHORIZATION, "Basic YWRtaW46YWRtaW4="))
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(applicationsBody));
+
+        mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
+                .andExpect(request -> assertThat(request.getBody().toString()).doesNotContain("adminName"))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
         telemetryServiceSpy.sendTelemetry();
 
@@ -104,7 +118,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     void testSendTelemetry_ExceptionHandling() throws Exception {
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(eurekaRequestUrl))).andExpect(method(HttpMethod.GET))
-                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(appliciationsBody));
+                .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(applicationsBody));
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withServerError().body(mapper.writeValueAsString("Failure!")));
 
