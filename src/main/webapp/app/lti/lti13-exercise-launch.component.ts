@@ -4,6 +4,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
 import { SessionStorageService } from 'ngx-webstorage';
+import { LtiService } from 'app/shared/service/lti.service';
 
 type LtiLaunchResponse = {
     targetLinkUri: string;
@@ -24,6 +25,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
         private accountService: AccountService,
         private router: Router,
         private sessionStorageService: SessionStorageService,
+        private ltiService: LtiService,
     ) {
         this.isLaunching = true;
     }
@@ -32,6 +34,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
      * perform an LTI launch with state and id_token query parameters
      */
     ngOnInit(): void {
+        this.ltiService.setLti(true);
         this.sendRequest();
     }
 
