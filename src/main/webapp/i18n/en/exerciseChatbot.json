@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "exerciseChatbot": {
-            "popUpMessage": "By choosing to continue, you agree that your interactions with Iris and required context data, such as your code, will be processed by Microsoft and OpenAI, with data processing occurring outside of our university data center.",
+            "popUpMessage": "By choosing to continue, you agree that your interactions with Iris and required context data, such as your code, will be processed by Microsoft and OpenAI, with data processing occurring outside our university data center.",
             "inputMessage": "Write a message...",
             "accept": "Accept",
             "decline": "Decline",
