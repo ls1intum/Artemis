@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -25,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -445,15 +444,7 @@ public class BuildJobContainerService {
     }
 
     private String getParentFolderPath(String path) {
-        // Remove trailing slash if it exists
-        if (path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
-
-        // Split the path by slash
-        String[] parts = path.split("/");
-
-        // Join the parts up to the second-to-last element
-        return String.join("/", Arrays.copyOfRange(parts, 0, parts.length - 1));
+        Path parentPath = Paths.get(path).normalize().getParent();
+        return parentPath != null ? parentPath.toString() : "";
     }
 }
