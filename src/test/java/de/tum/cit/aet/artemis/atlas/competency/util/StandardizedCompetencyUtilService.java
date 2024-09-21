@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.util;
+package de.tum.cit.aet.artemis.atlas.competency.util;
 
 import java.util.ArrayList;
 import java.util.stream.Stream;

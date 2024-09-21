@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.atlas.util;
+package de.tum.cit.aet.artemis.atlas.learningpath.util;
 
 import java.util.Set;
 
