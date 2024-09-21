@@ -125,27 +125,29 @@ The configuration parameters are utilized through the capability system by pipel
 
 **Parameter Descriptions:**
 
-- ``api_key``: The API key for the model.
-- ``capabilities``: The capabilities of the model.
-  - ``context_length``: The maximum number of tokens the model can process in a single request.
-  - ``gpt_version_equivalent``: The equivalent GPT version of the model in terms of overall capabilities (e.g., Llama 3.1 ≈ GPT-4).
-  - ``image_recognition``: Whether the model supports image recognition (for multimodal models like GPT-4 Omni).
-  - ``input_cost``: The cost of input tokens for the model.
-  - ``output_cost``: The cost of output tokens for the model.
-  - ``json_mode``: Whether the model supports structured JSON output mode.
-  - ``privacy_compliance``: Whether the model complies with privacy regulations.
-  - ``self_hosted``: Whether the model is self-hosted.
-  - ``vendor``: The provider of the model (e.g., OpenAI or other vendors).
-  - ``speed``: The model's processing speed.
-- ``description``: Additional information about the model.
-- ``id``: Unique identifier for the model across all models.
-- ``model``: The official name of the model as used by the vendor.
-- ``name``: A custom, human-readable name for the model.
-- ``type``: The model type, used to select the appropriate client (e.g., ``openai_chat``, ``azure_chat``, ``ollama``).
-- ``endpoint``: The URL to connect to the model.
-- ``api_version``: The API version to use with the model.
-- ``azure_deployment``: The deployment name of the model on Azure.
-- ``tools``: The tools supported by the model.
+* ``api_key``: The API key for the model.
+* ``capabilities``: The capabilities of the model.
+
+  * ``context_length``: The maximum number of tokens the model can process in a single request.
+  * ``gpt_version_equivalent``: The equivalent GPT version of the model in terms of overall capabilities (e.g., Llama 3.1 ≈ GPT-4).
+  * ``image_recognition``: Whether the model supports image recognition (for multimodal models like GPT-4 Omni).
+  * ``input_cost``: The cost of input tokens for the model.
+  * ``output_cost``: The cost of output tokens for the model.
+  * ``json_mode``: Whether the model supports structured JSON output mode.
+  * ``privacy_compliance``: Whether the model complies with privacy regulations.
+  * ``self_hosted``: Whether the model is self-hosted.
+  * ``vendor``: The provider of the model (e.g., OpenAI or other vendors).
+  * ``speed``: The model's processing speed.
+
+* ``description``: Additional information about the model.
+* ``id``: Unique identifier for the model across all models.
+* ``model``: The official name of the model as used by the vendor.
+* ``name``: A custom, human-readable name for the model.
+* ``type``: The model type, used to select the appropriate client (e.g., ``openai_chat``, ``azure_chat``, ``ollama``).
+* ``endpoint``: The URL to connect to the model.
+* ``api_version``: The API version to use with the model.
+* ``azure_deployment``: The deployment name of the model on Azure.
+* ``tools``: The tools supported by the model.
 
 **Notes on ``gpt_version_equivalent``:**
 
