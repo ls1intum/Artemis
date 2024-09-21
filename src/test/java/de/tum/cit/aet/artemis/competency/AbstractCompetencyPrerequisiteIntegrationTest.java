@@ -2,10 +2,7 @@ package de.tum.cit.aet.artemis.competency;
 
 import static de.tum.cit.aet.artemis.util.TestResourceUtils.HalfSecond;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -18,9 +15,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -56,7 +51,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -97,9 +91,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
     @Autowired
     protected CourseCompetencyRepository courseCompetencyRepository;
 
-    @SpyBean
-    protected ProgrammingExerciseImportService programmingExerciseImportService;
-
     protected Course course;
 
     protected Course course2;
@@ -136,11 +127,6 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
         teamTextExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(courseCompetency), true);
 
         creatingLectureUnitsOfLecture(courseCompetency);
-    }
-
-    // AfterEach
-    void tearDownTestScenario() {
-        Mockito.reset(programmingExerciseImportService);
     }
 
     CompetencyRelation createRelation(CourseCompetency tail, CourseCompetency head, RelationType type) {
@@ -572,17 +558,15 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpr
 
     // Test
     void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
-        ProgrammingExercise programmingExercise = createProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now());
-        doReturn(programmingExercise).when(programmingExerciseImportService).importProgrammingExercise(any(), any(), anyBoolean(), anyBoolean(), anyBoolean());
+        createProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now());
 
         CompetencyImportOptionsDTO importOptions = new CompetencyImportOptionsDTO(Set.of(), Optional.of(course.getId()), false, true, true, Optional.empty(), false);
         importAllCall(course2.getId(), importOptions, HttpStatus.CREATED);
 
         course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
-        assertThat(course2.getExercises()).hasSize(2);
+        assertThat(course2.getExercises()).hasSize(3);
         assertThat(course2.getLectures()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
-        verify(programmingExerciseImportService).importProgrammingExercise(any(), any(), eq(false), eq(false), eq(false));
     }
 
     // Test

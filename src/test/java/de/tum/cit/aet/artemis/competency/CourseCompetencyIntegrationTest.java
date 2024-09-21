@@ -11,7 +11,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.glassfish.jersey.internal.util.Producer;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -85,11 +84,6 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         super.setupTestScenario(TEST_PREFIX, course -> competencyUtilService.createCompetency(course, "penguin"));
 
         participantScoreScheduleService.activate();
-    }
-
-    @AfterEach
-    void tearDownTestScenario() {
-        super.tearDownTestScenario();
     }
 
     private Result createExerciseParticipationSubmissionAndResult(Exercise exercise, StudentParticipation studentParticipation, double pointsOfExercise,

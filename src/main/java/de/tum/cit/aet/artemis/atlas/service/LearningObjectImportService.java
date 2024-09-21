@@ -406,6 +406,14 @@ public class LearningObjectImportService {
             exercise.setExampleSolutionPublicationDate(exercise.getExampleSolutionPublicationDate().plusSeconds(timeOffset));
         }
 
+        if (exercise instanceof QuizExercise quizExercise && !quizExercise.getQuizBatches().isEmpty()) {
+            quizExercise.getQuizBatches().forEach(batch -> {
+                if (batch.getStartTime() != null) {
+                    batch.setStartTime(batch.getStartTime().plusSeconds(timeOffset));
+                }
+            });
+        }
+
         if (exercise instanceof ProgrammingExercise programmingExercise && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null) {
             programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate().plusSeconds(timeOffset));
         }

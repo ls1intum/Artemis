@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.competency;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -30,11 +29,6 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     @BeforeEach
     void setupTestScenario() {
         super.setupTestScenario(TEST_PREFIX, prerequisiteUtilService::createPrerequisite);
-    }
-
-    @AfterEach
-    void tearDownTestScenario() {
-        super.tearDownTestScenario();
     }
 
     @Nested
