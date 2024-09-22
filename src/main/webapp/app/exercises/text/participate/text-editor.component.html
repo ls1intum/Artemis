@@ -127,5 +127,8 @@
             </ng-container>
             <!--endregion-->
         </jhi-resizeable-container>
+        @if (!textExercise.exerciseGroup && irisSettings?.irisTextExerciseChatSettings?.enabled) {
+            <jhi-exercise-chatbot-button [mode]="ChatServiceMode.TEXT_EXERCISE" />
+        }
     }
 </div>

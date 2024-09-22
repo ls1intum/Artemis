@@ -238,8 +238,8 @@
                         <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult" />
                     </div>
                 }
-                @if ((exercise.type === PROGRAMMING || exercise.type === TEXT) && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
-                    <jhi-exercise-chatbot-button />
+                @if (exercise.type === PROGRAMMING && !exercise.exerciseGroup && irisSettings?.irisChatSettings?.enabled) {
+                    <jhi-exercise-chatbot-button [mode]="ChatServiceMode.EXERCISE" />
                 }
                 <jhi-exercise-hint-button-overlay
                     class="p-3"

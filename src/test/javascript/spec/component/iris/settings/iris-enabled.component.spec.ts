@@ -48,7 +48,7 @@ describe('IrisEnabledComponent', () => {
     });
 
     it.each([IrisSubSettingsType.CHAT, IrisSubSettingsType.COMPETENCY_GENERATION])('should load exercise', async (subSettingstype) => {
-        const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedProgrammingExerciseSettings').mockReturnValue(of(irisSettings));
+        const getExerciseSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedExerciseSettings').mockReturnValue(of(irisSettings));
         comp.exercise = exercise;
         comp.irisSubSettingsType = subSettingstype;
         fixture.detectChanges();
@@ -70,7 +70,7 @@ describe('IrisEnabledComponent', () => {
     });
 
     it('should set exercise enabled', async () => {
-        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setProgrammingExerciseSettings').mockReturnValue(of(new HttpResponse({ body: null as any as IrisSettings })));
+        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setExerciseSettings').mockReturnValue(of(new HttpResponse({ body: null as any as IrisSettings })));
         comp.exercise = exercise;
         comp.irisSettings = irisSettings;
         comp.irisSubSettingsType = IrisSubSettingsType.CHAT;

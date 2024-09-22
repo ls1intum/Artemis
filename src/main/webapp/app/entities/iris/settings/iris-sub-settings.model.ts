@@ -23,9 +23,10 @@ export class IrisChatSubSettings extends IrisSubSettings {
     rateLimitTimeframeHours?: number;
 }
 
-export class TextChatSubSettings extends IrisSubSettings {
+export class IrisTextExerciseChatSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
-    rateLimit?: RateLimit;
+    rateLimit?: number;
+    rateLimitTimeframeHours?: number;
 }
 
 export class IrisLectureIngestionSubSettings extends IrisSubSettings {
@@ -35,9 +36,4 @@ export class IrisLectureIngestionSubSettings extends IrisSubSettings {
 
 export class IrisCompetencyGenerationSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.COMPETENCY_GENERATION;
-}
-
-export class RateLimit {
-    maxMessages: number;
-    timeframeHours: number;
 }

@@ -44,6 +44,7 @@ import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { ChatServiceMode } from 'app/iris/iris-chat.service';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -63,6 +64,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly evaluateBadge = ResultService.evaluateBadge;
     readonly dayjs = dayjs;
+    readonly ChatServiceMode = ChatServiceMode;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;

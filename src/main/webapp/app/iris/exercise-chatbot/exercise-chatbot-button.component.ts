@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
@@ -14,6 +14,9 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/iris-chat.service';
     styleUrls: ['./exercise-chatbot-button.component.scss'],
 })
 export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
+    @Input()
+    mode: ChatServiceMode;
+
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
     chatOpen = false;
     hasNewMessages = false;
@@ -38,12 +41,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         // Subscribes to route params and gets the exerciseId from the route
         this.paramsSubscription = this.route.params.subscribe((params) => {
             const exerciseId = parseInt(params['exerciseId'], 10);
-            const exerciseType = params['exerciseType'];
-            if (exerciseType === 'programming') {
-                this.chatService.switchTo(ChatServiceMode.EXERCISE, exerciseId);
-            } else if (exerciseType === 'text') {
-                this.chatService.switchTo(ChatServiceMode.TEXT_EXERCISE, exerciseId);
-            }
+            this.chatService.switchTo(this.mode, exerciseId);
         });
 
         // Subscribes to check for new messages

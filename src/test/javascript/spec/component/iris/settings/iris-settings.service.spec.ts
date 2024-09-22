@@ -75,7 +75,7 @@ describe('Iris Settings Service', () => {
     it('should get uncombined programming exercise settings', fakeAsync(() => {
         const mockedSettings = mockSettings();
         service
-            .getUncombinedProgrammingExerciseSettings(1)
+            .getUncombinedExerciseSettings(1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(mockedSettings));
         const req = httpMock.expectOne({ method: 'GET' });
@@ -86,7 +86,7 @@ describe('Iris Settings Service', () => {
     it('should get combined programming exercise settings', fakeAsync(() => {
         const mockedSettings = mockSettings();
         service
-            .getCombinedProgrammingExerciseSettings(1)
+            .getCombinedExerciseSettings(1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(mockedSettings));
         const req = httpMock.expectOne({ method: 'GET' });
@@ -97,7 +97,7 @@ describe('Iris Settings Service', () => {
     it('should set programming exercise settings', fakeAsync(() => {
         const mockedSettings = mockSettings();
         service
-            .setProgrammingExerciseSettings(1, mockedSettings)
+            .setExerciseSettings(1, mockedSettings)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toEqual(mockedSettings));
         const req = httpMock.expectOne({ method: 'PUT' });

@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.domain.iris.settings.IrisLectureIngestionSubSettin
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettings;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSettingsType;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
+import de.tum.in.www1.artemis.domain.iris.settings.IrisTextExerciseChatSubSettings;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
@@ -64,6 +65,30 @@ public class IrisSubSettingsService {
         }
         if (currentSettings == null) {
             currentSettings = new IrisChatSubSettings();
+        }
+        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+        }
+        if (authCheckService.isAdmin()) {
+            currentSettings.setRateLimit(newSettings.getRateLimit());
+            currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+        }
+        currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+        currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                parentSettings != null ? parentSettings.allowedVariants() : null));
+        return currentSettings;
+    }
+
+    public IrisTextExerciseChatSubSettings update(IrisTextExerciseChatSubSettings currentSettings, IrisTextExerciseChatSubSettings newSettings,
+            IrisCombinedTextExerciseChatSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the chat settings");
+            }
+            return null;
+        }
+        if (currentSettings == null) {
+            currentSettings = new IrisTextExerciseChatSubSettings();
         }
         if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
             currentSettings.setEnabled(newSettings.isEnabled());

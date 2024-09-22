@@ -203,6 +203,8 @@ public class IrisSettingsService {
     private IrisGlobalSettings updateGlobalSettings(IrisGlobalSettings existingSettings, IrisGlobalSettings settingsUpdate) {
         existingSettings.setIrisLectureIngestionSettings(
                 irisSubSettingsService.update(existingSettings.getIrisLectureIngestionSettings(), settingsUpdate.getIrisLectureIngestionSettings(), null, GLOBAL));
+        existingSettings.setIrisTextExerciseChatSettings(
+                irisSubSettingsService.update(existingSettings.getIrisTextExerciseChatSettings(), settingsUpdate.getIrisTextExerciseChatSettings(), null, GLOBAL));
         existingSettings.setIrisChatSettings(irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), null, GLOBAL));
         existingSettings.setIrisCompetencyGenerationSettings(
                 irisSubSettingsService.update(existingSettings.getIrisCompetencyGenerationSettings(), settingsUpdate.getIrisCompetencyGenerationSettings(), null, GLOBAL));
@@ -221,6 +223,8 @@ public class IrisSettingsService {
         var parentSettings = getCombinedIrisGlobalSettings();
         existingSettings.setIrisChatSettings(
                 irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), parentSettings.irisChatSettings(), COURSE));
+        existingSettings.setIrisTextExerciseChatSettings(irisSubSettingsService.update(existingSettings.getIrisTextExerciseChatSettings(),
+                settingsUpdate.getIrisTextExerciseChatSettings(), parentSettings.irisTextExerciseChatSettings(), COURSE));
         existingSettings.setIrisLectureIngestionSettings(irisSubSettingsService.update(existingSettings.getIrisLectureIngestionSettings(),
                 settingsUpdate.getIrisLectureIngestionSettings(), parentSettings.irisLectureIngestionSettings(), COURSE));
         existingSettings.setIrisCompetencyGenerationSettings(irisSubSettingsService.update(existingSettings.getIrisCompetencyGenerationSettings(),
@@ -240,6 +244,8 @@ public class IrisSettingsService {
         var parentSettings = getCombinedIrisSettingsFor(existingSettings.getExercise().getCourseViaExerciseGroupOrCourseMember(), false);
         existingSettings.setIrisChatSettings(
                 irisSubSettingsService.update(existingSettings.getIrisChatSettings(), settingsUpdate.getIrisChatSettings(), parentSettings.irisChatSettings(), EXERCISE));
+        existingSettings.setIrisTextExerciseChatSettings(irisSubSettingsService.update(existingSettings.getIrisTextExerciseChatSettings(),
+                settingsUpdate.getIrisTextExerciseChatSettings(), parentSettings.irisTextExerciseChatSettings(), EXERCISE));
         return irisSettingsRepository.save(existingSettings);
     }
 

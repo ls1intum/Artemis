@@ -1,6 +1,6 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Subject } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
@@ -9,13 +9,15 @@ import { Course } from 'app/entities/course.model';
 import { Router } from '@angular/router';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faBook, faChartBar, faListAlt, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faChartBar, faListAlt, faRobot, faTable, faTrash, faUserCheck, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_IRIS } from 'app/app.constants';
 
 @Component({
     selector: 'jhi-non-programming-exercise-detail-common-actions',
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
 })
-export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
+export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit, OnDestroy {
     @Input()
     exercise: Exercise;
 
@@ -30,9 +32,12 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     teamBaseResource: string;
     baseResource: string;
     shortBaseResource: string;
+    irisEnabled = false;
     readonly ExerciseType = ExerciseType;
 
     readonly AssessmentType = AssessmentType;
+
+    private profileInfoSubscription: Subscription;
 
     // Icons
     faTrash = faTrash;
@@ -43,11 +48,13 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faUserCheck = faUserCheck;
+    faRobot = faRobot;
 
     constructor(
         private textExerciseService: TextExerciseService,
         private fileUploadExerciseService: FileUploadExerciseService,
         private modelingExerciseService: ModelingExerciseService,
+        private profileService: ProfileService,
         private eventManager: EventManager,
         private router: Router,
     ) {}
@@ -65,6 +72,15 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                 `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}` +
                 `/exercise-groups/${this.exercise.exerciseGroup?.id}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
+        }
+        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+            this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
+        });
+    }
+
+    ngOnDestroy(): void {
+        if (this.profileInfoSubscription) {
+            this.profileInfoSubscription.unsubscribe();
         }
     }
 

@@ -9,6 +9,8 @@ import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
+import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
+import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
 import de.tum.in.www1.artemis.domain.iris.session.IrisTextExerciseChatSession;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettingsType;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -19,11 +21,14 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisJobService;
 import de.tum.in.www1.artemis.service.connectors.pyris.PyrisPipelineService;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.text_exercise.PyrisTextExerciseChatPipelineExecutionDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.text_exercise.PyrisTextExerciseChatStatusUpdateDTO;
+import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisMessageDTO;
 import de.tum.in.www1.artemis.service.connectors.pyris.dto.data.PyrisTextExerciseDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.job.ExerciseChatJob;
+import de.tum.in.www1.artemis.service.connectors.pyris.job.TextExerciseChatJob;
+import de.tum.in.www1.artemis.service.iris.IrisMessageService;
 import de.tum.in.www1.artemis.service.iris.IrisRateLimitService;
 import de.tum.in.www1.artemis.service.iris.settings.IrisSettingsService;
-import de.tum.in.www1.artemis.service.iris.websocket.IrisChatWebsocketService;
+import de.tum.in.www1.artemis.service.iris.websocket.IrisTextExerciseChatWebsocketService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -37,6 +42,8 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
 
     private final IrisRateLimitService rateLimitService;
 
+    private final IrisMessageService irisMessageService;
+
     private final TextExerciseRepository textExerciseRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -45,36 +52,38 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
 
     private final PyrisJobService pyrisJobService;
 
-    private final IrisChatWebsocketService irisChatWebsocketService;
+    private final IrisTextExerciseChatWebsocketService irisWebsocketService;
 
     private final AuthorizationCheckService authCheckService;
 
     public IrisTextExerciseChatSessionService(IrisSettingsService irisSettingsService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            TextExerciseRepository textExerciseRepository, StudentParticipationRepository studentParticipationRepository, PyrisPipelineService pyrisPipelineService,
-            PyrisJobService pyrisJobService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService) {
+            IrisMessageService irisMessageService, TextExerciseRepository textExerciseRepository, StudentParticipationRepository studentParticipationRepository,
+            PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService, IrisTextExerciseChatWebsocketService irisWebsocketService,
+            AuthorizationCheckService authCheckService) {
         this.irisSettingsService = irisSettingsService;
         this.irisSessionRepository = irisSessionRepository;
         this.rateLimitService = rateLimitService;
+        this.irisMessageService = irisMessageService;
         this.textExerciseRepository = textExerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.pyrisPipelineService = pyrisPipelineService;
         this.pyrisJobService = pyrisJobService;
-        this.irisChatWebsocketService = irisChatWebsocketService;
+        this.irisWebsocketService = irisWebsocketService;
         this.authCheckService = authCheckService;
     }
 
     @Override
     public void sendOverWebsocket(IrisTextExerciseChatSession session, IrisMessage message) {
-        irisChatWebsocketService.sendMessage(session, message, null);
+        irisWebsocketService.sendMessage(session, message, null);
     }
 
     @Override
-    public void requestAndHandleResponse(IrisTextExerciseChatSession session) {
-        var textExerciseSession = (IrisTextExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        if (textExerciseSession.getExercise().isExamExercise()) {
+    public void requestAndHandleResponse(IrisTextExerciseChatSession irisSession) {
+        var session = (IrisTextExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(irisSession.getId());
+        if (session.getExercise().isExamExercise()) {
             throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
         }
-        var exercise = textExerciseRepository.findByIdElseThrow(textExerciseSession.getExercise().getId());
+        var exercise = textExerciseRepository.findByIdElseThrow(session.getExercise().getId());
         if (!irisSettingsService.isEnabledFor(IrisSubSettingsType.TEXT_EXERCISE_CHAT, exercise)) {
             throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
         }
@@ -89,10 +98,24 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         else {
             latestSubmissionText = null;
         }
-        pyrisPipelineService.executePipeline("text-exercise-chat", "default",
-                pyrisJobService.createTokenForJob(token -> new ExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
-                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, new PyrisTextExerciseDTO(exercise), latestSubmissionText),
-                stages -> irisChatWebsocketService.sendStatusUpdate(session, stages));
+        var conversation = session.getMessages().stream().map(PyrisMessageDTO::of).toList();
+        // @formatter:off
+        pyrisPipelineService.executePipeline(
+                "text-exercise-chat",
+                "default",
+                pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), session.getId())),
+                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(dto, new PyrisTextExerciseDTO(exercise), conversation, latestSubmissionText),
+                stages -> irisWebsocketService.sendMessage(session, null, stages)
+        );
+        // @formatter:on
+    }
+
+    public void handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
+        var session = (IrisTextExerciseChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
+        var message = session.newMessage();
+        message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+        IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+        irisWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
     }
 
     @Override
