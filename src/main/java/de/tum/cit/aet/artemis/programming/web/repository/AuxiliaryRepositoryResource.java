@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.web.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCService.getDefaultBranchOfRepository;
 
 import java.security.Principal;
 import java.util.List;
@@ -48,7 +47,6 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryAccessService;
 import de.tum.cit.aet.artemis.programming.service.RepositoryService;
-import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
@@ -99,9 +97,9 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     @Override
     String getOrRetrieveBranchOfDomainObject(Long auxiliaryRepositoryId) {
-        AuxiliaryRepository auxiliaryRep = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        LocalVCRepositoryUri localVCRepositoryUri = new LocalVCRepositoryUri(auxiliaryRep.getRepositoryUri());
-        return getDefaultBranchOfRepository(localVCRepositoryUri);
+        AuxiliaryRepository auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(auxiliaryRepo.getExercise().getId());
+        return versionControlService.orElseThrow().getOrRetrieveBranchOfExercise(exercise);
     }
 
     @Override
