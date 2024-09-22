@@ -189,7 +189,7 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        if (queue.isEmpty()) {
+        if (queue.isEmpty() || isPaused) {
             return;
         }
         BuildJobQueueItem buildJob = null;
