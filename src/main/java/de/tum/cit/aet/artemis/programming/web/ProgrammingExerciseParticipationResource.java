@@ -343,7 +343,7 @@ public class ProgrammingExerciseParticipationResource {
 
     /**
      * GET /programming-exercise/{exerciseID}/commit-history/{repositoryType} : Get the commit history of a programming exercise repository. The repository type can be TEMPLATE or
-     * SOLUTION or TESTS.
+     * SOLUTION, TESTS or AUXILIARY.
      * Here we check is at least a teaching assistant for the exercise.
      *
      * @param exerciseID     the id of the exercise for which to retrieve the commit history
@@ -353,7 +353,7 @@ public class ProgrammingExerciseParticipationResource {
      */
     @GetMapping("programming-exercise/{exerciseID}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionOrTestRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType,
+    public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionTestOrAuxRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType,
             @RequestParam long repositoryId) {
         boolean isTemplateRepository = repositoryType.equals(RepositoryType.TEMPLATE);
         boolean isSolutionRepository = repositoryType.equals(RepositoryType.SOLUTION);
