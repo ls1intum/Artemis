@@ -21,15 +21,10 @@ const formulaCompatibilityPlugin: PluginSimple = (md) => {
         // which is different from the showdown behavior and could break existing exercises.
         // So we replace these with $formular$ to make them inline.
         state.tokens.forEach((token) => {
-            if (token.type === 'inline') {
-                if (token.content.match(inlineFormularRegex) && token.children) {
-                    token.content = token.content.replace(/\$\$/g, '$');
-                    for (const child of token.children) {
-                        if (child.type === 'text') {
-                            child.content = child.content.replace(/\$\$/g, '$');
-                        }
-                    }
-                }
+            if (token.content.match(inlineFormularRegex)) {
+                token.content = token.content.replace(/\$\$/g, '$');
+            } else if (token.content.includes('\\\\begin') || token.content.includes('\\\\end')) {
+                token.content = token.content.replaceAll('\\\\begin', '\\begin').replaceAll('\\\\end', '\\end');
             }
         });
     });
