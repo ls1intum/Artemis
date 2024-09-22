@@ -11,7 +11,7 @@ export class ArtemisMarkdownService {
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.
      *
      * @param {string} markdownText the original markdown text
-     * @param extensions to use for markdown parsing
+     * @param {PluginSimple[]} extensions to use for markdown parsing
      * @param {string[]} allowedHtmlTags to allow during sanitization
      * @param {string[]} allowedHtmlAttributes to allow during sanitization
      * @returns {string} the resulting html as a SafeHtml object that can be inserted into the angular template

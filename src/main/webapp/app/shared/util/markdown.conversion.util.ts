@@ -14,14 +14,14 @@ const classMap: { [key: string]: string } = {
 };
 
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
-const inlineFormularRegex = /(?:.+\$\$[^\$]+\$\$)|(?:\$\$[^\$]+\$\$.+)/g;
+const inlineFormulaRegex = /(?:.+\$\$[^\$]+\$\$)|(?:\$\$[^\$]+\$\$.+)/g;
 const formulaCompatibilityPlugin: PluginSimple = (md) => {
     md.core.ruler.before('inline', 'latex-inline-migrator', (state) => {
         // markdownItKatex always creates a big block formula if $$ is used as a deliminator
         // which is different from the showdown behavior and could break existing exercises.
-        // So we replace these with $formular$ to make them inline.
+        // So we replace these with $formula$ to make them inline.
         state.tokens.forEach((token) => {
-            if (token.content.match(inlineFormularRegex)) {
+            if (token.content.match(inlineFormulaRegex)) {
                 token.content = token.content.replace(/\$\$/g, '$');
             } else if (token.content.includes('\\\\begin') || token.content.includes('\\\\end')) {
                 token.content = token.content.replaceAll('\\\\begin', '\\begin').replaceAll('\\\\end', '\\end');
@@ -50,18 +50,17 @@ export function htmlForMarkdown(
         return '';
     }
 
-    let md = markdownIt({
+    const md = markdownIt({
         html: true,
         linkify: true,
         breaks: false, // Avoid line breaks after tasks
     });
     for (const extension of extensions) {
-        md = md.use(extension);
+        md.use(extension);
     }
 
     // Add default extensions (Code Highlight, Latex)
-    md = md
-        .use(markdown_it_highlightjs)
+    md.use(markdown_it_highlightjs)
         .use(formulaCompatibilityPlugin)
         .use(markdownItKatex, {
             enableMathInlineInHtml: true,
