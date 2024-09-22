@@ -17,13 +17,20 @@ export type MonacoEditorDiffText = { original: string; modified: string };
 export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneDiffEditor;
     monacoDiffEditorContainerElement: HTMLElement;
-    themeSubscription?: Subscription;
-    listeners: Disposable[] = [];
-    resizeObserver?: ResizeObserver;
 
     allowSplitView = input<boolean>();
     onReadyForDisplayChange = output<boolean>();
 
+    /*
+     * Subscriptions and listeners that need to be disposed of when this component is destroyed.
+     */
+    themeSubscription?: Subscription;
+    listeners: Disposable[] = [];
+    resizeObserver?: ResizeObserver;
+
+    /*
+     * Injected services and elements.
+     */
     private readonly themeService = inject(ThemeService);
     private readonly elementRef = inject(ElementRef);
     private readonly renderer = inject(Renderer2);
