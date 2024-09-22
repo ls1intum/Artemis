@@ -1,7 +1,6 @@
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
 import { BehaviorSubject } from 'rxjs';
@@ -13,9 +12,7 @@ describe('MonacoDiffEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule],
-            declarations: [MonacoDiffEditorComponent],
-            providers: [],
+            imports: [ArtemisTestModule, MonacoDiffEditorComponent],
         })
             .compileComponents()
             .then(() => {

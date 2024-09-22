@@ -73,8 +73,8 @@ import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-edi
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { MonacoEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-editor.component';
 
 describe('CodeEditorContainerIntegration', () => {
     let container: CodeEditorContainerComponent;
@@ -100,7 +100,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule, MockDirective(NgbDropdown), MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, MonacoEditorComponent, MockDirective(NgbDropdown), MockModule(NgbTooltipModule)],
             declarations: [
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
