@@ -24,17 +24,6 @@ export const MAX_TAB_SIZE = 8;
     encapsulation: ViewEncapsulation.None,
 })
 export class MonacoEditorComponent implements OnInit, OnDestroy {
-    private _editor: monaco.editor.IStandaloneCodeEditor;
-    private textEditorAdapter: MonacoTextEditorAdapter;
-    private monacoEditorContainerElement: HTMLElement;
-    themeSubscription?: Subscription;
-    models: MonacoEditorTextModel[] = [];
-    lineWidgets: MonacoEditorLineWidget[] = [];
-    editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
-    lineHighlights: MonacoEditorLineHighlight[] = [];
-    actions: TextEditorAction[] = [];
-    lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
-
     /**
      * The default width of the line decoration button in the editor. We use the ch unit to avoid fixed pixel sizes.
      * @private
@@ -42,6 +31,45 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
     private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
 
+    private readonly _editor: monaco.editor.IStandaloneCodeEditor;
+    private readonly textEditorAdapter: MonacoTextEditorAdapter;
+    private readonly monacoEditorContainerElement: HTMLElement;
+
+    /*
+     * Elements, models, and actions of the editor.
+     */
+    models: MonacoEditorTextModel[] = [];
+    lineWidgets: MonacoEditorLineWidget[] = [];
+    buildAnnotations: MonacoEditorBuildAnnotation[] = [];
+    lineHighlights: MonacoEditorLineHighlight[] = [];
+    actions: TextEditorAction[] = [];
+    lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
+
+    /*
+     * Inputs and outputs.
+     */
+
+    textChangedEmitDelay = input<number | undefined>();
+    shrinkToFit = input<boolean>(true);
+    stickyScroll = input<boolean>(false);
+    readOnly = input<boolean>(false);
+
+    textChanged = output<string>();
+    contentHeightChanged = output<number>();
+    onBlurEditor = output<void>();
+
+    /*
+     * Disposable listeners, subscriptions, and timeouts.
+     */
+    private contentHeightListener?: Disposable;
+    private textChangedListener?: Disposable;
+    private blurEditorWidgetListener?: Disposable;
+    private textChangedEmitTimeout?: NodeJS.Timeout;
+    private themeSubscription?: Subscription;
+
+    /*
+     * Injected services and elements.
+     */
     private readonly themeService = inject(ThemeService);
     private readonly renderer = inject(Renderer2);
     private readonly translateService = inject(TranslateService);
@@ -93,20 +121,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             });
         });
     }
-
-    textChangedEmitDelay = input<number | undefined>();
-    shrinkToFit = input<boolean>(true);
-    stickyScroll = input<boolean>(false);
-    readOnly = input<boolean>(false);
-
-    textChanged = output<string>();
-    contentHeightChanged = output<number>();
-    onBlurEditor = output<void>();
-
-    private contentHeightListener?: Disposable;
-    private textChangedListener?: Disposable;
-    private blurEditorWidgetListener?: Disposable;
-    private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
         const resizeObserver = new ResizeObserver(() => {
@@ -264,10 +278,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     disposeAnnotations() {
-        this.editorBuildAnnotations.forEach((o) => {
+        this.buildAnnotations.forEach((o) => {
             o.dispose();
         });
-        this.editorBuildAnnotations = [];
+        this.buildAnnotations = [];
     }
 
     disposeLineHighlights(): void {
@@ -321,7 +335,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             );
             editorBuildAnnotation.addToEditor();
             editorBuildAnnotation.setOutdatedAndUpdate(outdated);
-            this.editorBuildAnnotations.push(editorBuildAnnotation);
+            this.buildAnnotations.push(editorBuildAnnotation);
         }
     }
 

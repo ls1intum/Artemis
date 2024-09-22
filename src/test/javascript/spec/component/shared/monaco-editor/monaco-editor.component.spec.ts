@@ -118,9 +118,9 @@ describe('MonacoEditorComponent', () => {
         comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(multiLineText);
         const element = document.getElementById(buildAnnotationId);
-        expect(comp.editorBuildAnnotations).toHaveLength(1);
+        expect(comp.buildAnnotations).toHaveLength(1);
         expect(element).not.toBeNull();
-        expect(element).toEqual(comp.editorBuildAnnotations[0].getGlyphMarginDomNode());
+        expect(element).toEqual(comp.buildAnnotations[0].getGlyphMarginDomNode());
     });
 
     it('should not display build annotations that are out of bounds', () => {
@@ -130,28 +130,28 @@ describe('MonacoEditorComponent', () => {
         comp.setAnnotations(buildAnnotationArray, false);
         comp.setText(singleLineText);
         const element = document.getElementById(buildAnnotationId);
-        expect(comp.editorBuildAnnotations).toHaveLength(1);
+        expect(comp.buildAnnotations).toHaveLength(1);
         // Ensure that the element is actually there, but not displayed in the DOM.
         expect(element).toBeNull();
-        expect(comp.editorBuildAnnotations[0].getGlyphMarginDomNode().id).toBe(buildAnnotationId);
+        expect(comp.buildAnnotations[0].getGlyphMarginDomNode().id).toBe(buildAnnotationId);
     });
 
     it('should mark build annotations as outdated if specified', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
         comp.setAnnotations(buildAnnotationArray, true);
-        expect(comp.editorBuildAnnotations).toHaveLength(1);
-        expect(comp.editorBuildAnnotations[0].isOutdated()).toBeTrue();
+        expect(comp.buildAnnotations).toHaveLength(1);
+        expect(comp.buildAnnotations[0].isOutdated()).toBeTrue();
     });
 
     it('should mark build annotations as outdated when a keyboard input is made', () => {
         fixture.detectChanges();
         comp.setText(multiLineText);
         comp.setAnnotations(buildAnnotationArray, false);
-        expect(comp.editorBuildAnnotations).toHaveLength(1);
-        expect(comp.editorBuildAnnotations[0].isOutdated()).toBeFalse();
+        expect(comp.buildAnnotations).toHaveLength(1);
+        expect(comp.buildAnnotations[0].isOutdated()).toBeFalse();
         comp.triggerKeySequence('typing');
-        expect(comp.editorBuildAnnotations[0].isOutdated()).toBeTrue();
+        expect(comp.buildAnnotations[0].isOutdated()).toBeTrue();
     });
 
     it('should highlight line ranges with the specified classnames', () => {
@@ -218,7 +218,7 @@ describe('MonacoEditorComponent', () => {
         comp.addLineWidget(1, 'widget', document.createElement('div'));
         comp.setLineDecorationsHoverButton('testClass', jest.fn());
         comp.highlightLines(1, 1);
-        const disposeAnnotationSpy = jest.spyOn(comp.editorBuildAnnotations[0], 'dispose');
+        const disposeAnnotationSpy = jest.spyOn(comp.buildAnnotations[0], 'dispose');
         const disposeWidgetSpy = jest.spyOn(comp.lineWidgets[0], 'dispose');
         const disposeHoverButtonSpy = jest.spyOn(comp.lineDecorationsHoverButton!, 'dispose');
         const disposeLineHighlightSpy = jest.spyOn(comp.lineHighlights[0], 'dispose');
