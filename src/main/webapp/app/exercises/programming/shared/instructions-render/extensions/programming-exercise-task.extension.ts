@@ -30,6 +30,11 @@ export class ProgrammingExerciseTaskExtensionWrapper extends ArtemisTextReplacem
         return this.injectableElementsFoundSubject.asObservable();
     }
 
+    /**
+     * The task regex is coupled to the value used in ProgrammingExerciseTaskService in the server
+     * and `TaskCommand` in the client
+     * If you change the regex, make sure to change it in all places!
+     */
     replaceText(text: string): string {
         return text.replace(taskRegex, (match) => {
             return this.escapeTaskSpecialCharactersForMarkdown(match);

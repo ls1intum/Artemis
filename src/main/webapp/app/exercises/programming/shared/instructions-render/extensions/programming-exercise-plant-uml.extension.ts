@@ -67,6 +67,15 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
             .subscribe();
     }
 
+    /**
+     * The extension provides a custom rendering mechanism for embedded plantUml diagrams.
+     * The mechanism works as follows:
+     * 1) Find (multiple) embedded plantUml diagrams based on a regex (startuml, enduml).
+     * 2) Replace the whole plantUml with a simple plantUml div container and a unique placeholder id
+     * 3) Add colors for test results in the plantUml (red, green, grey)
+     * 4) Send the plantUml content to the server for rendering a svg (the result will be cached for performance reasons)
+     * 5) Inject the computed svg for the plantUml (from the server) into the plantUml div container based on the unique placeholder id (see step 2)
+     */
     replaceText(text: string): string {
         const idPlaceholder = '%idPlaceholder%';
         // E.g. [task][Implement BubbleSort](testBubbleSort)
