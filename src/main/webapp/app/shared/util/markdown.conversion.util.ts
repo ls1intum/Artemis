@@ -23,10 +23,8 @@ const formulaCompatibilityPlugin: PluginSimple = (md) => {
         state.tokens.forEach((token) => {
             if (token.type === 'inline') {
                 if (token.content.match(inlineFormularRegex) && token.children) {
-                    console.log(token.content);
                     token.content = token.content.replace(/\$\$/g, '$');
                     for (const child of token.children) {
-                        console.log('child', child.content);
                         if (child.type === 'text') {
                             child.content = child.content.replace(/\$\$/g, '$');
                         }
