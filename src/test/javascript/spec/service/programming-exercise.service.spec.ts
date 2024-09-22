@@ -20,6 +20,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { Submission } from 'app/entities/submission.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -79,6 +80,27 @@ describe('ProgrammingExercise Service', () => {
             const expected = { ...returnedFromService };
             service
                 .findWithTemplateAndSolutionParticipation(123)
+                .pipe(take(1))
+                .subscribe((resp) => expect(resp.body).toEqual(expected));
+            const req = httpMock.expectOne({ method: 'GET' });
+            req.flush(returnedFromService);
+            tick();
+        }));
+
+        it('should find with auxiliary repositories', fakeAsync(() => {
+            const auxiliaryRepository: AuxiliaryRepository = { id: 5 };
+            const returnedFromService = {
+                ...defaultProgrammingExercise,
+                auxiliaryRepositories: [auxiliaryRepository],
+                releaseDate: undefined,
+                dueDate: undefined,
+                assessmentDueDate: undefined,
+                buildAndTestStudentSubmissionsAfterDueDate: undefined,
+                studentParticipations: [],
+            };
+            const expected = { ...returnedFromService };
+            service
+                .findWithAuxiliaryRepository(returnedFromService.id!, auxiliaryRepository.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
