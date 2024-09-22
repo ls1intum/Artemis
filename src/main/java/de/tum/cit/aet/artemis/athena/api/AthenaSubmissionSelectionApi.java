@@ -3,33 +3,23 @@ package de.tum.cit.aet.artemis.athena.api;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.athena.service.AthenaSubmissionSelectionService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Controller
-public class AthenaSubmissionSelectionApi {
+public class AthenaSubmissionSelectionApi extends AbstractAthenaApi {
 
-    private final Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService;
+    private final Optional<AthenaSubmissionSelectionService> optionalAthenaSubmissionSelectionService;
 
-    public AthenaSubmissionSelectionApi(Optional<AthenaSubmissionSelectionService> athenaSubmissionSelectionService) {
-        this.athenaSubmissionSelectionService = athenaSubmissionSelectionService;
+    public AthenaSubmissionSelectionApi(Environment environment, Optional<AthenaSubmissionSelectionService> optionalAthenaSubmissionSelectionService) {
+        super(environment);
+        this.optionalAthenaSubmissionSelectionService = optionalAthenaSubmissionSelectionService;
     }
 
     public Optional<Long> getProposedSubmissionId(Exercise exercise, List<Long> submissionIds) {
-        return getOrThrow().getProposedSubmissionId(exercise, submissionIds);
-    }
-
-    public boolean isActive() {
-        return athenaSubmissionSelectionService.isPresent();
-    }
-
-    private AthenaSubmissionSelectionService getOrThrow() {
-        if (athenaSubmissionSelectionService.isEmpty()) {
-            throw new IllegalStateException("AthenaSubmissionSelectionService is not available");
-        }
-
-        return athenaSubmissionSelectionService.get();
+        return getOrThrow(optionalAthenaSubmissionSelectionService).getProposedSubmissionId(exercise, submissionIds);
     }
 }

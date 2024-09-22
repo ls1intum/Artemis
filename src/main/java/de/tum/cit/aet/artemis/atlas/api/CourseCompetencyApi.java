@@ -5,6 +5,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -17,7 +18,7 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 
 @Controller
-public class CourseCompetencyApi {
+public class CourseCompetencyApi extends AbstractAtlasApi {
 
     private final Optional<CourseCompetencyRepository> optionalCourseCompetencyRepository;
 
@@ -27,8 +28,10 @@ public class CourseCompetencyApi {
 
     private final Optional<CompetencyRepository> optionalCompetencyRepository;
 
-    public CourseCompetencyApi(Optional<CourseCompetencyRepository> optionalCourseCompetencyRepository, Optional<CompetencyRelationRepository> optionalCompetencyRelationRepository,
-            Optional<PrerequisiteRepository> optionalPrerequisitesRepository, Optional<CompetencyRepository> optionalCompetencyRepository) {
+    public CourseCompetencyApi(Environment environment, Optional<CourseCompetencyRepository> optionalCourseCompetencyRepository,
+            Optional<CompetencyRelationRepository> optionalCompetencyRelationRepository, Optional<PrerequisiteRepository> optionalPrerequisitesRepository,
+            Optional<CompetencyRepository> optionalCompetencyRepository) {
+        super(environment);
         this.optionalCourseCompetencyRepository = optionalCourseCompetencyRepository;
         this.optionalCompetencyRelationRepository = optionalCompetencyRelationRepository;
         this.optionalPrerequisitesRepository = optionalPrerequisitesRepository;

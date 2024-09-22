@@ -41,7 +41,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.ManualConfig;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
+import de.tum.cit.aet.artemis.exam.api.ExamAccessApi;
 
 /**
  * REST controller for managing bonus
@@ -66,19 +66,19 @@ public class BonusResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ExamAccessService examAccessService;
+    private final ExamAccessApi examAccessApi;
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
     private final CourseRepository courseRepository;
 
     public BonusResource(BonusService bonusService, BonusRepository bonusRepository, GradingScaleRepository gradingScaleRepository, AuthorizationCheckService authCheckService,
-            ExamAccessService examAccessService, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
+            ExamAccessApi examAccessApi, CourseScoreCalculationService courseScoreCalculationService, CourseRepository courseRepository) {
         this.bonusService = bonusService;
         this.bonusRepository = bonusRepository;
         this.gradingScaleRepository = gradingScaleRepository;
         this.authCheckService = authCheckService;
-        this.examAccessService = examAccessService;
+        this.examAccessApi = examAccessApi;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.courseRepository = courseRepository;
     }
@@ -96,7 +96,7 @@ public class BonusResource {
     @EnforceAtLeastStudent
     public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(required = false) boolean includeSourceGradeSteps) {
         log.debug("REST request to get bonus for exam: {}", examId);
-        examAccessService.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
+        examAccessApi.checkCourseAndExamAccessForStudentElseThrow(courseId, examId);
 
         var bonus = bonusRepository.findAllByBonusToExamId(examId).stream().findAny().orElseThrow(() -> new EntityNotFoundException("BonusToGradingScale exam", examId));
         bonus.setBonusStrategy(bonus.getBonusToGradingScale().getBonusStrategy());
@@ -139,7 +139,7 @@ public class BonusResource {
             @RequestParam Double calculationSign, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
 
         // TODO: Add auth and validation and authorize to USER role. Currently enabled only to ADMINs for testing.
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        examAccessApi.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         var bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
         var sourceGradingScale = gradingScaleRepository.findById(sourceGradingScaleId).orElseThrow();
@@ -168,7 +168,7 @@ public class BonusResource {
             throw new BadRequestAlertException("A new bonus cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        examAccessApi.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         GradingScale sourceGradingScaleFromDb = gradingScaleRepository.findById(bonus.getSourceGradingScale().getId()).orElseThrow();
         bonus.setSourceGradingScale(sourceGradingScaleFromDb);
@@ -234,7 +234,7 @@ public class BonusResource {
             throw new ConflictException("The updatedBonus id in the body and path do not match", ENTITY_NAME, "bonusIdMismatch");
         }
 
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        examAccessApi.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         Bonus oldBonus = bonusRepository.findByIdElseThrow(updatedBonus.getId());
         checkBonusAppliesToExam(oldBonus, examId);
@@ -283,7 +283,7 @@ public class BonusResource {
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId) {
         log.debug("REST request to delete the bonus: {}", bonusId);
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        examAccessApi.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         Bonus bonus = bonusRepository.findByIdElseThrow(bonusId);
         checkBonusAppliesToExam(bonus, examId);
 

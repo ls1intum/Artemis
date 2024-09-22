@@ -1076,4 +1076,11 @@ public class AuthorizationCheckService {
             throw new AccessForbiddenException("Exercise", exerciseId);
         }
     }
+
+    public void checkCourseAccessForInstructorElseThrow(Long courseId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (isAtLeastInstructorInCourse(course, null)) {
+            throw new AccessForbiddenException("You are not allowed to manage exams in this course!");
+        }
+    }
 }

@@ -217,7 +217,6 @@ public class Lti13Service {
                 LtiPlatformConfiguration returnPlatform = launch.getLtiPlatformConfiguration();
                 ClientRegistration returnClient = onlineCourseConfigurationService.getClientRegistration(returnPlatform);
                 submitScore(launch, returnClient, concatenatedFeedbacks, result.get().getScore());
-
             });
         });
     }

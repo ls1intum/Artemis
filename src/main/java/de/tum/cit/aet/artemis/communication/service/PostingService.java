@@ -39,7 +39,6 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
 public abstract class PostingService {
 
@@ -51,8 +50,6 @@ public abstract class PostingService {
 
     protected final ExerciseRepository exerciseRepository;
 
-    protected final LectureRepository lectureRepository;
-
     protected final ConversationParticipantRepository conversationParticipantRepository;
 
     protected final AuthorizationCheckService authorizationCheckService;
@@ -63,13 +60,12 @@ public abstract class PostingService {
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
-    protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
+    protected PostingService(CourseRepository courseRepository, UserRepository userRepository, ExerciseRepository exerciseRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService,
             ConversationParticipantRepository conversationParticipantRepository) {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
-        this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.websocketMessagingService = websocketMessagingService;
         this.conversationParticipantRepository = conversationParticipantRepository;

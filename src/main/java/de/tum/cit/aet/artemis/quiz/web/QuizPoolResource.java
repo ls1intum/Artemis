@@ -92,7 +92,8 @@ public class QuizPoolResource {
 
     private void validateCourseRole(Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
+        // ToDo: Does it make sense to have these duplicated?
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
-        examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
+        authCheckService.checkCourseAccessForInstructorElseThrow(courseId);
     }
 }

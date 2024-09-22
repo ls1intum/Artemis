@@ -44,6 +44,7 @@ public class ExamDateService {
      * @return true if the exam is over and the students cannot submit anymore
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
+    // ToDo: Move to tests
     public boolean isExamWithGracePeriodOver(Long examId) {
         final var exam = examRepository.findByIdElseThrow(examId);
         return isExamWithGracePeriodOver(exam);
@@ -163,6 +164,7 @@ public class ExamDateService {
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      * @throws EntityNotFoundException if no exam with the given examId can be found
      */
+    // ToDo: Move to tests
     public Set<ZonedDateTime> getAllIndividualExamEndDates(Long examId) {
         final var exam = examRepository.findByIdElseThrow(examId);
         return getAllIndividualExamEndDates(exam);
@@ -176,6 +178,7 @@ public class ExamDateService {
      * @param exam the exam
      * @return a set of all end dates. May return an empty set, if the exam has no start/end date or student exams cannot be found.
      */
+    // ToDo: Move to tests
     public Set<ZonedDateTime> getAllIndividualExamEndDates(Exam exam) {
         if (exam.getStartDate() == null) {
             return null;

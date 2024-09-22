@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.athena.api;
 
 import java.util.Optional;
 
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
@@ -10,16 +11,13 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 @Controller
-public class AthenaModuleApi {
+public class AthenaModuleApi extends AbstractAthenaApi {
 
     private final Optional<AthenaModuleService> optionalAthenaModuleService;
 
-    public AthenaModuleApi(Optional<AthenaModuleService> optionalAthenaModuleService) {
+    public AthenaModuleApi(Environment environment, Optional<AthenaModuleService> optionalAthenaModuleService) {
+        super(environment);
         this.optionalAthenaModuleService = optionalAthenaModuleService;
-    }
-
-    public boolean isActive() {
-        return optionalAthenaModuleService.isPresent();
     }
 
     public void revokeAccessToRestrictedFeedbackSuggestionModules(Course course) {

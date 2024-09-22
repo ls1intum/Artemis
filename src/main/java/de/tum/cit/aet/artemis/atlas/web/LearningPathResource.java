@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationObjectDTO.Learning
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
 import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
+import de.tum.cit.aet.artemis.atlas.service.LearningObjectService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathNavigationService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathRecommendationService;
@@ -54,7 +55,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
-import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 
 @Profile(PROFILE_CORE)
 @RestController

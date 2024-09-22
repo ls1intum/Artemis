@@ -19,13 +19,13 @@ import de.tum.cit.aet.artemis.StudentScoreUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.service.LearningObjectService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.lecture.LectureFactory;
 import de.tum.cit.aet.artemis.lecture.LectureUtilService;
-import de.tum.cit.aet.artemis.lecture.service.LearningObjectService;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 
 class LearningObjectServiceTest extends AbstractSpringIntegrationIndependentTest {

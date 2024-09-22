@@ -302,6 +302,10 @@ public final class Constants {
      */
     public static final String PROFILE_ARTEMIS = "artemis";
 
+    public static final String PROFILE_ATLAS = "atlas";
+
+    public static final String PROFILE_EXAM = "exam";
+
     /**
      * The name of the Spring profile used for Artemis core functionality.
      */

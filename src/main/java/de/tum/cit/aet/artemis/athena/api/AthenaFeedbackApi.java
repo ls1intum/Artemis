@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.athena.api;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -19,20 +20,17 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 @Controller
-public class AthenaFeedbackApi {
+public class AthenaFeedbackApi extends AbstractAthenaApi {
 
     private final Optional<AthenaFeedbackSuggestionsService> optionalAthenaFeedbackSuggestionsService;
 
     private final Optional<AthenaFeedbackSendingService> optionalAthenaFeedbackSendingService;
 
-    public AthenaFeedbackApi(Optional<AthenaFeedbackSuggestionsService> optionalAthenaFeedbackSuggestionsService,
+    public AthenaFeedbackApi(Environment environment, Optional<AthenaFeedbackSuggestionsService> optionalAthenaFeedbackSuggestionsService,
             Optional<AthenaFeedbackSendingService> optionalAthenaFeedbackSendingService) {
+        super(environment);
         this.optionalAthenaFeedbackSuggestionsService = optionalAthenaFeedbackSuggestionsService;
         this.optionalAthenaFeedbackSendingService = optionalAthenaFeedbackSendingService;
-    }
-
-    public boolean isActive() {
-        return optionalAthenaFeedbackSuggestionsService.isPresent();
     }
 
     public void sendFeedback(Exercise exercise, Submission submission, List<Feedback> feedbacks) {
@@ -41,18 +39,10 @@ public class AthenaFeedbackApi {
 
     public List<ProgrammingFeedbackDTO> getProgrammingFeedbackSuggestions(ProgrammingExercise exercise, ProgrammingSubmission submission, boolean isGraded)
             throws NetworkingException {
-        return getOrThrow().getProgrammingFeedbackSuggestions(exercise, submission, isGraded);
+        return getOrThrow(optionalAthenaFeedbackSuggestionsService).getProgrammingFeedbackSuggestions(exercise, submission, isGraded);
     }
 
     public List<TextFeedbackDTO> getTextFeedbackSuggestions(TextExercise exercise, TextSubmission submission, boolean isGraded) throws NetworkingException {
-        return getOrThrow().getTextFeedbackSuggestions(exercise, submission, isGraded);
-    }
-
-    private AthenaFeedbackSuggestionsService getOrThrow() {
-        if (optionalAthenaFeedbackSuggestionsService.isEmpty()) {
-            throw new IllegalArgumentException("Athena feedback suggestions service is not available");
-        }
-
-        return optionalAthenaFeedbackSuggestionsService.get();
+        return getOrThrow(optionalAthenaFeedbackSuggestionsService).getTextFeedbackSuggestions(exercise, submission, isGraded);
     }
 }

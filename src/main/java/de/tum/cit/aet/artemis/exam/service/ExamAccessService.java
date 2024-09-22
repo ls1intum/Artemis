@@ -137,10 +137,7 @@ public class ExamAccessService {
      * @param courseId The id of the course
      */
     public void checkCourseAccessForInstructorElseThrow(Long courseId) {
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authorizationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            throw new AccessForbiddenException("You are not allowed to manage exams in this course!");
-        }
+        authorizationCheckService.checkCourseAccessForInstructorElseThrow(courseId);
     }
 
     /**

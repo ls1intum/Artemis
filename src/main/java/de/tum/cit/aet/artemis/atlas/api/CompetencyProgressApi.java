@@ -6,6 +6,7 @@ import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
@@ -18,13 +19,15 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 
 @Controller
-public class CompetencyProgressApi {
+public class CompetencyProgressApi extends AbstractAtlasApi {
 
     private final Optional<CompetencyProgressService> optionalCompetencyProgressService;
 
     private final Optional<CompetencyRepository> optionalCompetencyRepository;
 
-    public CompetencyProgressApi(Optional<CompetencyProgressService> optionalCompetencyProgressService, Optional<CompetencyRepository> optionalCompetencyRepository) {
+    public CompetencyProgressApi(Environment environment, Optional<CompetencyProgressService> optionalCompetencyProgressService,
+            Optional<CompetencyRepository> optionalCompetencyRepository) {
+        super(environment);
         this.optionalCompetencyProgressService = optionalCompetencyProgressService;
         this.optionalCompetencyRepository = optionalCompetencyRepository;
     }
@@ -58,13 +61,5 @@ public class CompetencyProgressApi {
             // Asynchronously update the progress for each competency
             competencies.forEach(competencyProgressService::updateProgressByCompetencyAsync);
         });
-    }
-
-    public <T> T getOrThrow(Optional<T> service) {
-        if (service.isEmpty()) {
-            throw new IllegalStateException("CompetencyProgressService is not enabled");
-        }
-
-        return service.get();
     }
 }
