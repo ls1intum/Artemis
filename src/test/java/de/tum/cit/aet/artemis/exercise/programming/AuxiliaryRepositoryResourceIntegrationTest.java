@@ -178,7 +178,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
         params.add("file", "newFile");
 
         doReturn(Optional.of(true)).when(gitService).getFileByName(any(), any());
-        request.postWithoutResponseBody(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.BAD_REQUEST, params);
+        request.postWithoutResponseBody(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.BAD_REQUEST, params);
     }
 
     @Test
@@ -288,7 +288,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
 
         doReturn(Optional.empty()).when(gitService).getFileByName(any(), any());
 
-        request.delete(testRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.NOT_FOUND, params);
+        request.delete(testRepoBaseUrl + auxiliaryRepository.getId() + "/file", HttpStatus.NOT_FOUND, params);
     }
 
     @Test
@@ -420,7 +420,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
             assertThat(localAuxiliaryRepo.getAllLocalCommits().getFirst()).isNotEqualTo(localAuxiliaryRepo.getAllOriginCommits().getFirst());
 
             // Execute the Rest call
-            request.get(testRepoBaseUrl + programmingExercise.getId() + "/pull", HttpStatus.OK, Void.class);
+            request.get(testRepoBaseUrl + auxiliaryRepository.getId() + "/pull", HttpStatus.OK, Void.class);
 
             // Check if the current commit is the same on the local and the remote repository and if the file exists on the local repository
             assertThat(localAuxiliaryRepo.getAllLocalCommits().getFirst()).isEqualTo(localAuxiliaryRepo.getAllOriginCommits().getFirst());
@@ -437,14 +437,14 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
                 var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(localAuxiliaryRepo.originRepoFile.toPath(), null)) {
 
             // Check status of git before the commit
-            var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + auxiliaryRepository.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
             assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
 
             // Create a commit for the local and the remote repository
-            request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/commit", null, HttpStatus.OK, null);
+            request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/commit", null, HttpStatus.OK, null);
 
             // Check status of git after the commit
-            var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+            var receivedStatusAfterCommit = request.get(testRepoBaseUrl + auxiliaryRepository.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
             assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
 
             // Create file in the local repository and commit it
@@ -496,7 +496,7 @@ class AuxiliaryRepositoryResourceIntegrationTest extends AbstractSpringIntegrati
         request.postWithoutLocation(testRepoBaseUrl + auxiliaryRepository.getId() + "/commit", null, HttpStatus.OK, null);
 
         // Check if the status of git is "clean" after the commit
-        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        var receivedStatusAfterCommit = request.get(testRepoBaseUrl + auxiliaryRepository.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
     }
 
