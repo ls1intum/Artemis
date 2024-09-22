@@ -45,7 +45,6 @@
               "rfdc",
               "shallowequal",
               "markdown-it-class",
-              "@iktakahiro/markdown-it-katex",
               "smoothscroll-polyfill",
               "sockjs-client",
               "use-sync-external-store/shim",

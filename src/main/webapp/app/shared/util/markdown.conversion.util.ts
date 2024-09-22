@@ -2,7 +2,7 @@ import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import markdownIt from 'markdown-it';
 import markdownItClass from 'markdown-it-class';
-import markdownItKatex from '@iktakahiro/markdown-it-katex';
+import markdownItKatex from '@vscode/markdown-it-katex';
 import markdown_it_highlightjs from 'markdown-it-highlightjs';
 import TurndownService from 'turndown';
 
@@ -12,6 +12,7 @@ import TurndownService from 'turndown';
 const classMap: { [key: string]: string } = {
     table: 'table',
 };
+
 /**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
  * Note: If possible, please use safeHtmlForMarkdown
@@ -43,7 +44,6 @@ export function htmlForMarkdown(
 
     // Add default extensions (Code Highlight, Latex)
     md = md.use(markdown_it_highlightjs).use(markdownItKatex).use(markdownItClass, classMap);
-
     let markdownRender = md.render(markdownText);
     if (markdownRender.endsWith('\n')) {
         // Keep legacy behavior from showdown where the output does not end with \n.
