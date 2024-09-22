@@ -12,6 +12,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
+import { MonacoEditorService } from 'app/shared/monaco-editor/monaco-editor.service';
 
 export const MAX_TAB_SIZE = 8;
 
@@ -44,6 +45,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private readonly renderer = inject(Renderer2);
     private readonly translateService = inject(TranslateService);
     private readonly elementRef = inject(ElementRef);
+    private readonly monacoEditorService = inject(MonacoEditorService);
 
     constructor() {
         /*
@@ -68,6 +70,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
+        this.monacoEditorService.foo();
     }
 
     @Input()

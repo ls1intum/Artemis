@@ -4,6 +4,7 @@ import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { MonacoEditorService } from './monaco-editor.service';
 
 export type MonacoEditorDiffText = { original: string; modified: string };
 @Component({
@@ -33,6 +34,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     private readonly themeService = inject(ThemeService);
     private readonly elementRef = inject(ElementRef);
     private readonly renderer = inject(Renderer2);
+    private readonly monacoEditorService = inject(MonacoEditorService);
 
     constructor() {
         /*
@@ -64,6 +66,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoDiffEditorContainerElement);
         this.setupDiffListener();
         this.setupContentHeightListeners();
+        this.monacoEditorService.foo();
     }
 
     ngOnInit(): void {
