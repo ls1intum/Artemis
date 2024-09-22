@@ -35,7 +35,7 @@ export function htmlForMarkdown(
     let md = markdownIt({
         html: true,
         linkify: true,
-        breaks: true,
+        breaks: false, // Avoid line breaks after tasks
     });
     for (const extension of extensions) {
         md = md.use(extension);
