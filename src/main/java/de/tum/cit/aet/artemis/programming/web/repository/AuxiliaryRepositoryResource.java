@@ -55,7 +55,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
  */
 @Profile(PROFILE_CORE)
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/auxiliary-repository/")
 public class AuxiliaryRepositoryResource extends RepositoryResource {
 
     private final AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
@@ -72,7 +72,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     Repository getRepository(Long auxiliaryRepositoryId, RepositoryActionType repositoryActionType, boolean pullOnGet) throws GitAPIException {
         final var auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), user, "test");
+        repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, auxiliaryRepository.getExercise(), user, "auxiliary");
         final var repoUri = auxiliaryRepository.getVcsRepositoryUri();
         return gitService.getOrCheckoutRepository(repoUri, pullOnGet);
     }
@@ -103,21 +103,21 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @GetMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "{auxiliaryRepositoryId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long auxiliaryRepositoryId) {
         return super.getFiles(auxiliaryRepositoryId);
     }
 
     @Override
-    @GetMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<byte[]> getFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
         return super.getFile(auxiliaryRepositoryId, filename);
     }
 
     @Override
-    @PostMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filePath, HttpServletRequest request) {
@@ -125,7 +125,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @PostMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "{auxiliaryRepositoryId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> createFolder(@PathVariable Long auxiliaryRepositoryId, @RequestParam("folder") String folderPath, HttpServletRequest request) {
@@ -133,7 +133,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @PostMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "{auxiliaryRepositoryId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long auxiliaryRepositoryId, @RequestBody FileMove fileMove) {
@@ -141,7 +141,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @DeleteMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "{auxiliaryRepositoryId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long auxiliaryRepositoryId, @RequestParam("file") String filename) {
@@ -149,14 +149,14 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @GetMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "{auxiliaryRepositoryId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<Void> pullChanges(@PathVariable Long auxiliaryRepositoryId) {
         return super.pullChanges(auxiliaryRepositoryId);
     }
 
     @Override
-    @PostMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "{auxiliaryRepositoryId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> commitChanges(@PathVariable Long auxiliaryRepositoryId) {
@@ -164,7 +164,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @PostMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "{auxiliaryRepositoryId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long auxiliaryRepositoryId) {
@@ -172,7 +172,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     @Override
-    @GetMapping(value = "auxiliary-repository/{auxiliaryRepositoryId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "{auxiliaryRepositoryId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastTutor
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long auxiliaryRepositoryId) throws GitAPIException {
         return super.getStatus(auxiliaryRepositoryId);
@@ -187,16 +187,16 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
      * @param principal             used to check if the user can update the files
      * @return {Map<String, String>} file submissions or the appropriate http error
      */
-    @PutMapping("auxiliary-repository/{auxiliaryRepositoryId}/files")
+    @PutMapping("{auxiliaryRepositoryId}/files")
     @EnforceAtLeastTutor
-    public ResponseEntity<Map<String, String>> updateTestFiles(@PathVariable("auxiliaryRepositoryId") Long auxiliaryRepositoryId, @RequestBody List<FileSubmission> submissions,
-            @RequestParam Boolean commit, Principal principal) {
+    public ResponseEntity<Map<String, String>> updateAuxiliaryFiles(@PathVariable("auxiliaryRepositoryId") Long auxiliaryRepositoryId,
+            @RequestBody List<FileSubmission> submissions, @RequestParam Boolean commit, Principal principal) {
 
         if (versionControlService.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");
         }
         AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(auxiliaryRepository.getExercise().getId());
+        ProgrammingExercise exercise = auxiliaryRepository.getExercise();
 
         Repository repository;
         try {

@@ -158,7 +158,7 @@ export class CommitHistoryComponent implements OnInit, OnDestroy {
      */
     private handleAuxiliaryRepositoryCommits() {
         this.commitsInfoSubscription = this.programmingExerciseParticipationService
-            .retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryType, this.repositoryId!)
+            .retrieveCommitHistoryForAuxiliaryRepository(this.exerciseId, this.repositoryId!)
             .subscribe((commits) => {
                 this.commits = this.sortCommitsByTimestampDesc(commits);
             });
