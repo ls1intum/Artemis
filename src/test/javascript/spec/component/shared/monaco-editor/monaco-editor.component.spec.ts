@@ -91,7 +91,7 @@ describe('MonacoEditorComponent', () => {
         const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
         const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
         fixture.detectChanges();
-        const unsubscribeStub = jest.spyOn(comp.themeSubscription!, 'unsubscribe').mockImplementation();
+        const unsubscribeStub = jest.spyOn(comp['themeSubscription']!, 'unsubscribe').mockImplementation();
         comp.ngOnDestroy();
         expect(subscribeStub).toHaveBeenCalledOnce();
         expect(unsubscribeStub).toHaveBeenCalledOnce();
