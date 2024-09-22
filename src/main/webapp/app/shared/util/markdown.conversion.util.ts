@@ -1,13 +1,13 @@
 import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import markdownIt from 'markdown-it';
-import showdown from 'showdown';
-import markdown_it_highlightjs from 'markdown-it-highlightjs';
 // These libraries are not typed
 // @ts-expect-error
 import markdownItClass from 'markdown-it-class';
 // @ts-expect-error
 import markdownItKatex from '@iktakahiro/markdown-it-katex';
+import markdown_it_highlightjs from 'markdown-it-highlightjs';
+import TurndownService from 'turndown';
 
 /**
  * Add these classes to the converted html.
@@ -58,33 +58,10 @@ export function htmlForMarkdown(
     if (allowedHtmlAttributes) {
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
-    const html = DOMPurify.sanitize(mdtext, purifyParameters) as string;
-
-    //return md.render(html);
-    return html;
-    /*
-    const converter = new showdown.Converter({
-        parseImgDimensions: true,
-        headerLevelStart: 3,
-        simplifiedAutoLink: true,
-        strikethrough: true,
-        tables: true,
-        openLinksInNewWindow: true,
-        backslashEscapesHTMLTags: true,
-        extensions: [...extensions, showdownKatex(), showdownHighlight({ pre: true }), ...addCSSClass],
-    });
-     */
+    return DOMPurify.sanitize(mdtext, purifyParameters) as string;
 }
 
 export function markdownForHtml(htmlText: string): string {
-    const converter = new showdown.Converter({
-        parseImgDimensions: true,
-        headerLevelStart: 3,
-        simplifiedAutoLink: true,
-        strikethrough: true,
-        tables: true,
-        openLinksInNewWindow: true,
-        backslashEscapesHTMLTags: true,
-    });
-    return converter.makeMarkdown(htmlText);
+    const turndownService = new TurndownService();
+    return turndownService.turndown(htmlText);
 }
