@@ -1,7 +1,7 @@
-import showdown from 'showdown';
 import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import markdownit from 'markdown-it';
+import showdown from 'showdown';
 
 /**
  * showdown will add the classes to the converted html
@@ -43,17 +43,6 @@ export function htmlForMarkdown(
         return '';
     }
 
-    const purifyParameters = {} as Config;
-    // Prevents sanitizer from deleting <testid>id</testid> or PlantUML color tags
-    purifyParameters['ADD_TAGS'] = ['testid', 'color:grey', 'color:green', 'color:red'];
-    if (allowedHtmlTags) {
-        purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
-    }
-    if (allowedHtmlAttributes) {
-        purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
-    }
-    const html = DOMPurify.sanitize(markdownText, purifyParameters) as string;
-
     let md = markdownit({
         html: true,
         linkify: true,
@@ -62,7 +51,22 @@ export function htmlForMarkdown(
     for (const extension of extensions) {
         md = md.use(extension);
     }
-    return md.render(html);
+
+    const mdtext = md.render(markdownText);
+
+    const purifyParameters = {} as Config;
+    // Prevents sanitizer from deleting <testid>id</testid>
+    purifyParameters['ADD_TAGS'] = ['testid'];
+    if (allowedHtmlTags) {
+        purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
+    }
+    if (allowedHtmlAttributes) {
+        purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
+    }
+    const html = DOMPurify.sanitize(mdtext, purifyParameters) as string;
+
+    //return md.render(html);
+    return html;
     /*
     const converter = new showdown.Converter({
         parseImgDimensions: true,
