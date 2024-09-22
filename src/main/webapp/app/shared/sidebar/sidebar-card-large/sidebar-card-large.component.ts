@@ -13,6 +13,7 @@ export class SidebarCardLargeComponent {
     @Input({ required: true }) sidebarItem: SidebarCardElement;
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
+    @Input() groupKey?: string;
     constructor(
         private sidebarEventService: SidebarEventService,
         private router: Router,

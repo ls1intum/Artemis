@@ -16,6 +16,7 @@ export class SidebarCardMediumComponent {
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
     @Output() pageChange = new EventEmitter<number>();
+    @Input() groupKey?: string;
 
     constructor(
         private sidebarEventService: SidebarEventService,

@@ -63,8 +63,12 @@
                 "exerciseChannels": "Exercises",
                 "lectureChannels": "Lectures",
                 "examChannels": "Exams",
+                "addChannel": "Add Channel",
                 "createChannel": "Create channel",
                 "browseChannels": "Browse channels",
+                "createChat": "Create Chat",
+                "createGroupChat": "Create group chat",
+                "createDirectChat": "Create direct chat",
                 "groupChats": "Group Chats",
                 "directMessages": "Direct Messages",
                 "filterConversationPlaceholder": "Filter conversations"

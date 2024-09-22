@@ -24,7 +24,10 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Output() onSelectConversation = new EventEmitter<number>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
-    @Output() onPlusPressed = new EventEmitter<string>();
+    @Output() onDirectChatPressed = new EventEmitter<void>();
+    @Output() onGroupChatPressed = new EventEmitter<void>();
+    @Output() onBrowsePressed = new EventEmitter<void>();
+    @Output() onCreateChannelPressed = new EventEmitter<void>();
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
@@ -33,6 +36,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
     @Input() showFilter: boolean = false;
+    @Input() inCommunication: boolean = false;
 
     searchValue = '';
     isCollapsed: boolean = false;
@@ -42,7 +46,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     paramSubscription?: Subscription;
     profileSubscription?: Subscription;
     sidebarEventSubscription?: Subscription;
-    sidebarAccordionEventSubscription?: Subscription;
 
     routeParams: Params;
     isProduction = true;
@@ -65,6 +68,43 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         private modalService: NgbModal,
     ) {}
 
+    showChatDropdown = false;
+    showChannelDropdown = false;
+
+    toggleChatDropdown() {
+        this.showChatDropdown = !this.showChatDropdown;
+        if (this.showChatDropdown) {
+            this.showChannelDropdown = false;
+        }
+    }
+
+    toggleChannelDropdown() {
+        this.showChannelDropdown = !this.showChannelDropdown;
+        if (this.showChannelDropdown) {
+            this.showChatDropdown = false;
+        }
+    }
+
+    createNewChannel() {
+        this.onCreateChannelPressed.emit();
+        this.showChannelDropdown = false;
+    }
+
+    browseChannels() {
+        this.onBrowsePressed.emit();
+        this.showChannelDropdown = false;
+    }
+
+    createDirectChat() {
+        this.onDirectChatPressed.emit();
+        this.showChatDropdown = false;
+    }
+
+    createGroupChat() {
+        this.onGroupChatPressed.emit();
+        this.showChatDropdown = false;
+    }
+
     ngOnInit(): void {
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
             this.isProduction = profileInfo?.inProduction;
@@ -82,17 +122,6 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
                         this.onSelectConversation.emit(+itemId);
                         this.onUpdateSidebar.emit();
                     }
-                }
-            });
-
-        this.sidebarAccordionEventSubscription = this.sidebarEventService
-            .sidebarAccordionPlusClickedEventListener()
-            .pipe(
-                distinctUntilChanged(), // This ensures the function is only called when the actual value changes
-            )
-            .subscribe((groupKey) => {
-                if (groupKey) {
-                    this.onPlusPressed.emit(groupKey);
                 }
             });
     }

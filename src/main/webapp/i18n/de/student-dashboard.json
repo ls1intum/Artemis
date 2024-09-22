@@ -63,8 +63,12 @@
                 "exerciseChannels": "Aufgaben",
                 "lectureChannels": "Vorlesungen",
                 "examChannels": "Klausuren",
+                "addChannel": "Kanal hinzufügen",
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
+                "createChat": "Chat erstellen",
+                "createGroupChat": "Gruppen-Chat erstellen",
+                "createDirectChat": "Direkt-Chat erstellen",
                 "groupChats": "Gruppen-Chats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern"

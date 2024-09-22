@@ -51,7 +51,7 @@
                     @if (sidebarItem.icon) {
                         <fa-icon [fixedWidth]="true" [icon]="sidebarItem.icon" />
                     }
-                    {{ sidebarItem.title }}</span
+                    {{ removeChannelPrefix(sidebarItem, sidebarItem.title) }}</span
                 >
                 <span>
                     @if (sidebarItem.rightIcon) {

@@ -18,6 +18,35 @@
                     }
                 </div>
             }
+            @if (inCommunication) {
+                <div class="row g-1 mb-1">
+                    <div class="col-6">
+                        <div class="dropdown-container">
+                            <button type="button" class="btn btn-primary" (click)="toggleChatDropdown()" jhiTranslate="artemisApp.courseOverview.sidebar.createChat"></button>
+
+                            <div [hidden]="!showChatDropdown" class="dropdown-menu">
+                                <button (click)="createDirectChat()" class="dropdown-item" jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></button>
+                                <button (click)="createGroupChat()" class="dropdown-item" jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="dropdown-container">
+                            <button
+                                type="button"
+                                class="btn btn-secondary w-100"
+                                (click)="toggleChannelDropdown()"
+                                jhiTranslate="artemisApp.courseOverview.sidebar.addChannel"
+                            ></button>
+                            <div [hidden]="!showChannelDropdown" class="dropdown-menu">
+                                <button (click)="createNewChannel()" class="dropdown-item" jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></button>
+                                <button (click)="browseChannels()" class="dropdown-item" jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
             @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                 <div
                     [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
@@ -46,9 +75,7 @@
                             [routeParams]="routeParams"
                             [courseId]="courseId"
                             [itemSelected]="itemSelected"
-                            [showAddOptions]="sidebarData.showAccordionAddOption ?? false"
                             [showLeadingIcon]="sidebarData.showAccordionLeadingIcon ?? false"
-                            [showAddOption]="showAddOption"
                             [channelTypeIcon]="channelTypeIcon"
                             [collapseState]="collapseState"
                             (onUpdateSidebar)="onUpdateSidebar.emit()"

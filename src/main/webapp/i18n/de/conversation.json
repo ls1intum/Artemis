@@ -192,12 +192,7 @@
                 }
             },
             "channelOverview": {
-                "title": {
-                    "general": "Alle allgemeinen Kanäle im Kurs {{ courseTitle }}",
-                    "exercise": "Alle Aufgabenkanäle im Kurs {{ courseTitle }}",
-                    "lecture": "Alle Vorlesungskanäle im Kurs {{ courseTitle }}",
-                    "exam": "Alle Klausurkanäle im Kurs {{ courseTitle }}"
-                },
+                "title": "Alle Kanäle im Kurs {{ courseTitle }}",
                 "otherChannels": "Andere Kanäle",
                 "createChannelButton": "Erstelle einen neuen Kanal",
                 "channelItem": {
