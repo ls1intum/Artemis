@@ -394,17 +394,17 @@ public class SharedQueueProcessingService {
     }
 
     private void pauseBuildAgent() {
-        if (this.isPaused) {
+        if (isPaused) {
             log.info("Build agent is already paused");
             return;
         }
 
         log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
 
-        this.isPaused = true;
-        this.removeListener();
-        if (this.scheduledFuture != null && !this.scheduledFuture.isCancelled()) {
-            this.scheduledFuture.cancel(false);
+        isPaused = true;
+        removeListener();
+        if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+            scheduledFuture.cancel(false);
         }
         updateLocalBuildAgentInformation();
 
@@ -414,7 +414,7 @@ public class SharedQueueProcessingService {
             log.info("No running build jobs to cancel");
         }
         else {
-            // Sleep for 10 seconds to allow the build jobs to be finished. If they are not finished, they will be cancelled.
+            // Sleep for the configured grace period to allow the build jobs to finish. If they are not finished, they will be cancelled.
             try {
                 Thread.sleep(pauseGracePeriodSeconds * 1000L);
             }
@@ -422,16 +422,16 @@ public class SharedQueueProcessingService {
                 log.error("Error while pausing build agent", e);
             }
 
-            if (!this.isPaused) {
+            if (!isPaused) {
                 log.info("Build agent was resumed before the build jobs could be cancelled");
                 return;
             }
 
-            this.processResults = false;
+            processResults = false;
             Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
             List<BuildJobQueueItem> runningBuildJobs = processingJobs.getAll(runningBuildJobIds).values().stream().toList();
             runningBuildJobIds.forEach(buildJobManagementService::cancelBuildJob);
-            this.queue.addAll(runningBuildJobs);
+            queue.addAll(runningBuildJobs);
             log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIds);
             log.debug("Cancelled running build jobs: {}", runningBuildJobs);
 
@@ -439,21 +439,21 @@ public class SharedQueueProcessingService {
     }
 
     private void resumeBuildAgent() {
-        if (!this.isPaused) {
+        if (!isPaused) {
             log.info("Build agent is already running");
             return;
         }
 
         log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-        this.isPaused = false;
-        this.processResults = true;
+        isPaused = false;
+        processResults = true;
         // We remove the listener and scheduledTask first to avoid race conditions
-        this.removeListener();
-        this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        if (this.scheduledFuture != null && !this.scheduledFuture.isCancelled()) {
-            this.scheduledFuture.cancel(false);
+        removeListener();
+        listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+            scheduledFuture.cancel(false);
         }
-        this.scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
         checkAvailabilityAndProcessNextBuild();
         updateLocalBuildAgentInformation();
     }
