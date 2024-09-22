@@ -53,7 +53,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 
 /**
- * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
+ * Executes requested actions on the auxiliary repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
 @Profile(PROFILE_CORE)
 @RestController
@@ -181,7 +181,7 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
     }
 
     /**
-     * Update a list of files in a test repository based on the submission's content.
+     * Update a list of files in an auxiliary repository based on the submission's content.
      *
      * @param auxiliaryRepositoryId of exercise to which the files belong
      * @param submissions           information about the file updates

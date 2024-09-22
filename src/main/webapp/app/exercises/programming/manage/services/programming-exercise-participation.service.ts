@@ -187,7 +187,7 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
     }
 
     retrieveCommitHistoryForAuxiliaryRepository(exerciseId: number, repositoryType: string, auxiliaryRepositoryId: number): Observable<CommitInfo[]> {
-        const params: { [key: string]: number | string } = {};
+        const params: { [key: string]: number } = {};
         params['repositoryId'] = auxiliaryRepositoryId;
         return this.http.get<CommitInfo[]>(`${this.resourceUrl}${exerciseId}/commit-history/${repositoryType}`, { params: params });
     }

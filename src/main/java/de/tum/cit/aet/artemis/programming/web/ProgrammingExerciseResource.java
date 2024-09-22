@@ -540,9 +540,9 @@ public class ProgrammingExerciseResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository/{auxiliaryRepositoryId}")
     @EnforceAtLeastTutorInExercise
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithTemplateAndSolutionParticipation(@PathVariable long exerciseId, @PathVariable long auxiliaryRepositoryId) {
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long auxiliaryRepositoryId) {
 
-        log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
+        log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
         if (programmingExercise.getAuxiliaryRepositories().stream().noneMatch(id -> id.getId() == auxiliaryRepositoryId)) {
             throw new BadRequestAlertException("The auxiliary repository Id does not belong to the exercise.", "Exercise",
