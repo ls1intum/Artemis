@@ -9,6 +9,7 @@ export type MonacoEditorDiffText = { original: string; modified: string };
 @Component({
     selector: 'jhi-monaco-diff-editor',
     template: '',
+    standalone: true,
     styleUrls: ['monaco-diff-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })

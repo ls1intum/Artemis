@@ -18,6 +18,7 @@ export const MAX_TAB_SIZE = 8;
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
+    standalone: true,
     styleUrls: ['monaco-editor.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
