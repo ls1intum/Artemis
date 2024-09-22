@@ -195,13 +195,13 @@ public class AuxiliaryRepositoryResource extends RepositoryResource {
         if (versionControlService.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE, "VCSNotPresent");
         }
-
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(auxiliaryRepositoryId);
+        AuxiliaryRepository auxiliaryRepository = auxiliaryRepositoryRepository.findByIdElseThrow(auxiliaryRepositoryId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(auxiliaryRepository.getExercise().getId());
 
         Repository repository;
         try {
             repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(true, exercise, userRepository.getUserWithGroupsAndAuthorities(principal.getName()), "test");
-            repository = gitService.getOrCheckoutRepository(exercise.getVcsTestRepositoryUri(), true);
+            repository = gitService.getOrCheckoutRepository(auxiliaryRepository.getVcsRepositoryUri(), true);
         }
         catch (AccessForbiddenException e) {
             FileSubmissionError error = new FileSubmissionError(auxiliaryRepositoryId, "noPermissions");
