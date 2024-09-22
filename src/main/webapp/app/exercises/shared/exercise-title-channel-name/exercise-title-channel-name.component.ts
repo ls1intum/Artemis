@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, input } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input, signal } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-exercise-title-channel-name',
@@ -23,7 +24,23 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Output() onTitleChange = new EventEmitter<string>();
     @Output() onChannelNameChange = new EventEmitter<string>();
 
+    private readonly exerciseService: ExerciseService = inject(ExerciseService);
+
+    alreadyUsedExerciseNames = signal<string[]>([]);
+    alreadyUsedChannelNames = signal<string[]>([]);
+
     hideChannelNameInput = false;
+
+    constructor() {
+        // TODO
+        if (this.course?.id) {
+            this.exerciseService.getExistingExerciseDetailsInCourse(this.course.id).subscribe((exerciseDetails) => {
+                this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles);
+                // this.alreadyUsedChannelNames.set(exerciseDetails.)
+            });
+        }
+    }
+
     ngOnChanges(changes: SimpleChanges) {
         if (changes.exercise || changes.course || changes.isExamMode || this.isImport) {
             this.hideChannelNameInput = !this.requiresChannelName(this.exercise, this.course, this.isExamMode, this.isImport);
