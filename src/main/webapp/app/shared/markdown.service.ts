@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { addCSSClass, htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
-import showdown from 'showdown';
+import type { PluginSimple } from 'markdown-it';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdownService {
@@ -18,14 +18,14 @@ export class ArtemisMarkdownService {
      */
     safeHtmlForMarkdown(
         markdownText?: string,
-        extensions: showdown.ShowdownExtension[] = [],
+        extensions: PluginSimple[] = [],
         allowedHtmlTags: string[] | undefined = undefined,
         allowedHtmlAttributes: string[] | undefined = undefined,
     ): SafeHtml {
         if (!markdownText || markdownText === '') {
             return '';
         }
-        const convertedString = htmlForMarkdown(markdownText, [...extensions, ...addCSSClass], allowedHtmlTags, allowedHtmlAttributes);
+        const convertedString = htmlForMarkdown(markdownText, [...extensions, addCSSClass], allowedHtmlTags, allowedHtmlAttributes);
         return this.sanitizer.bypassSecurityTrustHtml(convertedString);
     }
 

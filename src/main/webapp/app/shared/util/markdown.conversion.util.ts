@@ -1,7 +1,7 @@
 import showdown from 'showdown';
-import showdownKatex from 'showdown-katex';
-import showdownHighlight from 'showdown-highlight';
 import DOMPurify, { Config } from 'dompurify';
+import type { PluginSimple } from 'markdown-it';
+import markdownit from 'markdown-it';
 
 /**
  * showdown will add the classes to the converted html
@@ -12,13 +12,16 @@ const classMap: { [key: string]: string } = {
 };
 /**
  * extension to add css classes to html tags
- * see: https://github.com/showdownjs/showdown/wiki/Add-default-classes-for-each-HTML-element
  */
-export const addCSSClass = Object.keys(classMap).map((key) => ({
-    type: 'output',
-    regex: new RegExp(`<${key}(.*)>`, 'g'),
-    replace: `<${key} class="${classMap[key]}" $1>`,
-}));
+export const addCSSClass: PluginSimple = (md) => {
+    for (const key in classMap) {
+        const originalRender = md.renderer.rules[key] || md.renderer.rules.defaultRender;
+        md.renderer.rules[key] = (tokens, idx, options, env, self) => {
+            tokens[idx].attrPush(['class', classMap[key]]);
+            return originalRender ? originalRender(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options);
+        };
+    }
+};
 
 /**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
@@ -32,13 +35,35 @@ export const addCSSClass = Object.keys(classMap).map((key) => ({
  */
 export function htmlForMarkdown(
     markdownText?: string,
-    extensions: showdown.ShowdownExtension[] = [],
+    extensions: PluginSimple[] = [],
     allowedHtmlTags: string[] | undefined = undefined,
     allowedHtmlAttributes: string[] | undefined = undefined,
 ): string {
     if (!markdownText || markdownText === '') {
         return '';
     }
+
+    const purifyParameters = {} as Config;
+    // Prevents sanitizer from deleting <testid>id</testid> or PlantUML color tags
+    purifyParameters['ADD_TAGS'] = ['testid', 'color:grey', 'color:green', 'color:red'];
+    if (allowedHtmlTags) {
+        purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
+    }
+    if (allowedHtmlAttributes) {
+        purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
+    }
+    const html = DOMPurify.sanitize(markdownText, purifyParameters) as string;
+
+    let md = markdownit({
+        html: true,
+        linkify: true,
+        // TODO code highlight, katex, etc
+    });
+    for (const extension of extensions) {
+        md = md.use(extension);
+    }
+    return md.render(html);
+    /*
     const converter = new showdown.Converter({
         parseImgDimensions: true,
         headerLevelStart: 3,
@@ -49,17 +74,7 @@ export function htmlForMarkdown(
         backslashEscapesHTMLTags: true,
         extensions: [...extensions, showdownKatex(), showdownHighlight({ pre: true }), ...addCSSClass],
     });
-    const html = converter.makeHtml(markdownText);
-    const purifyParameters = {} as Config;
-    // Prevents sanitizer from deleting <testid>id</testid>
-    purifyParameters['ADD_TAGS'] = ['testid'];
-    if (allowedHtmlTags) {
-        purifyParameters['ALLOWED_TAGS'] = allowedHtmlTags;
-    }
-    if (allowedHtmlAttributes) {
-        purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
-    }
-    return DOMPurify.sanitize(html, purifyParameters) as string;
+     */
 }
 
 export function markdownForHtml(htmlText: string): string {
