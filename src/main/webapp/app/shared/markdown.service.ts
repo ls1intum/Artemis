@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
-import { addCSSClass, htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import type { PluginSimple } from 'markdown-it';
 
 @Injectable({ providedIn: 'root' })
@@ -25,7 +25,7 @@ export class ArtemisMarkdownService {
         if (!markdownText || markdownText === '') {
             return '';
         }
-        const convertedString = htmlForMarkdown(markdownText, [...extensions, addCSSClass], allowedHtmlTags, allowedHtmlAttributes);
+        const convertedString = htmlForMarkdown(markdownText, extensions, allowedHtmlTags, allowedHtmlAttributes);
         return this.sanitizer.bypassSecurityTrustHtml(convertedString);
     }
 

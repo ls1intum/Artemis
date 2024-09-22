@@ -1,28 +1,20 @@
 import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
-import markdownit from 'markdown-it';
+import markdownIt from 'markdown-it';
 import showdown from 'showdown';
+import markdown_it_highlightjs from 'markdown-it-highlightjs';
+// These libraries are not typed
+// @ts-expect-error
+import markdownItClass from 'markdown-it-class';
+// @ts-expect-error
+import markdownItKatex from '@iktakahiro/markdown-it-katex';
 
 /**
- * showdown will add the classes to the converted html
- * see: https://github.com/showdownjs/showdown/wiki/Add-default-classes-for-each-HTML-element
+ * Add these classes to the converted html.
  */
 const classMap: { [key: string]: string } = {
     table: 'table',
 };
-/**
- * extension to add css classes to html tags
- */
-export const addCSSClass: PluginSimple = (md) => {
-    for (const key in classMap) {
-        const originalRender = md.renderer.rules[key] || md.renderer.rules.defaultRender;
-        md.renderer.rules[key] = (tokens, idx, options, env, self) => {
-            tokens[idx].attrPush(['class', classMap[key]]);
-            return originalRender ? originalRender(tokens, idx, options, env, self) : self.renderToken(tokens, idx, options);
-        };
-    }
-};
-
 /**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
  * Note: If possible, please use safeHtmlForMarkdown
@@ -43,14 +35,17 @@ export function htmlForMarkdown(
         return '';
     }
 
-    let md = markdownit({
+    let md = markdownIt({
         html: true,
         linkify: true,
-        // TODO code highlight, katex, etc
+        breaks: true,
     });
     for (const extension of extensions) {
         md = md.use(extension);
     }
+
+    // Add default extensions (Code Highlight, Latex)
+    md = md.use(markdown_it_highlightjs).use(markdownItKatex).use(markdownItClass, classMap);
 
     const mdtext = md.render(markdownText);
 
