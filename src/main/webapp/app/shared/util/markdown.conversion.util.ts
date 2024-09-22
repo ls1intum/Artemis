@@ -13,6 +13,30 @@ const classMap: { [key: string]: string } = {
     table: 'table',
 };
 
+// An inline math formula has some other characters before or after the formula and uses $$ as delimiters
+const inlineFormularRegex = /(?:.+\$\$[^\$]+\$\$)|(?:\$\$[^\$]+\$\$.+)/g;
+const formulaCompatibilityPlugin: PluginSimple = (md) => {
+    md.core.ruler.before('inline', 'latex-inline-migrator', (state) => {
+        // markdownItKatex always creates a big block formula if $$ is used as a deliminator
+        // which is different from the showdown behavior and could break existing exercises.
+        // So we replace these with $formular$ to make them inline.
+        state.tokens.forEach((token) => {
+            if (token.type === 'inline') {
+                if (token.content.match(inlineFormularRegex) && token.children) {
+                    console.log(token.content);
+                    token.content = token.content.replace(/\$\$/g, '$');
+                    for (const child of token.children) {
+                        console.log('child', child.content);
+                        if (child.type === 'text') {
+                            child.content = child.content.replace(/\$\$/g, '$');
+                        }
+                    }
+                }
+            }
+        });
+    });
+};
+
 /**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
  * Note: If possible, please use safeHtmlForMarkdown
@@ -43,7 +67,13 @@ export function htmlForMarkdown(
     }
 
     // Add default extensions (Code Highlight, Latex)
-    md = md.use(markdown_it_highlightjs).use(markdownItKatex).use(markdownItClass, classMap);
+    md = md
+        .use(markdown_it_highlightjs)
+        .use(formulaCompatibilityPlugin)
+        .use(markdownItKatex, {
+            enableMathInlineInHtml: true,
+        })
+        .use(markdownItClass, classMap);
     let markdownRender = md.render(markdownText);
     if (markdownRender.endsWith('\n')) {
         // Keep legacy behavior from showdown where the output does not end with \n.
