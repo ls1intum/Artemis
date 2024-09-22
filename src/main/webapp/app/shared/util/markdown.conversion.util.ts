@@ -1,9 +1,7 @@
 import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import markdownIt from 'markdown-it';
-// @ts-expect-error library is not typed
 import markdownItClass from 'markdown-it-class';
-// @ts-expect-error library is not typed
 import markdownItKatex from '@iktakahiro/markdown-it-katex';
 import markdown_it_highlightjs from 'markdown-it-highlightjs';
 import TurndownService from 'turndown';
