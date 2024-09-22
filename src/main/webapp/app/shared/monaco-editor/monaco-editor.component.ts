@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation, inject } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
@@ -40,20 +40,20 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
 
-    constructor(
-        private readonly themeService: ThemeService,
-        elementRef: ElementRef,
-        private readonly renderer: Renderer2,
-        private readonly translateService: TranslateService,
-    ) {
+    private readonly themeService = inject(ThemeService);
+    private readonly renderer = inject(Renderer2);
+    private readonly translateService = inject(TranslateService);
+    private readonly elementRef = inject(ElementRef);
+
+    constructor() {
         /*
          * The constructor injects the editor along with its container into the empty template of this component.
          * This makes the editor available immediately (not just after ngOnInit), preventing errors when the methods
          * of this component are called.
          */
-        this.monacoEditorContainerElement = renderer.createElement('div');
-        renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
-        renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
+        this.monacoEditorContainerElement = this.renderer.createElement('div');
+        this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
+        this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
         this._editor = monaco.editor.create(this.monacoEditorContainerElement, {
             value: '',
             glyphMargin: true,
@@ -67,7 +67,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         });
         this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
-        renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
+        this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
     }
 
     @Input()

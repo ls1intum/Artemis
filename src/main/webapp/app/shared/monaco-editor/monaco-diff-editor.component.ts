@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation, inject } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 import * as monaco from 'monaco-editor';
@@ -30,17 +30,17 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     @Output()
     onReadyForDisplayChange = new EventEmitter<boolean>();
 
-    constructor(
-        private themeService: ThemeService,
-        elementRef: ElementRef,
-        renderer: Renderer2,
-    ) {
+    private readonly themeService = inject(ThemeService);
+    private readonly elementRef = inject(ElementRef);
+    private readonly renderer = inject(Renderer2);
+
+    constructor() {
         /*
          * The constructor injects the editor along with its container into the empty template of this component.
          * This makes the editor available immediately (not just after ngOnInit), preventing errors when the methods
          * of this component are called.
          */
-        this.monacoDiffEditorContainerElement = renderer.createElement('div');
+        this.monacoDiffEditorContainerElement = this.renderer.createElement('div');
         this._editor = monaco.editor.createDiffEditor(this.monacoDiffEditorContainerElement, {
             glyphMargin: true,
             minimap: { enabled: false },
@@ -61,7 +61,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
             },
             fontSize: 12,
         });
-        renderer.appendChild(elementRef.nativeElement, this.monacoDiffEditorContainerElement);
+        this.renderer.appendChild(this.elementRef.nativeElement, this.monacoDiffEditorContainerElement);
         this.setupDiffListener();
         this.setupContentHeightListeners();
     }
