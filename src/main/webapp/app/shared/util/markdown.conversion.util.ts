@@ -44,7 +44,12 @@ export function htmlForMarkdown(
     // Add default extensions (Code Highlight, Latex)
     md = md.use(markdown_it_highlightjs).use(markdownItKatex).use(markdownItClass, classMap);
 
-    const mdtext = md.render(markdownText);
+    let markdownRender = md.render(markdownText);
+    if (markdownRender.endsWith('\n')) {
+        // Keep legacy behavior from showdown where the output does not end with \n.
+        // This is needed because e.g. for quiz questions, we render the markdown in multiple small parts and then concatenate them.
+        markdownRender = markdownRender.slice(0, -1);
+    }
 
     const purifyParameters = {} as Config;
     // Prevents sanitizer from deleting <testid>id</testid>
@@ -55,7 +60,7 @@ export function htmlForMarkdown(
     if (allowedHtmlAttributes) {
         purifyParameters['ALLOWED_ATTR'] = allowedHtmlAttributes;
     }
-    return DOMPurify.sanitize(mdtext, purifyParameters) as string;
+    return DOMPurify.sanitize(markdownRender, purifyParameters) as string;
 }
 
 export function markdownForHtml(htmlText: string): string {
