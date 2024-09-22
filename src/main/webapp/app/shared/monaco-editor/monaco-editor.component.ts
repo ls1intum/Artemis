@@ -48,7 +48,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     /*
      * Inputs and outputs.
      */
-
     textChangedEmitDelay = input<number | undefined>();
     shrinkToFit = input<boolean>(true);
     stickyScroll = input<boolean>(false);

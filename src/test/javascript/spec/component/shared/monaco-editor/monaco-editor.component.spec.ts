@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
@@ -23,9 +22,7 @@ describe('MonacoEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule],
-            declarations: [MonacoEditorComponent],
-            providers: [],
+            imports: [ArtemisTestModule, MonacoEditorComponent],
         })
             .compileComponents()
             .then(() => {
@@ -59,7 +56,7 @@ describe('MonacoEditorComponent', () => {
     it('should only send a notification once per delay interval', fakeAsync(() => {
         const delay = 1000;
         const valueCallbackStub = jest.fn();
-        comp.textChangedEmitDelay = delay;
+        fixture.componentRef.setInput('textChangedEmitDelay', delay);
         fixture.detectChanges();
         comp.textChanged.subscribe(valueCallbackStub);
         comp.setText('too early');
@@ -70,10 +67,10 @@ describe('MonacoEditorComponent', () => {
     }));
 
     it('should be set to readOnly depending on the input', () => {
-        comp.readOnly = true;
+        fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
         expect(comp.isReadOnly()).toBeTrue();
-        comp.readOnly = false;
+        fixture.componentRef.setInput('readOnly', false);
         fixture.detectChanges();
         expect(comp.isReadOnly()).toBeFalse();
     });
@@ -205,7 +202,7 @@ describe('MonacoEditorComponent', () => {
     });
 
     it('should not allow editing in readonly mode', () => {
-        comp.readOnly = true;
+        fixture.componentRef.setInput('readOnly', true);
         fixture.detectChanges();
         comp.setText(singleLineText);
         comp.triggerKeySequence('some ignored input');
