@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.communication.web.LinkPreviewResource;
 
 class ResourceArchitectureTest extends AbstractArchitectureTest {
 
-    private static final Pattern KEBAB_CASE_PATH_PATTERN = Pattern.compile("^(\\.?[a-z0-9]+(-[a-z0-9]+)*|\\{[^}]+})(/(([a-z0-9]+(-[a-z0-9]+)*|\\{[^}]+})))*(.json|/\\*)?$");
+    private static final Pattern KEBAB_CASE_PATH_PATTERN = Pattern.compile("^(\\.?[a-z0-9]+(-[a-z0-9]+)*|\\{[^}]+})(/(([a-z0-9]+(-[a-z0-9]+)*|\\{[^}]+})))*(\\.json|/\\*)?$");
 
     @Test
     void shouldBeNamedResource() {
