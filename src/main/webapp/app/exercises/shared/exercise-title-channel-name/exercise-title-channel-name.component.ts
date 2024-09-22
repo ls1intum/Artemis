@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, inject, input, signal } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild, effect, inject, input, signal } from '@angular/core';
 import { Course, isCommunicationEnabled } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
@@ -11,7 +11,7 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 })
 export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() exercise: Exercise;
-    @Input() course?: Course;
+    course = input<Course>();
     @Input() titlePattern: string;
     @Input() minTitleLength: number;
     @Input() isExamMode: boolean;
@@ -32,18 +32,20 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     hideChannelNameInput = false;
 
     constructor() {
-        // TODO
-        if (this.course?.id) {
-            this.exerciseService.getExistingExerciseDetailsInCourse(this.course.id).subscribe((exerciseDetails) => {
-                this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles);
-                // this.alreadyUsedChannelNames.set(exerciseDetails.)
-            });
-        }
+        effect(() => {
+            if (this.course()?.id) {
+                this.exerciseService.getExistingExerciseDetailsInCourse(this.course()!.id!).subscribe((exerciseDetails) => {
+                    this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles);
+                    // this.alreadyUsedChannelNames.set(exerciseDetails.)
+                });
+                // TODO channel names need to be returned
+            }
+        });
     }
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes.exercise || changes.course || changes.isExamMode || this.isImport) {
-            this.hideChannelNameInput = !this.requiresChannelName(this.exercise, this.course, this.isExamMode, this.isImport);
+            this.hideChannelNameInput = !this.requiresChannelName(this.exercise, this.course(), this.isExamMode, this.isImport);
         }
     }
 
