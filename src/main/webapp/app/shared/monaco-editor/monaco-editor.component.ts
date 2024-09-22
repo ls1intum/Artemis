@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation, inject } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
@@ -40,6 +40,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * @private
      */
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
+    private static readonly SHRINK_TO_FIT_CLASS = 'monaco-shrink-to-fit';
 
     private readonly themeService = inject(ThemeService);
     private readonly renderer = inject(Renderer2);
@@ -55,12 +56,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
          */
         this.monacoEditorContainerElement = this.renderer.createElement('div');
         this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
-        this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
+        this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
         this._editor = monaco.editor.create(this.monacoEditorContainerElement, {
             value: '',
             glyphMargin: true,
             minimap: { enabled: false },
-            readOnly: this._readOnly,
             lineNumbersMinChars: 4,
             scrollBeyondLastLine: false,
             scrollbar: {
@@ -71,46 +71,37 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
         this.monacoEditorService.foo();
-    }
 
-    @Input()
-    textChangedEmitDelay?: number;
+        effect(() => {
+            // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
+            if (this.shrinkToFit()) {
+                this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+            } else {
+                this.renderer.removeClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
+            }
+        });
 
-    // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
-    @Input()
-    set shrinkToFit(value: boolean) {
-        if (value) {
-            this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
-        } else {
-            this.renderer.removeClass(this.monacoEditorContainerElement, 'monaco-shrink-to-fit');
-        }
-    }
+        effect(() => {
+            this._editor.updateOptions({
+                stickyScroll: { enabled: this.stickyScroll() },
+            });
+        });
 
-    @Input()
-    set stickyScroll(value: boolean) {
-        this._editor.updateOptions({
-            stickyScroll: { enabled: value },
+        effect(() => {
+            this._editor.updateOptions({
+                readOnly: this.readOnly(),
+            });
         });
     }
 
-    @Input()
-    set readOnly(value: boolean) {
-        this._readOnly = value;
-        this._editor.updateOptions({
-            readOnly: value,
-        });
-    }
+    textChangedEmitDelay = input<number | undefined>();
+    shrinkToFit = input<boolean>(true);
+    stickyScroll = input<boolean>(false);
+    readOnly = input<boolean>(false);
 
-    private _readOnly: boolean = false;
-
-    @Output()
-    textChanged = new EventEmitter<string>();
-
-    @Output()
-    contentHeightChanged = new EventEmitter<number>();
-
-    @Output()
-    onBlurEditor = new EventEmitter<void>();
+    textChanged = output<string>();
+    contentHeightChanged = output<number>();
+    onBlurEditor = output<void>();
 
     private contentHeightListener?: Disposable;
     private textChangedListener?: Disposable;
@@ -151,7 +142,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
 
     private emitTextChangeEvent() {
         const newValue = this.getText();
-        if (!this.textChangedEmitDelay) {
+        const delay = this.textChangedEmitDelay();
+        if (!delay) {
             this.textChanged.emit(newValue);
         } else {
             if (this.textChangedEmitTimeout) {
@@ -160,7 +152,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             }
             this.textChangedEmitTimeout = setTimeout(() => {
                 this.textChanged.emit(newValue);
-            }, this.textChangedEmitDelay);
+            }, delay);
         }
     }
 
