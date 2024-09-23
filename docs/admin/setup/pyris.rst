@@ -56,16 +56,15 @@ Local Environment Setup
 
      .. code-block:: yaml
 
+        # Token that Artemis will use to access Pyris
         api_keys:
           - token: "your-secret-token"
 
+        # Weviate Connection
         weaviate:
           host: "localhost"
           port: "8001"
           grpc_port: "50051"
-
-        env_vars:
-          test: "test-value"
 
    - **Create LLM Config File**
 
@@ -114,8 +113,8 @@ Local Environment Setup
           api_key: "<your_azure_api_key>"
           tools: []
           capabilities:
-            input_cost: 6
-            output_cost: 16
+            input_cost: 5
+            output_cost: 15
             gpt_version_equivalent: 4.5  # Equivalent GPT version of the model
             context_length: 128000
             vendor: "OpenAI"
@@ -126,10 +125,26 @@ Local Environment Setup
 
      **Explanation of Configuration Parameters**
 
-     The configuration parameters are utilized through the capability system by pipelines in Pyris to select the appropriate model for a task. The parameter values under capabilities are mostly subjective and can be set manually by the admins.
-     One thing to keep in mind regarding the parameters values under capabilities is that the values are used to compare and rank models based on the required capabilities specified by a pipeline to select an appropriate model for the task, the pipeline is performing.
+     The configuration parameters are utilized through the capability system by pipelines in Pyris to select the appropriate model for a task. The parameter values under capabilities are mostly subjective and do not have any standard values.
+     In the example configuration above, we orient the values based on the official documentation of the models.
 
-     Next section provides a detailed explanation of the parameters used in the configuration file.
+     One can adjust the capabilities as the following example workflow:
+
+        On their official website, OpenAI provides the following information about the `GPT-4o model <https://platform.openai.com/docs/models/gpt-4o>`_:
+
+            - The model can process 128,000 tokens in a single request. So, we set the context_length to 128000.
+            - The models is supposed to be better than GPT-4 in terms of its capabilities. So, we set the gpt_version_equivalent to 4.5.
+            - The model is developed by OpenAI. So, we set the vendor to OpenAI.
+            - We can not assume the if the service that provides the model, e.g. official OpenAI API or Azure, is compatible with the privacy regulations of the organisation. So, we set the privacy_compliance to false.
+            - The model is not self-hosted. So, we set the self_hosted to false.
+            - The model supports image recognition. So, we set the image_recognition to true.
+            - The model supports structured JSON output mode. So, we set the json_mode to true.
+            - The cost of input tokens for the model is 5$/1M tokens. So, we set the input_cost to 5.
+            - The cost of output tokens for the model is 15$/1M tokens. So, we set the output_cost to 15.
+
+     One thing to keep in mind regarding the parameter values under capabilities is that the values are used to compare and rank models based on the required capabilities specified by a pipeline to select an appropriate model for the task, the pipeline is performing.
+
+     Next section provides a more detailed explanation of the parameters used in the configuration file.
 
      **Parameter Descriptions:**
 
@@ -139,8 +154,8 @@ Local Environment Setup
        - ``context_length``: The maximum number of tokens the model can process in a single request.
        - ``gpt_version_equivalent``: The equivalent GPT version of the model in terms of overall capabilities.
        - ``image_recognition``: Whether the model supports image recognition.
-       - ``input_cost``: The cost of input tokens for the model. The capability system will prioritize models with lower or equal input costs.
-       - ``output_cost``: The cost of output tokens for the model. The capability system will prioritize models with lower or equal output costs.
+       - ``input_cost``: The cost of input tokens for the model. The capability system will prioritize models with lower or equal input costs. The value can be determined by the admin according to model's pricing. A more expensive model can have a higher input cost.
+       - ``output_cost``: The cost of output tokens for the model. The capability system will prioritize models with lower or equal output costs.The value can be determined by the admin according to model's pricing. A more expensive model can have a higher output cost.
        - ``json_mode``: Whether the model supports structured JSON output mode.
        - ``privacy_compliance``: Whether the model complies with privacy regulations. If true, capability system will prioritize privacy-compliant models. Privacy compliant models can be determined by the system admins according to organizational and legal requirements.
        - ``self_hosted``: Whether the model is self-hosted. If true, capability system will prioritize self-hosted models
