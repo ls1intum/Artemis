@@ -71,7 +71,7 @@ export class CourseUpdateComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faPen = faPen;
 
-    faqEnabled: boolean;
+    faqEnabled: boolean = true; //default value
     communicationEnabled = true;
     messagingEnabled = true;
     ltiEnabled = false;

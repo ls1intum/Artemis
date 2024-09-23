@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FAQ, FAQState } from 'app/entities/faq.model';
 import { FAQCategory } from 'app/entities/faq-category.model';
-import { AlertService } from 'app/core/util/alert.service';
 
 type EntityResponseType = HttpResponse<FAQ>;
 type EntityArrayResponseType = HttpResponse<FAQ[]>;
@@ -13,10 +12,7 @@ type EntityArrayResponseType = HttpResponse<FAQ[]>;
 export class FAQService {
     public resourceUrl = 'api/courses';
 
-    constructor(
-        protected http: HttpClient,
-        protected alertService: AlertService,
-    ) {}
+    constructor(protected http: HttpClient) {}
 
     create(faq: FAQ): Observable<EntityResponseType> {
         const copy = FAQService.convertFaqFromClient(faq);
