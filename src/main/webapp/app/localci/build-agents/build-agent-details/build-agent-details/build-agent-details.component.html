@@ -8,14 +8,17 @@
                     <h3 id="build-agent-name" class="h3" style="margin-left: 20px">{{ buildAgent.name }}</h3>
                 </div>
                 <div>
-                    <button class="btn btn-success" (click)="resumeBuildAgent()">
-                        <fa-icon [icon]="faPlay"></fa-icon>
-                        <span jhiTranslate="artemisApp.buildAgents.resume"></span>
-                    </button>
-                    <button class="btn btn-danger" (click)="pauseBuildAgent()">
-                        <fa-icon [icon]="faPause"></fa-icon>
-                        <span jhiTranslate="artemisApp.buildAgents.pause"></span>
-                    </button>
+                    @if (buildAgent.status === 'PAUSED') {
+                        <button class="btn btn-success" (click)="resumeBuildAgent()">
+                            <fa-icon [icon]="faPlay"></fa-icon>
+                            <span jhiTranslate="artemisApp.buildAgents.resume"></span>
+                        </button>
+                    } @else {
+                        <button class="btn btn-danger" (click)="pauseBuildAgent()">
+                            <fa-icon [icon]="faPause"></fa-icon>
+                            <span jhiTranslate="artemisApp.buildAgents.pause"></span>
+                        </button>
+                    }
                 </div>
             </div>
             <jhi-data-table [showPageSizeDropdown]="false" [showSearchField]="false" entityType="buildAgent" [allEntities]="[buildAgent!]">
