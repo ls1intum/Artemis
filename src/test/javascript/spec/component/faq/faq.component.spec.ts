@@ -58,9 +58,6 @@ describe('FaqComponent', () => {
                         parent: {
                             data: of({ course: { id: 1 } }),
                         },
-                        queryParams: of({
-                            params: {},
-                        }),
                         snapshot: {
                             paramMap: convertToParamMap({
                                 courseId: '1',
@@ -93,16 +90,17 @@ describe('FaqComponent', () => {
                     },
                 }),
             ],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+                    return new MockResizeObserver(callback);
+                });
+                faqComponentFixture = TestBed.createComponent(FAQComponent);
+                faqComponent = faqComponentFixture.componentInstance;
 
-        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-            return new MockResizeObserver(callback);
-        });
-        faqComponentFixture = TestBed.createComponent(FAQComponent);
-        faqComponent = faqComponentFixture.componentInstance;
-
-        faqService = TestBed.inject(FAQService);
-        faqComponentFixture.detectChanges();
+                faqService = TestBed.inject(FAQService);
+            });
     });
 
     afterEach(() => {
@@ -113,7 +111,6 @@ describe('FaqComponent', () => {
         const findAllSpy = jest.spyOn(faqService, 'findAllByCourseId');
 
         faqComponentFixture.detectChanges();
-        //is actually called when debugging, i dont get why it is 0. Need help
         expect(findAllSpy).toHaveBeenCalledOnce();
         expect(findAllSpy).toHaveBeenCalledWith(1);
         expect(faqComponent.faqs).toHaveLength(3);
@@ -121,10 +118,8 @@ describe('FaqComponent', () => {
 
     it('should delete faq', () => {
         const deleteSpy = jest.spyOn(faqService, 'delete');
-
         faqComponentFixture.detectChanges();
         faqComponent.deleteFaq(faq1.id!);
-
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith(faq1.id!);
         expect(faqComponent.faqs).toHaveLength(2);

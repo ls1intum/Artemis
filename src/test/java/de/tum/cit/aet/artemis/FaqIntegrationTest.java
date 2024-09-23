@@ -16,6 +16,7 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -105,7 +106,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFaqCategoriesByCourseId() throws Exception {
-        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
         Set<String> categories = faq.getCategories();
         Set<String> returnedCategories = request.get("/api/courses/" + faq.getCourse().getId() + "/faq-categories", HttpStatus.OK, Set.class);
         assertThat(categories).isEqualTo(returnedCategories);

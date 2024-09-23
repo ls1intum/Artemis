@@ -38,9 +38,6 @@ describe('FaqUpdateComponent', () => {
                         parent: {
                             data: of({ course: { id: 1 } }),
                         },
-                        queryParams: of({
-                            params: {},
-                        }),
                         snapshot: {
                             paramMap: convertToParamMap({
                                 courseId: '1',

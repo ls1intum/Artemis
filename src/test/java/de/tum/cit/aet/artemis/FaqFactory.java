@@ -25,7 +25,4 @@ public class FaqFactory {
         categories.add("this is also a category");
         return categories;
     }
-
-    private FaqFactory() {
-    }
 }

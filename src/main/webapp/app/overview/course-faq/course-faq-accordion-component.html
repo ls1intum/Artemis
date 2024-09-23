@@ -1,6 +1,6 @@
 <div>
     <div class="faq-container">
-        <h2 class="markdown-preview" [innerHTML]="faq().questionTitle | htmlForMarkdown"></h2>
+        <h2 class="markdown-preview">{{faq().questionTitle}}</h2>
 
         <div class="badge-container">
             @for (category of faq().categories; track category){

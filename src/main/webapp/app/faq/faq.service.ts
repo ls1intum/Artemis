@@ -16,7 +16,7 @@ export class FAQService {
 
     create(faq: FAQ): Observable<EntityResponseType> {
         const copy = FAQService.convertFaqFromClient(faq);
-        faq.faqState = FAQState.ACCEPTED;
+        copy.faqState = FAQState.ACCEPTED;
         return this.http.post<FAQ>(`api/faqs`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
@@ -59,7 +59,7 @@ export class FAQService {
      * @param res the response
      */
     static convertFaqCategoriesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
-        if (res.body && res.body.categories) {
+        if (res.body?.categories) {
             FAQService.parseFaqCategories(res.body);
         }
         return res;
