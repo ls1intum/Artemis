@@ -1,6 +1,6 @@
 import { Injectable, ViewContainerRef } from '@angular/core';
 import { TaskArrayWithExercise } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { ArtemisTextReplacementExtension } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementExtension';
+import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import { Observable, Subject } from 'rxjs';
 
 /**
@@ -17,7 +17,7 @@ import { Observable, Subject } from 'rxjs';
 export const taskRegex = /\[task]\[([^[\]]+)]\(((?:[^(),]+(?:\([^()]*\)[^(),]*)?(?:,[^(),]+(?:\([^()]*\)[^(),]*)?)*)?)\)/g;
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseTaskExtensionWrapper extends ArtemisTextReplacementExtension {
+export class ProgrammingExerciseTaskExtensionWrapper extends ArtemisTextReplacementPlugin {
     // We don't have a provider for ViewContainerRef, so we pass it from ProgrammingExerciseInstructionComponent
     viewContainerRef: ViewContainerRef;
 

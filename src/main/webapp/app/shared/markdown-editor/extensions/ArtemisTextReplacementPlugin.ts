@@ -2,9 +2,9 @@ import type MarkdownIt from 'markdown-it';
 import type { PluginSimple } from 'markdown-it';
 
 /**
- * Markdown-It extension that allows replacing text in the raw markdown before tokenizing.
+ * Markdown-It plugin that allows replacing text in the raw markdown before tokenizing.
  */
-export abstract class ArtemisTextReplacementExtension {
+export abstract class ArtemisTextReplacementPlugin {
     getExtension(): PluginSimple {
         return (md: MarkdownIt): void => {
             // Override the `render` method to process the raw Markdown text before tokenizing

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
-import { ArtemisTextReplacementExtension } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementExtension';
+import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -13,7 +13,7 @@ import DOMPurify from 'dompurify';
 const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextReplacementExtension {
+export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextReplacementPlugin {
     private latestResult?: Result;
     private testCases?: ProgrammingExerciseTestCase[];
     private injectableElementsFoundSubject = new Subject<() => void>();

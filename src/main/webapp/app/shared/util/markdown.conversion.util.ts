@@ -1,3 +1,4 @@
+import { ArtemisTextReplacementPlugin } from 'app/shared/markdown-editor/extensions/ArtemisTextReplacementPlugin';
 import DOMPurify, { Config } from 'dompurify';
 import type { PluginSimple } from 'markdown-it';
 import markdownIt from 'markdown-it';
@@ -15,20 +16,24 @@ const classMap: { [key: string]: string } = {
 
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
 const inlineFormulaRegex = /(?:.+\$\$[^\$]+\$\$)|(?:\$\$[^\$]+\$\$.+)/g;
-const formulaCompatibilityPlugin: PluginSimple = (md) => {
-    md.core.ruler.before('inline', 'latex-inline-migrator', (state) => {
-        // markdownItKatex always creates a big block formula if $$ is used as a deliminator
-        // which is different from the showdown behavior and could break existing exercises.
-        // So we replace these with $formula$ to make them inline.
-        state.tokens.forEach((token) => {
-            if (token.content.match(inlineFormulaRegex)) {
-                token.content = token.content.replace(/\$\$/g, '$');
-            } else if (token.content.includes('\\\\begin') || token.content.includes('\\\\end')) {
-                token.content = token.content.replaceAll('\\\\begin', '\\begin').replaceAll('\\\\end', '\\end');
-            }
-        });
-    });
-};
+
+class FormularCompatibilityPlugin extends ArtemisTextReplacementPlugin {
+    replaceText(text: string): string {
+        return text
+            .split('\n')
+            .map((line) => {
+                if (line.match(inlineFormulaRegex)) {
+                    line = line.replace(/\$\$/g, '$');
+                }
+                if (line.includes('\\\\begin') || line.includes('\\\\end')) {
+                    line = line.replaceAll('\\\\begin', '\\begin').replaceAll('\\\\end', '\\end');
+                }
+                return line;
+            })
+            .join('\n');
+    }
+}
+const formulaCompatibilityPlugin = new FormularCompatibilityPlugin();
 
 const turndownService = new TurndownService();
 
@@ -63,7 +68,7 @@ export function htmlForMarkdown(
 
     // Add default extensions (Code Highlight, Latex)
     md.use(markdown_it_highlightjs)
-        .use(formulaCompatibilityPlugin)
+        .use(formulaCompatibilityPlugin.getExtension())
         .use(markdownItKatex, {
             enableMathInlineInHtml: true,
         })

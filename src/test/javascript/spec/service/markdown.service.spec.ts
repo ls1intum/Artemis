@@ -108,4 +108,30 @@ describe('Markdown Service', () => {
         const safeMarkdownWithoutExtras = htmlForMarkdown(markdownString, [], [], []);
         expect(safeMarkdownWithoutExtras).toBe('Will this render blue?');
     });
+
+    describe('formulaCompatibilityPlugin', () => {
+        it.each(['This is a formula $$E=mc^2$$ in text.', '$$a_1$$ formula at front', 'formula at back $$a_2$$'])('converts block formulas to inline formulas', (input) => {
+            const result = htmlForMarkdown(input);
+            expect(result).toContain('<span class="katex">');
+            expect(result).not.toContain('class="katex-block"');
+        });
+
+        it('does not convert block formulas without surrounding text', () => {
+            const result = htmlForMarkdown('$$E=mc^2$$');
+            expect(result).toContain('class="katex-block"');
+            expect(result).toContain('display="block"');
+        });
+
+        it('converts double-backslash LaTeX begin and end tags', () => {
+            const result = htmlForMarkdown('Here is some LaTeX: $$\\\\begin{equation}a^2 + b^2 = c^2\\\\end{equation}$$\n');
+            expect(result).toContain('<span class="katex">');
+            expect(result).toContain('class="katex-html"');
+        });
+
+        it('handles multiple formulas in the same text', () => {
+            const result = htmlForMarkdown('First formula $$a^2 + b^2 = c^2$$ and second formula $$E=mc^2$$.');
+            const formulaCount = (result.match(/class="katex"/g) || []).length;
+            expect(formulaCount).toBe(2);
+        });
+    });
 });
