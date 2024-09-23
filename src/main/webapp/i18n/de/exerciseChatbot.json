@@ -15,7 +15,7 @@
             "text2_2": "<b>Tutoring-Fähigkeiten:</b> Iris kann dir komplexe Programmierkonzepte erklären und anschauliche Beispiele geben.",
             "text2_3": "<b>Kontextverständnis:</b> Im Gegensatz zu anderen LLM-basierten Chatbots kennt Iris den Programmcode, die Aufgabenstellung, die Buildresultate und die Logdaten. Das bedeutet, dass sie dir die Aufgabenstellung genauer erklären und dir Feedback zu deinem Code oder möglichen Buildfehlern geben kann.",
             "text2_4": "<b>Feedback:</b> Dein Feedback ist wichtig, um das Verhalten von Iris zu verbessern. Indem du bestimmte Antworten oder ganze Konversationen beurteilst, trägst du dazu bei, dass sich Leistung mit der Zeit zu verbessert.",
-            "text2_5": "<b>Kommunikationsfähigkeiten:</b> Iris speichert deinen Chatverlauf, so dass du d eine Interaktion fortsetzen und auf frühere Nachrichten zurückgreifen kannst, wenn du Iris erneut öffnest.",
+            "text2_5": "<b>Kommunikationsfähigkeiten:</b> Iris speichert deinen Chatverlauf, sodass du d eine Interaktion fortsetzen und auf frühere Nachrichten zurückgreifen kannst, wenn du Iris erneut öffnest.",
             "subheading3": "Grenzen & Einschränkungen",
             "text3_1": "<b>Keine Lösung:</b> Iris begleitet dich beim Lösen der Aufgabe und hilft dir, sie besser zu verstehen. Dabei gibt sie dir keine Lösungen, sondern beantwortet konkrete Fragen und gibt kleine Hinweise.",
             "text3_2": "<b>Keine Diskussionen außerhalb des Themas:</b> Iris' Aufgabe ist es, dir bei deinen Programmierübungen zu helfen. Daher beantwortet sie keine Fragen, die nichts mit dem Thema 'Programmieren' oder mit deiner aktuellen Aufgabe zu tun haben..",

@@ -62,7 +62,7 @@
                 "all": "Alle Teams",
                 "own": "Eigene Teams"
             },
-            "invalidFileType": "Ungültiger Dateityp für den Team Import: {{ fileType }}",
+            "invalidFileType": "Ungültiger Dateityp für den Team-Import: {{ fileType }}",
             "invalidCsvHeader": "Die CSV-Datei muss folgende Kopfzeile haben: {{ expectedHeader }}",
             "invalidCsvLine": "Zeile {{ line }} ist falsch formatiert",
             "missingUserNameOrId": "Der/Die Studierende in Eintrag {{ entryNr }} hat weder einen Login noch eine Matrikelnummer.",

@@ -26,8 +26,8 @@
                 "wrong": "Falsche Beurteilung. Es gibt {{mistakeCount}} Fehler.\nBitte überprüfe die Bewertungskriterien und reiche deine verbesserte Bewertung ein."
             },
             "correctTutorAssessment": "Herzlichen Glückwunsch! Das ist eine gute Beurteilung!",
-            "submitSuccessful": "Deine Beispiel Abgabe wurde eingereicht.",
-            "saveSuccessful": "Deine Beispiel Abgabe wurde gespeichert.",
+            "submitSuccessful": "Deine Beispielabgabe wurde eingereicht.",
+            "saveSuccessful": "Deine Beispielabgabe wurde gespeichert.",
             "readSuccessfully": "Du hast die Beispielabgabe erfolgreich gelesen und verstanden.",
             "createNew": "Neu erstellen",
             "pageHeader": "Beispiel für eine Textvorlage zur Übung",

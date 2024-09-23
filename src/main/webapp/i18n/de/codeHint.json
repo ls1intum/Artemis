@@ -85,7 +85,7 @@
                     "iris": {
                         "generateDescription": {
                             "label": "Beschreibungen generieren",
-                            "tooltip": "Generiert eine kurze und lange Beschreibung basierend auf dem Lösungs Codeschnipseln mit Hilfe von Iris."
+                            "tooltip": "Generiert eine kurze und lange Beschreibung basierend auf dem Lösungs Codeschnipseln mithilfe von Iris."
                         }
                     }
                 }

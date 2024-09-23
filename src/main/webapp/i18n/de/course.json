@@ -70,7 +70,7 @@
             "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Maximale Punktzahl",
-                "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mit Hilfe der im Kurs erreichbaren Punkte berechnet."
+                "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mithilfe der im Kurs erreichbaren Punkte berechnet."
             },
             "accuracyOfScores": "Anzahl der Nachkommastellen bei der Berechnung von Punktzahlen",
             "defaultProgrammingLanguage": "Standard-Programmiersprache",
@@ -112,8 +112,8 @@
                 "title": "Kurseinschreibung für Studierende aktiviert",
                 "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs einschreiben können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Einschreibung bestätigen müssen."
             },
-            "enrollmentStartDate": "Einschreibungs Start",
-            "enrollmentEndDate": "Einschreibungs Ende",
+            "enrollmentStartDate": "Einschreibungsstart",
+            "enrollmentEndDate": "Einschreibungsende",
             "enrollmentConfirmationMessage": "Nachricht zur Bestätigung der Einschreibung",
             "unenrollmentEnabled": {
                 "title": "Austragen aus dem Kurs für Studierende aktiviert",

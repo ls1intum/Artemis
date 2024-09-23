@@ -157,7 +157,7 @@
             "validation": {
                 "startAndEndMustBeSet": "Start- und Enddatum der Klausur müssen festgelegt werden.",
                 "atLeastOneExercisePerExerciseGroup": "Alle Aufgabengruppen müssen mindestens eine Aufgabe haben.",
-                "allExercisesInExerciseGroupOfSameIncludedType": "Alle Aufgaben in einer Aufgabengruppe müssen alle die selbe Bedeutung haben für das Klausurergebnis (Normale Aufgabe, Bonusaufgabe, Keine Bedeutung).",
+                "allExercisesInExerciseGroupOfSameIncludedType": "Alle Aufgaben in einer Aufgabengruppe müssen alle dieselbe Bedeutung haben für das Klausurergebnis (Normale Aufgabe, Bonusaufgabe, Keine Bedeutung).",
                 "allExercisesInExerciseGroupGiveSameNumberOfPoints": "Alle Aufgaben in einer Aufgabengruppe müssen dieselbe Anzahl an Punkte oder Bonuspunkte geben",
                 "tooManyMaxPoints": "Überprüfe die maximale Punktzahl in der Klausur! Die maximale Punktzahl, die Studierende in den verpflichtenden Aufgaben erreichen können, ist zu groß.",
                 "tooFewMaxPoints": "Überprüfe die maximale Punktzahl in der Klausur! Die maximale Punktzahl, die Studierende in den Aufgaben erreichen können, ist zu niedrig.",
@@ -592,7 +592,7 @@
                     "duplicatedProgrammingExerciseTitle": "Mehrere Programmieraufgaben in der Klausur besitzen denselben Titel. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Titel",
                     "invalidExerciseConfiguration": "Ein oder mehrere eingegebene Werte liegen außerhalb des zulässigen Bereiches. Bitte passe diese vor dem Import an",
                     "isImporting": "Der Import der Aufgabengruppen und der Aufgaben wird derzeit auf dem Server durchgeführt. Dies kann etwas Zeit in Anspruch nehmen.",
-                    "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtlinie, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu erstellen der Build-Pläne kann diese Import Funktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
+                    "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtlinie, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu erstellen der Build-Pläne kann diese Importfunktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
                 },
                 "importSuccessful": "Import der Aufgabengruppen erfolgreich!"
             },
