@@ -69,12 +69,12 @@
                     "notGenerated": "Bisher wurden keine Code-Hinweise generiert.",
                     "updateHintsButton": {
                         "label": "Code-Hinweise aktualisieren",
-                        "tooltip": "Erstellt neue Code-Hinweise, indem die existierenden Lösungs Codeschnipsel neu zugewiesen werden. Titel, Beschreibung und Inhalt bleiben unverändert beim ursprünglichen Hinweis.",
+                        "tooltip": "Erstellt neue Code-Hinweise, indem die existierenden Lösungs-Codeschnipsel neu zugewiesen werden. Titel, Beschreibung und Inhalt bleiben unverändert beim ursprünglichen Hinweis.",
                         "success": "Code-Hinweise erfolgreich aktualisiert. Die Hinweise sind direkt sichtbar für teilnehmende Studierende."
                     },
                     "createHintsButton": {
                         "label": "Code-Hinweise erstellen",
-                        "tooltip": "Erstellt Code-Hinweise aus den existierenden Lösungs Codeschnipseln.",
+                        "tooltip": "Erstellt Code-Hinweise aus den existierenden Lösungs-Codeschnipseln.",
                         "success": "Code-Hinweise erfolgreich erstellt. Die Hinweise sind direkt sichtbar für teilnehmende Studierende."
                     },
                     "recreateHintsButton": {
@@ -85,17 +85,17 @@
                     "iris": {
                         "generateDescription": {
                             "label": "Beschreibungen generieren",
-                            "tooltip": "Generiert eine kurze und lange Beschreibung basierend auf dem Lösungs Codeschnipseln mithilfe von Iris."
+                            "tooltip": "Generiert eine kurze und lange Beschreibung basierend auf dem Lösungs-Codeschnipseln mithilfe von Iris."
                         }
                     }
                 }
             }
         },
         "programmingExerciseSolutionEntry": {
-            "simplifiedName": "Lösungs Codeschnipsel",
-            "created": "Neues Lösungs Codeschnipsel erstellt mit ID {{ param }}",
-            "updated": "Lösungs Codeschnipsel aktualisiert mit ID {{ param }}",
-            "deleted": "Lösungs Codeschnipsel gelöscht mit ID {{ param }}",
+            "simplifiedName": "Lösungs-Codeschnipsel",
+            "created": "Neues Lösungs-Codeschnipsel erstellt mit ID {{ param }}",
+            "updated": "Lösungs-Codeschnipsel aktualisiert mit ID {{ param }}",
+            "deleted": "Lösungs-Codeschnipsel gelöscht mit ID {{ param }}",
             "test": "Test",
             "testOnlyForCurrentTask": "Du kannst nur Tests auswählen, die in der aktuellen Task enthalten sind.",
             "file": "Datei",
