@@ -10,10 +10,10 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { PROFILE_GITLAB, PROFILE_LOCALVC } from 'app/app.constants';
+import { PROFILE_GITLAB, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import dayjs from 'dayjs/esm';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { faCode, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { faCode, faDesktop, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 
@@ -71,9 +71,13 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     vscodeFallback: Ide = { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' };
     programmingLanguageToIde: Map<ProgrammingLanguage, Ide> = new Map([[ProgrammingLanguage.EMPTY, this.vscodeFallback]]);
 
+    theiaEnabled = false;
+    theiaPortalURL: string;
+
     // Icons
     readonly faCode = faCode;
     readonly faExternalLink = faExternalLink;
+    readonly faDesktop = faDesktop;
     ideName: string;
 
     constructor(
@@ -131,6 +135,34 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                 this.sshSettingsUrl = profileInfo.sshKeysURL;
             }
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
+
+            // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
+            if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
+                // console.log('Theia Profile is enabled');
+                this.theiaEnabled = true;
+
+                // Set variables now, sanitize later on
+                this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
+
+                // Verify that Theia's portal URL is set
+                if (this.theiaPortalURL === '') {
+                    this.theiaEnabled = false;
+                    // console.log('Theia portal URL is null');
+                }
+
+                // Verify that the exercise allows the online IDE
+                if (!this.exercise.allowOnlineIde) {
+                    this.theiaEnabled = false;
+                    // console.log('Theia allowOnlineIde is false');
+                }
+
+                // Verify that the exercise has a theia blueprint configured
+                if (!this.exercise.buildConfig?.theiaImage) {
+                    //this.theiaEnabled = false;
+                    // console.log('Theia Image is null');
+                    // console.log(this.exercise.buildConfig);
+                }
+            }
         });
 
         this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIde) => {
@@ -346,5 +378,41 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         if (this.activeParticipation.vcsAccessToken) {
             this.user.vcsAccessToken = this.activeParticipation.vcsAccessToken;
         }
+    }
+
+    startOnlineIDE() {
+        const reactURL = 'http://localhost:80';
+
+        const data = {
+            appDef: this.exercise?.buildConfig?.theiaImage ?? '',
+            gitToken: '12345',
+        };
+
+        const newWindow = window.open('', '_blank');
+        if (!newWindow) {
+            return;
+        }
+        newWindow.name = 'Theia-IDE';
+
+        const form = document.createElement('form');
+        form.method = 'GET';
+        form.action = reactURL;
+        form.target = newWindow.name;
+
+        // Loop over data element and create input fields
+        for (const key in data) {
+            if (data.hasOwnProperty(key)) {
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.name = key;
+                hiddenField.value = Object.getOwnPropertyDescriptor(data, key)!.value;
+                form.appendChild(hiddenField);
+            }
+        }
+
+        document.body.appendChild(form);
+
+        // Submit the form
+        form.submit();
     }
 }

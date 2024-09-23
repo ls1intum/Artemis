@@ -5,7 +5,7 @@ import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
@@ -29,6 +29,8 @@ import { ArtemisTestModule } from '../../test.module';
 import { RouterTestingModule } from '@angular/router/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { PROFILE_THEIA } from 'app/app.constants';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
@@ -42,6 +44,7 @@ describe('CodeButtonComponent', () => {
     let localStorageUseSshStoreStub: jest.SpyInstance;
     let getVcsAccessTokenSpy: jest.SpyInstance;
     let createVcsAccessTokenSpy: jest.SpyInstance;
+    let getProfileInfoSub: jest.SpyInstance;
 
     const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
 
@@ -86,6 +89,15 @@ describe('CodeButtonComponent', () => {
         operatorName: 'TUM',
     };
 
+    const exercise: Exercise = {
+        id: 42,
+        type: ExerciseType.PROGRAMMING,
+        studentParticipations: [],
+        numberOfAssessmentsOfCorrectionRounds: [],
+        secondCorrectionEnabled: false,
+        studentAssignedTeamIdComputed: false,
+    };
+
     let participation: ProgrammingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
 
     beforeEach(() => {
@@ -108,7 +120,12 @@ describe('CodeButtonComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            .compileComponents()
+            .then(() => {
+                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+                getProfileInfoSub.mockReturnValue(of(info));
+            });
 
         fixture = TestBed.createComponent(CodeButtonComponent);
         component = fixture.componentInstance;
@@ -449,4 +466,85 @@ describe('CodeButtonComponent', () => {
         const getProfileInfoStub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoStub.mockReturnValue(new BehaviorSubject(info));
     }
+
+    it.each([
+        [
+            'start theia button should be visible when profile is active and theia is configured',
+            {
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            },
+            {
+                allowOnlineIde: true,
+            },
+            {
+                theiaImage: 'this-is-a-theia-image',
+            },
+            true,
+        ],
+        [
+            'start theia button should not be visible when profile is active but theia is ill-configured',
+            {
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            },
+            {
+                allowOnlineIde: true,
+            },
+            {
+                theiaImage: undefined,
+            },
+            false,
+        ],
+        [
+            'start theia button should not be visible when profile is active but onlineIde is not activated',
+            {
+                activeProfiles: [PROFILE_THEIA],
+                theiaPortalURL: 'https://theia.test',
+            },
+            {
+                allowOnlineIde: false,
+            },
+            {
+                theiaImage: 'this-is-an-old-image',
+            },
+            false,
+        ],
+        [
+            'start theia button should not be visible when profile is active but url is not set',
+            {
+                activeProfiles: [PROFILE_THEIA],
+            },
+            {
+                allowOnlineIde: true,
+            },
+            {
+                theiaImage: 'this-is-a-theia-image',
+            },
+            false,
+        ],
+        [
+            'start theia button should not be visible when profile is not active but url is set',
+            {
+                theiaPortalURL: 'https://theia.test',
+            },
+            {
+                allowOnlineIde: true,
+            },
+            {
+                theiaImage: 'this-is-a-theia-image',
+            },
+            false,
+        ],
+    ])('%s', (description, profileInfo, programmingExercise, buildConfig, expectedVisibility) => {
+        getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+        getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
+
+        // Expand the programmingExercise by given properties
+        component.exercise = { ...exercise, ...programmingExercise, buildConfig: buildConfig } as ProgrammingExercise;
+
+        fixture.detectChanges();
+
+        expect(component.theiaEnabled).toBe(expectedVisibility);
+    });
 });
