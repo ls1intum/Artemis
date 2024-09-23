@@ -8,9 +8,9 @@
                     "loading": "Es ist ein Fehler beim Laden der Diagramme aufgetreten"
                 }
             },
-            "updated": "Apollon Diagram '{{ title }}' aktualisiert",
+            "updated": "Apollon Diagramm '{{ title }}' aktualisiert",
             "create": {
-                "success": "Apollon Diagram mit Titel {{ title }} wurde erfolgreich generiert",
+                "success": "Apollon Diagramm mit Titel {{ title }} wurde erfolgreich generiert",
                 "error": "Fehler beim Erstellen des Apollon Diagramms",
                 "validationError": "Validierungsfehler: Interaktive Elemente werden zum Generieren benötigt."
             },
@@ -18,8 +18,8 @@
                 "error": "Fehler beim Aktualisieren des Apollon Diagramms"
             },
             "delete": {
-                "question": "Soll Apollon Diagram '{{ title }}' wirklich dauerhaft gelöscht werden?",
-                "success": "Apollon Diagram mit Titel {{ title }} wurde erfolgreich gelöscht",
+                "question": "Soll Apollon Diagramm '{{ title }}' wirklich dauerhaft gelöscht werden?",
+                "success": "Apollon Diagramm mit Titel {{ title }} wurde erfolgreich gelöscht",
                 "error": "Fehler beim Löschen des Apollon Diagramms mit Titel {{ title }} aufgetreten"
             },
             "detail": {
@@ -30,12 +30,12 @@
                 "createLabel": "Erstelle eine Quizaufgabe",
                 "generate": "Erstellen",
                 "error": {
-                    "loading": "Es ist ein Fehler beim Laden des Diagrams aufgetreten"
+                    "loading": "Es ist ein Fehler beim Laden des Diagramms aufgetreten"
                 },
                 "quizExercise": "Erstelle eine Quizaufgabe für den Kurs {{ title }}.",
                 "exitConfirm": {
-                    "title": "Diagram Editor Verlassen",
-                    "question": "Dein Diagram hat ungespeicherte Änderungen. Bist du dir sicher, dass du den Editor verlassen möchtest?"
+                    "title": "Diagramm Editor Verlassen",
+                    "question": "Dein Dia gram hat ungespeicherte Änderungen. Bist du dir sicher, dass du den Editor verlassen möchtest?"
                 }
             },
             "title": "Titel",
