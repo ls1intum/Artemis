@@ -11,10 +11,13 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -87,6 +90,11 @@ public class SharedQueueProcessingService {
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
 
+    /**
+     * Lock for pausing and resuming the build agent.
+     */
+    private final ReentrantLock pauseResumeLock = new ReentrantLock();
+
     private UUID listenerId;
 
     /**
@@ -94,8 +102,15 @@ public class SharedQueueProcessingService {
      */
     private ScheduledFuture<?> scheduledFuture;
 
+    /**
+     * Flag to indicate whether the build agent is paused.
+     */
     private volatile boolean isPaused = false;
 
+    /**
+     * Flag to indicate whether the build agent should process build results. This is necessary to differentiate between when the build agent is paused and grace period is not over
+     * yet.
+     */
     private volatile boolean processResults = true;
 
     @Value("${artemis.continuous-integration.pause-grace-period-seconds:15}")
@@ -399,42 +414,63 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+        pauseResumeLock.lock();
+        try {
+            log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
 
-        isPaused = true;
-        removeListener();
-        if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
-            scheduledFuture.cancel(false);
+            isPaused = true;
+            removeListener();
+            if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+                scheduledFuture.cancel(false);
+            }
+            updateLocalBuildAgentInformation();
         }
-        updateLocalBuildAgentInformation();
+        finally {
+            pauseResumeLock.unlock();
+        }
 
         log.info("Gracefully cancelling running build jobs");
 
-        if (buildJobManagementService.getRunningBuildJobIds().isEmpty()) {
+        Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
+        if (runningBuildJobIds.isEmpty()) {
             log.info("No running build jobs to cancel");
         }
         else {
-            // Sleep for the configured grace period to allow the build jobs to finish. If they are not finished, they will be cancelled.
-            try {
-                Thread.sleep(pauseGracePeriodSeconds * 1000L);
-            }
-            catch (InterruptedException e) {
-                log.error("Error while pausing build agent", e);
-            }
+            List<CompletableFuture<BuildResult>> runningFuturesWrapper = runningBuildJobIds.stream().map(buildJobManagementService::getRunningBuildJobFutureWrapper)
+                    .filter(Objects::nonNull).toList();
 
-            if (!isPaused) {
-                log.info("Build agent was resumed before the build jobs could be cancelled");
-                return;
+            if (!runningFuturesWrapper.isEmpty()) {
+                CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
+
+                try {
+                    allFuturesWrapper.get(pauseGracePeriodSeconds, TimeUnit.SECONDS);
+                    log.info("All running build jobs finished during grace period");
+                }
+                catch (TimeoutException e) {
+                    if (!isPaused) {
+                        log.info("Build agent was resumed before the build jobs could be cancelled");
+                        return;
+                    }
+                    pauseResumeLock.lock();
+                    try {
+                        log.info("Grace period exceeded. Cancelling running build jobs.");
+
+                        processResults = false;
+                        Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
+                        List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = processingJobs.getAll(runningBuildJobIdsAfterGracePeriod).values().stream().toList();
+                        runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
+                        queue.addAll(runningBuildJobsAfterGracePeriod);
+                        log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIdsAfterGracePeriod);
+                        log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
+                    }
+                    finally {
+                        pauseResumeLock.unlock();
+                    }
+                }
+                catch (InterruptedException | ExecutionException e) {
+                    log.error("Error while waiting for running build jobs to finish", e);
+                }
             }
-
-            processResults = false;
-            Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
-            List<BuildJobQueueItem> runningBuildJobs = processingJobs.getAll(runningBuildJobIds).values().stream().toList();
-            runningBuildJobIds.forEach(buildJobManagementService::cancelBuildJob);
-            queue.addAll(runningBuildJobs);
-            log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIds);
-            log.debug("Cancelled running build jobs: {}", runningBuildJobs);
-
         }
     }
 
@@ -444,18 +480,24 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-        isPaused = false;
-        processResults = true;
-        // We remove the listener and scheduledTask first to avoid race conditions
-        removeListener();
-        listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
-            scheduledFuture.cancel(false);
+        pauseResumeLock.lock();
+        try {
+            log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
+            isPaused = false;
+            processResults = true;
+            // We remove the listener and scheduledTask first to avoid race conditions
+            removeListener();
+            listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
+            if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+                scheduledFuture.cancel(false);
+            }
+            scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
+            checkAvailabilityAndProcessNextBuild();
+            updateLocalBuildAgentInformation();
         }
-        scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
-        checkAvailabilityAndProcessNextBuild();
-        updateLocalBuildAgentInformation();
+        finally {
+            pauseResumeLock.unlock();
+        }
     }
 
     /**

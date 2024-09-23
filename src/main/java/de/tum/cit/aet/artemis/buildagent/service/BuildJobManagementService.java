@@ -74,6 +74,8 @@ public class BuildJobManagementService {
      */
     private final Map<String, Future<BuildResult>> runningFutures = new ConcurrentHashMap<>();
 
+    private final Map<String, CompletableFuture<BuildResult>> runningFuturesWrapper = new ConcurrentHashMap<>();
+
     /**
      * A set that contains all build jobs that were cancelled by the user.
      * This set is unique for each node and contains only the build jobs that were cancelled on this node.
@@ -171,11 +173,19 @@ public class BuildJobManagementService {
             }
         });
 
-        return futureResult.whenComplete(((result, throwable) -> runningFutures.remove(buildJobItem.id())));
+        runningFuturesWrapper.put(buildJobItem.id(), futureResult);
+        return futureResult.whenComplete(((result, throwable) -> {
+            runningFutures.remove(buildJobItem.id());
+            runningFuturesWrapper.remove(buildJobItem.id());
+        }));
     }
 
     Set<String> getRunningBuildJobIds() {
         return Set.copyOf(runningFutures.keySet());
+    }
+
+    CompletableFuture<BuildResult> getRunningBuildJobFutureWrapper(String buildJobId) {
+        return runningFuturesWrapper.get(buildJobId);
     }
 
     /**
