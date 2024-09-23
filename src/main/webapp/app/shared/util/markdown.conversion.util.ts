@@ -30,6 +30,8 @@ const formulaCompatibilityPlugin: PluginSimple = (md) => {
     });
 };
 
+const turndownService = new TurndownService();
+
 /**
  * Converts markdown into html (string) and sanitizes it. Does NOT declare it as safe to bypass further security
  * Note: If possible, please use safeHtmlForMarkdown
@@ -86,6 +88,5 @@ export function htmlForMarkdown(
 }
 
 export function markdownForHtml(htmlText: string): string {
-    const turndownService = new TurndownService();
     return turndownService.turndown(htmlText);
 }
