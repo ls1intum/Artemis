@@ -1,11 +1,11 @@
 import { TestBed, fakeAsync } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { ShortAnswerQuestionUtil } from '../../../../../../main/webapp/app/exercises/quiz/shared/short-answer-question-util.service';
+import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { ShortAnswerQuestion } from '../../../../../../main/webapp/app/entities/quiz/short-answer-question.model';
-import { ShortAnswerSpot } from '../../../../../../main/webapp/app/entities/quiz/short-answer-spot.model';
-import { ShortAnswerMapping } from '../../../../../../main/webapp/app/entities/quiz/short-answer-mapping.model';
-import { ShortAnswerSolution } from '../../../../../../main/webapp/app/entities/quiz/short-answer-solution.model';
+import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
+import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
+import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
 
 describe('ShortAnswerQuestionUtil', () => {
