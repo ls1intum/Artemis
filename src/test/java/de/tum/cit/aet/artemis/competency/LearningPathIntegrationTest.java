@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.competency;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.within;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -62,8 +60,6 @@ import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.util.PageableSearchUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.competency.CompetencyInstructorGraphNodeDTO;
-import de.tum.in.www1.artemis.web.rest.dto.competency.LearningPathCompetencyInstructorGraphDTO;
 
 class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -484,43 +480,6 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
             return Objects.equals(nodeDTO.value(), Math.floor(masteryProgress * 100))
                     && Objects.equals(nodeDTO.valueType(), CompetencyGraphNodeDTO.CompetencyNodeValueType.MASTERY_PROGRESS);
         });
-
-        Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
-        assertThat(response.edges()).hasSameSizeAs(relations);
-        assertThat(response.edges()).allMatch(relationDTO -> relations.stream().anyMatch(relation -> relation.getId() == Long.parseLong(relationDTO.id())
-                && relation.getTailCompetency().getId() == Long.parseLong(relationDTO.target()) && relation.getHeadCompetency().getId() == Long.parseLong(relationDTO.source())));
-    }
-
-    @Test
-    @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
-    void testGetLearningPathCompetencyInstructorGraph() throws Exception {
-        course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final User[] students = IntStream.range(1, NUMBER_OF_STUDENTS + 1).mapToObj(i -> userRepository.findOneByLogin(TEST_PREFIX + "student" + i).orElseThrow())
-                .toArray(User[]::new);
-
-        // student 1 and 2 completed both text units
-        TextUnit otherTextUnit = createAndLinkTextUnit(students[0], competencies[0], true);
-        lectureUnitService.setLectureUnitCompletion(textUnit, students[1], true);
-        lectureUnitService.setLectureUnitCompletion(otherTextUnit, students[1], true);
-
-        // student 3 completed only one text unit
-        lectureUnitService.setLectureUnitCompletion(otherTextUnit, students[2], true);
-
-        Arrays.stream(students)
-                .forEach(student -> Arrays.stream(competencies).forEach(competency -> competencyProgressService.updateCompetencyProgress(competency.getId(), student)));
-
-        LearningPathCompetencyInstructorGraphDTO response = request.get("/api/courses/" + course.getId() + "/learning-path/competency-instructor-graph", HttpStatus.OK,
-                LearningPathCompetencyInstructorGraphDTO.class);
-
-        assertThat(response).isNotNull();
-        assertThat(response.nodes().stream().map(CompetencyInstructorGraphNodeDTO::id))
-                .containsExactlyInAnyOrderElementsOf(Arrays.stream(competencies).map(Competency::getId).map(Object::toString).toList());
-        CompetencyInstructorGraphNodeDTO nodeForCompetency1 = response.nodes().stream().filter(node -> Objects.equals(node.id(), competencies[0].getId().toString())).findAny()
-                .get();
-        assertThat(nodeForCompetency1.percentOfMasteredStudents()).isCloseTo(2.0 / 5, within(0.001));
-        // masteryThreshold is 60% for competency[0]
-        assertThat(nodeForCompetency1.averageMasteryProgress()).isCloseTo((2 * 1 + 1 * 5.0 / 6) / 3, within(0.001));
-        assertThat(nodeForCompetency1.meanMasteryProgress()).isCloseTo(1, within(0.001));
 
         Set<CompetencyRelation> relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
         assertThat(response.edges()).hasSameSizeAs(relations);

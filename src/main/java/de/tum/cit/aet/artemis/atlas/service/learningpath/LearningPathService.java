@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.LearningPathRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -50,7 +51,6 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnitCompletion;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitCompletionRepository;
-import de.tum.in.www1.artemis.repository.CourseCompetencyRepository;
 
 /**
  * Service Implementation for managing Learning Paths.
