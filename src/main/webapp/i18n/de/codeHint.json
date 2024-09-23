@@ -36,7 +36,7 @@
                 },
                 "step3": {
                     "name": "Lösungs-Fragmente",
-                    "description": "In diesem Schritt kannst du die einzelnen Fragment bearbeiten, aus denen Code-Hinweise erstellt werden.",
+                    "description": "In diesem Schritt kannst du die einzelnen Fragmente bearbeiten, aus denen Code-Hinweise erstellt werden.",
                     "notGenerated": "Bisher wurden keine Fragmente generiert.",
                     "createManualFragmentButton": {
                         "label": "Erstelle manuelles Fragment",

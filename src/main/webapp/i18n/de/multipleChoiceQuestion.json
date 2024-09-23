@@ -48,7 +48,7 @@
                 "color": "Farbe"
             },
             "visualEditor": {
-                "hintTooltip": "Füge hier einen Hinweis hinzu (sichtbar während des Quizzes über den ?-Button)",
+                "hintTooltip": "Füge hier einen Hinweis hinzu (sichtbar während des Quiz über den ?-Button)",
                 "explanationTooltip": "Füge hier eine Erklärung hinzu (nur sichtbar im Feedback nachdem das Quiz beendet ist)",
                 "hintPlaceholder": "Hinweis ...",
                 "explanationPlaceholder": "Erklärung ...",
