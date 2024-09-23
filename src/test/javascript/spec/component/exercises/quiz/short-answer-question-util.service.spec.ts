@@ -1,11 +1,11 @@
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
-import { ArtemisTestModule } from '../test.module';
-import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { ShortAnswerSpot } from 'app/entities/quiz/short-answer-spot.model';
-import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
-import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
+import { ShortAnswerQuestionUtil } from '../../../../../../main/webapp/app/exercises/quiz/shared/short-answer-question-util.service';
+import { ArtemisTestModule } from '../../../test.module';
+import { ShortAnswerQuestion } from '../../../../../../main/webapp/app/entities/quiz/short-answer-question.model';
+import { ShortAnswerSpot } from '../../../../../../main/webapp/app/entities/quiz/short-answer-spot.model';
+import { ShortAnswerMapping } from '../../../../../../main/webapp/app/entities/quiz/short-answer-mapping.model';
+import { ShortAnswerSolution } from '../../../../../../main/webapp/app/entities/quiz/short-answer-solution.model';
 import { cloneDeep } from 'lodash-es';
 
 describe('ShortAnswerQuestionUtil', () => {
@@ -208,4 +208,42 @@ describe('ShortAnswerQuestionUtil', () => {
         expect(textPartsInHTML[3][0]).toContain(`<p>[-spot 2]</p>`);
         expect(textPartsInHTML[3][1]).toContain(`<p>test3</p>`);
     });
+
+    it('should transform text parts to html correctly', fakeAsync(() => {
+        const originalTextParts1 = [['random text'], ['    some more text', '[-spot 1]'], ['last paragraph']];
+        const formattedTextParts1 = [['<p>random text</p>'], ['<p>&nbsp;&nbsp;&nbsp;&nbsp;some more text</p>', '<p>[-spot 1]</p>'], ['<p>last paragraph</p>']];
+        expect(service.transformTextPartsIntoHTML(originalTextParts1)).toEqual(formattedTextParts1);
+        const originalTextParts2 = [['`random code`'], ['`    some more code`', '[-spot 1]'], ['`last code paragraph`']];
+        const formattedTextParts2 = [
+            ['<p><code>random code</code></p>'],
+            ['<p><code>&nbsp;&nbsp;&nbsp;&nbsp;some more code</code></p>', '<p>[-spot 1]</p>'],
+            ['<p><code>last code paragraph</code></p>'],
+        ];
+        expect(service.transformTextPartsIntoHTML(originalTextParts2)).toEqual(formattedTextParts2);
+        const originalTextParts3 = [['`random code`'], ['    [-spot 1]', '`some more code`', '[-spot 1]'], ['`last code paragraph`']];
+        const formattedTextParts3 = [
+            ['<p><code>random code</code></p>'],
+            ['<p>&nbsp;&nbsp;&nbsp;&nbsp;[-spot 1]</p>', '<p><code>some more code</code></p>', '<p>[-spot 1]</p>'],
+            ['<p><code>last code paragraph</code></p>'],
+        ];
+        expect(service.transformTextPartsIntoHTML(originalTextParts3)).toEqual(formattedTextParts3);
+    }));
+
+    it('should return the correct indentation', fakeAsync(() => {
+        const sentence1 = '    this is a test';
+        const sentence2 = '  `another test`';
+        const sentence3 = '`last test`';
+        expect(service.getIndentation(sentence1)).toBe('    ');
+        expect(service.getIndentation(sentence2)).toBe('  ');
+        expect(service.getIndentation(sentence3)).toBe('');
+    }));
+
+    it('should return first word of a sentence', fakeAsync(() => {
+        const sentence1 = '         this is a test';
+        const sentence2 = '    `another test`';
+        const sentence3 = '';
+        expect(service.getFirstWord(sentence1)).toBe('this');
+        expect(service.getFirstWord(sentence2)).toBe('another');
+        expect(service.getFirstWord(sentence3)).toBe('');
+    }));
 });
