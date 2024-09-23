@@ -3,6 +3,7 @@ import type { PluginSimple } from 'markdown-it';
 
 /**
  * Markdown-It plugin that allows replacing text in the raw markdown before tokenizing.
+ * See more about Markdown-It plugins here: https://github.com/markdown-it/markdown-it/tree/master/docs
  */
 export abstract class ArtemisTextReplacementPlugin {
     getExtension(): PluginSimple {
