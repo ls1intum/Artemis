@@ -118,7 +118,7 @@ Local Environment Setup
             gpt_version_equivalent: 4.5  # Equivalent GPT version of the model
             context_length: 128000
             vendor: "OpenAI"
-            privacy_compliance: true
+            privacy_compliance: false
             self_hosted: false
             image_recognition: true
             json_mode: true
