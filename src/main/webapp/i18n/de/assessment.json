@@ -73,7 +73,7 @@
             "useAsExampleSubmissionVerificationQuestion": "Bist du dir sicher, dass du diese Abgabe als Beispielabgabe importieren möchtest?",
             "messages": {
                 "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
-                "acceptComplaintWithoutMoreScore": "Bist du sicher, dass du diesen Complaint annehmen willst, ohne dem Studenten mehr Punkte zu geben?",
+                "acceptComplaintWithoutMoreScore": "Bist du sicher, dass du diese Beschwerde annehmen willst, ohne dem Studenten mehr Punkte zu geben?",
                 "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
                 "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
                 "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
