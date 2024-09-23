@@ -11,7 +11,7 @@ export class SidebarCardItemComponent {
     @Input() sidebarType?: SidebarTypes;
     @Input() groupKey?: string;
 
-    removeChannelPrefix(item: SidebarCardElement, name: string): string {
+    removeChannelPrefix(name: string): string {
         const prefixes = ['exercise-', 'lecture-', 'exam-'];
         const channelTypes = ['exerciseChannels', 'lectureChannels', 'examChannels'];
         for (const prefix of prefixes) {

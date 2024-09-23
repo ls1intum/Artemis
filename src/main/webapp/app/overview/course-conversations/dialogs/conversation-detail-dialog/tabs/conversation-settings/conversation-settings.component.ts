@@ -42,7 +42,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    readonly faTimes = faTrash;
+    readonly faTrash = faTrash;
 
     conversationAsChannel: ChannelDTO | undefined;
     canLeaveConversation: boolean;
