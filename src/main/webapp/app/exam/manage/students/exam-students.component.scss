@@ -47,16 +47,16 @@ jhi-exam-students {
         &.newly-registered {
             $vars: map-get($datatable-row, newly-registered);
 
+            animation-name: flash-animation;
+            animation-delay: map-get($vars, animation-delay);
+            animation-duration: map-get($vars, animation-duration);
+            animation-timing-function: ease-out;
+
             @keyframes flash-animation {
                 30% {
                     background-color: map-get($vars, background-color);
                 }
             }
-
-            animation-name: flash-animation;
-            animation-delay: map-get($vars, animation-delay);
-            animation-duration: map-get($vars, animation-duration);
-            animation-timing-function: ease-out;
         }
     }
 }

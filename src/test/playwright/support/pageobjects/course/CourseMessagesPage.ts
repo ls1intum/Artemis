@@ -153,7 +153,7 @@ export class CourseMessagesPage {
      * @returns The locator for the name element.
      */
     getName() {
-        return this.page.locator('h3.conversation-name');
+        return this.page.locator('h4.d-inline-block');
     }
 
     /**
@@ -161,7 +161,7 @@ export class CourseMessagesPage {
      * @returns The locator for the topic element.
      */
     getTopic() {
-        return this.page.locator('.conversation-topic');
+        return this.page.locator('#conversation-topic');
     }
 
     /**

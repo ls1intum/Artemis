@@ -1,48 +1,24 @@
 <div>
-    <div class="d-flex flex-wrap">
-        <div class="d-flex align-items-center">
-            <h2 jhiTranslate="artemisApp.competency.manageCompetencies.title"></h2>
-            <jhi-documentation-button [type]="documentationType" />
-        </div>
+    <div class="d-flex flex-wrap mt-4">
+        <h2 jhiTranslate="artemisApp.competency.manage.title"></h2>
+        <jhi-documentation-button [type]="documentationType" />
         <div class="ms-auto justify-content-end">
             @if (irisCompetencyGenerationEnabled) {
                 <a class="btn btn-primary" id="generateButton" [routerLink]="['/course-management', courseId, 'competency-management', 'generate']">
                     <fa-icon [icon]="faRobot" />
-                    <span>{{ 'artemisApp.competency.manageCompetencies.generateButton' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.competency.manage.generateButton"></span>
                 </a>
             }
-            <div ngbDropdown class="d-inline">
-                <button id="importCompetenciesDropdown" class="btn btn-primary" ngbDropdownToggle>
-                    <fa-icon [icon]="faFileImport" />
-                    {{ 'artemisApp.competency.manageCompetencies.importButton' | artemisTranslate }}
-                </button>
-                <div ngbDropdownMenu aria-labelledby="importCompetenciesDropdown">
-                    <button class="btn" id="competencyImportAllButton" (click)="openImportAllModal()" ngbDropdownItem>
-                        <fa-icon [icon]="faFileImport" />
-                        <span>{{ 'artemisApp.competency.manageCompetencies.importAllButton' | artemisTranslate }}</span>
-                    </button>
-                    <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import']" ngbDropdownItem>
-                        <fa-icon [icon]="faFileImport" />
-                        <span>{{ 'artemisApp.competency.manageCompetencies.importFromCoursesButton' | artemisTranslate }}</span>
-                    </a>
-                    @if (standardizedCompetenciesEnabled) {
-                        <a class="btn" [routerLink]="['/course-management', courseId, 'competency-management', 'import-standardized']" ngbDropdownItem>
-                            <fa-icon [icon]="faFileImport" />
-                            <span>{{ 'artemisApp.competency.manageCompetencies.importStandardizedButton' | artemisTranslate }}</span>
-                        </a>
-                    }
-                </div>
-            </div>
-            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'create']">
-                <fa-icon [icon]="faPlus" />
-                <span>{{ 'artemisApp.competency.manageCompetencies.createButton' | artemisTranslate }}</span>
-            </a>
+            <button class="btn btn-primary" id="courseCompetencyImportAllButton" (click)="openImportAllModal()">
+                <fa-icon [icon]="faFileImport" />
+                <span jhiTranslate="artemisApp.courseCompetency.manage.importAllButton"></span>
+            </button>
         </div>
     </div>
     @if (isLoading) {
         <div class="d-flex justify-content-center">
             <div class="spinner-border" role="status">
-                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
     }
@@ -52,183 +28,20 @@
         (onCreateRelation)="createRelation($event)"
         (onRemoveRelation)="onRemoveRelation($event)"
     />
-    <h2>{{ 'artemisApp.competency.competencies' | artemisTranslate }}</h2>
-    <div class="container-fluid overflow-auto">
-        @if (competencies.length) {
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th class="col">
-                            <span jhiTranslate="global.field.id"></span>
-                        </th>
-                        <th class="col">
-                            <span jhiTranslate="artemisApp.competency.title"></span>
-                        </th>
-                        <th class="col">
-                            <span jhiTranslate="artemisApp.competency.description"></span>
-                        </th>
-                        <th class="col">
-                            <span jhiTranslate="artemisApp.competency.taxonomy"></span>
-                        </th>
-                        <th class="d-none col-lg d-lg-table-cell">
-                            <span jhiTranslate="artemisApp.competency.softDueDate"></span>
-                        </th>
-                        <th class="d-none col-lg d-lg-table-cell">
-                            <span jhiTranslate="artemisApp.competency.masteredStudents"></span>
-                        </th>
-                        <th class="col">
-                            <span jhiTranslate="artemisApp.competency.optional"></span>
-                        </th>
-                        <th class="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (competency of competencies; track competency.id; let i = $index) {
-                        <tr>
-                            <td class="col">
-                                <a [routerLink]="['/courses', courseId, 'competencies', competency.id]">{{ competency.id }}</a>
-                            </td>
-                            <td class="col">
-                                <a [routerLink]="['/courses', courseId, 'competencies', competency.id]">{{ competency.title }}</a>
-                            </td>
-                            <td class="col markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></td>
-                            <td class="col">
-                                <div>
-                                    <fa-icon [icon]="getIcon(competency.taxonomy)" [fixedWidth]="true" container="body" />
-                                    {{ 'artemisApp.competency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate }}
-                                </div>
-                            </td>
-                            <td class="d-none col-lg d-lg-table-cell">
-                                {{ competency.softDueDate | artemisDate }}
-                            </td>
-                            <td class="d-none col-lg d-lg-table-cell">
-                                <ngb-progressbar
-                                    type="primary"
-                                    [showValue]="true"
-                                    [value]="competency.courseProgress?.numberOfMasteredStudents ?? 0"
-                                    [max]="competency.courseProgress?.numberOfStudents ?? 0"
-                                />
-                            </td>
-                            <td class="col">
-                                <span>{{ 'global.generic.' + (competency.optional ? 'yes' : 'no') | artemisTranslate }}</span>
-                            </td>
-                            <td class="col">
-                                <div class="d-flex justify-content-end">
-                                    <a class="btn btn-sm btn-primary me-1" [routerLink]="['/course-management', courseId, 'competency-management', competency.id, 'edit']">
-                                        <fa-icon [icon]="faPencilAlt" />
-                                        <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
-                                    </a>
-                                    <button
-                                        jhiDeleteButton
-                                        [entityTitle]="competency.title ?? ''"
-                                        [deleteQuestion]="'artemisApp.competency.competencyCard.delete.question'"
-                                        [deleteConfirmationText]="'artemisApp.competency.competencyCard.delete.typeNameToConfirm'"
-                                        (delete)="deleteCompetency(competency.id!)"
-                                        [dialogError]="dialogError"
-                                    >
-                                        <fa-icon [icon]="faTrash" />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        } @else {
-            <span jhiTranslate="artemisApp.competency.manageCompetencies.empty"></span>
-        }
-    </div>
-    <div class="d-flex flex-wrap mt-4">
-        <h2 jhiTranslate="artemisApp.prerequisite.title"></h2>
-        <div class="ms-auto text-truncate justify-content-end">
-            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'import-prerequisites']">
-                <fa-icon [icon]="faFileImport" />
-                <span jhiTranslate="artemisApp.prerequisite.manage.importButton"></span>
-            </a>
-            <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'competency-management', 'prerequisites', 'create']">
-                <fa-icon [icon]="faPlus" />
-                <span jhiTranslate="artemisApp.prerequisite.manage.createButton"></span>
-            </a>
-        </div>
-    </div>
-    <!-- TODO: new table will be added when create/edit will be added -->
-    <div class="container-fluid overflow-auto">
-        @if (prerequisites.length) {
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th class="col">
-                            <span jhiTranslate="global.field.id"></span>
-                        </th>
-                        <th class="col">
-                            <span jhiTranslate="artemisApp.courseCompetency.title"></span>
-                        </th>
-                        <th class="col">
-                            <span jhiTranslate="artemisApp.courseCompetency.description"></span>
-                        </th>
-                        <th class="col">
-                            <span jhiTranslate="artemisApp.courseCompetency.taxonomy"></span>
-                        </th>
-                        <th class="col">
-                            <span jhiTranslate="artemisApp.courseCompetency.softDueDate"></span>
-                        </th>
-                        <th class="col">
-                            <span jhiTranslate="artemisApp.courseCompetency.course"></span>
-                        </th>
-                        <th class="col"></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (prerequisite of prerequisites; track prerequisite.id; let i = $index) {
-                        <tr>
-                            <td class="col">{{ prerequisite.id }}</td>
-                            <td class="col">{{ prerequisite.title }}</td>
-                            <td class="col markdown-preview" [innerHTML]="prerequisite.description | htmlForMarkdown"></td>
-                            <td class="col">
-                                <div>
-                                    <fa-icon [icon]="getIcon(prerequisite.taxonomy)" [fixedWidth]="true" container="body" />
-                                    {{ 'artemisApp.competency.taxonomies.' + (prerequisite.taxonomy ?? 'none') | artemisTranslate }}
-                                </div>
-                            </td>
-                            <td class="d-none col-lg d-lg-table-cell">
-                                {{ prerequisite.softDueDate | artemisDate }}
-                            </td>
-                            <td class="col">
-                                @if (prerequisite.linkedCourseCompetency?.course?.id) {
-                                    <div>
-                                        <a [routerLink]="['/course-management', prerequisite.linkedCourseCompetency!.course!.id!, 'competency-management']">{{
-                                            prerequisite.linkedCourseCompetency!.course!.title ?? ('artemisApp.competency.course' | artemisTranslate)
-                                        }}</a>
-                                    </div>
-                                }
-                            </td>
-                            <td class="col">
-                                <div class="d-flex justify-content-end">
-                                    <a
-                                        class="btn btn-sm btn-primary me-1"
-                                        [routerLink]="['/course-management', courseId, 'competency-management', 'prerequisites', prerequisite.id, 'edit']"
-                                    >
-                                        <fa-icon [icon]="faPencilAlt" />
-                                        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
-                                    </a>
-                                    <button
-                                        jhiDeleteButton
-                                        [entityTitle]="prerequisite.title ?? ''"
-                                        [deleteQuestion]="'artemisApp.prerequisite.manage.delete.question'"
-                                        [deleteConfirmationText]="'artemisApp.prerequisite.manage.delete.typeNameToConfirm'"
-                                        (delete)="deletePrerequisite(prerequisite.id!)"
-                                        [dialogError]="dialogError"
-                                    >
-                                        <fa-icon [icon]="faTrash" />
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        } @else {
-            <span jhiTranslate="artemisApp.prerequisite.empty"></span>
-        }
-    </div>
+    <jhi-competency-management-table
+        [courseId]="courseId"
+        [courseCompetencies]="competencies"
+        [relations]="relations"
+        [competencyType]="CourseCompetencyType.COMPETENCY"
+        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
+        (competencyDeleted)="onRemoveCompetency($event)"
+    />
+    <jhi-competency-management-table
+        [courseId]="courseId"
+        [courseCompetencies]="prerequisites"
+        [relations]="relations"
+        [competencyType]="CourseCompetencyType.PREREQUISITE"
+        [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled"
+        (competencyDeleted)="onRemoveCompetency($event)"
+    />
 </div>

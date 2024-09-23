@@ -7,7 +7,7 @@ import { omit as _omit } from 'lodash-es';
 
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
@@ -19,14 +19,14 @@ import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programmin
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
-import { BuildLogStatisticsDTO } from 'app/entities/build-log-statistics-dto';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
+import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { SortService } from 'app/shared/service/sort.service';
 import { Result } from 'app/entities/result.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 import { ImportOptions } from 'app/types/programming-exercises';
-import { CheckoutDirectoriesDto } from 'app/entities/checkout-directories-dto';
+import { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -586,12 +586,12 @@ export class ProgrammingExerciseService {
         newerCommitHash: string,
         repositoryType?: string,
     ): Observable<ProgrammingExerciseGitDiffReport | undefined> {
-        const params = {};
+        const params: { repositoryType?: string; participationId?: number } = {};
         if (repositoryType !== undefined) {
-            params['repositoryType'] = repositoryType;
+            params.repositoryType = repositoryType;
         }
         if (participationId !== undefined && !isNaN(participationId)) {
-            params['participationId'] = participationId;
+            params.participationId = participationId;
         }
 
         return this.http

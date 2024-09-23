@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { EntityResponseType, ResultService } from 'app/exercises/shared/result/result.service';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { Result } from 'app/entities/result.model';
@@ -19,7 +19,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import {
     FeedbackType,
     NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER,
@@ -153,8 +153,7 @@ describe('ResultService', () => {
         const resultWithPoints2 = new ResultWithPointsPerGradingCriterion();
         resultWithPoints2.result = result2;
         resultWithPoints2.totalPoints = 50;
-        // @ts-ignore
-        resultWithPoints2.pointsPerCriterion = { '1': 20, '2': 30 };
+        resultWithPoints2.pointsPerCriterion = new Map(Object.entries({ '1': 20, '2': 30 }).map(([key, value]) => [Number(key), value]));
 
         const results = [resultWithPoints1, resultWithPoints2];
 

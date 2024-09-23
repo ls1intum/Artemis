@@ -5,8 +5,10 @@
             class="overflow-hidden flex-grow-1"
             [domainActions]="domainActions"
             [initialEditorHeight]="initialEditorHeight"
+            [useDefaultMarkdownEditorOptions]="false"
             [enableResize]="enableResize"
             [markdown]="exercise.problemStatement"
+            [showDefaultPreview]="false"
             (onPreviewSelect)="generateHtml()"
             (markdownChange)="updateProblemStatement($event)"
         >

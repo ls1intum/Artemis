@@ -5,7 +5,7 @@ import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
 import { TextExerciseUpdateComponent } from 'app/exercises/text/manage/text-exercise/text-exercise-update.component';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
@@ -13,7 +13,7 @@ import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-act
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { Subject, of, throwError } from 'rxjs';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
@@ -23,6 +23,7 @@ import { NgModel } from '@angular/forms';
 import { ExerciseTitleChannelNameComponent } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('TextExercise Management Update Component', () => {
     let comp: TextExerciseUpdateComponent;
@@ -176,7 +177,7 @@ describe('TextExercise Management Update Component', () => {
             comp.validateDate();
             expect(calculatValidationSectionsSpy).toHaveBeenCalledOnce();
             for (const errorName of dateErrorNames) {
-                expect(comp.textExercise[errorName]).toBeFalsy();
+                expect(comp.textExercise[errorName as keyof TextExercise]).toBeFalsy();
             }
         }));
     });
@@ -363,7 +364,7 @@ describe('TextExercise Management Update Component', () => {
     it('should updateCategories properly by making category available for selection again when removing it', () => {
         comp.textExercise = new TextExercise(undefined, undefined);
         comp.exerciseCategories = [];
-        const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+        const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
         comp.updateCategories(newCategories);
 

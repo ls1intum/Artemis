@@ -1,6 +1,6 @@
-<div class="me-0 p-1 row">
+<div class="d-flex gap-2 fs-xx-small">
     @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData) {
-        <div class="col-auto p-0">
+        <div>
             <button
                 [disabled]="isReadOnlyMode"
                 class="reaction-button clickable"
@@ -13,16 +13,18 @@
             </button>
         </div>
     }
-    <div class="col-auto px-0" [hidden]="isReadOnlyMode">
-        <fa-icon
-            [icon]="farSmile"
-            class="reaction-button me-0 text-secondary clickable"
-            [class.open-selector]="showReactionSelector"
-            (click)="showReactionSelector = !showReactionSelector"
-            cdkOverlayOrigin
-            #trigger="cdkOverlayOrigin"
-            [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
-        />
+    <div [hidden]="isReadOnlyMode">
+        <button class="reaction-button clickable px-2 fs-small">
+            <fa-icon
+                [icon]="farSmile"
+                [class.open-selector]="showReactionSelector"
+                class="reaction-button react text-secondary clickable"
+                (click)="showReactionSelector = !showReactionSelector"
+                cdkOverlayOrigin
+                #trigger="cdkOverlayOrigin"
+                [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
+            />
+        </button>
     </div>
     @if (!isReadOnlyMode) {
         <ng-template
@@ -45,10 +47,10 @@
     }
     <!-- add new answer to expanded discussion -->
     @if (isLastAnswer && !isThreadSidebar) {
-        <div class="col-auto p-0">
+        <div>
             <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()">
                 <jhi-emoji [emoji]="speechBalloonId" />
-                <span class="emoji-count">{{ 'artemisApp.metis.reply' | artemisTranslate }}</span>
+                <span jhiTranslate="artemisApp.metis.reply" class="emoji-count"></span>
             </button>
         </div>
     }

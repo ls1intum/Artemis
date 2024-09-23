@@ -15,7 +15,6 @@
         "noImplicitReturns": false,
         "noFallthroughCasesInSwitch": true,
         "noImplicitAny": true,
-        "suppressImplicitAnyIndexErrors": true,
         "strictNullChecks": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,

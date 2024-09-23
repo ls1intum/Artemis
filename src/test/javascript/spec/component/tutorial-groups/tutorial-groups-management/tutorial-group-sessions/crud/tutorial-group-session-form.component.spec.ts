@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import {
     TutorialGroupSessionFormComponent,
@@ -13,6 +13,7 @@ import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angul
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TutorialGroupSessionForm', () => {
     let fixture: ComponentFixture<TutorialGroupSessionFormComponent>;
@@ -28,7 +29,13 @@ describe('TutorialGroupSessionForm', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
-            declarations: [TutorialGroupSessionFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockPipe(ArtemisDatePipe)],
+            declarations: [
+                TutorialGroupSessionFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisDatePipe),
+                MockDirective(TranslateDirective),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -69,7 +76,7 @@ describe('TutorialGroupSessionForm', () => {
 
         const formControlNames = ['date', 'startTime', 'endTime'];
         formControlNames.forEach((control) => {
-            expect(component.form.get(control)!.value).toEqual(formData[control]);
+            expect(component.form.get(control)?.value).toEqual(formData[control as keyof TutorialGroupSessionFormData]);
         });
     });
 

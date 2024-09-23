@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { MultipleChoiceQuestionEditComponent } from './multiple-choice-question/multiple-choice-question-edit.component';
 import { DragAndDropQuestionEditComponent } from './drag-and-drop-question/drag-and-drop-question-edit.component';
 import { ShortAnswerQuestionEditComponent } from './short-answer-question/short-answer-question-edit.component';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { QuizScoringInfoModalComponent } from './quiz-scoring-info-modal/quiz-scoring-info-modal.component';
@@ -50,7 +49,6 @@ const ENTITY_STATES = [...quizManagementRoute];
         ArtemisSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         DragDropModule,
-        AceEditorModule,
         FormDateTimePickerModule,
         ArtemisQuizQuestionTypesModule,
         ArtemisMarkdownEditorModule,

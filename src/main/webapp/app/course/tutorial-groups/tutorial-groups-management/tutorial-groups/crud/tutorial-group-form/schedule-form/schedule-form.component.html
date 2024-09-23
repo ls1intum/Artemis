@@ -1,38 +1,32 @@
 <ng-container [formGroup]="parentFormGroup">
     <div formGroupName="schedule" style="border: 0">
         <div>
-            <h3>{{ 'artemisApp.forms.scheduleForm.formTitle' | artemisTranslate }}</h3>
+            <h3 jhiTranslate="artemisApp.forms.scheduleForm.formTitle"></h3>
         </div>
         <div>
             <!-- repetition frequency -->
-            <label for="repetitionFrequency">{{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.label' | artemisTranslate }}</label>
+            <label for="repetitionFrequency" jhiTranslate="artemisApp.forms.scheduleForm.repetitionFrequencyInput.label"></label>
             <div class="input-group small-input">
                 <input id="repetitionFrequency" type="number" class="form-control" formControlName="repetitionFrequency" />
-                <div class="input-group-text">{{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.weeks' | artemisTranslate }}</div>
+                <div class="input-group-text" jhiTranslate="artemisApp.forms.scheduleForm.repetitionFrequencyInput.weeks"></div>
             </div>
             @if (repetitionFrequencyControl?.invalid && (repetitionFrequencyControl?.dirty || repetitionFrequencyControl?.touched)) {
                 <div class="alert alert-danger">
                     @if (repetitionFrequencyControl?.errors?.min) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.minValidationError' | artemisTranslate: { min: 1 } }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.repetitionFrequencyInput.minValidationError" [translateValues]="{ min: 1 }"></div>
                     }
                     @if (repetitionFrequencyControl?.errors?.max) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.maxValidationError' | artemisTranslate: { max: 7 } }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.repetitionFrequencyInput.maxValidationError" [translateValues]="{ max: 7 }"></div>
                     }
                     @if (repetitionFrequencyControl?.errors?.required) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.requiredValidationError' | artemisTranslate }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.repetitionFrequencyInput.requiredValidationError"></div>
                     }
                 </div>
             }
             <!-- weekday -->
             <div>
                 <div>
-                    <label> {{ 'artemisApp.forms.scheduleForm.weekDayInput.label' | artemisTranslate }}</label>
+                    <label jhiTranslate="artemisApp.forms.scheduleForm.weekDayInput.label"></label>
                 </div>
                 @for (weekDay of weekDays; track weekDay) {
                     <input formControlName="dayOfWeek" type="radio" class="btn-check" name="dayOfWeek" id="{{ weekDay.id }}" autocomplete="off" [value]="weekDay.value" checked />
@@ -43,13 +37,13 @@
             <div>
                 <div class="row">
                     <div class="col-auto my-auto">
-                        <span>{{ 'artemisApp.forms.scheduleForm.timeInput.from' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.forms.scheduleForm.timeInput.from"></span>
                     </div>
                     <div class="col-auto">
                         <ngb-timepicker formControlName="startTime" [hourStep]="1" [minuteStep]="15" />
                     </div>
                     <div class="col-auto my-auto">
-                        <span>{{ 'artemisApp.forms.scheduleForm.timeInput.to' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.forms.scheduleForm.timeInput.to"></span>
                     </div>
                     <div class="col-auto my-auto">
                         <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15" />
@@ -58,27 +52,21 @@
                 @if (startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (startTimeControl?.errors?.required) {
-                            <div>
-                                {{ 'artemisApp.forms.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.forms.scheduleForm.timeInput.invalidTimeRange"></div>
                         }
                     </div>
                 }
                 @if (endTimeControl?.invalid && (endTimeControl?.dirty || endTimeControl?.touched)) {
                     <div class="alert alert-danger">
                         @if (endTimeControl?.errors?.required) {
-                            <div>
-                                {{ 'artemisApp.forms.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                            </div>
+                            <div jhiTranslate="artemisApp.forms.scheduleForm.timeInput.invalidTimeRange"></div>
                         }
                     </div>
                 }
                 @if (formGroup?.invalid && (formGroup?.dirty || formGroup?.touched)) {
                     <div>
                         @if (formGroup?.errors?.invalidTimeRange) {
-                            <div class="alert alert-danger">
-                                {{ 'artemisApp.forms.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
-                            </div>
+                            <div class="alert alert-danger" jhiTranslate="artemisApp.forms.scheduleForm.timeInput.invalidTimeRange"></div>
                         }
                     </div>
                 }
@@ -87,10 +75,10 @@
         <!-- Location -->
         <div class="form-group">
             @if (parentIsOnlineControl!.value) {
-                <label for="location">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</label>
+                <label for="location" jhiTranslate="artemisApp.forms.scheduleForm.locationInput.labelOnline"></label>
             }
             @if (!parentIsOnlineControl!.value) {
-                <label for="location">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</label>
+                <label for="location" jhiTranslate="artemisApp.forms.scheduleForm.locationInput.labelOffline"></label>
             }
             <textarea
                 class="form-control"
@@ -107,14 +95,10 @@
             @if (locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)) {
                 <div class="alert alert-danger">
                     @if (locationControl?.errors?.maxlength) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.locationInput.maxLengthValidationError" [translateValues]="{ max: '2000' }"></div>
                     }
                     @if (locationControl?.errors?.required) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.locationInput.requiredValidationError' | artemisTranslate }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.locationInput.requiredValidationError"></div>
                     }
                 </div>
             }
@@ -122,11 +106,9 @@
         <!-- Period -->
         <div>
             @if (defaultPeriodChanged) {
-                <div class="alert alert-warning" role="alert">
-                    {{ 'artemisApp.forms.scheduleForm.periodInput.periodWarning' | artemisTranslate }}
-                </div>
+                <div class="alert alert-warning" role="alert" jhiTranslate="artemisApp.forms.scheduleForm.periodInput.periodWarning"></div>
             }
-            <label class="form-label" for="period">{{ 'artemisApp.forms.scheduleForm.periodInput.label' | artemisTranslate }}</label>
+            <label class="form-label" for="period" jhiTranslate="artemisApp.forms.scheduleForm.periodInput.label"></label>
             <div class="input-group">
                 <input formControlName="period" [owlDateTime]="period" class="d-none" [selectMode]="'range'" />
                 <input
@@ -146,21 +128,17 @@
             @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
                 <div class="alert alert-danger">
                     @if (periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required) {
-                        <div>
-                            {{ 'artemisApp.createConfiguration.periodInput.requiredValidationError' | artemisTranslate }}
-                        </div>
+                        <div jhiTranslate="artemisApp.createConfiguration.periodInput.requiredValidationError"></div>
                     }
                     @if (periodControl?.errors?.owlDateTimeRange) {
-                        <div>
-                            {{ 'artemisApp.forms.scheduleForm.periodInput.invalidRangeError' | artemisTranslate }}
-                        </div>
+                        <div jhiTranslate="artemisApp.forms.scheduleForm.periodInput.invalidRangeError"></div>
                     }
                 </div>
             }
         </div>
         @if (createdSessions.length > 0) {
             <div>
-                <span>{{ 'artemisApp.forms.scheduleForm.sessionCreationInfo' | artemisTranslate }} </span>
+                <span jhiTranslate="artemisApp.forms.scheduleForm.sessionCreationInfo"></span>
                 @for (session of createdSessions; track session) {
                     <span class="badge bg-info m-1"> {{ session | artemisDate: 'long-date' : false : undefined : true }} </span>
                 }

@@ -3,10 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/programming/hestia/generation-overview/manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { of } from 'rxjs';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/shared/solution-entry.component';
+import { MockComponent } from 'ng-mocks';
 
 describe('ManualSolutionEntryCreationModal Component', () => {
     let comp: ManualSolutionEntryCreationModalComponent;
@@ -25,6 +27,7 @@ describe('ManualSolutionEntryCreationModal Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
+            declarations: [ManualSolutionEntryCreationModalComponent, MockComponent(SolutionEntryComponent)],
         }).compileComponents();
         fixture = TestBed.createComponent(ManualSolutionEntryCreationModalComponent);
         comp = fixture.componentInstance;
@@ -84,5 +87,11 @@ describe('ManualSolutionEntryCreationModal Component', () => {
         const closedSpy = jest.spyOn(modalService, 'close');
         comp.clear();
         expect(closedSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should setup editor when file path changes', () => {
+        comp.solutionEntryComponent = { setupEditor: jest.fn() } as unknown as SolutionEntryComponent;
+        comp.onUpdateFilePath();
+        expect(comp.solutionEntryComponent.setupEditor).toHaveBeenCalledOnce();
     });
 });

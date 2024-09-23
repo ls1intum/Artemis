@@ -27,9 +27,12 @@
                                     <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
                                 </div>
                                 <div class="col-4">
-                                    <button class="btn btn-primary" id="file-upload-submit" (click)="saveUploadedFile()">
-                                        {{ 'artemisApp.examParticipation.uploadFile' | artemisTranslate }}
-                                    </button>
+                                    <button
+                                        class="btn btn-primary"
+                                        id="file-upload-submit"
+                                        (click)="saveUploadedFile()"
+                                        jhiTranslate="artemisApp.examParticipation.uploadFile"
+                                    ></button>
                                 </div>
                             </div>
                             <p class="d-inline-block" jhiTranslate="artemisApp.fileUploadExercise.supportedFileExtensions"></p>
@@ -46,9 +49,7 @@
             </div>
             @if (submittedFileName && studentSubmission?.filePath) {
                 <div class="card-text">
-                    <h6>
-                        {{ 'artemisApp.fileUploadSubmission.submittedFile' | artemisTranslate: { filename: submittedFileName } }}
-                    </h6>
+                    <h6 jhiTranslate="artemisApp.fileUploadSubmission.submittedFile" [translateValues]="{ filename: submittedFileName }"></h6>
                     <a class="text-primary" (click)="downloadFile(studentSubmission!.filePath!)" jhiTranslate="artemisApp.fileUploadSubmission.download"></a>
                     @if (submittedFileExtension) {
                         <span class="ms-2 badge bg-info">
@@ -59,9 +60,7 @@
             }
             @if (!submittedFileName && examTimeline) {
                 <div>
-                    <h6>
-                        {{ 'artemisApp.timeline.fileUploadNotSubmitted' | artemisTranslate }}
-                    </h6>
+                    <h6 jhiTranslate="artemisApp.timeline.fileUploadNotSubmitted"></h6>
                 </div>
             }
         </div>

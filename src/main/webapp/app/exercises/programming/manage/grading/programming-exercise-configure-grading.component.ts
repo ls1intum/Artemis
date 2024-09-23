@@ -7,10 +7,10 @@ import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { IssuesMap, ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { IssuesMap, ProgrammingExerciseGradingStatistics } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/programming/static-code-analysis-category.model';
 import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 import { ProgrammingExerciseGradingService, StaticCodeAnalysisCategoryUpdate } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
@@ -48,7 +48,7 @@ enum TestCaseView {
     SAVE_VALUES,
 }
 
-const DefaultFieldValues = {
+const DefaultFieldValues: { [key: string]: number } = {
     [EditableField.WEIGHT]: 1,
     [EditableField.BONUS_MULTIPLIER]: 1,
     [EditableField.BONUS_POINTS]: 0,
@@ -56,8 +56,7 @@ const DefaultFieldValues = {
     [EditableField.MAX_PENALTY]: 0,
 };
 
-export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy';
-
+export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy' | 'feedback-analysis';
 export type Table = 'testCases' | 'codeAnalysis';
 
 @Component({
@@ -117,7 +116,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     categoryStateList = Object.entries(StaticCodeAnalysisCategoryState).map(([name, value]) => ({ value, name }));
 
     testCaseColors = {};
-    categoryColors = {};
+    categoryColors: { [key: string]: string } = {};
     totalWeight = 0;
 
     submissionPolicy?: SubmissionPolicy;
@@ -232,7 +231,8 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
                 this.isLoading = false;
             }
 
-            if (params['tab'] === 'test-cases' || params['tab'] === 'code-analysis' || params['tab'] === 'submission-policy') {
+            const gradingTabs: GradingTab[] = ['test-cases', 'code-analysis', 'submission-policy', 'feedback-analysis'];
+            if (gradingTabs.includes(params['tab'])) {
                 this.selectTab(params['tab']);
             } else {
                 this.selectTab('test-cases');
@@ -304,9 +304,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     updateEditedField(editedTestCase: ProgrammingExerciseTestCase, field: EditableField) {
         return (newValue: any) => {
-            newValue = this.checkFieldValue(newValue, editedTestCase[field], field);
+            newValue = this.checkFieldValue(newValue, editedTestCase[field as keyof ProgrammingExerciseTestCase], field);
             // Only mark the testcase as changed, if the field has changed.
-            if (newValue !== editedTestCase[field]) {
+            if (newValue !== editedTestCase[field as keyof ProgrammingExerciseTestCase]) {
                 this.changedTestCaseIds = this.changedTestCaseIds.includes(editedTestCase.id!) ? this.changedTestCaseIds : [...this.changedTestCaseIds, editedTestCase.id!];
                 this.updateAllTestCaseViewsAfterEditing(editedTestCase, field, newValue);
                 this.updateTestPoints(editedTestCase, field, newValue);
@@ -324,9 +324,9 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      */
     updateEditedCategoryField(editedCategory: StaticCodeAnalysisCategory, field: EditableField) {
         return (newValue: any) => {
-            newValue = this.checkFieldValue(newValue, editedCategory[field], field);
+            newValue = this.checkFieldValue(newValue, editedCategory[field as keyof StaticCodeAnalysisCategory], field);
             // Only mark the category as changed, if the field has changed.
-            if (newValue !== editedCategory[field]) {
+            if (newValue !== editedCategory[field as keyof StaticCodeAnalysisCategory]) {
                 this.changedCategoryIds = this.changedCategoryIds.includes(editedCategory.id) ? this.changedCategoryIds : [...this.changedCategoryIds, editedCategory.id];
                 this.updateStaticCodeAnalysisCategories(editedCategory, field, newValue);
             }

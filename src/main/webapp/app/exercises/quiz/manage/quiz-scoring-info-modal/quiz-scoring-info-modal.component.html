@@ -1,23 +1,23 @@
 <ng-template #info let-c="close" let-d="dismiss">
     <div class="modal-header">
-        <h4 class="modal-title">{{ 'artemisApp.quizExercise.scoringTypeExplanation.title' | artemisTranslate }}</h4>
+        <h4 class="modal-title" jhiTranslate="artemisApp.quizExercise.scoringTypeExplanation.title"></h4>
         <button type="button" class="btn-close" aria-label="Close" (click)="d()"></button>
     </div>
     <div class="modal-body">
         <table class="table">
             <tr>
-                <th>{{ 'artemisApp.quizExercise.scoringType.all_or_nothing' | artemisTranslate }}</th>
-                <td>{{ 'artemisApp.quizExercise.scoringTypeExplanation.all_or_nothing' | artemisTranslate }}</td>
+                <th jhiTranslate="artemisApp.quizExercise.scoringType.all_or_nothing"></th>
+                <td jhiTranslate="artemisApp.quizExercise.scoringTypeExplanation.all_or_nothing"></td>
             </tr>
 
             <tr>
-                <th>{{ 'artemisApp.quizExercise.scoringType.proportional_with_penalty' | artemisTranslate }}</th>
-                <td>{{ 'artemisApp.quizExercise.scoringTypeExplanation.proportional_with_penalty' | artemisTranslate }}</td>
+                <th jhiTranslate="artemisApp.quizExercise.scoringType.proportional_with_penalty"></th>
+                <td jhiTranslate="artemisApp.quizExercise.scoringTypeExplanation.proportional_with_penalty"></td>
             </tr>
 
             <tr>
-                <th>{{ 'artemisApp.quizExercise.scoringType.proportional_without_penalty' | artemisTranslate }}</th>
-                <td>{{ 'artemisApp.quizExercise.scoringTypeExplanation.proportional_without_penalty' | artemisTranslate }}</td>
+                <th jhiTranslate="artemisApp.quizExercise.scoringType.proportional_without_penalty"></th>
+                <td jhiTranslate="artemisApp.quizExercise.scoringTypeExplanation.proportional_without_penalty"></td>
             </tr>
         </table>
     </div>

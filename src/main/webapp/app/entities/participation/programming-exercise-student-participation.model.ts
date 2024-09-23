@@ -10,6 +10,7 @@ export class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     // helper attribute
     public buildPlanUrl?: string;
     public userIndependentRepositoryUri?: string;
+    public vcsAccessToken?: string;
 
     constructor() {
         super(ParticipationType.PROGRAMMING);

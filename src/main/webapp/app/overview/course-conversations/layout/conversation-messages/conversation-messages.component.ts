@@ -52,6 +52,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     course?: Course;
     @Input()
     searchbarCollapsed = false;
+    @Input()
+    contentHeightDev: boolean = false;
 
     getAsChannel = getAsChannelDTO;
 

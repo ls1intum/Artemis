@@ -7,13 +7,11 @@
 }
 @if (asQuizExercise(exercise).isActiveQuiz && showTags.quizLive) {
     <h4 class="fw-medium">
-        <span class="badge bg-success">{{ 'artemisApp.courseOverview.exerciseList.live' | artemisTranslate }}</span>
+        <span class="badge bg-success" jhiTranslate="artemisApp.courseOverview.exerciseList.live"></span>
     </h4>
 }
 @for (category of exercise.categories; track category) {
-    <h4 class="fw-medium">
-        <span class="badge" [ngStyle]="{ backgroundColor: category.color }">{{ category.category }}</span>
-    </h4>
+    <jhi-custom-exercise-category-badge [category]="category" />
 }
 @if (exercise.difficulty && showTags.difficulty) {
     <h4 class="fw-medium">

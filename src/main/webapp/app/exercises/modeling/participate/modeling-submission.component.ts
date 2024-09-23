@@ -30,7 +30,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { getNamesForAssessments } from '../assess/modeling-assessment.util';
+import { AssessmentNamesForModelId, getNamesForAssessments } from '../assess/modeling-assessment.util';
 import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
@@ -76,7 +76,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     submission: ModelingSubmission;
 
     assessmentResult?: Result;
-    assessmentsNames: Map<string, Map<string, string>>;
+    assessmentsNames: AssessmentNamesForModelId = {};
     totalScore: number;
 
     umlModel: UMLModel; // input model for Apollon

@@ -55,13 +55,8 @@ export class ThemeSwitchComponent implements OnInit {
         });
     }
 
-    /**
-     * Open the popover if this is not a cypress test
-     */
     openPopover() {
-        if (!window['Cypress']) {
-            this.popover?.open();
-        }
+        this.popover?.open();
         clearTimeout(this.closeTimeout);
     }
 

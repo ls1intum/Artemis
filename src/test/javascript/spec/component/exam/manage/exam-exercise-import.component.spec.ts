@@ -3,17 +3,19 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule } from '@angular/forms';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } from '@fortawesome/free-solid-svg-icons';
 import { UMLDiagramType } from '@ls1intum/apollon';
+
+type DuplicateType = keyof Pick<ExamExerciseImportComponent, 'exercisesWithDuplicatedTitles' | 'exercisesWithDuplicatedShortNames'>;
 
 describe('Exam Exercise Import Component', () => {
     let component: ExamExerciseImportComponent;
@@ -339,7 +341,7 @@ describe('Exam Exercise Import Component', () => {
             expect(programmingExercise3.title).toBe('');
         });
 
-        it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
+        it.each<DuplicateType>(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
             'should check for programming exercise duplicated titles and short names when entering input',
             (attrToCheck) => {
                 const duplicatesToCheck = component[attrToCheck];
@@ -362,7 +364,7 @@ describe('Exam Exercise Import Component', () => {
             },
         );
 
-        it.each([
+        it.each<[DuplicateType, boolean]>([
             ['exercisesWithDuplicatedShortNames', false],
             ['exercisesWithDuplicatedShortNames', true],
             ['exercisesWithDuplicatedTitles', false],
@@ -388,7 +390,7 @@ describe('Exam Exercise Import Component', () => {
             expect(duplicatesToCheck.size).toBe(additionalDuplicate ? 2 : 0);
         });
 
-        it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
+        it.each<DuplicateType>(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])(
             'should check for programming exercise duplicated titles and short names when unselecting exercises',
             (attrToCheck) => {
                 const duplicatesToCheck = component[attrToCheck];
@@ -413,7 +415,7 @@ describe('Exam Exercise Import Component', () => {
             },
         );
 
-        it.each(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])('should ignore unselected exercises', (attrToCheck) => {
+        it.each<DuplicateType>(['exercisesWithDuplicatedTitles', 'exercisesWithDuplicatedShortNames'])('should ignore unselected exercises', (attrToCheck) => {
             const duplicatesToCheck = component[attrToCheck];
             const duplicatedTitles = attrToCheck === 'exercisesWithDuplicatedTitles';
 

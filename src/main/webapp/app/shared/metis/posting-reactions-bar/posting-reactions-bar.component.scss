@@ -1,15 +1,11 @@
 @import 'src/main/webapp/app/shared/metis/metis.component';
 
 .reaction-button {
-    font-size: 16px;
-    line-height: 16px;
-    padding: 4px 6px;
     display: inline-flex;
     background: var(--reaction-button-default-color);
     border: none;
-    border-radius: 12px;
-    margin-right: 5px;
-    margin-bottom: 5px;
+    border-radius: 1rem;
+    align-items: center;
 
     &.open-selector {
         box-shadow: inset 0 0 0 1px var(--metis-gray);
@@ -17,12 +13,11 @@
     }
 
     .emoji-count {
-        font-size: 11px;
         color: var(--reaction-button-emoji-count-color);
         padding-left: 0.2em;
 
         &.reaction-count--reacted {
-            font-weight: bold;
+            font-weight: 600;
             color: var(--reaction-button-reacted-accent-color);
         }
     }

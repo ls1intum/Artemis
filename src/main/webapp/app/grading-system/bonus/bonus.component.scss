@@ -8,11 +8,6 @@ $numbering-margin: calc($numbering-size / 2 - $numbering-border); // To make num
 }
 
 .bonus-form-step {
-    &::before {
-        counter-increment: bonus-step-counter;
-        content: counter(bonus-step-counter);
-    }
-
     border-radius: $numbering-size;
     width: $numbering-size;
     height: $numbering-size;
@@ -20,6 +15,11 @@ $numbering-margin: calc($numbering-size / 2 - $numbering-border); // To make num
     border: $numbering-border solid;
     text-align: center;
     margin-left: $numbering-margin;
+
+    &::before {
+        counter-increment: bonus-step-counter;
+        content: counter(bonus-step-counter);
+    }
 }
 
 .bonus-calculated {

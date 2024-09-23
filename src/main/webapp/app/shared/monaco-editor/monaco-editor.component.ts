@@ -7,10 +7,14 @@ import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'ap
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { Annotation } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { MonacoEditorLineDecorationsHoverButton } from './model/monaco-editor-line-decorations-hover-button.model';
-import { MonacoEditorAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-action.model';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TranslateService } from '@ngx-translate/core';
+import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
+import { Disposable, EditorPosition, EditorRange, MonacoEditorTextModel } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { MonacoTextEditorAdapter } from 'app/shared/monaco-editor/model/actions/adapter/monaco-text-editor.adapter';
 
-type EditorPosition = { row: number; column: number };
+export const MAX_TAB_SIZE = 8;
+
 @Component({
     selector: 'jhi-monaco-editor',
     template: '',
@@ -19,13 +23,14 @@ type EditorPosition = { row: number; column: number };
 })
 export class MonacoEditorComponent implements OnInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneCodeEditor;
+    private textEditorAdapter: MonacoTextEditorAdapter;
     private monacoEditorContainerElement: HTMLElement;
     themeSubscription?: Subscription;
-    models: monaco.editor.IModel[] = [];
+    models: MonacoEditorTextModel[] = [];
     lineWidgets: MonacoEditorLineWidget[] = [];
     editorBuildAnnotations: MonacoEditorBuildAnnotation[] = [];
     lineHighlights: MonacoEditorLineHighlight[] = [];
-    actions: MonacoEditorAction[] = [];
+    actions: TextEditorAction[] = [];
     lineDecorationsHoverButton?: MonacoEditorLineDecorationsHoverButton;
 
     /**
@@ -60,6 +65,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             },
         });
         this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
+        this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
         renderer.appendChild(elementRef.nativeElement, this.monacoEditorContainerElement);
     }
 
@@ -99,8 +105,12 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     @Output()
     contentHeightChanged = new EventEmitter<number>();
 
-    private contentHeightListener?: monaco.IDisposable;
-    private textChangedListener?: monaco.IDisposable;
+    @Output()
+    onBlurEditor = new EventEmitter<void>();
+
+    private contentHeightListener?: Disposable;
+    private textChangedListener?: Disposable;
+    private blurEditorWidgetListener?: Disposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
 
     ngOnInit(): void {
@@ -119,6 +129,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             }
         });
 
+        this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
+            this.onBlurEditor.emit();
+        });
+
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
@@ -128,6 +142,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.themeSubscription?.unsubscribe();
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
+        this.blurEditorWidgetListener?.dispose();
     }
 
     private emitTextChangeEvent() {
@@ -145,22 +160,24 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         }
     }
 
-    // Workaround: The rest of the code expects { row, column } - we have { lineNumber, column }. Can be removed when Ace is removed.
     getPosition(): EditorPosition {
-        const position = this._editor.getPosition() ?? new monaco.Position(0, 0);
-        return { row: position.lineNumber, column: position.column };
+        return this._editor.getPosition() ?? { column: 0, lineNumber: 0 };
     }
 
     setPosition(position: EditorPosition) {
-        this._editor.setPosition({ lineNumber: position.row, column: position.column });
+        this._editor.setPosition(position);
     }
 
-    setSelection(range: monaco.IRange): void {
+    setSelection(range: EditorRange): void {
         this._editor.setSelection(range);
     }
 
     getText(): string {
         return this._editor.getValue();
+    }
+
+    getContentHeight(): number {
+        return this._editor.getContentHeight() + this._editor.getOption(monaco.editor.EditorOption.lineHeight);
     }
 
     setText(text: string): void {
@@ -195,6 +212,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * All elements currently rendered in the editor will be disposed.
      * @param fileName The name of the file to switch to.
      * @param newFileContent The content of the file (will be retrieved from the model if left out).
+     * @param languageId The language ID to use for syntax highlighting (will be inferred from the file extension if left out).
      */
     changeModel(fileName: string, newFileContent?: string, languageId?: string) {
         const uri = monaco.Uri.parse(`inmemory://model/${this._editor.getId()}/${fileName}`);
@@ -271,9 +289,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     changeTheme(artemisTheme: Theme): void {
-        this._editor.updateOptions({
-            theme: artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light',
-        });
+        monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
     }
 
     layout(): void {
@@ -367,8 +383,8 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      * Registers an action to be available in the editor. The action will be disposed when the editor is disposed.
      * @param action The action to register.
      */
-    registerAction(action: MonacoEditorAction): void {
-        action.register(this._editor, this.translateService);
+    registerAction(action: TextEditorAction): void {
+        action.register(this.textEditorAdapter, this.translateService);
         this.actions.push(action);
     }
 
@@ -379,39 +395,20 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Enables a text field mode for the editor. This will make the editor look more like a text field and less like a code editor.
-     * In particular, line numbers, margins, and highlights will be disabled.
+     * Sets the line number from which the editor should start counting.
+     * @param startLineNumber The line number to start counting from (starting at 1).
      */
-    enableTextFieldMode(): void {
+    setStartLineNumber(startLineNumber: number): void {
         this._editor.updateOptions({
-            // Sets up the layout to make the editor look more like a text field (no line numbers, margin, or highlights).
-            lineNumbers: 'off',
-            glyphMargin: false,
-            folding: false,
-            lineDecorationsWidth: '1ch',
-            lineNumbersMinChars: 0,
-            padding: {
-                top: 5,
-            },
-            renderLineHighlight: 'none',
-            selectionHighlight: false,
-            occurrencesHighlight: 'off',
-            // Only show scrollbars if required.
-            scrollbar: {
-                vertical: 'auto',
-                horizontal: 'auto',
-            },
-            overviewRulerLanes: 0,
-            hideCursorInOverviewRuler: true,
-            // The suggestions from showWords are shared between editors of the same language.
-            suggest: {
-                showWords: false,
-            },
-            // Separates the editor suggest widget from the editor's layout. It will stick to the page, but it won't interfere with other elements.
-            fixedOverflowWidgets: true,
-            // We use the 'simple' strategy for word wraps to prevent performance issues. This prevents us from switching to a different font as the lines would no longer break correctly.
-            wrappingStrategy: 'simple',
+            lineNumbers: (number) => `${startLineNumber + number - 1}`,
         });
-        this.setWordWrap(true);
+    }
+
+    /**
+     * Applies the given options to the editor.
+     * @param options The options to apply.
+     */
+    applyOptionPreset(options: MonacoEditorOptionPreset): void {
+        options.apply(this._editor);
     }
 }

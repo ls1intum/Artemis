@@ -1,6 +1,6 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
-import { BuildLogEntry, BuildLogType } from 'app/entities/build-log.model';
+import { BuildLogEntry, BuildLogType } from 'app/entities/programming/build-log.model';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 
 describe('Build Log Service', () => {

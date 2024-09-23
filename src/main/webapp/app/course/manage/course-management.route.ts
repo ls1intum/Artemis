@@ -7,8 +7,8 @@ import { CourseManagementExercisesComponent } from './course-management-exercise
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
-import { CreateCompetencyComponent } from 'app/course/competencies/create-competency/create-competency.component';
-import { EditCompetencyComponent } from 'app/course/competencies/edit-competency/edit-competency.component';
+import { CreateCompetencyComponent } from 'app/course/competencies/create/create-competency.component';
+import { EditCompetencyComponent } from 'app/course/competencies/edit/edit-competency.component';
 import { GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
 import { CourseManagementStatisticsComponent } from './course-management-statistics.component';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
@@ -24,11 +24,14 @@ import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lt
 import { CourseManagementTabBarComponent } from 'app/course/manage/course-management-tab-bar/course-management-tab-bar.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.component';
-import { ImportCompetenciesComponent } from 'app/course/competencies/import-competencies/import-competencies.component';
+import { ImportCompetenciesComponent } from 'app/course/competencies/import/import-competencies.component';
 import { LocalCIGuard } from 'app/localci/localci-guard.service';
 import { IrisGuard } from 'app/iris/iris-guard.service';
 import { CourseImportStandardizedCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-competencies.component';
-import { ImportPrerequisitesComponent } from 'app/course/competencies/import-competencies/import-prerequisites.component';
+import { ImportPrerequisitesComponent } from 'app/course/competencies/import/import-prerequisites.component';
+import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
+import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
+import { CourseImportStandardizedPrerequisitesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-prerequisites.component';
 import { LearningPathInstructorPageComponent } from 'app/course/learning-paths/pages/learning-path-instructor-page/learning-path-instructor-page.component';
 
 export const courseManagementState: Routes = [
@@ -201,7 +204,7 @@ export const courseManagementState: Routes = [
                         component: CompetencyManagementComponent,
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                            pageTitle: 'artemisApp.competency.manageCompetencies.title',
+                            pageTitle: 'artemisApp.competency.manage.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -209,7 +212,7 @@ export const courseManagementState: Routes = [
                         // Create a new path without a component defined to prevent the CompetencyManagementComponent from being always rendered
                         path: 'competency-management',
                         data: {
-                            pageTitle: 'artemisApp.competency.manageCompetencies.title',
+                            pageTitle: 'artemisApp.competency.manage.title',
                         },
                         children: [
                             {
@@ -217,7 +220,7 @@ export const courseManagementState: Routes = [
                                 component: CreateCompetencyComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.competency.createCompetency.title',
+                                    pageTitle: 'artemisApp.competency.create.title',
                                 },
                                 canActivate: [UserRouteAccessService],
                             },
@@ -260,9 +263,39 @@ export const courseManagementState: Routes = [
                                 canActivate: [UserRouteAccessService, IrisGuard],
                                 canDeactivate: [PendingChangesGuard],
                             },
-                            //TODO: move to own child route.
+                        ],
+                    },
+                    {
+                        path: 'prerequisite-management',
+                        redirectTo: 'competency-management',
+                        pathMatch: 'full',
+                    },
+                    {
+                        path: 'prerequisite-management',
+                        data: {
+                            pageTitle: 'artemisApp.prerequisite.manage.title',
+                        },
+                        children: [
                             {
-                                path: 'import-prerequisites',
+                                path: 'create',
+                                component: CreatePrerequisiteComponent,
+                                data: {
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.prerequisite.createPrerequisite.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: ':prerequisiteId/edit',
+                                component: EditPrerequisiteComponent,
+                                data: {
+                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+                                    pageTitle: 'artemisApp.prerequisite.editPrerequisite.title',
+                                },
+                                canActivate: [UserRouteAccessService],
+                            },
+                            {
+                                path: 'import',
                                 component: ImportPrerequisitesComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
@@ -272,22 +305,14 @@ export const courseManagementState: Routes = [
                                 canDeactivate: [PendingChangesGuard],
                             },
                             {
-                                path: 'prerequisites/create',
-                                loadComponent: () => import('app/course/competencies/prerequisite-form/create-prerequisite.component').then((m) => m.CreatePrerequisiteComponent),
+                                path: 'import-standardized',
+                                component: CourseImportStandardizedPrerequisitesComponent,
                                 data: {
                                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.prerequisite.create.title',
+                                    pageTitle: 'artemisApp.prerequisite.import.title',
                                 },
                                 canActivate: [UserRouteAccessService],
-                            },
-                            {
-                                path: 'prerequisites/:prerequisiteId/edit',
-                                loadComponent: () => import('app/course/competencies/prerequisite-form/edit-prerequisite.component').then((m) => m.EditPrerequisiteComponent),
-                                data: {
-                                    authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                                    pageTitle: 'artemisApp.prerequisite.edit.title',
-                                },
-                                canActivate: [UserRouteAccessService],
+                                canDeactivate: [PendingChangesGuard],
                             },
                         ],
                     },

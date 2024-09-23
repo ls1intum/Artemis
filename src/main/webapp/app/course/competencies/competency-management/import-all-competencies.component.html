@@ -1,16 +1,16 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title">{{ 'artemisApp.competency.importAll.title' | artemisTranslate }}</h4>
+        <h4 class="modal-title" [jhiTranslate]="'artemisApp.' + competencyType + '.importAll.title'"></h4>
         <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
     </div>
     <div class="modal-body">
         <div class="form-group form-inline">
-            <span>{{ 'artemisApp.competency.importAll.search' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.competency.importAll.search"></span>
             <input [(ngModel)]="searchTerm" class="form-control ms-2" name="searchCourse" type="text" />
-            <span class="ms-3">{{ 'artemisApp.competency.import.importRelations' | artemisTranslate }}</span>
+            <span class="ms-3" jhiTranslate="artemisApp.competency.import.importRelations"></span>
             <input type="checkbox" class="ms-2" [(ngModel)]="importRelations" name="importRelations" />
             @if (loading) {
-                <span class="ms-3">{{ 'loading' | artemisTranslate }}</span>
+                <span class="ms-3" jhiTranslate="loading"></span>
             }
         </div>
         <table class="table table-striped align-middle flex">

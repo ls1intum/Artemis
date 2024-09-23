@@ -1,53 +1,68 @@
-<h1>
-    <!--Account Information-->
-    {{ 'artemisApp.userSettings.accountInformation' | artemisTranslate }}
-</h1>
+<h1 jhiTranslate="artemisApp.userSettings.accountInformation"></h1>
 @if (currentUser) {
     <div class="list-group d-block">
         @if (currentUser.name) {
             <div class="list-group-item">
-                <dt>
-                    <!--Full Name-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.fullName' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.fullName"></dt>
                 <dd>{{ currentUser.name }}</dd>
             </div>
         }
         @if (currentUser.login) {
             <div class="list-group-item">
-                <dt>
-                    <!--Login-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.login' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.login"></dt>
                 <dd>{{ currentUser.login }}</dd>
             </div>
         }
         @if (currentUser.email) {
             <div class="list-group-item">
-                <dt>
-                    <!--Email-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.email' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.email"></dt>
                 <dd>{{ currentUser.email }}</dd>
             </div>
         }
         @if (currentUser.visibleRegistrationNumber) {
             <div class="list-group-item">
-                <dt>
-                    <!--Registration Number-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.registrationNumber' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.registrationNumber"></dt>
                 <dd>{{ currentUser.visibleRegistrationNumber }}</dd>
             </div>
         }
         @if (currentUser.createdDate) {
             <div class="list-group-item">
-                <dt>
-                    <!--Joined Artemis on-->
-                    {{ 'artemisApp.userSettings.accountInformationPage.joinedArtemis' | artemisTranslate }}
-                </dt>
+                <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.joinedArtemis"></dt>
                 <dd>{{ currentUser.createdDate | artemisDate }}</dd>
             </div>
         }
+        <div class="list-group-item">
+            <dt jhiTranslate="artemisApp.userSettings.accountInformationPage.profilePicture"></dt>
+            <input type="file" accept="image/png, image/jpeg" #fileInput style="display: none" (change)="setUserImage($event)" />
+            @if (currentUser.imageUrl) {
+                <div class="position-relative d-inline-block rounded-3 overflow-hidden">
+                    <jhi-secured-image class="secured-image" [src]="currentUser.imageUrl" [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" />
+
+                    <button
+                        id="delete-course-icon"
+                        type="button"
+                        class="btn icon-button-wrapper btn-danger position-absolute bottom-0 start-0 mb-1 ms-1"
+                        (click)="deleteUserImage()"
+                    >
+                        <fa-icon [icon]="faTrash" />
+                    </button>
+
+                    <button
+                        id="edit-course-icon"
+                        type="button"
+                        class="btn icon-button-wrapper btn-warning position-absolute bottom-0 end-0 mb-1 me-1"
+                        (click)="triggerUserImageFileInput()"
+                    >
+                        <fa-icon [icon]="faPen" />
+                    </button>
+                </div>
+            }
+            @if (!currentUser.imageUrl) {
+                <button (click)="triggerUserImageFileInput()" class="btn btn-primary mt-1">
+                    <fa-icon [icon]="faPlus" />
+                    <div class="d-inline" jhiTranslate="artemisApp.userSettings.accountInformationPage.addProfilePicture"></div>
+                </button>
+            }
+        </div>
     </div>
 }

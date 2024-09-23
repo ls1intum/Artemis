@@ -44,19 +44,15 @@
             </div>
             <div submissionPolicy class="ps-2 pt-1 justify-self-center">
                 @if (exercise.submissionPolicy && exercise.submissionPolicy.active && numberOfSubmissionsForSubmissionPolicy !== undefined) {
-                    <span>
-                        {{
-                            'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
-                                | artemisTranslate: { submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }
-                        }}
-                    </span>
+                    <span
+                        jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionsAllowed"
+                        [translateValues]="{ submissionCount: numberOfSubmissionsForSubmissionPolicy, totalSubmissions: exercise.submissionPolicy.submissionLimit }"
+                    ></span>
                     @if (exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
-                        <span>
-                            {{
-                                'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
-                                    | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
-                            }}
-                        </span>
+                        <span
+                            jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel"
+                            [translateValues]="{ points: exercise.submissionPolicy.exceedingPenalty }"
+                        ></span>
                     }
                 }
             </div>

@@ -73,7 +73,7 @@ describe('CourseManagementCardComponent', () => {
     it('should correctly categorize past, current, and future exercises and update statisticsPerExercise', () => {
         component.courseStatistics = courseStatisticsDTO;
         component.ngOnChanges();
-        expect(component.statisticsPerExercise[exerciseDTO.exerciseId!]).toEqual(exerciseDTO);
+        expect(component.statisticsPerExercise.get(exerciseDTO.exerciseId!)).toEqual(exerciseDTO);
 
         component.courseWithExercises = course;
         component.ngOnChanges();

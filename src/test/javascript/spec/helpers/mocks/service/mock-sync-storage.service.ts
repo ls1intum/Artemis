@@ -2,7 +2,7 @@ import { StorageService } from 'ngx-webstorage/lib/core/interfaces/storageServic
 import { Observable } from 'rxjs';
 
 export class MockSyncStorage implements StorageService {
-    private static storage = {};
+    private static storage: { [key: string]: any } = {};
 
     clear(key?: string): any {}
 
@@ -21,7 +21,7 @@ export class MockSyncStorage implements StorageService {
         MockSyncStorage.storage[key] = `${value}`;
     }
 
-    static retrieve(key: string) {
+    static retrieve(key: string): any {
         return this.storage[key];
     }
 }

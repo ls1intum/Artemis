@@ -9,6 +9,7 @@ import { ButtonType } from 'app/shared/components/button.component';
 })
 export class CourseDescriptionFormComponent implements OnInit {
     @Input() isLoading = false;
+    @Input() placeholder = '';
     @Output() formSubmitted: EventEmitter<string> = new EventEmitter<string>();
 
     form: FormGroup<{ courseDescription: FormControl<string | null> }>;
@@ -26,8 +27,12 @@ export class CourseDescriptionFormComponent implements OnInit {
 
     ngOnInit(): void {
         this.form = this.formBuilder.group({
-            courseDescription: ['', [Validators.required, Validators.minLength(this.DESCRIPTION_MIN), Validators.maxLength(this.DESCRIPTION_MAX)]],
+            courseDescription: [this.placeholder, [Validators.required, Validators.minLength(this.DESCRIPTION_MIN), Validators.maxLength(this.DESCRIPTION_MAX)]],
         });
+    }
+
+    setCourseDescription(description: string) {
+        this.form.controls.courseDescription.setValue(description);
     }
 
     /**

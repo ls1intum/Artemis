@@ -7,7 +7,7 @@ export type ExportRow = any;
  * Builds rows for exporting student scores.
  */
 export abstract class ExportRowBuilder {
-    private exportRow = {};
+    private exportRow: { [key: string]: unknown } = {};
 
     readonly accuracyOfScores: number;
 

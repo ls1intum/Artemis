@@ -5,22 +5,16 @@
     <div [hidden]="loadingState === 'success'">
         @if (loadingState !== 'error') {
             <h2>
-                <span style="color: grey"
-                    ><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span>{{ 'artemisApp.quizQuestion.loading' | artemisTranslate }}</span></span
-                >
+                <span style="color: grey"><fa-icon [icon]="faSpinner" animation="spin" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.loading"></span></span>
             </h2>
         }
         @if (loadingState === 'error') {
             <div>
                 <h2>
-                    <span style="color: grey"
-                        ><fa-icon [icon]="faExclamationCircle" />&nbsp;<span>{{ 'artemisApp.quizQuestion.failed' | artemisTranslate }}</span></span
-                    >
+                    <span style="color: grey"><fa-icon [icon]="faExclamationCircle" />&nbsp;<span jhiTranslate="artemisApp.quizQuestion.failed"></span></span>
                 </h2>
                 <p>
-                    <button class="btn btn-default" (click)="secureImageComponent.retryLoadImage()">
-                        {{ 'artemisApp.quizQuestion.retry' | artemisTranslate }}
-                    </button>
+                    <button class="btn btn-default" (click)="secureImageComponent.retryLoadImage()" jhiTranslate="artemisApp.quizQuestion.retry"></button>
                 </p>
             </div>
         }
@@ -90,14 +84,10 @@
                 @if (showResult && !forceSampleSolution) {
                     <div>
                         @if (!showingSampleSolution) {
-                            <div class="btn btn-outline-primary" (click)="showSampleSolution()">
-                                {{ 'artemisApp.quizQuestion.showSampleSolution' | artemisTranslate }}
-                            </div>
+                            <div class="btn btn-outline-primary" (click)="showSampleSolution()" jhiTranslate="artemisApp.quizQuestion.showSampleSolution"></div>
                         }
                         @if (showingSampleSolution) {
-                            <div class="btn btn-outline-primary" (click)="hideSampleSolution()">
-                                {{ 'artemisApp.quizQuestion.hideSampleSolution' | artemisTranslate }}
-                            </div>
+                            <div class="btn btn-outline-primary" (click)="hideSampleSolution()" jhiTranslate="artemisApp.quizQuestion.hideSampleSolution"></div>
                         }
                     </div>
                 }

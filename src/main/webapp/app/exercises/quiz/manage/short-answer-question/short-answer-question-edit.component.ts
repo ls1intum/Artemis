@@ -12,10 +12,6 @@ import {
     ViewChild,
     ViewEncapsulation,
 } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import 'brace/theme/chrome';
-import 'brace/mode/markdown';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -29,6 +25,18 @@ import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
 import { MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { UnorderedListAction } from 'app/shared/monaco-editor/model/actions/unordered-list.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
+import { InsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-spot.action';
+import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { InsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
+import { SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -38,11 +46,15 @@ import { MAX_QUIZ_QUESTION_POINTS, MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
     @ViewChild('questionEditor', { static: false })
-    private questionEditor: AceEditorComponent;
+    private questionEditor: MarkdownEditorMonacoComponent;
     @ViewChild('clickLayer', { static: false })
     private clickLayer: ElementRef;
     @ViewChild('question', { static: false })
     questionElement: ElementRef;
+
+    markdownActions: TextEditorAction[];
+    insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
+    insertShortAnswerSpotAction = new InsertShortAnswerSpotAction(this.insertShortAnswerOptionAction);
 
     shortAnswerQuestion: ShortAnswerQuestion;
 
@@ -68,10 +80,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     readonly MAX_CHARACTER_COUNT = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
-    /** Ace Editor configuration constants **/
-    questionEditorText: any = '';
-    questionEditorMode = 'markdown';
-    questionEditorAutoUpdate = true;
+    questionEditorText = '';
     showVisualMode: boolean;
 
     /** Status boolean for collapse status **/
@@ -80,8 +89,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     /** Variables needed for the setup of editorText **/
     // equals the highest spotNr
     numberOfSpot = 1;
-    // defines the first gap between text and solutions when
-    firstPressed = 1;
     // has all solution options with their mapping (each spotNr)
     optionsWithID: string[] = [];
 
@@ -101,16 +108,28 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
-    readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
+    protected readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     constructor(
-        private artemisMarkdown: ArtemisMarkdownService,
         public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
         private modalService: NgbModal,
         private changeDetector: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
+        this.markdownActions = [
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new CodeAction(),
+            new UrlAction(),
+            new UnorderedListAction(),
+            new OrderedListAction(),
+            this.insertShortAnswerSpotAction,
+            this.insertShortAnswerOptionAction,
+        ];
+
         // create deepcopy
         this.backupQuestion = cloneDeep(this.shortAnswerQuestion);
 
@@ -185,28 +204,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     setupQuestionEditor(): void {
         // Sets the counter to the highest spotNr and generates solution options with their mapping (each spotNr)
         this.numberOfSpot = this.shortAnswerQuestion.spots!.length + 1;
-
-        // Default editor settings for inline markup editor
-        this.questionEditor.getEditor().renderer.setShowGutter(false);
-        this.questionEditor.getEditor().renderer.setPadding(10);
-        this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
-        this.questionEditor.getEditor().setHighlightActiveLine(false);
-        this.questionEditor.getEditor().setShowPrintMargin(false);
-
+        this.questionEditor.applyOptionPreset(SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS);
         // Generate markdown from question and show result in editor
         this.questionEditorText = this.generateMarkdown();
-        this.questionEditor.getEditor().clearSelection();
-
-        // Register the onBlur listener
-        this.questionEditor.getEditor().on(
-            'blur',
-            () => {
-                // Parse the markdown in the editor and update question accordingly
-                this.parseMarkdown(this.questionEditorText);
-                this.questionUpdated.emit();
-            },
-            this,
-        );
         this.changeDetector.detectChanges();
         this.parseMarkdown(this.questionEditorText);
         this.questionUpdated.emit();
@@ -233,7 +233,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
                     option += ',' + this.shortAnswerQuestion.spots?.filter((spot) => this.shortAnswerQuestionUtil.isSameSpot(spot, spotForSolution))[0].spotNr;
                 }
             });
-            option += ']';
+            option += option === '[-option ' ? '#]' : ']';
             this.optionsWithID.push(option);
         });
     }
@@ -247,10 +247,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     generateMarkdown(): string {
         this.setOptionsWithID();
-        const markdownText =
-            generateExerciseHintExplanation(this.shortAnswerQuestion) +
-            '\n\n\n' +
-            this.shortAnswerQuestion.solutions?.map((solution, index) => this.optionsWithID[index] + ' ' + solution.text!.trim()).join('\n');
+        let markdownText = generateExerciseHintExplanation(this.shortAnswerQuestion);
+
+        if (this.shortAnswerQuestion.solutions?.length) {
+            markdownText += '\n\n\n' + this.shortAnswerQuestion.solutions.map((solution, index) => this.optionsWithID[index] + ' ' + solution.text!.trim()).join('\n');
+        }
         return markdownText;
     }
 
@@ -354,36 +355,17 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * an option connected to the spot below the last visible row
      */
     addSpotAtCursor(): void {
-        const editor = this.questionEditor.getEditor();
-        const optionText = editor.getCopyText();
-        const currentSpotNumber = this.numberOfSpot;
-        const addedText = '[-spot ' + currentSpotNumber + ']';
-        editor.focus();
-        editor.insert(addedText);
-        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
-        this.addOptionToSpot(editor, currentSpotNumber, optionText, this.firstPressed);
-
-        this.firstPressed++;
+        this.insertShortAnswerSpotAction.executeInCurrentEditor({ spotNumber: this.numberOfSpot });
     }
 
     /**
      * add the markdown for a solution option below the last visible row, which is connected to a spot in the given editor
      *
-     * @param editor {object} the editor into which the solution option markdown will be inserted
-     * @param numberOfSpot
-     * @param optionText
-     * @param firstPressed
+     * @param numberOfSpot the number of the spot to which the option should be connected
+     * @param optionText the text of the option
      */
-    addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
-        let addedText: string;
-        if (numberOfSpot === 1 && firstPressed === 1) {
-            addedText = '\n\n\n[-option ' + numberOfSpot + '] ' + optionText;
-        } else {
-            addedText = '\n[-option ' + numberOfSpot + '] ' + optionText;
-        }
-        editor.focus();
-        editor.clearSelection();
-        editor.insert(addedText);
+    addOptionToSpot(numberOfSpot: number, optionText: string) {
+        this.insertShortAnswerOptionAction.executeInCurrentEditor({ spotNumber: numberOfSpot, optionText });
     }
 
     /**
@@ -391,21 +373,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @desc Add the markdown for a solution option below the last visible row
      */
     addOption(): void {
-        const editor = this.questionEditor.getEditor();
-        let addedText: string;
-        if (this.firstPressed === 1) {
-            addedText = '\n\n\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
-        } else {
-            addedText = '\n[-option #] Please enter here one answer option and do not forget to replace # with a number';
-        }
-        editor.clearSelection();
-        editor.moveCursorTo(editor.getLastVisibleRow(), Number.POSITIVE_INFINITY);
-        editor.insert(addedText);
-        const range = editor.selection.getRange();
-        range.setStart(range.start.row, 12);
-        editor.selection.setRange(range);
-
-        this.firstPressed++;
+        this.insertShortAnswerOptionAction.executeInCurrentEditor();
     }
 
     /**
@@ -426,9 +394,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             return;
         }
 
-        const editor = this.questionEditor.getEditor();
         // ID 'element-row-column' is divided into array of [row, column]
         const selectedTextRowColumn = selection.focusNode!.parentNode!.parentElement!.id.split('-').slice(1);
+
+        const row = Number(selectedTextRowColumn[0]);
+        const column = Number(selectedTextRowColumn[1]);
 
         if (selectedTextRowColumn.length === 0) {
             return;
@@ -449,31 +419,27 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const startOfRange = markdownForHtml(htmlContent).length - selection.toString().length;
         const endOfRange = startOfRange + selection.toString().length;
 
-        const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
-        const markedText = markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);
+        const markedTextHTML = this.textParts[row][column];
+        const markedText = markdownForHtml(markedTextHTML!).substring(startOfRange, endOfRange);
 
         const currentSpotNumber = this.numberOfSpot;
 
         // split text before first option tag
-        const questionText = editor
-            .getValue()
+        const questionText = this.questionEditor.monacoEditor
+            .getText()
             .split(/\[-option /g)[0]
             .trim();
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
-        const textOfSelectedRow = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
-        this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] =
-            textOfSelectedRow.substring(0, startOfRange) + '[-spot ' + currentSpotNumber + ']' + textOfSelectedRow.substring(endOfRange);
+        const textOfSelectedRow = this.textParts[row][column];
+        this.textParts[row][column] = textOfSelectedRow?.substring(0, startOfRange) + '[-spot ' + currentSpotNumber + ']' + textOfSelectedRow?.substring(endOfRange);
 
         // recreation of question text from array and update textParts and parse textParts to html
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
-        editor.setValue(this.generateMarkdown());
-        editor.moveCursorTo(editor.getLastVisibleRow() + currentSpotNumber, Number.POSITIVE_INFINITY);
-        this.addOptionToSpot(editor, currentSpotNumber, markedText, this.firstPressed);
-        this.parseMarkdown(editor.getValue());
-
-        this.firstPressed++;
+        this.setQuestionEditorValue(this.generateMarkdown());
+        this.addOptionToSpot(currentSpotNumber, markedText);
+        this.parseMarkdown(this.questionEditor.monacoEditor.getText());
 
         this.questionUpdated.emit();
     }
@@ -488,9 +454,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             this.shortAnswerQuestion.solutions = [];
         }
         const solution = new ShortAnswerSolution();
-        solution.text = 'Please enter here your text';
-        this.shortAnswerQuestion.solutions.push(solution);
-        this.questionEditorText = this.generateMarkdown();
+        solution.text = InsertShortAnswerOptionAction.DEFAULT_TEXT_SHORT;
+        this.insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: solution.text });
         this.questionUpdated.emit();
     }
 
@@ -634,8 +599,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text!);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
 
-        this.questionEditor.getEditor().setValue(this.generateMarkdown());
-        this.questionEditor.getEditor().clearSelection();
+        this.setQuestionEditorValue(this.generateMarkdown());
     }
 
     /**
@@ -743,7 +707,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     setQuestionText(textPartId: string): void {
         const rowColumn: string[] = textPartId.split('-').slice(1);
-        this.textParts[rowColumn[0]][rowColumn[1]] = (<HTMLInputElement>document.getElementById(textPartId)).value;
+        this.textParts[Number(rowColumn[0])][Number(rowColumn[1])] = (<HTMLInputElement>document.getElementById(textPartId)).value;
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         this.textParts = this.parseQuestionTextIntoTextBlocks(this.shortAnswerQuestion.text);
     }
@@ -765,7 +729,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     onTextChange(newText: string) {
+        this.parseMarkdown(this.questionEditorText);
         this.numberOfSpot = this.getHighestSpotNumbers(newText) + 1;
+        this.insertShortAnswerSpotAction.spotNumber = this.numberOfSpot;
         this.questionUpdated.emit();
     }
 
@@ -784,6 +750,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     }
 
     setQuestionEditorValue(text: string): void {
-        this.questionEditor.getEditor().setValue(text);
+        this.questionEditor.markdown = text;
     }
 }

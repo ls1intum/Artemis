@@ -11,12 +11,12 @@
             @if (!exerciseGroups) {
                 <div class="alert alert-warning">
                     <fa-icon [icon]="faExclamationTriangle" />
-                    <span>{{ 'artemisApp.examScores.noExerciseGroupAvailable' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.examScores.noExerciseGroupAvailable"></span>
                 </div>
             }
             @if (!studentResults) {
                 <div class="alert alert-info">
-                    <span>{{ 'artemisApp.examScores.noStudentResultAvailable' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.examScores.noStudentResultAvailable"></span>
                 </div>
             }
         </div>
@@ -58,7 +58,7 @@
                         [checked]="filterForSubmittedExams"
                         (change)="toggleFilterForSubmittedExam()"
                     />
-                    <label for="toggleFilterForSubmittedExam" class="form-check-label">{{ 'artemisApp.examScores.filterForSubmittedExams' | artemisTranslate }}</label>
+                    <label for="toggleFilterForSubmittedExam" class="form-check-label" jhiTranslate="artemisApp.examScores.filterForSubmittedExams"></label>
                 </div>
                 <div class="form-check form-check-inline">
                     <input
@@ -68,7 +68,7 @@
                         [checked]="filterForNonEmptySubmissions"
                         (change)="toggleFilterForNonEmptySubmission()"
                     />
-                    <label for="toggleFilterForNonEmptySubmission" class="form-check-label">{{ 'artemisApp.examScores.filterForNonEmptySubmissions' | artemisTranslate }}</label>
+                    <label for="toggleFilterForNonEmptySubmission" class="form-check-label" jhiTranslate="artemisApp.examScores.filterForNonEmptySubmissions"></label>
                 </div>
             </div>
             <!-- Exam Point Statistics -->
@@ -78,24 +78,16 @@
                         <tr>
                             <th></th>
                             @if (gradingScaleExists && !isBonus) {
-                                <th colspan="3">
-                                    {{ 'artemisApp.examScores.secondCorrectionColumn' | artemisTranslate }}
-                                </th>
+                                <th colspan="3" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
                             }
                             @if (gradingScaleExists && !isBonus) {
-                                <th colspan="3" style="border-left: 3px solid grey">
-                                    {{ 'artemisApp.examScores.firstCorrectionColumn' | artemisTranslate }}
-                                </th>
+                                <th colspan="3" style="border-left: 3px solid grey" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
                             }
                             @if (!gradingScaleExists || isBonus) {
-                                <th colspan="2">
-                                    {{ 'artemisApp.examScores.secondCorrectionColumn' | artemisTranslate }}
-                                </th>
+                                <th colspan="2" jhiTranslate="artemisApp.examScores.secondCorrectionColumn"></th>
                             }
                             @if (!gradingScaleExists || isBonus) {
-                                <th colspan="2" style="border-left: 3px solid grey">
-                                    {{ 'artemisApp.examScores.firstCorrectionColumn' | artemisTranslate }}
-                                </th>
+                                <th colspan="2" style="border-left: 3px solid grey" jhiTranslate="artemisApp.examScores.firstCorrectionColumn"></th>
                             }
                         </tr>
                     </thead>
@@ -104,36 +96,24 @@
                     <tr>
                         <th></th>
                         @if (gradingScaleExists && !isBonus) {
-                            <th>
-                                {{ 'artemisApp.examScores.passedColumn' | artemisTranslate }}
-                            </th>
+                            <th jhiTranslate="artemisApp.examScores.passedColumn"></th>
                         }
-                        <th>
-                            {{ 'artemisApp.examScores.submittedColumn' | artemisTranslate }}
-                        </th>
-                        <th>
-                            {{ 'artemisApp.examScores.totalColumn' | artemisTranslate }}
-                        </th>
+                        <th jhiTranslate="artemisApp.examScores.submittedColumn"></th>
+                        <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
                         @if (hasSecondCorrectionAndStarted && gradingScaleExists && !isBonus) {
-                            <th style="border-left: 3px solid grey">
-                                {{ 'artemisApp.examScores.passedColumn' | artemisTranslate }}
-                            </th>
+                            <th style="border-left: 3px solid grey" jhiTranslate="artemisApp.examScores.passedColumn"></th>
                         }
                         @if (hasSecondCorrectionAndStarted) {
-                            <th [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '3px solid grey' } : {}">
-                                {{ 'artemisApp.examScores.submittedColumn' | artemisTranslate }}
-                            </th>
+                            <th [ngStyle]="!gradingScaleExists || isBonus ? { 'border-left': '3px solid grey' } : {}" jhiTranslate="artemisApp.examScores.submittedColumn"></th>
                         }
                         @if (hasSecondCorrectionAndStarted) {
-                            <th>
-                                {{ 'artemisApp.examScores.totalColumn' | artemisTranslate }}
-                            </th>
+                            <th jhiTranslate="artemisApp.examScores.totalColumn"></th>
                         }
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <th scope="row">{{ 'artemisApp.examScores.noOfExams' | artemisTranslate }}</th>
+                        <th scope="row" jhiTranslate="artemisApp.examScores.noOfExams"></th>
                         @if (gradingScaleExists && !isBonus) {
                             <td>
                                 {{ aggregatedExamResults.noOfExamsFilteredForPassed }}
@@ -158,7 +138,7 @@
                         }
                     </tr>
                     <tr>
-                        <th scope="row">{{ 'artemisApp.examScores.averagePointsColumn' | artemisTranslate }}</th>
+                        <th scope="row" jhiTranslate="artemisApp.examScores.averagePointsColumn"></th>
                         @if (gradingScaleExists && !isBonus) {
                             <td>
                                 {{ aggregatedExamResults.meanPointsPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults.meanPointsPassed) : '-' }}
@@ -200,9 +180,7 @@
                     </tr>
                     @if (gradingScaleExists) {
                         <tr>
-                            <th scope="row">
-                                {{ isBonus ? ('artemisApp.examScores.averageBonusColumn' | artemisTranslate) : ('artemisApp.examScores.averageGradeColumn' | artemisTranslate) }}
-                            </th>
+                            <th scope="row" jhiTranslate="{{ isBonus ? 'artemisApp.examScores.averageBonusColumn' : 'artemisApp.examScores.averageGradeColumn' }}"></th>
                             @if (!isBonus) {
                                 <td>{{ aggregatedExamResults.meanGradePassed !== null ? aggregatedExamResults.meanGradePassed : '-' }}</td>
                             }
@@ -226,7 +204,7 @@
                         </tr>
                     }
                     <tr>
-                        <th scope="row">{{ 'artemisApp.examScores.medianColumn' | artemisTranslate }}</th>
+                        <th scope="row" jhiTranslate="artemisApp.examScores.medianColumn"></th>
                         @if (gradingScaleExists && !isBonus) {
                             <td>
                                 {{ aggregatedExamResults.medianPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults.medianPassed) : '-' }}
@@ -272,9 +250,7 @@
                     </tr>
                     @if (gradingScaleExists) {
                         <tr>
-                            <th scope="row">
-                                {{ isBonus ? ('artemisApp.examScores.medianBonusColumn' | artemisTranslate) : ('artemisApp.examScores.medianGradeColumn' | artemisTranslate) }}
-                            </th>
+                            <th scope="row" jhiTranslate="{{ isBonus ? 'artemisApp.examScores.medianBonusColumn' : 'artemisApp.examScores.medianGradeColumn' }}"></th>
                             @if (!isBonus) {
                                 <td>{{ aggregatedExamResults.medianGradePassed !== null ? aggregatedExamResults.medianGradePassed : '-' }}</td>
                             }
@@ -298,7 +274,7 @@
                         </tr>
                     }
                     <tr>
-                        <th scope="row">{{ 'artemisApp.examScores.standardDeviationColumn' | artemisTranslate }}</th>
+                        <th scope="row" jhiTranslate="artemisApp.examScores.standardDeviationColumn"></th>
                         @if (gradingScaleExists && !isBonus) {
                             <td>
                                 {{ aggregatedExamResults.standardDeviationPassed !== null ? roundAndPerformLocalConversion(aggregatedExamResults.standardDeviationPassed) : '-' }}
@@ -330,7 +306,7 @@
                     </tr>
                     @if (gradingScaleExists && hasNumericGrades) {
                         <tr>
-                            <th scope="row">{{ 'artemisApp.examScores.standardGradeDeviationColumn' | artemisTranslate }}</th>
+                            <th scope="row" jhiTranslate="artemisApp.examScores.standardGradeDeviationColumn"></th>
                             @if (!isBonus) {
                                 <td>
                                     {{
@@ -373,30 +349,30 @@
                 @if (gradingScaleExists && this.aggregatedExamResults.medianRelativePassed !== null) {
                     <div class="form-check">
                         <input id="toggleMedianPassed" class="form-check-input" type="checkbox" [checked]="showPassedMedian" (change)="toggleMedian(medianType.PASSED)" />
-                        <label for="toggleMedianPassed" class="form-check-label">
-                            {{
-                                'artemisApp.examScores.highlightPassedMedian'
-                                    | artemisTranslate
-                                        : {
-                                              median: this.aggregatedExamResults.medianRelativePassed
-                                                  ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
-                                                  : 0,
-                                          }
-                            }}
-                        </label>
+                        <label
+                            for="toggleMedianPassed"
+                            class="form-check-label"
+                            jhiTranslate="artemisApp.examScores.highlightPassedMedian"
+                            [translateValues]="{
+                                median: this.aggregatedExamResults.medianRelativePassed
+                                    ? roundScoreSpecifiedByCourseSettings(this.aggregatedExamResults.medianRelativePassed, course)
+                                    : 0,
+                            }"
+                        ></label>
                     </div>
                 }
                 <div class="form-check">
                     <input id="toggleMedianOverall" class="form-check-input" type="checkbox" [checked]="showOverallMedian" (change)="toggleMedian(overallChartMedianType)" />
-                    <label for="toggleMedianOverall" class="form-check-label">
-                        {{ 'artemisApp.examScores.highlightOverallMedian' | artemisTranslate: { median: this.overallChartMedian } }}
-                    </label>
+                    <label
+                        for="toggleMedianOverall"
+                        class="form-check-label"
+                        jhiTranslate="artemisApp.examScores.highlightOverallMedian"
+                        [translateValues]="{ median: this.overallChartMedian }"
+                    ></label>
                 </div>
                 <!-- Histogram -->
                 @if (hasBonus) {
-                    <h4 class="text-center mb-0">
-                        {{ 'artemisApp.examScores.gradesBeforeBonus' | artemisTranslate }}
-                    </h4>
+                    <h4 class="text-center mb-0" jhiTranslate="artemisApp.examScores.gradesBeforeBonus"></h4>
                 }
                 <div class="row d-flex justify-content-center">
                     <jhi-participant-scores-distribution
@@ -410,9 +386,7 @@
                 </div>
                 <!-- Histogram with bonus -->
                 @if (hasBonus) {
-                    <h4 class="text-center mt-5 mb-0">
-                        {{ 'artemisApp.examScores.gradesAfterBonus' | artemisTranslate }}
-                    </h4>
+                    <h4 class="text-center mt-5 mb-0" jhiTranslate="artemisApp.examScores.gradesAfterBonus"></h4>
                 }
                 @if (hasBonus) {
                     <div class="row d-flex justify-content-center">
@@ -448,9 +422,7 @@
                             <thead class="table-dark">
                                 <tr>
                                     <th>#</th>
-                                    <th>
-                                        {{ 'artemisApp.examScores.titleExerciseGroupColumn' | artemisTranslate }}
-                                    </th>
+                                    <th jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn"></th>
                                     <th>
                                         {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
                                         <jhi-help-icon text="artemisApp.examScores.participantsExerciseGroupTooltip" />
@@ -460,17 +432,9 @@
                                         <jhi-help-icon text="artemisApp.examScores.averageExerciseGroupTooltip" />
                                     </th>
                                     @if (gradingScaleExists) {
-                                        <th>
-                                            {{
-                                                isBonus
-                                                    ? ('artemisApp.examScores.averageBonusColumn' | artemisTranslate)
-                                                    : ('artemisApp.examScores.averageGradeColumn' | artemisTranslate)
-                                            }}
-                                        </th>
+                                        <th jhiTranslate="{{ isBonus ? 'artemisApp.examScores.averageBonusColumn' : 'artemisApp.examScores.averageGradeColumn' }}"></th>
                                     }
-                                    <th>
-                                        {{ 'artemisApp.examScores.titleExerciseColumn' | artemisTranslate }}
-                                    </th>
+                                    <th jhiTranslate="artemisApp.examScores.titleExerciseColumn"></th>
                                     <th>
                                         {{ 'artemisApp.examScores.participantsColumn' | artemisTranslate }}
                                         <jhi-help-icon text="artemisApp.examScores.participantsExerciseTooltip" />
@@ -585,44 +549,43 @@
                             </th>
                             @if (gradingScaleExists) {
                                 <th jhiSortBy="overallScoreAchieved">
-                                    <span>{{
-                                        isBonus ? ('artemisApp.examScores.overallBonusColumn' | artemisTranslate) : ('artemisApp.examScores.overallGradeColumn' | artemisTranslate)
-                                    }}</span>
+                                    <span jhiTranslate="{{ isBonus ? 'artemisApp.examScores.overallBonusColumn' : 'artemisApp.examScores.overallGradeColumn' }}"></span>
                                     <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (hasBonus) {
                                 @if (presentationScoreThreshold !== undefined) {
                                     <th jhiSortBy="gradeWithBonus.achievedPresentationScore">
-                                        <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate: { threshold: presentationScoreThreshold } }}</span>
+                                        <span
+                                            jhiTranslate="artemisApp.examScores.presentationScoreThresholdColumn"
+                                            [translateValues]="{ threshold: presentationScoreThreshold }"
+                                        ></span>
                                         <fa-icon [icon]="faSort" />
                                     </th>
                                 }
                                 <th jhiSortBy="gradeWithBonus.bonusGrade">
-                                    <span>{{
-                                        hasBonus === BonusStrategy.POINTS
-                                            ? ('artemisApp.examScores.bonusPointsColumn' | artemisTranslate)
-                                            : ('artemisApp.examScores.bonusGradeColumn' | artemisTranslate)
-                                    }}</span>
+                                    <span
+                                        [jhiTranslate]="hasBonus === BonusStrategy.POINTS ? 'artemisApp.examScores.bonusPointsColumn' : 'artemisApp.examScores.bonusGradeColumn'"
+                                    ></span>
                                     <fa-icon [icon]="faSort" />
                                 </th>
                                 <th jhiSortBy="gradeWithBonus.finalGrade">
-                                    <span>{{ 'artemisApp.examScores.finalGradeColumn' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.examScores.finalGradeColumn"></span>
                                     <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (gradingScaleExists && !isBonus) {
-                                <th>{{ 'artemisApp.examScores.passedColumn' | artemisTranslate }}</th>
+                                <th jhiTranslate="artemisApp.examScores.passedColumn"></th>
                             }
                             @if (hasPlagiarismVerdicts) {
                                 <th jhiSortBy="mostSeverePlagiarismVerdict">
-                                    <span>{{ 'artemisApp.examScores.mostSeverePlagiarismVerdictColumn' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.examScores.mostSeverePlagiarismVerdictColumn"></span>
                                     <fa-icon [icon]="faSort" />
                                 </th>
                             }
                             @if (hasPlagiarismVerdictsInBonusSource) {
                                 <th jhiSortBy="gradeWithBonus.mostSeverePlagiarismVerdict">
-                                    <span>{{ 'artemisApp.examScores.mostSeverePlagiarismVerdictInBonusColumn' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.examScores.mostSeverePlagiarismVerdictInBonusColumn"></span>
                                     <fa-icon [icon]="faSort" />
                                 </th>
                             }

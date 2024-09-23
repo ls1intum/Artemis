@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
-import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
+import { CourseGroupComponent, GroupUserInformationRow } from 'app/shared/course-group/course-group.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup } from 'app/entities/course.model';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -28,7 +28,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
 
-describe('Course Group Component', () => {
+describe('CourseGroupComponent', () => {
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
     let userService: UserService;
@@ -224,15 +224,15 @@ describe('Course Group Component', () => {
         expect(exportAsCsvMock).toHaveBeenCalledOnce();
         const generatedRows = exportAsCsvMock.mock.calls[0][0];
 
-        const expectedRow1 = {};
+        const expectedRow1 = {} as GroupUserInformationRow;
         expectedRow1[NAME_KEY] = '';
-        expectedRow1[USERNAME_KEY] = courseGroupUser.login;
+        expectedRow1[USERNAME_KEY] = courseGroupUser.login ?? '';
         expectedRow1[EMAIL_KEY] = '';
         expectedRow1[REGISTRATION_NUMBER_KEY] = '';
 
-        const expectedRow2 = {};
+        const expectedRow2 = {} as GroupUserInformationRow;
         expectedRow2[NAME_KEY] = '';
-        expectedRow2[USERNAME_KEY] = courseGroupUser2.login;
+        expectedRow2[USERNAME_KEY] = courseGroupUser2.login ?? '';
         expectedRow2[EMAIL_KEY] = '';
         expectedRow2[REGISTRATION_NUMBER_KEY] = '';
 

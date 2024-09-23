@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
+import { WindFile } from 'app/entities/programming/wind.file';
 import { Observable } from 'rxjs';
 
-import { BuildAction, PlatformAction, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class AeolusService {
@@ -51,7 +53,7 @@ export class AeolusService {
     parseWindFile(file: string): WindFile | undefined {
         try {
             const templateFile: WindFile = JSON.parse(file);
-            const windFile: WindFile = Object.assign(new WindFile(), templateFile);
+            const windfile: WindFile = Object.assign(new WindFile(), templateFile);
             const actions: BuildAction[] = [];
             templateFile.actions.forEach((anyAction: any) => {
                 let action: BuildAction | undefined;
@@ -70,10 +72,12 @@ export class AeolusService {
                     actions.push(action);
                 }
             });
-            // somehow, the returned content has a scriptActions field, which is not defined in the WindFile class
-            delete windFile['scriptActions'];
-            windFile.actions = actions;
-            return windFile;
+            // somehow, the returned content may have a scriptActions field, which is not a field of the WindFile class
+            if ('scriptActions' in windfile) {
+                delete windfile['scriptActions'];
+            }
+            windfile.actions = actions;
+            return windfile;
         } catch (SyntaxError) {
             return undefined;
         }
@@ -98,8 +102,8 @@ export class AeolusService {
         };
     }
 
-    serializeWindFile(windFile: WindFile): string {
-        return JSON.stringify(windFile, this.replacer);
+    serializeWindFile(windfile: WindFile): string {
+        return JSON.stringify(windfile, this.replacer);
     }
 
     /**

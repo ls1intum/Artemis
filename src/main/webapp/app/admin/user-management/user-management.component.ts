@@ -218,7 +218,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         const tempInStorage = temp
             ? temp
                   .split(',')
-                  .map((filter: string) => type[filter])
+                  .map((filter: keyof Filter) => type[filter])
                   .filter(Boolean)
             : new Set();
         return new Set(tempInStorage);
@@ -292,35 +292,28 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Generic method to return all possible filter values per category.
-     */
-    getFilter(type: Filter) {
-        return Object.keys(type).map((value) => type[value]);
-    }
-
-    /**
      * Get all filter options for authorities.
      */
     get authorityFilters() {
-        return this.getFilter(AuthorityFilter);
+        return Object.values<AuthorityFilter>(AuthorityFilter);
     }
 
     /**
      * Get all filter options for origin.
      */
     get originFilters() {
-        return this.getFilter(OriginFilter);
+        return Object.values<OriginFilter>(OriginFilter);
     }
 
     /**
      * Get all filter options for status.
      */
     get statusFilters() {
-        return this.getFilter(StatusFilter);
+        return Object.values<StatusFilter>(StatusFilter);
     }
 
     get registrationNumberFilters() {
-        return this.getFilter(RegistrationNumberFilter);
+        return Object.values<RegistrationNumberFilter>(RegistrationNumberFilter);
     }
 
     /**
@@ -433,6 +426,16 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
+     * Actions after the deletion of not enrolled users is completed.
+     */
+    deleteNotEnrolledUsersComplete() {
+        this.eventManager.broadcast({
+            name: 'userListModification',
+            content: 'Deleted users',
         });
     }
 

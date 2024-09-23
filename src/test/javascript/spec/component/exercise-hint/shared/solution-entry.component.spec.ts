@@ -1,19 +1,20 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/shared/solution-entry.component';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('Solution Entry Component', () => {
     let comp: SolutionEntryComponent;
     let fixture: ComponentFixture<SolutionEntryComponent>;
+    let solutionEntry: ProgrammingExerciseSolutionEntry;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [SolutionEntryComponent, AceEditorComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [SolutionEntryComponent, MockComponent(MonacoEditorComponent), MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
         fixture = TestBed.createComponent(SolutionEntryComponent);
         comp = fixture.componentInstance;
@@ -23,35 +24,32 @@ describe('Solution Entry Component', () => {
         comp.solutionEntry.filePath = '/src/de/Test.java';
         comp.solutionEntry.line = 1;
         comp.solutionEntry.code = 'ABC';
+
+        solutionEntry = comp.solutionEntry;
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should setup editors', () => {
-        jest.spyOn(comp.editor.getEditor(), 'setOptions');
-        jest.spyOn(comp.editor.getEditor().getSession(), 'setValue');
+    it('should correctly setup editors', () => {
+        const setStartLineNumberStub = jest.spyOn(comp.editor, 'setStartLineNumber').mockImplementation();
+        const changeModelStub = jest.spyOn(comp.editor, 'changeModel').mockImplementation();
+        fixture.detectChanges();
 
-        comp.ngOnInit();
-
-        expect(comp.editor.getEditor().setOptions).toHaveBeenCalledOnce();
-        expect(comp.editor.getEditor().setOptions).toHaveBeenCalledWith({
-            animatedScroll: true,
-            maxLines: Infinity,
-            showPrintMargin: false,
-        });
-
-        expect(comp.editor.getEditor().getSession().setValue).toHaveBeenCalledOnce();
-        expect(comp.editor.getEditor().getSession().setValue).toHaveBeenCalledWith('ABC');
+        expect(setStartLineNumberStub).toHaveBeenCalledExactlyOnceWith(solutionEntry.line);
+        expect(changeModelStub).toHaveBeenCalledExactlyOnceWith(solutionEntry.filePath, solutionEntry.code);
     });
 
-    it('should give correct line for gutter', () => {
-        comp.ngOnInit();
-        const gutterRendererNow = comp.editor.getEditor().session.gutterRenderer;
-        const config = { characterWidth: 1 };
+    it('should update the editor height', () => {
+        const contentHeight = 123;
+        comp.onContentSizeChange(contentHeight);
+        expect(comp.editorHeight).toEqual(contentHeight);
+    });
 
-        expect(gutterRendererNow.getText(null, 2)).toBe(3);
-        expect(gutterRendererNow.getWidth(null, 2, config)).toBe(1);
+    it('should update the solution entry code', () => {
+        const newCode = 'DEF';
+        comp.onEditorContentChange(newCode);
+        expect(comp.solutionEntry.code).toEqual(newCode);
     });
 });

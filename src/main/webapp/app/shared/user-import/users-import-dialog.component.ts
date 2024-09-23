@@ -3,12 +3,12 @@ import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
-import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
+import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
 import { cleanString } from 'app/shared/util/utils';
 import { Subject } from 'rxjs';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse } from 'papaparse';
@@ -25,7 +25,9 @@ const POSSIBLE_LAST_NAME_HEADERS = ['familyname', 'lastname', 'familynameofstude
 const POSSIBLE_ROOM_HEADERS = ['actualroom', 'actualRoom', 'raum', 'room', 'Room'];
 const POSSIBLE_SEAT_HEADERS = ['actualseat', 'actualSeat', 'sitzplatz', 'sitz', 'seat', 'Seat'];
 
-type CsvUser = object;
+interface CsvUser {
+    [key: string]: string;
+}
 
 @Component({
     selector: 'jhi-users-import-dialog',
@@ -137,26 +139,26 @@ export class UsersImportDialogComponent implements OnDestroy {
 
         if (this.examUserMode) {
             return csvUsers.map(
-                (users) =>
+                (user: CsvUser) =>
                     ({
-                        registrationNumber: users[registrationNumberHeader]?.trim() || '',
-                        login: users[loginHeader]?.trim() || '',
-                        email: users[emailHeader]?.trim() || '',
-                        firstName: users[firstNameHeader]?.trim() || '',
-                        lastName: users[lastNameHeader]?.trim() || '',
-                        room: users[roomHeader]?.trim() || '',
-                        seat: users[seatHeader]?.trim() || '',
+                        registrationNumber: user[registrationNumberHeader]?.trim() || '',
+                        login: user[loginHeader]?.trim() || '',
+                        email: user[emailHeader]?.trim() || '',
+                        firstName: user[firstNameHeader]?.trim() || '',
+                        lastName: user[lastNameHeader]?.trim() || '',
+                        room: user[roomHeader]?.trim() || '',
+                        seat: user[seatHeader]?.trim() || '',
                     }) as ExamUserDTO,
             );
         } else {
             return csvUsers.map(
-                (users) =>
+                (user: CsvUser) =>
                     ({
-                        registrationNumber: users[registrationNumberHeader]?.trim() || '',
-                        login: users[loginHeader]?.trim() || '',
-                        email: users[emailHeader]?.trim() || '',
-                        firstName: users[firstNameHeader]?.trim() || '',
-                        lastName: users[lastNameHeader]?.trim() || '',
+                        registrationNumber: user[registrationNumberHeader]?.trim() || '',
+                        login: user[loginHeader]?.trim() || '',
+                        email: user[emailHeader]?.trim() || '',
+                        firstName: user[firstNameHeader]?.trim() || '',
+                        lastName: user[lastNameHeader]?.trim() || '',
                     }) as StudentDTO,
             );
         }
@@ -210,11 +212,11 @@ export class UsersImportDialogComponent implements OnDestroy {
      */
     private parseCSVFile(csvFile: File): Promise<CsvUser[]> {
         return new Promise((resolve, reject) => {
-            parse(csvFile, {
+            parse<CsvUser>(csvFile, {
                 header: true,
                 transformHeader: (header: string) => cleanString(header),
                 skipEmptyLines: true,
-                complete: (results) => resolve(results.data as CsvUser[]),
+                complete: (results) => resolve(results.data),
                 error: (error) => reject(error),
             });
         });

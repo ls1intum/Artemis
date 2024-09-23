@@ -36,12 +36,12 @@
 }
 
 .mat-expansion-panel.code-hint-creation-expansion-panel-wrapper-header {
+    font-weight: bold;
+    cursor: default;
+
     .mat-expansion-panel-header {
         border-bottom: 2px solid;
     }
-
-    font-weight: bold;
-    cursor: default;
 }
 
 .sort-icon {

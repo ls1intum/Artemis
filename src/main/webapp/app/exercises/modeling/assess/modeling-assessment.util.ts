@@ -2,12 +2,14 @@ import { Result } from 'app/entities/result.model';
 import { UMLElementType, UMLModelCompat, UMLRelationshipType, findElement, findRelationship } from '@ls1intum/apollon';
 import { Feedback } from 'app/entities/feedback.model';
 
+export type AssessmentNamesForModelId = { [modelId: string]: { type: string; name: string } | undefined };
+
 /**
  * Creates the labels for the assessment elements for displaying them in the modeling and assessment editor.
  */
 // TODO: define a mapping or simplify this complex monster in a another way so that we can support other diagram types as well
-export function getNamesForAssessments(result: Result, model: UMLModelCompat): Map<string, Map<string, string>> {
-    const assessmentsNames = new Map<string, Map<string, string>>();
+export function getNamesForAssessments(result: Result, model: UMLModelCompat): AssessmentNamesForModelId {
+    const assessmentsNames: AssessmentNamesForModelId = {};
     for (const feedback of result.feedbacks!) {
         const referencedModelType = feedback.referenceType! as UMLElementType;
         const referencedModelId = feedback.referenceId!;
@@ -106,7 +108,7 @@ export function getNamesForAssessments(result: Result, model: UMLModelCompat): M
             }
             assessmentsNames[referencedModelId] = { type, name: source + relation + target };
         } else {
-            assessmentsNames[referencedModelId] = { type: referencedModelType, name: '' };
+            assessmentsNames[referencedModelId] = { type: `${referencedModelType}`, name: '' };
         }
     }
     return assessmentsNames;

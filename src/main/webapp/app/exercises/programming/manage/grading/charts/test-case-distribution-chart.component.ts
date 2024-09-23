@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { TestCaseStatsMap } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { TestCaseStatsMap } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { getColor } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.utils';
 import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
@@ -15,6 +15,10 @@ enum TestCaseBarTitle {
     WEIGHT_AND_BONUS_EN = 'Weight & Bonus',
     WEIGHT_AND_BONUS_DE = 'Gewichtung & Bonus',
 }
+
+type TestCaseColors = {
+    [label: string]: string;
+};
 
 @Component({
     selector: 'jhi-test-case-distribution-chart',
@@ -94,7 +98,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         });
 
         if (this.ngxWeightData[0].series.length !== testCaseScores.length) {
-            const testCaseColors = {};
+            const testCaseColors: TestCaseColors = {};
 
             this.ngxWeightData = [];
             this.ngxPointsData = [];

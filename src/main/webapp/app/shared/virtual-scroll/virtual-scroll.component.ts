@@ -114,7 +114,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     }
 
     /**
-     * start listening to focusin events on initialization to prevent unintentional scrolling when the user focuses into the text area of ace editor component
+     * start listening to focusin events on initialization to prevent unintentional scrolling when the user focuses into the text area of code editor component
      * start listening to scroll events on initialization to perform virtual scrolling when the user scrolls through the item container
      * start listening to navigationStart events of router and enable forceReloadChange to scroll to the top of the updated item list
      */
@@ -172,7 +172,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     }
 
     /**
-     * prevents automatic scrolling to other items when user clicks the text area of ace editor component
+     * prevents automatic scrolling to other items when user clicks the text area of code editor component
      */
     onFocusIn() {
         window.scrollTo(0, this.windowScrollTop);

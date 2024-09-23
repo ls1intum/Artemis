@@ -3,7 +3,7 @@ import { ConversationDTO } from 'app/entities/metis/conversation/conversation.mo
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { EMPTY, Subject, from, take, takeUntil } from 'rxjs';
+import { EMPTY, Subject, Subscription, from, take, takeUntil } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -20,6 +20,7 @@ import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversation
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -79,13 +80,16 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     postInThread?: Post;
     activeConversation?: ConversationDTO = undefined;
     conversationsOfUser: ConversationDTO[] = [];
-    channelSearchCollapsed = false;
+    channelSearchCollapsed = true;
 
     conversationSelected = true;
     sidebarData: SidebarData;
     accordionConversationGroups: AccordionGroups;
     sidebarConversations: SidebarCardElement[] = [];
+    profileSubscription?: Subscription;
     isCollapsed = false;
+    isProduction = true;
+    isTestServer = false;
 
     readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
@@ -118,6 +122,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private metisService: MetisService,
         private courseOverviewService: CourseOverviewService,
         private modalService: NgbModal,
+        private profileService: ProfileService,
     ) {}
 
     getAsChannel = getAsChannelDTO;
@@ -158,6 +163,11 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.isServiceSetUp = true;
             }
         });
+
+        this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {
+            this.isProduction = profileInfo?.inProduction;
+            this.isTestServer = profileInfo.testServer ?? false;
+        });
     }
 
     subscribeToQueryParameter() {
@@ -186,6 +196,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.profileSubscription?.unsubscribe();
     }
 
     private subscribeToActiveConversation() {
@@ -249,9 +260,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     prepareSidebarData() {
-        this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser);
-        this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.conversationsOfUser, this.messagingEnabled);
-        this.updateSidebarData();
+        this.metisConversationService.forceRefresh().subscribe({
+            complete: () => {
+                this.sidebarConversations = this.courseOverviewService.mapConversationsToSidebarCardElements(this.conversationsOfUser);
+                this.accordionConversationGroups = this.courseOverviewService.groupConversationsByChannelType(this.conversationsOfUser, this.messagingEnabled);
+                this.updateSidebarData();
+            },
+        });
     }
 
     updateSidebarData() {
@@ -297,9 +312,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             .subscribe((chatPartners: UserPublicInfoDTO[]) => {
                 this.metisConversationService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
                     complete: () => {
-                        this.metisConversationService.forceRefresh().subscribe({
-                            complete: () => {},
-                        });
                         this.prepareSidebarData();
                     },
                 });
@@ -319,9 +331,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 if (chatPartner?.login) {
                     this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
                         complete: () => {
-                            this.metisConversationService.forceRefresh().subscribe({
-                                complete: () => {},
-                            });
                             this.prepareSidebarData();
                         },
                     });

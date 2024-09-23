@@ -8,8 +8,9 @@
                 "overview": {
                     "title": "Learning path competencies",
                     "showCompetenciesGraphButton": "Competency graph",
-                    "emptyLearningObjectsLabel": "This competency doesn't contain any learning units yet!",
-                    "nextLearningObjectOnPathLabel": "Next"
+                    "emptyLearningObjectsLabel": "This competency doesn't contain any learning objects yet!",
+                    "nextLearningObjectOnPathLabel": "Next",
+                    "unreleasedLearningObjectLabel": "Unreleased learning unit"
                 },
                 "recapLabel": "Recap learning units"
             },

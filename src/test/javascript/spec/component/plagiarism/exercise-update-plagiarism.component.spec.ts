@@ -1,6 +1,6 @@
 import { DEFAULT_PLAGIARISM_DETECTION_CONFIG, Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Subject } from 'rxjs';
 
 describe('Exercise Update Plagiarism Component', () => {
@@ -90,11 +90,11 @@ describe('Exercise Update Plagiarism Component', () => {
 
         // initialize
         for (const fieldName of inputFieldNames) {
-            comp[fieldName] = { valueChanges: new Subject(), valid: false };
+            (comp as any)[fieldName] = { valueChanges: new Subject(), valid: false };
         }
         comp.ngAfterViewInit();
         for (const fieldName of inputFieldNames) {
-            expect((comp[fieldName].valueChanges! as Subject<boolean>).observed).toBeTrue();
+            expect(((comp as any)[fieldName].valueChanges! as Subject<boolean>).observed).toBeTrue();
         }
 
         (comp.fieldCPCEnabled!.valueChanges! as Subject<boolean>).next(false);
@@ -112,7 +112,7 @@ describe('Exercise Update Plagiarism Component', () => {
 
         comp.ngOnDestroy();
         for (const fieldName of inputFieldNames) {
-            expect((comp[fieldName].valueChanges! as Subject<boolean>).observed).toBeFalse();
+            expect(((comp as any)[fieldName].valueChanges! as Subject<boolean>).observed).toBeFalse();
         }
     });
 });

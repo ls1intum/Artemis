@@ -248,7 +248,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.examStartedSubscription?.unsubscribe();
     }
 
-    breadcrumbTranslation = {
+    breadcrumbTranslation: { [key: string]: string } = {
         new: 'global.generic.create',
         process: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
         verify_attendance: 'artemisApp.examManagement.examStudents.verifyChecks',
@@ -290,7 +290,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         teams: 'artemisApp.team.home.title',
         exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
-        competency_management: 'artemisApp.competency.manageCompetencies.title',
+        competency_management: 'artemisApp.competency.manage.title',
+        prerequisite_management: 'artemisApp.prerequisite.manage.title',
         learning_path_management: 'artemisApp.learningPath.manageLearningPaths.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
@@ -365,7 +366,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         import_standardized: 'artemisApp.standardizedCompetency.courseImport.title',
     };
 
-    studentPathBreadcrumbTranslations = {
+    studentPathBreadcrumbTranslations: { [key: string]: string } = {
         exams: 'artemisApp.courseOverview.menu.exams',
         test_exam: 'artemisApp.courseOverview.menu.testExam',
         exercises: 'artemisApp.courseOverview.menu.exercises',
@@ -531,8 +532,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 this.addTranslationAsCrumb(currentPath, 'example-submission-editor');
                 break;
+            case 'attachments':
+                this.addBreadcrumb(currentPath, segment, false);
+                break;
             // No breadcrumbs for those segments
             case 'competency-management':
+            case 'prerequisite-management':
             case 'unit-management':
             case 'exercise-groups':
             case 'student-exams':

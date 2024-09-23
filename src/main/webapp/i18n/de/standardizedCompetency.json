@@ -68,6 +68,7 @@
             },
             "courseImport": {
                 "title": "Standardisierte Kompetenzen Importieren",
+                "prerequisiteTitle": "Standardisierte Kompetenzen als Voraussetzungen importieren",
                 "empty": "Es existieren keine standardisierten Kompetenzen",
                 "success": "Erfolgreich {{count}} standardisierte Kompetenzen importiert",
                 "selectedTitle": "Ausgewählte Kompetenzen",

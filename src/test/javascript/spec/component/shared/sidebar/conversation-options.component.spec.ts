@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
@@ -26,6 +26,7 @@ import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversation
 import { ConversationDetailDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
@@ -59,7 +60,7 @@ examples.forEach((conversation) => {
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
                 ],
-                declarations: [ConversationOptionsComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
+                declarations: [ConversationOptionsComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
                 providers: [
                     MockProvider(ConversationService),
                     MockProvider(MetisConversationService),

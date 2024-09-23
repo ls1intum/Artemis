@@ -4,15 +4,15 @@
             @if (!exam.id) {
                 <div class="d-flex align-items-center">
                     @if (!isImport) {
-                        <h4>{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
+                        <h4 jhiTranslate="artemisApp.examManagement.createExam"></h4>
                     }
                     @if (isImport) {
-                        <h4>{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
+                        <h4 jhiTranslate="artemisApp.examManagement.importExam"></h4>
                     }
                     <jhi-documentation-button [type]="documentationType" />
                 </div>
             } @else {
-                <h4>{{ 'artemisApp.examManagement.editExam' | artemisTranslate }}</h4>
+                <h4 jhiTranslate="artemisApp.examManagement.editExam"></h4>
             }
             <!-- Section exam configuration -->
             <div>
@@ -102,7 +102,7 @@
                         id="startDate"
                     />
                     @if (isStartDateSet && isValidStartDateValue && !isValidStartDate) {
-                        <span class="invalid-feedback"> {{ 'entity.startDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="entity.startDateError"></span>
                     }
                 </div>
                 <div class="col-sm-4">
@@ -118,7 +118,7 @@
                         id="endDate"
                     />
                     @if (isEndDateSet && isValidEndDateValue && !isValidEndDate) {
-                        <span class="invalid-feedback"> {{ 'entity.endDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="entity.endDateError"></span>
                     }
                 </div>
             </div>
@@ -232,7 +232,7 @@
                                 id="examStudentReviewEnd"
                             />
                             @if (!isValidExamStudentReviewEnd) {
-                                <span class="invalid-feedback"> {{ 'artemisApp.examManagement.reviewDatesInvalidWarning' | artemisTranslate }}</span>
+                                <span class="invalid-feedback" jhiTranslate="artemisApp.examManagement.reviewDatesInvalidWarning"></span>
                             }
                         </div>
                     </div>
@@ -257,19 +257,19 @@
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.text"></h5>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.startText"></label>
-                <jhi-markdown-editor id="startText" class="markdown-editor" [(markdown)]="exam.startText" />
+                <jhi-markdown-editor-monaco id="startText" class="markdown-editor" [(markdown)]="exam.startText" />
             </div>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.endText"></label>
-                <jhi-markdown-editor id="endText" class="markdown-editor" [(markdown)]="exam.endText" />
+                <jhi-markdown-editor-monaco id="endText" class="markdown-editor" [(markdown)]="exam.endText" />
             </div>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationStartText"></label>
-                <jhi-markdown-editor id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText" />
+                <jhi-markdown-editor-monaco id="confirmationStartText" class="markdown-editor" [(markdown)]="exam.confirmationStartText" />
             </div>
             <div class="form-group">
                 <label for="startText" jhiTranslate="artemisApp.examManagement.confirmationEndText"></label>
-                <jhi-markdown-editor id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" />
+                <jhi-markdown-editor-monaco id="confirmationEndText" class="markdown-editor" [(markdown)]="exam.confirmationEndText" />
             </div>
             <div>
                 <button type="button" class="btn btn-secondary" (click)="resetToPreviousState()">
@@ -279,7 +279,7 @@
                     <fa-icon [icon]="faSave" />&nbsp;{{ 'entity.action.' + (isImport ? 'import' : 'save') | artemisTranslate }}
                 </button>
                 <ng-template #renderedWarning>
-                    <div>{{ 'artemisApp.examManagement.reviewDatesInvalidExplanation' | artemisTranslate }}</div>
+                    <div jhiTranslate="artemisApp.examManagement.reviewDatesInvalidExplanation"></div>
                 </ng-template>
                 @if (!isValidExamStudentReviewEnd) {
                     <span class="badge bg-warning" [ngbTooltip]="renderedWarning" placement="right auto">

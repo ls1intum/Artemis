@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
 
 @Component({
@@ -7,19 +7,15 @@ import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
     template: `
         @if (exercise.submissionPolicy && exercise.submissionPolicy.active && submissionCount !== undefined) {
             <div submissionPolicy>
-                <span>
-                    {{
-                        'artemisApp.programmingExercise.submissionPolicy.submissionsAllowed'
-                            | artemisTranslate: { submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }
-                    }}
-                </span>
+                <span
+                    jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionsAllowed"
+                    [translateValues]="{ submissionCount: submissionCount, totalSubmissions: exercise.submissionPolicy.submissionLimit }"
+                ></span>
                 @if (exercise.submissionPolicy.type === SubmissionPolicyType.SUBMISSION_PENALTY) {
-                    <span>
-                        {{
-                            'artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
-                                | artemisTranslate: { points: exercise.submissionPolicy.exceedingPenalty }
-                        }}
-                    </span>
+                    <span
+                        jhiTranslate="artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel"
+                        [translateValues]="{ points: exercise.submissionPolicy.exceedingPenalty }"
+                    ></span>
                 }
             </div>
         }

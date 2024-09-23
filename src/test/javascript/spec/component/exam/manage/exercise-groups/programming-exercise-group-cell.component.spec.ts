@@ -5,12 +5,14 @@ import { ProgrammingExerciseGroupCellComponent } from 'app/exam/manage/exercise-
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { By } from '@angular/platform-browser';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../../helpers/mocks/service/mock-alert.service';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { PROFILE_THEIA } from 'app/app.constants';
 
 describe('Programming Exercise Group Cell Component', () => {
     let comp: ProgrammingExerciseGroupCellComponent;
@@ -30,6 +32,7 @@ describe('Programming Exercise Group Cell Component', () => {
         },
         allowOfflineIde: true,
         allowOnlineEditor: true,
+        allowOnlineIde: false,
     } as any as ProgrammingExercise;
 
     let mockedProfileService: ProfileService;
@@ -42,12 +45,12 @@ describe('Programming Exercise Group Cell Component', () => {
                 // @ts-ignore
                 of({
                     buildPlanURLTemplate: 'https://example.com/{buildPlanId}/{projectKey}',
-                    activeProfiles: [],
+                    activeProfiles: [PROFILE_THEIA],
                 }),
         };
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, ArtemisSharedCommonModule],
             declarations: [ProgrammingExerciseGroupCellComponent, TranslatePipeMock],
             providers: [
                 { provide: ProfileService, useValue: mockedProfileService },
@@ -93,11 +96,15 @@ describe('Programming Exercise Group Cell Component', () => {
 
         const div0 = fixture.debugElement.query(By.css('div > div > div:first-child'));
         expect(div0).not.toBeNull();
-        expect(div0.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.offlineIde : true');
+        expect(div0.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.offlineIdeartemisApp.exercise.yes');
 
         const div1 = fixture.debugElement.query(By.css('div > div > div:nth-child(2)'));
         expect(div1).not.toBeNull();
-        expect(div1.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.onlineEditor : true');
+        expect(div1.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.onlineEditorartemisApp.exercise.yes');
+
+        const div2 = fixture.debugElement.query(By.css('div > div > div:nth-child(3)'));
+        expect(div2).not.toBeNull();
+        expect(div2.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.onlineIdeartemisApp.exercise.no');
     });
 
     it('should download the repository', () => {

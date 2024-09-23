@@ -183,7 +183,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
                 result.body!.forEach((course) => {
                     if (course.id) {
-                        this.coursesWithExercises[course.id] = course;
+                        this.coursesWithExercises.set(course.id, course);
                     }
                 });
             },
@@ -199,7 +199,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
             next: (result: HttpResponse<CourseManagementOverviewStatisticsDto[]>) => {
                 result.body!.forEach((statisticsDTO) => {
                     if (statisticsDTO.courseId) {
-                        this.statistics[statisticsDTO.courseId] = statisticsDTO;
+                        this.statistics.set(statisticsDTO.courseId, statisticsDTO);
                     }
                 });
             },
@@ -216,7 +216,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 // We use this extra map of courses to improve performance by allowing us to use OnPush change detection
                 result.body!.forEach((course) => {
                     if (course.id) {
-                        this.coursesWithUsers[course.id] = course;
+                        this.coursesWithUsers.set(course.id, course);
                     }
                 });
             },

@@ -783,7 +783,8 @@
         "studentExam": {
             "alreadySubmitted": "Du hast bereits abgegeben.",
             "submissionNotInTime": "Du hast die Klausur nicht rechtzeitig abgegeben. Sie wird nicht bewertet!",
-            "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!"
+            "handInFailed": "Die Abgabe der Klausur ist fehlgeschlagen. Bitte versuche es erneut!",
+            "deleted": "Testlauf gelöscht"
         },
         "examTimeline": {
             "title": "Klausurverlauf von {{ username }}",

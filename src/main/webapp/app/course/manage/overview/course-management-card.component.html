@@ -40,9 +40,7 @@
                             </a>
                         }
                         @if (courseWithUsers.numberOfStudents === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'students']">
-                                {{ 'artemisApp.course.students' | artemisTranslate }}
-                            </a>
+                            <a [routerLink]="['/course-management', course.id, 'groups', 'students']" jhiTranslate="artemisApp.course.students"></a>
                         }
                     </div>
                     <div>
@@ -57,9 +55,7 @@
                             </a>
                         }
                         @if (courseWithUsers.numberOfTeachingAssistants === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']">
-                                {{ 'artemisApp.course.tutors' | artemisTranslate }}
-                            </a>
+                            <a [routerLink]="['/course-management', course.id, 'groups', 'tutors']" jhiTranslate="artemisApp.course.tutors"></a>
                         }
                     </div>
                 </div>
@@ -76,9 +72,7 @@
                             </a>
                         }
                         @if (courseWithUsers.numberOfEditors === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']">
-                                {{ 'artemisApp.course.editors' | artemisTranslate }}
-                            </a>
+                            <a [routerLink]="['/course-management', course.id, 'groups', 'editors']" jhiTranslate="artemisApp.course.editors"></a>
                         }
                     </div>
                     <div>
@@ -93,9 +87,7 @@
                             </a>
                         }
                         @if (courseWithUsers.numberOfInstructors === undefined) {
-                            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']">
-                                {{ 'artemisApp.course.instructors' | artemisTranslate }}
-                            </a>
+                            <a [routerLink]="['/course-management', course.id, 'groups', 'instructors']" jhiTranslate="artemisApp.course.instructors"></a>
                         }
                     </div>
                 </div>
@@ -116,7 +108,7 @@
                             <div>
                                 <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                                     <fa-icon class="control-icon" [icon]="showFutureExercises ? faAngleDown : faAngleUp" />
-                                    <strong>{{ 'artemisApp.course.releasedSoon' | artemisTranslate }}</strong>
+                                    <strong jhiTranslate="artemisApp.course.releasedSoon"></strong>
                                 </div>
                                 @if (showFutureExercises) {
                                     <div>
@@ -125,7 +117,7 @@
                                                 [course]="course"
                                                 [rowType]="exerciseRowType.FUTURE"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise[exercise.id!]"
+                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
                                             />
                                         }
                                     </div>
@@ -139,7 +131,7 @@
                             <div>
                                 <div class="control-label" (click)="showCurrentExercises = !showCurrentExercises">
                                     <fa-icon class="control-icon" [icon]="showCurrentExercises ? faAngleDown : faAngleUp" />
-                                    <strong>{{ 'artemisApp.course.currentWorking' | artemisTranslate }}</strong>
+                                    <strong jhiTranslate="artemisApp.course.currentWorking"></strong>
                                 </div>
                                 @if (showCurrentExercises) {
                                     <div>
@@ -148,7 +140,7 @@
                                                 [course]="course"
                                                 [rowType]="exerciseRowType.CURRENT"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise[exercise.id!]"
+                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
                                             />
                                         }
                                     </div>
@@ -162,7 +154,7 @@
                             <div>
                                 <div class="control-label" (click)="showExercisesInAssessment = !showExercisesInAssessment">
                                     <fa-icon class="control-icon" [icon]="showExercisesInAssessment ? faAngleDown : faAngleUp" />
-                                    <strong>{{ 'artemisApp.course.inAssessment' | artemisTranslate }}</strong>
+                                    <strong jhiTranslate="artemisApp.course.inAssessment"></strong>
                                 </div>
                                 @if (showExercisesInAssessment) {
                                     <div>
@@ -171,7 +163,7 @@
                                                 [course]="course"
                                                 [rowType]="exerciseRowType.ASSESSING"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise[exercise.id!]"
+                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
                                             />
                                         }
                                     </div>
@@ -185,7 +177,7 @@
                             <div>
                                 <div class="control-label" (click)="showPastExercises = !showPastExercises">
                                     <fa-icon class="control-icon" [icon]="showPastExercises ? faAngleDown : faAngleUp" />
-                                    <strong>{{ 'artemisApp.course.pastExercises' | artemisTranslate: { amount: pastExercises.length, total: pastExerciseCount } }}</strong>
+                                    <strong jhiTranslate="artemisApp.course.pastExercises" [translateValues]="{ amount: pastExercises.length, total: pastExerciseCount }"></strong>
                                 </div>
                                 @if (showPastExercises) {
                                     <div>
@@ -194,7 +186,7 @@
                                                 [course]="course"
                                                 [rowType]="exerciseRowType.PAST"
                                                 [details]="exercise"
-                                                [statistic]="statisticsPerExercise[exercise.id!]"
+                                                [statistic]="statisticsPerExercise.get(exercise.id!)"
                                             />
                                         }
                                     </div>
@@ -206,7 +198,7 @@
                         }
                         @if ((futureExercises?.length || 0) + (currentExercises?.length || 0) + (exercisesInAssessment?.length || 0) + (pastExercises?.length || 0) === 0) {
                             <div>
-                                <h4 class="text-center no-exercises mt-3 fw-medium">{{ 'artemisApp.course.noExercises' | artemisTranslate }}</h4>
+                                <h4 class="text-center no-exercises mt-3 fw-medium" jhiTranslate="artemisApp.course.noExercises"></h4>
                             </div>
                         }
                     </div>
@@ -240,7 +232,7 @@
                 id="course-card-open-exams"
             >
                 <fa-icon [icon]="faGraduationCap" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.exams' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.exams"></span>
             </a>
         }
         @if (course.isAtLeastTutor) {
@@ -252,7 +244,7 @@
                 id="course-card-open-exercises"
             >
                 <fa-icon [icon]="faListAlt" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.exercise' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.exercise"></span>
             </a>
         }
         @if (course.isAtLeastEditor) {
@@ -263,7 +255,7 @@
                 id="course-card-open-lectures"
             >
                 <fa-icon [icon]="faFilePdf" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.lecture' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.lecture"></span>
             </a>
         }
         @if (course.isAtLeastTutor) {
@@ -274,7 +266,7 @@
                 id="course-card-open-open-statistics"
             >
                 <fa-icon [icon]="faChartBar" />
-                <span class="d-none d-xl-inline">{{ 'artemisApp.courseStatistics.statistics' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.courseStatistics.statistics"></span>
             </a>
         }
         @if (isCommunicationEnabled(course) && course.isAtLeastTutor) {
@@ -284,7 +276,7 @@
                 [ngbTooltip]="'artemisApp.courseOverview.menu.communication' | artemisTranslate"
             >
                 <fa-icon [icon]="faComments" />
-                <span class="d-none d-xl-inline">{{ 'artemisApp.metis.communication.label' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="artemisApp.metis.communication.label"></span>
             </a>
         }
         @if (course.timeZone || course.isAtLeastInstructor) {
@@ -332,7 +324,7 @@
                 id="course-card-open-assessment-dashboard"
             >
                 <fa-icon [icon]="faUserCheck" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.assessmentDashboard' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.assessmentDashboard"></span>
             </a>
         }
         @if (course.isAtLeastInstructor) {
@@ -343,7 +335,7 @@
                 id="course-card-open-scores"
             >
                 <fa-icon [icon]="faTable" />
-                <span class="d-none d-xl-inline">{{ 'entity.action.scores' | artemisTranslate }}</span>
+                <span class="d-none d-xl-inline" jhiTranslate="entity.action.scores"></span>
             </a>
         }
     </div>

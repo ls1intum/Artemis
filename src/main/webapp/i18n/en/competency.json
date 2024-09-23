@@ -9,7 +9,6 @@
             "description": "Description",
             "taxonomy": "Taxonomy",
             "softDueDate": "Recommended until",
-            "masteryThreshold": "Mastery threshold",
             "optional": "Optional",
             "optionalDescription": "Optional competencies are not required to complete the learning path. They can provide additional practice or may cover material that exceeds the courses requirements.",
             "course": "Course",
@@ -28,27 +27,10 @@
                 "MORE_HARD_POINTS": "Since you mostly scored your points in hard exercises, the mastery is higher than the progress",
                 "QUICKLY_SOLVED_EXERCISES": "Since you solved some exercises quickly, the mastery is higher than the progress"
             },
-            "taxonomies": {
-                "REMEMBER": "Remember",
-                "UNDERSTAND": "Understand",
-                "APPLY": "Apply",
-                "ANALYZE": "Analyze",
-                "EVALUATE": "Evaluate",
-                "CREATE": "Create",
-                "none": "No Taxonomy"
-            },
-            "keywords": {
-                "REMEMBER": "define, duplicate, list, note, repeat, recognize, reproduce, name",
-                "UNDERSTAND": "classify, describe, discuss, explain, identify, locate, recognize, report, restate, select, translate",
-                "APPLY": "execute, implement, solve, use, demonstrate, illustrate, operate, schedule, show, sketch",
-                "ANALYZE": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
-                "EVALUATE": "appraise, argue, choose, defend, judge, select, support, value, critique",
-                "CREATE": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
-            },
             "table": {
                 "panelHeader": "Your advancement"
             },
-            "manageCompetencies": {
+            "manage": {
                 "title": "Competency Management",
                 "importButton": "Import competencies",
                 "importFromCoursesButton": "Import from other courses",
@@ -93,7 +75,7 @@
                 "saveModalTitle": "Confirm Save",
                 "saveModalText": "You have not viewed all recommendations, do you still want to continue?",
                 "errorWarning": "You may not save because some competencies are invalid",
-                "loading": "Generating competency recommendations... This might take a while.",
+                "loading": "Generating competency recommendations...",
                 "courseDescription": {
                     "title": "Enter a Course Description",
                     "placeholder": "Please enter a course description",
@@ -104,7 +86,7 @@
                     "regenerateTooltip": "Generate additional Competency Recommendations",
                     "infoTooltip": "Enter a course description, focusing on the theoretical/practical content and learning objectives. Iris will then use it to generate recommendations for competencies you could add to your course.",
                     "success": "Generated {{ noOfCompetencies }} competency recommendations.",
-                    "warning": "No competency recommendations could be generated. Try using a more detailed course description. If the issue persists, contact the administrators."
+                    "warning": "No competency recommendations could be generated. If the issue persists, contact the administrators."
                 }
             },
             "importAll": {
@@ -119,34 +101,17 @@
                 "success": "Imported {{ noOfCompetencies }} competencies from course \"{{ courseTitle }}\".",
                 "warning": "No competencies were found for course \"{{ courseTitle }}\"."
             },
-            "createCompetency": {
+            "create": {
                 "title": "Create a new competency",
                 "titlePlaceholder": "Give the competency a title",
                 "titleRequiredValidationError": "A competency needs to have a title",
                 "titleMaxLengthValidationError": "A competency title is limited to {{max}} characters",
-                "titleUniqueValidationError": "There already exists a competency/prerequisite with this title in the course",
                 "descriptionMaxLengthValidationError": "A competency description is limited to {{max}} characters",
                 "softDueDate": "Recommended date of completion",
                 "softDueDateHint": "Guide students by selecting when you expect them to have mastered this competency. This is not a hard deadline.",
-                "suggestedTaxonomy": "Suggested",
-                "averageStudentScore": "Average student score",
-                "connectWithLectureUnits": "Link the competency with lecture units",
-                "selectLecture": "Select a Lecture",
-                "noLectures": "This course has no lectures",
-                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} unit(s) linked)",
-                "lectureUnitTable": {
-                    "type": "Type",
-                    "name": "Lecture Unit",
-                    "releaseDate": "Release Date",
-                    "lecture": "Lecture",
-                    "scoreAchievedByStudent": "Your score",
-                    "averageScoreAchievedByStudent": "Average score of participant",
-                    "totalPointsAchievable": "Achievable points",
-                    "noOfParticipants": "Number of participants",
-                    "participationRate": "Participation Rate"
-                }
+                "connectWithLectureUnits": "Link the competency with lecture units"
             },
-            "editCompetency": {
+            "edit": {
                 "title": "Edit a competency"
             },
             "link": {
@@ -204,12 +169,62 @@
             "course": "Course",
             "description": "Description",
             "taxonomy": "Taxonomy",
-            "softDueDate": "Recommended until"
+            "softDueDate": "Recommended until",
+            "masteryThreshold": "Mastery threshold",
+            "manage": {
+                "importAllButton": "Import all of a course"
+            },
+            "importAll": {
+                "title": "Import all Competencies and Prerequisites from another course",
+                "success": "Imported {{ noOfCompetencies }} competencies and prerequisites from course \"{{ courseTitle }}\".",
+                "warning": "No competencies or prerequisites were found for course \"{{ courseTitle }}\"."
+            },
+            "create": {
+                "titleUniqueValidationError": "There already exists a competency/prerequisite with this title in the course",
+                "suggestedTaxonomy": "Suggested",
+                "averageStudentScore": "Average student mastery",
+                "selectLecture": "Select a Lecture",
+                "noLectures": "This course has no lectures",
+                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} unit(s) linked)",
+                "lectureUnitTable": {
+                    "type": "Type",
+                    "name": "Lecture Unit",
+                    "releaseDate": "Release Date",
+                    "lecture": "Lecture",
+                    "scoreAchievedByStudent": "Your score",
+                    "averageScoreAchievedByStudent": "Average score of participant",
+                    "totalPointsAchievable": "Achievable points",
+                    "noOfParticipants": "Number of participants",
+                    "participationRate": "Participation Rate"
+                }
+            },
+            "taxonomies": {
+                "REMEMBER": "Remember",
+                "UNDERSTAND": "Understand",
+                "APPLY": "Apply",
+                "ANALYZE": "Analyze",
+                "EVALUATE": "Evaluate",
+                "CREATE": "Create",
+                "none": "No Taxonomy"
+            },
+            "keywords": {
+                "REMEMBER": "define, duplicate, list, note, repeat, recognize, reproduce, name",
+                "UNDERSTAND": "classify, describe, discuss, explain, identify, locate, recognize, report, restate, select, translate",
+                "APPLY": "execute, implement, solve, use, demonstrate, illustrate, operate, schedule, show, sketch",
+                "ANALYZE": "differentiate, examine, experiment, question, relate, test, break down, contrast, distinguish",
+                "EVALUATE": "appraise, argue, choose, defend, judge, select, support, value, critique",
+                "CREATE": "design, formulate, hypothesize, invent, plan, propose, write, assemble, construct, develop"
+            }
         },
         "prerequisite": {
             "title": "Prerequisites",
-            "empty": "No prerequisites exist for this course",
+            "created": "Prerequisite created",
+            "deleted": "Prerequisite deleted",
+            "updated": "Prerequisite updated",
+            "optional": "Optional",
+            "optionalDescription": "Optional prerequisites are not required to complete the learning path. They can provide additional practice or may cover material that exceeds the courses requirements.",
             "manage": {
+                "title": "Prerequisite Management",
                 "createButton": "Create prerequisite",
                 "importButton": "Import prerequisites",
                 "importFromCoursesButton": "Import from other courses",
@@ -217,7 +232,10 @@
                 "delete": {
                     "question": "Do you really want to delete the prerequisite <strong>{{ title }}</strong>? You can not undo this action!",
                     "typeNameToConfirm": "Please enter the name of the prerequisite for confirmation."
-                }
+                },
+                "importAllButton": "Import all prerequisites of a course",
+                "importStandardizedButton": "Import standardized competencies",
+                "empty": "No prerequisites exist for this course"
             },
             "import": {
                 "title": "Import Prerequisites",
@@ -226,19 +244,28 @@
                 "selectedTableEmpty": "No competencies selected to import as prerequisites"
             },
             "create": {
-                "title": "Create a new Prerequisite",
+                "title": "Create a new prerequisite",
                 "titlePlaceholder": "Give the prerequisite a title",
-                "softDueDateTooltip": "Guide students by selecting when you expect them to have mastered this prerequisite. This is not a hard deadline.",
-                "suggestedTaxonomy": "Suggested",
-                "error": {
-                    "titleRequired": "A prerequisite needs to have a title",
-                    "titleMaxLength": "The title of a prerequisite is limited to {{max}} characters",
-                    "descriptionMaxLength": "The description of a prerequisite is limited to {{max}} characters",
-                    "titleUnique": "There already exists a competency/prerequisite with this title in the course"
-                }
+                "titleRequiredValidationError": "A prerequisite needs to have a title",
+                "titleMaxLengthValidationError": "A prerequisite title is limited to {{max}} characters",
+                "descriptionMaxLengthValidationError": "A prerequisite description is limited to {{max}} characters",
+                "softDueDate": "Recommended date of completion",
+                "softDueDateHint": "Guide students by selecting when you expect them to have mastered this prerequisite. This is not a hard deadline.",
+                "connectWithLectureUnits": "Link the prerequisite with lecture units"
             },
             "edit": {
                 "title": "Edit a Prerequisite"
+            },
+            "importAll": {
+                "title": "Import all Prerequisites from another course",
+                "success": "Imported {{ noOfCompetencies }} prerequisites from course \"{{ courseTitle }}\".",
+                "warning": "No prerequisites were found for course \"{{ courseTitle }}\"."
+            },
+            "competencyCard": {
+                "delete": {
+                    "question": "Do you really want to delete the prerequisite <strong>{{ title }}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the prerequisite for confirmation."
+                }
             }
         },
         "learningPath": {

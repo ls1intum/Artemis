@@ -189,7 +189,7 @@ export function dtoToCompetencyRelation(competencyRelationDTO: CompetencyRelatio
 }
 
 export class CompetencyWithTailRelationDTO {
-    competency?: Competency;
+    competency?: CourseCompetency;
     tailRelations?: CompetencyRelationDTO[];
 
     constructor() {}

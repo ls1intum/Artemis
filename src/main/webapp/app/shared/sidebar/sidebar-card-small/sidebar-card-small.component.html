@@ -2,18 +2,18 @@
  operates differently over the MetisConversations service, it will get adjusted in a followup PR -->
 <div
     id="test-sidebar-card-small"
-    class="pointer rounded-3 col-12 border-start border-5 highlight-card bg-module padding-small"
+    class="d-flex justify-content-between rounded-3 border-start border-5 highlight-card bg-module align-items-end py-1"
     [ngClass]="!!this.sidebarItem.conversation?.hasUnreadMessage ? 'border-primary' : 'border-module'"
-    [routerLink]="itemSelected ? '../messages' : './messages'"
+    [routerLink]="itemSelected ? '../communication' : './communication'"
     [queryParams]="{ conversationId: sidebarItem?.id }"
     (click)="emitStoreAndRefresh(sidebarItem.id)"
     [routerLinkActive]="'bg-selected border-selected'"
 >
-    <div class="inline-block col-8">
+    <div class="w-75">
         <jhi-sidebar-card-item [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
     </div>
     @if (sidebarItem.conversation) {
-        <div class="inline-block pb-2">
+        <div>
             <jhi-conversation-options [conversation]="sidebarItem.conversation!" (onUpdateSidebar)="onUpdateSidebar.emit()" />
         </div>
     }

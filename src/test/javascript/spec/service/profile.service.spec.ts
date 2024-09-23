@@ -7,10 +7,10 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 
-describe('Profile Service', () => {
+describe('ProfileService', () => {
     let service: ProfileService;
     let httpMock: HttpTestingController;
 
@@ -63,7 +63,7 @@ describe('Profile Service', () => {
             name: 'Artemis',
             time: '2021-05-26T23:13:30.212Z',
             version: '5.0.0',
-            group: 'de.tum.in.www1.artemis',
+            group: 'de.tum.cit.aet.artemis',
         },
         features: ['ProgrammingExercises', 'PlagiarismChecks'],
         programmingLanguageFeatures: [
@@ -145,6 +145,7 @@ describe('Profile Service', () => {
                 },
             },
         },
+        operatorName: 'TUM',
         theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
     };
 
@@ -261,6 +262,7 @@ describe('Profile Service', () => {
             },
         },
         theiaPortalURL: 'http://theia-test.k8s.ase.cit.tum.de',
+        operatorName: 'TUM',
     };
 
     beforeEach(() => {

@@ -3,13 +3,13 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { BuildJob } from 'app/entities/build-job.model';
+import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
-import { BuildAgent } from 'app/entities/build-agent.model';
-import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { BuildAgent } from 'app/entities/programming/build-agent.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
-import { BuildConfig } from 'app/entities/build-config.model';
+import { BuildConfig } from 'app/entities/programming/build-config.model';
 
 describe('BuildAgentsService', () => {
     let service: BuildAgentsService;

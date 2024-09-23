@@ -1,5 +1,5 @@
 <div>
-    <h4>{{ (exerciseGroup.id ? 'artemisApp.examManagement.exerciseGroup.update' : 'artemisApp.examManagement.exerciseGroup.create') | artemisTranslate }}</h4>
+    <h4 jhiTranslate="{{ exerciseGroup.id ? 'artemisApp.examManagement.exerciseGroup.update' : 'artemisApp.examManagement.exerciseGroup.create' }}"></h4>
     <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
         <div class="form-group">
             <label class="form-check-label" for="title" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"></label>
@@ -10,7 +10,7 @@
             <label class="form-check-label" for="isMandatory" jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"></label>
         </div>
         <ngb-alert [type]="alertType" [dismissible]="false">
-            <span>{{ 'artemisApp.examManagement.exerciseGroup.titleInfo' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.examManagement.exerciseGroup.titleInfo"></span>
         </ngb-alert>
         <div class="mt-3">
             <button type="button" class="btn btn-secondary" (click)="previousState()"><fa-icon [icon]="faBan" />&nbsp;<span jhiTranslate="entity.action.cancel"></span></button>

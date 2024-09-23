@@ -12,12 +12,13 @@
                 }
             </div>
             <div class="status-step-content">
-                <h6 class="text-center">{{ 'artemisApp.examStatus.preparation.' + (isTestExam ? 'testExam.' : '') + 'examPreparation' | artemisTranslate }}</h6>
+                <h6 class="text-center" jhiTranslate="artemisApp.examStatus.preparation.{{ isTestExam ? 'testExam.' : '' }}examPreparation"></h6>
                 <ol>
                     <li class="d-flex align-items-center">
-                        <span>{{
-                            'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate: { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }
-                        }}</span>
+                        <span
+                            jhiTranslate="artemisApp.examStatus.preparation.configureExercises"
+                            [translateValues]="{ amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }"
+                        ></span>
                         @if (configuredExercises) {
                             <fa-icon [icon]="faCheckCircle" class="check" />
                         }
@@ -32,14 +33,14 @@
                                 <fa-icon [icon]="faCheckCircle" class="check" />
                             }
                             @if (maxPointExercises !== exam.examMaxPoints) {
-                                <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsWrong' | artemisTranslate: { points: maxPointExercises } }} </span>
+                                <span jhiTranslate="artemisApp.examStatus.preparation.testExam.maxPointsWrong" [translateValues]="{ points: maxPointExercises }"></span>
                                 <fa-icon [icon]="faTimes" class="cross" />
                             }
                         </li>
                     }
                     @if (!isTestExam) {
                         <li class="d-flex align-items-center">
-                            <span>{{ 'artemisApp.examStatus.preparation.registerStudents' | artemisTranslate: { registered: exam.numberOfExamUsers } }} </span>
+                            <span jhiTranslate="artemisApp.examStatus.preparation.registerStudents" [translateValues]="{ registered: exam.numberOfExamUsers }"></span>
                             @if (registeredStudents) {
                                 <fa-icon [icon]="faCheckCircle" class="check" />
                             }
@@ -50,22 +51,19 @@
                     }
                     @if (!isTestExam) {
                         <li class="d-flex align-items-center">
-                            <span>{{ 'artemisApp.examStatus.preparation.generateStudentExams' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.examStatus.preparation.generateStudentExams"></span>
                             <!-- If no students are registered yet, we do not want to display "0 of 0" -->
                             @if (!registeredStudents) {
-                                <span>{{ 'artemisApp.examStatus.preparation.notRegistered' | artemisTranslate }}</span>
+                                <span jhiTranslate="artemisApp.examStatus.preparation.notRegistered"></span>
                             }
                             @if (registeredStudents) {
-                                <span>
-                                    {{
-                                        'artemisApp.examStatus.preparation.registered'
-                                            | artemisTranslate
-                                                : {
-                                                      generated: numberOfGeneratedStudentExams,
-                                                      total: exam.numberOfExamUsers,
-                                                  }
-                                    }}
-                                </span>
+                                <span
+                                    jhiTranslate="artemisApp.examStatus.preparation.registered"
+                                    [translateValues]="{
+                                        generated: numberOfGeneratedStudentExams,
+                                        total: exam.numberOfExamUsers,
+                                    }"
+                                ></span>
                             }
                             @if (generatedStudentExams) {
                                 <fa-icon [icon]="faCheckCircle" class="check" />
@@ -77,7 +75,7 @@
                     }
                     @if (!isTestExam) {
                         <li class="d-flex align-items-center">
-                            <span>{{ 'artemisApp.examStatus.preparation.prepareExerciseStart' | artemisTranslate }}</span>
+                            <span jhiTranslate="artemisApp.examStatus.preparation.prepareExerciseStart"></span>
                             @if (preparedExerciseStart) {
                                 <fa-icon [icon]="faCheckCircle" class="check" />
                             }
@@ -115,13 +113,13 @@
         </div>
         <div class="status-step-content">
             <div class="text-center mb-1">
-                <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'examConduction' | artemisTranslate }}</h6>
+                <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}examConduction"></h6>
                 <b>{{ exam.startDate | artemisDate }} - {{ exam.endDate | artemisDate }}</b>
             </div>
             <!-- In case the exercise configuration is wrong, but the test eam already started, students are not able to start a test eam -->
             @if (examConductionState === examConductionStateEnum.ERROR) {
                 <div class="text-center mb-1">
-                    <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'conductionSuspended' | artemisTranslate }}</h6>
+                    <h6 jhiTranslate="artemisApp.examStatus.conduction.{{ isTestExam ? 'testExam.' : '' }}conductionSuspended"></h6>
                 </div>
             }
             @if (course?.isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR) {
@@ -179,7 +177,7 @@
                 }
             </div>
             <div class="status-step-content">
-                <h6 class="text-center">{{ 'artemisApp.examStatus.correction.examCorrection' | artemisTranslate }}</h6>
+                <h6 class="text-center" jhiTranslate="artemisApp.examStatus.correction.examCorrection"></h6>
                 @if (examChecklist) {
                     <ol>
                         @if (examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && numberOfSubmitted !== 0) {
@@ -215,9 +213,7 @@
                                 </b>
                             }
                             @if (!exam.publishResultsDate) {
-                                <b class="unset">
-                                    {{ 'artemisApp.examStatus.correction.notSet' | artemisTranslate }}
-                                </b>
+                                <b class="unset" jhiTranslate="artemisApp.examStatus.correction.notSet"></b>
                             }
                             <br />
                         </li>

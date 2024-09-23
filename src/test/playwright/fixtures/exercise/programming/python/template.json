@@ -6,7 +6,6 @@
     "assessmentDueDateError": false,
     "assessmentType": "AUTOMATIC",
     "bonusPoints": 0,
-    "checkoutSolutionRepository": false,
     "dueDateError": false,
     "exampleSolutionPublicationDateError": false,
     "exampleSolutionPublicationDateWarning": false,
@@ -36,5 +35,8 @@
     },
     "testwiseCoverageEnabled": false,
     "title": "<Insert programming exercise title here>",
-    "type": "programming"
+    "type": "programming",
+    "buildConfig": {
+        "checkoutSolutionRepository": false
+    }
 }

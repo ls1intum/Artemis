@@ -2,7 +2,7 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -10,7 +10,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { ArtemisTestModule } from '../test.module';
 import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
@@ -179,6 +179,7 @@ describe('ProgrammingExercise Service', () => {
                 solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
                 allowOnlineEditor: true,
+                allowOnlineIde: true,
                 releaseDate: undefined,
                 dueDate: undefined,
                 assessmentDueDate: undefined,
@@ -222,6 +223,7 @@ describe('ProgrammingExercise Service', () => {
                 solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
                 allowOnlineEditor: true,
+                allowOnlineIde: true,
                 releaseDate: undefined,
                 dueDate: undefined,
                 assessmentDueDate: undefined,
@@ -427,7 +429,11 @@ describe('ProgrammingExercise Service', () => {
     ])('should call correct exercise endpoint', (test) =>
         fakeAsync(() => {
             const exerciseId = 1;
-            service[test.method](exerciseId).subscribe();
+            const functionToCall = service[test.method as keyof ProgrammingExerciseService];
+            if (typeof functionToCall !== 'function') {
+                throw new Error(`Method ${test.method} does not exist on service`);
+            }
+            functionToCall.bind(service, exerciseId).apply().subscribe();
             const url = `${resourceUrl}/${exerciseId}/${test.uri}`;
             const req = httpMock.expectOne({ method: 'GET', url });
             req.flush({});

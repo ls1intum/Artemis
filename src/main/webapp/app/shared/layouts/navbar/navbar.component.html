@@ -28,7 +28,7 @@
                     }
                     @if (getImageUrl()) {
                         <span>
-                            <img [src]="getImageUrl()" class="profile-image img-circle" alt="Avatar" />
+                            <img [src]="getImageUrl()" class="profile-image img-circle rounded-3" alt="Avatar" />
                         </span>
                     }
                 </a>
@@ -36,7 +36,7 @@
                     <li>
                         <a class="dropdown-item" [routerLink]="['/user-settings']" (click)="collapseNavbar()">
                             <fa-icon [icon]="faCog" [fixedWidth]="true" />
-                            <span>{{ 'global.menu.settings' | artemisTranslate }}</span>
+                            <span jhiTranslate="global.menu.settings"></span>
                         </a>
                     </li>
                     <div class="dropdown-divider"></div>

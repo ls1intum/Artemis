@@ -1,32 +1,38 @@
 plugins {
-    id 'java'
-    id 'application'
+    id "java"
+    id "application"
 }
 
-group 'de.tum.in.www1.artemis'
-version '1.0-SNAPSHOT'
+group "de.tum.cit.aet.artemis"
+version "1.0.0"
 
 repositories {
     mavenCentral()
 }
 
-evaluationDependsOn(':')
+evaluationDependsOn(":")
 
 dependencies {
-    implementation rootProject.ext.qDoxVersionReusable
+    implementation "com.github.javaparser:javaparser-symbol-solver-core:${project.java_parser_version}"
+    implementation "com.github.javaparser:javaparser-core:${project.java_parser_version}"
+    implementation "com.github.javaparser:javaparser-core-serialization:${project.java_parser_version}"
+    implementation "com.fasterxml.jackson.core:jackson-databind:${project.fasterxml_version}"
     implementation rootProject.ext.springBootStarterWeb
+    implementation "org.slf4j:slf4j-api:${project.slf4j_version}"
+    implementation "ch.qos.logback:logback-classic:${project.logback_version}"
 }
 
-test {
-    useJUnitPlatform()
+task runEndpointParser(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "de.tum.cit.endpointanalysis.EndpointParser"
 }
 
-application {
-    mainClassName = 'de.tum.cit.endpointanalysis.AnalysisOfEndpointConnections'
+task runEndpointAnalysis(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "de.tum.cit.endpointanalysis.EndpointAnalyzer"
 }
 
-run {
-    if (project.hasProperty('appArgs')) {
-        args = project.appArgs.split(' ')
-    }
+task runRestCallAnalysis(type: JavaExec) {
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = "de.tum.cit.endpointanalysis.RestCallAnalyzer"
 }

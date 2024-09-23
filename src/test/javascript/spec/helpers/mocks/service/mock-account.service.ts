@@ -40,4 +40,6 @@ export class MockAccountService implements IAccountService {
     isAdmin = () => true;
     save = (account: any) => ({}) as any;
     addSshPublicKey = (sshPublicKey: string) => of();
+    getVcsAccessToken = (participationId: number) => of();
+    createVcsAccessToken = (participationId: number) => of();
 }

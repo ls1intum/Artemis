@@ -1,13 +1,11 @@
-<h3>{{ 'artemisApp.studentDashboard.enroll.title' | artemisTranslate }}</h3>
+<h3 jhiTranslate="artemisApp.studentDashboard.enroll.title"></h3>
 @if (loading) {
     <div>
-        <span>{{ 'artemisApp.studentDashboard.enroll.courseLoading' | artemisTranslate }}</span>
+        <span jhiTranslate="artemisApp.studentDashboard.enroll.courseLoading"></span>
     </div>
 } @else {
     <h4>{{ course?.title }}</h4>
-    <p>
-        {{ 'artemisApp.studentDashboard.enroll.notInCourseButCanEnroll' | artemisTranslate }}
-    </p>
+    <p jhiTranslate="artemisApp.studentDashboard.enroll.notInCourseButCanEnroll"></p>
     <jhi-course-prerequisites-button [course]="course!" />
     <jhi-course-registration-button [course]="course!" (onRegistration)="redirectToCoursePage()" />
 }

@@ -9,7 +9,6 @@
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
             "softDueDate": "Empfohlen bis",
-            "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
             "optional": "Optional",
             "optionalDescription": "Optionale Kompetenzen müssen nicht absolviert werden um den Lernpfad zu vervollständigen. Sie dienen entweder als zusätzliche Übung oder gehen über die erwarteten Inhalte des Kurses hinaus.",
             "course": "Kurs",
@@ -28,27 +27,10 @@
                 "MORE_HARD_POINTS": "Da ein größerer Anteil deiner Punkte aus schwierigen Aufgaben kommt, ist die Kompetenzbeherrschung höher als der Fortschritt",
                 "QUICKLY_SOLVED_EXERCISES": "Da du Aufgaben schnell gelöst hast, ist die Kompetenzbeherrschung höher als der Fortschritt"
             },
-            "taxonomies": {
-                "REMEMBER": "Erinnern",
-                "UNDERSTAND": "Verstehen",
-                "APPLY": "Anwenden",
-                "ANALYZE": "Analysieren",
-                "EVALUATE": "Evaluieren",
-                "CREATE": "Erstellen",
-                "none": "Keine Taxonomie"
-            },
-            "keywords": {
-                "REMEMBER": "definieren, duplizieren, auflisten, notieren, wiederholen, erkennen, reproduzieren, benennen",
-                "UNDERSTAND": "klassifizieren, beschreiben, erörtern, erklären, identifizieren, lokalisieren, erkennen, berichten, angeben, wählen, übersetzen",
-                "APPLY": "ausführen, implementieren, lösen, benutzen, demonstrieren, illustrieren, arbeiten, festlegen, zeigen, skizzieren",
-                "ANALYZE": "differenzieren, untersuchen, experimentieren, hinterfragen, beziehen, testen, zerlegen, kontrastieren, unterscheiden",
-                "EVALUATE": "beurteilen, argumentieren, wählen, verteidigen, bewerten, auswählen, unterstützen, einschätzen, kritisieren",
-                "CREATE": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
-            },
             "table": {
                 "panelHeader": "Deine Fortentwicklung"
             },
-            "manageCompetencies": {
+            "manage": {
                 "title": "Kompetenzmanagement",
                 "importButton": "Kompetenzen importieren",
                 "importFromCoursesButton": "Aus anderen Kursen importieren",
@@ -93,7 +75,7 @@
                 "saveModalTitle": "Speichern bestätigen",
                 "saveModalText": "Du hast nicht alle Empfehlungen angesehen, möchtest du trotzdem fortfahren?",
                 "errorWarning": "Speichern nicht möglich, weil fehlerhafte Kompetenzen vorliegen",
-                "loading": "Generiere Kompetenzvorschläge... Das kann eine Weile dauern.",
+                "loading": "Generiere Kompetenzvorschläge...",
                 "courseDescription": {
                     "title": "Kursbeschreibung eingeben",
                     "placeholder": "Bitte gib eine Kursbeschreibung ein",
@@ -104,7 +86,7 @@
                     "regenerateTooltip": "Zusätzliche Kompetenzvorschläge generieren",
                     "infoTooltip": "Gib eine Beschreibung ein, die sich auf den theoretischen/praktischen Inhalt und Lernziele des Kurses fokussiert. Iris generiert daraus Vorschläge für Kompetenzen, die du in deinen Kurs einfügen könntest.",
                     "success": "{{ noOfCompetencies }} Kompetenzvorschläge generiert.",
-                    "warning": "Keine Kompetenzvorschläge generiert. Versuche, eine ausführlichere Kursbeschreibung zu verwenden. Wenn das Problem weiterhin besteht, wende dich an die Administratoren."
+                    "warning": "Keine Kompetenzvorschläge generiert. Wenn das Problem weiterhin besteht, wende dich an die Administratoren."
                 }
             },
             "importAll": {
@@ -119,34 +101,17 @@
                 "success": "{{ noOfCompetencies }} Kompetezen aus dem Kurs \"{{ courseTitle }}\" importiert.",
                 "warning": "Es wurden keine Kompetenzen für den Kurs \"{{ courseTitle }}\" gefunden."
             },
-            "createCompetency": {
+            "create": {
                 "title": "Erstelle eine neue Kompetenz",
                 "titlePlaceholder": "Gib der Kompetenz einen Titel",
                 "titleRequiredValidationError": "Eine Kompetenz braucht einen Titel",
                 "titleMaxLengthValidationError": "Der Titel einer Kompetenz ist auf maximal {{max}} Symbole beschränkt",
-                "titleUniqueValidationError": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs",
                 "descriptionMaxLengthValidationError": "Die Beschreibung der Kompetenz ist auf maximal {{max}} Symbole beschränkt",
                 "softDueDate": "Empfohlenes Fertigstellungsdatum",
                 "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Kompetenz gemeistert haben sollten. Dies ist keine harte Frist.",
-                "suggestedTaxonomy": "Vorschlag",
-                "averageStudentScore": "Durchschnittliche Bewertung der Studierenden",
-                "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungseinheiten",
-                "selectLecture": "Wähle eine Vorlesung aus",
-                "noLectures": "Dieser Kurs hat keine Vorlesungen",
-                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
-                "lectureUnitTable": {
-                    "type": "Typ",
-                    "name": "Vorlesungseinheit",
-                    "releaseDate": "Veröffentlichungsdatum",
-                    "lecture": "Vorlesung",
-                    "scoreAchievedByStudent": "Deine Bewertung",
-                    "averageScoreAchievedByStudent": "Durchschnittliche Bewertung für Teilnehmende",
-                    "totalPointsAchievable": "Erreichbare Punkte",
-                    "noOfParticipants": "Anzahl der Teilnehmenden",
-                    "participationRate": "Teilnahmerate"
-                }
+                "connectWithLectureUnits": "Verbinde die Kompetenz mit Vorlesungseinheiten"
             },
-            "editCompetency": {
+            "edit": {
                 "title": "Bearbeite eine Kompetenz"
             },
             "link": {
@@ -204,12 +169,57 @@
             "course": "Kurs",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
-            "softDueDate": "Empfohlen bis"
+            "softDueDate": "Empfohlen bis",
+            "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
+            "manage": {
+                "importAllButton": "Alles eines Kurses importieren"
+            },
+            "taxonomies": {
+                "REMEMBER": "Erinnern",
+                "UNDERSTAND": "Verstehen",
+                "APPLY": "Anwenden",
+                "ANALYZE": "Analysieren",
+                "EVALUATE": "Evaluieren",
+                "CREATE": "Erstellen",
+                "none": "Keine Taxonomie"
+            },
+            "keywords": {
+                "REMEMBER": "definieren, duplizieren, auflisten, notieren, wiederholen, erkennen, reproduzieren, benennen",
+                "UNDERSTAND": "klassifizieren, beschreiben, erörtern, erklären, identifizieren, lokalisieren, erkennen, berichten, angeben, wählen, übersetzen",
+                "APPLY": "ausführen, implementieren, lösen, benutzen, demonstrieren, illustrieren, arbeiten, festlegen, zeigen, skizzieren",
+                "ANALYZE": "differenzieren, untersuchen, experimentieren, hinterfragen, beziehen, testen, zerlegen, kontrastieren, unterscheiden",
+                "EVALUATE": "beurteilen, argumentieren, wählen, verteidigen, bewerten, auswählen, unterstützen, einschätzen, kritisieren",
+                "CREATE": "entwerfen, formulieren, postulieren, erfinden, planen, bieten, schreiben, konstruieren, entwickeln"
+            },
+            "create": {
+                "titleUniqueValidationError": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs",
+                "suggestedTaxonomy": "Vorschlag",
+                "averageMastery": "Durchschnittliche Kompetenzbeherrschung der Studierenden",
+                "selectLecture": "Wähle eine Vorlesung aus",
+                "noLectures": "Dieser Kurs hat keine Vorlesungen",
+                "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
+                "lectureUnitTable": {
+                    "type": "Typ",
+                    "name": "Vorlesungseinheit",
+                    "releaseDate": "Veröffentlichungsdatum",
+                    "lecture": "Vorlesung",
+                    "scoreAchievedByStudent": "Deine Bewertung",
+                    "averageScoreAchievedByStudent": "Durchschnittliche Bewertung für Teilnehmende",
+                    "totalPointsAchievable": "Erreichbare Punkte",
+                    "noOfParticipants": "Anzahl der Teilnehmenden",
+                    "participationRate": "Teilnahmerate"
+                }
+            }
         },
         "prerequisite": {
             "title": "Voraussetzungen",
-            "empty": "Es existieren keine Voraussetzungen für diesen Kurs",
+            "created": "Voraussetzungen erstellt",
+            "deleted": "Voraussetzungen gelöscht",
+            "updated": "Voraussetzungen bearbeitet",
+            "optional": "Optional",
+            "optionalDescription": "Optionale Voraussetzungen müssen nicht absolviert werden um den Lernpfad zu vervollständigen. Sie dienen entweder als zusätzliche Übung oder gehen über die erwarteten Inhalte des Kurses hinaus.",
             "manage": {
+                "title": "Voraussetzungsmanagement",
                 "createButton": "Voraussetzung erstellen",
                 "importButton": "Voraussetzungen importieren",
                 "importFromCoursesButton": "Aus anderen Kursen importieren",
@@ -217,7 +227,10 @@
                 "delete": {
                     "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
                     "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der Voraussetzung ein."
-                }
+                },
+                "importAllButton": "Alle Voraussetzungen eines Kurses importieren",
+                "importStandardizedButton": "Standardisierte Kompetenzen importieren",
+                "empty": "Es existieren keine Voraussetzungen für diesen Kurs"
             },
             "import": {
                 "title": "Voraussetzungen importieren",
@@ -228,17 +241,21 @@
             "create": {
                 "title": "Erstelle eine neue Voraussetzung",
                 "titlePlaceholder": "Gib der Voraussetzung einen Titel",
-                "softDueDateTooltip": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Voraussetzung gemeistert haben sollten. Dies ist keine harte Frist.",
-                "suggestedTaxonomy": "Vorschlag",
-                "error": {
-                    "titleRequired": "Eine Voraussetzung braucht einen Titel",
-                    "titleMaxLength": "Der Titel einer Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
-                    "descriptionMaxLength": "Die Beschreibung der Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
-                    "titleUnique": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs"
-                }
+                "titleRequiredValidationError": "Eine Voraussetzung braucht einen Titel",
+                "titleMaxLengthValidationError": "Der Titel einer Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
+                "descriptionMaxLengthValidationError": "Die Beschreibung der Voraussetzung ist auf maximal {{max}} Symbole beschränkt",
+                "softDueDate": "Empfohlenes Fertigstellungsdatum",
+                "softDueDateHint": "Empfehle einen Zeitpunkt zu dem die Studierenden diese Voraussetzung gemeistert haben sollten. Dies ist keine harte Frist.",
+                "connectWithLectureUnits": "Verbinde die Voraussetzung mit Vorlesungseinheiten"
             },
             "edit": {
                 "title": "Bearbeite eine Voraussetzung"
+            },
+            "competencyCard": {
+                "delete": {
+                    "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen der Voraussetzung ein."
+                }
             }
         },
         "learningPath": {

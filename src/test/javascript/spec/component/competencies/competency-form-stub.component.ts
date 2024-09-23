@@ -1,13 +1,28 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { CompetencyFormData } from 'app/course/competencies/competency-form/competency-form.component';
 import { Lecture } from 'app/entities/lecture.model';
+import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 
-@Component({ selector: 'jhi-competency-form', template: '' })
+@Component({ selector: 'jhi-competency-form', standalone: true, template: '' })
 export class CompetencyFormStubComponent {
-    @Input() formData: CompetencyFormData;
-    @Input() courseId: number;
-    @Input() isEditMode = false;
-    @Input() lecturesOfCourseWithLectureUnits: Lecture[] = [];
-    @Input() averageStudentScore?: number;
-    @Output() formSubmitted: EventEmitter<CompetencyFormData> = new EventEmitter<CompetencyFormData>();
+    @Input()
+    formData: CourseCompetencyFormData;
+    @Input()
+    isEditMode = false;
+    @Input()
+    isInConnectMode = false;
+    @Input()
+    isInSingleLectureMode = false;
+    @Input()
+    courseId: number;
+    @Input()
+    lecturesOfCourseWithLectureUnits: Lecture[] = [];
+    @Input()
+    averageStudentScore?: number;
+    @Input()
+    hasCancelButton: boolean;
+
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
+    @Output()
+    formSubmitted: EventEmitter<CourseCompetencyFormData> = new EventEmitter<CourseCompetencyFormData>();
 }

@@ -1,28 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { Lecture } from 'app/entities/lecture.model';
-import { EditCompetencyComponent } from 'app/course/competencies/edit-competency/edit-competency.component';
+import { EditCompetencyComponent } from 'app/course/competencies/edit/edit-competency.component';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { Competency, CourseCompetencyProgress } from 'app/entities/competency.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyFormStubComponent } from './competency-form-stub.component';
 import { ArtemisTestModule } from '../../test.module';
+import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 describe('EditCompetencyComponent', () => {
     let editCompetencyComponentFixture: ComponentFixture<EditCompetencyComponent>;
     let editCompetencyComponent: EditCompetencyComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [CompetencyFormStubComponent, EditCompetencyComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, EditCompetencyComponent, CompetencyFormStubComponent],
+            declarations: [],
             providers: [
                 MockProvider(LectureService),
                 MockProvider(CompetencyService),
@@ -56,6 +58,10 @@ describe('EditCompetencyComponent', () => {
             ],
             schemas: [],
         })
+            .overrideModule(ArtemisMarkdownEditorModule, {
+                remove: { exports: [MarkdownEditorMonacoComponent] },
+                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
+            })
             .compileComponents()
             .then(() => {
                 editCompetencyComponentFixture = TestBed.createComponent(EditCompetencyComponent);
@@ -111,9 +117,7 @@ describe('EditCompetencyComponent', () => {
         const findAllByCourseSpy = jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
 
         editCompetencyComponentFixture.detectChanges();
-        const competencyFormStubComponent: CompetencyFormStubComponent = editCompetencyComponentFixture.debugElement.query(
-            By.directive(CompetencyFormStubComponent),
-        ).componentInstance;
+        const competencyFormComponent = editCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormComponent)).componentInstance;
         expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(getCourseProgressSpy).toHaveBeenCalledOnce();
         expect(findAllByCourseSpy).toHaveBeenCalledOnce();
@@ -123,7 +127,7 @@ describe('EditCompetencyComponent', () => {
         expect(editCompetencyComponent.formData.optional).toEqual(competencyOfResponse.optional);
         expect(editCompetencyComponent.formData.connectedLectureUnits).toEqual(competencyOfResponse.lectureUnits);
         expect(editCompetencyComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
-        expect(competencyFormStubComponent.formData).toEqual(editCompetencyComponent.formData);
+        expect(competencyFormComponent.formData).toEqual(editCompetencyComponent.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
@@ -179,7 +183,7 @@ describe('EditCompetencyComponent', () => {
         const updatedSpy = jest.spyOn(competencyService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        const competencyForm: CompetencyFormStubComponent = editCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormStubComponent)).componentInstance;
+        const competencyForm = editCompetencyComponentFixture.debugElement.query(By.directive(CompetencyFormComponent)).componentInstance;
         competencyForm.formSubmitted.emit({
             title: changedUnit.title,
             description: changedUnit.description,

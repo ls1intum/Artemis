@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="input-group mb-1 rounded-2 p-2 me-2 module-bg" [hidden]="!isCodeOfConductAccepted">
+    <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg" [hidden]="!isCodeOfConductAccepted">
         <!-- search bar -->
         <input
             #courseWideSearchInput
@@ -17,9 +17,7 @@
     @if (course && isCodeOfConductAccepted === false) {
         <div class="module-bg px-3 py-3 code-of-conduct">
             <jhi-course-conversations-code-of-conduct [course]="course!" />
-            <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()">
-                {{ 'artemisApp.codeOfConduct.accept' | artemisTranslate }}
-            </button>
+            <button id="acceptCodeOfConductButton" class="btn btn-primary" type="button" (click)="acceptCodeOfConduct()" jhiTranslate="artemisApp.codeOfConduct.accept"></button>
         </div>
     }
     @if (isCodeOfConductAccepted && isServiceSetUp && course) {
@@ -42,15 +40,24 @@
                     <jhi-course-conversations-code-of-conduct [course]="course!" />
                 </div>
             }
-            <div class="col pe-0 flex-grow-1 module-bg" [ngClass]="{ 'card-border': true }" style="min-width: 200px">
+            <div class="col flex-grow-1 module-bg rounded-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }" style="min-width: 200px">
                 @if (activeConversation) {
-                    <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" />
-                    <jhi-conversation-messages (openThread)="postInThread = $event" [course]="course" [searchbarCollapsed]="channelSearchCollapsed" />
+                    <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" (onUpdateSidebar)="prepareSidebarData()" />
+                    <jhi-conversation-messages
+                        [contentHeightDev]="!isProduction || isTestServer"
+                        (openThread)="postInThread = $event"
+                        [course]="course"
+                        [searchbarCollapsed]="channelSearchCollapsed"
+                    />
                 } @else {
                     <jhi-course-wide-search (openThread)="postInThread = $event" [courseWideSearchConfig]="courseWideSearchConfig" />
                 }
             </div>
-            <div class="col d-flex flex-grow-1 justify-end px-0 card-border" style="max-width: min-content">
+            <div
+                class="col d-flex flex-grow-1 justify-end px-0 scrollable-content"
+                [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
+                style="max-width: min-content"
+            >
                 @if (!!postInThread) {
                     <jhi-conversation-thread-sidebar
                         [activeConversation]="activeConversation ?? postInThread.conversation!"

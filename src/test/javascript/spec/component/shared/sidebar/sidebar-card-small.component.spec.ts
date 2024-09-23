@@ -84,7 +84,7 @@ describe('SidebarCardSmallComponent', () => {
         expect(mockFn).toHaveBeenCalledWith('testId');
         expect(router.navigateByUrl).toHaveBeenCalled();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('../messages');
+        expect(navigationArray).toBe('../communication');
     });
 
     it('should navigate to the when no item was selected before', async () => {
@@ -98,6 +98,6 @@ describe('SidebarCardSmallComponent', () => {
         expect(mockFn).toHaveBeenCalledWith('testId');
         expect(router.navigateByUrl).toHaveBeenCalled();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
-        expect(navigationArray).toBe('./messages');
+        expect(navigationArray).toBe('./communication');
     });
 });

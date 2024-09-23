@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
 import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
@@ -28,10 +28,16 @@ test.describe('Programming exercise participation', () => {
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
     });
 
     const testCases = [
-        { description: 'Makes a failing Java submission', programmingLanguage: ProgrammingLanguage.JAVA, submission: javaBuildErrorSubmission, commitMessage: 'Initial commit' },
+        {
+            description: 'Makes a failing Java submission',
+            programmingLanguage: ProgrammingLanguage.JAVA,
+            submission: javaBuildErrorSubmission,
+            commitMessage: 'Initial commit',
+        },
         {
             description: 'Makes a partially successful Java submission',
             programmingLanguage: ProgrammingLanguage.JAVA,
@@ -234,6 +240,7 @@ async function makeGitExerciseSubmission(
         repoUrl = repoUrl.replace('localhost', 'artemis-app');
     }
     repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+    repoUrl = repoUrl.replace(`:**********`, ``);
     const urlParts = repoUrl.split('/');
     const repoName = urlParts[urlParts.length - 1];
     const exerciseRepo = await gitClient.cloneRepo(repoUrl, repoName);

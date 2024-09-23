@@ -118,14 +118,22 @@
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
-                "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
-                "alert": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "offlineIde": "IDE",
+            "allowOnlineIde": {
+                "title": "Online-IDE erlauben",
+                "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein.",
+                "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
+            },
+            "onlineIde": "Online IDE",
             "showTestNamesToStudents": "Zeige die Test Namen den Studierenden",
             "showTestNamesToStudentsTooltip": "Durch Aktivierung dieser Option werden die Namen der automatischen Tests den Studierenden angezeigt. Lasse die Option deaktiviert, um keine visuelle Unterscheidung zwischen manuellem und automatischem Feedback für die Studierenden vorzunehmen.",
             "participationMode": "Teilnahmemodus",
@@ -170,6 +178,11 @@
             "projectType": "Projekttyp",
             "testRepositoryProjectType": "Projekttyp des Test-Repository",
             "packageName": "Package-Name",
+            "theiaImage": {
+                "title": "Konfiguration für Online IDE",
+                "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
+                "alert": "Es muss eine gültige Konfiguration für die Online IDE ausgewählt werden."
+            },
             "appName": "App-Name",
             "templateResult": "Ergebnis der Vorlage",
             "solutionResult": "Ergebnis der Musterlösung",
@@ -260,7 +273,8 @@
                     "settingNegative": "Der Testfall {{testCase}} darf keine Einstellungen mit negativen Werten haben."
                 },
                 "categories": {
-                    "title": "Code-Analyse-Kategorien",
+                    "titleHeader": "Quelltext-Analyse",
+                    "title": "Quelltext-Analyse-Kategorien",
                     "notGraded": "Nicht bewertet.",
                     "noFeedback": "Ohne sichtbares Feedback.",
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
@@ -305,6 +319,17 @@
                     "resultingPoints": "Resultierende Punkte",
                     "testType": "Type",
                     "passedPercent": "Bestanden %"
+                },
+                "feedbackAnalysis": {
+                    "titleHeader": "Feedback Analyse",
+                    "title": "Fehleranalyse für {{exerciseTitle}}",
+                    "occurrence": "Häufigkeit",
+                    "feedback": "Feedback",
+                    "task": "Aufgabe",
+                    "testcase": "Testfall",
+                    "errorCategory": "Fehlerkategorie",
+                    "totalItems": "Insgesamt {{count}} Elemente",
+                    "error": "Beim Laden des Feedback ist ein Fehler aufgetreten."
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
@@ -632,6 +657,19 @@
                 "template": "Vorlage",
                 "history": "Commit-Historie",
                 "result": "Ergebnis"
+            },
+            "otherLanguageHints": {
+                "title": "Führe folgende Schritte aus, um eine andere Sprache zu benutzen. Siehe die <a href=\"{{documentationLink}}\">Dokumentation</a> für Details.",
+                "setImage": "Lege ein angepasstes Docker Image mit benötigten Abhängigkeiten fest (erstelle möglicherweise ein eigenes und lade es in die <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> oder auf den <a href=\"{{dockerhubLink}}\">Docker Hub</a> hoch).",
+                "buildScript": {
+                    "title": "Passe das Build Skript an:",
+                    "dependencies": "Optional: Installiere aufgabenspezifische Abhängigkeiten.",
+                    "runTests": "Führe alle Tests aus. Sie sollten JUnit XML Dateien generieren.",
+                    "moveResults": "Bewege die XML Dateien in das <code>{{resultsDirectory}}</code> Verzeichnis."
+                },
+                "pushExercise": "Lade den Aufgaben-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt.",
+                "pushSolution": "Lade den Lösungs-Code in das entsprechende Repository. Es wird nicht ausgecheckt.",
+                "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
             }
         },
         "error": {

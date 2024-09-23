@@ -7,6 +7,7 @@ Coding and design guidelines
    :includehidden:
    :maxdepth: 3
 
+   guidelines/performance
    guidelines/server
    guidelines/server-tests
    guidelines/client

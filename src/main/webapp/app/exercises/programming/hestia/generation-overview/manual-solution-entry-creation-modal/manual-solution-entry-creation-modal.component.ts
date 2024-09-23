@@ -1,18 +1,20 @@
-import { Component, EventEmitter, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
 import { Subject } from 'rxjs';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/exercise-hint/services/programming-exercise-solution-entry.service';
+import { SolutionEntryComponent } from 'app/exercises/shared/exercise-hint/shared/solution-entry.component';
 
 @Component({
     selector: 'jhi-manual-solution-entry-creation-modal',
     templateUrl: './manual-solution-entry-creation-modal.component.html',
 })
 export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDestroy {
+    @ViewChild('solutionEntryComponent', { static: false }) solutionEntryComponent: SolutionEntryComponent;
+
     solutionEntry = new ProgrammingExerciseSolutionEntry();
 
     exerciseId: number;
@@ -27,7 +29,6 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
 
     constructor(
         private activeModal: NgbActiveModal,
-        private service: CodeHintService,
         private exerciseService: ProgrammingExerciseService,
         private solutionEntryService: ProgrammingExerciseSolutionEntryService,
     ) {
@@ -56,6 +57,14 @@ export class ManualSolutionEntryCreationModalComponent implements OnInit, OnDest
             },
             error: (error) => this.dialogErrorSource.error(error.message),
         });
+    }
+
+    /**
+     * Updates the solution entry editor to refer to the correct file path.
+     * In particular, this updates the syntax highlighting of the editor.
+     */
+    onUpdateFilePath(): void {
+        this.solutionEntryComponent.setupEditor();
     }
 
     clear() {

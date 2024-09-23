@@ -33,8 +33,8 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
         this.fitTextParent = this.fitTextElement.parentElement!;
         this.computed = window.getComputedStyle(this.fitTextElement);
         this.newlines = this.fitTextElement.childElementCount > 0 ? this.fitTextElement.childElementCount : 1;
-        this.lineHeight = this.computed['line-height'];
-        this.display = this.computed['display'];
+        this.lineHeight = this.computed.lineHeight;
+        this.display = this.computed.display;
     }
 
     @HostListener('window:resize')
@@ -45,8 +45,8 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
     };
 
     public ngOnInit() {
-        this.fitTextMinFontSize = this.minFontSize === 'inherit' ? this.computed['font-size'] : this.minFontSize;
-        this.fitTextMaxFontSize = this.maxFontSize === 'inherit' ? this.computed['font-size'] : this.maxFontSize;
+        this.fitTextMinFontSize = this.minFontSize === 'inherit' ? Number(this.computed.fontSize) : this.minFontSize!;
+        this.fitTextMaxFontSize = this.maxFontSize === 'inherit' ? Number(this.computed.fontSize) : this.maxFontSize!;
     }
 
     public ngAfterViewInit() {
