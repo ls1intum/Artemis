@@ -163,7 +163,7 @@
                     "purgeExisting": {
                         "label": "Purge existing",
                         "badge": "dangerous",
-                        "explanation": "Before importing all of the teams from the source exercise above, all existing teams and their participation in this exercise will be deleted."
+                        "explanation": "Before importing all the teams from the source exercise above, all existing teams and their participation in this exercise will be deleted."
                     },
                     "createOnly": {
                         "label": "Create only",
