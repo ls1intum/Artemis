@@ -192,9 +192,9 @@ Using Docker
 
 **Docker Compose Files**
 
-- **Development**: ``docker-compose/pyris-dev.yml``
-- **Production with Nginx**: ``docker-compose/pyris-production.yml``
-- **Production without Nginx**: ``docker-compose/pyris-production-internal.yml``
+- **Development**: ``docker/pyris-dev.yml``
+- **Production with Nginx**: ``docker/pyris-production.yml``
+- **Production without Nginx**: ``docker/pyris-production-internal.yml``
 
 **Setup Instructions**
 
@@ -208,7 +208,7 @@ Using Docker
 
      .. code-block:: bash
 
-        docker-compose -f docker-compose/pyris-dev.yml up --build
+        docker-compose -f docker/pyris-dev.yml up --build
 
      - Builds the Pyris application.
      - Starts Pyris and Weaviate in development mode.
@@ -231,7 +231,7 @@ Using Docker
 
       .. code-block:: bash
 
-         docker-compose -f docker-compose/pyris-production.yml up -d
+         docker compose -f docker/pyris-production.yml up -d
 
       - Pulls the latest Pyris image.
       - Starts Pyris, Weaviate, and Nginx.
@@ -247,7 +247,7 @@ Using Docker
 
       .. code-block:: bash
 
-         docker-compose -f docker-compose/pyris-production-internal.yml up -d
+         docker compose -f docker/pyris-production-internal.yml up -d
 
       - Pulls the latest Pyris image.
       - Starts Pyris and Weaviate.
@@ -262,7 +262,7 @@ Using Docker
 
      .. code-block:: bash
 
-        docker-compose -f <compose-file> down
+        docker compose -f <compose-file> down
 
      Replace ``<compose-file>`` with the appropriate Docker Compose file.
 
@@ -270,13 +270,13 @@ Using Docker
 
      .. code-block:: bash
 
-        docker-compose -f <compose-file> logs -f <service-name>
+        docker compose -f <compose-file> logs -f <service-name>
 
      Example:
 
      .. code-block:: bash
 
-        docker-compose -f docker-compose/pyris-dev.yml logs -f pyris-app
+        docker compose -f docker-compose/pyris-dev.yml logs -f pyris-app
 
    - **Rebuild Containers**
 
@@ -284,7 +284,7 @@ Using Docker
 
      .. code-block:: bash
 
-        docker-compose -f <compose-file> up --build
+        docker compose -f <compose-file> up --build
 
 3. **Customizing Configuration**
 
