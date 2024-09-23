@@ -259,7 +259,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-
+    implementation "com.google.protobuf:protobuf-java:4.28.2"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
