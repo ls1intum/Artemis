@@ -12,8 +12,10 @@
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
             "cardExerciseLabel": "Next Exercise:",
-            "oldCourses": "Looking for old courses? Click",
-            "here": "here",
+            "archive": {
+                "oldCourses": "Looking for old courses? Click",
+                "here": "here"
+            },
             "enroll": {
                 "title": "Course Enrollment",
                 "enrollSuccessful": "Enrollment successful",

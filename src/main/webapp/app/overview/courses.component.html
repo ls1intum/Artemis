@@ -61,9 +61,8 @@
 }
 @if (coursesLoaded) {
     <div class="d-flex justify-content-center mt-3">
-        <div>
-            {{ 'artemisApp.studentDashboard.oldCourses' | artemisTranslate }}
-            <a [routerLink]="['/courses/archive']"> {{ 'artemisApp.studentDashboard.here' | artemisTranslate }}</a>
-        </div>
+        <div jhiTranslate="artemisApp.studentDashboard.archive.oldCourses"></div>
+        <div>&nbsp;</div>
+        <a [routerLink]="['/courses/archive']" jhiTranslate="artemisApp.studentDashboard.archive.here"></a>
     </div>
 }

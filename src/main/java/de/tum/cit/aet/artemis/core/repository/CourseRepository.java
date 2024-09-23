@@ -542,4 +542,16 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     boolean hasLearningPathsEnabled(@Param("courseId") long courseId);
 
+    @Query("""
+            SELECT DISTINCT c
+            FROM Course c
+            JOIN UserGroup ug ON c.studentGroupName = ug.group
+                                OR c.teachingAssistantGroupName = ug.group
+                                OR c.editorGroupName = ug.group
+                                OR c.instructorGroupName = ug.group
+            WHERE (ug.userId = :userId OR :isAdmin = TRUE)
+              AND c.semester IS NOT NULL
+            """)
+    List<Course> findCoursesForUserRolesWithNonNullSemester(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin);
+
 }

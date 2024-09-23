@@ -12,8 +12,10 @@
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
-            "oldCourses": "Suchst du nach alten Kursen? Klicke",
-            "here": "hier",
+            "archive": {
+                "oldCourses": "Suchst du nach alten Kursen? Klicke",
+                "here": "hier"
+            },
             "enroll": {
                 "title": "Kurseinschreibung",
                 "enrollSuccessful": "Einschreibung erfolgreich",

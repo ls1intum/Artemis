@@ -13,7 +13,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
 
 @Component({
-    selector: 'course-archive',
+    selector: 'jhi-course-archive',
     templateUrl: './course-archive.component.html',
     styleUrls: ['./course-archive.component.scss'],
     standalone: true,
