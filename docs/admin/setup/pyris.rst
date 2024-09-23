@@ -251,7 +251,7 @@ Using Docker
 
      .. code-block:: bash
 
-        docker-compose -f docker/pyris-dev.yml up --build
+        docker compose -f docker/pyris-dev.yml up --build
 
      - Builds the Pyris application.
      - Starts Pyris and Weaviate in development mode.
@@ -319,7 +319,7 @@ Using Docker
 
      .. code-block:: bash
 
-        docker compose -f docker-compose/pyris-dev.yml logs -f pyris-app
+        docker compose -f docker/pyris-dev.yml logs -f pyris-app
 
    - **Rebuild Containers**
 
@@ -349,7 +349,6 @@ Using Docker
      - **Pyris Configuration**: Update ``application.yml`` and ``llm-config.yml``.
      - **Weaviate Configuration**: Adjust settings in ``weaviate.yml``.
      - **Nginx Configuration**: Modify Nginx settings in ``nginx.yml`` and related config files.
-
 Troubleshooting
 ---------------
 
