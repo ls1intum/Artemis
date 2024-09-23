@@ -34,6 +34,12 @@ Local Environment Setup
 
 2. **Install Dependencies**
 
+   Navigate to the Pyris directory:
+
+   .. code-block:: bash
+
+      cd Pyris
+
    Install the required Python packages:
 
    .. code-block:: bash
