@@ -424,54 +424,52 @@ public class SharedQueueProcessingService {
                 scheduledFuture.cancel(false);
             }
             updateLocalBuildAgentInformation();
+
+            log.info("Gracefully cancelling running build jobs");
+
+            Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
+            if (runningBuildJobIds.isEmpty()) {
+                log.info("No running build jobs to cancel");
+            }
+            else {
+                List<CompletableFuture<BuildResult>> runningFuturesWrapper = runningBuildJobIds.stream().map(buildJobManagementService::getRunningBuildJobFutureWrapper)
+                        .filter(Objects::nonNull).toList();
+
+                if (!runningFuturesWrapper.isEmpty()) {
+                    CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
+
+                    try {
+                        allFuturesWrapper.get(pauseGracePeriodSeconds, TimeUnit.SECONDS);
+                        log.info("All running build jobs finished during grace period");
+                    }
+                    catch (TimeoutException e) {
+                        handleTimeoutAndCancelRunningJobs();
+                    }
+                    catch (InterruptedException | ExecutionException e) {
+                        log.error("Error while waiting for running build jobs to finish", e);
+                    }
+                }
+            }
         }
         finally {
             pauseResumeLock.unlock();
         }
+    }
 
-        log.info("Gracefully cancelling running build jobs");
-
-        Set<String> runningBuildJobIds = buildJobManagementService.getRunningBuildJobIds();
-        if (runningBuildJobIds.isEmpty()) {
-            log.info("No running build jobs to cancel");
+    private void handleTimeoutAndCancelRunningJobs() {
+        if (!isPaused) {
+            log.info("Build agent was resumed before the build jobs could be cancelled");
+            return;
         }
-        else {
-            List<CompletableFuture<BuildResult>> runningFuturesWrapper = runningBuildJobIds.stream().map(buildJobManagementService::getRunningBuildJobFutureWrapper)
-                    .filter(Objects::nonNull).toList();
+        log.info("Grace period exceeded. Cancelling running build jobs.");
 
-            if (!runningFuturesWrapper.isEmpty()) {
-                CompletableFuture<Void> allFuturesWrapper = CompletableFuture.allOf(runningFuturesWrapper.toArray(new CompletableFuture[0]));
-
-                try {
-                    allFuturesWrapper.get(pauseGracePeriodSeconds, TimeUnit.SECONDS);
-                    log.info("All running build jobs finished during grace period");
-                }
-                catch (TimeoutException e) {
-                    if (!isPaused) {
-                        log.info("Build agent was resumed before the build jobs could be cancelled");
-                        return;
-                    }
-                    pauseResumeLock.lock();
-                    try {
-                        log.info("Grace period exceeded. Cancelling running build jobs.");
-
-                        processResults = false;
-                        Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
-                        List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = processingJobs.getAll(runningBuildJobIdsAfterGracePeriod).values().stream().toList();
-                        runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
-                        queue.addAll(runningBuildJobsAfterGracePeriod);
-                        log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIdsAfterGracePeriod);
-                        log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
-                    }
-                    finally {
-                        pauseResumeLock.unlock();
-                    }
-                }
-                catch (InterruptedException | ExecutionException e) {
-                    log.error("Error while waiting for running build jobs to finish", e);
-                }
-            }
-        }
+        processResults = false;
+        Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
+        List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = processingJobs.getAll(runningBuildJobIdsAfterGracePeriod).values().stream().toList();
+        runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
+        queue.addAll(runningBuildJobsAfterGracePeriod);
+        log.info("Cancelled running build jobs and added them back to the queue with Ids {}", runningBuildJobIdsAfterGracePeriod);
+        log.debug("Cancelled running build jobs: {}", runningBuildJobsAfterGracePeriod);
     }
 
     private void resumeBuildAgent() {
