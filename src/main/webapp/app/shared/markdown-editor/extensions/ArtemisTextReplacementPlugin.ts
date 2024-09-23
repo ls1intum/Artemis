@@ -7,14 +7,10 @@ import type { PluginSimple } from 'markdown-it';
 export abstract class ArtemisTextReplacementPlugin {
     getExtension(): PluginSimple {
         return (md: MarkdownIt): void => {
-            // Override the `render` method to process the raw Markdown text before tokenizing
-            const originalRender = md.render.bind(md);
-            md.render = (markdownText: string, ...args) => {
+            md.core.ruler.before('normalize', 'artemis_text_replacement', (state) => {
                 // Perform the replacement on the raw markdown text
-                const modifiedText = this.replaceText(markdownText);
-                // Call the original render method with the modified text
-                return originalRender(modifiedText, ...args);
-            };
+                state.src = this.replaceText(state.src);
+            });
         };
     }
 

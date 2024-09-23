@@ -99,7 +99,7 @@ export class ProgrammingExercisePlantUmlExtensionWrapper extends ArtemisTextRepl
         // before we send the plantUml to the server for rendering, we need to inject the current test status so that the colors can be adapted
         // (green == implemented, red == not yet implemented, grey == unknown)
         const plantUmlsValidated = plantUmlsIndexed.map((plantUmlIndexed: { plantUmlId: number; plantUml: string }) => {
-            plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(testsColorRegex, (match: any, capture: string) => {
+            plantUmlIndexed.plantUml = plantUmlIndexed.plantUml.replace(testsColorRegex, (match: string, capture: string) => {
                 const tests = this.programmingExerciseInstructionService.convertTestListToIds(capture, this.testCases);
                 const { testCaseState } = this.programmingExerciseInstructionService.testStatusForTask(tests, this.latestResult);
                 switch (testCaseState) {

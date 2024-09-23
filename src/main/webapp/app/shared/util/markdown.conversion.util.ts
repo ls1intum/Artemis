@@ -4,7 +4,7 @@ import type { PluginSimple } from 'markdown-it';
 import markdownIt from 'markdown-it';
 import markdownItClass from 'markdown-it-class';
 import markdownItKatex from '@vscode/markdown-it-katex';
-import markdown_it_highlightjs from 'markdown-it-highlightjs';
+import markdownItHighlightjs from 'markdown-it-highlightjs';
 import TurndownService from 'turndown';
 
 /**
@@ -17,7 +17,7 @@ const classMap: { [key: string]: string } = {
 // An inline math formula has some other characters before or after the formula and uses $$ as delimiters
 const inlineFormulaRegex = /(?:.+\$\$[^\$]+\$\$)|(?:\$\$[^\$]+\$\$.+)/g;
 
-class FormularCompatibilityPlugin extends ArtemisTextReplacementPlugin {
+class FormulaCompatibilityPlugin extends ArtemisTextReplacementPlugin {
     replaceText(text: string): string {
         return text
             .split('\n')
@@ -33,7 +33,7 @@ class FormularCompatibilityPlugin extends ArtemisTextReplacementPlugin {
             .join('\n');
     }
 }
-const formulaCompatibilityPlugin = new FormularCompatibilityPlugin();
+const formulaCompatibilityPlugin = new FormulaCompatibilityPlugin();
 
 const turndownService = new TurndownService();
 
@@ -67,7 +67,7 @@ export function htmlForMarkdown(
     }
 
     // Add default extensions (Code Highlight, Latex)
-    md.use(markdown_it_highlightjs)
+    md.use(markdownItHighlightjs)
         .use(formulaCompatibilityPlugin.getExtension())
         .use(markdownItKatex, {
             enableMathInlineInHtml: true,

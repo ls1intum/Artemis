@@ -132,6 +132,8 @@ describe('Markdown Service', () => {
             const result = htmlForMarkdown('First formula $$a^2 + b^2 = c^2$$ and second formula $$E=mc^2$$.');
             const formulaCount = (result.match(/class="katex"/g) || []).length;
             expect(formulaCount).toBe(2);
+            expect(result).not.toContain('class="katex-block"');
+            expect(result).not.toContain('display="block"');
         });
     });
 });
