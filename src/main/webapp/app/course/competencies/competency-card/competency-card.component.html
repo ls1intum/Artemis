@@ -58,9 +58,11 @@
                     </span>
                 </div>
             }
-            <div class="col-sm col text-end py-1 px-2" style="max-width: 95px">
-                <jhi-competency-rings [progress]="progress" [mastery]="mastery" [hideProgress]="hideProgress" />
-            </div>
+            @if (!noProgressRings) {
+                <div class="col-sm col text-end py-1 px-2" style="max-width: 95px">
+                    <jhi-competency-rings [progress]="progress" [mastery]="mastery" [hideProgress]="hideProgress" />
+                </div>
+            }
         </div>
     </div>
 </div>

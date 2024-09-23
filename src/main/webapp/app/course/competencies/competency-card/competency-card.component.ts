@@ -17,8 +17,10 @@ export class CompetencyCardComponent {
     isPrerequisite: boolean;
     @Input()
     hideProgress = false;
+    @Input()
+    noProgressRings = false;
 
-    getIcon = getIcon;
+    protected readonly getIcon = getIcon;
 
     constructor(public translateService: TranslateService) {}
 
