@@ -14,13 +14,13 @@
     ],
     "dependencies": {
         "@angular/animations": "18.2.5",
-        "@angular/cdk": "18.2.4",
+        "@angular/cdk": "18.2.5",
         "@angular/common": "18.2.5",
         "@angular/compiler": "18.2.5",
         "@angular/core": "18.2.5",
         "@angular/forms": "18.2.5",
         "@angular/localize": "18.2.5",
-        "@angular/material": "18.2.4",
+        "@angular/material": "18.2.5",
         "@angular/platform-browser": "18.2.5",
         "@angular/platform-browser-dynamic": "18.2.5",
         "@angular/router": "18.2.5",
@@ -58,12 +58,12 @@
         "jszip": "3.10.1",
         "lodash-es": "4.17.21",
         "mobile-drag-drop": "3.0.0-rc.0",
-        "monaco-editor": "0.51.0",
+        "monaco-editor": "0.52.0",
         "ngx-infinite-scroll": "18.0.0",
         "ngx-webstorage": "18.0.0",
         "papaparse": "5.4.1",
         "pdfjs-dist": "4.6.82",
-        "posthog-js": "1.161.6",
+        "posthog-js": "1.163.0",
         "rxjs": "7.8.1",
         "showdown": "2.1.0",
         "showdown-highlight": "3.1.0",
@@ -88,13 +88,13 @@
             "d3-transition": "^3.0.1"
         },
         "@typescript-eslint/utils": {
-            "eslint": "^9.10.0"
+            "eslint": "^9.11.0"
         },
         "braces": "3.0.3",
         "critters": "0.0.24",
         "debug": "4.3.7",
         "eslint-plugin-deprecation": {
-            "eslint": "^9.10.0"
+            "eslint": "^9.11.0"
         },
         "eslint-plugin-jest": {
             "@typescript-eslint/eslint-plugin": "^8.6.0"
@@ -116,13 +116,13 @@
     },
     "devDependencies": {
         "@angular-builders/jest": "18.0.0",
-        "@angular-devkit/build-angular": "18.2.4",
+        "@angular-devkit/build-angular": "18.2.5",
         "@angular-eslint/builder": "18.3.1",
         "@angular-eslint/eslint-plugin": "18.3.1",
         "@angular-eslint/eslint-plugin-template": "18.3.1",
         "@angular-eslint/schematics": "18.3.1",
         "@angular-eslint/template-parser": "18.3.1",
-        "@angular/cli": "18.2.4",
+        "@angular/cli": "18.2.5",
         "@angular/compiler-cli": "18.2.5",
         "@angular/language-service": "18.2.5",
         "@sentry/types": "8.30.0",
@@ -139,7 +139,7 @@
         "@types/uuid": "10.0.0",
         "@typescript-eslint/eslint-plugin": "8.6.0",
         "@typescript-eslint/parser": "8.6.0",
-        "eslint": "9.10.0",
+        "eslint": "9.11.0",
         "eslint-config-prettier": "9.1.0",
         "eslint-plugin-deprecation": "3.0.0",
         "eslint-plugin-jest": "28.8.3",
@@ -158,7 +158,7 @@
         "ng-mocks": "14.13.1",
         "prettier": "3.3.3",
         "rimraf": "6.0.1",
-        "sass": "1.79.1",
+        "sass": "1.79.3",
         "ts-jest": "29.2.5",
         "typescript": "5.5.4",
         "weak-napi": "2.0.2"
