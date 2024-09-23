@@ -37,6 +37,7 @@ import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -146,14 +147,21 @@ examples.forEach((activeConversation) => {
         });
 
         describe('Dialog Opening', () => {
+            const expectedResults = [undefined, true];
+            const mockModalRef: Partial<NgbModalRef> = {
+                componentInstance: {
+                    course: {},
+                    initialize: jest.fn(),
+                },
+            };
+
+            beforeEach(() => {
+                // Set a mock course with id 1
+                component.course = { id: 1 } as Course;
+            });
+
             it('should open the group chat creation dialog', fakeAsync(() => {
-                const mockModalRef: Partial<NgbModalRef> = {
-                    componentInstance: {
-                        course: {},
-                        initialize: jest.fn(),
-                    },
-                    result: Promise.resolve(undefined),
-                };
+                mockModalRef.result = Promise.resolve(undefined);
                 const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
                 component.onCreateGroupChatPressed();
                 tick();
@@ -161,13 +169,6 @@ examples.forEach((activeConversation) => {
             }));
 
             it('should open the one-to-one chat creation dialog', fakeAsync(() => {
-                const mockModalRef: Partial<NgbModalRef> = {
-                    componentInstance: {
-                        course: {},
-                        initialize: jest.fn(),
-                    },
-                    result: Promise.resolve(undefined),
-                };
                 const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
                 component.onCreateDirectChatPressed();
                 tick();
@@ -175,20 +176,23 @@ examples.forEach((activeConversation) => {
             }));
 
             it('should open the channel overview dialog', fakeAsync(() => {
-                const expectedResults = [undefined, true];
-                const mockModalRef: Partial<NgbModalRef> = {
-                    componentInstance: {
-                        course: {},
-                        createChannelFn: jest.fn(),
-                        initialize: jest.fn(),
-                        channelSubType: undefined,
-                    },
-                    result: Promise.resolve(expectedResults),
-                };
+                mockModalRef.result = Promise.resolve(expectedResults);
                 const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
                 component.onBrowseChannelPressed();
                 tick();
                 expect(spy).toHaveBeenCalledWith(ChannelsOverviewDialogComponent, expect.anything());
+                expect(mockModalRef.componentInstance.initialize).toHaveBeenCalled();
+            }));
+
+            it('should open the create channel dialog when onCreateChannelPressed is called', fakeAsync(() => {
+                mockModalRef.result = Promise.resolve(expectedResults);
+                const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
+
+                component.onCreateChannelPressed();
+                tick();
+
+                expect(spy).toHaveBeenCalledWith(ChannelsCreateDialogComponent, expect.anything());
+                expect(mockModalRef.componentInstance.course).toEqual(course);
                 expect(mockModalRef.componentInstance.initialize).toHaveBeenCalled();
             }));
         });
