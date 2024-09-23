@@ -1464,14 +1464,17 @@ public class CourseResource {
 
         Set<String> alreadyTakenExerciseNames = new HashSet<>();
         Set<String> alreadyTakenShortNames = new HashSet<>();
+        Set<String> alreadyTakenChannelNames = new HashSet<>();
 
         course.getExercises().forEach((exercise -> {
             alreadyTakenExerciseNames.add(exercise.getTitle());
             if (includeShortNames && exercise.getShortName() != null) {
                 alreadyTakenShortNames.add(exercise.getShortName());
             }
+            alreadyTakenChannelNames.add(exercise.getChannelName());
         }));
 
-        return ResponseEntity.ok(new CourseExistingExerciseDetails(alreadyTakenExerciseNames.toArray(String[]::new), alreadyTakenShortNames.toArray(String[]::new)));
+        return ResponseEntity.ok(new CourseExistingExerciseDetails(alreadyTakenExerciseNames.toArray(String[]::new), alreadyTakenShortNames.toArray(String[]::new),
+                alreadyTakenChannelNames.toArray(String[]::new)));
     }
 }

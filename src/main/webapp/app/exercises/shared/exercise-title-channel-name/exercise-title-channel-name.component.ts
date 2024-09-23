@@ -36,10 +36,13 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
             if (this.course()?.id) {
                 this.exerciseService.getExistingExerciseDetailsInCourse(this.course()!.id!).subscribe((exerciseDetails) => {
                     this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles);
-                    // this.alreadyUsedChannelNames.set(exerciseDetails.)
+                    this.alreadyUsedChannelNames.set(exerciseDetails.channelNames);
                 });
-                // TODO channel names need to be returned
             }
+        });
+
+        effect(() => {
+            console.log(this.alreadyUsedChannelNames());
         });
     }
 

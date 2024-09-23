@@ -38,6 +38,8 @@
                 [ngModel]="channelName"
                 (ngModelChange)="formatChannelName($event)"
                 maxlength="30"
+                notIncludedIn
+                [disallowedValues]="alreadyUsedChannelNames()"
             />
         </div>
     }

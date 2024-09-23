@@ -45,6 +45,7 @@ export type ExerciseDetailsType = {
 export type CourseExistingExerciseDetailsType = {
     exerciseTitles: string[];
     shortNames: string[];
+    channelNames: string[];
 };
 
 export interface ExerciseServicable<T extends Exercise> {
