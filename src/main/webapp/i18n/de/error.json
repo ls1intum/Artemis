@@ -17,7 +17,7 @@
         "validation": "Validierungsfehler auf dem Server.",
         "resultStringNull": "Fehler! Ein Ergebnistext ist erforderlich.",
         "resultStringTooLong": "Fehler! Der Ergebnistext ist zu lange (max. 255 Zeichen)",
-        "scoreNull": "Fehler! Eine Bewertung is erforderlich.",
+        "scoreNull": "Fehler! Eine Bewertung ist erforderlich.",
         "resultNotRated": "Fehler! Ein Ergebnis muss bewertet sein.",
         "submissionMissing": "Fehler! Die Abgabe ist nicht mehr mit dem Ergebnis verknüpft. Deine Änderungen wurden abgelehnt.",
         "resultAlreadyExists": "Es liegt bereits ein Ergebnis für diese Übung vor.",

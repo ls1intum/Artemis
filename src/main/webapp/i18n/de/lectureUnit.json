@@ -67,7 +67,7 @@
                 "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
                 "sourceURLValidationError": "Keine valide URL",
                 "urlVideoHelper": "Umwandlung in einbettbares Format ",
-                "urlHelperPlaceholder": "Du kannst hier eine Video URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
+                "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
                 "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL"
             },
             "editVideoUnit": {

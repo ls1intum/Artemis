@@ -281,7 +281,7 @@
                     },
                     "noRelations": {
                         "title": "Keine Beziehungen",
-                        "body": "Es wurden noch keine Beziehungen zwischen Kompetenzen konfiguriert. Lernpfade nutzen die Informationen über die Struktur der Lerninhalte um zuverlässig qualitiv hochwertige Empfehlungen für Studierende zu generieren. Gehe zum Kompetenzmanagement um die Beziehungen zwischen Kompetenzen zu konfigurieren.",
+                        "body": "Es wurden noch keine Beziehungen zwischen Kompetenzen konfiguriert. Lernpfade nutzen die Informationen über die Struktur der Lerninhalte um zuverlässig qualitativ hochwertige Empfehlungen für Studierende zu generieren. Gehe zum Kompetenzmanagement um die Beziehungen zwischen Kompetenzen zu konfigurieren.",
                         "action": "Kompetenzmanagement",
                         "hint": "Gehe zum Kompetenzmanagement"
                     }

@@ -46,11 +46,11 @@
                 "content": "Hier kannst du die Testfälle der einzelnen Aufgaben einsehen, die noch nicht erfolgreich durchgelaufen sind."
             },
             "umlSuccess": {
-                "headline": "Überprüfe deine Implementierung anhand des UML Diagramms",
+                "headline": "Überprüfe deine Implementierung anhand des UML-Diagramms",
                 "content": "Nun kannst du einsehen, ob du das UML Klassendiagramm erfolgreich implementiert hast!"
             },
             "umlFailure": {
-                "headline": "Überprüfe die fehlgeschlagenen Tests in deinem UML Diagramm",
+                "headline": "Überprüfe die fehlgeschlagenen Tests in deinem UML-Diagramm",
                 "content": "Nun kannst du einsehen, welche Tests erfolgreich durchgelaufen sind und welche noch fehlschlagen."
             },
             "resolveTasks": {

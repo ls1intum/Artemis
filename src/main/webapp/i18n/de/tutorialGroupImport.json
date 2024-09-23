@@ -10,7 +10,7 @@
                 "requirements": "Die oberste Zeile der CSV-Datei muss die Spaltennamen angeben. Jede Zeile muss den Titel der Tutoriumsgruppe enthalten. Um Studenten zu registrieren, muss jede Zeile zusätzlich entweder eine Matrikelnummer oder einen Anmeldenamen enthalten. Vor- und Nachname sind optional."
             },
             "supportedHeaderNames": {
-                "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Grossbuchstaben werden ebenfalls unterstützt): ",
+                "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Großbuchstaben werden ebenfalls unterstützt): ",
                 "format": "Diese werden unten mit Pfeile illustriert. Die linke Seite zeigt die kompatiblen Spaltennamen und die rechte Seite zeigt den Spaltennamen nach dem Parsen einer CSV.",
                 "alwaysRequired": "Eins von den folgenden ist als Spaltennamen immer erforderlich um die Übungsgruppe zu identifizieren: ",
                 "requiredIfStudentRegistration": "Eins von den folgenden ist als Spaltennamen erforderlich, wenn Studierende identifiziert und registriert werden sollen: ",

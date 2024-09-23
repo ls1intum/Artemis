@@ -19,7 +19,7 @@
             },
             "version13": "LTI 1.3",
             "dynamicRegistrationUrl": "Dynamic Registration URL",
-            "deepLinkingUrl": "Deep Linking URL",
+            "deepLinkingUrl": "Deep-Linking URL",
             "toolUrl": "Tool URL",
             "keysetUrl": "Keyset URL",
             "initiateLoginUrl": "Initiate Login URL",
@@ -82,7 +82,7 @@
                 "registerFailed": "Fehler bei der dynamischen Registrierung"
             },
             "deepLinking": {
-                "title": "Deep Linking",
+                "title": "Deep-Linking",
                 "linking": "Verlinkung",
                 "linkedSuccessfully": "Verknüpfung der Übungen erfolgreich",
                 "linkedFailed": "Fehler beim Deep-Linking",
