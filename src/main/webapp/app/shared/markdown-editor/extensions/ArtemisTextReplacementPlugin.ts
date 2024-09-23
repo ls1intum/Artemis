@@ -18,5 +18,10 @@ export abstract class ArtemisTextReplacementPlugin {
         };
     }
 
+    /**
+     * Performs text replacement on the raw markdown before parsing.
+     * @param text The raw markdown text.
+     * @returns The modified markdown text after replacements.
+     */
     abstract replaceText(text: string): string;
 }
