@@ -16,6 +16,7 @@ import { isPracticeMode } from 'app/entities/participation/student-participation
 import { faCode, faDesktop, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 
 @Component({
     selector: 'jhi-code-button',
@@ -88,6 +89,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         private localStorage: LocalStorageService,
         private participationService: ParticipationService,
         private ideSettingsService: IdeSettingsService,
+        private programmingExerciseService: ProgrammingExerciseService,
     ) {}
 
     ngOnInit() {
@@ -138,30 +140,33 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
             // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
             if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
-                // console.log('Theia Profile is enabled');
-                this.theiaEnabled = true;
+                // Theia requires the Build Config of the programming exercise to be set
+                this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
+                    if (this.exercise) {
+                        this.exercise.buildConfig = buildConfig;
+                        this.theiaEnabled = true;
 
-                // Set variables now, sanitize later on
-                this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
+                        // Set variables now, sanitize later on
+                        this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
 
-                // Verify that Theia's portal URL is set
-                if (this.theiaPortalURL === '') {
-                    this.theiaEnabled = false;
-                    // console.log('Theia portal URL is null');
-                }
+                        // Verify that Theia's portal URL is set
+                        if (this.theiaPortalURL === '') {
+                            this.theiaEnabled = false;
+                        }
 
-                // Verify that the exercise allows the online IDE
-                if (!this.exercise.allowOnlineIde) {
-                    this.theiaEnabled = false;
-                    // console.log('Theia allowOnlineIde is false');
-                }
+                        // Verify that the exercise allows the online IDE
+                        if (!this.exercise.allowOnlineIde) {
+                            this.theiaEnabled = false;
+                        }
 
-                // Verify that the exercise has a theia blueprint configured
-                if (!this.exercise.buildConfig?.theiaImage) {
-                    //this.theiaEnabled = false;
-                    // console.log('Theia Image is null');
-                    // console.log(this.exercise.buildConfig);
-                }
+                        // Verify that the exercise has a theia blueprint configured
+                        if (!this.exercise.buildConfig?.theiaImage) {
+                            this.theiaEnabled = false;
+                        }
+                    } else {
+                        this.theiaEnabled = false;
+                    }
+                });
             }
         });
 

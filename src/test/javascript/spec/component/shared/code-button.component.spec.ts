@@ -31,12 +31,16 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
+import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 
 describe('CodeButtonComponent', () => {
     let component: CodeButtonComponent;
     let fixture: ComponentFixture<CodeButtonComponent>;
     let profileService: ProfileService;
     let accountService: AccountService;
+    let programmingExerciseService: ProgrammingExerciseService;
 
     let localStorageUseSshRetrieveStub: jest.SpyInstance;
     let localStorageUseSshObserveStub: jest.SpyInstance;
@@ -45,6 +49,7 @@ describe('CodeButtonComponent', () => {
     let getVcsAccessTokenSpy: jest.SpyInstance;
     let createVcsAccessTokenSpy: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
+    let getBuildConfigSub: jest.SpyInstance;
 
     const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
 
@@ -119,6 +124,7 @@ describe('CodeButtonComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
             ],
         })
             .compileComponents()
@@ -131,6 +137,7 @@ describe('CodeButtonComponent', () => {
         component = fixture.componentInstance;
         profileService = TestBed.inject(ProfileService);
         accountService = TestBed.inject(AccountService);
+        programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
         const localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
         localStorageUseSshRetrieveStub = jest.spyOn(localStorageMock, 'retrieve');
@@ -540,8 +547,11 @@ describe('CodeButtonComponent', () => {
         getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
         getProfileInfoSub.mockReturnValue(of(profileInfo as ProfileInfo));
 
+        getBuildConfigSub = jest.spyOn(programmingExerciseService, 'getBuildConfig');
+        getBuildConfigSub.mockReturnValue(of(buildConfig as ProgrammingExerciseBuildConfig));
+
         // Expand the programmingExercise by given properties
-        component.exercise = { ...exercise, ...programmingExercise, buildConfig: buildConfig } as ProgrammingExercise;
+        component.exercise = { ...exercise, ...programmingExercise } as ProgrammingExercise;
 
         fixture.detectChanges();
 
