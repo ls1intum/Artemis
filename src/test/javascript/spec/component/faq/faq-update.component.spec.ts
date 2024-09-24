@@ -18,6 +18,7 @@ import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-obse
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
 import { FAQCategory } from 'app/entities/faq-category.model';
+import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FAQUpdateComponent>;
@@ -25,8 +26,14 @@ describe('FaqUpdateComponent', () => {
     let faqService: FAQService;
     let activatedRoute: ActivatedRoute;
     let router: Router;
+    let faq1: FAQ;
 
     beforeEach(() => {
+        faq1 = new FAQ();
+        faq1.id = 1;
+        faq1.questionTitle = 'questionTitle';
+        faq1.questionAnswer = 'questionAnswer';
+        faq1.categories = [new FAQCategory('category1', '#94a11c')];
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MonacoEditorModule, MockModule(BrowserAnimationsModule)],
             declarations: [FAQUpdateComponent, MockComponent(MonacoEditorComponent), MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
@@ -46,7 +53,17 @@ describe('FaqUpdateComponent', () => {
                         },
                     },
                 },
-                MockProvider(AlertService),
+                { provide: AlertService, useClass: MockAlertService },
+                MockProvider(FAQService, {
+                    find: () => {
+                        return of(
+                            new HttpResponse({
+                                body: faq1,
+                                status: 200,
+                            }),
+                        );
+                    },
+                }),
             ],
         }).compileComponents();
 
@@ -84,12 +101,13 @@ describe('FaqUpdateComponent', () => {
             ),
         );
 
+        faqUpdateComponentFixture.detectChanges();
         faqUpdateComponent.save();
         tick();
-        faqUpdateComponentFixture.detectChanges();
 
         expect(createSpy).toHaveBeenCalledOnce();
         expect(createSpy).toHaveBeenCalledWith({ faqState: FAQState.ACCEPTED, questionTitle: 'test1' });
+        expect(faqUpdateComponent.isSaving).toBeFalse();
     }));
 
     it('should edit a faq', fakeAsync(() => {

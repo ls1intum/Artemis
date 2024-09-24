@@ -11,7 +11,7 @@
                         <li>
                             <label class="d-flex align-items-center">
                                 <input
-                                    id="'filter-' + category.category"
+                                    id="filter-{{ category.category }}"
                                     class="ms-2 form-check-input"
                                     (change)="toggleFilters(category.category!)"
                                     [checked]="activeFilters.has(category.category!)"
