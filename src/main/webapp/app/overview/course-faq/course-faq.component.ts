@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { Subject, Subscription } from 'rxjs';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { faFilter, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { SidebarData } from 'app/types/sidebar';
@@ -23,7 +22,6 @@ import { onError } from 'app/shared/util/global.utils';
     templateUrl: './course-faq.component.html',
     styleUrls: ['../course-overview.scss', './course-faq.component.scss', '../../faq/faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [MetisService],
     standalone: true,
     imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent],
 })
@@ -34,7 +32,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     courseId: number;
     faqs: FAQ[];
 
-    filteredFaq: FAQ[];
+    filteredFaqs: FAQ[];
     existingCategories: FAQCategory[];
     activeFilters = new Set<string>();
 
@@ -98,6 +96,6 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     }
 
     private applyFilters(): void {
-        this.filteredFaq = this.faqService.applyFilters(this.activeFilters, this.faqs);
+        this.filteredFaqs = this.faqService.applyFilters(this.activeFilters, this.faqs);
     }
 }

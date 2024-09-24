@@ -1,26 +1,27 @@
-import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute, Router } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { ArtemisTestModule } from '../../test.module';
+import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { HttpResponse } from '@angular/common/http';
+import { CourseFaqComponent } from 'app/overview/course-faq/course-faq.component';
+import { AlertService } from 'app/core/util/alert.service';
 import { FAQService } from 'app/faq/faq.service';
-import { FAQ } from 'app/entities/faq.model';
-import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
-
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FAQComponent } from 'app/faq/faq.component';
-import { FAQCategory } from 'app/entities/faq-category.model';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
+import { FAQ } from 'app/entities/faq.model';
+import { FAQCategory } from 'app/entities/faq-category.model';
 
-describe('FaqComponent', () => {
-    let faqComponentFixture: ComponentFixture<FAQComponent>;
-    let faqComponent: FAQComponent;
+describe('CourseFaqs', () => {
+    let courseFaqComponentFixture: ComponentFixture<CourseFaqComponent>;
+    let courseFaqComponent: CourseFaqComponent;
 
     let faqService: FAQService;
 
@@ -47,21 +48,18 @@ describe('FaqComponent', () => {
         faq3.questionAnswer = 'questionAnswer';
         faq3.categories = [new FAQCategory('category3', '#0ab84f')];
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisMarkdownEditorModule, MockModule(BrowserAnimationsModule)],
-            declarations: [FAQComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
+            imports: [ArtemisSharedComponentModule, ArtemisSharedModule, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent)],
+            declarations: [CourseFaqComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
             providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(AlertService),
+                MockProvider(FAQService),
                 { provide: Router, useClass: MockRouter },
+                { provide: TranslateService, useClass: MockTranslateService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
-                            data: of({ course: { id: 1 } }),
-                        },
-                        snapshot: {
-                            paramMap: convertToParamMap({
-                                courseId: '1',
-                            }),
+                            params: of({ courseId: '1' }),
                         },
                     },
                 },
@@ -93,11 +91,8 @@ describe('FaqComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-                faqComponentFixture = TestBed.createComponent(FAQComponent);
-                faqComponent = faqComponentFixture.componentInstance;
+                courseFaqComponentFixture = TestBed.createComponent(CourseFaqComponent);
+                courseFaqComponent = courseFaqComponentFixture.componentInstance;
 
                 faqService = TestBed.inject(FAQService);
             });
@@ -107,33 +102,28 @@ describe('FaqComponent', () => {
         jest.restoreAllMocks();
     });
 
+    it('should initialize', () => {
+        courseFaqComponentFixture.detectChanges();
+        expect(courseFaqComponent).not.toBeNull();
+        courseFaqComponent.ngOnDestroy();
+    });
+
     it('should fetch faqs when initialized', () => {
         const findAllSpy = jest.spyOn(faqService, 'findAllByCourseId');
 
-        faqComponentFixture.detectChanges();
+        courseFaqComponentFixture.detectChanges();
         expect(findAllSpy).toHaveBeenCalledOnce();
         expect(findAllSpy).toHaveBeenCalledWith(1);
-        expect(faqComponent.faqs).toHaveLength(3);
-    });
-
-    it('should delete faq', () => {
-        const deleteSpy = jest.spyOn(faqService, 'delete');
-        faqComponentFixture.detectChanges();
-        faqComponent.deleteFaq(faq1.id!);
-        expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith(faq1.id!);
-        expect(faqComponent.faqs).toHaveLength(2);
-        expect(faqComponent.faqs).not.toContain(faq1);
-        expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs);
+        expect(courseFaqComponent.faqs).toHaveLength(3);
     });
 
     it('should toggle filter correctly', () => {
         const toggleFilterSpy = jest.spyOn(faqService, 'toggleFilter');
-        faqComponentFixture.detectChanges();
-        faqComponent.toggleFilters('category2');
+        courseFaqComponentFixture.detectChanges();
+        courseFaqComponent.toggleFilters('category2');
         expect(toggleFilterSpy).toHaveBeenCalledOnce();
-        expect(faqComponent.filteredFaqs).toHaveLength(2);
-        expect(faqComponent.filteredFaqs).not.toContain(faq1);
-        expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
+        expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);
     });
 });

@@ -17,6 +17,7 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
+import { FAQCategory } from 'app/entities/faq-category.model';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FAQUpdateComponent>;
@@ -102,7 +103,8 @@ describe('FaqUpdateComponent', () => {
                 new HttpResponse({
                     body: {
                         id: 6,
-                        title: 'test1Updated',
+                        questionTitle: 'test1Updated',
+                        questionAnswer: 'answer',
                         course: {
                             id: 1,
                         },
@@ -134,5 +136,16 @@ describe('FaqUpdateComponent', () => {
 
         const expectedPath = ['course-management', '1', 'faqs'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
+    }));
+
+    it('should update categories', fakeAsync(() => {
+        const categories = [new FAQCategory('category1', 'red'), new FAQCategory('category2', 'blue')];
+
+        faqUpdateComponentFixture.detectChanges();
+
+        faqUpdateComponent.updateCategories(categories);
+
+        expect(faqUpdateComponent.faqCategories).toEqual(categories);
+        expect(faqUpdateComponent.faq.categories).toEqual(categories);
     }));
 });
