@@ -3387,4 +3387,51 @@ public class CourseTestService {
             assertThat(found).as("Course is available").isPresent();
         }
     }
+
+    // Test
+    public void testGetAllCoursesForCourseArchiveWithNonNullSemesters() throws Exception {
+        List<Course> expectedOldCourses = new ArrayList<>();
+        for (int i = 1; i <= 4; i++) {
+            expectedOldCourses.add(courseUtilService.createCourse((long) i));
+        }
+
+        expectedOldCourses.get(0).setSemester("SS20");
+        expectedOldCourses.get(1).setSemester("SS21");
+        expectedOldCourses.get(2).setSemester("WS21/22");
+        expectedOldCourses.get(3).setSemester(null); // will be filtered out
+
+        for (Course oldCourse : expectedOldCourses) {
+            courseRepo.save(oldCourse);
+        }
+
+        final var actualOldCourses = request.getList("/api/courses/archive", HttpStatus.OK, Course.class);
+        assertThat(actualOldCourses).as("Course archive has 3 courses").hasSize(3);
+        assertThat(actualOldCourses).as("Course archive has the correct semesters").extracting("semester").containsExactlyInAnyOrder(expectedOldCourses.get(0).getSemester(),
+                expectedOldCourses.get(1).getSemester(), expectedOldCourses.get(2).getSemester());
+        assertThat(actualOldCourses).as("Course archive got the correct courses").extracting("id").containsExactlyInAnyOrder(expectedOldCourses.get(0).getId(),
+                expectedOldCourses.get(1).getId(), expectedOldCourses.get(2).getId());
+        assertThat(actualOldCourses).as("Course archive does not contain a null semester").doesNotContain(expectedOldCourses.get(3));
+    }
+
+    // Test
+    public void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
+        Course course1 = courseUtilService.createCourse((long) 1);
+        course1.setSemester("SS20");
+        courseRepo.save(course1);
+
+        Course course2 = courseUtilService.createCourse((long) 2);
+        course2.setSemester("SS21");
+        courseRepo.save(course2);
+
+        Course course3 = courseUtilService.createCourse((long) 3);
+        course3.setSemester("WS21/22");
+        courseRepo.save(course3);
+
+        // remove student from all courses
+        removeAllGroupsFromStudent1();
+
+        var actualCoursesForStudent = request.getList("/api/courses/archive", HttpStatus.OK, Course.class);
+        assertThat(actualCoursesForStudent).as("Course archive does not show any courses to the user removed from these courses").hasSize(0);
+    }
+
 }

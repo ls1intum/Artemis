@@ -542,6 +542,15 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     boolean hasLearningPathsEnabled(@Param("courseId") long courseId);
 
+    /**
+     * Retrieves all courses that the user has access to based on their role
+     * or if they are an admin. Filters out any courses that do not belong to
+     * a specific semester (i.e., have a null semester).
+     *
+     * @param userId  The id of the user whose courses are being retrieved
+     * @param isAdmin A boolean flag indicating whether the user is an admin
+     * @return A list of courses that the user has access to and belong to a specific semester
+     */
     @Query("""
             SELECT DISTINCT c
             FROM Course c

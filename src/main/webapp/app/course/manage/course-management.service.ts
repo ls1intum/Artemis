@@ -742,7 +742,14 @@ export class CourseManagementService {
                     }
 
                     // If years are the same, sort WS over SS
-                    return semesterA.slice(0, 2) === 'WS' ? -1 : 1;
+                    const prefixA = semesterA.slice(0, 2);
+                    const prefixB = semesterB.slice(0, 2);
+
+                    if (prefixA === prefixB) {
+                        return 0; // Both semesters are the same (either both WS or both SS)
+                    }
+
+                    return prefixA === 'WS' ? -1 : 1; // WS should be placed above SS
                 })
         );
     }
