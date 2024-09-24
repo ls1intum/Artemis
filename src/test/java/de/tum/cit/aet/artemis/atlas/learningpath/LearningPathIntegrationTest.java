@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
@@ -573,16 +574,16 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     @Nested
-    class GetLearningPathId {
+    class GetLearningPath {
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnExistingId() throws Exception {
+        void shouldReturnExisting() throws Exception {
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
             final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-            final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
-            assertThat(result).isEqualTo(learningPath.getId());
+            final var result = request.get("/api/courses/" + course.getId() + "/learning-path/me", HttpStatus.OK, LearningPathDTO.class);
+            assertThat(result).isEqualTo(LearningPathDTO.of(learningPath));
         }
 
         @Test
@@ -593,7 +594,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
             var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
             student = userTestRepository.findWithLearningPathsByIdElseThrow(student.getId());
             learningPathRepository.deleteAll(student.getLearningPaths());
-            request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.NOT_FOUND, Long.class);
+            request.get("/api/courses/" + course.getId() + "/learning-path/me", HttpStatus.NOT_FOUND, LearningPathDTO.class);
         }
     }
 
@@ -603,14 +604,14 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnForbiddenIfNotEnabled() throws Exception {
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnBadRequestIfAlreadyExists() throws Exception {
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -618,13 +619,15 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         void shouldGenerateLearningPath() throws Exception {
             course.setLearningPathsEnabled(true);
             course = courseRepository.save(course);
-            final var response = request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.CREATED);
+            final var response = request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.CREATED);
             assertThat(response).isNotNull();
             final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
             assertThat(learningPath).isNotNull();
         }
     }
+
+    // TODO: Write tests for start learning path
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
