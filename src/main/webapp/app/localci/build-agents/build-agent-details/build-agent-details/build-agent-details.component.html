@@ -1,22 +1,22 @@
 <div>
     @if (buildAgent) {
-        <div style="padding-bottom: 40px">
-            <div style="padding-bottom: 20px" class="d-flex align-items-center justify-content-between">
+        <div class="mb-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
                 <div class="d-flex align-items-center">
-                    <h3 id="build-agent-heading" jhiTranslate="artemisApp.buildAgents.details"></h3>
-                    <span class="h3">:</span>
-                    <h3 id="build-agent-name" class="h3" style="margin-left: 20px">{{ buildAgent.name }}</h3>
+                    <h3 class="mb-0" id="build-agent-heading" jhiTranslate="artemisApp.buildAgents.details"></h3>
+                    <span class="h3 mb-0">:</span>
+                    <h3 id="build-agent-name" class="mb-0 ms-2">{{ buildAgent.name }}</h3>
                 </div>
-                <div>
+                <div class="ms-3 d-flex justify-content-center gap-2">
                     @if (buildAgent.status === 'PAUSED') {
                         <button class="btn btn-success" (click)="resumeBuildAgent()">
                             <fa-icon [icon]="faPlay"></fa-icon>
-                            <span jhiTranslate="artemisApp.buildAgents.resume"></span>
+                            <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.buildAgents.resume"></span>
                         </button>
                     } @else {
                         <button class="btn btn-danger" (click)="pauseBuildAgent()">
                             <fa-icon [icon]="faPause"></fa-icon>
-                            <span jhiTranslate="artemisApp.buildAgents.pause"></span>
+                            <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.buildAgents.pause"></span>
                         </button>
                     }
                 </div>

@@ -29,8 +29,8 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
     faTimes = faTimes;
-    faPause = faPause;
-    faPlay = faPlay;
+    readonly faPause = faPause;
+    readonly faPlay = faPlay;
 
     constructor(
         private websocketService: JhiWebsocketService,
@@ -110,7 +110,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         window.open(url, '_blank');
     }
 
-    pauseBuildAgent() {
+    pauseBuildAgent(): void {
         if (this.buildAgent.name) {
             this.buildAgentsService.pauseBuildAgent(this.buildAgent.name).subscribe({
                 next: () => {
@@ -134,7 +134,7 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
-    resumeBuildAgent() {
+    resumeBuildAgent(): void {
         if (this.buildAgent.name) {
             this.buildAgentsService.resumeBuildAgent(this.buildAgent.name).subscribe({
                 next: () => {
