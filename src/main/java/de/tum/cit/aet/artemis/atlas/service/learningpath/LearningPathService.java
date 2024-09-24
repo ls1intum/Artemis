@@ -284,6 +284,9 @@ public class LearningPathService {
         if (!learningPath.getUser().equals(currentUser)) {
             throw new AccessForbiddenException("You are not allowed to start this learning path.");
         }
+        else if (learningPath.isStartedByStudent()) {
+            throw new BadRequestException("Learning path already started.");
+        }
         learningPath.setStartedByStudent(true);
         learningPathRepository.save(learningPath);
     }
