@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -40,7 +41,6 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -281,20 +281,32 @@ public class ResultResource {
     }
 
     /**
-     * POST /exercises/{exerciseId}/feedback-details-paged : Retrieves paginated and filtered aggregated feedback details for a given exercise.
+     * GET /exercises/{exerciseId}/feedback-details-paged : Retrieves paginated and filtered aggregated feedback details for a given exercise.
      * The feedback details include counts and relative counts of feedback occurrences, test case names, and task numbers.
      * The method allows filtering by search term and sorting by various fields.
      * <br>
-     * Pagination is applied based on the provided {@link SearchTermPageableSearchDTO}, including page number, page size, sorting order, and search term.
+     * Pagination is applied based on the provided query parameters, including page number, page size, sorting order, and search term.
      * The response contains both the paginated feedback details and the total count of distinct results for the exercise.
      *
-     * @param exerciseId The ID of the exercise for which feedback details should be retrieved.
-     * @param search     The pageable search DTO containing page number, page size, sorting options, and a search term for filtering results.
+     * @param exerciseId   The ID of the exercise for which feedback details should be retrieved.
+     * @param page         The page number of the results to retrieve (0-indexed).
+     * @param pageSize     The number of feedback details per page.
+     * @param searchTerm   The search term used for filtering the results (optional).
+     * @param sortingOrder The sorting order for the results (ASCENDING or DESCENDING).
+     * @param sortedColumn The column by which the results should be sorted.
      * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes the paginated feedback details and the total count of distinct results.
      */
-    @PostMapping("exercises/{exerciseId}/feedback-details-paged")
-    @EnforceAtLeastEditorInExercise
-    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestBody SearchTermPageableSearchDTO<String> search) {
+    @GetMapping("exercises/{exerciseId}/feedback-details-paged")
+    public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam int page, @RequestParam int pageSize,
+            @RequestParam(required = false) String searchTerm, @RequestParam String sortingOrder, @RequestParam String sortedColumn) {
+
+        SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
+        search.setPage(page);
+        search.setPageSize(pageSize);
+        search.setSearchTerm(searchTerm);
+        search.setSortingOrder(SortingOrder.valueOf(sortingOrder));
+        search.setSortedColumn(sortedColumn);
+
         FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, search);
         return ResponseEntity.ok(response);
     }

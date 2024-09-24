@@ -1252,16 +1252,20 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                  JOIN p.results r
                  JOIN r.feedbacks f
-                    WHERE p.exercise.id = :exerciseId
-                        AND p.testRun = FALSE
-                        AND r.id = (
-                            SELECT MAX(pr.id)
-                            FROM p.results pr
-                            )
-                        AND f.positive = FALSE
-                        GROUP BY f.detailText, f.testCase.testName
+            WHERE p.exercise.id = :exerciseId
+                  AND p.testRun = FALSE
+                  AND r.id = (
+                      SELECT MAX(pr.id)
+                      FROM p.results pr
+                  )
+                  AND f.positive = FALSE
+                  AND (
+                      :searchTerm IS NULL OR :searchTerm = ''
+                      OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
+                  )
+            GROUP BY f.detailText, f.testCase.testName
             """)
-    List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId);
+    List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm);
 
     /**
      * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.

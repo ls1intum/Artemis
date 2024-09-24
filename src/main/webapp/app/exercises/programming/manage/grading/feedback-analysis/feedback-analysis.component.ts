@@ -2,7 +2,7 @@ import { Component, InputSignal, computed, effect, inject, input, signal, untrac
 import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faSort, faSortDown, faSortUp, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
@@ -34,12 +34,9 @@ export class FeedbackAnalysisComponent {
     private modalService = inject(NgbModal);
 
     readonly faSort = faSort;
-    readonly faSortUp = faSortUp;
-    readonly faSortDown = faSortDown;
     readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
-    readonly sortIcon = computed(() => (this.sortingOrder() === SortingOrder.ASCENDING ? this.faSortUp : this.faSortDown));
 
     constructor() {
         effect(() => {
@@ -53,7 +50,7 @@ export class FeedbackAnalysisComponent {
         const state = {
             page: this.page(),
             pageSize: this.pageSize(),
-            searchTerm: this.searchTerm(),
+            searchTerm: this.searchTerm() || '', // Pass empty string if searchTerm is not set
             sortingOrder: this.sortingOrder(),
             sortedColumn: this.sortedColumn(),
         };
@@ -69,16 +66,6 @@ export class FeedbackAnalysisComponent {
 
     setPage(newPage: number): void {
         this.page.set(newPage);
-        this.loadData();
-    }
-
-    setSortedColumn(column: string): void {
-        if (this.sortedColumn() === column) {
-            this.sortingOrder.set(this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING);
-        } else {
-            this.sortedColumn.set(column);
-            this.sortingOrder.set(SortingOrder.ASCENDING);
-        }
         this.loadData();
     }
 

@@ -1,9 +1,6 @@
 <ng-template #headerTemplate let-column="column" let-label="label">
-    <th scope="col" class="clickable" (click)="setSortedColumn(column)">
+    <th scope="col">
         <span [jhiTranslate]="label"></span>
-        @if (sortedColumn() === column) {
-            <fa-icon [icon]="sortIcon()"></fa-icon>
-        }
     </th>
 </ng-template>
 
