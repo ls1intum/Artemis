@@ -42,6 +42,7 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
+    readonly ChatServiceMode = ChatServiceMode;
 
     @Input() participationId?: number;
     @Input() displayHeader: boolean = true;
@@ -338,6 +339,4 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     onTextEditorInput(event: Event) {
         this.textEditorInput.next((<HTMLTextAreaElement>event.target).value);
     }
-
-    protected readonly ChatServiceMode = ChatServiceMode;
 }

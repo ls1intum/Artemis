@@ -180,9 +180,6 @@ public class ProgrammingLanguageConfiguration {
         final Map<ProjectType, String> languageImages = images.get(programmingLanguage);
         final ProjectType configuredProjectType = projectType.map(this::getConfiguredProjectType).orElse(DEFAULT_PROJECT_TYPE);
 
-        if (languageImages == null) {
-            throw new IllegalArgumentException("No build image defined for " + programmingLanguage);
-        }
         if (languageImages.containsKey(configuredProjectType)) {
             return languageImages.get(configuredProjectType).trim();
         }

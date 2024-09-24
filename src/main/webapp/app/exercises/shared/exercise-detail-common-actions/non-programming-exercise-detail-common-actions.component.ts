@@ -1,6 +1,6 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';
@@ -17,7 +17,7 @@ import { PROFILE_IRIS } from 'app/app.constants';
     selector: 'jhi-non-programming-exercise-detail-common-actions',
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
 })
-export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit, OnDestroy {
+export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
     @Input()
     exercise: Exercise;
 
@@ -36,8 +36,6 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     readonly ExerciseType = ExerciseType;
 
     readonly AssessmentType = AssessmentType;
-
-    private profileInfoSubscription: Subscription;
 
     // Icons
     faTrash = faTrash;
@@ -73,15 +71,9 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
                 `/exercise-groups/${this.exercise.exerciseGroup?.id}/exercises/${this.exercise.id}/`;
             this.shortBaseResource = `/course-management/${this.course.id!}/exams/${this.exercise.exerciseGroup?.exam?.id}/`;
         }
-        this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
+        this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
         });
-    }
-
-    ngOnDestroy(): void {
-        if (this.profileInfoSubscription) {
-            this.profileInfoSubscription.unsubscribe();
-        }
     }
 
     deleteExercise() {

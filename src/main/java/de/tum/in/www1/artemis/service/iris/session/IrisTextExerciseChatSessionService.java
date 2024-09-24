@@ -120,9 +120,12 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
 
     @Override
     public void checkHasAccessTo(User user, IrisTextExerciseChatSession session) {
-        if (!hasAccess(user, session)) {
-            throw new AccessForbiddenException();
+        // TODO: This check is probably unnecessary since we are fetching the sessions from the database with the user ID already
+        if (!session.getUser().equals(user)) {
+            throw new AccessForbiddenException("Iris Text Exercise Chat Session", session.getId());
         }
+        // TODO: This check is probably unnecessary as the endpoint already checks it via the @EnforceAtLeastStudentInExercise annotation
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, session.getExercise(), user);
     }
 
     /**
@@ -135,18 +138,13 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
      * @return True if the user has access, false otherwise
      */
     public boolean hasAccess(User user, IrisTextExerciseChatSession session) {
-        // TODO: This check is probably unnecessary since we are fetching the sessions from the database with the user ID already
-        if (!session.getUser().equals(user)) {
-            return false;
-        }
         try {
-            // TODO: This check is probably unnecessary as the endpoint already checks it via the @EnforceAtLeastStudentInExercise annotation
-            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, session.getExercise(), user);
+            checkHasAccessTo(user, session);
+            return true;
         }
         catch (AccessForbiddenException e) {
             return false;
         }
-        return true;
     }
 
     @Override

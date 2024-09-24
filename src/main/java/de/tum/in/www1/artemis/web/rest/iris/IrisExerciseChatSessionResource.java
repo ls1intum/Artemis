@@ -46,6 +46,7 @@ public class IrisExerciseChatSessionResource {
 
     protected final IrisRateLimitService irisRateLimitService;
 
+    // TODO: This could be a ProgrammingExerciseRepository
     protected final ExerciseRepository exerciseRepository;
 
     private final IrisExerciseChatSessionRepository irisExerciseChatSessionRepository;
