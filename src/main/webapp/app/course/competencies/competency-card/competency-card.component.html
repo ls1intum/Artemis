@@ -1,19 +1,19 @@
 <div
-    [id]="'competency-card-' + competency.id"
+    [id]="'competency-card-' + competency()?.id"
     class="course-exercise-row row align-items-center justify-content-between mb-2 mt-2 position-relative"
-    [class.border-secondary]="isPrerequisite"
+    [class.border-secondary]="isPrerequisite()"
     [class.border-success]="isMastered"
     [class.text-secondary]="isMastered"
 >
-    @if (courseId && !isPrerequisite) {
-        <a class="stretched-link" [routerLink]="['/courses', courseId, 'competencies', competency.id!]"></a>
+    @if (courseId() && !isPrerequisite()) {
+        <a class="stretched-link" [routerLink]="['/courses', courseId(), 'competencies', competency()?.id!]"></a>
     }
     <div class="col-auto d-none d-sm-block">
         <a class="exercise-row-icon">
             <fa-icon
-                [icon]="getIcon(competency.taxonomy)"
+                [icon]="getIcon(competency()?.taxonomy)"
                 size="2x"
-                [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency()?.taxonomy ?? 'none') | artemisTranslate"
                 container="body"
             />
         </a>
@@ -22,45 +22,45 @@
         <div class="row">
             <div class="col-auto d-sm-none">
                 <h4 class="fw-medium">
-                    <fa-icon [icon]="getIcon(competency.taxonomy)" />
+                    <fa-icon [icon]="getIcon(competency()?.taxonomy)" />
                 </h4>
             </div>
             <div class="col-sm col py-2">
                 <h4 class="m-0">
-                    {{ competency.title }}
+                    {{ competency()?.title }}
                     @if (isMastered) {
                         <span class="badge text-white text-bg-success" jhiTranslate="artemisApp.competency.mastered"></span>
                     }
-                    @if (competency.optional) {
+                    @if (competency()?.optional) {
                         <span id="optional-badge" class="badge text-white bg-warning" jhiTranslate="artemisApp.competency.optional"></span>
                     }
                 </h4>
-                @if (competency.description) {
-                    <p class="m-0 markdown-preview" [innerHTML]="competency.description | htmlForMarkdown"></p>
+                @if (competency()?.description) {
+                    <p class="m-0 markdown-preview" [innerHTML]="competency()?.description | htmlForMarkdown"></p>
                 }
-                @if (isPrerequisite && competency.linkedCourseCompetency?.course) {
+                @if (isPrerequisite() && competency()?.linkedCourseCompetency?.course) {
                     <div>
-                        @if (competency.linkedCourseCompetency!.course!.title) {
-                            <span class="badge bg-primary">{{ competency.linkedCourseCompetency!.course!.title! }}</span>
+                        @if (competency()!.linkedCourseCompetency!.course!.title) {
+                            <span class="badge bg-primary">{{ competency()!.linkedCourseCompetency!.course!.title! }}</span>
                         }
-                        @if (competency.linkedCourseCompetency!.course!.semester) {
-                            <span class="badge bg-secondary">{{ competency.linkedCourseCompetency!.course!.semester! }}</span>
+                        @if (competency()!.linkedCourseCompetency!.course!.semester) {
+                            <span class="badge bg-secondary">{{ competency()!.linkedCourseCompetency!.course!.semester! }}</span>
                         }
                     </div>
                 }
                 <ng-content />
             </div>
-            @if (competency.softDueDate) {
+            @if (competency()?.softDueDate) {
                 <div class="col-sm col py-2" style="max-width: fit-content">
                     <span style="vertical-align: middle" jhiTranslate="artemisApp.competency.competencyCard.softDueDate"></span>
                     <span class="badge" [ngClass]="softDueDatePassed && !isMastered ? 'bg-danger' : 'bg-success'" id="date-badge">
-                        {{ competency.softDueDate! | artemisTimeAgo }}
+                        {{ competency()!.softDueDate! | artemisTimeAgo }}
                     </span>
                 </div>
             }
-            @if (!noProgressRings) {
+            @if (!noProgressRings()) {
                 <div class="col-sm col text-end py-1 px-2" style="max-width: 95px">
-                    <jhi-competency-rings [progress]="progress" [mastery]="mastery" [hideProgress]="hideProgress" />
+                    <jhi-competency-rings [progress]="progress" [mastery]="mastery" [hideProgress]="hideProgress()" />
                 </div>
             }
         </div>

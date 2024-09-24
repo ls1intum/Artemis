@@ -1,11 +1,11 @@
-import { Component, Input } from '@angular/core';
-import { Competency } from 'app/entities/competency.model';
+import { Component, input } from '@angular/core';
+import { CourseCompetency } from 'app/entities/competency.model';
 
 @Component({ selector: 'jhi-competency-card', template: '<div><ng-content /></div>' })
 export class CompetencyCardStubComponent {
-    @Input() courseId?: number;
-    @Input() competency: Competency;
-    @Input() isPrerequisite: boolean;
-    @Input() hideProgress: boolean;
-    @Input() noProgressRings = false;
+    courseId = input<number | undefined>();
+    competency = input<CourseCompetency>();
+    isPrerequisite = input<boolean>();
+    hideProgress = input<boolean>(false);
+    noProgressRings = input<boolean>(false);
 }
