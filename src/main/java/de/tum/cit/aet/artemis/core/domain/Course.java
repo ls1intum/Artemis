@@ -639,7 +639,7 @@ public class Course extends DomainObject {
         return faqEnabled;
     }
 
-    public void setFaqEnabled(Boolean faqEnabled) {
+    public void setFaqEnabled(boolean faqEnabled) {
         this.faqEnabled = faqEnabled;
     }
 
