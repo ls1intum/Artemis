@@ -7,4 +7,5 @@ export class CompetencyCardStubComponent {
     @Input() competency: Competency;
     @Input() isPrerequisite: boolean;
     @Input() hideProgress: boolean;
+    @Input() noProgressRings = false;
 }
