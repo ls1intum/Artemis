@@ -150,7 +150,7 @@ public class FaqResource {
     }
 
     /**
-     * GET /courses/:courseId/faqs : get all the faq categories of a course
+     * GET /courses/:courseId/faq-categories : get all the faq categories of a course
      *
      * @param courseId the courseId of the course for which all faq categories should be returned
      * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
