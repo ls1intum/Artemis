@@ -85,6 +85,7 @@ export class FAQComponent implements OnInit, OnDestroy {
     private handleDeleteSuccess(faqId: number) {
         this.faqs = this.faqs.filter((faq) => faq.id !== faqId);
         this.dialogErrorSource.next('');
+        this.loadCourseFaqCategories(this.courseId);
         this.applyFilters();
     }
 

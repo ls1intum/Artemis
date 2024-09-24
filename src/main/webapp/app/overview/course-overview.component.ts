@@ -337,11 +337,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             sidebarItems.push(faqItem);
         }
 
-        if (this.course?.learningPathsEnabled) {
-            const learningPathItem: SidebarItem = this.getLearningPathItems();
-            sidebarItems.push(learningPathItem);
-        }
-
         return sidebarItems;
     }
 

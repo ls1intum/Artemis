@@ -13,6 +13,7 @@
                         [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }"
                         ngbDropdownToggle
                         id="filter-dropdown-button"
+                        [disabled]="!hasCategories"
                     >
                         <fa-icon [icon]="faFilter" />
                         <span class="d-sm-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters.size }"></span>
@@ -55,7 +56,7 @@
                         <span jhiTranslate="global.field.id"></span>
                         <fa-icon [icon]="faSort" />
                     </th>
-                    <th jhiSortBy="title">
+                    <th jhiSortBy="questionTitle">
                         <span jhiTranslate="artemisApp.faq.table.questionTitle"></span>
                         <fa-icon [icon]="faSort" />
                     </th>
