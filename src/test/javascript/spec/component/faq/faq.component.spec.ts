@@ -18,6 +18,7 @@ import { FAQComponent } from 'app/faq/faq.component';
 import { FAQCategory } from 'app/entities/faq-category.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { SortService } from 'app/shared/service/sort.service';
 
 describe('FaqComponent', () => {
     let faqComponentFixture: ComponentFixture<FAQComponent>;
@@ -26,6 +27,7 @@ describe('FaqComponent', () => {
     let faqService: FAQService;
     let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
+    let sortService: SortService;
 
     let faq1: FAQ;
     let faq2: FAQ;
@@ -104,6 +106,7 @@ describe('FaqComponent', () => {
 
                 faqService = TestBed.inject(FAQService);
                 alertService = TestBed.inject(AlertService);
+                sortService = TestBed.inject(SortService);
             });
     });
 
@@ -118,6 +121,14 @@ describe('FaqComponent', () => {
         expect(findAllSpy).toHaveBeenCalledOnce();
         expect(findAllSpy).toHaveBeenCalledWith(1);
         expect(faqComponent.faqs).toHaveLength(3);
+    });
+
+    it('should catch error if loading fails', () => {
+        const error = { status: 404 };
+        const findSpy = jest.spyOn(faqService, 'findAllByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        faqComponentFixture.detectChanges();
+        expect(findSpy).toHaveBeenCalled();
+        expect(faqComponent.faqs).toBeUndefined();
     });
 
     it('should delete faq', () => {
@@ -160,4 +171,12 @@ describe('FaqComponent', () => {
         expect(alertServiceStub).toHaveBeenCalledOnce();
         flush();
     }));
+
+    it('should call sortService when sortRows is called', () => {
+        jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
+
+        faqComponent.sortRows();
+
+        expect(sortService.sortByProperty).toHaveBeenCalledOnce();
+    });
 });
