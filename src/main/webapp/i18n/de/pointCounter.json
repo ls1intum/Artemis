@@ -2,20 +2,20 @@
     "artemisApp": {
         "pointCounter": {
             "home": {
-                "title": "Point Counters",
-                "createLabel": "Point Counter erstellen"
+                "title": "Punktzähler",
+                "createLabel": "Punktzähler erstellen"
             },
-            "created": "Point Counter erstellt mit ID {{ param }}",
-            "updated": "Point Counter aktualisiert mit ID {{ param }}",
-            "deleted": "Point Counter gelöscht mit ID {{ param }}",
+            "created": "Punktzähler erstellt mit ID {{ param }}",
+            "updated": "Punktzähler aktualisiert mit ID {{ param }}",
+            "deleted": "Punktzähler gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Point Counter {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Punktzähler {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Point Counter"
+                "title": "Punktezähler"
             },
-            "points": "Points",
-            "quizPointStatistic": "Quiz Point Statistic"
+            "points": "Punkte",
+            "quizPointStatistic": "Quiz Punkte Statistik"
         }
     }
 }

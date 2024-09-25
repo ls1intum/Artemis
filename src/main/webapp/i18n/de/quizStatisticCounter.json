@@ -2,17 +2,17 @@
     "artemisApp": {
         "quizStatisticCounter": {
             "home": {
-                "title": "Statistic Counters",
-                "createLabel": "Statistic Counter erstellen"
+                "title": "Statistik Zähler",
+                "createLabel": "Statistik Zähler erstellen"
             },
-            "created": "Statistic Counter erstellt mit ID {{ param }}",
-            "updated": "Statistic Counter aktualisiert mit ID {{ param }}",
-            "deleted": "Statistic Counter gelöscht mit ID {{ param }}",
+            "created": "Statistik Zähler erstellt mit ID {{ param }}",
+            "updated": "Statistik Zähler aktualisiert mit ID {{ param }}",
+            "deleted": "Statistik Zähler gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Statistic Counter {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Statistik Zähler {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Statistic Counter"
+                "title": "Statistik Zähler"
             },
             "ratedCounter": "Rated Counter",
             "unRatedCounter": "Un Rated Counter"

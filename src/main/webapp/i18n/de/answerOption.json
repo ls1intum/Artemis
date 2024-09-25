@@ -2,24 +2,24 @@
     "artemisApp": {
         "answerOption": {
             "home": {
-                "title": "Answer Options",
-                "createLabel": "Answer Option erstellen"
+                "title": "Antwortmöglichkeiten",
+                "createLabel": "Antwortmöglichkeit erstellen"
             },
-            "created": "Answer Option erstellt mit ID {{ param }}",
-            "updated": "Answer Option aktualisiert mit ID {{ param }}",
-            "deleted": "Answer Option gelöscht mit ID {{ param }}",
+            "created": "Antwortmöglichkeit erstellt mit ID {{ param }}",
+            "updated": "Antwortmöglichkeit aktualisiert mit ID {{ param }}",
+            "deleted": "Antwortmöglichkeit gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Answer Option {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Antwortmöglichkeit {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Answer Option"
+                "title": "Antwortmöglichkeit"
             },
             "text": "Text",
             "hint": "Hint",
-            "explanation": "Explanation",
-            "isCorrect": "Is Correct",
-            "invalid": "Invalid",
-            "question": "Question"
+            "explanation": "Erklärung",
+            "isCorrect": "Ist korrekt",
+            "invalid": "Invalide",
+            "question": "Frage"
         }
     }
 }

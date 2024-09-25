@@ -2,21 +2,21 @@
     "artemisApp": {
         "quizQuestionStatistic": {
             "home": {
-                "title": "Question Statistics",
-                "createLabel": "Question Statistic erstellen"
+                "title": "Frage Statistken",
+                "createLabel": "Frage Statistik erstellen"
             },
-            "created": "Question Statistic erstellt mit ID {{ param }}",
-            "updated": "Question Statistic aktualisiert mit ID {{ param }}",
-            "deleted": "Question Statistic gelöscht mit ID {{ param }}",
+            "created": "Frage Statistik erstellt mit ID {{ param }}",
+            "updated": "Frage Statistik aktualisiert mit ID {{ param }}",
+            "deleted": "Frage Statistik gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Question Statistic {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Frage Statistik {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Question Statistic"
+                "title": "Frage Statistik"
             },
             "ratedCorrectCounter": "Rated Correct Counter",
             "unRatedCorrectCounter": "Un-Rated Correct Counter",
-            "question": "Question"
+            "question": "Frage"
         }
     }
 }

@@ -2,25 +2,25 @@
     "artemisApp": {
         "dragAndDropMapping": {
             "home": {
-                "title": "Drag-And-Drop Mappings",
-                "createLabel": "Drag-And-Drop Mapping erstellen"
+                "title": "Drag-And-Drop Zuordnungen",
+                "createLabel": "Drag-And-Drop Zuordnung erstellen"
             },
-            "created": "Drag-And-Drop Mapping erstellt mit ID {{ param }}",
-            "updated": "Drag-And-Drop Mapping aktualisiert mit ID {{ param }}",
-            "deleted": "Drag-And-Drop Mapping gelöscht mit ID {{ param }}",
+            "created": "Drag-And-Drop Zuordnung erstellt mit ID {{ param }}",
+            "updated": "Drag-And-Drop Zuordnung aktualisiert mit ID {{ param }}",
+            "deleted": "Drag-And-Drop Zuordnung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Drag-And-Drop Mapping {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Drag-And-Drop Zuordnung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Drag-And-Drop Mapping"
+                "title": "Drag-And-Drop Zuordnung"
             },
             "dragItemIndex": "Drag Item Index",
             "dropLocationIndex": "Drop Location Index",
-            "invalid": "Invalid",
+            "invalid": "Invalide",
             "dragItem": "Drag Item",
             "dropLocation": "Drop Location",
-            "submittedAnswer": "Submitted Answer",
-            "question": "Question"
+            "submittedAnswer": "Eingereichte Antwort",
+            "question": "Frage"
         }
     }
 }

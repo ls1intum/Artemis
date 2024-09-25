@@ -2,21 +2,21 @@
     "artemisApp": {
         "shortAnswerQuestion": {
             "home": {
-                "title": "Short Answer Questions",
-                "createLabel": "Short Answer Question erstellen"
+                "title": "Kurzantwort Fragen",
+                "createLabel": "Kurzantwort Frage erstellen"
             },
-            "created": "Short Answer Question erstellt mit ID {{ param }}",
-            "updated": "Short Answer Question aktualisiert mit ID {{ param }}",
-            "deleted": "Short Answer Question gelöscht mit ID {{ param }}",
+            "created": "Kurzantwort Frage erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort Frage aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort Frage gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Short Answer Question {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Kurzantwort Frage {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Short Answer Question"
+                "title": "Kurzantwort Frage"
             },
             "spots": "Spots",
             "solutions": "Lösungen",
-            "correctMappings": "Korrekte Mappings",
+            "correctMappings": "Korrekte Zuordnung",
 
             "editor": {
                 "addHint": "[hint] Hinweis",

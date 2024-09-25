@@ -73,7 +73,7 @@
             "deleteAssessmentInstruction": "Bewertungsanweisung löschen",
             "addAssessmentInstruction": "Bewertungsanweisung hinzufügen",
             "limit": "Begrenzung",
-            "dragDropInstruction": "Drag & Drop Bewertungsanweisung zum Feedback-Element",
+            "dragDropInstruction": "Drag-and-Drop Bewertungsanweisung zum Feedback-Element",
             "gradingScale": "Skala",
             "instructionDescription": "Beschreibung",
             "credits": "Credits",

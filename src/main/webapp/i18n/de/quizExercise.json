@@ -3,7 +3,7 @@
         "quizWarning": {
             "title": "Achtung!",
             "question": "Mögliche Leistungsprobleme",
-            "description": "Du verwendest in dieser Quizaufgabe eine sehr große Anzahl an Short-Answer Elementen und/oder Drag-and-Drop Elementen. Dies kann zu erheblichen Performancebeeinträchtigungen führen. Bist du sicher, dass du die Aufgabe so speichern möchtest?",
+            "description": "Du verwendest in dieser Quizaufgabe eine sehr große Anzahl an Kurzantwortelementen und/oder Drag-and-Drop Elementen. Dies kann zu erheblichen Performancebeeinträchtigungen führen. Bist du sicher, dass du die Aufgabe so speichern möchtest?",
             "confirmButton": "Trotzdem speichern"
         },
         "quizExercise": {
@@ -19,7 +19,7 @@
                 "title": "Quiz Aufgabe",
                 "questionCount": {
                     "title": "Fragenanzahl",
-                    "value": "Multiple Choice: {{ mcCount }}, Drag And Drop: {{ dndCount }}, Kurz Antwort: {{ shortCount }}"
+                    "value": "Multiple Choice: {{ mcCount }}, Drag-And-Drop: {{ dndCount }}, Kurzantwort: {{ shortCount }}"
                 }
             },
             "created": "Quiz erstellt mit ID {{ param }}",
@@ -56,7 +56,7 @@
             "filter": {
                 "mcq": "Multiple-Choice Frage",
                 "dnd": "Drag-And-Drop Frage",
-                "sa": "Short-Answer Frage",
+                "sa": "Kurzantwort-Frage",
                 "applyFilter": "Filter anwenden"
             },
             "quizStatus": {
@@ -90,10 +90,10 @@
             "noMatchingQuestionsFound": "Keine Fragen des Kurses entsprechen den Suchkriterien",
             "multipleChoiceQuestion": "Multiple-Choice Frage",
             "dragAndDropQuestion": "Drag-And-Drop Frage",
-            "shortAnswerQuestion": "Short-Answer Frage",
+            "shortAnswerQuestion": "Kurzantwort-Frage",
             "addMultipleChoiceQuestion": "Multiple-Choice Frage hinzufügen",
             "addDragAndDropQuestion": "Drag-And-Drop Frage hinzufügen",
-            "addShortAnswerQuestion": "Short-Answer Frage hinzufügen",
+            "addShortAnswerQuestion": "Kurzantwort Frage hinzufügen",
             "addApollonDragAndDropQuestion": "Apollon Drag-And-Drop Frage hinzufügen",
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
             "fromAFile": "Aus einer Datei",
@@ -157,8 +157,8 @@
                 "resetQuestion": "Frage zurücksetzen",
                 "resetQuestionTitle": "Fragentitel zurücksetzen",
                 "resetQuestionText": "Fragentext zurücksetzen",
-                "resetAnswer": "Reset Answer",
-                "deleteAnswer": "Delete Answer",
+                "resetAnswer": "Antwort zurücksetzen",
+                "deleteAnswer": "Antwort löschen",
                 "moveUp": "Frage nach oben verschieben",
                 "moveDown": "Frage nach unten verschieben",
                 "warning": {

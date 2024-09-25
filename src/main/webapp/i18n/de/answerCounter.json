@@ -2,20 +2,20 @@
     "artemisApp": {
         "answerCounter": {
             "home": {
-                "title": "Answer Counters",
-                "createLabel": "Answer Counter erstellen"
+                "title": "Antwortzähler",
+                "createLabel": "Antwortzähler erstellen"
             },
-            "created": "Answer Counter erstellt mit ID {{ param }}",
-            "updated": "Answer Counter aktualisiert mit ID {{ param }}",
-            "deleted": "Answer Counter gelöscht mit ID {{ param }}",
+            "created": "Antwortzähler erstellt mit ID {{ param }}",
+            "updated": "Antwortzähler aktualisiert mit ID {{ param }}",
+            "deleted": "Antwortzähler gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Answer Counter {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Antwortzähler {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Answer Counter"
+                "title": "Antwortzähler"
             },
-            "answer": "Answer",
-            "multipleChoiceQuestionStatistic": "Multiple-Choice Question Statistic"
+            "answer": "Antwort",
+            "multipleChoiceQuestionStatistic": "Multiple-Choice Frage Statistik"
         }
     }
 }

@@ -7,7 +7,7 @@
             },
             "addEditUmlElement": {
                 "headline": "UML Elemente hinzufügen und bearbeiten",
-                "content": "Um UML Elemente hinzuzufügen, musst du eines der aufgelisteten UML Elemente per Drag and Drop auf die Editierfläche ziehen.",
+                "content": "Um UML Elemente hinzuzufügen, musst du eines der aufgelisteten UML Elemente per Drag-and-Drop auf die Editierfläche ziehen.",
                 "hint": "Du kannst das UML Element per Doppelklick auswählen und editieren."
             },
             "createAssociation": {

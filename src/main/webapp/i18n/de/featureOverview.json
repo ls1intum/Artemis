@@ -119,7 +119,7 @@
                 },
                 "apollonEditor": {
                     "title": "Integrierter Model-Editor",
-                    "shortDescription": "Erstelle komplexe Modelle einfach per Drag & Drop mit dem intuitiven Apollon-Editor.",
+                    "shortDescription": "Erstelle komplexe Modelle einfach per Drag-and-Drop mit dem intuitiven Apollon-Editor.",
                     "descriptionTextOne": "Angetrieben vom Apollon-Editor unterstützt der Artemis-Klausurmodus das Modellieren von Aufgaben unterschiedlicher Art. Dazu gehören Klassen-, Aktivitäts-, Objekt-, Anwendungsfall-, Kommunikations-, Komponenten-, Verteilungsdiagramme, Petri-Netze und Syntaxbäume. Mit dem integrierten Apollon-Editor kannst du auf einfache Weise komplexe Modelle erstellen, die über eine intuitive Drag-and-drop-Benutzeroberfläche navigierbar sind."
                 },
                 "quizExercises": {

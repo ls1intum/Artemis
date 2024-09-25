@@ -2,24 +2,24 @@
     "artemisApp": {
         "shortAnswerMapping": {
             "home": {
-                "title": "Short Answer Mappings",
-                "createLabel": "Short Answer Mapping erstellen"
+                "title": "Kurzantwort Zuordnungen",
+                "createLabel": "Kurzantwort Zuordnung erstellen"
             },
-            "created": "Short Answer Mapping erstellt mit ID {{ param }}",
-            "updated": "Short Answer Mapping aktualisiert mit ID {{ param }}",
-            "deleted": "Short Answer Mapping gelöscht mit ID {{ param }}",
+            "created": "Kurzantwort Zuordnung erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort Zuordnung aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort Zuordnung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Short Answer Mapping {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Kurzantwort Zuordnung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Short Answer Mapping"
+                "title": "Kurzantwort Zuordnung"
             },
-            "shortAnswerSpotIndex": "Short Answer Spot Index",
-            "shortAnswerSolutionIndex": "Short Answer Solution Index",
-            "invalid": "Invalid",
+            "shortAnswerSpotIndex": "Kurzantwort Spot-Index",
+            "shortAnswerSolutionIndex": "Kurzantwort Lösungsindex",
+            "invalid": "Invalide",
             "solution": "Lösung",
             "spot": "Spot",
-            "question": "Question"
+            "question": "Frage"
         }
     }
 }
