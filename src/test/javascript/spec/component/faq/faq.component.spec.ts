@@ -1,9 +1,9 @@
-import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -17,12 +17,15 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { FAQComponent } from 'app/faq/faq.component';
 import { FAQCategory } from 'app/entities/faq-category.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('FaqComponent', () => {
     let faqComponentFixture: ComponentFixture<FAQComponent>;
     let faqComponent: FAQComponent;
 
     let faqService: FAQService;
+    let alertServiceStub: jest.SpyInstance;
+    let alertService: AlertService;
 
     let faq1: FAQ;
     let faq2: FAQ;
@@ -100,6 +103,7 @@ describe('FaqComponent', () => {
                 faqComponent = faqComponentFixture.componentInstance;
 
                 faqService = TestBed.inject(FAQService);
+                alertService = TestBed.inject(AlertService);
             });
     });
 
@@ -136,4 +140,13 @@ describe('FaqComponent', () => {
         expect(faqComponent.filteredFaqs).not.toContain(faq1);
         expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
     });
+
+    it('should catch error if no categories are found', fakeAsync(() => {
+        alertServiceStub = jest.spyOn(alertService, 'error');
+        const error = { status: 404 };
+        jest.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        faqComponentFixture.detectChanges();
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+        flush();
+    }));
 });

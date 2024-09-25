@@ -4,10 +4,10 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseFaqComponent } from 'app/overview/course-faq/course-faq.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { FAQService } from 'app/faq/faq.service';
@@ -24,6 +24,8 @@ describe('CourseFaqs', () => {
     let courseFaqComponent: CourseFaqComponent;
 
     let faqService: FAQService;
+    let alertServiceStub: jest.SpyInstance;
+    let alertService: AlertService;
 
     let faq1: FAQ;
     let faq2: FAQ;
@@ -51,7 +53,6 @@ describe('CourseFaqs', () => {
             imports: [ArtemisSharedComponentModule, ArtemisSharedModule, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent)],
             declarations: [CourseFaqComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
             providers: [
-                MockProvider(AlertService),
                 MockProvider(FAQService),
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -95,6 +96,7 @@ describe('CourseFaqs', () => {
                 courseFaqComponent = courseFaqComponentFixture.componentInstance;
 
                 faqService = TestBed.inject(FAQService);
+                alertService = TestBed.inject(AlertService);
             });
     });
 
@@ -125,5 +127,13 @@ describe('CourseFaqs', () => {
         expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
         expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
         expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);
+    });
+
+    it('should catch error if no categories are found', () => {
+        alertServiceStub = jest.spyOn(alertService, 'error');
+        const error = { status: 404 };
+        jest.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        courseFaqComponentFixture.detectChanges();
+        expect(alertServiceStub).toHaveBeenCalledOnce();
     });
 });
