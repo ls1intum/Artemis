@@ -131,6 +131,17 @@ describe('FaqComponent', () => {
         expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs);
     });
 
+    it('should not delete faq on error', () => {
+        const error = { status: 404 };
+        const deleteSpy = jest.spyOn(faqService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        faqComponentFixture.detectChanges();
+        faqComponent.deleteFaq(faq1.id!);
+        expect(deleteSpy).toHaveBeenCalledOnce();
+        expect(deleteSpy).toHaveBeenCalledWith(faq1.id!);
+        expect(faqComponent.faqs).toHaveLength(3);
+        expect(faqComponent.faqs).toContain(faq1);
+    });
+
     it('should toggle filter correctly', () => {
         const toggleFilterSpy = jest.spyOn(faqService, 'toggleFilter');
         faqComponentFixture.detectChanges();
