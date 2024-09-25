@@ -108,7 +108,7 @@
                     "placeholder": "Wähle einen Campus, auf dem sich diese Übungsgruppe trifft.",
                     "loadingText": "Campus laden ...",
                     "notFoundText": "Kein Campus gefunden.",
-                    "campusHelp": "In das Feld tippen um nach einem Campus zu suchen.",
+                    "campusHelp": "In das Feld tippen, um nach einem Campus zu suchen.",
                     "maxLengthValidationError": "Der Campus ist auf {{ max }} Zeichen beschränkt!"
                 },
                 "additionalInformationInput": {
@@ -126,7 +126,7 @@
                     "placeholder": "Wähle eine Sprache",
                     "loadingText": "Sprachen laden ...",
                     "notFoundText": "Keine Sprachen gefunden.",
-                    "languageHelp": "In das Feld tippen um nach einer Sprache zu suchen.",
+                    "languageHelp": "In das Feld tippen, um nach einer Sprache zu suchen.",
                     "maxLengthValidationError": "Die Sprache ist auf {{ max }} Zeichen beschränkt!",
                     "requiredValidationError": "Eine Sprache ist erforderlich!"
                 },
@@ -223,7 +223,7 @@
                     "beta": "Die Zeitzone wird momentan nur in Verbindung mit dem Übungsgruppen-Feature verwendet. Sie hat momentan keinen Einfluss auf andere Bereiche von Artemis",
                     "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
                     "placeholder": "Wähle eine Zeitzone aus",
-                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen um nach einer Zeitzone zu suchen.",
+                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen, um nach einer Zeitzone zu suchen.",
                     "requiredValidationError": "Eine Zeitzone muss ausgewählt werden!"
                 },
                 "periodInput": {

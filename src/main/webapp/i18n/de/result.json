@@ -13,7 +13,7 @@
                 "question2": "Soll die Bewertung wirklich gelöscht werden? Es kann nicht rückgängig gemacht werden!",
                 "buttonText": "Löschen",
                 "error": {
-                    "hasComplaint": "Eine Bewertung kann nicht gelöscht werden wenn es zu ihr eine Beschwerde gibt!"
+                    "hasComplaint": "Eine Bewertung kann nicht gelöscht werden, wenn es zu ihr eine Beschwerde gibt!"
                 }
             },
             "detail": {
@@ -98,7 +98,7 @@
             "chart": {
                 "points": "Punkte",
                 "deductions": "Abzüge",
-                "tooltip": "Deine Punktabzüge werden begrenzt um den Einfluss von Folgefehlern durch Code-Issues abzuschwächen. Beachte, dass du gegebenenfalls mehrere Code-Issues lösen musst, bevor sich deine Punkte erhöhen.",
+                "tooltip": "Deine Punktabzüge werden begrenzt, um den Einfluss von Folgefehlern durch Code-Issues abzuschwächen. Beachte, dass du gegebenenfalls mehrere Code-Issues lösen musst, bevor sich deine Punkte erhöhen.",
                 "filterApplied": "Das Feedback ist gefiltert.",
                 "reset": "Zurücksetzen"
             },
@@ -114,7 +114,7 @@
             "notLatestSubmission": "Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung.",
             "seeMore": "Mehr anzeigen",
             "noFeedback": "Kein Feedback verfügbar",
-            "afterDueDateFeedbackHidden": "Auch nach der Einreichungsfrist werden Detailfeedbacks nicht zu allen Testfällen angezeigt. Dies ist etwa der Fall wenn für andere Studierende eine spätere Einreichungsfrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Alle Feedbacks werden automatisch am {{date}} sichtbar sein.",
+            "afterDueDateFeedbackHidden": "Auch nach der Einreichungsfrist werden Detailfeedbacks nicht zu allen Testfällen angezeigt. Dies ist etwa der Fall, wenn für andere Studierende eine spätere Einreichungsfrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Alle Feedbacks werden automatisch am {{date}} sichtbar sein.",
             "testCount": "Du hast {{passed}} von {{total}} Tests bestanden.",
             "notExecutedTests": "{{numberOfNotExecutedTests}} Tests wurden nicht ausgeführt.",
             "notExecutedTestsTooltip": "Diese Tests werden eventuell nur nach der Einreichungsfrist ausgeführt oder es gab ein Problem während der Ausführung der Tests.",

@@ -106,7 +106,7 @@
             "buildplan": "Build-Plan",
             "buildConfiguration": "Build Konfiguration",
             "buildPlanEditor": "Build-Plan-Editor",
-            "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen der hier bearbeitet werden kann.",
+            "buildPlanFetchError": "Konnte keinen Build-Plan für diese Aufgabe finden. Das ist normal für ältere Aufgaben. Du kannst den Build-Plan im CI-System bearbeiten oder den Build-Plan in Artemis zurücksetzen, um einen neuen Build-Plan zu erstellen, der hier bearbeitet werden kann.",
             "customizeBuildPlan": "Build Skript anpassen",
             "customizeBuildPlanWithAeolus": "Build Skript anpassen",
             "revertToTemplateBuildPlan": "Artemis führt das folgende Build-Skript für jede Einreichung in einem Docker-Container aus. Du kannst das Build Skript anpassen und auf seinen Standardwert zurücksetzen, indem du die Schaltfläche Zurücksetzen oben verwendest.",

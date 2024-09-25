@@ -230,7 +230,7 @@
             },
             "scoringTypeExplanation": {
                 "title": "Bewertungstypen",
-                "all_or_nothing": "Alle richtigen Auswahlmöglichkeiten müssen ausgewählt werden und alle falschen Auswahlmöglichkeiten müssen leer bleiben, um die volle Punktzahl zu erreichen. Wird eine falsche Antwortmöglichkeit ausgewählt gibt es 0 Punkte. Es gibt keine Punktzahl dazwischen.",
+                "all_or_nothing": "Alle richtigen Auswahlmöglichkeiten müssen ausgewählt werden und alle falschen Auswahlmöglichkeiten müssen leer bleiben, um die volle Punktzahl zu erreichen. Wird eine falsche Antwortmöglichkeit ausgewählt, gibt es 0 Punkte. Es gibt keine Punktzahl dazwischen.",
                 "proportional_with_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Um Rätselraten zu vermeiden, wird für jeden Fehler der gleiche Anteil von den erreichten Punkten abgezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Jede falsche Antwortmöglichkeit zieht 0,6 Punkte ab. Studierende mit 3 richtigen und 2 falschen Antworten erhalten dann 0,6 Punkte.",
                 "proportional_without_penalty": "Jede richtige Antwort führt zu einem Bruchteil der Gesamtpunktzahl. Bei falschen Antworten werden keine Punkte abgezogen. Beispiel: Wenn die Punktzahl der Frage 3 ist und es 5 Optionen gibt, ergibt jede richtige Antwortmöglichkeit 0,6 Punkte. Studierende mit 3 richtigen und 2 falschen Antworten erhalten dann 1,8 Punkte."
             },
