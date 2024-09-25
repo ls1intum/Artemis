@@ -8,7 +8,7 @@
             "initialization": {
                 "header": "LTI Benutzer Initialisierung",
                 "body": {
-                    "welcome": "Herzlich Willkommen bei Artemis! Wir haben automatisch ein Konto für dich erstellt.",
+                    "welcome": "Herzlich willkommen bei Artemis! Wir haben automatisch ein Konto für dich erstellt.",
                     "loginLabel": "Dein Login-Name",
                     "passwordLabel": "Dein Passwort",
                     "passwordHint": "Merk dir das Passwort gut. Du wirst es benötigen, um dich manuell einzuloggen oder für unsere Programmieraufgaben.<br>Wenn du dein Passwort vergessen hast oder ändern möchtest, kannst du es auf der Login-Seite zurücksetzen. Du kannst das Passwort auch sofort ändern:",
@@ -37,7 +37,7 @@
             "jwkSetUri": "JWKSet URI",
             "customName": "Benutzerdefinierter Name",
             "exercises": "Aufgaben",
-            "startExercise": "<strong>Herzlich Willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!",
+            "startExercise": "<strong>Herzlich willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!",
             "ltiSuccessLoginRequired": "LTI Übung erfolgreich gestartet. Bitte melde dich als Nutzer:in {{user}} an.",
             "lti": "LTI",
             "configurationForCourse": "LTI Konfiguration des Kurses {{ title }}",
