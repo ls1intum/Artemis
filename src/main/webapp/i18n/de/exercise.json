@@ -81,7 +81,7 @@
             "editText": "Als Text bearbeiten",
             "usageCountHint": "Diese Zahl gibt an, wie oft Punkte für diese Anweisung zur Endbewertung hinzugefügt werden.",
             "creditsHint": "Diese Zahl gibt die Punktzahl für diese Bewertungsanweisung an.",
-            "gradingScaleHint": "Die Skala beschreibt das Leistungsniveau für den Anweisung. Einige Beispiele hierfür sind: ausgezeichnet, gut, durchschnittlich, schlecht.",
+            "gradingScaleHint": "Die Skala beschreibt das Leistungsniveau für die Anweisung. Einige Beispiele hierfür sind: ausgezeichnet, gut, durchschnittlich, schlecht.",
             "descriptionHint": "Die Beschreibung einer bestimmten Leistungsstufe kann zusätzliche Hinweise dazu enthalten, wann diese Anweisung anzuwenden ist.",
             "feedbackHint": "Das Feedback ist ein erläuternder Text an Studierende, um ihr Leistungsniveau besser zu verstehen.",
             "title": "Titel",

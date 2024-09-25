@@ -154,7 +154,7 @@
                     "startPage": "Startseite",
                     "endPage": "Letzte Seite"
                 },
-                "lectureFileToolTip": "Bitte auswählen, um die automatischen Trennung von Vorlesungseinheiten zu aktivieren.",
+                "lectureFileToolTip": "Bitte auswählen, um die automatische Trennung von Vorlesungseinheiten zu aktivieren.",
                 "processTimeInfo": "Die Verarbeitung der Vortragseinheiten kann einige Sekunden dauern. Habe bitte etwas Geduld."
             },
             "createAttachmentUnit": {

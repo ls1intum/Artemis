@@ -228,7 +228,7 @@
                 "templateFulfillsTest": "Das Template-Repository erfüllt bereits einen oder mehrere Testfälle. Das könnte auf ein Problem mit dem Template-Repository oder den Testfällen hinweisen."
             },
             "testCaseAnalysis": {
-                "invalidTestCases": "{{number}} Testfälle sind Teil des Aufgabenstellung aber können nicht im Test-Repository gefunden werden:",
+                "invalidTestCases": "{{number}} Testfälle sind Teil der Aufgabenstellung aber können nicht im Test-Repository gefunden werden:",
                 "missingTestCases": "{{number}} Testfälle wurde im Test-Repository gefunden, die nicht Teil der Aufgabenstellung sind:",
                 "issues": "Testfallprobleme.",
                 "ok": "Testfälle ok.",
@@ -301,7 +301,7 @@
                     },
                     "testCasePoints": {
                         "title": "Punkte-Verteilung",
-                        "description": "Der prozentuale Anteil von verteilten Punkten für ein bestimmten Testfall. 100% in dem Diagramm steht für volle Punktzahl (100%) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
+                        "description": "Der prozentuale Anteil von verteilten Punkten für einen bestimmten Testfall. 100% in dem Diagramm steht für volle Punktzahl (100%) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
                         "points": "Punkte",
                         "pointsTooltip": "Punkte: {{ percentage }}% aller Punkte."
                     },
@@ -329,7 +329,7 @@
                     "testcase": "Testfall",
                     "errorCategory": "Fehlerkategorie",
                     "totalItems": "Insgesamt {{count}} Elemente",
-                    "error": "Beim Laden des Feedback ist ein Fehler aufgetreten."
+                    "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten."
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",

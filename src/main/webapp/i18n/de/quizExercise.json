@@ -175,7 +175,7 @@
                     "question_invalid": "Frage ungültig gesetzt:",
                     "scoring_change": "Bewertungsart verändert:",
                     "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
-                    "quizStatistic": "Die bestehende Statistiken müssen neu berechnet werden!",
+                    "quizStatistic": "Die bestehenden Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
                     "exam": "Dieses Quiz ist eine Klausuraufgabe. Stelle sicher, dass das Quiz bereits evaluiert wurde bevor eine Überarbeitung vorgenommen wird!",
                     "resulttext": {

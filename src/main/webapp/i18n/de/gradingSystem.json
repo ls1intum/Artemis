@@ -48,7 +48,7 @@
             "add": "Notenstufe hinzufügen",
             "save": "Speichern",
             "stickyGradeStep": "Der letzte Notenschritt ist immer offen, um Punkte zu verarbeiten, die das Maximum überschreiten. Es klebt am Boden.",
-            "plagiarismGradeHelp": "Diese Note wird vergeben, wenn bei einen Studierenden in einer beliebigen Übung ein \"Unterschleif\" festgestellt wurde.",
+            "plagiarismGradeHelp": "Diese Note wird vergeben, wenn bei einem Studierenden in einer beliebigen Übung ein \"Unterschleif\" festgestellt wurde.",
             "noParticipationGradeHelp": "Diese besondere Note für Nichtbestehen wird vergeben, wenn ein Student nicht teilgenommen hat. Bei Kursen bedeutet dies, dass der Studierende keine Übung begonnen hat. Bei Prüfungen bedeutet dies, dass der Studierende nicht begonnen oder nicht abgegeben hat.",
             "defaultGradeName": "Standard: {{default}}",
             "info": {
