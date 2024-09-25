@@ -58,13 +58,13 @@
             "hideContinuousPlagiarismControl": "Verstecke Kontinuierliche Plagiatskontrolle",
             "continuousPlagiarismControlTooltip": "Die kontinuierliche Plagiatskontrolle löst jede Nacht automatisch eine Plagiatskontrolle aus. Aufgedeckte Fälle werden als Plagiat gekennzeichnet und die Studierenden werden darüber behutsam informiert.",
             "continuousPlagiarismControlEnabled": "Aktiviere Kontinuierliche Plagiatskontrolle",
-            "continuousPlagiarismControlPostDueDateChecksEnabled": "Führe die Überprüfung der Abgaben nach der Einreichungsfrist ein weiteres mal durch.",
+            "continuousPlagiarismControlPostDueDateChecksEnabled": "Führe die Überprüfung der Abgaben nach der Einreichungsfrist ein weiteres Mal durch.",
             "cleanUp": {
                 "confirmDialog": {
                     "title": "Plagiatsvergleiche aufräumen",
                     "question": "Bist du sicher, dass du alle unbenutzten Plagiatsvergleiche löschen willst? Dies kann nicht rückgängig gemacht werden.",
                     "deleteAll": "Lösche alle Plagiatsvergleiche",
-                    "warning": "Es werden ALLE plagiatsvergleiche gelöscht, einschließlich des Ergebnisses der Plagiatskontrolle und der Statistiken.",
+                    "warning": "Es werden ALLE Plagiatsvergleiche gelöscht, einschließlich des Ergebnisses der Plagiatskontrolle und der Statistiken.",
                     "submit": "Aufräumen"
                 }
             },
@@ -120,7 +120,7 @@
                 "pageTitle": "Plagiatsfälle",
                 "plagiarismReview": "Plagiate Prüfen",
                 "plagiarismCases": "Plagiatsfälle",
-                "pageSubtitle": "Bestätigte plagiatsfälle verwalten, Studierende benachrichtigen und Stellungnahmen bearbeiten.",
+                "pageSubtitle": "Bestätigte Plagiatsfälle verwalten, Studierende benachrichtigen und Stellungnahmen bearbeiten.",
                 "affectedExercise": "Betroffene Aufgabe:",
                 "assess": "Öffnen",
                 "close": "Schließen",

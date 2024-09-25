@@ -171,7 +171,7 @@
                 "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
                 "file": "Datei",
                 "version": "Version",
-                "fileRequiredValidationError": "Du musst eine Datei zum uploaden auswählen.",
+                "fileRequiredValidationError": "Du musst eine Datei zum Uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
                 "fileTooBig": "Die Datei ist zu groß! Die maximale Dateigröße beträgt 20 MB.",
                 "fileLimitation": "(max. Größe 20 MB)",

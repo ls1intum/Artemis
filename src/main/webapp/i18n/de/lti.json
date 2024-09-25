@@ -72,12 +72,12 @@
         "lti13": {
             "launch": {
                 "title": "Aufgabe starten",
-                "launching": "Am starten...",
+                "launching": "Am Starten...",
                 "launchFailed": "Die Übung konnte nicht gestartet werden. Bitte versuche es später noch einmal oder kontaktiere den Administrator."
             },
             "dynamicRegistration": {
                 "title": "Dynamische Registrierung",
-                "registering": "Am registrieren",
+                "registering": "Am Registrieren",
                 "registeredSuccessfully": "Kurs erfolgreich registriert",
                 "registerFailed": "Fehler bei der dynamischen Registrierung"
             },

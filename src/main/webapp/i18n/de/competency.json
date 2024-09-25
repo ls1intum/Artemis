@@ -269,7 +269,7 @@
                 "health": {
                     "missing": {
                         "title": "Fehlende Lernpfade",
-                        "body": "Für einige Studierende wurde noch kein Lernpfad erstellt. Dies ist nicht kritisch. Ihre Lernpfade werden generiert, wenn sie ihren Lernpfad das erste mal anfragen.",
+                        "body": "Für einige Studierende wurde noch kein Lernpfad erstellt. Dies ist nicht kritisch. Ihre Lernpfade werden generiert, wenn sie ihren Lernpfad das erste Mal anfragen.",
                         "action": "Erstellen",
                         "hint": "Erstellen der fehlenden Lernpfade"
                     },
@@ -316,7 +316,7 @@
                 "legend": {
                     "competencyEnd": {
                         "title": "Kompetenzende",
-                        "tooltip": "Hier endet eine Kompetenz. Die Knoten zwischen Kompetenzbeginn und -ende sind Inhalte, die dir beim erreichen dieser Kompetenz helfen."
+                        "tooltip": "Hier endet eine Kompetenz. Die Knoten zwischen Kompetenzbeginn und -ende sind Inhalte, die dir beim Erreichen dieser Kompetenz helfen."
                     },
                     "matchStart": {
                         "title": "Verzweigung",

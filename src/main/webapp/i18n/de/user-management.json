@@ -11,7 +11,7 @@
             },
             "notEnrolled": {
                 "delete": {
-                    "cancel": "Keine nicht eingeschriebenen Nutzer:innen zum löschen gefunden.",
+                    "cancel": "Keine nicht eingeschriebenen Nutzer:innen zum Löschen gefunden.",
                     "caption": "Nicht eingeschriebene Nutzer:innen löschen",
                     "question": "Sollen diese Nutzer:innen wirklich dauerhaft gelöscht werden? <br> {{ users }} <br> Das sind <strong>{{ title }}</strong> Nutzer:innen! Diese Aktion kann NICHT rückgängig gemacht werden!"
                 }
