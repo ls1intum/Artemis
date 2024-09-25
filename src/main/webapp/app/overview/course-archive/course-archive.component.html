@@ -32,17 +32,17 @@
             <div class="mb-0">
                 @for (semester of semesters; track semester; let last = $last) {
                     <div
-                        class="d-flex justify-content-between align-items-center px-3 mb-2"
-                        [ngClass]="{ 'mb-2': !(last && semesterCollapsed[semester]) }"
-                        (click)="semesterCollapsed[semester] = !semesterCollapsed[semester]"
+                        class="d-flex justify-content-between align-items-center px-3"
+                        (click)="isCourseFoundInSemester(semester) && toggleCollapseState(semester)"
                         tabindex="0"
                         role="button"
+                        [ngClass]="{ 'text-secondary': (coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText).length <= 0 }"
                     >
                         <span class="fw-bold" jhiTranslate="{{ fullFormOfSemesterStrings[semester] }}" [translateValues]="{ param: semester.slice(2) }"></span>
                         <fa-icon [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />
                     </div>
                     @if (!semesterCollapsed[semester]) {
-                        <div class="container-fluid py-2">
+                        <div class="container-fluid mt-2">
                             <div class="course-grid justify-content-center align-items-center">
                                 @for (course of coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText; track course) {
                                     <div class="course-card-wrapper p-0">

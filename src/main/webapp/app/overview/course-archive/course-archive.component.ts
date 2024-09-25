@@ -74,6 +74,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
         let isCollapsed = false;
         for (const semester of this.semesters) {
             this.semesterCollapsed[semester] = isCollapsed;
+            this.courseService.setSemesterCollapseState(semester, isCollapsed);
             this.coursesBySemester[semester] = this.courses.filter((course) => course.semester === semester);
             this.fullFormOfSemesterStrings[semester] = semester.startsWith('WS') ? 'artemisApp.course.archive.winterSemester' : 'artemisApp.course.archive.summerSemester';
             isCollapsed = true;
@@ -89,6 +90,8 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
         this.searchCourseText = searchValue;
         if (searchValue !== '') {
             this.expandOrCollapseBasedOnSearchValue();
+        } else {
+            this.getCollapseStateForSemesters();
         }
     }
 
@@ -106,5 +109,20 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
             const hasMatchingCourse = this.coursesBySemester[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText.toLowerCase()));
             this.semesterCollapsed[semester] = !hasMatchingCourse;
         }
+    }
+
+    getCollapseStateForSemesters(): void {
+        for (const semester of this.semesters) {
+            this.semesterCollapsed[semester] = this.courseService.getSemesterCollapseStateFromStorage(semester);
+        }
+    }
+
+    toggleCollapseState(semester: string): void {
+        this.semesterCollapsed[semester] = !this.semesterCollapsed[semester];
+        this.courseService.setSemesterCollapseState(semester, this.semesterCollapsed[semester]);
+    }
+
+    isCourseFoundInSemester(semester: string): boolean {
+        return this.coursesBySemester[semester].some((course) => course.title?.toLowerCase().includes(this.searchCourseText.toLowerCase()));
     }
 }

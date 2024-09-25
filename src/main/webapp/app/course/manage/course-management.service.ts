@@ -753,4 +753,13 @@ export class CourseManagementService {
                 })
         );
     }
+
+    getSemesterCollapseStateFromStorage(storageId: string): boolean {
+        const storedCollapseState: string | null = localStorage.getItem('semester.collapseState.' + storageId);
+        return storedCollapseState ? JSON.parse(storedCollapseState) : false;
+    }
+
+    setSemesterCollapseState(storageId: string, isCollapsed: boolean) {
+        localStorage.setItem('semester.collapseState.' + storageId, JSON.stringify(isCollapsed));
+    }
 }
