@@ -104,7 +104,7 @@
                 },
                 "messagingEnabled": {
                     "label": "Direktnachrichten / Gruppen-Chats aktiviert",
-                    "tooltip": "Ermöglicht den Nachrichtenaustausch in Gruppenchats oder Direktnachrichten. Alle Nutzer:innen können Direktnachrichten oder einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Die Chats finden im Kommunikationbereich des Kurses statt.",
+                    "tooltip": "Ermöglicht den Nachrichtenaustausch in Gruppenchats oder Direktnachrichten. Alle Nutzer:innen können Direktnachrichten oder einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder begrenzt. Die Chats finden im Kommunikationbereich des Kurses statt.",
                     "codeOfConduct": "Nachrichten: Code of Conduct"
                 }
             },
