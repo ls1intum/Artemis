@@ -116,6 +116,7 @@ for (const group of groups) {
  * The workers of the monaco editor must be bundled separately.
  * Specialized workers are available in the vs/esm/language/ directory.
  * Be sure to modify the MonacoConfig if you choose to add a worker here.
+ * For more details, refer to https://github.com/microsoft/monaco-editor/blob/main/samples/browser-esm-esbuild/build.js
  */
 const workerEntryPoints = [
     'vs/language/json/json.worker.js',
@@ -124,7 +125,7 @@ const workerEntryPoints = [
     'vs/language/typescript/ts.worker.js',
     'vs/editor/editor.worker.js'
 ];
-build({
+await build({
     entryPoints: workerEntryPoints.map((entry) => `node_modules/monaco-editor/esm/${entry}`),
     bundle: true,
     format: 'iife',
@@ -133,17 +134,17 @@ build({
 });
 
 /**
- * @param {import ('esbuild').BuildOptions} opts
+ * Start an esbuild build with the given options and prints errors and warnings.
+ * @param opts The options for the build.
  */
-function build(opts) {
-    esbuild.build(opts).then((result) => {
-        if (result.errors.length > 0) {
-            console.error(result.errors);
-        }
-        if (result.warnings.length > 0) {
-            console.error(result.warnings);
-        }
-    });
+async function build(opts) {
+    const result = await esbuild.build(opts);
+    if (result.errors.length > 0) {
+        console.error(result.errors);
+    }
+    if (result.warnings.length > 0) {
+        console.warn(result.warnings);
+    }
 }
 
 console.log("Pre-Build complete!");
