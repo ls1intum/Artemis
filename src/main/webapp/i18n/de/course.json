@@ -110,7 +110,7 @@
             },
             "enrollmentEnabled": {
                 "title": "Kurseinschreibung für Studierende aktiviert",
-                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs einschreiben können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Einschreibung bestätigen müssen."
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig im Kurs einschreiben können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Einschreibung bestätigen müssen."
             },
             "enrollmentStartDate": "Einschreibungsstart",
             "enrollmentEndDate": "Einschreibungsende",
