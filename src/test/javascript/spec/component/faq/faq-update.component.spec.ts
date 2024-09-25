@@ -1,10 +1,10 @@
-import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -18,7 +18,6 @@ import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-obse
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
 import { FAQCategory } from 'app/entities/faq-category.model';
-import { MockAlertService } from '../../helpers/mocks/service/mock-alert.service';
 
 describe('FaqUpdateComponent', () => {
     let faqUpdateComponentFixture: ComponentFixture<FAQUpdateComponent>;
@@ -27,6 +26,9 @@ describe('FaqUpdateComponent', () => {
     let activatedRoute: ActivatedRoute;
     let router: Router;
     let faq1: FAQ;
+
+    let alertServiceStub: jest.SpyInstance;
+    let alertService: AlertService;
 
     beforeEach(() => {
         faq1 = new FAQ();
@@ -53,7 +55,6 @@ describe('FaqUpdateComponent', () => {
                         },
                     },
                 },
-                { provide: AlertService, useClass: MockAlertService },
                 MockProvider(FAQService, {
                     find: () => {
                         return of(
@@ -82,6 +83,7 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
 
         faqService = TestBed.inject(FAQService);
+        alertService = TestBed.inject(AlertService);
 
         router = TestBed.inject(Router);
         activatedRoute = TestBed.inject(ActivatedRoute);
@@ -180,5 +182,15 @@ describe('FaqUpdateComponent', () => {
         expect(faqUpdateComponent.canSave()).toBeFalse();
         faqUpdateComponent.faq = { questionTitle: 'test', questionAnswer: 'test1' } as FAQ;
         expect(faqUpdateComponent.canSave()).toBeTrue();
+    }));
+
+    it('should fail while saving with ErrorResponse', fakeAsync(() => {
+        alertServiceStub = jest.spyOn(alertService, 'error');
+        const error = { status: 404 };
+        jest.spyOn(faqService, 'create').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
+        faqUpdateComponent.save();
+        expect(faqUpdateComponent.isSaving).toBeFalse();
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+        flush();
     }));
 });
