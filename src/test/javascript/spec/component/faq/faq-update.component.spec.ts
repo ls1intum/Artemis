@@ -96,7 +96,7 @@ describe('FaqUpdateComponent', () => {
 
     it('should create faq', fakeAsync(() => {
         faqUpdateComponent.faq = { questionTitle: 'test1' } as FAQ;
-
+        faq1.categories = undefined;
         const createSpy = jest.spyOn(faqService, 'create').mockReturnValue(
             of(
                 new HttpResponse({

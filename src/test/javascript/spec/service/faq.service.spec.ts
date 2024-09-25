@@ -182,6 +182,7 @@ describe('Faq Service', () => {
 
             let filteredFaq = [faq1, faq11, faq2];
 
+            filteredFaq = service.applyFilters(activeFilters, filteredFaq);
             expect(filteredFaq).toBeArrayOfSize(3);
             expect(filteredFaq).toContainAllValues([faq1, faq11, faq2]);
 
@@ -195,6 +196,13 @@ describe('Faq Service', () => {
             const convertedCategory = service.convertFaqCategoriesAsStringFromServer(['{"category":"category1", "color":"red"}']);
             expect(convertedCategory[0].category).toBe('category1');
             expect(convertedCategory[0].color).toBe('red');
+        });
+
+        it('should convert FAQ categories into strings', async () => {
+            const faq2 = new FAQ();
+            faq2.categories = [new FAQCategory('testing', 'red')];
+            const convertedCategory = FAQService.stringifyFaqCategories(faq2);
+            expect(convertedCategory).toEqual(['{"color":"red","category":"testing"}']);
         });
     });
 });
