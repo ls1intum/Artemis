@@ -4,7 +4,7 @@
             "codeEditor": {
                 "fileBrowser": {
                     "headline": "Datei Browser",
-                    "content": "Im Datei Browser findest die Struktur des Projekts mit allen Ordnern und Dateien. Du kannst hier auch eigene Ordner und Dateien anlegen."
+                    "content": "Im Datei Browser findest du die Struktur des Projekts mit allen Ordnern und Dateien. Du kannst hier auch eigene Ordner und Dateien anlegen."
                 },
                 "exerciseFile": {
                     "headline": "Klassendatei",
@@ -30,7 +30,7 @@
             },
             "buildStatus": {
                 "headline": "Buildstatus",
-                "content": "Hier kannst jetzt den Buildstatus einsehen, und erkennen, wie hoch der Anteil an bestandenen Tests ist und somit welche (Teil-)Aufgaben erfolgreich gelöst wurden und welche nicht.",
+                "content": "Hier kannst du jetzt den Buildstatus einsehen, und erkennen, wie hoch der Anteil an bestandenen Tests ist und somit welche (Teil-)Aufgaben erfolgreich gelöst wurden und welche nicht.",
                 "hint": "Es können zusätzliche Tests nach der Einreichungsfrist ausgeführt werden. Das heißt, auch wenn alle aktuell angezeigten Tests erfolgreich durchgelaufen sind, wird die Aufgabe nicht zwangsläufig mit voller Punktzahl bewertet. Überprüfe deine Implementierung daher genau, bevor du sie final einreichst."
             },
             "testCases": {
