@@ -76,6 +76,21 @@ describe('Faq Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
+        it('should delete a faq in the database', async () => {
+            const returnedFromService = { ...elemDefault };
+            const faqId = elemDefault.id!;
+            service
+                .delete(faqId)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `${resourceUrl}/${faqId}`,
+                method: 'DELETE',
+            });
+            req.flush(returnedFromService);
+            expect(req.request.method).toBe('DELETE');
+        });
+
         it('should find a faq in the database', async () => {
             const category = {
                 color: '#6ae8ac',
@@ -155,7 +170,7 @@ describe('Faq Service', () => {
 
         it('should apply faqFilter  correctly', async () => {
             const activeFilters = new Set<string>();
-            activeFilters.add('test');
+
             const faq1 = new FAQ();
             faq1.categories = [new FAQCategory('test', 'red'), new FAQCategory('test2', 'blue')];
 
@@ -164,11 +179,22 @@ describe('Faq Service', () => {
 
             const faq2 = new FAQ();
             faq2.categories = [new FAQCategory('testing', 'red'), new FAQCategory('test2', 'blue')];
-            let filteredFaq = [faq1, faq11, faq2];
-            filteredFaq = service.applyFilters(activeFilters, filteredFaq);
 
+            let filteredFaq = [faq1, faq11, faq2];
+
+            expect(filteredFaq).toBeArrayOfSize(3);
+            expect(filteredFaq).toContainAllValues([faq1, faq11, faq2]);
+
+            activeFilters.add('test');
+            filteredFaq = service.applyFilters(activeFilters, filteredFaq);
             expect(filteredFaq).toBeArrayOfSize(2);
             expect(filteredFaq).toContainAllValues([faq1, faq11]);
+        });
+
+        it('should convert String into FAQ categories   correctly', async () => {
+            const convertedCategory = service.convertFaqCategoriesAsStringFromServer(['{"category":"category1", "color":"red"}']);
+            expect(convertedCategory[0].category).toBe('category1');
+            expect(convertedCategory[0].color).toBe('red');
         });
     });
 });
