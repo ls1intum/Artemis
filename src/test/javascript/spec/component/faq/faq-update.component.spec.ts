@@ -63,6 +63,14 @@ describe('FaqUpdateComponent', () => {
                             }),
                         );
                     },
+                    findAllCategoriesByCourseId: () => {
+                        return of(
+                            new HttpResponse({
+                                body: [],
+                                status: 200,
+                            }),
+                        );
+                    },
                 }),
             ],
         }).compileComponents();
@@ -158,12 +166,19 @@ describe('FaqUpdateComponent', () => {
 
     it('should update categories', fakeAsync(() => {
         const categories = [new FAQCategory('category1', 'red'), new FAQCategory('category2', 'blue')];
-
         faqUpdateComponentFixture.detectChanges();
-
         faqUpdateComponent.updateCategories(categories);
-
         expect(faqUpdateComponent.faqCategories).toEqual(categories);
         expect(faqUpdateComponent.faq.categories).toEqual(categories);
+    }));
+
+    it('should not be able to save unless title and question are filled', fakeAsync(() => {
+        faqUpdateComponentFixture.detectChanges();
+        faqUpdateComponent.faq = { questionTitle: 'test1' } as FAQ;
+        expect(faqUpdateComponent.canSave()).toBeFalse();
+        faqUpdateComponent.faq = { questionAnswer: 'test1' } as FAQ;
+        expect(faqUpdateComponent.canSave()).toBeFalse();
+        faqUpdateComponent.faq = { questionTitle: 'test', questionAnswer: 'test1' } as FAQ;
+        expect(faqUpdateComponent.canSave()).toBeTrue();
     }));
 });
