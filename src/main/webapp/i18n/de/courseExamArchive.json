@@ -24,8 +24,8 @@
                     "question": "Möchtest du die Prüfung <strong>{{title}}</strong> wirklich archivieren?",
                     "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen der Prüfung."
                 },
-                "statement2": "<strong class='text-danger'>This process can take several hours depending on the number of students and programming exercises and will take up many server resources. Please start this process only once when the server load is low (e.g. early in the morning)</strong>",
-                "footerStatement": "You will receive a notification when the process is finished. Then you can download the archive as zip file on this page."
+                "statement2": "<strong class='text-danger'>Dieser Vorgang kann einige Stunden dauern, abhängig von der Anzahl an Studierenden und Programmieraufgaben und wird viele Serverkapazitäten in Anspruch nehmen. Bitte starte diesen Vorgang, nur wenn die Serverauslastung gering ist (z.B. in den frühen Morgenstunden)</strong>",
+                "footerStatement": "Du wirst eine Benachrichtigung erhalten, wenn der Prozess abgeschlossen ist. Dann kannst du das Archiv als Zip-Datei von dieser Seite herunterladen."
             },
             "confirmArchive": {
                 "title": "Achtung: Ein Archiv existiert bereits!",
