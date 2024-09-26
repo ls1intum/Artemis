@@ -3,8 +3,8 @@
         "programmingExercise": {
             "codeEditor": {
                 "fileBrowser": {
-                    "headline": "Datei Browser",
-                    "content": "Im Datei Browser findest du die Struktur des Projekts mit allen Ordnern und Dateien. Du kannst hier auch eigene Ordner und Dateien anlegen."
+                    "headline": "Dateibrowser",
+                    "content": "Im Dateibrowser findest du die Struktur des Projekts mit allen Ordnern und Dateien. Du kannst hier auch eigene Ordner und Dateien anlegen."
                 },
                 "exerciseFile": {
                     "headline": "Klassendatei",
