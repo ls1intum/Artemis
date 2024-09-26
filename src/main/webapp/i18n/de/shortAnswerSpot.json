@@ -15,7 +15,7 @@
                 "title": "Kurzantwort Spot"
             },
             "width": "Breite",
-            "invalid": "Invalide",
+            "invalid": "Ungültig",
             "question": "Frage",
             "invalidSpot": "Dieses Eingabefeld wurde als ungültig markiert. Die eingesetzte Lösung wird als korrekt gewertet."
         }
