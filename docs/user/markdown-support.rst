@@ -52,9 +52,9 @@ Markdown is also supported in the context of :ref:`communicating<communication>`
 Supported Syntax
 ^^^^^^^^^^^^^^^^
 
-The integrated markdown editor uses `MardkownIt <https://github.com/markdown-it/markdown-it>`__. A quick description of the supported syntax can be found `here <https://www.markdownguide.org/basic-syntax/>`__.
+The integrated markdown editor uses `MarkdownIt <https://github.com/markdown-it/markdown-it>`__. A quick description of the supported syntax can be found `here <https://www.markdownguide.org/basic-syntax/>`__.
 
 The following Plugins are activated:
 
-- `MardkownIt Katex <https://github.com/microsoft/vscode-markdown-it-katex>`__ to render LaTeX math and AsciiMath using KaTeX.
+- `MarkdownIt Katex <https://github.com/microsoft/vscode-markdown-it-katex>`__ to render LaTeX math and AsciiMath using KaTeX.
 - `MarkdownIt HighlightJS <https://github.com/valeriangalliat/markdown-it-highlightjs>`__ for syntax highlighting in code blocks.
