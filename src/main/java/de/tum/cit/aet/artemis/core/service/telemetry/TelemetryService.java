@@ -50,7 +50,7 @@ public class TelemetryService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
-        if (!useTelemetry) { // || profileService.isDevActive()) {
+        if (!useTelemetry || profileService.isDevActive()) {
             return;
         }
 
