@@ -9,7 +9,7 @@ Markdown Support
 
 `Markdown <https://daringfireball.net/projects/markdown/>`__ is an easy-to-read, easy-to-write syntax for formatting plain text.
 
-A markdown playground can be found  `here <https://markdown-it.github.io//>`__.
+A markdown playground can be found  `here <https://markdown-it.github.io/>`__.
 
 Artemis extends the basic `Markdown <https://daringfireball.net/projects/markdown/>`__ syntax to support Artemis-specific features. This Artemis flavored Markdown is used to format text content across the platform using an integrated markdown editor.
 
