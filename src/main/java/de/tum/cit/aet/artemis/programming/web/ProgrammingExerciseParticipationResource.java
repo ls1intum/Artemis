@@ -354,7 +354,7 @@ public class ProgrammingExerciseParticipationResource {
     @GetMapping("programming-exercise/{exerciseID}/commit-history/{repositoryType}")
     @EnforceAtLeastTutor
     public ResponseEntity<List<CommitInfoDTO>> getCommitHistoryForTemplateSolutionTestOrAuxRepo(@PathVariable long exerciseID, @PathVariable RepositoryType repositoryType,
-            @RequestParam long repositoryId) {
+            @RequestParam Optional<Long> repositoryId) {
         boolean isTemplateRepository = repositoryType.equals(RepositoryType.TEMPLATE);
         boolean isSolutionRepository = repositoryType.equals(RepositoryType.SOLUTION);
         boolean isTestRepository = repositoryType.equals(RepositoryType.TESTS);
@@ -373,7 +373,7 @@ public class ProgrammingExerciseParticipationResource {
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
         if (isAuxiliaryRepository) {
-            var auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(repositoryId);
+            var auxiliaryRepo = auxiliaryRepositoryRepository.findByIdElseThrow(repositoryId.orElseThrow());
             if (!auxiliaryRepo.getExercise().getId().equals(exerciseID)) {
                 throw new BadRequestAlertException("Invalid repository id", ENTITY_NAME, "invalidRepositoryId");
             }
