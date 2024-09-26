@@ -173,6 +173,50 @@ describe('SidebarComponent', () => {
         });
     });
 
+    describe('Chat and Channel Creation Methods', () => {
+        beforeEach(() => {
+            component.showChatDropdown = true;
+            component.showChannelDropdown = true;
+            fixture.detectChanges();
+        });
+
+        it('should emit onDirectChatPressed and set showChatDropdown to false when createDirectChat is called', () => {
+            jest.spyOn(component.onDirectChatPressed, 'emit');
+
+            component.createDirectChat();
+
+            expect(component.onDirectChatPressed.emit).toHaveBeenCalledOnce();
+            expect(component.showChatDropdown).toBeFalse();
+        });
+
+        it('should emit onGroupChatPressed and set showChatDropdown to false when createGroupChat is called', () => {
+            jest.spyOn(component.onGroupChatPressed, 'emit');
+
+            component.createGroupChat();
+
+            expect(component.onGroupChatPressed.emit).toHaveBeenCalledOnce();
+            expect(component.showChatDropdown).toBeFalse();
+        });
+
+        it('should emit onBrowsePressed and set showChannelDropdown to false when browseChannels is called', () => {
+            jest.spyOn(component.onBrowsePressed, 'emit');
+
+            component.browseChannels();
+
+            expect(component.onBrowsePressed.emit).toHaveBeenCalledOnce();
+            expect(component.showChannelDropdown).toBeFalse();
+        });
+
+        it('should emit onCreateChannelPressed and set showChannelDropdown to false when createNewChannel is called', () => {
+            jest.spyOn(component.onCreateChannelPressed, 'emit');
+
+            component.createNewChannel();
+
+            expect(component.onCreateChannelPressed.emit).toHaveBeenCalledOnce();
+            expect(component.showChannelDropdown).toBeFalse();
+        });
+    });
+
     describe('openFilterExercisesDialog', () => {
         it('should subscribe to filterApplied from modal', () => {
             const filterAppliedEmitter = new EventEmitter<ExerciseFilterResults>();

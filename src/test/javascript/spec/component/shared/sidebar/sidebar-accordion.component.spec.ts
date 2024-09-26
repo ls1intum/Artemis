@@ -10,6 +10,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { NgbCollapseModule, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { RouterModule } from '@angular/router';
+import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
 
 describe('SidebarAccordionComponent', () => {
     let component: SidebarAccordionComponent;
@@ -63,6 +65,22 @@ describe('SidebarAccordionComponent', () => {
         expect(component.collapseState[groupKey]).toBeFalse();
         component.toggleGroupCategoryCollapse(groupKey);
         expect(component.collapseState[groupKey]).toBeTrue();
+    });
+
+    it('should toggle collapse state when group header is clicked', () => {
+        const groupKey = 'current';
+        const initialCollapseState = component.collapseState[groupKey];
+
+        component.searchValue = '';
+        fixture.detectChanges();
+
+        const headerElement: DebugElement = fixture.debugElement.query(By.css('#test-accordion-item-header-' + groupKey));
+        expect(headerElement).toBeTruthy();
+
+        headerElement.triggerEventHandler('click', null);
+        fixture.detectChanges();
+
+        expect(component.collapseState[groupKey]).toBe(!initialCollapseState);
     });
 
     it('should call expandAll when searchValue changes to a non-empty string', () => {
