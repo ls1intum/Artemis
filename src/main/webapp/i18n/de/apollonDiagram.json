@@ -35,7 +35,7 @@
                 "quizExercise": "Erstelle eine Quizaufgabe für den Kurs {{ title }}.",
                 "exitConfirm": {
                     "title": "Diagramm Editor Verlassen",
-                    "question": "Dein Dia gram hat ungespeicherte Änderungen. Bist du dir sicher, dass du den Editor verlassen möchtest?"
+                    "question": "Dein Diagramm hat ungespeicherte Änderungen. Bist du dir sicher, dass du den Editor verlassen möchtest?"
                 }
             },
             "title": "Titel",
