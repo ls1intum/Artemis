@@ -1,6 +1,6 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpTestingController } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -18,6 +18,8 @@ import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { CourseArchiveComponent } from 'app/overview/course-archive/course-archive.component';
 import { CourseCardHeaderComponent } from 'app/overview/course-card-header/course-card-header.component';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 const course1: Course = { id: 1, semester: 'WS21/22', title: 'iPraktikum' };
 const course2: Course = { id: 2, semester: 'WS21/22' };
@@ -39,6 +41,8 @@ describe('CourseArchiveComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 CourseArchiveComponent,
+                SearchFilterPipe,
+                SearchFilterComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortDirective),
@@ -191,14 +195,13 @@ describe('CourseArchiveComponent', () => {
             });
         });
 
-        it('should toggle sort order and update the icon accordingly', async () => {
+        it('should toggle sort order and update the icon accordingly', fakeAsync(() => {
             const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
             getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
             const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
             component.ngOnInit();
-
             fixture.detectChanges();
-            await fixture.whenStable();
+            tick();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
@@ -224,6 +227,6 @@ describe('CourseArchiveComponent', () => {
 
             expect(iconComponent).not.toBeNull();
             expect(iconComponent.icon).toBe(component.faArrowUpAZ);
-        });
+        }));
     });
 });

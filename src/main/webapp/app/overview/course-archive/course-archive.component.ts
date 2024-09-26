@@ -24,9 +24,9 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
 
     courses: Course[];
     semesters: string[];
-    fullFormOfSemesterStrings: { [key: string]: string };
-    semesterCollapsed: { [key: string]: boolean };
-    coursesBySemester: { [key: string]: Course[] };
+    fullFormOfSemesterStrings: { [key: string]: string } = {};
+    semesterCollapsed: { [key: string]: boolean } = {};
+    coursesBySemester: { [key: string]: Course[] } = {};
     searchCourseText = '';
     isSortAscending = true;
     iconSize: SizeProp = 'lg';
@@ -67,10 +67,6 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
      * maps existing courses to each semester
      */
     mapCoursesIntoSemesters(): void {
-        this.semesterCollapsed = {};
-        this.coursesBySemester = {};
-        this.fullFormOfSemesterStrings = {};
-
         let isCollapsed = false;
         for (const semester of this.semesters) {
             this.semesterCollapsed[semester] = isCollapsed;
