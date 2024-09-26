@@ -532,22 +532,17 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises/:exerciseId/with-auxiliary-repository/:auxiliaryRepositoryId
+     * GET /programming-exercises/:exerciseId/with-auxiliary-repository
      *
-     * @param exerciseId            the id of the programmingExercise to retrieve
-     * @param auxiliaryRepositoryId the id of the auxiliary repository of the exercise
+     * @param exerciseId the id of the programmingExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
      */
-    @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository/{auxiliaryRepositoryId}")
+    @GetMapping("programming-exercises/{exerciseId}/with-auxiliary-repository")
     @EnforceAtLeastTutorInExercise
-    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long auxiliaryRepositoryId) {
+    public ResponseEntity<ProgrammingExercise> getProgrammingExerciseWithAuxiliaryRepository(@PathVariable long exerciseId) {
 
         log.debug("REST request to get programming exercise with auxiliary repositories: {}", exerciseId);
         final var programmingExercise = programmingExerciseService.loadProgrammingExerciseWithAuxiliaryRepositories(exerciseId);
-        if (programmingExercise.getAuxiliaryRepositories().stream().noneMatch(id -> id.getId() == auxiliaryRepositoryId)) {
-            throw new BadRequestAlertException("The auxiliary repository Id does not belong to the exercise.", "Exercise",
-                    ProgrammingExerciseResourceErrorKeys.INVALID_AUXILIARY_REPOSITORY_ID);
-        }
         return ResponseEntity.ok(programmingExercise);
     }
 

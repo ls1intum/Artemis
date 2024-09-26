@@ -286,10 +286,9 @@ export class ProgrammingExerciseService {
     /**
      * Finds the programming exercise for the given exerciseId with its auxiliary repositories
      * @param programmingExerciseId of the programming exercise to retrieve
-     * @param auxiliaryRepositoryId of the auxiliary repository
      */
-    findWithAuxiliaryRepository(programmingExerciseId: number, auxiliaryRepositoryId: number): Observable<EntityResponseType> {
-        return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-auxiliary-repository/${auxiliaryRepositoryId}`, {
+    findWithAuxiliaryRepository(programmingExerciseId: number): Observable<EntityResponseType> {
+        return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${programmingExerciseId}/with-auxiliary-repository`, {
             observe: 'response',
         });
     }

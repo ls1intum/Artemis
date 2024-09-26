@@ -9,7 +9,7 @@ export class MockProgrammingExerciseService {
     findWithTemplateAndSolutionParticipation = (exerciseId: number) => of();
     findWithTemplateAndSolutionParticipationAndResults = (exerciseId: number) => of();
     findWithTemplateAndSolutionParticipationAndLatestResults = (exerciseId: number) => of();
-    findWithAuxiliaryRepository = (programmingExerciseId: number, auxiliaryRepositoryId: number) => of();
+    findWithAuxiliaryRepository = (programmingExerciseId: number) => of();
     find = (exerciseId: number) => of({ body: { id: 4 } });
     getProgrammingExerciseTestCaseState = (exerciseId: number) => of({ body: { released: true, hasStudentResult: true, testCasesChanged: false } });
     exportInstructorExercise = (exerciseId: number) => of({ body: undefined });

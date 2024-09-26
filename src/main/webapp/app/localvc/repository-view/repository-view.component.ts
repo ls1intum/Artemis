@@ -197,7 +197,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
 
     private loadAuxiliaryRepository(exerciseId: number, auxiliaryRepositoryId: number) {
         this.programmingExerciseService
-            .findWithAuxiliaryRepository(exerciseId, auxiliaryRepositoryId)
+            .findWithAuxiliaryRepository(exerciseId)
             .pipe(
                 tap((exerciseResponse) => {
                     this.exercise = exerciseResponse.body!;
@@ -214,7 +214,6 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                 },
                 error: () => {
                     this.participationCouldNotBeFetched = true;
-                    this.loadingParticipation = false;
                 },
             });
     }

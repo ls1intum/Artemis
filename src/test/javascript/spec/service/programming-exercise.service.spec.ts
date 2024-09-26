@@ -100,7 +100,7 @@ describe('ProgrammingExercise Service', () => {
             };
             const expected = { ...returnedFromService };
             service
-                .findWithAuxiliaryRepository(returnedFromService.id!, auxiliaryRepository.id!)
+                .findWithAuxiliaryRepository(returnedFromService.id!)
                 .pipe(take(1))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });
