@@ -185,7 +185,7 @@ describe('RepositoryViewComponent', () => {
         const exerciseId = 1;
         const auxiliaryRepositoryId = 5;
 
-        activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'AUXILIARY', auxiliaryRepositoryId: auxiliaryRepositoryId });
+        activatedRoute.setParameters({ exerciseId: exerciseId, repositoryType: 'AUXILIARY', repositoryId: auxiliaryRepositoryId });
         jest.spyOn(programmingExerciseService, 'findWithAuxiliaryRepository').mockReturnValue(of(mockExerciseResponse));
 
         // Trigger ngOnInit
