@@ -36,6 +36,8 @@ public class TelemetryService {
     @Value("${eureka.client.enabled}")
     public boolean eurekaEnabled;
 
+    public long eurekaQueryDelaySeconds = 120;
+
     public TelemetryService(ProfileService profileService, TelemetrySendingService telemetrySendingService) {
         this.profileService = profileService;
         this.telemetrySendingService = telemetrySendingService;
@@ -48,13 +50,13 @@ public class TelemetryService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
-        if (!useTelemetry || profileService.isDevActive()) {
+        if (!useTelemetry) { // || profileService.isDevActive()) {
             return;
         }
 
         log.info("Sending telemetry information");
         try {
-            telemetrySendingService.sendTelemetryByPostRequest(eurekaEnabled, sendAdminDetails);
+            telemetrySendingService.sendTelemetryByPostRequest(eurekaEnabled, sendAdminDetails, eurekaQueryDelaySeconds);
         }
         catch (JsonProcessingException e) {
             log.warn("JsonProcessingException in sendTelemetry.", e);

@@ -70,25 +70,67 @@ public class TelemetrySendingService {
     @Value("${spring.datasource.url}")
     private String datasourceUrl;
 
-    @Value("${artemis.continuous-integration.concurrent-build-size}")
+    @Value("${artemis.continuous-integration.concurrent-build-size:0}")
     private long buildAgentCount;
 
     /**
-     * Assembles the telemetry data, and sends it to the external telemetry server.
+     * Sends telemetry data to a specified destination via an HTTP POST request asynchronously.
+     * The telemetry includes information about the application version, environment, data source,
+     * and optionally, administrator details. If Eureka is enabled, the number of registered
+     * instances is also included.
      *
-     * @throws Exception if the writing the telemetry data to a json format fails, or the connection to the telemetry server fails
+     * <p>
+     * The method constructs the telemetry data, converts it to JSON, and sends it to a
+     * telemetry server. The request is sent asynchronously due to the {@code @Async} annotation.
+     *
+     * @param eurekaEnabled    a flag indicating whether Eureka is enabled. If {@code true},
+     *                             the method retrieves the number of instances registered with Eureka.
+     * @param sendAdminDetails a flag indicating whether to include administrator details in the
+     *                             telemetry data (such as contact information and admin name).
+     * @throws Exception if an error occurs while sending the telemetry data or constructing the request.
      */
     @Async
-    public void sendTelemetryByPostRequest(boolean eurekaEnabled, boolean sendAdminDetails) throws Exception {
+    public void sendTelemetryByPostRequest(boolean eurekaEnabled, boolean sendAdminDetails, long waitInSeconds) throws Exception {
 
         long numberOfInstances = 1;
+
         if (eurekaEnabled) {
+            try {
+                log.info("Wait {} seconds before querying Eureka.", waitInSeconds);
+                Thread.sleep(waitInSeconds * 1000);
+            }
+            catch (InterruptedException e) {
+                log.warn("Waiting for other instances to spin up was interrupted.");
+            }
+
+            log.info("Querying other instances from Eureka...");
             numberOfInstances = eurekaClientService.getNumberOfReplicas();
         }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
+
+        var telemetryJson = objectWriter.writeValueAsString(buildTelemetryData(sendAdminDetails, numberOfInstances));
+        HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
+        var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
+        log.info("Successfully sent telemetry data. {}", response.getBody());
+    }
+
+    /**
+     * Retrieves telemetry data for the current system configuration, including details
+     * about the active profiles, data source type, and optionally admin contact details.
+     *
+     * @param sendAdminDetails  whether to include admin contact information in the telemetry data
+     * @param numberOfInstances the number of instances to include in the telemetry data
+     * @return an instance of {@link TelemetryData} containing the gathered telemetry information
+     */
+    private TelemetryData buildTelemetryData(boolean sendAdminDetails, long numberOfInstances) {
 
         TelemetryData telemetryData;
         var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+
         String contact = null;
         String adminName = null;
         if (sendAdminDetails) {
@@ -97,14 +139,6 @@ public class TelemetrySendingService {
         }
         telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), dataSource, numberOfInstances, buildAgentCount,
                 contact, adminName);
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ObjectWriter objectWriter = new ObjectMapper().writer().withDefaultPrettyPrinter();
-
-        var telemetryJson = objectWriter.writeValueAsString(telemetryData);
-        HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
-        var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
-        log.info("Successfully sent telemetry data. {}", response.getBody());
+        return telemetryData;
     }
 }

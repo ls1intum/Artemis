@@ -53,7 +53,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
     private String destination;
 
     @Value("${eureka.client.service-url.defaultZone}")
-    private String defaultZoneUrl;
+    private String eurekaDefaultZoneUrl;
 
     private String eurekaRequestUrl;
 
@@ -62,7 +62,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
     @BeforeEach
     void init() throws JsonProcessingException {
         try {
-            var eurekaURI = new URI(defaultZoneUrl);
+            var eurekaURI = new URI(eurekaDefaultZoneUrl);
             eurekaRequestUrl = eurekaURI.getScheme() + "://" + eurekaURI.getAuthority() + "/api/eureka/applications";
 
         }
@@ -75,6 +75,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         telemetryServiceSpy.useTelemetry = true;
         telemetryServiceSpy.eurekaEnabled = true;
+        telemetryServiceSpy.eurekaQueryDelaySeconds = 1;
     }
 
     @Test

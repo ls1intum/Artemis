@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.service.telemetry;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_SCHEDULING;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -9,6 +11,7 @@ import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -22,6 +25,7 @@ import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+@Profile(PROFILE_SCHEDULING)
 @Service
 public class EurekaClientService {
 
