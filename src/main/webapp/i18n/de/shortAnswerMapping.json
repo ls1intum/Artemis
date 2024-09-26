@@ -16,7 +16,7 @@
             },
             "shortAnswerSpotIndex": "Kurzantwort Spot-Index",
             "shortAnswerSolutionIndex": "Kurzantwort Lösungsindex",
-            "invalid": "Invalide",
+            "invalid": "Ungültig",
             "solution": "Lösung",
             "spot": "Spot",
             "question": "Frage"
