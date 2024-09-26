@@ -22,7 +22,7 @@
             "isBeingCreated": "Dein angeforderter Datenexport wird aktuell noch erstellt.",
             "lastRequestDate": "Du hast deinen letzten Datenexport angefordert am ",
             "nextRequestDate": "Du kannst wieder einen Datenexport anfordern am ",
-            "typeUserLoginToConfirm": "Bitte gib die Benutzerkennung des Nutzers ein, für den du den Datenexport anfordern möchtest, um den Datenexport zu bestätigen",
+            "typeUserLoginToConfirm": "Bitte gib die Benutzerkennung des Nutzers ein, für den du den Datenexport anfordern möchtest, um den Datenexport zu bestätigen.",
             "loginOrName": "Benutzerkennung oder Name des Nutzers",
             "searchQueryTooShort": "Bitte gib mindestens {{ length }} Zeichen ein"
         }

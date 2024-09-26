@@ -24,7 +24,7 @@
                     "question": "Möchtest du die Prüfung <strong>{{title}}</strong> wirklich archivieren?",
                     "statement1": "Der Prozess komprimiert alle Repositories, Übungen zum Hochladen von Dateien, Modellierungsübungen und Textübungen der Prüfung."
                 },
-                "statement2": "<strong class='text-danger'>Dieser Vorgang kann einige Stunden dauern, abhängig von der Anzahl an Studierenden und Programmieraufgaben und wird viele Serverkapazitäten in Anspruch nehmen. Bitte starte diesen Vorgang, nur wenn die Serverauslastung gering ist (z.B. in den frühen Morgenstunden)</strong>",
+                "statement2": "<strong class='text-danger'>Dieser Vorgang kann einige Stunden dauern, abhängig von der Anzahl an Studierenden und Programmieraufgaben, und wird viele Serverkapazitäten in Anspruch nehmen. Bitte starte diesen Vorgang nur wenn die Serverauslastung gering ist (z.B. in den frühen Morgenstunden).</strong>",
                 "footerStatement": "Du wirst eine Benachrichtigung erhalten, wenn der Prozess abgeschlossen ist. Dann kannst du das Archiv als Zip-Datei von dieser Seite herunterladen."
             },
             "confirmArchive": {
