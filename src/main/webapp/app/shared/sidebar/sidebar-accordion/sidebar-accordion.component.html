@@ -17,6 +17,7 @@
                     <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
                 </div>
             </div>
+            @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                 <hr class="my-0" />
                 <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="p-2 bg-body">
                     @for (sidebarItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
