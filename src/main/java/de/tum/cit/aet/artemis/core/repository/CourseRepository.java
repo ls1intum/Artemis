@@ -549,6 +549,7 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
      *
      * @param userId  The id of the user whose courses are being retrieved
      * @param isAdmin A boolean flag indicating whether the user is an admin
+     * @param now     The current time to check if the course is still active
      * @return A list of courses that the user has access to and belong to a specific semester
      */
     @Query("""
@@ -560,7 +561,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
                                 OR c.instructorGroupName = ug.group
             WHERE (ug.userId = :userId OR :isAdmin = TRUE)
               AND c.semester IS NOT NULL
+              AND (c.endDate IS NOT NULL AND c.endDate < :now)
             """)
-    List<Course> findCoursesForUserRolesWithNonNullSemester(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin);
+    List<Course> findCoursesForUserRolesWithNonNullSemester(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin, @Param("now") ZonedDateTime now);
 
 }

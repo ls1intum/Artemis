@@ -3389,15 +3389,18 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetAllCoursesForCourseArchiveWithNonNullSemesters() throws Exception {
+    public void testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate() throws Exception {
         List<Course> expectedOldCourses = new ArrayList<>();
         for (int i = 1; i <= 4; i++) {
             expectedOldCourses.add(courseUtilService.createCourse((long) i));
         }
 
         expectedOldCourses.get(0).setSemester("SS20");
+        expectedOldCourses.get(0).setEndDate(ZonedDateTime.now().minusDays(10));
         expectedOldCourses.get(1).setSemester("SS21");
+        expectedOldCourses.get(1).setEndDate(ZonedDateTime.now().minusDays(10));
         expectedOldCourses.get(2).setSemester("WS21/22");
+        expectedOldCourses.get(2).setEndDate(ZonedDateTime.now().minusDays(10));
         expectedOldCourses.get(3).setSemester(null); // will be filtered out
 
         for (Course oldCourse : expectedOldCourses) {
@@ -3417,14 +3420,17 @@ public class CourseTestService {
     public void testGetAllCoursesForCourseArchiveForUnenrolledStudent() throws Exception {
         Course course1 = courseUtilService.createCourse((long) 1);
         course1.setSemester("SS20");
+        course1.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course1);
 
         Course course2 = courseUtilService.createCourse((long) 2);
         course2.setSemester("SS21");
+        course2.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course2);
 
         Course course3 = courseUtilService.createCourse((long) 3);
         course3.setSemester("WS21/22");
+        course3.setEndDate(ZonedDateTime.now().minusDays(10));
         courseRepo.save(course3);
 
         // remove student from all courses

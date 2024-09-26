@@ -1064,7 +1064,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllCoursesForCourseArchiveWithNonNullSemesters() throws Exception {
-        courseTestService.testGetAllCoursesForCourseArchiveWithNonNullSemesters();
+        courseTestService.testGetAllCoursesForCourseArchiveWithNonNullSemestersAndEndDate();
     }
 
     @Test
