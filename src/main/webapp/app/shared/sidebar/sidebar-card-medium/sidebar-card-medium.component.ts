@@ -16,6 +16,7 @@ export class SidebarCardMediumComponent {
     @Input() sidebarType?: SidebarTypes;
     @Input() itemSelected?: boolean;
     @Output() pageChange = new EventEmitter<number>();
+    /** Key used for grouping or categorizing sidebar items */
     @Input() groupKey?: string;
 
     constructor(

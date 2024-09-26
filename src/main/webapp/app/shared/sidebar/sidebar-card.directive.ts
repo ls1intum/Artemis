@@ -46,7 +46,9 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
             this.componentRef.instance.itemSelected = this.itemSelected;
             this.componentRef.instance.sidebarType = this.sidebarType;
             this.componentRef.instance.sidebarItem = this.sidebarItem;
-            this.componentRef.instance.groupKey = this.groupKey;
+            if (this.groupKey !== undefined) {
+                this.componentRef.instance.groupKey = this.groupKey;
+            }
             if (this.size == 'S') {
                 this.componentRef.instance.onUpdateSidebar = this.onUpdateSidebar;
             }
