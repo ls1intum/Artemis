@@ -146,6 +146,10 @@
                 "title": "Checke Repository der Lösung aus",
                 "description": "Aktiviere diese Checkbox, um das Repository der Lösung in ein Verzeichnis 'solution' auszuchecken. Dies ist nützlich, um die Abgabe von Studierenden mit der Musterlösung zu vergleichen."
             },
+            "disableNetworkAccess": {
+                "title": "Netzwerkzugriff deaktivieren",
+                "description": "Aktivieren Sie diese Option, um den Netzwerkzugriff für Container zu deaktivieren. Dies wird durch die Bereitstellung der Option '--network none' für den Docker-Container erreicht."
+            },
             "enableStaticCodeAnalysis": {
                 "title": "Aktiviere Statische Code-Analyse",
                 "description": "Durch Aktivierung dieser Option werden Abgaben einer Statischen Code-Analyse unterzogen. Sequentielle Testläufe werden nicht unterstützt. Zusätzliche Optionen stehen in der Bewertungssicht zur Verfügung. Diese Option kann bei erneutem Import der Aufgabe geändert werden, wenn die Build-Pläne neu erstellt werden und das Template aktualisiert wird."

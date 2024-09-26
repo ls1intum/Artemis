@@ -8,6 +8,7 @@ import { Subject, Subscription } from 'rxjs';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
+import { DockerRunConfig } from 'app/entities/programming/programming-exercise-build.config';
 
 @Component({
     selector: 'jhi-programming-exercise-language',
@@ -96,5 +97,17 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         }
 
         return true;
+    }
+
+    onDisableNetworkAccessChange(event: any) {
+        let existingFlags = JSON.parse(this.programmingExercise.buildConfig?.dockerFlags || '{}') as DockerRunConfig;
+        if (!(existingFlags && existingFlags.flags)) {
+            existingFlags = new DockerRunConfig();
+        }
+        existingFlags.flags = existingFlags.flags?.filter((flag) => flag[0] !== DockerRunConfig.NETWORK_KEY) || [];
+        if (event.target.checked) {
+            existingFlags.flags.push([DockerRunConfig.NETWORK_KEY, 'none']);
+        }
+        this.programmingExercise.buildConfig!.dockerFlags = JSON.stringify(existingFlags.flags);
     }
 }

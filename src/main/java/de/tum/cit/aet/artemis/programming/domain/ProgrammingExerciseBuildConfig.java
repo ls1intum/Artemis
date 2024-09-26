@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -10,6 +13,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +21,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
@@ -266,6 +273,46 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
+    }
+
+    /**
+     * Converts a JSON string representing Docker flags (in the form of a list of key-value pairs)
+     * into a {@link DockerRunConfig} instance.
+     *
+     * <p>
+     * The JSON string is expected to represent a list of key-value pairs where each
+     * entry is a list containing two strings: the first being the key and the second being the value.
+     * Example JSON input:
+     *
+     * <pre>
+     * [["network", "none"], ["env", "TEST"]]
+     * </pre>
+     *
+     * @return a {@link DockerRunConfig} object initialized with the parsed flags, or {@code null} if an error occurs
+     */
+    public DockerRunConfig getDockerRunConfigFromString() {
+        if (StringUtils.isBlank(dockerFlags)) {
+            return null;
+        }
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            List<List<String>> list = objectMapper.readValue(dockerFlags, new TypeReference<>() {
+            });
+
+            Map<String, String> flagsMap = new HashMap<>();
+            for (List<String> entry : list) {
+                flagsMap.put(entry.get(0), entry.get(1)); // First element is key, second is value
+            }
+
+            return new DockerRunConfig(flagsMap);
+        }
+        catch (Exception e) {
+            log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", dockerFlags, e);
+        }
+
+        return null;
     }
 
     @Override

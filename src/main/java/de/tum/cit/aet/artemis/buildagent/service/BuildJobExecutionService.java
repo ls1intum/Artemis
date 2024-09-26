@@ -192,7 +192,8 @@ public class BuildJobExecutionService {
             index++;
         }
 
-        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript());
+        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
+                buildJob.buildConfig().disableNetwork());
 
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
                 assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);

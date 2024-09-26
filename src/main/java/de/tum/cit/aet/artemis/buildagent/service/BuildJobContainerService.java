@@ -84,12 +84,13 @@ public class BuildJobContainerService {
     /**
      * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
      *
-     * @param containerName the name of the container to be created
-     * @param image         the Docker image to use for the container
-     * @param buildScript   the build script to be executed in the container
+     * @param containerName  the name of the container to be created
+     * @param image          the Docker image to use for the container
+     * @param buildScript    the build script to be executed in the container
+     * @param disableNetwork whether to disable the network for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, boolean disableNetwork) {
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
@@ -97,15 +98,23 @@ public class BuildJobContainerService {
             envVars.add("NO_PROXY=" + noProxy);
         }
         envVars.add("SCRIPT=" + buildScript);
-        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
+        HostConfig containerHostConfig = disableNetwork ? cloneHostConfigWithDisabledNetwork(hostConfig) : hostConfig;
+        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(containerHostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
-                // .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                // .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
+                .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
                 .exec();
+    }
+
+    private HostConfig cloneHostConfigWithDisabledNetwork(HostConfig originalConfig) {
+        return HostConfig.newHostConfig().withCpuQuota(originalConfig.getCpuQuota()).withCpuPeriod(originalConfig.getCpuPeriod()).withMemory(originalConfig.getMemory())
+                .withMemorySwap(originalConfig.getMemorySwap()).withPidsLimit(originalConfig.getPidsLimit()).withAutoRemove(true)
+                // We only offer the option to disable the network. Other flags could be a security risk.
+                .withNetworkMode("none");
     }
 
     /**

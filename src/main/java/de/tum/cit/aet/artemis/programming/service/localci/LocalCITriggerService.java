@@ -11,6 +11,7 @@ import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.RepositoryInfo;
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -301,6 +303,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }
 
+        DockerRunConfig dockerRunConfig = buildConfig.getDockerRunConfigFromString();
+        boolean disableNetwork = dockerRunConfig != null && StringUtils.equals(dockerRunConfig.flags().get(DockerRunConfig.NETWORK_FLAG), "none");
+
         List<String> resultPaths = getTestResultPaths(windfile);
 
         // Todo: If build agent does not have access to filesystem, we need to send the build script to the build agent and execute it there.
@@ -308,7 +313,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, disableNetwork);
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {

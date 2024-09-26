@@ -1,5 +1,14 @@
 import { WindFile } from 'app/entities/programming/wind.file';
 
+export class DockerRunConfig {
+    public static readonly NETWORK_KEY = 'network';
+    public flags?: [string, string][];
+
+    constructor() {
+        this.flags = [];
+    }
+}
+
 export class ProgrammingExerciseBuildConfig {
     public sequentialTestRuns?: boolean;
     public buildPlanConfiguration?: string;

@@ -158,6 +158,10 @@
                 "title": "Check out repository of sample solution",
                 "description": "Activate this option to checkout the solution repository into the 'solution' path. This is useful for comparing the student's submission with the sample solution."
             },
+            "disableNetworkAccess": {
+                "title": "Disable Network Access",
+                "description": "Activate this option to disable network access for containers. This is done by providing the '--network none' option to the Docker container."
+            },
             "enableStaticCodeAnalysis": {
                 "title": "Enable Static Code Analysis",
                 "description": "This option enables the execution of static code analysis. Sequential test runs are not supported. Additional options are available on the grading page. This option can be changed on import if the recreate build plans and update template files option is active."
