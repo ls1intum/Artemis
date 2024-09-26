@@ -115,7 +115,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     faFilter = faFilter;
     faSearch = faSearch;
 
-    private createChannelFn: (channel: ChannelDTO) => Observable<never>;
+    createChannelFn?: (channel: ChannelDTO) => Observable<never>;
     channelActions$ = new Subject<ChannelAction>();
 
     constructor(
@@ -165,9 +165,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course!);
                 this.isServiceSetUp = true;
             }
-            this.channelActions$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((channelAction) => {
-                this.performChannelAction(channelAction);
-            });
+            this.channelActions$
+                .pipe(
+                    debounceTime(500),
+                    distinctUntilChanged((prev, curr) => prev.action === curr.action && prev.channel.id === curr.channel.id),
+                    takeUntil(this.ngUnsubscribe),
+                )
+                .subscribe((channelAction) => {
+                    this.performChannelAction(channelAction);
+                });
             this.createChannelFn = (channel: ChannelDTO) => this.metisConversationService.createChannel(channel);
         });
 
@@ -184,6 +190,9 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 .subscribe({
                     complete: () => {
                         this.prepareSidebarData();
+                    },
+                    error: (error) => {
+                        console.error('Error creating channel:', error);
                     },
                 });
         }

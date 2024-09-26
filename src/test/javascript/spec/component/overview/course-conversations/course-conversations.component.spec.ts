@@ -35,9 +35,10 @@ import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 import { SidebarAccordionComponent } from 'app/shared/sidebar/sidebar-accordion/sidebar-accordion.component';
 import { GroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
-import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
+import { ChannelAction, ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 const examples: (ConversationDTO | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -285,6 +286,72 @@ examples.forEach((activeConversation) => {
             const setActiveConversationSpy = jest.spyOn(metisConversationService, 'setActiveConversation').mockImplementation();
             component.onConversationSelected(activeConversation?.id ?? 1);
             expect(setActiveConversationSpy).toHaveBeenCalled();
+        });
+
+        describe('performChannelAction', () => {
+            let channelAction: ChannelAction;
+            let channel: ChannelDTO;
+
+            beforeEach(() => {
+                channel = new ChannelDTO();
+                channel.id = 123;
+                channel.name = 'Test Channel';
+
+                channelAction = {
+                    action: 'create',
+                    channel,
+                };
+
+                component.createChannelFn = undefined;
+                component.ngOnInit();
+
+                component.createChannelFn = jest.fn().mockReturnValue(EMPTY);
+                jest.spyOn(component, 'prepareSidebarData').mockImplementation();
+            });
+
+            it('should call createChannelFn with the provided channel', () => {
+                component.performChannelAction(channelAction);
+                expect(component.createChannelFn).toHaveBeenCalledWith(channel);
+            });
+
+            it('should call prepareSidebarData on successful completion', () => {
+                component.createChannelFn = jest.fn().mockReturnValue({
+                    pipe: () => ({
+                        subscribe: ({ complete }: any) => {
+                            complete();
+                        },
+                    }),
+                });
+
+                component.performChannelAction(channelAction);
+                expect(component.prepareSidebarData).toHaveBeenCalled();
+            });
+
+            it('should log an error if createChannelFn throws an error', () => {
+                const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
+
+                component.createChannelFn = jest.fn().mockReturnValue({
+                    pipe: () => ({
+                        subscribe: ({ error }: any) => {
+                            error('Test Error');
+                        },
+                    }),
+                });
+
+                component.performChannelAction(channelAction);
+                expect(consoleErrorSpy).toHaveBeenCalledWith('Error creating channel:', 'Test Error');
+
+                consoleErrorSpy.mockRestore();
+            });
+
+            it('should not call createChannelFn or prepareSidebarData if createChannelFn is undefined', () => {
+                component.createChannelFn = undefined;
+                const prepareSidebarDataSpy = jest.spyOn(component, 'prepareSidebarData');
+                component.performChannelAction(channelAction);
+                expect(component.createChannelFn).toBeUndefined();
+                // Since createChannelFn is undefined, prepareSidebarData should not be called
+                expect(prepareSidebarDataSpy).not.toHaveBeenCalled();
+            });
         });
     });
 });
