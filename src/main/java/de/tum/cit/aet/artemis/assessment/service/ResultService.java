@@ -21,6 +21,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -47,6 +48,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -554,28 +556,27 @@ public class ResultService {
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
 
-        String searchTerm = search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "";
-        List<FeedbackDetailDTO> feedbackDetails = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId, searchTerm);
-        feedbackDetails = feedbackDetails.stream().map(detail -> {
+        // Create PageRequest using PageUtil
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS); // Add FEEDBACK_ANALYSIS to your ColumnMapping
+
+        // Extract search term
+        final var searchTerm = search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "";
+
+        // Execute the query using pageable
+        final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId, searchTerm, pageable);
+
+        // Map to DTOs if necessary
+        final List<FeedbackDetailDTO> contentDTOs = feedbackDetailPage.getContent().stream().map(detail -> {
             double relativeCount = (detail.count() * 100.0) / distinctResultCount;
             int taskNumber = determineTaskNumberOfTestCase(detail.testCaseName(), tasks);
             return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);
         }).toList();
 
-        return paginateFeedbackDetails(feedbackDetails, search.getPage(), search.getPageSize());
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(contentDTOs, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements());
     }
 
     private int determineTaskNumberOfTestCase(String testCaseName, List<ProgrammingExerciseTask> tasks) {
         return tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(testCaseName))).findFirst()
                 .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
-    }
-
-    private FeedbackAnalysisResponseDTO paginateFeedbackDetails(List<FeedbackDetailDTO> feedbackDetails, int page, int pageSize) {
-        int start = Math.max(0, (page - 1) * pageSize);
-        int end = Math.min(start + pageSize, feedbackDetails.size());
-        List<FeedbackDetailDTO> paginatedFeedbackDetails = feedbackDetails.subList(start, end);
-
-        int totalPages = (int) Math.ceil((double) feedbackDetails.size() / pageSize);
-        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(paginatedFeedbackDetails, totalPages), feedbackDetails.size());
     }
 }

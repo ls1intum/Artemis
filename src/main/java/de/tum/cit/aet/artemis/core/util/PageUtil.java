@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.JpaSort;
 
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.PageableSearchDTO;
@@ -69,6 +70,10 @@ public class PageUtil {
             "id", "id",
             "name", "name",
             "build_completion_date", "buildCompletionDate"
+        )),
+        FEEDBACK_ANALYSIS(Map.of(
+            "count", "COUNT(f.id)",
+            "detailText", "detailText"
         ));
         // @formatter:on
 
@@ -89,7 +94,10 @@ public class PageUtil {
 
     @NotNull
     public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
-        var sortOptions = Sort.by(columnMapping.getMappedColumnName(search.getSortedColumn()));
+        String mappedColumn = columnMapping.getMappedColumnName(search.getSortedColumn());
+
+        var sortOptions = mappedColumn.contains("COUNT(") ? JpaSort.unsafe(mappedColumn) : Sort.by(mappedColumn);
+
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
     }

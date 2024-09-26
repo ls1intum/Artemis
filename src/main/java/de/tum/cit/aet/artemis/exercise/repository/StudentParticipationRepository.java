@@ -1248,7 +1248,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 f.detailText,
                 f.testCase.testName,
                 0
-                )
+            )
             FROM StudentParticipation p
                  JOIN p.results r
                  JOIN r.feedbacks f
@@ -1264,8 +1264,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
                   )
             GROUP BY f.detailText, f.testCase.testName
+            ORDER BY COUNT(f.id) DESC
             """)
-    List<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm);
+    Page<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm, Pageable pageable);
 
     /**
      * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.
