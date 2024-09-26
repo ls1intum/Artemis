@@ -131,7 +131,7 @@
                     "requiredValidationError": "Eine Sprache ist erforderlich!"
                 },
                 "isOnlineInput": {
-                    "label": "Trifft sich sich diese Übungsgruppe online oder offline?"
+                    "label": "Trifft sich diese Übungsgruppe online oder offline?"
                 },
                 "notificationInput": {
                     "label": "Optional: Benachrichtigung über Änderungen",
