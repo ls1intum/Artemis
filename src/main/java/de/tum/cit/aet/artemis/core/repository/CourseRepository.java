@@ -555,13 +555,15 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @Query("""
             SELECT DISTINCT c
             FROM Course c
-            JOIN UserGroup ug ON c.studentGroupName = ug.group
-                                OR c.teachingAssistantGroupName = ug.group
-                                OR c.editorGroupName = ug.group
-                                OR c.instructorGroupName = ug.group
-            WHERE (ug.userId = :userId OR :isAdmin = TRUE)
-              AND c.semester IS NOT NULL
-              AND (c.endDate IS NOT NULL AND c.endDate < :now)
+            LEFT JOIN UserGroup ug ON ug.group IN (
+                c.studentGroupName,
+                c.teachingAssistantGroupName,
+                c.editorGroupName,
+                c.instructorGroupName
+            )
+            WHERE (:isAdmin = TRUE OR ug.userId = :userId)
+            AND c.semester IS NOT NULL
+            AND (c.endDate IS NOT NULL AND c.endDate < :now)
             """)
     List<Course> findCoursesForUserRolesWithNonNullSemester(@Param("userId") Long userId, @Param("isAdmin") boolean isAdmin, @Param("now") ZonedDateTime now);
 

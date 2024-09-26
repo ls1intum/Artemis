@@ -653,7 +653,7 @@ public class CourseService {
     }
 
     /**
-     * Retrieves all courses from non-null semesters that the current user is enrolled in
+     * Retrieves all inactive courses from non-null semesters that the current user is enrolled in
      * for the course archive.
      *
      * @return A list of courses for the course archive.
