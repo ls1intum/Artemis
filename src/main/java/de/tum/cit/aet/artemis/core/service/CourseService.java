@@ -661,7 +661,7 @@ public class CourseService {
     public List<Course> getAllCoursesForCourseArchive() {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         boolean isAdmin = authCheckService.isAdmin(user);
-        return courseRepository.findCoursesForUserRolesWithNonNullSemester(user.getId(), isAdmin, ZonedDateTime.now());
+        return courseRepository.findInactiveCoursesForUserRolesWithNonNullSemester(user.getId(), isAdmin, ZonedDateTime.now());
     }
 
     /**
