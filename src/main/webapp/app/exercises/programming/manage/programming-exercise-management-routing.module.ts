@@ -173,7 +173,7 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService, LocalVCGuard],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/:auxiliaryRepositoryId',
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/repo/:repositoryId',
         component: RepositoryViewComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
@@ -197,6 +197,18 @@ export const routes: Routes = [
         canActivate: [LocalVCGuard],
     },
     {
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/repo/:repositoryId/commit-history',
+        component: CommitHistoryComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
+    },
+    {
         path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/vcs-access-log',
         component: VcsRepositoryAccessLogViewComponent,
         data: {
@@ -209,10 +221,10 @@ export const routes: Routes = [
         canActivate: [LocalVCGuard],
     },
     {
-        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/:repositoryId/commit-history',
-        component: CommitHistoryComponent,
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/repo/:repositoryId/vcs-access-log',
+        component: VcsRepositoryAccessLogViewComponent,
         data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR],
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},

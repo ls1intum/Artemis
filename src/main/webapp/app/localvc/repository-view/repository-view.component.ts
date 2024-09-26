@@ -92,14 +92,14 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             this.participationCouldNotBeFetched = false;
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
-            const auxiliaryRepositoryId = Number(params['auxiliaryRepositoryId']);
+            const repositoryId = Number(params['repositoryId']);
             this.repositoryType = participationId ? 'USER' : params['repositoryType'];
             this.vcsAccessLogRoute = this.router.url + '/vcs-access-log';
             this.enableVcsAccessLog = this.router.url.includes('course-management') && params['repositoryType'] !== 'TESTS';
             if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
             } else if (this.repositoryType === 'AUXILIARY') {
-                this.loadAuxiliaryRepository(exerciseId, auxiliaryRepositoryId);
+                this.loadAuxiliaryRepository(exerciseId, repositoryId);
             } else {
                 this.loadDifferentParticipation(this.repositoryType, exerciseId);
             }
