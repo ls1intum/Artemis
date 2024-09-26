@@ -5,5 +5,6 @@
     (click)="emitStoreAndRefresh(sidebarItem.id)"
     [routerLinkActive]="'bg-selected border-selected'"
 >
+    <!-- groupKey is used to determine the display format of channel names in different sidebar sections -->
     <jhi-sidebar-card-item [groupKey]="groupKey" [sidebarType]="sidebarType" [sidebarItem]="sidebarItem" />
 </div>
