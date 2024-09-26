@@ -152,7 +152,7 @@
             },
             "maxStaticCodeAnalysisPenalty": {
                 "title": "Max Strafe bei statischer Code-Analyse",
-                "description": "Wähle einen Wert zwischen 0 und 100 Prozent oder fülle das Feld nicht aus. Wenn für eine zehn-Punkte-Aufgabe die maximale Strafe 20% beträgt, werden maximal zwei Punkte durch Probleme, die von der statischen Analyse gefunden wurden, abgezogen. Wenn kein Wert angegeben wird existiert kein Limit für den Punkteabzug."
+                "description": "Wähle einen Wert zwischen 0 und 100 Prozent oder fülle das Feld nicht aus. Wenn für eine zehn-Punkte-Aufgabe die maximale Strafe 20 % beträgt, werden maximal zwei Punkte durch Probleme, die von der statischen Analyse gefunden wurden, abgezogen. Wenn kein Wert angegeben wird existiert kein Limit für den Punkteabzug."
             },
             "recreateBuildPlans": {
                 "title": "Build-Pläne neu erstellen",
@@ -301,7 +301,7 @@
                     },
                     "testCasePoints": {
                         "title": "Punkte-Verteilung",
-                        "description": "Der prozentuale Anteil von verteilten Punkten für einen bestimmten Testfall. 100% in dem Diagramm steht für volle Punktzahl (100%) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
+                        "description": "Der prozentuale Anteil von verteilten Punkten für einen bestimmten Testfall. 100 % in dem Diagramm steht für volle Punktzahl (100 %) bei <b>allen</b> Studierenden. Das Diagramm zeigt nur die positiven Punkte erzielt durch erfüllte Testfälle, ungeachtet möglicher Punktabzüge durch statische Code-Analyse.<br/>Bewege die Maus über einen farbigen Abschnitt, um mehr Details zu sehen.",
                         "points": "Punkte",
                         "pointsTooltip": "Punkte: {{ percentage }}% aller Punkte."
                     },
@@ -338,8 +338,8 @@
                     "maxPenalty": "Der maximale Punktabzug über alle Issues einer/s Studierenden in dieser Kategorie.",
                     "detectedIssues": "Zeigt die Anzahl an Studierenden je Höhe der erkannten Issues in einer Kategorie, beginnend bei einem Issue. Die Balken werden rot, sobald der durch maxPenalty definierte Grenzwert der Kategorie überschritten wird.",
                     "weight": "Gewichtung: Die Gewichtung eines Testfalls bestimmt die Punkte, die Studierende für das Bestehen des Testfalls erhält. Die verteilten Punkte eines Testfalls sind proportional zu dessen Gewichtung und werden als ein Anteil der vollen Punktzahl der Aufgabe berechnet.",
-                    "bonusMultiplier": "Bonusmultiplikator: Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100% führen.",
-                    "bonusPoints": "Bonuspunkte: Zusätzliche Punkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100% führen.",
+                    "bonusMultiplier": "Bonusmultiplikator: Dies multipliziert die Punkte für das Bestehen eines Testfalls, ohne dabei die Anteile der anderen Testfälle zu beeinflussen. Multiplikatoren größer als 1 können zu Ergebnissen von mehr als 100 % führen.",
+                    "bonusPoints": "Bonuspunkte: Zusätzliche Punkte, die zu den regulären Punkten für das Bestehen eines Testfalls hinzuaddiert werden. Das Setzen von Bonuspunkten kann zu Ergebnissen von mehr als 100 % führen.",
                     "visibility": "Feedback und Punkte für Testfälle, die mit „Nach Einreichungsfrist“ markiert sind, werden erst danach für Studierende angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
                     "visibilityExam": "Feedback und Punkte für Testfälle, die mit „Nach Veröffentlichung der Ergebnisse“ markiert sind, werden erst nach der Veröffentlichung der Klausurergebnisse angezeigt. Nie sichtbare Tests werden nicht in die Punktebewertung einbezogen.",
                     "points": "Die Menge an Punkten, die die Studierenden für das Bestehen dieses Tests bekommen. Dieser Wert wird wie in den Kurseinstellungen festgelegt gerundet.",

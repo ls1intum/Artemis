@@ -36,7 +36,7 @@
             "open": "{{ amount }} offen",
             "portionOfAllCases": "{{ percentage }}% aller Fälle",
             "similarityThreshold": "Ähnlichkeitsschwelle in %",
-            "similarityThresholdTooltip": "Ignoriere Vergleiche, deren Ähnlichkeit unter dieser Schwelle liegt. Eine Ähnlichkeit von 0% bedeutet, dass es keinerlei Überschneidung zwischen zwei Einreichungen gibt, eine Ähnlichkeit von 50% bedeutet, dass in etwa die Hälfte zweier Einreichungen identisch ist. Eine Ähnlichkeit von 100% bedeutet, dass zwei Einreichungen komplett identisch sind",
+            "similarityThresholdTooltip": "Ignoriere Vergleiche, deren Ähnlichkeit unter dieser Schwelle liegt. Eine Ähnlichkeit von 0 % bedeutet, dass es keinerlei Überschneidung zwischen zwei Einreichungen gibt, eine Ähnlichkeit von 50 % bedeutet, dass in etwa die Hälfte zweier Einreichungen identisch ist. Eine Ähnlichkeit von 100 % bedeutet, dass zwei Einreichungen komplett identisch sind",
             "minimumScore": "Minimale Bewertung in %",
             "minimumScoreTooltip": "Berücksichtige nur Einreichungen mit einer Bewertung, die mindestens diesem Wert entspricht",
             "minimumSize": "Plagiatskontrolle: Minimale Größe",

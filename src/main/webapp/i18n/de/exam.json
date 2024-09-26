@@ -218,7 +218,7 @@
             "highlightOverallMedian": "Hebe Median aller Klausuren im Diagramm hervor: {{ median }}%",
             "criticalPerformance": "Bedenkliche Leistung",
             "uncriticalPerformance": "Unbedenkliche Leistung",
-            "noGradingScaleExplanation": "Eine Leistung gilt als bedenklich, falls sie unter 40% der maximal zu erreichenden Punktzahl erzielt und somit in den meisten Fällen zum Nichtbestehen einer Klausur führen würde. Andernfalls gilt eine Leistung als unbedenklich.",
+            "noGradingScaleExplanation": "Eine Leistung gilt als bedenklich, falls sie unter 40 % der maximal zu erreichenden Punktzahl erzielt und somit in den meisten Fällen zum Nichtbestehen einer Klausur führen würde. Andernfalls gilt eine Leistung als unbedenklich.",
             "sufficientPerformance": "Ausreichende Leistung",
             "insufficientPerformance": "Ungenügende Leistung",
             "gradingScaleExplanationNotBonus": "Eine Leistung gilt als ungenügend, falls sie nicht zum Bestehen der Klausur genügt. Andernfalls gilt eine Leistung als ausreichend.",
