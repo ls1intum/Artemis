@@ -4,8 +4,10 @@ import static com.tngtech.archunit.lang.ConditionEvent.createMessage;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.methods;
+import static de.tum.cit.aet.artemis.shared.util.StringUtils.isSingular;
 
 import java.lang.annotation.Annotation;
+import java.util.Collection;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -115,5 +117,58 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
         for (String value : values) {
             tester.accept(value);
         }
+    }
+
+    @Test
+    void getRequestsShouldHaveCorrectPath() {
+        methods().that().areAnnotatedWith(GetMapping.class).should(haveCorrectPath()).check(productionClasses);
+    }
+
+    private ArchCondition<JavaMethod> haveCorrectPath() {
+        final var excludedMethods = Set.of("de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource.redirectGetSolutionRepositoryFiles(java.lang.Long)",
+                "de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource.redirectGetTemplateRepositoryFiles(java.lang.Long)",
+                "de.tum.cit.aet.artemis.programming.web.ProgrammingExerciseResource.redirectGetSolutionRepositoryFilesWithoutContent(java.lang.Long)");
+        return new ArchCondition<>("have correct path") {
+
+            @Override
+            public void check(JavaMethod item, ConditionEvents events) {
+                if (excludedMethods.contains(item.getFullName())) {
+                    return;
+                }
+                var annotation = getAnnotation(GetMapping.class, item);
+                var value = annotation.value()[0];
+                var endsWithIdVariable = urlEndsWithIdVariable(value);
+                var isSingular = isSingular(value);
+                if (returnsCollection(item)) {
+                    if (isSingular || endsWithIdVariable) {
+                        events.add(violated(item, "Endpoints returning a collection should have a plural path"));
+                    }
+                }
+                else {
+                    if (!isSingular && !endsWithIdVariable) {
+                        events.add(violated(item, "Endpoints returning a single item should have a singular path"));
+                    }
+                }
+
+            }
+        };
+    }
+
+    private static boolean returnsCollection(JavaMethod method) {
+        var returnType = method.getRawReturnType();
+        if (returnType.isAssignableTo(Collection.class)) {
+            return true;
+        }
+        else if (returnType.isAssignableTo(ResponseEntity.class)) {
+            var parameterType = returnType.getTypeParameters().getFirst();
+            return parameterType.toErasure().isAssignableTo(Collection.class);
+        }
+        else {
+            throw new IllegalArgumentException("Method does not return a Collection or ResponseEntity containing a Collection");
+        }
+    }
+
+    private static boolean urlEndsWithIdVariable(String url) {
+        return url.endsWith("}");
     }
 }
