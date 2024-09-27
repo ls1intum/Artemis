@@ -12,7 +12,6 @@ import { CourseTutorialGroupDetailComponent } from './tutorial-group-details/cou
 import { ExamParticipationComponent } from 'app/exam/participate/exam-participation.component';
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { CourseDashboardGuard } from 'app/overview/course-dashboard/course-dashboard-guard.service';
-import { CourseFaqComponent } from 'app/overview/course-faq/course-faq.component';
 
 const routes: Routes = [
     {
@@ -258,7 +257,7 @@ const routes: Routes = [
             },
             {
                 path: 'faq',
-                component: CourseFaqComponent,
+                loadComponent: () => import('../overview/course-faq/course-faq.component').then((m) => m.CourseFaqComponent),
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.faq',

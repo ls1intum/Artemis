@@ -149,11 +149,11 @@ export class CourseCreationPage {
 
     /**
      * Sets if complaints are enabled
-     * @param complaints if complaints should be enabled
+     * @param enableFaq if complaints should be enabled
      */
-    async setEnableFaqs(faqs: boolean) {
+    async setEnableFaqs(enableFaq: boolean) {
         const selector = this.page.locator('#field_faq_enabled');
-        if (faqs) {
+        if (enableFaq) {
             await selector.check();
         } else {
             await selector.uncheck();

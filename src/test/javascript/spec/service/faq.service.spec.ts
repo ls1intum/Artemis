@@ -45,7 +45,7 @@ describe('Faq Service', () => {
     });
 
     describe('Service methods', () => {
-        it('should create a faq in the database', async () => {
+        it('should create a faq', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
@@ -60,7 +60,7 @@ describe('Faq Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should update a faq in the database', async () => {
+        it('should update a faq', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             const faqId = elemDefault.id!;
@@ -76,7 +76,7 @@ describe('Faq Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should delete a faq in the database', async () => {
+        it('should delete a faq', () => {
             const returnedFromService = { ...elemDefault };
             const faqId = elemDefault.id!;
             service
@@ -91,7 +91,7 @@ describe('Faq Service', () => {
             expect(req.request.method).toBe('DELETE');
         });
 
-        it('should find a faq in the database', async () => {
+        it('should find a faq', () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
@@ -111,7 +111,7 @@ describe('Faq Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should find faqs by courseId in the database', async () => {
+        it('should find faqs by courseId', async () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
@@ -131,7 +131,7 @@ describe('Faq Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should find all categories by courseId in the database', async () => {
+        it('should find all categories by courseId', async () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',

@@ -114,8 +114,7 @@ describe('CourseFaqs', () => {
         const findAllSpy = jest.spyOn(faqService, 'findAllByCourseId');
 
         courseFaqComponentFixture.detectChanges();
-        expect(findAllSpy).toHaveBeenCalledOnce();
-        expect(findAllSpy).toHaveBeenCalledWith(1);
+        expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1);
         expect(courseFaqComponent.faqs).toHaveLength(3);
     });
 

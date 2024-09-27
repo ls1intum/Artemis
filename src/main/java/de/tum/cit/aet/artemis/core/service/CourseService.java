@@ -471,7 +471,7 @@ public class CourseService {
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
-        deleteFaqOfCourse(course);
+        deleteFaqsOfCourse(course);
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
@@ -547,7 +547,7 @@ public class CourseService {
         competencyRepository.deleteAll(course.getCompetencies());
     }
 
-    private void deleteFaqOfCourse(Course course) {
+    private void deleteFaqsOfCourse(Course course) {
         faqRepository.deleteAllByCourseId(course.getId());
     }
 

@@ -57,9 +57,9 @@ export class CourseUpdateComponent implements OnInit {
     isSaving: boolean;
     courseImageUploadFile?: File;
     croppedImage?: string;
-    complaintsEnabled = true; // default value
-    requestMoreFeedbackEnabled = true; // default value
-    customizeGroupNames = false; // default value
+    complaintsEnabled = true;
+    requestMoreFeedbackEnabled = true;
+    customizeGroupNames = false;
     courseOrganizations: Organization[];
     isAdmin = false;
     // Icons
@@ -71,7 +71,7 @@ export class CourseUpdateComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faPen = faPen;
 
-    faqEnabled = true; //default value
+    faqEnabled = true;
     communicationEnabled = true;
     messagingEnabled = true;
     ltiEnabled = false;

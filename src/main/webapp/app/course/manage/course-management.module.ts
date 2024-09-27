@@ -70,7 +70,6 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { ArtemisFAQModule } from 'app/faq/faq.module';
 
 @NgModule({
     imports: [
@@ -125,7 +124,6 @@ import { ArtemisFAQModule } from 'app/faq/faq.module';
         DetailModule,
         SubmissionResultStatusModule,
         ArtemisMarkdownEditorModule,
-        ArtemisFAQModule,
     ],
     declarations: [
         CourseManagementComponent,

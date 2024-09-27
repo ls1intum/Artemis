@@ -143,7 +143,7 @@ public class FaqResource {
     public ResponseEntity<Set<Faq>> getFaqForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
 
-        Course course = getCourseForRequest(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(faqs);
@@ -160,20 +160,10 @@ public class FaqResource {
     public ResponseEntity<Set<String>> getFaqCategoriesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faq Categories for the course with id : {}", courseId);
 
-        Course course = getCourseForRequest(courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         Set<String> faqs = faqRepository.findAllCategoriesByCourseId(courseId);
 
         return ResponseEntity.ok().body(faqs);
     }
-
-    /**
-     *
-     * @param courseId the courseId of the course
-     * @return the course with the id courseId, unless it exists
-     */
-    private Course getCourseForRequest(Long courseId) {
-        return courseRepository.findByIdElseThrow(courseId);
-    }
-
 }
