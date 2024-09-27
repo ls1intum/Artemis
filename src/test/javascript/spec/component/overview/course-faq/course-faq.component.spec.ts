@@ -19,6 +19,15 @@ import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-
 import { FAQ } from 'app/entities/faq.model';
 import { FAQCategory } from 'app/entities/faq-category.model';
 
+function createFaq(id: number, category: string, color: string): FAQ {
+    const faq = new FAQ();
+    faq.id = id;
+    faq.questionTitle = 'questionTitle';
+    faq.questionAnswer = 'questionAnswer';
+    faq.categories = [new FAQCategory(category, color)];
+    return faq;
+}
+
 describe('CourseFaqs', () => {
     let courseFaqComponentFixture: ComponentFixture<CourseFaqComponent>;
     let courseFaqComponent: CourseFaqComponent;
@@ -32,23 +41,11 @@ describe('CourseFaqs', () => {
     let faq3: FAQ;
 
     beforeEach(() => {
-        faq1 = new FAQ();
-        faq1.id = 1;
-        faq1.questionTitle = 'questionTitle';
-        faq1.questionAnswer = 'questionAnswer';
-        faq1.categories = [new FAQCategory('category1', '#94a11c')];
+        // In beforeEach:
+        faq1 = createFaq(1, 'category1', '#94a11c');
+        faq2 = createFaq(2, 'category2', '#0ab84f');
+        faq3 = createFaq(3, 'category3', '#0ab84f');
 
-        faq2 = new FAQ();
-        faq2.id = 2;
-        faq2.questionTitle = 'questionTitle';
-        faq2.questionAnswer = 'questionAnswer';
-        faq2.categories = [new FAQCategory('category2', '#0ab84f')];
-
-        faq3 = new FAQ();
-        faq3.id = 3;
-        faq3.questionTitle = 'questionTitle';
-        faq3.questionAnswer = 'questionAnswer';
-        faq3.categories = [new FAQCategory('category3', '#0ab84f')];
         TestBed.configureTestingModule({
             imports: [ArtemisSharedComponentModule, ArtemisSharedModule, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent)],
             declarations: [CourseFaqComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],

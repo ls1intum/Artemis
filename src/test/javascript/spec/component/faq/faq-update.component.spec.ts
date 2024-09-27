@@ -117,8 +117,7 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent.save();
         tick();
 
-        expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith(courseId, { faqState: FAQState.ACCEPTED, questionTitle: 'test1' });
+        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { faqState: FAQState.ACCEPTED, questionTitle: 'test1' });
         expect(faqUpdateComponent.isSaving).toBeFalse();
     }));
 
@@ -164,7 +163,7 @@ describe('FaqUpdateComponent', () => {
         tick();
         expect(previousState).toHaveBeenCalledOnce();
 
-        const expectedPath = ['course-management', '1', 'faqs'];
+        const expectedPath = ['course-management', 1, 'faqs'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
     }));
 

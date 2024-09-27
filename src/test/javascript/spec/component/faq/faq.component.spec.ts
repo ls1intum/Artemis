@@ -20,6 +20,15 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-catego
 import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 
+function createFaq(id: number, category: string, color: string): FAQ {
+    const faq = new FAQ();
+    faq.id = id;
+    faq.questionTitle = 'questionTitle';
+    faq.questionAnswer = 'questionAnswer';
+    faq.categories = [new FAQCategory(category, color)];
+    return faq;
+}
+
 describe('FaqComponent', () => {
     let faqComponentFixture: ComponentFixture<FAQComponent>;
     let faqComponent: FAQComponent;
@@ -36,27 +45,13 @@ describe('FaqComponent', () => {
     let courseId: number;
 
     beforeEach(() => {
-        faq1 = new FAQ();
-        faq1.id = 1;
-        faq1.questionTitle = 'questionTitle';
-        faq1.questionAnswer = 'questionAnswer';
-        faq1.categories = [new FAQCategory('category1', '#94a11c')];
-
-        faq2 = new FAQ();
-        faq2.id = 2;
-        faq2.questionTitle = 'questionTitle';
-        faq2.questionAnswer = 'questionAnswer';
-        faq2.categories = [new FAQCategory('category2', '#0ab84f')];
-
-        faq3 = new FAQ();
-        faq3.id = 3;
-        faq3.questionTitle = 'questionTitle';
-        faq3.questionAnswer = 'questionAnswer';
-        faq3.categories = [new FAQCategory('category3', '#0ab84f')];
+        // In beforeEach:
+        faq1 = createFaq(1, 'category1', '#94a11c');
+        faq2 = createFaq(2, 'category2', '#0ab84f');
+        faq3 = createFaq(3, 'category3', '#0ab84f');
 
         courseId = 1;
 
-        courseId = 1;
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisMarkdownEditorModule, MockModule(BrowserAnimationsModule)],
             declarations: [FAQComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
@@ -126,6 +121,7 @@ describe('FaqComponent', () => {
         faqComponentFixture.detectChanges();
         expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1);
         expect(faqComponent.faqs).toHaveLength(3);
+        expect(faqComponent.faqs).toEqual([faq1, faq2, faq3]);
     });
 
     it('should catch error if loading fails', () => {
@@ -139,7 +135,7 @@ describe('FaqComponent', () => {
     it('should delete faq', () => {
         const deleteSpy = jest.spyOn(faqService, 'delete');
         faqComponentFixture.detectChanges();
-        faqComponent.deleteFaq(1, faq1.id!);
+        faqComponent.deleteFaq(courseId, faq1.id!);
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith(courseId, faq1.id!);
         expect(faqComponent.faqs).toHaveLength(2);

@@ -8,10 +8,10 @@ import de.tum.cit.aet.artemis.communication.domain.Faq;
 import de.tum.cit.aet.artemis.communication.domain.FaqState;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record FaqDTO(Long id, String title, String questionTitle, String questionAnswer, Set<String> categories, FaqState faqState) {
+public record FaqDTO(Long id, String questionTitle, String questionAnswer, Set<String> categories, FaqState faqState) {
 
     public FaqDTO(Faq faq) {
-        this(faq.getId(), faq.getQuestionTitle(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
+        this(faq.getId(), faq.getQuestionTitle(), faq.getQuestionAnswer(), faq.getCategories(), faq.getFaqState());
     }
 
 }

@@ -112,7 +112,7 @@ describe('Faq Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should find faqs by courseId', async () => {
+        it('should find faqs by courseId', () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
@@ -132,7 +132,7 @@ describe('Faq Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should find all categories by courseId', async () => {
+        it('should find all categories by courseId', () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
@@ -152,7 +152,7 @@ describe('Faq Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
-        it('should set add active filter correctly', async () => {
+        it('should set add active filter correctly', () => {
             let activeFilters = new Set<string>();
             activeFilters = service.toggleFilter('category1', activeFilters);
 
@@ -160,7 +160,7 @@ describe('Faq Service', () => {
             expect(activeFilters.size).toBe(1);
         });
 
-        it('should remove active filter correctly', async () => {
+        it('should remove active filter correctly', () => {
             let activeFilters = new Set<string>();
             activeFilters.add('category1');
             activeFilters = service.toggleFilter('category1', activeFilters);
@@ -169,7 +169,7 @@ describe('Faq Service', () => {
             expect(activeFilters.size).toBe(0);
         });
 
-        it('should apply faqFilter  correctly', async () => {
+        it('should apply faqFilter correctly', () => {
             const activeFilters = new Set<string>();
 
             const faq1 = new FAQ();

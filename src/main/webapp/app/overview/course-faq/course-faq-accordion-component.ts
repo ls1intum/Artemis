@@ -7,8 +7,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @Component({
     selector: 'jhi-course-faq-accordion',
-    templateUrl: './course-faq-accordion-component.html',
-    styleUrl: './course-faq-accordion-component.scss',
+    templateUrl: './course-faq-accordion.component.html',
+    styleUrl: './course-faq-accordion.component.scss',
     standalone: true,
 
     imports: [TranslateDirective, CustomExerciseCategoryBadgeComponent, ArtemisMarkdownModule],

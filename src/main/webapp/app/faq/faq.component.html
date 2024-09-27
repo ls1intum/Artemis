@@ -84,7 +84,7 @@
                             <p class="markdown-preview" [innerHTML]="faq.questionAnswer | htmlForMarkdown"></p>
                         </td>
                         <td>
-                            <div class="category-container">
+                            <div class="d-flex">
                                 @for (category of faq.categories; track category) {
                                     <jhi-custom-exercise-category-badge [category]="category" />
                                 }

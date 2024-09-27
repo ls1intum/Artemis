@@ -137,14 +137,14 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetFaqByFaqId_shouldNotGet_IdMissmatch() throws Exception {
+    void testGetFaqByFaqId_shouldNotGet_IdMismatch() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
         Faq returnedFaq = request.get("/api/courses/" + faq.getCourse().getId() + 1 + "/faqs/" + faq.getId(), HttpStatus.BAD_REQUEST, Faq.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteFAQ_shouldDeleteFAQ() throws Exception {
+    void deleteFaq_shouldDeleteFAQ() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
         request.delete("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), HttpStatus.OK);
         Optional<Faq> faqOptional = faqRepository.findById(faq.getId());
@@ -153,7 +153,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteFAQ_IdsDoNotMatch_shouldNotDeleteFAQ() throws Exception {
+    void deleteFaq_IdsDoNotMatch_shouldNotDeleteFAQ() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
         request.delete("/api/courses/" + faq.getCourse().getId() + 1 + "/faqs/" + faq.getId(), HttpStatus.BAD_REQUEST);
         Optional<Faq> faqOptional = faqRepository.findById(faq.getId());

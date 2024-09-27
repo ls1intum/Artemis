@@ -1,10 +1,10 @@
 <div>
     <div class="faq-container">
-        <h2 class="markdown-preview">{{faq().questionTitle}}</h2>
+        <h2 class="markdown-preview">{{ faq().questionTitle }}</h2>
 
         <div class="badge-container">
-            @for (category of faq().categories; track category){
-            <jhi-custom-exercise-category-badge [category]="category" style="margin-top: 10px; margin-left: 4px" />
+            @for (category of faq().categories; track category) {
+                <jhi-custom-exercise-category-badge [category]="category" style="margin-top: 10px; margin-left: 4px" />
             }
         </div>
     </div>

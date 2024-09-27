@@ -101,7 +101,7 @@ test.describe('Course management', () => {
             await courseCreation.setCourseMaxPoints(courseData.maxPoints);
             await courseCreation.setProgrammingLanguage(courseData.programmingLanguage);
             await courseCreation.setEnableComplaints(courseData.enableComplaints);
-            await courseCreation.setEnableFaqs(courseData.enableFaqs);
+            await courseCreation.setEnableFaq(courseData.enableFaqs);
             await courseCreation.setMaxComplaints(courseData.maxComplaints);
             await courseCreation.setMaxTeamComplaints(courseData.maxTeamComplaints);
             await courseCreation.setMaxComplaintsTimeDays(courseData.maxComplaintTimeDays);

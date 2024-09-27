@@ -310,7 +310,15 @@
                 }
                 <div class="form-group">
                     <div class="form-check">
-                        <input type="checkbox" class="form-check-input" name="faqEnabled" [checked]="faqEnabled" id="field_faq_enabled" formControlName="faqEnabled" />
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            name="faqEnabled"
+                            [checked]="faqEnabled"
+                            (change)="changeFaqEnabled()"
+                            id="field_faq_enabled"
+                            formControlName="faqEnabled"
+                        />
                         <label for="field_faq_enabled" class="form-control-label" jhiTranslate="artemisApp.course.courseCommunicationSetting.faqEnabled.label"></label>
                         <fa-icon
                             [icon]="faQuestionCircle"

@@ -121,6 +121,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.complaintsEnabled =
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
                     this.course.maxComplaintTimeDays! > 0 &&
+                    this.course.maxComplaintTimeDays! > 0 &&
                     this.course.maxComplaintTextLimit! > 0 &&
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;
@@ -506,7 +507,10 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['editorGroupName'].setValue(editorGroupName);
         this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
-
+    changeFaqEnabled() {
+        this.faqEnabled = !this.faqEnabled;
+        this.courseForm.controls['faqEnabled'].setValue(this.faqEnabled);
+    }
     /**
      * Enable or disable test course
      */
