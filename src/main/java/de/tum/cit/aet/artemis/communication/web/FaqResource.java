@@ -84,7 +84,7 @@ public class FaqResource {
 
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
-        return ResponseEntity.created(new URI("/api/faqs/" + courseId)).body(dto);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/faqs/" + savedFaq.getId())).body(dto);
     }
 
     /**

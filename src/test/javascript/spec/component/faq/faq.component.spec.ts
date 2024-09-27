@@ -147,7 +147,7 @@ describe('FaqComponent', () => {
         const error = { status: 404 };
         const deleteSpy = jest.spyOn(faqService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
-        faqComponent.deleteFaq(1, faq1.id!);
+        faqComponent.deleteFaq(courseId, faq1.id!);
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith(courseId, faq1.id!);
         expect(faqComponent.faqs).toHaveLength(3);
