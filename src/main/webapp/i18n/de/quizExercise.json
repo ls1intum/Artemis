@@ -12,14 +12,14 @@
                 "createLabel": "Quiz erstellen",
                 "editLabel": "Quiz bearbeiten",
                 "importLabel": "Quiz importieren",
-                "createModelDragAndDrop": "Drag-And-Drop Model Quiz erstellen",
+                "createModelDragAndDrop": "Drag-and-Drop Model Quiz erstellen",
                 "exportLabel": "Quizübungen exportieren"
             },
             "detail": {
                 "title": "Quiz Aufgabe",
                 "questionCount": {
                     "title": "Fragenanzahl",
-                    "value": "Multiple Choice: {{ mcCount }}, Drag-And-Drop: {{ dndCount }}, Kurzantwort: {{ shortCount }}"
+                    "value": "Multiple Choice: {{ mcCount }}, Drag-and-Drop: {{ dndCount }}, Kurzantwort: {{ shortCount }}"
                 }
             },
             "created": "Quiz erstellt mit ID {{ param }}",
@@ -55,7 +55,7 @@
             },
             "filter": {
                 "mcq": "Multiple-Choice Frage",
-                "dnd": "Drag-And-Drop Frage",
+                "dnd": "Drag-and-Drop Frage",
                 "sa": "Kurzantwort-Frage",
                 "applyFilter": "Filter anwenden"
             },
@@ -89,12 +89,12 @@
             "noQuestionsFoundExam": "Keine Fragen in Klausur gefunden",
             "noMatchingQuestionsFound": "Keine Fragen des Kurses entsprechen den Suchkriterien",
             "multipleChoiceQuestion": "Multiple-Choice Frage",
-            "dragAndDropQuestion": "Drag-And-Drop Frage",
+            "dragAndDropQuestion": "Drag-and-Drop Frage",
             "shortAnswerQuestion": "Kurzantwort-Frage",
             "addMultipleChoiceQuestion": "Multiple-Choice Frage hinzufügen",
-            "addDragAndDropQuestion": "Drag-And-Drop Frage hinzufügen",
+            "addDragAndDropQuestion": "Drag-and-Drop Frage hinzufügen",
             "addShortAnswerQuestion": "Kurzantwort Frage hinzufügen",
-            "addApollonDragAndDropQuestion": "Apollon Drag-And-Drop Frage hinzufügen",
+            "addApollonDragAndDropQuestion": "Apollon Drag-and-Drop Frage hinzufügen",
             "addExistingQuestions": "Vorhandene Fragen hinzufügen",
             "fromAFile": "Aus einer Datei",
             "fromACourse": "Von einem Kurs",
