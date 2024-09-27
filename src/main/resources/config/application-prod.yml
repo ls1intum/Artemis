@@ -109,8 +109,7 @@ jhipster:
             port: 5000
             ring-buffer-size: 512
     audit-events:
-        retention-period: 120 # Number of days before audit events are deleted.
-
+        retention-period: 120 # Number of days before audit events and VCS access logs are deleted.
 # Properties to be exposed on the /info management endpoint
 info:
     guided-tour:

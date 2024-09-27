@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240804144500" author="entholzer">
+        <!--
+            Change Set for creating a new table for storing the LocalVC access logs
+        -->
+        <createTable tableName="vcs_access_log">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="participation_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repository_action_type" type="tinyint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="authentication_mechanism" type="tinyint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="commit_hash" type="varchar(40)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="ip_address" type="varchar(45)">
+                <constraints nullable="true"/>
+            </column>
+            <column defaultValueComputed="CURRENT_TIMESTAMP" name="timestamp" type="timestamp">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="idx_vcs_access_log_user_participation" tableName="vcs_access_log">
+            <column name="user_id"/>
+            <column name="participation_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

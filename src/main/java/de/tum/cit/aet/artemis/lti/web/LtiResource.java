@@ -36,7 +36,6 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -113,7 +112,7 @@ public class LtiResource {
      */
     @GetMapping("lti-platforms")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<LtiPlatformConfiguration>> getAllConfiguredLtiPlatforms(Pageable pageable) {
         log.info("REST request to get all configured LTI platforms");
         Page<LtiPlatformConfiguration> platformsPage = ltiPlatformConfigurationRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), platformsPage);
