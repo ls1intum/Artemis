@@ -287,9 +287,9 @@ jhipster:
         allowed-methods: "*"
         allowed-headers: "*"
         exposed-headers: "Authorization,Link,X-Total-Count,Set-Cookie"
-        allow-credentials: false
+        allow-credentials: true
         max-age: 1800
-        allowed-origin-patterns:
+        allowed-origins:
           - "vscode-file://vscode-app"
           - "vscode-webview://*"
 
