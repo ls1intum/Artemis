@@ -12,6 +12,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.OCAM
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.RUST;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.TYPESCRIPT;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.VHDL;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.FACT;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GCC;
@@ -51,5 +52,6 @@ public class LocalCIProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, false, true, true, false, List.of(PLAIN), false, true));
         programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, false, true, false, false, List.of(), false, true));
         programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, false, true, false, false, List.of(), false, true));
+        programmingLanguageFeatures.put(TYPESCRIPT, new ProgrammingLanguageFeature(TYPESCRIPT, false, false, true, false, false, List.of(), false, true));
     }
 }

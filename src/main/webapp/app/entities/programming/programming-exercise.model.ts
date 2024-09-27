@@ -25,6 +25,7 @@ export enum ProgrammingLanguage {
     EMPTY = 'EMPTY',
     RUST = 'RUST',
     JAVASCRIPT = 'JAVASCRIPT',
+    TYPESCRIPT = 'TYPESCRIPT',
 }
 
 export enum ProjectType {

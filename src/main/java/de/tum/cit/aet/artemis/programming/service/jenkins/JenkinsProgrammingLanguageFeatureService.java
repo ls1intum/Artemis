@@ -9,6 +9,7 @@ import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.KOTL
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.PYTHON;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.RUST;
 import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.SWIFT;
+import static de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage.TYPESCRIPT;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.FACT;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GCC;
 import static de.tum.cit.aet.artemis.programming.domain.ProjectType.GRADLE_GRADLE;
@@ -43,5 +44,6 @@ public class JenkinsProgrammingLanguageFeatureService extends ProgrammingLanguag
         programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, true, List.of(), false, false));
         programmingLanguageFeatures.put(RUST, new ProgrammingLanguageFeature(RUST, false, false, true, false, false, List.of(), false, false));
         programmingLanguageFeatures.put(JAVASCRIPT, new ProgrammingLanguageFeature(JAVASCRIPT, false, false, true, false, false, List.of(), false, false));
+        programmingLanguageFeatures.put(TYPESCRIPT, new ProgrammingLanguageFeature(TYPESCRIPT, false, false, true, false, false, List.of(), false, false));
     }
 }
