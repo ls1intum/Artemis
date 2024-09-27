@@ -19,7 +19,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
-    styleUrls: ['./faq.component.scss'],
+    styleUrls: [],
     standalone: true,
     imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule],
 })
