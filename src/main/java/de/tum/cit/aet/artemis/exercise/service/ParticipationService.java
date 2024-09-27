@@ -715,16 +715,16 @@ public class ParticipationService {
     }
 
     /**
-     * Get the text exercise participation with the Latest Submissions and its results
+     * Retrieves a StudentParticipation with its latest Submission and associated Result.
      *
-     * @param participationId the id of the participation
-     * @return the participation with latest submission and result
-     * @throws EntityNotFoundException
+     * @param participationId The unique identifier of the participation to retrieve.
+     * @return A StudentParticipation object containing the latest submission and result.
+     * @throws EntityNotFoundException If no StudentParticipation is found with the given ID.
      */
-    public StudentParticipation findTextExerciseParticipationWithLatestSubmissionAndResultElseThrow(Long participationId) throws EntityNotFoundException {
+    public StudentParticipation findExerciseParticipationWithLatestSubmissionAndResultElseThrow(Long participationId) throws EntityNotFoundException {
         Optional<Participation> participation = participationRepository.findByIdWithLatestSubmissionAndResult(participationId);
         if (participation.isEmpty() || !(participation.get() instanceof StudentParticipation studentParticipation)) {
-            throw new EntityNotFoundException("No text exercise participation found with id " + participationId);
+            throw new EntityNotFoundException("No exercise participation found with id " + participationId);
         }
         return studentParticipation;
     }
