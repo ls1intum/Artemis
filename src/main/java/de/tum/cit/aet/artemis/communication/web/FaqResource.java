@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -66,9 +67,9 @@ public class FaqResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new faq, or with status 400 (Bad Request) if the faq has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("faqs")
+    @PostMapping("courses/{courseId}/faqs")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Faq> createFaq(@RequestBody Faq faq) throws URISyntaxException {
+    public ResponseEntity<Faq> createFaq(@RequestBody Faq faq, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save Faq : {}", faq);
         if (faq.getId() != null) {
             throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
@@ -87,15 +88,18 @@ public class FaqResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated faq, or with status 400 (Bad Request) if the faq is not valid, or with status 500 (Internal
      *         Server Error) if the faq couldn't be updated
      */
-    @PutMapping("faqs/{faqId}")
+    @PutMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq, @PathVariable Long faqId) {
+    public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq, @PathVariable Long faqId, @PathVariable Long courseId) {
         log.debug("REST request to update Faq : {}", faq);
         if (faqId == null || !faqId.equals(faq.getId())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
+        if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
+            throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
+        }
         Faq result = faqRepository.save(faq);
         return ResponseEntity.ok().body(result);
     }
@@ -106,9 +110,9 @@ public class FaqResource {
      * @param faqId the faqId of the faq to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the faq, or with status 404 (Not Found)
      */
-    @GetMapping("faqs/{faqId}")
+    @GetMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Faq> getFaq(@PathVariable Long faqId) {
+    public ResponseEntity<Faq> getFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
         log.debug("REST request to get faq {}", faqId);
         Faq faq = faqRepository.findByIdElseThrow(faqId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, faq.getCourse(), null);
@@ -121,13 +125,16 @@ public class FaqResource {
      * @param faqId the id of the faq to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("faqs/{faqId}")
+    @DeleteMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId) {
+    public ResponseEntity<Void> deleteFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
 
         log.debug("REST request to delete faq {}", faqId);
-        Faq faq = faqRepository.findByIdElseThrow(faqId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
+        Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingFaq.getCourse(), null);
+        if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
+            throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
+        }
         faqRepository.deleteById(faqId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, faqId.toString())).build();
     }

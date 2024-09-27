@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { FAQ } from 'app/entities/faq.model';
 import { faEdit, faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
@@ -51,12 +51,12 @@ export class FAQComponent implements OnInit, OnDestroy {
     faFilter = faFilter;
     faSort = faSort;
 
-    constructor(
-        protected faqService: FAQService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private sortService: SortService,
-    ) {
+    protected faqService = inject(FAQService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+
+    constructor() {
         this.predicate = 'id';
         this.ascending = true;
     }
@@ -75,8 +75,8 @@ export class FAQComponent implements OnInit, OnDestroy {
         return item.id;
     }
 
-    deleteFaq(faqId: number) {
-        this.faqService.delete(faqId).subscribe({
+    deleteFaq(courseId: number, faqId: number) {
+        this.faqService.delete(courseId, faqId).subscribe({
             next: () => this.handleDeleteSuccess(faqId),
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

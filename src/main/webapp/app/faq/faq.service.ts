@@ -14,27 +14,29 @@ export class FAQService {
 
     constructor(protected http: HttpClient) {}
 
-    create(faq: FAQ): Observable<EntityResponseType> {
+    create(courseId: number, faq: FAQ): Observable<EntityResponseType> {
         const copy = FAQService.convertFaqFromClient(faq);
         copy.faqState = FAQState.ACCEPTED;
-        return this.http.post<FAQ>(`api/faqs`, copy, { observe: 'response' }).pipe(
+        return this.http.post<FAQ>(`${this.resourceUrl}/${courseId}/faqs`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
             }),
         );
     }
 
-    update(faq: FAQ): Observable<EntityResponseType> {
+    update(courseId: number, faq: FAQ): Observable<EntityResponseType> {
         const copy = FAQService.convertFaqFromClient(faq);
-        return this.http.put<FAQ>(`api/faqs/${faq.id}`, copy, { observe: 'response' }).pipe(
+        return this.http.put<FAQ>(`${this.resourceUrl}/${courseId}/faqs/${faq.id}`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
             }),
         );
     }
 
-    find(faqId: number): Observable<EntityResponseType> {
-        return this.http.get<FAQ>(`api/faqs/${faqId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => FAQService.convertFaqCategoriesFromServer(res)));
+    find(courseId: number, faqId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<FAQ>(`${this.resourceUrl}/${courseId}/faqs/${faqId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => FAQService.convertFaqCategoriesFromServer(res)));
     }
 
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
@@ -45,8 +47,8 @@ export class FAQService {
             .pipe(map((res: EntityArrayResponseType) => FAQService.convertFaqCategoryArrayFromServer(res)));
     }
 
-    delete(faqId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`api/faqs/${faqId}`, { observe: 'response' });
+    delete(courseId: number, faqId: number): Observable<HttpResponse<any>> {
+        return this.http.delete<any>(`${this.resourceUrl}/${courseId}/faqs/${faqId}`, { observe: 'response' });
     }
 
     findAllCategoriesByCourseId(courseId: number) {

@@ -15,9 +15,9 @@ import { FAQService } from 'app/faq/faq.service';
 describe('Faq Service', () => {
     let httpMock: HttpTestingController;
     let service: FAQService;
-    const resourceUrl = 'api/faqs';
     let expectedResult: any;
     let elemDefault: FAQ;
+    let courseId: number;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -38,6 +38,7 @@ describe('Faq Service', () => {
         elemDefault.questionAnswer = 'Answer';
         elemDefault.id = 1;
         elemDefault.faqState = FAQState.ACCEPTED;
+        courseId = 1;
     });
 
     afterEach(() => {
@@ -49,11 +50,11 @@ describe('Faq Service', () => {
             const returnedFromService = { ...elemDefault };
             const expected = { ...returnedFromService };
             service
-                .create(elemDefault)
+                .create(courseId, elemDefault)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: resourceUrl,
+                url: `api/courses/${courseId}/faqs`,
                 method: 'POST',
             });
             req.flush(returnedFromService);
@@ -65,11 +66,11 @@ describe('Faq Service', () => {
             const expected = { ...returnedFromService };
             const faqId = elemDefault.id!;
             service
-                .update(elemDefault)
+                .update(courseId, elemDefault)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `${resourceUrl}/${faqId}`,
+                url: `api/courses/${courseId}/faqs/${faqId}`,
                 method: 'PUT',
             });
             req.flush(returnedFromService);
@@ -80,11 +81,11 @@ describe('Faq Service', () => {
             const returnedFromService = { ...elemDefault };
             const faqId = elemDefault.id!;
             service
-                .delete(faqId)
+                .delete(courseId, faqId)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `${resourceUrl}/${faqId}`,
+                url: `api/courses/${courseId}/faqs/${faqId}`,
                 method: 'DELETE',
             });
             req.flush(returnedFromService);
@@ -100,11 +101,11 @@ describe('Faq Service', () => {
             const expected = { ...elemDefault, categories: [new FAQCategory('category1', '#6ae8ac')] };
             const faqId = elemDefault.id!;
             service
-                .find(faqId)
+                .find(courseId, faqId)
                 .pipe(take(1))
                 .subscribe((resp) => (expectedResult = resp));
             const req = httpMock.expectOne({
-                url: `${resourceUrl}/${faqId}`,
+                url: `api/courses/${courseId}/faqs/${faqId}`,
                 method: 'GET',
             });
             req.flush(returnedFromService);

@@ -106,7 +106,7 @@
                                         [entityTitle]="faq.questionTitle || ''"
                                         deleteQuestion="artemisApp.faq.delete.question"
                                         deleteConfirmationText="artemisApp.faq.delete.typeNameToConfirm"
-                                        (delete)="deleteFaq(faq.id!)"
+                                        (delete)="deleteFaq(this.courseId, faq.id!)"
                                         [dialogError]="dialogError$"
                                     >
                                         <fa-icon [icon]="faTrash" />

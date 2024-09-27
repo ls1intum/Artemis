@@ -12,8 +12,9 @@ export class FAQResolve implements Resolve<FAQ> {
 
     resolve(route: ActivatedRouteSnapshot): Observable<FAQ> {
         const faqId = route.params['faqId'];
+        const courseId = route.params['courseId'];
         if (faqId) {
-            return this.faqService.find(faqId).pipe(
+            return this.faqService.find(courseId, faqId).pipe(
                 filter((response: HttpResponse<FAQ>) => response.ok),
                 map((faq: HttpResponse<FAQ>) => faq.body!),
             );

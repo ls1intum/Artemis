@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -29,6 +29,7 @@ export class FAQUpdateComponent implements OnInit {
     isSaving: boolean;
     existingCategories: FAQCategory[];
     faqCategories: FAQCategory[];
+    courseId: number;
 
     domainActionsDescription = [new FormulaAction()];
 
@@ -37,20 +38,16 @@ export class FAQUpdateComponent implements OnInit {
     faSave = faSave;
     faBan = faBan;
 
-    constructor(
-        protected alertService: AlertService,
-        protected faqService: FAQService,
-        protected activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private router: Router,
-        private translateService: TranslateService,
-    ) {}
+    private alertService = inject(AlertService);
+    private faqService = inject(FAQService);
+    private activatedRoute = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
 
-    /**
-     * Life cycle hook called by Angular to indicate that Angular is done creating the component
-     */
     ngOnInit() {
         this.isSaving = false;
+        this.courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));
         this.activatedRoute.parent?.data.subscribe((data) => {
             // Create a new faq to use unless we fetch an existing faq
             const faq = data['faq'];
@@ -80,10 +77,10 @@ export class FAQUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
         if (this.faq.id !== undefined) {
-            this.subscribeToSaveResponse(this.faqService.update(this.faq));
+            this.subscribeToSaveResponse(this.faqService.update(this.courseId, this.faq));
         } else {
             this.faq.faqState = FAQState.ACCEPTED;
-            this.subscribeToSaveResponse(this.faqService.create(this.faq));
+            this.subscribeToSaveResponse(this.faqService.create(this.courseId, this.faq));
         }
     }
 
@@ -102,7 +99,7 @@ export class FAQUpdateComponent implements OnInit {
      */
     protected onSaveSuccess(faq: FAQ) {
         if (!this.faq.id) {
-            this.faqService.find(faq.id!).subscribe({
+            this.faqService.find(this.courseId, faq.id!).subscribe({
                 next: (response: HttpResponse<FAQ>) => {
                     this.isSaving = false;
                     const faqBody = response.body;

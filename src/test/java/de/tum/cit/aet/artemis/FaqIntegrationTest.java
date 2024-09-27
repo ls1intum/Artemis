@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -44,9 +45,9 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.postWithResponseBody("/api/faqs", new Faq(), Faq.class, HttpStatus.FORBIDDEN);
-        request.putWithResponseBody("/api/faqs/" + this.faq.getId(), this.faq, Faq.class, HttpStatus.FORBIDDEN);
-        request.delete("/api/faqs/" + this.faq.getId(), HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs", new Faq(), Faq.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs/" + this.faq.getId(), this.faq, Faq.class, HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + faq.getCourse().getId() + "/faqs/" + this.faq.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -65,7 +66,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFaq_correctRequestBody_shouldCreateFaq() throws Exception {
         Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
-        Faq returnedFaq = request.postWithResponseBody("/api/faqs", newFaq, Faq.class, HttpStatus.CREATED);
+        Faq returnedFaq = request.postWithResponseBody("/api/courses/" + course1.getId() + "/faqs", newFaq, Faq.class, HttpStatus.CREATED);
         assertThat(returnedFaq).isNotNull();
         assertThat(returnedFaq.getId()).isNotNull();
         assertThat(returnedFaq.getQuestionTitle()).isEqualTo(newFaq.getQuestionTitle());
@@ -78,9 +79,16 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFaq_alreadyId_shouldReturnBadRequest() throws Exception {
-        Faq faq = new Faq();
-        faq.setId(1L);
-        request.postWithResponseBody("/api/faqs", faq, Faq.class, HttpStatus.BAD_REQUEST);
+        Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
+        faq.setId(this.faq.getId());
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/faqs", faq, Faq.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createFaq_courseId_noMatch_shouldReturnBadRequest() throws Exception {
+        Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
+        request.postWithResponseBody("/api/courses/" + course1.getId() + 1 + "/faqs", faq, Faq.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -93,8 +101,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Set<String> newCategories = new HashSet<>();
         newCategories.add("Test");
         faq.setCategories(newCategories);
-        Faq updatedFaq = request.putWithResponseBody("/api/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.OK);
-
+        Faq updatedFaq = request.putWithResponseBody("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.OK);
         assertThat(updatedFaq.getQuestionTitle()).isEqualTo("Updated");
         assertThat(updatedFaq.getQuestionAnswer()).isEqualTo("Update");
         assertThat(updatedFaq.getFaqState()).isEqualTo(FaqState.PROPOSED);
@@ -110,6 +117,15 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Set<String> categories = faq.getCategories();
         Set<String> returnedCategories = request.get("/api/courses/" + faq.getCourse().getId() + "/faq-categories", HttpStatus.OK, Set.class);
         assertThat(categories).isEqualTo(returnedCategories);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteFAQ_lectureExists_shouldDeleteFAQ() throws Exception {
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
+        request.delete("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), HttpStatus.OK);
+        Optional<Faq> faqOptional = faqRepository.findById(faq.getId());
+        assertThat(faqOptional).isEmpty();
     }
 
 }
