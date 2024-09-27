@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { Subject, Subscription } from 'rxjs';
@@ -49,12 +49,10 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faFilter = faFilter;
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private faqService: FAQService,
-        private alertService: AlertService,
-    ) {}
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private faqService = inject(FAQService);
+    private alertService = inject(AlertService);
 
     ngOnInit(): void {
         this.parentParamSubscription = this.route.parent!.params.subscribe((params) => {
