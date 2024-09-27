@@ -20,7 +20,7 @@ import { onError } from 'app/shared/util/global.utils';
 @Component({
     selector: 'jhi-course-faq',
     templateUrl: './course-faq.component.html',
-    styleUrls: ['../course-overview.scss', './course-faq.component.scss', '../../faq/faq.component.scss'],
+    styleUrls: ['../course-overview.scss', '../../faq/faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent],
