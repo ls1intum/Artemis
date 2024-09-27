@@ -28,6 +28,7 @@ import { Course } from 'app/entities/course.model';
 export class FAQUpdateComponent implements OnInit {
     faq: FAQ;
     isSaving: boolean;
+    isAllowedToSave: boolean;
     existingCategories: FAQCategory[];
     faqCategories: FAQCategory[];
     courseId: number;
@@ -62,6 +63,7 @@ export class FAQUpdateComponent implements OnInit {
             }
             this.faqCategories = faq?.categories ? faq.categories : [];
         });
+        this.canSave();
     }
 
     /**
@@ -146,8 +148,9 @@ export class FAQUpdateComponent implements OnInit {
 
     canSave() {
         if (this.faq.questionTitle && this.faq.questionAnswer) {
-            return this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0;
+            this.isAllowedToSave = this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0;
+        } else {
+            this.isAllowedToSave = false;
         }
-        return false;
     }
 }
