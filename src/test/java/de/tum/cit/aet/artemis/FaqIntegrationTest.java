@@ -157,6 +157,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
         request.delete("/api/courses/" + faq.getCourse().getId() + 1 + "/faqs/" + faq.getId(), HttpStatus.BAD_REQUEST);
         Optional<Faq> faqOptional = faqRepository.findById(faq.getId());
+        assertThat(faqOptional).isPresent();
     }
 
 }

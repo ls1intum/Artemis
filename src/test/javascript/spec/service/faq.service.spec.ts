@@ -199,7 +199,7 @@ describe('Faq Service', () => {
             expect(convertedCategory[0].color).toBe('red');
         });
 
-        it('should convert FAQ categories into strings', async () => {
+        it('should convert FAQ categories into strings', () => {
             const faq2 = new FAQ();
             faq2.categories = [new FAQCategory('testing', 'red')];
             const convertedCategory = FAQService.stringifyFaqCategories(faq2);
