@@ -72,8 +72,7 @@ Local Environment Setup
           port: "8001"
           grpc_port: "50051"
 
-        env_vars:
-          test: "test-value"
+        env_vars: {}
 
    The `env_vars` section allows you to define custom environment variables that can be accessed within the Pyris application. These can be used for various purposes, such as setting feature flags or defining environment-specific configurations. Currently, the `env_vars` section is not used by Pyris, but it can be utilized in future versions.
 
