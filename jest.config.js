@@ -125,7 +125,7 @@ module.exports = {
             },
         ],
     },
-    modulePathIgnorePatterns: [],
+    modulePathIgnorePatterns: ['<rootDir>/src/main/resources/templates/'],
     testTimeout: 3000,
     testMatch: [
         '<rootDir>/src/test/javascript/spec/component/**/*.spec.ts',
