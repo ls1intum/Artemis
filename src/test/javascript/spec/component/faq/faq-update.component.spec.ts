@@ -178,11 +178,14 @@ describe('FaqUpdateComponent', () => {
     it('should not be able to save unless title and question are filled', fakeAsync(() => {
         faqUpdateComponentFixture.detectChanges();
         faqUpdateComponent.faq = { questionTitle: 'test1' } as FAQ;
-        expect(faqUpdateComponent.canSave()).toBeFalse();
+        faqUpdateComponent.canSave();
+        expect(faqUpdateComponent.isAllowedToSave).toBeFalse();
         faqUpdateComponent.faq = { questionAnswer: 'test1' } as FAQ;
-        expect(faqUpdateComponent.canSave()).toBeFalse();
+        faqUpdateComponent.canSave();
+        expect(faqUpdateComponent.isAllowedToSave).toBeFalse();
         faqUpdateComponent.faq = { questionTitle: 'test', questionAnswer: 'test1' } as FAQ;
-        expect(faqUpdateComponent.canSave()).toBeTrue();
+        faqUpdateComponent.canSave();
+        expect(faqUpdateComponent.isAllowedToSave).toBeTrue();
     }));
 
     it('should fail while saving with ErrorResponse', fakeAsync(() => {
