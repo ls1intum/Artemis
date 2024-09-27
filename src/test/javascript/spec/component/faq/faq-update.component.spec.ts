@@ -26,6 +26,7 @@ describe('FaqUpdateComponent', () => {
     let activatedRoute: ActivatedRoute;
     let router: Router;
     let faq1: FAQ;
+    let courseId: number;
 
     let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
@@ -36,6 +37,7 @@ describe('FaqUpdateComponent', () => {
         faq1.questionTitle = 'questionTitle';
         faq1.questionAnswer = 'questionAnswer';
         faq1.categories = [new FAQCategory('category1', '#94a11c')];
+        courseId = 1;
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MonacoEditorModule, MockModule(BrowserAnimationsModule)],
             declarations: [FAQUpdateComponent, MockComponent(MonacoEditorComponent), MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
@@ -116,7 +118,7 @@ describe('FaqUpdateComponent', () => {
         tick();
 
         expect(createSpy).toHaveBeenCalledOnce();
-        expect(createSpy).toHaveBeenCalledWith({ faqState: FAQState.ACCEPTED, questionTitle: 'test1' });
+        expect(createSpy).toHaveBeenCalledWith(courseId, { faqState: FAQState.ACCEPTED, questionTitle: 'test1' });
         expect(faqUpdateComponent.isSaving).toBeFalse();
     }));
 
@@ -146,7 +148,7 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponentFixture.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledOnce();
-        expect(updateSpy).toHaveBeenCalledWith({ id: 6, questionTitle: 'test1Updated' });
+        expect(updateSpy).toHaveBeenCalledWith(courseId, { id: 6, questionTitle: 'test1Updated' });
     }));
 
     it('should navigate to previous state', fakeAsync(() => {

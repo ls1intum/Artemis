@@ -93,7 +93,7 @@ public class Faq extends AbstractAuditingEntity {
 
     @Override
     public String toString() {
-        return "Faq{" + "id=" + getId() + ", title='" + getQuestionTitle() + "'" + ", description='" + getQuestionTitle() + "'" + ", faqState='" + getFaqState() + "}";
+        return "Faq{" + "id=" + getId() + ", questionTitle='" + getQuestionTitle() + "'" + ", questionAnswer='" + getQuestionAnswer() + "'" + ", faqState='" + getFaqState() + "}";
     }
 
 }

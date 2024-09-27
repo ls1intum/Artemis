@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -69,15 +71,20 @@ public class FaqResource {
      */
     @PostMapping("courses/{courseId}/faqs")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Faq> createFaq(@RequestBody Faq faq, @PathVariable Long courseId) throws URISyntaxException {
+    public ResponseEntity<FaqDTO> createFaq(@RequestBody Faq faq, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save Faq : {}", faq);
         if (faq.getId() != null) {
             throw new BadRequestAlertException("A new faq cannot already have an ID", ENTITY_NAME, "idExists");
         }
+
+        if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
+        }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
 
         Faq savedFaq = faqRepository.save(faq);
-        return ResponseEntity.created(new URI("/api/faqs/" + savedFaq.getId())).body(savedFaq);
+        FaqDTO dto = new FaqDTO(savedFaq);
+        return ResponseEntity.created(new URI("/api/faqs/" + courseId)).body(dto);
     }
 
     /**
@@ -90,7 +97,7 @@ public class FaqResource {
      */
     @PutMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastInstructor
-    public ResponseEntity<Faq> updateFaq(@RequestBody Faq faq, @PathVariable Long faqId, @PathVariable Long courseId) {
+    public ResponseEntity<FaqDTO> updateFaq(@RequestBody Faq faq, @PathVariable Long faqId, @PathVariable Long courseId) {
         log.debug("REST request to update Faq : {}", faq);
         if (faqId == null || !faqId.equals(faq.getId())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
@@ -100,23 +107,28 @@ public class FaqResource {
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
         }
-        Faq result = faqRepository.save(faq);
-        return ResponseEntity.ok().body(result);
+        Faq updatedFaq = faqRepository.save(faq);
+        FaqDTO dto = new FaqDTO(updatedFaq);
+        return ResponseEntity.ok().body(dto);
     }
 
     /**
-     * GET /faqs/:faqId : get the "faqId" faq.
+     * GET /faqs/:faqId : get the faq with the id faqId.
      *
      * @param faqId the faqId of the faq to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the faq, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastStudent
-    public ResponseEntity<Faq> getFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
+    public ResponseEntity<FaqDTO> getFaq(@PathVariable Long faqId, @PathVariable Long courseId) {
         log.debug("REST request to get faq {}", faqId);
         Faq faq = faqRepository.findByIdElseThrow(faqId);
+        if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
+            throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
+        }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, faq.getCourse(), null);
-        return ResponseEntity.ok(faq);
+        FaqDTO dto = new FaqDTO(faq);
+        return ResponseEntity.ok(dto);
     }
 
     /**
@@ -147,13 +159,14 @@ public class FaqResource {
      */
     @GetMapping("courses/{courseId}/faqs")
     @EnforceAtLeastStudent
-    public ResponseEntity<Set<Faq>> getFaqForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Set<FaqDTO>> getFaqForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Faqs for the course with id : {}", courseId);
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
-        return ResponseEntity.ok().body(faqs);
+        Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
+        return ResponseEntity.ok().body(faqDTOS);
     }
 
     /**

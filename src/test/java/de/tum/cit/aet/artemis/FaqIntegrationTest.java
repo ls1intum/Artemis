@@ -70,7 +70,6 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(returnedFaq).isNotNull();
         assertThat(returnedFaq.getId()).isNotNull();
         assertThat(returnedFaq.getQuestionTitle()).isEqualTo(newFaq.getQuestionTitle());
-        assertThat(returnedFaq.getCourse().getId()).isEqualTo(newFaq.getCourse().getId());
         assertThat(returnedFaq.getQuestionAnswer()).isEqualTo(newFaq.getQuestionAnswer());
         assertThat(returnedFaq.getCategories()).isEqualTo(newFaq.getCategories());
         assertThat(returnedFaq.getFaqState()).isEqualTo(newFaq.getFaqState());
@@ -112,6 +111,15 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateFaq_IdsDoNotMatch_shouldNotUpdateFaq() throws Exception {
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow();
+        faq.setQuestionTitle("Updated");
+        faq.setFaqState(FaqState.PROPOSED);
+        Faq updatedFaq = request.putWithResponseBody("/api/courses/" + faq.getCourse().getId() + 1 + "/faqs/" + faq.getId(), faq, Faq.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFaqCategoriesByCourseId() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
         Set<String> categories = faq.getCategories();
@@ -121,11 +129,34 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void deleteFAQ_lectureExists_shouldDeleteFAQ() throws Exception {
+    void testGetFaqByFaqId() throws Exception {
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
+        Faq returnedFaq = request.get("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), HttpStatus.OK, Faq.class);
+        assertThat(faq).isEqualTo(returnedFaq);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetFaqByFaqId_shouldNotGet_IdMissmatch() throws Exception {
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
+        Faq returnedFaq = request.get("/api/courses/" + faq.getCourse().getId() + 1 + "/faqs/" + faq.getId(), HttpStatus.BAD_REQUEST, Faq.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteFAQ_shouldDeleteFAQ() throws Exception {
         Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
         request.delete("/api/courses/" + faq.getCourse().getId() + "/faqs/" + faq.getId(), HttpStatus.OK);
         Optional<Faq> faqOptional = faqRepository.findById(faq.getId());
         assertThat(faqOptional).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteFAQ_IdsDoNotMatch_shouldNotDeleteFAQ() throws Exception {
+        Faq faq = faqRepository.findById(this.faq.getId()).orElseThrow(EntityNotFoundException::new);
+        request.delete("/api/courses/" + faq.getCourse().getId() + 1 + "/faqs/" + faq.getId(), HttpStatus.BAD_REQUEST);
+        Optional<Faq> faqOptional = faqRepository.findById(faq.getId());
     }
 
 }

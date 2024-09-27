@@ -33,6 +33,8 @@ describe('FaqComponent', () => {
     let faq2: FAQ;
     let faq3: FAQ;
 
+    let courseId: number;
+
     beforeEach(() => {
         faq1 = new FAQ();
         faq1.id = 1;
@@ -51,6 +53,10 @@ describe('FaqComponent', () => {
         faq3.questionTitle = 'questionTitle';
         faq3.questionAnswer = 'questionAnswer';
         faq3.categories = [new FAQCategory('category3', '#0ab84f')];
+
+        courseId = 1;
+
+        courseId = 1;
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ArtemisMarkdownEditorModule, MockModule(BrowserAnimationsModule)],
             declarations: [FAQComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
@@ -133,9 +139,9 @@ describe('FaqComponent', () => {
     it('should delete faq', () => {
         const deleteSpy = jest.spyOn(faqService, 'delete');
         faqComponentFixture.detectChanges();
-        faqComponent.deleteFaq(faq1.id!);
+        faqComponent.deleteFaq(1, faq1.id!);
         expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith(faq1.id!);
+        expect(deleteSpy).toHaveBeenCalledWith(courseId, faq1.id!);
         expect(faqComponent.faqs).toHaveLength(2);
         expect(faqComponent.faqs).not.toContain(faq1);
         expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs);
@@ -145,9 +151,9 @@ describe('FaqComponent', () => {
         const error = { status: 404 };
         const deleteSpy = jest.spyOn(faqService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
-        faqComponent.deleteFaq(faq1.id!);
+        faqComponent.deleteFaq(1, faq1.id!);
         expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith(faq1.id!);
+        expect(deleteSpy).toHaveBeenCalledWith(courseId, faq1.id!);
         expect(faqComponent.faqs).toHaveLength(3);
         expect(faqComponent.faqs).toContain(faq1);
     });

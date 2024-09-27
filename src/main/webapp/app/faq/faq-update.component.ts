@@ -16,6 +16,7 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -30,6 +31,8 @@ export class FAQUpdateComponent implements OnInit {
     existingCategories: FAQCategory[];
     faqCategories: FAQCategory[];
     courseId: number;
+    courseTitle: string;
+    course: Course;
 
     domainActionsDescription = [new FormulaAction()];
 
@@ -68,7 +71,7 @@ export class FAQUpdateComponent implements OnInit {
      */
 
     previousState() {
-        this.navigationUtilService.navigateBack(['course-management', this.faq.course!.id!.toString(), 'faqs']);
+        this.navigationUtilService.navigateBack(['course-management', this.courseId, 'faqs']);
     }
     /**
      * Save the changes on a faq
@@ -107,13 +110,13 @@ export class FAQUpdateComponent implements OnInit {
                         this.faq = faqBody;
                     }
                     this.alertService.success(this.translateService.instant('artemisApp.faq.created', { id: faq.id }));
-                    this.router.navigate(['course-management', faq.course!.id, 'faqs']);
+                    this.router.navigate(['course-management', this.courseId, 'faqs']);
                 },
             });
         } else {
             this.isSaving = false;
             this.alertService.success(this.translateService.instant('artemisApp.faq.updated', { id: faq.id }));
-            this.router.navigate(['course-management', faq.course!.id, 'faqs']);
+            this.router.navigate(['course-management', this.courseId, 'faqs']);
         }
     }
 
