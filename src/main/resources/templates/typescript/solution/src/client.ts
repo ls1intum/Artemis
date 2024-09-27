@@ -1,5 +1,5 @@
-import Context from './context.js';
-import Policy from './policy.js';
+import Context from './context';
+import Policy from './policy';
 
 const ITERATIONS = 10;
 const DATES_LENGTH_MIN = 5;
@@ -37,7 +37,7 @@ function main() {
  *
  * @return an Array of random Date objects
  */
-function createRandomDates() {
+function createRandomDates(): Date[] {
     const length = randomIntegerWithin(DATES_LENGTH_MIN, DATES_LENGTH_MAX);
 
     const lowestDate = new Date('2024-09-15');
@@ -53,7 +53,7 @@ function createRandomDates() {
  * @param high {Date} the upper bound
  * @return {Date} random Date within the given range
  */
-function randomDateWithin(low, high) {
+function randomDateWithin(low: Date, high: Date): Date {
     const randomTimestamp = randomIntegerWithin(low.valueOf(), high.valueOf());
     return new Date(randomTimestamp);
 }
@@ -65,7 +65,7 @@ function randomDateWithin(low, high) {
  * @param high {number} the upper bound
  * @returns {number} random int within the given range
  */
-function randomIntegerWithin(low, high) {
+function randomIntegerWithin(low: number, high: number): number {
     return Math.floor(Math.random() * (high - low + 1)) + low;
 }
 

@@ -1,7 +1,7 @@
-import MergeSort from 'artemis-exercise/mergesort.js';
-import BubbleSort from 'artemis-exercise/bubblesort.js';
-import Context from 'artemis-exercise/context.js';
-import Policy from 'artemis-exercise/policy.js';
+import MergeSort from 'artemis-exercise/mergesort';
+import BubbleSort from 'artemis-exercise/bubblesort';
+import Context from 'artemis-exercise/context';
+import Policy from 'artemis-exercise/policy';
 
 // prettier-ignore
 const datesWithCorrectOrder = [
@@ -12,7 +12,7 @@ const datesWithCorrectOrder = [
 ];
 
 describe('behavior', () => {
-    let dates;
+    let dates: Date[];
     beforeEach(() => {
         // prettier-ignore
         dates = [
@@ -41,7 +41,7 @@ describe('behavior', () => {
 
     describe('Policy', () => {
         it('uses_MergeSort_for_big_list', () => {
-            const bigList = [];
+            const bigList: Date[] = [];
             for (let i = 0; i < 11; i++) {
                 bigList.push(new Date());
             }
@@ -55,7 +55,7 @@ describe('behavior', () => {
         });
 
         it('uses_BubbleSort_for_small_list', () => {
-            const smallList = [];
+            const smallList: Date[] = [];
             for (let i = 0; i < 3; i++) {
                 smallList.push(new Date());
             }

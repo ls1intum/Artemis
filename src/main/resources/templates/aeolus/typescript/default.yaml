@@ -1,10 +1,12 @@
 api: v0.0.1
 metadata:
-  name: JavaScript
+  name: TypeScript
   description: Run tests using Jest
 actions:
   - name: install_dependencies
     script: 'npm ci --prefer-offline --no-audit'
+  - name: build
+    script: 'npm run build'
   - name: test
     script: 'npm run test:ci'
     runAlways: false
