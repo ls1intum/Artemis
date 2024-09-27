@@ -711,6 +711,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCI
     @WithMockUser(username = TEST_PREFIX + "student1")
     void getModelSubmissionForModelingEditor() throws Exception {
         ModelingSubmission submission = ParticipationFactory.generateModelingSubmission(validModel, true);
+        classExercise.setDueDate(ZonedDateTime.now().minusHours(2));
+        classExercise.setAssessmentDueDate(ZonedDateTime.now().minusHours(1));
+        modelingExerciseUtilService.updateExercise(classExercise);
         submission = (ModelingSubmission) modelingExerciseUtilService.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1",
                 TEST_PREFIX + "tutor1");
 

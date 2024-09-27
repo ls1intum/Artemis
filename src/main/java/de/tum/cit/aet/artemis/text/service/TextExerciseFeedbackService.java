@@ -35,8 +35,6 @@ public class TextExerciseFeedbackService {
 
     private static final Logger log = LoggerFactory.getLogger(TextExerciseFeedbackService.class);
 
-    public static final String NON_GRADED_FEEDBACK_SUGGESTION = "NonGradedFeedbackSuggestion:";
-
     private final Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService;
 
     private final ResultWebsocketService resultWebsocketService;
@@ -98,7 +96,7 @@ public class TextExerciseFeedbackService {
         log.debug("Using athena to generate (text exercise) feedback request: {}", textExercise.getId());
 
         // athena takes over the control here
-        var submissionOptional = participationService.findTextExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
+        var submissionOptional = participationService.findExerciseParticipationWithLatestSubmissionAndResultElseThrow(participation.getId()).findLatestSubmission();
 
         if (submissionOptional.isEmpty()) {
             throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
