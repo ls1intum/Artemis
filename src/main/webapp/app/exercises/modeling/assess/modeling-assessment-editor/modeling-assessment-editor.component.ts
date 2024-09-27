@@ -237,8 +237,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         if (this.result?.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
-        } else {
-            this.result!.feedbacks = [];
+        } else if (this.result) {
+            this.result.feedbacks = [];
         }
 
         // Only load suggestions for new assessments, they don't make sense later.
