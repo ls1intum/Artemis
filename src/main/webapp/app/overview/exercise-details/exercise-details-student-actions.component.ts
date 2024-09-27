@@ -112,7 +112,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
-
                 // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
                 if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.programmingExercise) {
                     this.theiaEnabled = true;
@@ -138,6 +137,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+            });
         } else if (this.exercise.type === ExerciseType.TEXT) {
             this.editorLabel = 'openTextEditor';
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -388,7 +390,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     hasAthenaResultForlatestSubmission(): boolean {
         if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
-            // submissions.results is always undefined so this is neccessary
             return (
                 this.gradedParticipation.submissions.last()?.id ===
                 this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && !!result.successful).first()?.submission?.id
@@ -396,4 +397,17 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         }
         return false;
     }
+
+    private getDateValue = (date: any): number => {
+        if (dayjs.isDayjs(date)) {
+            return date.valueOf();
+        }
+        if (date instanceof Date) {
+            return date.valueOf();
+        }
+        if (typeof date === 'string') {
+            return new Date(date).valueOf();
+        }
+        return -Infinity; // fallback for null, undefined, or invalid dates
+    };
 }

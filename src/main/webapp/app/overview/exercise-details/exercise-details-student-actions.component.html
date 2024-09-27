@@ -251,7 +251,7 @@
                         [hideLabelMobile]="false"
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
-                    @if (exercise.allowFeedbackRequests && athenaEnabled && exercise.type === ExerciseType.TEXT && beforeDueDate) {
+                    @if (exercise.allowFeedbackRequests && athenaEnabled && (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING) && beforeDueDate) {
                         <jhi-button
                             [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
                             [icon]="faPenSquare"
