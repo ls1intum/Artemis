@@ -126,6 +126,26 @@ describe('ResultComponent', () => {
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
     });
 
+    it('should set (automatic athena) results for modeling exercise', () => {
+        const submission1: Submission = { id: 1 };
+        const result1: Result = { id: 1, submission: submission1, score: 0.8, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
+        const result2: Result = { id: 2 };
+        const participation1 = cloneDeep(modelingParticipation);
+        participation1.results = [result1, result2];
+        component.participation = participation1;
+        component.showUngradedResults = true;
+
+        fixture.detectChanges();
+
+        expect(component.result).toEqual(result1);
+        expect(component.result!.participation).toEqual(participation1);
+        expect(component.submission).toEqual(submission1);
+        expect(component.textColorClass).toBe('text-secondary');
+        expect(component.resultIconClass).toEqual(faQuestionCircle);
+        expect(component.resultString).toBe('artemisApp.result.resultString.short (artemisApp.result.preliminary)');
+        expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);
+    });
+
     it('should set (automatic athena) results for text exercise', () => {
         const submission1: Submission = { id: 1 };
         const result1: Result = { id: 1, submission: submission1, score: 1, assessmentType: AssessmentType.AUTOMATIC_ATHENA, successful: true };
