@@ -2,17 +2,17 @@
     "artemisApp": {
         "shortAnswerSolution": {
             "home": {
-                "title": "Kurzantwort Lösungen",
-                "createLabel": "Kurzantwort Lösung erstellen"
+                "title": "Kurzantwort-Lösungen",
+                "createLabel": "Kurzantwort-Lösung erstellen"
             },
-            "created": "Kurzantwort Lösung erstellt mit ID {{ param }}",
-            "updated": "Kurzantwort Lösung aktualisiert mit ID {{ param }}",
-            "deleted": "Kurzantwort Lösung gelöscht mit ID {{ param }}",
+            "created": "Kurzantwort-Lösung erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort-Lösung aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort-Lösung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Kurzantwort Lösung {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Kurzantwort-Lösung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Kurzantwort Lösung "
+                "title": "Kurzantwort-Lösung "
             },
             "text": "Text",
             "invalid": "Ungültig",
