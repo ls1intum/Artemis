@@ -13,7 +13,6 @@ import java.util.stream.Stream;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.jgrapht.alg.util.UnionFind;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +23,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.NgxLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
+import de.tum.cit.aet.artemis.atlas.service.util.UnionFind;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;

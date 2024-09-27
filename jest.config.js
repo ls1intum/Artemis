@@ -14,7 +14,7 @@ const esModules = [
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
-    '@flaviosantoro92/ngx-datatable',
+    '@siemens/ngx-datatable',
     '@fortawesome/angular-fontawesome',
     '@ls1intum/apollon',
     '@ng-bootstrap/ng-bootstrap',
@@ -102,10 +102,10 @@ module.exports = {
     coverageThreshold: {
         global: {
             // TODO: in the future, the following values should increase to at least 90%
-            statements: 87.36,
-            branches: 73.56,
-            functions: 81.90,
-            lines: 87.42,
+            statements: 87.38,
+            branches: 73.57,
+            functions: 81.91,
+            lines: 87.44,
         },
     },
     coverageReporters: ['clover', 'json', 'lcov', 'text-summary'],
