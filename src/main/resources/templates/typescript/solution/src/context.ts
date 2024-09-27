@@ -1,9 +1,9 @@
-export default class Context {
-    /** @type {?{ performSort: (input: Date[]) => void }} */
-    #sortAlgorithm = null;
+import type SortStrategy from './sortstrategy';
 
-    /** @type {Date[]} */
-    #dates = [];
+export default class Context {
+    #sortAlgorithm: SortStrategy | null = null;
+
+    #dates: Date[] = [];
 
     /**
      * Runs the configured sort algorithm.
@@ -12,19 +12,19 @@ export default class Context {
         this.#sortAlgorithm?.performSort(this.#dates);
     }
 
-    get sortAlgorithm() {
+    get sortAlgorithm(): SortStrategy | null {
         return this.#sortAlgorithm;
     }
 
-    set sortAlgorithm(sortAlgorithm) {
+    set sortAlgorithm(sortAlgorithm: SortStrategy) {
         this.#sortAlgorithm = sortAlgorithm;
     }
 
-    get dates() {
+    get dates(): Date[] {
         return this.#dates;
     }
 
-    set dates(dates) {
+    set dates(dates: Date[]) {
         this.#dates = dates;
     }
 }

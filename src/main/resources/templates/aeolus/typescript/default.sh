@@ -6,6 +6,11 @@ install_dependencies () {
   npm ci --prefer-offline --no-audit
 }
 
+build () {
+  echo '⚙️ executing build'
+  npm run build
+}
+
 test () {
   echo '⚙️ executing test'
   npm run test:ci
@@ -19,6 +24,8 @@ main () {
   _script_name=${BASH_SOURCE[0]:-$0}
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; install_dependencies"
+  cd "${AEOLUS_INITIAL_DIRECTORY}"
+  bash -c "source ${_script_name} aeolus_sourcing; build"
   cd "${AEOLUS_INITIAL_DIRECTORY}"
   bash -c "source ${_script_name} aeolus_sourcing; test"
 }

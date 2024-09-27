@@ -4,7 +4,7 @@ export default class MergeSort {
      *
      * @param input {Date[]} the array of Dates to be sorted
      */
-    performSort(input) {
+    performSort(input: Date[]) {
         mergesort(input, 0, input.length - 1);
     }
 }
@@ -16,7 +16,7 @@ export default class MergeSort {
  * @param low {number}
  * @param high {number}
  */
-function mergesort(input, low, high) {
+function mergesort(input: Date[], low: number, high: number) {
     if (high - low < 1) {
         return;
     }
@@ -34,8 +34,8 @@ function mergesort(input, low, high) {
  * @param middle {number}
  * @param high {number}
  */
-function merge(input, low, middle, high) {
-    const temp = new Array(high - low + 1);
+function merge(input: Date[], low: number, middle: number, high: number) {
+    const temp = new Array<Date>(high - low + 1);
 
     let leftIndex = low;
     let rightIndex = middle + 1;

@@ -1,16 +1,13 @@
-import BubbleSort from './bubblesort.js';
-import MergeSort from './mergesort.js';
+import BubbleSort from './bubblesort';
+import MergeSort from './mergesort';
+import Context from './context';
 
 const DATES_LENGTH_THRESHOLD = 10;
 
 export default class Policy {
-    /** @type {Context} */
-    #context;
+    #context: Context;
 
-    /**
-     * @param context {Context}
-     */
-    constructor(context) {
+    constructor(context: Context) {
         this.#context = context;
     }
 
@@ -25,11 +22,11 @@ export default class Policy {
         }
     }
 
-    get context() {
+    get context(): Context {
         return this.#context;
     }
 
-    set context(context) {
+    set context(context: Context) {
         this.#context = context;
     }
 }

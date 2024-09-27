@@ -2,10 +2,18 @@
     "name": "artemis-exercise",
     "private": true,
     "scripts": {
-        "start": "node ./src/client.js"
+        "build": "tsc",
+        "start": "node ./dist/client.js"
     },
     "exports": {
-        "./*.js": "./src/*.js"
+        "./*": {
+            "types": "./dist/*.d.ts",
+            "default": "./dist/*.js"
+        }
     },
-    "type": "module"
+    "devDependencies": {
+        "@tsconfig/node20": "^20.1.4",
+        "@types/node": "^22.7.4",
+        "typescript": "^5.6.2"
+    }
 }

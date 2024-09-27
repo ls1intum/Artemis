@@ -1,7 +1,7 @@
-import MergeSort from 'artemis-exercise/mergesort.js';
-import BubbleSort from 'artemis-exercise/bubblesort.js';
-import Context from 'artemis-exercise/context.js';
-import Policy from 'artemis-exercise/policy.js';
+import MergeSort from 'artemis-exercise/mergesort';
+import BubbleSort from 'artemis-exercise/bubblesort';
+import Context from 'artemis-exercise/context';
+import Policy from 'artemis-exercise/policy';
 
 describe('structural', () => {
     describe('Context', () => {
