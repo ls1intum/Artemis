@@ -80,14 +80,14 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     void createFaq_alreadyId_shouldReturnBadRequest() throws Exception {
         Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
         faq.setId(this.faq.getId());
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/faqs", faq, Faq.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/faqs", newFaq, Faq.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFaq_courseId_noMatch_shouldReturnBadRequest() throws Exception {
         Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
-        request.postWithResponseBody("/api/courses/" + course1.getId() + 1 + "/faqs", faq, Faq.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + course1.getId() + 1 + "/faqs", newFaq, Faq.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
