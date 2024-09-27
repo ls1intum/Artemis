@@ -2,17 +2,17 @@
     "artemisApp": {
         "shortAnswerSpot": {
             "home": {
-                "title": "Kurzantwort Spots",
-                "createLabel": "Kurzantwort Spot erstellen"
+                "title": "Kurzantwort-Spots",
+                "createLabel": "Kurzantwort-Spot erstellen"
             },
-            "created": "Kurzantwort Spot erstellt mit ID {{ param }}",
-            "updated": "Kurzantwort Spot aktualisiert mit ID {{ param }}",
-            "deleted": "Kurzantwort Spot gelöscht mit ID {{ param }}",
+            "created": "Kurzantwort-Spot erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort-Spot aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort-Spot gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Kurzantwort Spot {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Kurzantwort-Spot {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Kurzantwort Spot"
+                "title": "Kurzantwort-Spot"
             },
             "width": "Breite",
             "invalid": "Ungültig",

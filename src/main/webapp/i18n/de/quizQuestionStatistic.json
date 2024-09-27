@@ -3,16 +3,16 @@
         "quizQuestionStatistic": {
             "home": {
                 "title": "Frage Statistken",
-                "createLabel": "Frage Statistik erstellen"
+                "createLabel": "Fragestatistik erstellen"
             },
-            "created": "Frage Statistik erstellt mit ID {{ param }}",
-            "updated": "Frage Statistik aktualisiert mit ID {{ param }}",
-            "deleted": "Frage Statistik gelöscht mit ID {{ param }}",
+            "created": "Fragestatistik erstellt mit ID {{ param }}",
+            "updated": "Fragestatistik aktualisiert mit ID {{ param }}",
+            "deleted": "Fragestatistik gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Frage Statistik {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Fragestatistik {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Frage Statistik"
+                "title": "Fragestatistik"
             },
             "ratedCorrectCounter": "Rated Correct Counter",
             "unRatedCorrectCounter": "Un-Rated Correct Counter",

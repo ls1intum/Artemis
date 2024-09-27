@@ -2,17 +2,17 @@
     "artemisApp": {
         "quizPointStatistic": {
             "home": {
-                "title": "Quiz Punkte Statistiken",
-                "createLabel": "Quiz Punkte Statistik erstellen"
+                "title": "Quiz Punktestatistiken",
+                "createLabel": "Quiz Punktestatistik erstellen"
             },
-            "created": "Quiz Punkte Statistik erstellt mit ID {{ param }}",
-            "updated": "Quiz Punkte Statistik aktualisiert mit ID {{ param }}",
-            "deleted": "Quiz Punkte Statistik gelöscht mit ID {{ param }}",
+            "created": "Quiz Punktestatistik erstellt mit ID {{ param }}",
+            "updated": "Quiz Punktestatistik aktualisiert mit ID {{ param }}",
+            "deleted": "Quiz Punktestatistik gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Quiz Punkte Statistik {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Quiz Punktestatistik {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Quiz Punkte Statistik "
+                "title": "Quiz Punktestatistik "
             },
             "pointCounters": "Punktzähler",
             "quiz": "Quiz"

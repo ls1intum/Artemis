@@ -2,19 +2,19 @@
     "artemisApp": {
         "shortAnswerQuestionStatistic": {
             "home": {
-                "title": "Kurzantwort Frage Statistiken",
-                "createLabel": "Kurzantwort Frage Statistik erstellen"
+                "title": "Kurzantwort-Fragestatistiken",
+                "createLabel": "Kurzantwort-Fragestatistik erstellen"
             },
-            "created": "Kurzantwort Frage Statistik erstellt mit ID {{ param }}",
-            "updated": "Kurzantwort Frage Statistik aktualisiert mit ID {{ param }}",
-            "deleted": "Kurzantwort Frage Statistik gelöscht mit ID {{ param }}",
+            "created": "Kurzantwort-Fragestatistik erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort-Fragestatistik aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort-Fragestatistik gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Kurzantwort Frage Statistik {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Kurzantwort-Fragestatistik {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Kurzantwort Frage Statistik"
+                "title": "Kurzantwort-Fragestatistik"
             },
-            "shortAnswerSpotCounters": "Kurzantwort Spot Zähler"
+            "shortAnswerSpotCounters": "Kurzantwort-Spot-Zähler"
         }
     }
 }

@@ -2,17 +2,17 @@
     "artemisApp": {
         "dragAndDropQuestionStatistic": {
             "home": {
-                "title": "Drag-and-Drop Frage Statistiken",
-                "createLabel": "Drag-and-Drop Frage Statistik erstellen"
+                "title": "Drag-and-Drop Fragestatistiken",
+                "createLabel": "Drag-and-Drop Fragestatistik erstellen"
             },
-            "created": "Drag-and-Drop Frage Statistik erstellt mit ID {{ param }}",
-            "updated": "Drag-and-Drop Frage Statistik aktualisiert mit ID {{ param }}",
-            "deleted": "Drag-and-Drop Frage Statistik gelöscht mit ID {{ param }}",
+            "created": "Drag-and-Drop Fragestatistik erstellt mit ID {{ param }}",
+            "updated": "Drag-and-Drop Fragestatistik aktualisiert mit ID {{ param }}",
+            "deleted": "Drag-and-Drop Fragestatistik gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Drag-and-Drop Frage Statistik {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Drag-and-Drop Fragestatistik {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Drag-and-Drop Frage Statistik"
+                "title": "Drag-and-Drop Fragestatistik"
             },
             "dropLocationCounters": "Drop Location Counter"
         }
