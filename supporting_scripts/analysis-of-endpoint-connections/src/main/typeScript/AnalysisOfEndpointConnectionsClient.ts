@@ -71,7 +71,9 @@ function readConfigFile(filePath: string): Config | null {
     }
 }
 
-const configFilePath = 'supporting_scripts/analysis-of-endpoint-connections/analysisOfEndpointConnections.config.yml';
+// const configFilePath = 'supporting_scripts/analysis-of-endpoint-connections/analysisOfEndpointConnections.config.yml';
+console.log(__dirname);
+const configFilePath = '../../../analysisOfEndpointConnections.config.yml';
 
 const config = readConfigFile(configFilePath);
 if (!config) {
@@ -79,38 +81,46 @@ if (!config) {
 }
 
 
-const tsFiles = collectTypeScriptFiles(config.clientDirPath);
+// const tsFiles = collectTypeScriptFiles(config.clientDirPath);
+//
+// // create and store Syntax Tree for each file
+// const astMap = new Map<string, TSESTree.Program>;
+// tsFiles.forEach((filePath) => {
+//     const ast =  parseTypeScriptFile(filePath);
+//     if (ast) {
+//         astMap.set(filePath, ast);
+//     }
+// });
+//
+// // preprocess each file
+// Array.from(astMap.keys()).forEach((filePath: string) => {
+//     const ast = astMap.get(filePath);
+//     if (ast) {
+//         const preProcessor = new Preprocessor(ast);
+//         preProcessor.preprocessFile();
+//     }
+// });
+//
+// // postprocess each file
+// Array.from(astMap.keys()).forEach((filePath) => {
+//     const ast = astMap.get(filePath);
+//     if (ast) {
+//         const postProcessor = new Postprocessor(filePath, ast);
+//         postProcessor.extractRestCallsFromProgram();
+//     }
+// });
 
-// create and store Syntax Tree for each file
-const astMap = new Map<string, TSESTree.Program>;
-tsFiles.forEach((filePath) => {
-    const ast =  parseTypeScriptFile(filePath);
-    if (ast) {
-        astMap.set(filePath, ast);
-    }
-});
-
-// preprocess each file
-Array.from(astMap.keys()).forEach((filePath: string) => {
-    const ast = astMap.get(filePath);
-    if (ast) {
-        const preProcessor = new Preprocessor(ast);
-        preProcessor.preprocessFile();
-    }
-});
-
-// postprocess each file
-Array.from(astMap.keys()).forEach((filePath) => {
-    const ast = astMap.get(filePath);
-    if (ast) {
-        const postProcessor = new Postprocessor(filePath, ast);
-        postProcessor.extractRestCallsFromProgram();
-    }
-});
+let ast = parseTypeScriptFile('../../../../../src/main/webapp/app/exercises/shared/course-exercises/course-exercise.service.ts');
+if (ast) {
+    const preProcessor = new Preprocessor(ast);
+    preProcessor.preprocessFile();
+    const postProcessor = new Postprocessor('../../../../../src/main/webapp/app/exercises/shared/course-exercises/course-exercise.service.ts', ast);
+}
 
 try {
 
-    writeFileSync(`supporting_scripts/analysis-of-endpoint-connections/${config.restCallParsingResultPath}`, JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
+    // writeFileSync(`supporting_scripts/analysis-of-endpoint-connections/${config.restCallParsingResultPath}`, JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
+    writeFileSync(`${config.restCallParsingResultPath}`, JSON.stringify(Postprocessor.filesWithRestCalls, null, 2));
 } catch (error) {
     console.error('Failed to write REST calls to file:', error);
 }
