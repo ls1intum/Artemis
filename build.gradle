@@ -556,7 +556,7 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:16.4.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.0.0"
     }
 }
 
