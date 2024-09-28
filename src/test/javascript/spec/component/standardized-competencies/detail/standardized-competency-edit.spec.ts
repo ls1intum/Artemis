@@ -6,13 +6,13 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { CompetencyTaxonomy } from 'app/entities/competency.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { KnowledgeAreaDTO, StandardizedCompetencyDTO } from 'app/entities/competency/standardized-competency.model';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('StandardizedCompetencyEditComponent', () => {
     let componentFixture: ComponentFixture<StandardizedCompetencyEditComponent>;
@@ -47,7 +47,7 @@ describe('StandardizedCompetencyEditComponent', () => {
                 MockComponent(ButtonComponent),
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(MarkdownEditorComponent),
+                MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(TaxonomySelectComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(DeleteButtonDirective),

@@ -1,7 +1,7 @@
 @if (isLoading) {
     <div class="d-flex justify-content-center">
         <div class="spinner-border" role="status">
-            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+            <span class="sr-only" jhiTranslate="loading"></span>
         </div>
     </div>
 }
@@ -26,9 +26,12 @@
                     </div>
                     @if (lecture?.course?.isAtLeastEditor) {
                         <div class="col-auto d-flex align-items-center">
-                            <button id="manageLectureButton" class="btn btn-secondary" (click)="redirectToLectureManagement()">
-                                {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
-                            </button>
+                            <button
+                                id="manageLectureButton"
+                                class="btn btn-secondary"
+                                (click)="redirectToLectureManagement()"
+                                jhiTranslate="artemisApp.courseOverview.manage"
+                            ></button>
                         </div>
                     }
                 </div>
@@ -40,7 +43,7 @@
                     @if (lecture.description) {
                         <div class="row mb-2 mt-2 align-items-baseline">
                             <div class="col-auto">
-                                <h3>{{ 'artemisApp.courseOverview.lectureDetails.description' | artemisTranslate }}</h3>
+                                <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.description"></h3>
                             </div>
                         </div>
                         <div class="row mb-2 markdown-preview">
@@ -51,12 +54,15 @@
                     @if (lecture.lectureUnits) {
                         <div class="row mb-2 mt-2 align-items-baseline">
                             <div class="col-auto">
-                                <h3>{{ 'artemisApp.courseOverview.lectureDetails.lectureUnits' | artemisTranslate }}</h3>
+                                <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
                             </div>
                             @if (hasPdfLectureUnit) {
-                                <button id="downloadButton" class="col-auto btn btn-primary btn-sm rounded-pill" (click)="downloadMergedFiles()">
-                                    {{ 'artemisApp.courseOverview.lectureDetails.downloadMergedPdf' | artemisTranslate }}
-                                </button>
+                                <button
+                                    id="downloadButton"
+                                    class="col-auto btn btn-primary btn-sm rounded-pill"
+                                    (click)="downloadMergedFiles()"
+                                    jhiTranslate="artemisApp.courseOverview.lectureDetails.downloadMergedPdf"
+                                ></button>
                             }
                         </div>
                     }
@@ -95,7 +101,7 @@
                     @if (lecture.attachments) {
                         <div class="row mb-2 mt-2 align-items-baseline">
                             <div class="col-auto">
-                                <h3>{{ 'artemisApp.courseOverview.lectureDetails.attachments' | artemisTranslate }}</h3>
+                                <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.attachments"></h3>
                             </div>
                         </div>
                     }
@@ -120,9 +126,7 @@
                                                 {{ attachmentExtension(attachment) | uppercase }}
                                             </span>
                                             @if (attachmentNotReleased(attachment)) {
-                                                <span class="ms-1 badge bg-warning">
-                                                    {{ 'artemisApp.courseOverview.lectureDetails.notReleased' | artemisTranslate }}
-                                                </span>
+                                                <span class="ms-1 badge bg-warning" jhiTranslate="artemisApp.courseOverview.lectureDetails.notReleased"></span>
                                             }
                                         </h5>
                                         <h6 class="text-secondary mb-0 lecture-attachment-details">
@@ -138,7 +142,7 @@
                 <!-- LECTURE END -->
                 <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
                     @if (lecture && (isCommunicationEnabled(lecture.course) || isMessagingEnabled(lecture.course))) {
-                        <router-outlet class="ms-3" (activate)="onChildActivate($event)" />
+                        <jhi-discussion-section [lecture]="lecture" />
                     }
                 </div>
             </div>

@@ -1,14 +1,12 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ExerciseMode, IncludedInOverallScore, resetForImport } from 'app/entities/exercise.model';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
-import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm, NgModel } from '@angular/forms';
@@ -31,10 +29,12 @@ import { FormSectionStatus } from 'app/forms/form-status-bar/form-status-bar.com
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
+import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
 
 @Component({
     selector: 'jhi-text-exercise-update',
     templateUrl: './text-exercise-update.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterViewInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
@@ -56,7 +56,6 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     isExamMode: boolean;
     isImport = false;
     goBackAfterSaving = false;
-    EditorMode = EditorMode;
     AssessmentType = AssessmentType;
     isAthenaEnabled$: Observable<boolean> | undefined;
 
@@ -67,8 +66,8 @@ export class TextExerciseUpdateComponent implements OnInit, OnDestroy, AfterView
     existingCategories: ExerciseCategory[];
     notificationText?: string;
 
-    domainCommandsProblemStatement = [new KatexCommand()];
-    domainCommandsSampleSolution = [new KatexCommand()];
+    domainActionsProblemStatement = [new MonacoFormulaAction()];
+    domainActionsExampleSolution = [new MonacoFormulaAction()];
 
     formSectionStatus: FormSectionStatus[];
 

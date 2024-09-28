@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { CodeEditorBuildOutputComponent } from 'app/exercises/programming/shared/code-editor/build-output/code-editor-build-output.component';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { CodeEditorActionsComponent } from 'app/exercises/programming/shared/code-editor/actions/code-editor-actions.component';
@@ -28,7 +27,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 
 @NgModule({
     imports: [
-        AceEditorModule,
         NgbModule,
         ArtemisSharedModule,
         FeatureToggleModule,

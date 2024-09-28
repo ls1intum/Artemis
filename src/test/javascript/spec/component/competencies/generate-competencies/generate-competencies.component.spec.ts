@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
@@ -12,7 +12,7 @@ import { CompetencyService } from 'app/course/competencies/competency.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { of } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CourseDescriptionFormStubComponent } from './course-description-form-stub.component';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
@@ -21,17 +21,23 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CompetencyRecommendationDetailComponent } from 'app/course/competencies/generate-competencies/competency-recommendation-detail.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { IrisStageStateDTO } from 'app/entities/iris/iris-stage-dto.model';
 import { CourseDescriptionFormComponent } from 'app/course/competencies/generate-competencies/course-description-form.component';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisCompetenciesModule } from 'app/course/competencies/competency.module';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('GenerateCompetenciesComponent', () => {
     let generateCompetenciesComponentFixture: ComponentFixture<GenerateCompetenciesComponent>;
     let generateCompetenciesComponent: GenerateCompetenciesComponent;
+    let mockWebSocketSubject: Subject<any>;
 
     beforeEach(() => {
+        mockWebSocketSubject = new Subject<any>();
+
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, GenerateCompetenciesComponent, ArtemisSharedCommonModule, ArtemisSharedComponentModule, ArtemisCompetenciesModule],
             declarations: [
@@ -50,6 +56,16 @@ describe('GenerateCompetenciesComponent', () => {
                     useValue: new MockActivatedRoute({ courseId: 1 }),
                 },
                 { provide: Router, useClass: MockRouter },
+                {
+                    provide: JhiWebsocketService,
+                    useValue: {
+                        subscribe: jest.fn(),
+                        receive: jest.fn(() => mockWebSocketSubject.asObservable()),
+                        unsubscribe: jest.fn(),
+                    },
+                },
+                MockProvider(CourseDescriptionFormComponent),
+                MockProvider(CourseManagementService),
                 MockProvider(CourseCompetencyService),
                 MockProvider(CompetencyService),
                 MockProvider(AlertService),
@@ -85,11 +101,32 @@ describe('GenerateCompetenciesComponent', () => {
         expect(getCompetencyRecommendationsSpy).toHaveBeenCalledOnce();
     });
 
+    it('should initialize the form with the course description', fakeAsync(() => {
+        generateCompetenciesComponentFixture.detectChanges();
+        const courseDescription = 'Course Description';
+
+        const courseDescriptionComponent: CourseDescriptionFormComponent = generateCompetenciesComponentFixture.debugElement.query(
+            By.directive(CourseDescriptionFormComponent),
+        ).componentInstance;
+        const setCourseDescriptionSpy = jest.spyOn(courseDescriptionComponent, 'setCourseDescription');
+
+        // mock the course returned by CourseManagementService
+        const course = { description: courseDescription };
+        const courseManagementService = TestBed.inject(CourseManagementService);
+        const getCourseSpy = jest.spyOn(courseManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+
+        generateCompetenciesComponent.ngOnInit();
+        tick();
+
+        expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(setCourseDescriptionSpy).toHaveBeenCalledWith(courseDescription);
+    }));
+
     it('should add competency recommendations', () => {
         generateCompetenciesComponentFixture.detectChanges();
         const courseDescription = 'Course Description';
         const response = new HttpResponse({
-            body: [{}, {}],
+            body: null,
             status: 200,
         });
         const courseCompetencyService = TestBed.inject(CourseCompetencyService);
@@ -100,10 +137,15 @@ describe('GenerateCompetenciesComponent', () => {
         expect(generateCompetenciesComponent.competencies.value).toHaveLength(0);
 
         generateCompetenciesComponent.getCompetencyRecommendations(courseDescription);
+        const websocketMessage = {
+            stages: [{ state: IrisStageStateDTO.DONE }],
+            result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
+        };
+        mockWebSocketSubject.next(websocketMessage);
         generateCompetenciesComponentFixture.detectChanges();
 
-        expect(generateCompetenciesComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(2);
-        expect(generateCompetenciesComponent.competencies.value).toHaveLength(2);
+        expect(generateCompetenciesComponentFixture.debugElement.queryAll(By.directive(CompetencyRecommendationDetailComponent))).toHaveLength(1);
+        expect(generateCompetenciesComponent.competencies.value).toHaveLength(1);
         expect(getSpy).toHaveBeenCalledOnce();
     });
 
@@ -190,17 +232,30 @@ describe('GenerateCompetenciesComponent', () => {
 
     it('should display alerts after generating', () => {
         const alertService = TestBed.inject(AlertService);
+        const response = new HttpResponse({
+            body: null,
+            status: 200,
+        });
         const courseCompetencyService = TestBed.inject(CourseCompetencyService);
-        const generateCompetenciesMock = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription');
+        const generateCompetenciesMock = jest.spyOn(courseCompetencyService, 'generateCompetenciesFromCourseDescription').mockReturnValue(of(response));
 
-        generateCompetenciesMock.mockReturnValue(of({ body: [{ id: 1 }] } as HttpResponse<Competency[]>));
         const successMock = jest.spyOn(alertService, 'success');
-        generateCompetenciesComponent.getCompetencyRecommendations('');
+        generateCompetenciesComponent.getCompetencyRecommendations('Cool course description');
+        const websocketMessage = {
+            stages: [{ state: IrisStageStateDTO.DONE }],
+            result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
+        };
+        mockWebSocketSubject.next(websocketMessage);
         expect(successMock).toHaveBeenCalledOnce();
+        expect(generateCompetenciesMock).toHaveBeenCalledOnce();
 
-        generateCompetenciesMock.mockReturnValue(of({} as HttpResponse<Competency[]>));
         const warnMock = jest.spyOn(alertService, 'warning');
-        generateCompetenciesComponent.getCompetencyRecommendations('');
+        generateCompetenciesComponent.getCompetencyRecommendations('Cool course description');
+        const errorMessage = {
+            stages: [{ state: IrisStageStateDTO.ERROR }],
+            result: [{ title: 'Title', description: 'Description', taxonomy: CompetencyTaxonomy.ANALYZE }],
+        };
+        mockWebSocketSubject.next(errorMessage);
         expect(warnMock).toHaveBeenCalled();
     });
 

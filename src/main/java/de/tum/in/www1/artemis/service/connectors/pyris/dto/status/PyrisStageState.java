@@ -5,15 +5,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public enum PyrisStageState {
 
-    NOT_STARTED(false), IN_PROGRESS(false), DONE(true), SKIPPED(true), ERROR(true);
-
-    private final boolean isTerminal;
-
-    PyrisStageState(boolean isTerminal) {
-        this.isTerminal = isTerminal;
-    }
+    NOT_STARTED, IN_PROGRESS, DONE, SKIPPED, ERROR;
 
     public boolean isTerminal() {
-        return isTerminal;
+        return this == DONE || this == SKIPPED || this == ERROR;
     }
 }

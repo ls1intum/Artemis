@@ -1,5 +1,5 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
 export class ProgrammingExerciseSolutionEntry implements BaseEntity {

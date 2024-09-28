@@ -5,6 +5,10 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoInsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-option.action';
 import { MonacoInsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-spot.action';
+import { MonacoWrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-wrong-multiple-choice-answer.action';
+import { MonacoCorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-correct-multiple-choice-answer.action';
+import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
+import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
 
 describe('MonacoEditorActionQuizIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
@@ -133,6 +137,42 @@ describe('MonacoEditorActionQuizIntegration', () => {
             comp.triggerKeySequence(questionText);
             insertShortAnswerSpotAction.executeInCurrentEditor();
             expect(comp.getText()).toBe(questionText + '[-spot 1]' + `\n\n\n[-option 1] ${MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT}`);
+        });
+    });
+
+    describe('Multiple Choice answer options', () => {
+        it('should insert a wrong MC option', () => {
+            comp.triggerKeySequence('This is a question that needs some options.');
+            const action = new MonacoWrongMultipleChoiceAnswerAction();
+            comp.registerAction(action);
+            action.executeInCurrentEditor();
+            expect(comp.getText()).toBe('This is a question that needs some options.\n[wrong] Enter a wrong answer option here');
+        });
+
+        it('should insert a correct MC option', () => {
+            comp.triggerKeySequence('This is a question that needs some options.');
+            const action = new MonacoCorrectMultipleChoiceAnswerAction();
+            comp.registerAction(action);
+            action.executeInCurrentEditor();
+            expect(comp.getText()).toBe('This is a question that needs some options.\n[correct] Enter a correct answer option here');
+        });
+
+        it('should add an explanation to an answer option', () => {
+            comp.triggerKeySequence('This is a question that has an option.\n[correct] Option 1');
+            const action = new MonacoQuizExplanationAction();
+            comp.registerAction(action);
+            action.executeInCurrentEditor();
+            expect(comp.getText()).toBe(
+                'This is a question that has an option.\n[correct] Option 1\n\t[exp] Add an explanation here (only visible in feedback after quiz has ended)',
+            );
+        });
+
+        it('should add a hint to an answer option', () => {
+            comp.triggerKeySequence('This is a question that has an option.\n[correct] Option 1');
+            const action = new MonacoQuizHintAction();
+            comp.registerAction(action);
+            action.executeInCurrentEditor();
+            expect(comp.getText()).toBe('This is a question that has an option.\n[correct] Option 1\n\t[hint] Add a hint here (visible during the quiz via ?-Button)');
         });
     });
 });

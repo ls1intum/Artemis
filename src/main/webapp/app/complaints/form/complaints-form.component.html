@@ -2,7 +2,7 @@
     <div class="col-12 mt-4">
         <div class="row">
             <div class="col-12 col-md-6">
-                <h3>{{ complaintType === ComplaintType.COMPLAINT ? ('artemisApp.complaint.title' | artemisTranslate) : ('artemisApp.moreFeedback.title' | artemisTranslate) }}</h3>
+                <h3 [jhiTranslate]="complaintType === ComplaintType.COMPLAINT ? 'artemisApp.complaint.title' : 'artemisApp.moreFeedback.title'"></h3>
                 @if (complaintType !== ComplaintType.COMPLAINT) {
                     <p>
                         {{ (exercise.teamMode ? 'artemisApp.moreFeedback.descriptionTeam' : 'artemisApp.moreFeedback.description') | artemisTranslate }}
@@ -15,28 +15,18 @@
             <div class="col-12 col-md-6">
                 <p>
                     @if (exercise.teamMode) {
-                        <span>
-                            {{
-                                complaintType === ComplaintType.MORE_FEEDBACK
-                                    ? ('artemisApp.moreFeedback.beDescriptiveTeam' | artemisTranslate)
-                                    : ('artemisApp.complaint.beDescriptiveTeam' | artemisTranslate)
-                            }}
-                        </span>
+                        <span
+                            [jhiTranslate]="complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.beDescriptiveTeam' : 'artemisApp.complaint.beDescriptiveTeam'"
+                        ></span>
                     }
                     @if (!exercise.teamMode) {
-                        <span>
-                            {{
-                                complaintType === ComplaintType.MORE_FEEDBACK
-                                    ? ('artemisApp.moreFeedback.beDescriptive' | artemisTranslate)
-                                    : ('artemisApp.complaint.beDescriptive' | artemisTranslate)
-                            }}
-                        </span>
+                        <span
+                            [jhiTranslate]="complaintType === ComplaintType.MORE_FEEDBACK ? 'artemisApp.moreFeedback.beDescriptive' : 'artemisApp.complaint.beDescriptive'"
+                        ></span>
                     }
                 </p>
                 @if (!examId) {
-                    <p>
-                        {{ 'artemisApp.complaint.exclusivityDisclaimer' | artemisTranslate }}
-                    </p>
+                    <p jhiTranslate="artemisApp.complaint.exclusivityDisclaimer"></p>
                 }
                 <div class="d-flex flex-column">
                     <textarea id="complainTextArea" class="col-12 px-1" rows="4" [maxLength]="this.maxComplaintTextLimit" [(ngModel)]="complaintText"> </textarea>

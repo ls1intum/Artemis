@@ -1,4 +1,3 @@
-import * as ace from 'brace';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -47,8 +46,6 @@ import { ExerciseMode } from 'app/entities/exercise.model';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
 
 describe('ModelingSubmissionComponent', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist.js');
     let comp: ModelingSubmissionComponent;
     let fixture: ComponentFixture<ModelingSubmissionComponent>;
     let debugElement: DebugElement;

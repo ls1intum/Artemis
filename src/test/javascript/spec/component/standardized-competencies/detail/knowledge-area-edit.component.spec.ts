@@ -5,7 +5,6 @@ import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -13,6 +12,7 @@ import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbToolt
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { KnowledgeAreaDTO } from 'app/entities/competency/standardized-competency.model';
 import { By } from '@angular/platform-browser';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('KnowledgeAreaEditComponent', () => {
     let componentFixture: ComponentFixture<KnowledgeAreaEditComponent>;
@@ -44,7 +44,7 @@ describe('KnowledgeAreaEditComponent', () => {
                 MockComponent(ButtonComponent),
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(MarkdownEditorComponent),
+                MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(TaxonomySelectComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(DeleteButtonDirective),

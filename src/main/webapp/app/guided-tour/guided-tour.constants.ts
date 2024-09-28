@@ -34,7 +34,7 @@ export enum UserInteractionEvent {
     /** Listen for click events */
     CLICK = 'click',
     /** Observe added or removed lines in the code editor */
-    ACE_EDITOR = 'ace-editor',
+    MONACO_EDITOR = 'monaco-editor',
     /** Wait for the highlight element of the next tour step to be shown in the DOM */
     WAIT_FOR_SELECTOR = 'wait-for-selector',
     /** Observe and assess the given modeling task in the Apollon editor */

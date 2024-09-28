@@ -3,7 +3,7 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { EditorPosition, MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
@@ -22,7 +22,7 @@ import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
 
-type FileSession = { [fileName: string]: { code: string; cursor: { column: number; row: number }; loadingError: boolean } };
+type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
 @Component({
     selector: 'jhi-code-editor-monaco',
@@ -159,7 +159,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
                     this.onError.emit('loadingFailed');
                 }
             }
-            this.fileSession[fileName] = { code: fileContent, loadingError, cursor: { column: 0, row: 0 } };
+            this.fileSession[fileName] = { code: fileContent, loadingError, cursor: { column: 0, lineNumber: 0 } };
         }
 
         const code = this.fileSession[fileName].code;
@@ -329,7 +329,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
         }
         // In the future, there may be more than one feedback node per line.
         const feedbackNode = this.getInlineFeedbackNodeOrElseThrow(line);
-        // The lines are 0-based for Ace, but 1-based for Monaco -> increase by 1 to ensure it works in both editors.
+        // Feedback is stored with 0-based lines, but the lines of the Monaco editor used in Artemis are 1-based. We add 1 to correct this
         this.editor.addLineWidget(line + 1, 'feedback-' + feedback.id, feedbackNode);
     }
 
@@ -365,7 +365,7 @@ export class CodeEditorMonacoComponent implements OnChanges {
             this.fileSession = this.fileService.updateFileReferences(this.fileSession, fileChange);
             this.storeAnnotations([fileChange.fileName]);
         } else if (fileChange instanceof CreateFileChange && fileChange.fileType === FileType.FILE) {
-            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { row: 0, column: 0 }, loadingError: false } };
+            this.fileSession = { ...this.fileSession, [fileChange.fileName]: { code: '', cursor: { lineNumber: 0, column: 0 }, loadingError: false } };
         }
         this.setBuildAnnotations(this.annotationsArray);
     }

@@ -3,7 +3,7 @@
         <div class="case-header">
             <div class="row">
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
-                    <h1 class="h2">{{ 'artemisApp.plagiarism.plagiarismCases.plagiarismCase' | artemisTranslate }}</h1>
+                    <h1 class="h2" jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></h1>
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
                     <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" class="my-2" />
@@ -50,28 +50,26 @@
         </div>
         <div class="case-body">
             <section>
-                <h3>{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h3>
+                <h3 jhiTranslate="artemisApp.plagiarism.plagiarismCases.conversation"></h3>
                 @if (posts && posts.length > 0) {
                     <jhi-posting-thread [post]="posts[0]" [showAnswers]="true" />
                 }
                 @if ((!posts || posts.length === 0) && createdPost) {
                     <div>
-                        <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
-                            {{ 'artemisApp.plagiarism.plagiarismCases.notifyStudent' | artemisTranslate }}
-                        </button>
+                        <button class="btn btn-md btn-primary" (click)="createEditModal.open()" jhiTranslate="artemisApp.plagiarism.plagiarismCases.notifyStudent"></button>
                         <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onStudentNotified($event)" />
                     </div>
                 }
             </section>
             <section class="d-print-none">
-                <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}</h2>
-                <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.text' | artemisTranslate }}</p>
+                <h2 class="mt-5" jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.verdict"></h2>
+                <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.text"></p>
                 <div class="verdict-container">
                     <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" [destroyOnHide]="false" class="nav-tabs">
                         <li [ngbNavItem]="1">
                             <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"></a>
                             <ng-template ngbNavContent>
-                                <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.plagiarismDescription' | artemisTranslate }}</p>
+                                <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.plagiarismDescription"></p>
                                 <div class="form-inline">
                                     <jhi-confirm-button
                                         title="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"
@@ -96,7 +94,7 @@
                         <li [ngbNavItem]="2">
                             <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"></a>
                             <ng-template ngbNavContent>
-                                <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeductionDescription' | artemisTranslate }}</p>
+                                <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeductionDescription"></p>
                                 <div class="form-inline">
                                     <div class="input-group w-auto">
                                         <input
@@ -126,7 +124,7 @@
                         <li [ngbNavItem]="3">
                             <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning"></a>
                             <ng-template ngbNavContent>
-                                <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warningDescription' | artemisTranslate }}</p>
+                                <p jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warningDescription"></p>
                                 <div class="form">
                                     <div class="form-group">
                                         <textarea
@@ -169,7 +167,7 @@
                 </div>
             </section>
             <section>
-                <h3 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h3>
+                <h3 class="mt-5" jhiTranslate="artemisApp.plagiarism.plagiarismCases.comparisons"></h3>
                 <div class="container-fluid">
                     <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false" />
                 </div>

@@ -1,6 +1,6 @@
 <div class="d-flex pb-3 border-bottom mb-2">
     <div class="d-flex flex-column justify-content-center">
-        <h4 class="mb-0">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</h4>
+        <h4 class="mb-0" jhiTranslate="artemisApp.examManagement.exerciseGroups"></h4>
     </div>
     @if (course?.isAtLeastEditor) {
         <div class="ms-auto d-flex flex-wrap">
@@ -51,12 +51,12 @@
                             <div class="btn-group-vertical me-1 mb-1" style="justify-content: end">
                                 <a [routerLink]="[exerciseGroup.id, 'file-upload-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
                                     <fa-icon [icon]="faPlus" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.fileUploadExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.fileUploadExercise.home.createLabel"></span>
                                     <fa-icon [icon]="faFileUpload" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.FILE_UPLOAD)" class="btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faFileImport" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.fileUploadExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.fileUploadExercise.home.importLabel"></span>
                                     <fa-icon [icon]="faFileUpload" />
                                 </a>
                             </div>
@@ -65,12 +65,12 @@
                             <div class="btn-group-vertical me-1 mb-1" style="justify-content: end">
                                 <a [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="add-quiz-exercise btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
                                     <fa-icon [icon]="faPlus" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.quizExercise.home.createLabel"></span>
                                     <fa-icon [icon]="faCheckDouble" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.QUIZ)" class="btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faFileImport" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.quizExercise.home.importLabel"></span>
                                     <fa-icon [icon]="faCheckDouble" />
                                 </a>
                             </div>
@@ -79,12 +79,12 @@
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="add-text-exercise btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faPlus" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.textExercise.home.createLabel"></span>
                                     <fa-icon [icon]="faFont" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.TEXT)" class="btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faFileImport" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.textExercise.home.importLabel"></span>
                                     <fa-icon [icon]="faFont" />
                                 </a>
                             </div>
@@ -93,12 +93,12 @@
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="add-modeling-exercise btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faPlus" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.modelingExercise.home.createLabel"></span>
                                     <fa-icon [icon]="faProjectDiagram" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.MODELING)" class="btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faFileImport" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.modelingExercise.home.importLabel"></span>
                                     <fa-icon [icon]="faProjectDiagram" />
                                 </a>
                             </div>
@@ -107,12 +107,12 @@
                             <div class="btn-group-vertical me-1 mb-1">
                                 <a [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="add-programming-exercise btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faPlus" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.createLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.programmingExercise.home.createLabel"></span>
                                     <fa-icon [icon]="faKeyboard" />
                                 </a>
                                 <a (click)="openImportModal(exerciseGroup, exerciseType.PROGRAMMING)" class="btn btn-info btn-sm me-1 mb-1">
                                     <fa-icon [icon]="faFileImport" />
-                                    <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.importLabel' | artemisTranslate }}</span>
+                                    <span class="d-none d-xl-inline" jhiTranslate="artemisApp.programmingExercise.home.importLabel"></span>
                                     <fa-icon [icon]="faKeyboard" />
                                 </a>
                             </div>
@@ -122,7 +122,7 @@
                                 <div class="d-flex flex-column me-1 mb-1">
                                     <a [routerLink]="[exerciseGroup.id, 'edit']" class="edit-group btn btn-warning btn-sm me-1 mb-1">
                                         <fa-icon [icon]="faWrench" />
-                                        <span class="d-none d-xl-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                                        <span class="d-none d-xl-inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
                                     @if (
                                         exerciseGroup.id &&
@@ -181,50 +181,50 @@
                         <thead>
                             <tr>
                                 <th class="d-md-table-cell">
-                                    <span>{{ 'global.field.id' | artemisTranslate }}</span>
+                                    <span jhiTranslate="global.field.id"></span>
                                 </th>
                                 <th>
-                                    <span>{{ 'artemisApp.examManagement.exerciseGroup.type' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.examManagement.exerciseGroup.type"></span>
                                 </th>
                                 <th>
-                                    <span>{{ 'artemisApp.examManagement.exerciseGroup.title' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.examManagement.exerciseGroup.title"></span>
                                 </th>
                                 <th>
-                                    <span>{{ 'artemisApp.examManagement.exerciseGroup.points' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.examManagement.exerciseGroup.points"></span>
                                 </th>
                                 <th>
-                                    <span>{{ 'artemisApp.exercise.bonus' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.exercise.bonus"></span>
                                 </th>
                                 <th>
-                                    <span>{{ 'artemisApp.exercise.includedCompletely' | artemisTranslate }}</span>
+                                    <span jhiTranslate="artemisApp.exercise.includedCompletely"></span>
                                 </th>
                                 @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id!)?.includes(exerciseType.PROGRAMMING)) {
                                     <th>
-                                        <span>{{ 'artemisApp.exercise.shortName' | artemisTranslate }}</span>
+                                        <span jhiTranslate="artemisApp.exercise.shortName"></span>
                                     </th>
                                     <th>
-                                        <span>{{ 'artemisApp.programmingExercise.repositories' | artemisTranslate }}</span>
+                                        <span jhiTranslate="artemisApp.programmingExercise.repositories"></span>
                                     </th>
                                     <th>
-                                        <span>{{ 'artemisApp.programmingExercise.buildplans' | artemisTranslate }}</span>
+                                        <span jhiTranslate="artemisApp.programmingExercise.buildplans"></span>
                                     </th>
                                     <th>
-                                        <span>{{ 'artemisApp.programmingExercise.participationMode' | artemisTranslate }}</span>
+                                        <span jhiTranslate="artemisApp.programmingExercise.participationMode"></span>
                                     </th>
                                 }
                                 @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.QUIZ)) {
                                     <th>
-                                        <span>{{ 'artemisApp.quizExercise.questions' | artemisTranslate }}</span>
+                                        <span jhiTranslate="artemisApp.quizExercise.questions"></span>
                                     </th>
                                 }
                                 @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING)) {
                                     <th>
-                                        <span>{{ 'artemisApp.modelingExercise.diagramType' | artemisTranslate }}</span>
+                                        <span jhiTranslate="artemisApp.modelingExercise.diagramType"></span>
                                     </th>
                                 }
                                 @if (exerciseGroup.id && exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.FILE_UPLOAD)) {
                                     <th>
-                                        <span>{{ 'artemisApp.fileUploadExercise.filePattern' | artemisTranslate }}</span>
+                                        <span jhiTranslate="artemisApp.fileUploadExercise.filePattern"></span>
                                     </th>
                                 }
                                 @if (
@@ -234,7 +234,7 @@
                                         exerciseGroupToExerciseTypesDict.get(exerciseGroup.id)?.includes(exerciseType.MODELING))
                                 ) {
                                     <th>
-                                        <span>{{ 'artemisApp.assessmentMode' | artemisTranslate }}</span>
+                                        <span jhiTranslate="artemisApp.assessmentMode"></span>
                                     </th>
                                 }
                                 <th></th>
@@ -365,9 +365,7 @@
                 </div>
             }
             @if (!exerciseGroup.exercises) {
-                <div>
-                    {{ 'artemisApp.examManagement.exerciseGroup.noExercises' | artemisTranslate }}
-                </div>
+                <div jhiTranslate="artemisApp.examManagement.exerciseGroup.noExercises"></div>
             }
         </div>
     </div>

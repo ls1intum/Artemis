@@ -8,7 +8,6 @@ import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/question
 import { DragItemComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-item.component';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -34,7 +33,6 @@ describe('DragAndDropQuestionComponent', () => {
             declarations: [
                 DragAndDropQuestionComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(MarkdownEditorComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(DragAndDropQuestionComponent),
                 MockComponent(QuizScoringInfoStudentModalComponent),

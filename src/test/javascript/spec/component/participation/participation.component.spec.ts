@@ -7,7 +7,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { Course } from 'app/entities/course.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { of, throwError } from 'rxjs';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import dayjs from 'dayjs/esm';
@@ -31,7 +31,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { AlertService } from 'app/core/util/alert.service';

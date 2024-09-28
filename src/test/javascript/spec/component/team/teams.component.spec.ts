@@ -1,4 +1,3 @@
-import * as ace from 'brace';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
@@ -27,9 +26,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { teamRoute } from 'app/exercises/shared/team/team.route';
 
 describe('TeamsComponent', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist.js');
-
     let comp: TeamsComponent;
     let fixture: ComponentFixture<TeamsComponent>;
     let debugElement: DebugElement;

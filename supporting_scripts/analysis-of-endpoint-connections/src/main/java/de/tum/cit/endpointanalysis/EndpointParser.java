@@ -38,7 +38,6 @@ public class EndpointParser {
     private static final Config CONFIG = readConfig();
 
     public static void main(String[] args) {
-
         final Path absoluteDirectoryPath = Path.of("../../src/main/java").toAbsolutePath().normalize();
 
         StaticJavaParser.getParserConfiguration().setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);

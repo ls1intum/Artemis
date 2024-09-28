@@ -1,4 +1,4 @@
-<h3>{{ 'artemisApp.codeOfConduct.title' | artemisTranslate }}</h3>
+<h3 jhiTranslate="artemisApp.codeOfConduct.title"></h3>
 <div [innerHTML]="course.courseInformationSharingMessagingCodeOfConduct || '' | htmlForMarkdown"></div>
 <ul>
     @for (user of responsibleContacts; track user) {

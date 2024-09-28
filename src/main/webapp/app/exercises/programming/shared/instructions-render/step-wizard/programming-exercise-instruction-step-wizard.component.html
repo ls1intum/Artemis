@@ -1,8 +1,6 @@
 <div class="card-second-header" [hidden]="!steps?.length">
     <div class="stepwizard">
-        <div class="stepwizard-title">
-            {{ 'artemisApp.programmingExercise.problemStatement.tasksOfExercise' | artemisTranslate }}
-        </div>
+        <div class="stepwizard-title" jhiTranslate="artemisApp.programmingExercise.problemStatement.tasksOfExercise"></div>
         <div class="stepwizard-row">
             @for (step of steps; track step; let i = $index) {
                 <div class="stepwizard-step">

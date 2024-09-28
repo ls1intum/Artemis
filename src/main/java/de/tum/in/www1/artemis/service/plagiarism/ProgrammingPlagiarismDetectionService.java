@@ -185,7 +185,7 @@ public class ProgrammingPlagiarismDetectionService {
     private JPlagResult computeJPlagResult(ProgrammingExercise programmingExercise, float similarityThreshold, int minimumScore, int minimumSize) {
         long programmingExerciseId = programmingExercise.getId();
         final var targetPath = fileService.getTemporaryUniqueSubfolderPath(repoDownloadClonePath, 60);
-        List<ProgrammingExerciseParticipation> participations = filterStudentParticipationsForComparison(programmingExercise, minimumScore);
+        List<ProgrammingExerciseParticipation> participations = findStudentParticipationsForComparison(programmingExercise, minimumScore);
         log.info("Download repositories for JPlag for programming exercise {} to compare {} participations", programmingExerciseId, participations.size());
 
         if (participations.size() < 2) {
@@ -326,8 +326,10 @@ public class ProgrammingPlagiarismDetectionService {
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @return an unmodifiable list containing the latest text submission for every participation
      */
-    public List<ProgrammingExerciseParticipation> filterStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
+    public List<ProgrammingExerciseParticipation> findStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
+        long start = System.nanoTime();
         var studentParticipations = studentParticipationRepository.findAllForPlagiarism(programmingExercise.getId());
+        log.info("findAllForPlagiarism took {}", TimeLogUtil.formatDurationFrom(start));
 
         return studentParticipations.parallelStream().filter(participation -> !participation.isPracticeMode())
                 .filter(participation -> participation instanceof ProgrammingExerciseStudentParticipation).filter(plagiarismService.filterForStudents())

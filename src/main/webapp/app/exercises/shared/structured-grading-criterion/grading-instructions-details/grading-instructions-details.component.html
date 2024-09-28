@@ -46,27 +46,27 @@
                                     <thead>
                                         <tr>
                                             <th width="10%">
-                                                <span>{{ 'artemisApp.exercise.credits' | artemisTranslate }}</span>
+                                                <span jhiTranslate="artemisApp.exercise.credits"></span>
                                                 <jhi-help-icon text="artemisApp.exercise.creditsHint" class="me-1" />
                                             </th>
                                             <th width="10%">
-                                                <span>{{ 'artemisApp.exercise.gradingScale' | artemisTranslate }}</span>
+                                                <span jhiTranslate="artemisApp.exercise.gradingScale"></span>
                                                 <jhi-help-icon text="artemisApp.exercise.gradingScaleHint" class="me-1" />
                                             </th>
                                             <th width="30%">
-                                                <span>{{ 'artemisApp.exercise.instructionDescription' | artemisTranslate }}</span>
+                                                <span jhiTranslate="artemisApp.exercise.instructionDescription"></span>
                                                 <jhi-help-icon text="artemisApp.exercise.descriptionHint" class="me-1" />
                                             </th>
                                             <th width="30%">
-                                                <span>{{ 'artemisApp.exercise.feedback' | artemisTranslate }}</span>
+                                                <span jhiTranslate="artemisApp.exercise.feedback"></span>
                                                 <jhi-help-icon text="artemisApp.exercise.feedbackHint" class="me-1" />
                                             </th>
                                             <th width="10%">
-                                                <span>{{ 'artemisApp.exercise.limit' | artemisTranslate }}</span>
+                                                <span jhiTranslate="artemisApp.exercise.limit"></span>
                                                 <jhi-help-icon text="artemisApp.exercise.usageCountHint" class="me-1" />
                                             </th>
                                             <th width="5%">
-                                                <span>{{ 'artemisApp.exercise.action' | artemisTranslate }}</span>
+                                                <span jhiTranslate="artemisApp.exercise.action"></span>
                                             </th>
                                         </tr>
                                     </thead>
@@ -151,15 +151,17 @@
             <!--- Edit Text Mode --->
             @if (!showEditMode) {
                 <div>
-                    <jhi-markdown-editor
+                    <jhi-markdown-editor-monaco
                         #markdownEditor
                         class="markdown-editor"
                         [markdown]="markdownEditorText"
                         [showPreviewButton]="false"
                         [showEditButton]="false"
-                        [domainCommands]="domainCommands"
+                        [domainActions]="domainActionsForMainEditor"
+                        [enableResize]="false"
+                        [initialEditorHeight]="MarkdownEditorHeight.MEDIUM"
                         (markdownChange)="prepareForSave()"
-                        (textWithDomainCommandsFound)="domainCommandsFound($event)"
+                        (textWithDomainActionsFound)="onDomainActionsFound($event)"
                     />
                 </div>
             }
@@ -172,13 +174,13 @@
     <div class="edit-sqi">
         <div class="grading-instructions-update-border">
             <div class="instructions pb-2 row-cols-2">
-                <jhi-markdown-editor
+                <jhi-markdown-editor-monaco
                     #markdownEditor
                     class="editor col-md-8"
                     [markdown]="markdownEditorText"
-                    [domainCommands]="domainCommandsGradingInstructions"
+                    [domainActions]="domainActionsForGradingInstructionParsing"
                     (markdownChange)="prepareForSave()"
-                    (textWithDomainCommandsFound)="setExerciseGradingInstructionText($event)"
+                    (textWithDomainActionsFound)="setExerciseGradingInstructionText($event)"
                     [enableFileUpload]="false"
                     [showEditButton]="false"
                     [showPreviewButton]="false"
@@ -189,7 +191,7 @@
                     <div class="criteria-content pb-2">
                         <div class="row">
                             <div class="col-md-10 text-start">
-                                <div class="input-group" style="height: 33px; width: 75%">
+                                <div class="input-group mb-1" [style.width.%]="75">
                                     <input
                                         class="form-control"
                                         type="text"
@@ -216,22 +218,25 @@
                         </div>
                         @if (criteria.structuredGradingInstructions!) {
                             <div>
-                                @for (instruction of criteria.structuredGradingInstructions; track instruction) {
+                                @for (instruction of criteria.structuredGradingInstructions; track instruction; let index = $index) {
                                     <div>
-                                        <div class="instructions row-cols-2">
-                                            <jhi-markdown-editor
+                                        <div class="instructions row-cols-2 mb-1">
+                                            <jhi-markdown-editor-monaco
                                                 #markdownEditors
                                                 class="editor col-md-8"
-                                                [metaCommands]="[]"
-                                                [defaultCommands]="[]"
-                                                [headerCommands]="[]"
-                                                [colorCommands]="[]"
+                                                [metaActions]="[]"
+                                                [defaultActions]="[]"
+                                                [headerActions]="undefined"
+                                                [colorAction]="undefined"
                                                 [showEditButton]="false"
                                                 [showPreviewButton]="false"
-                                                [domainCommands]="domainCommandsGradingInstructions"
+                                                [domainActions]="[]"
                                                 (markdownChange)="prepareForSave()"
-                                                (textWithDomainCommandsFound)="onInstructionChange($event, instruction)"
+                                                (textWithDomainActionsFound)="onInstructionChange($event, instruction)"
                                                 [enableFileUpload]="false"
+                                                [enableResize]="false"
+                                                [resizableMinHeight]="MarkdownEditorHeight.INLINE"
+                                                [linkEditorHeightToContentHeight]="true"
                                             />
                                             <div class="form-group text-center col-md-4" style="display: block">
                                                 <span class="re-evaluate-button" id="reset-button" (click)="resetInstruction(instruction, criteria)">

@@ -69,6 +69,8 @@
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
             "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH Schlüssel zu deinem Konto hinzufügen.",
+            "vcsTokenTip": "Um mit einem VCS-Zugriffstoken auf das Repository zuzugreifen, musst du {link:hier} ein neues hinzufügen.",
+            "vcsTokenExpiredTip": "Dein VCS-Zugriffstoken ist abgelaufen. Erneuere es {link:hier}.",
             "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",
             "deleteMultipleExercisesQuestion": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?"
         }

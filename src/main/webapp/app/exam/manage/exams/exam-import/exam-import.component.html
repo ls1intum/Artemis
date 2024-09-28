@@ -1,10 +1,10 @@
 <form>
     <div class="modal-header">
         @if (!subsequentExerciseGroupSelection) {
-            <h4 class="modal-title">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
+            <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.importExam"></h4>
         }
         @if (subsequentExerciseGroupSelection) {
-            <h4 class="modal-title">{{ 'artemisApp.examManagement.exerciseGroup.import' | artemisTranslate }}</h4>
+            <h4 class="modal-title" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"></h4>
         }
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
@@ -54,10 +54,10 @@
                             </td>
                             <td class="text-break col-2">
                                 @if (!exam.testExam) {
-                                    <span class="badge bg-success">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</span>
+                                    <span class="badge bg-success" jhiTranslate="artemisApp.examManagement.testExam.realExam"></span>
                                 }
                                 @if (exam.testExam) {
-                                    <span class="badge bg-primary">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
+                                    <span class="badge bg-primary" jhiTranslate="artemisApp.examManagement.testExam.testExam"></span>
                                 }
                             </td>
                             <td class="col-1">

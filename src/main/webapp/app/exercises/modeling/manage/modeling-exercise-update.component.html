@@ -33,12 +33,11 @@
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group" name="problemStatement" id="field_problemStatement">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.problemStatement" for="field_problemStatement"></label>
-            <jhi-markdown-editor
+            <jhi-markdown-editor-monaco
                 class="markdown-editor background-editor-color"
-                [domainCommands]="domainCommandsProblemStatement"
+                [domainActions]="domainActionsProblemStatement"
                 [(markdown)]="modelingExercise.problemStatement"
                 (markdownChange)="calculateFormSectionStatus()"
-                [editorMode]="EditorMode.LATEX"
             />
         </div>
         @if (!isExamMode) {
@@ -66,12 +65,11 @@
         @if (!isImport) {
             <div class="form-group" name="exampleSolutionExplanation" id="field_exampleSolutionExplanation">
                 <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSolutionExplanation" for="field_exampleSolutionExplanation"></label>
-                <jhi-markdown-editor
+                <jhi-markdown-editor-monaco
                     class="markdown-editor background-editor-color"
-                    [domainCommands]="domainCommandsSampleSolution"
+                    [domainActions]="domainActionsExampleSolution"
                     [(markdown)]="modelingExercise.exampleSolutionExplanation"
                     (markdownChange)="calculateFormSectionStatus()"
-                    [editorMode]="EditorMode.LATEX"
                 />
             </div>
         }
@@ -87,9 +85,7 @@
                     (valueChange)="validateDate()"
                 />
                 @if (modelingExercise.exampleSolutionPublicationDateError) {
-                    <span class="invalid-feedback">
-                        {{ 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate }}
-                    </span>
+                    <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
                 }
             </div>
         }
@@ -123,7 +119,7 @@
                         [(ngModel)]="modelingExercise.startDate"
                     />
                     @if (modelingExercise.startDateError) {
-                        <span class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.startDateError"></span>
                     }
                 </div>
             </div>
@@ -144,7 +140,7 @@
                         [(ngModel)]="modelingExercise.dueDate"
                     />
                     @if (modelingExercise.dueDateError) {
-                        <span class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
                     }
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
@@ -161,15 +157,13 @@
                         [(ngModel)]="modelingExercise.assessmentDueDate"
                     />
                     @if (modelingExercise.assessmentDueDateError) {
-                        <span class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></span>
                     }
                 </div>
             </div>
         }
         <div class="form-group">
-            <label class="form-control-label">{{
-                'artemisApp.exercise.includedInOverallScore' + (modelingExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate
-            }}</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ modelingExercise.course ? 'Course' : 'Exam' }}Label"></label>
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="modelingExercise.includedInOverallScore"
@@ -195,9 +189,7 @@
                         #points="ngModel"
                     />
                     @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.exercise.pointsError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
                     }
                 </div>
             </div>
@@ -216,9 +208,11 @@
                         #bonusPoints="ngModel"
                     />
                     @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                        <div class="alert alert-danger" [hidden]="modelingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                            {{ 'artemisApp.exercise.bonusPointsError' | artemisTranslate }}
-                        </div>
+                        <div
+                            class="alert alert-danger"
+                            [hidden]="modelingExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                            jhiTranslate="artemisApp.exercise.bonusPointsError"
+                        ></div>
                     }
                 </div>
             </div>
@@ -233,17 +227,17 @@
                 (ngModelChange)="diagramTypeChanged()"
                 id="field_diagramType"
             >
-                <option value="ClassDiagram">{{ 'artemisApp.DiagramType.ClassDiagram' | artemisTranslate }}</option>
-                <option value="ActivityDiagram">{{ 'artemisApp.DiagramType.ActivityDiagram' | artemisTranslate }}</option>
-                <option value="ObjectDiagram">{{ 'artemisApp.DiagramType.ObjectDiagram' | artemisTranslate }}</option>
-                <option value="UseCaseDiagram">{{ 'artemisApp.DiagramType.UseCaseDiagram' | artemisTranslate }}</option>
-                <option value="CommunicationDiagram">{{ 'artemisApp.DiagramType.CommunicationDiagram' | artemisTranslate }}</option>
-                <option value="ComponentDiagram">{{ 'artemisApp.DiagramType.ComponentDiagram' | artemisTranslate }}</option>
-                <option value="DeploymentDiagram">{{ 'artemisApp.DiagramType.DeploymentDiagram' | artemisTranslate }}</option>
-                <option value="PetriNet">{{ 'artemisApp.DiagramType.PetriNet' | artemisTranslate }}</option>
-                <option value="SyntaxTree">{{ 'artemisApp.DiagramType.SyntaxTree' | artemisTranslate }}</option>
-                <option value="Flowchart">{{ 'artemisApp.DiagramType.Flowchart' | artemisTranslate }}</option>
-                <option value="BPMN">{{ 'artemisApp.DiagramType.BPMN' | artemisTranslate }}</option>
+                <option value="ClassDiagram" jhiTranslate="artemisApp.DiagramType.ClassDiagram"></option>
+                <option value="ActivityDiagram" jhiTranslate="artemisApp.DiagramType.ActivityDiagram"></option>
+                <option value="ObjectDiagram" jhiTranslate="artemisApp.DiagramType.ObjectDiagram"></option>
+                <option value="UseCaseDiagram" jhiTranslate="artemisApp.DiagramType.UseCaseDiagram"></option>
+                <option value="CommunicationDiagram" jhiTranslate="artemisApp.DiagramType.CommunicationDiagram"></option>
+                <option value="ComponentDiagram" jhiTranslate="artemisApp.DiagramType.ComponentDiagram"></option>
+                <option value="DeploymentDiagram" jhiTranslate="artemisApp.DiagramType.DeploymentDiagram"></option>
+                <option value="PetriNet" jhiTranslate="artemisApp.DiagramType.PetriNet"></option>
+                <option value="SyntaxTree" jhiTranslate="artemisApp.DiagramType.SyntaxTree"></option>
+                <option value="Flowchart" jhiTranslate="artemisApp.DiagramType.Flowchart"></option>
+                <option value="BPMN" jhiTranslate="artemisApp.DiagramType.BPMN"></option>
             </select>
         </div>
         @if (semiAutomaticAssessmentAvailable) {

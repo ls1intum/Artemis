@@ -12,7 +12,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';

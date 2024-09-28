@@ -13,9 +13,7 @@
             <button type="button" class="btn-close" (click)="dismiss()"></button>
         </div>
         <div class="modal-body">
-            <p>
-                {{ 'artemisApp.dialogs.createChannel.description' | artemisTranslate }}
-            </p>
+            <p jhiTranslate="artemisApp.dialogs.createChannel.description"></p>
             <jhi-channel-form
                 (channelTypeChanged)="onChannelTypeChanged($event)"
                 (isAnnouncementChannelChanged)="onIsAnnouncementChannelChanged($event)"

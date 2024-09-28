@@ -37,20 +37,20 @@
                         <table class="table table-borderless mx-auto">
                             <tbody>
                                 <tr>
-                                    <th>{{ 'artemisApp.studentExamDetail.name' | artemisTranslate }}</th>
+                                    <th jhiTranslate="artemisApp.studentExamDetail.name"></th>
                                     <td>{{ event.user?.firstName }} {{ event.user?.lastName }}</td>
                                 </tr>
                                 <tr>
-                                    <th>{{ 'artemisApp.studentExamDetail.login' | artemisTranslate }}</th>
+                                    <th jhiTranslate="artemisApp.studentExamDetail.login"></th>
                                     <td>{{ event.user?.login }}</td>
                                 </tr>
                                 <tr>
-                                    <th>{{ 'artemisApp.studentExamDetail.email' | artemisTranslate }}</th>
+                                    <th jhiTranslate="artemisApp.studentExamDetail.email"></th>
                                     <td>{{ event.user?.email }}</td>
                                 </tr>
                                 @if (event.user?.visibleRegistrationNumber) {
                                     <tr>
-                                        <th>{{ 'artemisApp.studentExamDetail.matriculationNumber' | artemisTranslate }}</th>
+                                        <th jhiTranslate="artemisApp.studentExamDetail.matriculationNumber"></th>
                                         <td>{{ event.user?.visibleRegistrationNumber }}</td>
                                     </tr>
                                 }
@@ -61,11 +61,12 @@
             }
             @case (ExamLiveEventType.PROBLEM_STATEMENT_UPDATE) {
                 <div>
-                    <div>
-                        {{ 'artemisApp.exam.events.messages.problemStatementUpdate.description' | artemisTranslate: { exerciseName: problemStatementUpdateEvent.exerciseName } }}
-                    </div>
+                    <div
+                        jhiTranslate="artemisApp.exam.events.messages.problemStatementUpdate.description"
+                        [translateValues]="{ exerciseName: problemStatementUpdateEvent.exerciseName }"
+                    ></div>
                     @if (problemStatementUpdateEvent.text) {
-                        <div>{{ 'artemisApp.exam.events.messages.problemStatementUpdate.instructorMessage' | artemisTranslate }}</div>
+                        <div jhiTranslate="artemisApp.exam.events.messages.problemStatementUpdate.instructorMessage"></div>
                         <div [innerHTML]="problemStatementUpdateEvent.text | htmlForMarkdown"></div>
                     }
                 </div>

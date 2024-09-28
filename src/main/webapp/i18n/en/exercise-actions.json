@@ -70,6 +70,8 @@
             "uploadFile": "Upload a file",
             "viewTeam": "Team",
             "sshKeyTip": "To use ssh, you need to add an ssh key to your account {link:here}.",
+            "vcsTokenTip": "To access the repository with a VCS access token, you need to add a new one to your account {link:here}.",
+            "vcsTokenExpiredTip": "Your VCS access token has expired. Renew it {link:here}.",
             "startExerciseBeforeStartDate": "You cannot participate before the start date of the exercise.",
             "deleteMultipleExercisesQuestion": "Are you sure you want to delete the selected exercises?"
         }

@@ -198,7 +198,7 @@ describe('PrerequisiteService', () => {
         const expected = defaultPrerequisites;
         let response: any;
 
-        prerequisiteService.generateCompetenciesFromCourseDescription(description, 1).subscribe((resp) => (response = resp));
+        prerequisiteService.generateCompetenciesFromCourseDescription(1, description, []).subscribe((resp) => (response = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         tick();

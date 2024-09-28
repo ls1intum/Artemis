@@ -37,6 +37,9 @@ public class Lti13ClientRegistration {
     @JsonProperty("jwks_uri")
     private String jwksUri;
 
+    @JsonProperty("logo_uri")
+    private String logoUri;
+
     @JsonProperty("token_endpoint_auth_method")
     private String tokenEndpointAuthMethod;
 
@@ -67,6 +70,7 @@ public class Lti13ClientRegistration {
         this.setRedirectUris(List.of(serverUrl + "/" + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH));
         this.setInitiateLoginUri(serverUrl + "/" + CustomLti13Configurer.LTI13_LOGIN_INITIATION_PATH + "/" + clientRegistrationId);
         this.setJwksUri(serverUrl + "/.well-known/jwks.json");
+        this.setLogoUri(serverUrl + "/public/images/logo.png");
 
         Lti13ToolConfiguration toolConfiguration = getLti13ToolConfiguration(serverUrl);
         this.setLti13ToolConfiguration(toolConfiguration);
@@ -83,6 +87,7 @@ public class Lti13ClientRegistration {
         }
         toolConfiguration.setDomain(domain);
         toolConfiguration.setTargetLinkUri(serverUrl + "/courses");
+        toolConfiguration.setDescription("Artemis: Interactive Learning with Individual Feedback");
         toolConfiguration.setClaims(Arrays.asList("iss", "email", "sub", "name", "given_name", "family_name"));
         Message deepLinkingMessage = new Message(CustomLti13Configurer.LTI13_DEEPLINK_MESSAGE_REQUEST, serverUrl + "/" + CustomLti13Configurer.LTI13_DEEPLINK_REDIRECT_PATH);
         toolConfiguration.setMessages(List.of(deepLinkingMessage));
@@ -145,6 +150,14 @@ public class Lti13ClientRegistration {
         this.jwksUri = jwksUri;
     }
 
+    public String getLogoUri() {
+        return logoUri;
+    }
+
+    public void setLogoUri(String logoUri) {
+        this.logoUri = logoUri;
+    }
+
     public String getTokenEndpointAuthMethod() {
         return tokenEndpointAuthMethod;
     }
@@ -179,6 +192,8 @@ public class Lti13ClientRegistration {
         @JsonProperty("target_link_uri")
         private String targetLinkUri;
 
+        private String description;
+
         private List<Message> messages;
 
         private List<String> claims;
@@ -197,6 +212,14 @@ public class Lti13ClientRegistration {
 
         public void setTargetLinkUri(String targetLinkUri) {
             this.targetLinkUri = targetLinkUri;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
         }
 
         public List<Message> getMessages() {

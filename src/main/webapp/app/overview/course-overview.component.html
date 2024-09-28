@@ -158,9 +158,7 @@
                         <div class="d-flex">
                             @if (isNotManagementView && course.isAtLeastTutor) {
                                 <div id="manage-button">
-                                    <a class="btn btn-secondary" [routerLink]="['/course-management', course.id]">
-                                        {{ 'artemisApp.courseOverview.manage' | artemisTranslate }}
-                                    </a>
+                                    <a class="btn btn-secondary" [routerLink]="['/course-management', course.id]" jhiTranslate="artemisApp.courseOverview.manage"></a>
                                 </div>
                             }
                             @if (showRefreshButton) {

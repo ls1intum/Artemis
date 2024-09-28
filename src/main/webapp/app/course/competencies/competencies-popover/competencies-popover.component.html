@@ -1,12 +1,8 @@
-<ng-template #popTitle>
-    <span class="font-weight-bold">{{ 'artemisApp.competency.competencyPopover.connectedCompetencies' | artemisTranslate }}</span></ng-template
->
+<ng-template #popTitle> <span class="font-weight-bold" jhiTranslate="artemisApp.competency.competencyPopover.connectedCompetencies"></span></ng-template>
 <ng-template #popContent>
     @if (competencies && competencies.length > 0) {
         <div>
-            <small>
-                {{ 'artemisApp.competency.competencyPopover.explanation' | artemisTranslate }}
-            </small>
+            <small jhiTranslate="artemisApp.competency.competencyPopover.explanation"></small>
             <ul class="list-group">
                 @for (competency of competencies; track competency) {
                     <a class="list-group-item" [routerLink]="navigationArray">{{ competency.title }}</a>
@@ -14,7 +10,7 @@
             </ul>
         </div>
     } @else {
-        <a [routerLink]="navigationArray">{{ 'artemisApp.competency.competencyPopover.noCompetencies' | artemisTranslate }}</a>
+        <a [routerLink]="navigationArray" jhiTranslate="artemisApp.competency.competencyPopover.noCompetencies"></a>
     }
 </ng-template>
 <button type="button" class="btn btn-sm btn-primary competency-button" [ngbPopover]="popContent" [popoverTitle]="popTitle" popoverClass="competency-popover">
