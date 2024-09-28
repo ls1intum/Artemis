@@ -18,7 +18,7 @@
             ></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'" />
         </div>
-        @if (this.exercise.type === ExerciseType.TEXT) {
+        @if (this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.MODELING) {
             <div class="form-check">
                 <input
                     type="checkbox"
