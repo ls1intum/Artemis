@@ -6,5 +6,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * Class used to hold tutor average rating and number of tutor ratings in an exercise
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record ExerciseRatingCount(Double averageRating, Long numberOfRatings) {
+public record ExerciseRatingCountDTO(Double averageRating, Long numberOfRatings) {
+
 }
