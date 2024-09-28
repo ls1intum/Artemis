@@ -33,8 +33,6 @@ excludedEndpoints:
   - 'api/apollon-diagrams/{diagramId}/title'
   - 'api/courses/{courseId}/answer-messages'
   - 'api/courses/{courseId}/answer-messages/{answerMessageId}'
-
-  # helperFromHere
   - 'api/courses/{courseId}/messages'
   - 'api/courses/{courseId}/messages/{messageId}'
   - 'api/courses/{courseId}/messages/similarity-check'
@@ -94,6 +92,16 @@ excludedEndpoints:
   - 'api/test-repository/{exerciseId}'
   - 'api/courses'
   - 'api/courses/{courseId}/download-archive'
+  - 'api/public/pyris/pipelines/competency-extraction/runs/{runId}/status'
+  - 'api/exercises/{exerciseId}/feedback-details'
+  - 'api/files/user/profile-pictures/{userId}/*'
+  - 'api/account'
+  - 'api/account/ssh-public-key'
+  - 'api/account/user-vcs-access-token'
+  - 'api/public/account'
+  - 'api/public/account/change-language'
+  - 'api/public/saml2'
+  - 'api/public/logout'
 
   # Issue: #9372 and #9371
   - 'api/courses/{courseId}/students'
