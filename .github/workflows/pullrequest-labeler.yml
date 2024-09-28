@@ -1,15 +1,19 @@
 name: Pull Request Labeler
-on: [pull_request_target]
+on:
+  - pull_request
 
 jobs:
   label:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - run: ls -l .github | awk '{ print $NF }'
-      - uses: actions/labeler@v5
+      - name: List files in .github
+        run: ls -l .github | awk '{ print $NF }'
+      - name: Run labeler
+        uses: actions/labeler@v5
         with:
           repo-token: "${{ secrets.GITHUB_TOKEN }}"
           sync-labels: true
