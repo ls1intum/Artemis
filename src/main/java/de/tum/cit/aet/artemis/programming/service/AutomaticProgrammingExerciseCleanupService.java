@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -135,9 +134,12 @@ public class AutomaticProgrammingExerciseCleanupService {
                 pageable);
         log.info("Found {} student participations to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
         if (uriBatch.getTotalElements() > 0) {
-            var batchStream = Stream.iterate(uriBatch, page -> page.getNumber() <= page.getTotalPages(), page -> programmingExerciseStudentParticipationRepository
-                    .findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate, page.nextPageable()));
-            batchStream.forEach(page -> page.forEach(this::deleteLocalRepositoryByUriString));
+            uriBatch.forEach(this::deleteLocalRepositoryByUriString);
+            while (!uriBatch.isLast()) {
+                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
+                        uriBatch.nextPageable());
+                uriBatch.forEach(this::deleteLocalRepositoryByUriString);
+            }
             log.info("Finished cleaning local student repositories");
         }
     }
