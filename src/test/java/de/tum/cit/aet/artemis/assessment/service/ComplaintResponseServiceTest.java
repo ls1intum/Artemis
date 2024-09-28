@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentTest { // change
+class ComplaintResponseServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "complaintresponseservice";
 
