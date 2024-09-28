@@ -17,7 +17,10 @@ test-job:
         - git clone --branch ${ARTEMIS_SUBMISSION_GIT_BRANCH} ${CI_SERVER_PROTOCOL}://${ARTEMIS_TEST_GIT_USER}:${ARTEMIS_TEST_GIT_TOKEN}@${CI_SERVER_HOST}:${CI_SERVER_PORT}/${CI_PROJECT_NAMESPACE}/${CI_PROJECT_NAME} assignment
         - export ARTEMIS_NOTIFICATION_SECRET=[hidden] # Workaround for overwriting the secret
         - export ARTEMIS_TEST_GIT_TOKEN=[hidden]
-        - mvn --version && echo "ARTEMIS_BUILD_STATUS=success" > .env || echo "ARTEMIS_BUILD_STATUS=failed" > .env
+        # TODO: Install dependencies not provided by the Docker image
+        # TODO: Run the tests and generate JUnit XMLs
+        - echo "Hello World" && echo "ARTEMIS_BUILD_STATUS=success" > .env || echo "ARTEMIS_BUILD_STATUS=failed" > .env
+        # TODO: Move JUnit XMLs into the ${ARTEMIS_TEST_RESULTS_DIR} directory
     after_script:
         - echo "ARTEMIS_TEST_GIT_HASH=$(git rev-parse HEAD)" >> .env
         - echo "ARTEMIS_SUBMISSION_GIT_HASH=${CI_COMMIT_SHA}" >> .env

@@ -9,6 +9,17 @@
 
 Artemis brings interactive learning to life with instant, individual feedback on programming exercises, quizzes, modeling tasks, and more. Offering customization for instructors and real-time collaboration for students, this platform bridges creativity and education. Embrace a new era of engaging, adaptive learning and artificial intelligence support with Artemis, where innovation meets inclusivity. Find out more on https://artemisapp.github.io
 
+## Main goals
+
+1. **User experience**: Provide an intuitive and engaging interface that enhances the learning experience for both students and instructors. Ensure ease of use across diverse learning scenarios, fostering seamless interaction and accessibility.
+
+2. **Scalable infrastructure**: Build a robust platform capable of supporting large-scale courses with thousands of participants simultaneously. Ensure high availability, performance, and adaptability as the platform grows in functionality and user base.
+
+3. **Constructive alignment**: Align learning goals, activities, and assessments through well-integrated features such as the exam mode that support instructional design principles. Enable the seamless implementation of interactive learning methodologies, ensuring that every feature contributes meaningfully to learning goals.
+
+4. **Learning analytics**: Leverage data to provide actionable insights into student performance and engagement. Offer detailed feedback to both learners and instructors, enhancing personalized learning experiences and supporting data-driven decisions for educational improvement while ensuring data privacy and security.
+
+
 ## Main features and modules
 
 1. **[Exercises](https://docs.artemis.cit.tum.de/user/exercises)** with automatic and manual assessment. Instructors have many configuration options.
@@ -83,7 +94,7 @@ The Artemis development team prioritizes the following areas in the future. We w
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
 * **Long term**: Develop an exchange platform for exercises
 
-## Contributing to This Project
+## Contributing
 
 We welcome contributions from both members of our organization and external contributors. To maintain transparency and trust:
 
@@ -96,28 +107,38 @@ We follow a pull request contribution model. For detailed guidelines, please ref
 
 #### Maintainers
 
+
 The following members of the project management team are responsible for specific feature areas in Artemis. Contact them if you have questions or if you want to develop new features in this area.
 
-| #  | Feature / Module      | Responsible maintainer                                                             |
-|----|-----------------------|------------------------------------------------------------------------------------|
-| 0  | Core                  | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
-| 1  | Exercises             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
-| 2  | Programming exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
-| 3  | Build agents          | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
-| 4  | Quiz exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
-| 5  | Modeling exercises    | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
-| 6  | Text exercises        | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
-| 7  | File upload exercises | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
-| 8  | Exam mode             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
-| 9  | Assessment            | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
-| 10 | Communication         | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
-| 11 | Lectures              | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
-| 12 | Atlas                 | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
-| 13 | Iris                  | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
-| 13 | Athena                | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
-| 15 | Tutorial Groups       | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
-| 16 | Plagiarism checks     | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
-| 17 | LTI                   | Matthias Linhuber ([@mtze](https://github.com/mtze))                               |
+
+| Goal                    | Responsible maintainer                                                             |
+|-------------------------|------------------------------------------------------------------------------------|
+| User experience         | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
+| Scalable infrastructure | Matthias Linhuber ([@mtze](https://github.com/mtze))                               |
+| Constructive alignment  | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Learning analytics      | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+
+| Feature / Module      | Responsible maintainer                                                             |
+|-----------------------|------------------------------------------------------------------------------------|
+| Exercises             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Programming exercises | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Build agents          | Robert Jandow ([@robertjndw](https://github.com/robertjndw))                       |
+| Quiz exercises        | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
+| Modeling exercises    | Felix Dietrich ([@FelixTJDietrich](https://github.com/FelixTJDietrich))            |
+| Text exercises        | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| File upload exercises | Elisabeth Friesinger ([@easy-lisi](https://github.com/easy-lisi))                  |
+| Exam mode             | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Assessment            | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| Communication         | Stephan Krusche ([@krusche](https://github.com/krusche))                           |
+| Lectures              | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
+| Atlas                 | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+| Iris                  | Patrick Bassner ([@bassner](https://github.com/bassner))                           |
+| Athena                | Maximilian Sölch ([@maximiliansoelch](https://github.com/maximiliansoelch))        |
+| Tutorial Groups       | Ramona Beinstingel ([@rabeatwork](https://github.com/rabeatwork))                  |
+| Plagiarism checks     | Markus Paulsen ([@MarkusPaulsen](https://github.com/MarkusPaulsen))                |
+| LTI                   | Maximilian Anzinger ([@maximiliananzinger](https://github.com/maximiliananzinger)) |
+
+
 
 ## Setup and guidelines
 
@@ -139,8 +160,9 @@ You can find a guide on [how to write documentation](docs/README.md).
 Setting up Artemis in your development environment or a demo production environment is really easy following the instructions on https://docs.artemis.cit.tum.de/dev/setup. When you want to support programming exercises, we recommend using the [Integrated Code Lifecycle](https://docs.artemis.cit.tum.de/dev/setup/#integrated-code-lifecycle-setup).
 
 Artemis can also be set up in conjunction with external tools for version control and continuous integration:
-1. [GitLab and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup)
-2. [GitLab and GitLab CI (experimental)](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup)
+1. [LocalVC and Jenkins](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-localvc-setup)
+2. [GitLab and Jenkins (deprecated)](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup)
+3. [GitLab and GitLab CI (experimental and deprecated)](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup)
 
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
@@ -171,7 +193,7 @@ Refer to [Using JHipster in production](http://www.jhipster.tech/production) for
 The following command can automate the deployment to a server. The example shows the deployment to the main Artemis test server (which runs a virtual machine):
 
 ```shell
-./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.5.4.war
+./artemis-server-cli deploy username@artemistest.ase.in.tum.de -w build/libs/Artemis-7.5.5.war
 ```
 
 ## Architecture
