@@ -296,20 +296,7 @@ public class GradingScaleResource {
             return;
         }
 
-        Course course = gradingScale.getCourse();
-
-        // Check validity of basic presentation configuration
-        if (course != null && course.getPresentationScore() != null && course.getPresentationScore() != 0) {
-            // The presentationsNumber and presentationsWeight must be null.
-            if (gradingScale.getPresentationsNumber() != null || gradingScale.getPresentationsWeight() != null) {
-                throw new BadRequestAlertException("You cannot set up graded presentations if the course is already set up for basic presentations", ENTITY_NAME,
-                        "basicPresentationAlreadySet");
-            }
-            // The presentationScore must be above 0.
-            if (course.getPresentationScore() <= 0) {
-                throw new BadRequestAlertException("The number of presentations must be a whole number above 0!", ENTITY_NAME, "invalidBasicPresentationsConfiguration");
-            }
-        }
+        final var course = getCourse(gradingScale);
 
         // Check validity of graded presentation configuration
         if (gradingScale.getPresentationsNumber() != null || gradingScale.getPresentationsWeight() != null) {
@@ -326,5 +313,23 @@ public class GradingScaleResource {
                         "invalidGradedPresentationsConfiguration");
             }
         }
+    }
+
+    private static Course getCourse(GradingScale gradingScale) {
+        Course course = gradingScale.getCourse();
+
+        // Check validity of basic presentation configuration
+        if (course != null && course.getPresentationScore() != null && course.getPresentationScore() != 0) {
+            // The presentationsNumber and presentationsWeight must be null.
+            if (gradingScale.getPresentationsNumber() != null || gradingScale.getPresentationsWeight() != null) {
+                throw new BadRequestAlertException("You cannot set up graded presentations if the course is already set up for basic presentations", ENTITY_NAME,
+                        "basicPresentationAlreadySet");
+            }
+            // The presentationScore must be above 0.
+            if (course.getPresentationScore() <= 0) {
+                throw new BadRequestAlertException("The number of presentations must be a whole number above 0!", ENTITY_NAME, "invalidBasicPresentationsConfiguration");
+            }
+        }
+        return course;
     }
 }
