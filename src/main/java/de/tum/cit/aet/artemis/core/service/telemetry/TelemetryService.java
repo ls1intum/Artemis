@@ -33,10 +33,8 @@ public class TelemetryService {
     @Value("${artemis.telemetry.sendAdminDetails}")
     public boolean sendAdminDetails;
 
-    @Value("${eureka.client.enabled}")
+    @Value("${eureka.client.enabled:false}")
     public boolean eurekaEnabled;
-
-    public long eurekaQueryDelaySeconds = 120;
 
     public TelemetryService(ProfileService profileService, TelemetrySendingService telemetrySendingService) {
         this.profileService = profileService;
@@ -56,7 +54,7 @@ public class TelemetryService {
 
         log.info("Sending telemetry information");
         try {
-            telemetrySendingService.sendTelemetryByPostRequest(eurekaEnabled, sendAdminDetails, eurekaQueryDelaySeconds);
+            telemetrySendingService.sendTelemetryByPostRequest(eurekaEnabled, sendAdminDetails);
         }
         catch (JsonProcessingException e) {
             log.warn("JsonProcessingException in sendTelemetry.", e);

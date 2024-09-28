@@ -75,7 +75,6 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         telemetryServiceSpy.useTelemetry = true;
         telemetryServiceSpy.eurekaEnabled = true;
-        telemetryServiceSpy.eurekaQueryDelaySeconds = 1;
     }
 
     @Test
