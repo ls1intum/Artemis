@@ -37,14 +37,11 @@ public class TelemetrySendingService {
 
     private final RestTemplate restTemplate;
 
-    private final EurekaClientService eurekaClientService;
-
     private final ProfileService profileService;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, EurekaClientService eurekaClientService, ProfileService profileService) {
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService) {
         this.env = env;
         this.restTemplate = restTemplate;
-        this.eurekaClientService = eurekaClientService;
         this.profileService = profileService;
     }
 
