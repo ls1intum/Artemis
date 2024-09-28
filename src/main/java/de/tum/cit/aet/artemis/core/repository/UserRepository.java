@@ -162,12 +162,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "guidedTourSettings", "irisAccepted" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndGuidedTourSettingsAndIrisAcceptedTimestampByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
-    Optional<User> findOneWithLearningPathsByLogin(String login);
-
-    @EntityGraph(type = LOAD, attributePaths = { "learningPaths" })
-    Optional<User> findWithLearningPathsById(long userId);
-
     Long countByIsDeletedIsFalseAndGroupsContains(String groupName);
 
     @Query("""
@@ -684,40 +678,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return new PageImpl<>(users, pageable, total);
     }
 
-    @Query("""
-            SELECT user.id
-            FROM User user
-            WHERE user.isDeleted = FALSE
-            """)
-    List<Long> findUserIdsByIsDeletedIsFalse(Pageable pageable);
-
-    @Query("""
-            SELECT COUNT(user)
-            FROM User user
-            WHERE user.isDeleted = FALSE
-            """)
-    long countUsersByIsDeletedIsFalse();
-
-    /**
-     * Retrieves a paginated list of {@link User} entities that are not marked as deleted,
-     * with their associated groups.
-     *
-     * @param pageable the pagination information.
-     * @return a paginated list of {@link User} entities that are not marked as deleted. If no entities are found, returns an empty page.
-     */
-    default Page<User> findAllWithGroupsByIsDeletedIsFalse(Pageable pageable) {
-        List<Long> ids = findUserIdsByIsDeletedIsFalse(pageable);
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<User> users = findUsersWithGroupsByIdIn(ids);
-        long total = countUsersByIsDeletedIsFalse();
-        return new PageImpl<>(users, pageable, total);
-    }
-
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByIsDeletedIsFalse();
-
     @Modifying
     @Transactional // ok because of modifying query
     @Query("""
@@ -1033,17 +993,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
     @NotNull
     default User findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(long userId) {
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesAndOrganizationsById(userId), userId);
-    }
-
-    /**
-     * Find user with eagerly loaded learning paths by its id
-     *
-     * @param userId the id of the user to find
-     * @return the user with learning paths if it exists, else throw exception
-     */
-    @NotNull
-    default User findWithLearningPathsByIdElseThrow(long userId) {
-        return getValueElseThrow(findWithLearningPathsById(userId), userId);
     }
 
     /**
