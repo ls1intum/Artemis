@@ -636,6 +636,30 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldUpdateForInstructor() throws Exception {
+            var headCompetency = competencyUtilService.createCompetency(course);
+            var relationToCreate = new CompetencyRelation();
+            relationToCreate.setTailCompetency(competency);
+            relationToCreate.setHeadCompetency(headCompetency);
+            relationToCreate.setType(RelationType.EXTENDS);
+
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/course-competencies/relations", CompetencyRelationDTO.of(relationToCreate), CompetencyRelation.class,
+                    HttpStatus.OK);
+
+            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
+            assertThat(relations).hasSize(1);
+            var relation = relations.stream().findFirst().get();
+            assertThat(relation.getType()).isEqualTo(RelationType.EXTENDS);
+
+            request.patch("/api/courses/" + course.getId() + "/course-competencies/relations/" + relation.getId(), RelationType.MATCHES, HttpStatus.OK);
+
+            relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
+            assertThat(relations).hasSize(1);
+            assertThat(relations.stream().findFirst().get().getType()).isEqualTo(RelationType.MATCHES);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldReturnBadRequestWhenCompetencyNotExists() throws Exception {
             var notPersCompetency = new Competency();
             notPersCompetency.setId(1337L);
@@ -772,6 +796,7 @@ class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILo
             relation.setType(RelationType.EXTENDS);
             request.post("/api/courses/" + course.getId() + "/course-competencies/relations", CompetencyRelationDTO.of(relation), HttpStatus.FORBIDDEN);
             request.getSet("/api/courses/" + course.getId() + "/course-competencies/relations", HttpStatus.FORBIDDEN, CompetencyRelationDTO.class);
+            request.patch("/api/courses/" + course.getId() + "/course-competencies/relations/1", RelationType.EXTENDS, HttpStatus.FORBIDDEN);
             request.delete("/api/courses/" + course.getId() + "/course-competencies/relations/1", HttpStatus.FORBIDDEN);
         }
 

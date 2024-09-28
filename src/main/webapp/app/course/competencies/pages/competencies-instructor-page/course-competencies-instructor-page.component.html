@@ -1,0 +1,46 @@
+<div class="col">
+    <div class="d-flex mb-2 justify-content-between align-items-center p-2">
+        <div class="d-flex align-items-center justify-content-center">
+            <h4 class="m-0 me-2" jhiTranslate="artemisApp.courseCompetency.manage.title"></h4>
+            <jhi-documentation-button [type]="documentationType" />
+        </div>
+        <div class="d-flex">
+            <button class="btn btn-sm btn-primary" id="openCourseCompetencyRelationsButton" (click)="openCourseCompetenciesRelationModal()">
+                <fa-icon [icon]="faEdit" />
+                <span jhiTranslate="artemisApp.courseCompetency.manage.editRelationsButtonLabel"></span>
+            </button>
+            <button class="ms-3 btn btn-sm btn-primary" id="importAllCourseCompetenciesButton">
+                <fa-icon [icon]="faFileImport" />
+                <span jhiTranslate="artemisApp.courseCompetency.manage.importAllButtonLabel"></span>
+            </button>
+        </div>
+    </div>
+    @if (isLoading()) {
+        <div class="row justify-content-center p-3">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only" jhiTranslate="loading"></span>
+            </div>
+        </div>
+    } @else {
+        <div class="p-2">
+            <jhi-course-competencies-management-table
+                [courseId]="courseId()"
+                [courseCompetencies]="competencies()"
+                [courseCompetencyType]="CourseCompetencyType.COMPETENCY"
+                [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+                (onCourseCompetenciesImport)="onCourseCompetenciesImport($event)"
+                (onCourseCompetencyDeletion)="onCourseCompetencyDeletion($event)"
+            />
+        </div>
+        <div class="p-2 mt-2">
+            <jhi-course-competencies-management-table
+                [courseId]="courseId()"
+                [courseCompetencies]="prerequisites()"
+                [courseCompetencyType]="CourseCompetencyType.PREREQUISITE"
+                [standardizedCompetenciesEnabled]="standardizedCompetenciesEnabled()"
+                (onCourseCompetenciesImport)="onCourseCompetenciesImport($event)"
+                (onCourseCompetencyDeletion)="onCourseCompetencyDeletion($event)"
+            />
+        </div>
+    }
+</div>

@@ -320,6 +320,7 @@ public class CompetencyResource {
      * @param competencyId the id of the competency to remove
      * @return the ResponseEntity with status 200 (OK)
      */
+    // TODO: Delete this method as it has been moved to courseCompetencyResource
     @DeleteMapping("courses/{courseId}/competencies/{competencyId}")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deleteCompetency(@PathVariable long competencyId, @PathVariable long courseId) {

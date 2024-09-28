@@ -323,6 +323,7 @@ public class PrerequisiteResource {
      * @param prerequisiteId the id of the prerequisite to remove
      * @return the ResponseEntity with status 200 (OK)
      */
+    // TODO: Delete this method as it has been moved to courseCompetencyResource
     @DeleteMapping("courses/{courseId}/prerequisites/{prerequisiteId}")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> deletePrerequisite(@PathVariable long prerequisiteId, @PathVariable long courseId) {

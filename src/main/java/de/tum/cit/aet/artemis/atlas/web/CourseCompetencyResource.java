@@ -14,10 +14,12 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -28,6 +30,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
@@ -55,6 +58,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO;
 
@@ -62,6 +66,9 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyE
 @RestController
 @RequestMapping("api/")
 public class CourseCompetencyResource {
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
 
     private static final String ENTITY_NAME = "courseCompetency";
 
@@ -153,6 +160,27 @@ public class CourseCompetencyResource {
         courseCompetencyService.filterOutLearningObjectsThatUserShouldNotSee(competency, currentUser);
 
         return ResponseEntity.ok(competency);
+    }
+
+    /**
+     * DELETE courses/:courseId/course-competencies/:courseCompetencyId : delete the course competency with the specified id
+     *
+     * @param courseCompetencyId the id of the course competency to delete
+     * @param courseId           the id of the course to which the competency belongs
+     * @return the ResponseEntity with status 204 (NO_CONTENT)
+     */
+    @DeleteMapping("courses/{courseId}/course-competencies/{courseCompetencyId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> deleteCourseCompetency(@PathVariable long courseCompetencyId, @PathVariable long courseId) {
+        log.info("REST request to delete a Course competency : {}", courseCompetencyId);
+
+        var course = courseRepository.findByIdElseThrow(courseId);
+        var courseCompetency = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsBidirectionalElseThrow(courseCompetencyId);
+        checkCourseForCompetency(course, courseCompetency);
+
+        courseCompetencyService.deleteCourseCompetency(courseCompetency, course);
+
+        return ResponseEntity.noContent().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, courseCompetency.getTitle())).build();
     }
 
     /**
@@ -308,6 +336,28 @@ public class CourseCompetencyResource {
         var createdRelation = competencyRelationService.createCompetencyRelation(tailCompetency, headCompetency, relation.relationType(), course);
 
         return ResponseEntity.ok(CompetencyRelationDTO.of(createdRelation));
+    }
+
+    /**
+     * PATCH courses/:courseId/course-competencies/relations/:competencyRelationId update a relation type of an existing relation
+     *
+     * @param courseId             the id of the course to which the competencies belong
+     * @param competencyRelationId the id of the competency relation to update
+     * @param relationType         the new relation type
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PatchMapping("courses/{courseId}/course-competencies/relations/{competencyRelationId}")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId, @RequestBody RelationType relationType) {
+        log.info("REST request to update a competency relation: {}", competencyRelationId);
+        var relation = competencyRelationRepository.findByIdElseThrow(competencyRelationId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        checkCourseForCompetency(course, relation.getHeadCompetency());
+
+        relation.setType(relationType);
+        competencyRelationRepository.save(relation);
+
+        return ResponseEntity.ok().build();
     }
 
     /**

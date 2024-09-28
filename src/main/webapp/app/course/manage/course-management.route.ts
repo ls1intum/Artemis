@@ -6,7 +6,6 @@ import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
-import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
 import { CreateCompetencyComponent } from 'app/course/competencies/create/create-competency.component';
 import { EditCompetencyComponent } from 'app/course/competencies/edit/edit-competency.component';
 import { GenerateCompetenciesComponent } from 'app/course/competencies/generate-competencies/generate-competencies.component';
@@ -33,6 +32,7 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import/imp
 import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
 import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
 import { CourseImportStandardizedPrerequisitesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-prerequisites.component';
+import { CourseCompetenciesInstructorPageComponent } from 'app/course/competencies/pages/competencies-instructor-page/course-competencies-instructor-page.component';
 
 export const courseManagementState: Routes = [
     {
@@ -201,7 +201,7 @@ export const courseManagementState: Routes = [
                     },
                     {
                         path: 'competency-management',
-                        component: CompetencyManagementComponent,
+                        component: CourseCompetenciesInstructorPageComponent,
                         data: {
                             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                             pageTitle: 'artemisApp.competency.manage.title',
