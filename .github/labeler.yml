@@ -38,7 +38,8 @@ template:
 assessment:
   - changed-files:
       - any-glob-to-any-file:
-          - src/(main|test)/java/de/tum/cit/aet/artemis/assessment/**/*
+          - src/main/java/de/tum/cit/aet/artemis/assessment/**/*
+          - src/test/java/de/tum/cit/aet/artemis/assessment/**/*
 
 athena:
   - changed-files:
