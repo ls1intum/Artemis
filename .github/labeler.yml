@@ -33,3 +33,94 @@ config-change:
 template:
   - changed-files:
       - any-glob-to-any-file: src/main/resources/templates/**/*
+
+# module labels
+assessment:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/assessment/**
+
+athena:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/athena/**
+
+atlas:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/atlas/**
+
+buildagent:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/buildagent/**
+
+communication:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/communication/**
+
+core:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/core/**
+
+exam:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/exam/**
+
+exercise:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/exercise/**
+
+fileupload:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/fileupload/**
+
+iris:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/iris/**
+
+lecture:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/lecture/**
+
+lti:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/lti/**
+
+modeling:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/modeling/**
+
+plagiarism:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/plagiarism/**
+
+programming:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/programming/**
+
+quiz:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/quiz/**
+
+text:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/text/**
+
+tutorialgroup:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/(main|test)/java/de/tum/cit/aet/artemis/tutorialgroup/**
