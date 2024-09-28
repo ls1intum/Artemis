@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.telemetry;
+package de.tum.cit.aet.artemis.core.service;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -26,8 +26,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.core.service.telemetry.TelemetryService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 @ExtendWith(MockitoExtension.class)
 class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
