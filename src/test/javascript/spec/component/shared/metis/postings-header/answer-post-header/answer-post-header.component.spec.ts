@@ -20,6 +20,8 @@ import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdow
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { metisAnswerPostUser2, metisPostInChannel, metisResolvingAnswerPostUser1, metisUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { UserRole } from 'app/shared/metis/metis.util';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
 
 describe('AnswerPostHeaderComponent', () => {
     let component: AnswerPostHeaderComponent;
@@ -45,6 +47,7 @@ describe('AnswerPostHeaderComponent', () => {
                     useClass: MockNgbModalService,
                 },
                 { provide: ViewContainerRef, useClass: MockViewContainerRef },
+                { provide: AccountService, useClass: MockAccountService },
             ],
             declarations: [
                 AnswerPostHeaderComponent,
@@ -78,6 +81,11 @@ describe('AnswerPostHeaderComponent', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should display default profile picture', () => {
+        fixture.detectChanges();
+        expect(getElement(debugElement, '#post-default-profile-picture')).not.toBeNull();
     });
 
     it('should set author information correctly', () => {

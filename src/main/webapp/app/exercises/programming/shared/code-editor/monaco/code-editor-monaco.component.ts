@@ -3,7 +3,7 @@ import { RepositoryFileService } from 'app/exercises/shared/result/repository.se
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { EditorPosition, MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { firstValueFrom, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/entities/feedback.model';
 import { Course } from 'app/entities/course.model';
@@ -21,6 +21,7 @@ import { fromPairs, pickBy } from 'lodash-es';
 import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/exercises/programming/assess/code-editor-tutor-assessment-inline-feedback-suggestion.component';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
+import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
