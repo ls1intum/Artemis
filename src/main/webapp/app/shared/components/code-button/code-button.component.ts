@@ -386,11 +386,10 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     }
 
     startOnlineIDE() {
-        const reactURL = 'http://localhost:80';
-
         const data = {
             appDef: this.exercise?.buildConfig?.theiaImage ?? '',
-            gitToken: '12345',
+            gitUri: this.activeParticipation?.repositoryUri ?? '',
+            gitToken: this.activeParticipation?.vcsAccessToken ?? '',
         };
 
         const newWindow = window.open('', '_blank');
@@ -401,16 +400,17 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
         const form = document.createElement('form');
         form.method = 'GET';
-        form.action = reactURL;
+        form.action = this.theiaPortalURL;
         form.target = newWindow.name;
 
         // Loop over data element and create input fields
         for (const key in data) {
-            if (data.hasOwnProperty(key)) {
+            if (Object.hasOwn(data, key)) {
                 const hiddenField = document.createElement('input');
                 hiddenField.type = 'hidden';
                 hiddenField.name = key;
-                hiddenField.value = Object.getOwnPropertyDescriptor(data, key)!.value;
+                const descriptor = Object.getOwnPropertyDescriptor(data, key);
+                hiddenField.value = descriptor ? descriptor.value : '';
                 form.appendChild(hiddenField);
             }
         }
@@ -419,5 +419,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
         // Submit the form
         form.submit();
+
+        // Remove the form
+        document.body.removeChild(form);
     }
 }
