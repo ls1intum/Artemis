@@ -8,7 +8,7 @@ This project contains Python scripts that automate the setup and management of c
 
 - Ensure that Python (preferably version 3.12) is installed on your system.
 ```shell
-python3.12 --version
+python3 --version
 ```
 - Install the [Python Plugin for IntelliJ](https://plugins.jetbrains.com/plugin/631-python).
 - Enable Python support in IntelliJ:
@@ -26,12 +26,12 @@ It is recommended to use a virtual environment to manage dependencies in isolati
 
 - Install `virtualenv` if it's not already installed:
 ```shell
-python3.12 -m pip install virtualenv
+python3 -m pip install virtualenv
 ```
 
 - Create a virtual environment in your project folder:
 ```shell
-python3.12 -m virtualenv venv
+python3 -m virtualenv venv
 ```
 
 - Activate the virtual environment:
@@ -56,7 +56,7 @@ To install any packages into this virtual environment, proceed with the same ste
 - If packages are missing when running the script, install the necessary Python packages using the following command (replace `<packageName>` with the actual package name and the python version with your used python version):
 
 ```shell
-python3.12 -m pip install <packageName>
+python3 -m pip install <packageName>
 ```
 # Usage
 
@@ -166,6 +166,30 @@ The script will automatically perform all the necessary steps:
 5. Create a programming exercise or use an existing one. 
 6. Add participation and commit for each student.
 
+### Optional: Generating Different Results For All Created Students (Should only be done Locally!!)
+
+If you want to generate different results for all the students created by the script:
+
+1.	Run the following Script which will navigate to the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and copy the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file into it.
+    It will delete the existing folders (behavior and structural) from the programming exercise’s test case template. The new test cases will randomly pass or fail, causing different results for each student.
+```shell
+python3 randomize_results_before.py
+```
+2.  Rebuild Artemis to apply the changes.
+3.	Run the main method in large_course_main.py. Now, all created students should have varying results in the programming exercise.
+```shell
+python3 large_course_main.py
+```
+4.  Make sure to revert these changes after running the script. The following script copies the original test case files from the [default](./testFiles-template/default) folder back into the [testFiles](../../../src/main/resources/templates/java/test/testFiles) folder and deletes the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file that was copied to [testFiles](../../../src/main/resources/templates/java/test/testFiles) in Step 1.
+    If you don't run this script after running the script in Step 1, you risk breaking the real template of the programming exercise if these changes are pushed and merged.
+```shell
+python3 randomize_results_after.py
+```
+
+### Optional: Using an Existing Programming Exercise (Can also be done on Test Server)
+Alternatively, you can use an existing programming exercise and push the [RandomizedTestCases](./testFiles-template/randomized/RandomizedTestCases.java) file to the test repository of the programming exercise. 
+Make sure to adjust the [config.ini](./config.ini) file to use the existing programming exercise with the corresponding exercise ID, allowing the script to push with the created students to this existing programming exercise.
+
 ### Optional: Deleting All Created Students
 
 If you want to delete all the students created by the script:
@@ -173,4 +197,17 @@ If you want to delete all the students created by the script:
 1.	Run the main in delete_students.py.
 ```shell
 python3 delete_students.py
+```
+
+### Dependency management
+
+Find outdated dependencies using the following command:
+```
+pip list --outdated
+```
+
+Find unused dependencies using the following command:
+```
+pip install deptry
+deptry .
 ```

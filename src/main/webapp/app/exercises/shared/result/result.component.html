@@ -21,6 +21,7 @@
         }
         @case (ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
             @if (result) {
+                <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" animation="spin" size="lg" />
                 <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
                     <span [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}

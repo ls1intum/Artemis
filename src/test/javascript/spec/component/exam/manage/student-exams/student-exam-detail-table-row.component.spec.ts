@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ReactiveFormsModule } from '@angular/forms';
