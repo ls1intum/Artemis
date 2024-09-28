@@ -30,4 +30,6 @@ public interface AnswerPostRepository extends ArtemisJpaRepository<AnswerPost, L
     default AnswerPost findAnswerMessageByIdElseThrow(Long answerPostId) {
         return getValueElseThrow(findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() != null), answerPostId);
     }
+
+    long countAnswerPostsByPostIdIn(List<Long> postIds);
 }

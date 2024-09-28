@@ -20,7 +20,10 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -29,13 +32,16 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
+import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamLiveEventRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.quiz.domain.QuizPool;
 import de.tum.cit.aet.artemis.quiz.repository.QuizPoolRepository;
 
@@ -71,10 +77,17 @@ public class ExamDeletionService {
 
     private final QuizPoolRepository quizPoolRepository;
 
+    private final BuildJobRepository buildJobRepository;
+
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
     public ExamDeletionService(ExerciseDeletionService exerciseDeletionService, ParticipationService participationService, CacheManager cacheManager, UserRepository userRepository,
             ExamRepository examRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, GradingScaleRepository gradingScaleRepository,
             StudentParticipationRepository studentParticipationRepository, ChannelRepository channelRepository, ChannelService channelService,
-            ExamLiveEventRepository examLiveEventRepository, QuizPoolRepository quizPoolRepository) {
+            ExamLiveEventRepository examLiveEventRepository, QuizPoolRepository quizPoolRepository, BuildJobRepository buildJobRepository, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.participationService = participationService;
         this.cacheManager = cacheManager;
@@ -88,6 +101,9 @@ public class ExamDeletionService {
         this.channelService = channelService;
         this.examLiveEventRepository = examLiveEventRepository;
         this.quizPoolRepository = quizPoolRepository;
+        this.buildJobRepository = buildJobRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -239,5 +255,35 @@ public class ExamDeletionService {
         // Delete the test run student exam
         log.info("Request to delete Test Run {}", testRunId);
         studentExamRepository.deleteById(testRunId);
+    }
+
+    /**
+     * Get the exam deletion summary for the given exam.
+     *
+     * @param examId the ID of the exam for which the deletion summary should be fetched
+     * @return the exam deletion summary
+     */
+    public ExamDeletionSummaryDTO getExamDeletionSummary(@NotNull long examId) {
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        long numberOfBuilds = exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream())
+                .filter(exercise -> ExerciseType.PROGRAMMING.equals(exercise.getExerciseType()))
+                .mapToLong(exercise -> buildJobRepository.countBuildJobsByExerciseIds(List.of(exercise.getId()))).sum();
+
+        Channel channel = channelRepository.findChannelByExamId(examId);
+        Long conversationId = channel.getId();
+
+        List<Long> postIds = postRepository.findAllByConversationId(conversationId).stream().map(Post::getId).toList();
+        long numberOfCommunicationPosts = postIds.size();
+        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(postIds);
+
+        Set<StudentExam> studentExams = exam.getStudentExams();
+        long numberRegisteredStudents = studentExams.size();
+
+        // Boolean.TRUE/Boolean.FALSE are used to handle the case where isStarted/isSubmitted is null
+        long notStartedExams = studentExams.stream().filter(studentExam -> studentExam.isStarted() == null || !studentExam.isStarted()).count();
+        long startedExams = studentExams.stream().filter(studentExam -> Boolean.TRUE.equals(studentExam.isStarted())).count();
+        long submittedExams = studentExams.stream().filter(studentExam -> Boolean.TRUE.equals(studentExam.isStarted()) && Boolean.TRUE.equals(studentExam.isSubmitted())).count();
+
+        return new ExamDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts, numberRegisteredStudents, notStartedExams, startedExams, submittedExams);
     }
 }
