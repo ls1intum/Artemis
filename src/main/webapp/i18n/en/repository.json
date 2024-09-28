@@ -20,6 +20,17 @@
                     "empty": "No changes",
                     "fileUnchanged": "No changes in the file content"
                 }
+            },
+            "vcsAccessLog": {
+                "title": "VCS Access Log",
+                "openVcsAccessLog": "Open Access Log",
+                "userId": "User Id",
+                "author": "Author",
+                "actionType": "Action Type",
+                "authMechanism": "Access Type",
+                "commitHash": "Commit Hash",
+                "timeStamp": "Timestamp",
+                "error": "VCS Access log could not be retrieved"
             }
         }
     }

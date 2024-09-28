@@ -97,12 +97,12 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
+    isGeneratingFeedback: boolean = false;
 
     exampleSolutionInfo?: ExampleSolutionInfo;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
-
     // Icons
     faBook = faBook;
     faEye = faEye;
@@ -243,7 +243,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private filterUnfinishedResults(participations?: StudentParticipation[]) {
         participations?.forEach((participation: Participation) => {
             if (participation.results) {
-                participation.results = participation.results.filter((result: Result) => result.completionDate);
+                participation.results = participation.results.filter((result: Result) => result.completionDate && result.successful !== undefined);
             }
         });
     }
@@ -251,7 +251,10 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     sortResults() {
         if (this.studentParticipations?.length) {
             this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
-            this.sortedHistoryResults = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.resultSortFunction);
+            this.sortedHistoryResults = this.studentParticipations
+                .flatMap((participation) => participation.results ?? [])
+                .sort(this.resultSortFunction)
+                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful == undefined));
         }
     }
 
@@ -302,10 +305,18 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
                         changedParticipation.exercise?.dueDate &&
                         hasExerciseDueDatePassed(changedParticipation.exercise, changedParticipation) &&
                         changedParticipation.id === this.gradedStudentParticipation?.id &&
-                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                        changedParticipation.results?.length! > this.gradedStudentParticipation?.results?.length!
+                        (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0)
                     ) {
+                        this.isGeneratingFeedback = false;
                         this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
+                    }
+                    if (
+                        (changedParticipation.results?.length || 0) > (this.gradedStudentParticipation?.results?.length || 0) &&
+                        changedParticipation.results?.last()?.assessmentType === AssessmentType.AUTOMATIC_ATHENA &&
+                        changedParticipation.results?.last()?.successful !== undefined
+                    ) {
+                        this.isGeneratingFeedback = false;
+                        this.alertService.success('artemisApp.exercise.athenaFeedbackSuccessful');
                     }
                     if (this.studentParticipations?.some((participation) => participation.id === changedParticipation.id)) {
                         this.exercise.studentParticipations = this.studentParticipations.map((participation) =>
@@ -425,4 +436,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     changeExampleSolution() {
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
+
+    setIsGeneratingFeedback() {}
 }

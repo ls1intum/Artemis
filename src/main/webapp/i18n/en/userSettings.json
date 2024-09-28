@@ -13,6 +13,11 @@
             "scienceSettings": "Science",
             "scienceSettingsFeatureDisabled": "The science feature is currently disabled. You can still edit your settings in case the feature gets enabled again.",
             "scienceSettingsInfo": "Help Artemis to get better!",
+            "idePreferencesPage": {
+                "description": "Choose the IDEs you want to use for opening programming exercises.",
+                "default": "Default",
+                "jetbrainsHelp": "To use JetBrains IDEs, please install the JetBrains Toolbox."
+            },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Here you can set a public SSH key to clone git repositories via SSH. For more details see the documentation.",
                 "deleteSshKeyQuestion": "Are you sure you want to delete your public SSH key?",
@@ -49,13 +54,16 @@
                 "login": "Login",
                 "email": "Email",
                 "joinedArtemis": "Joined Artemis on",
+                "profilePicture": "Profile Picture",
+                "addProfilePicture": "Add a profile picture",
                 "sshKey": "Public SSH Key"
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Notification Settings",
                 "SCIENCE_SETTINGS": "Science Settings",
                 "SSH_SETTINGS": "SSH Settings",
-                "VCS_TOKEN_SETTINGS": "VCS Token Settings"
+                "VCS_TOKEN_SETTINGS": "VCS Token Settings",
+                "IDE_PREFERENCES": "IDE Preferences"
             },
             "settingGroupNames": {
                 "weeklySummary": "Weekly Summary",
