@@ -119,6 +119,16 @@ public class ModelingExerciseUtilService {
     }
 
     /**
+     * Updates an existing ModelingExercise in the database.
+     *
+     * @param exercise The ModelingExercise to be updated
+     * @return The updated ModelingExercise
+     */
+    public ModelingExercise updateExercise(ModelingExercise exercise) {
+        return modelingExerciseRepository.save(exercise);
+    }
+
+    /**
      * Creates and saves a Course with a ModelingExercise. The ModelingExercise's DiagramType is set to ClassDiagram.
      *
      * @return The created Course
