@@ -11,7 +11,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.communication.domain.conversation.OneToOneChat;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 @Profile(PROFILE_CORE)
@@ -72,16 +71,6 @@ public interface OneToOneChatRepository extends ArtemisJpaRepository<OneToOneCha
     // We only execute the exists check for the second user, because we can filter the chats by the first user. This reduces the amounts of existence checks to the number of
     // one-to-one chats userA has in that specific course.
     Optional<OneToOneChat> findWithParticipantsAndUserGroupsInCourseBetweenUsers(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
-
-    @Query("""
-            SELECT DISTINCT oneToOneChat
-            FROM OneToOneChat oneToOneChat
-                LEFT JOIN FETCH oneToOneChat.conversationParticipants p
-                LEFT JOIN FETCH p.user u
-                LEFT JOIN FETCH u.groups
-            WHERE oneToOneChat.id = :oneToOneChatId
-            """)
-    Optional<OneToOneChat> findByIdWithConversationParticipantsAndUserGroups(@Param("oneToOneChatId") Long oneToOneChatId) throws EntityNotFoundException;
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 }

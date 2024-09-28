@@ -13,27 +13,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.dto.TutorEffortDTO;
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "tutoreffort"; // only lower case is supported
 
     @Autowired
-    private TextSubmissionRepository textSubmissionRepository;
+    private TextSubmissionTestRepository textSubmissionTestRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
@@ -57,10 +57,10 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
-        textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
+        textSubmission = textSubmissionTestRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
         var instructor = userUtilService.createAndSaveUser(TEST_PREFIX + "instructor");
         instructor.setGroups(Set.of(course.getInstructorGroupName()));
-        userRepository.save(instructor);
+        userTestRepository.save(instructor);
     }
 
     /**

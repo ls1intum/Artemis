@@ -16,16 +16,16 @@ import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
-import de.tum.cit.aet.artemis.connector.IrisRequestMockProvider;
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.iris.domain.IrisTemplate;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.repository.IrisSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
@@ -37,7 +37,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
     protected IrisRequestMockProvider irisRequestMockProvider;
 
     @Autowired
-    protected ProgrammingExerciseRepository programmingExerciseRepository;
+    protected ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
     private IrisSettingsRepository irisSettingsRepository;
