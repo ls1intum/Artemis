@@ -98,6 +98,7 @@ excludedEndpoints:
   - 'api/account'
   - 'api/account/ssh-public-key'
   - 'api/account/user-vcs-access-token'
+  - 'api/account/participation-vcs-access-token'
   - 'api/public/account'
   - 'api/public/account/change-language'
   - 'api/public/saml2'
