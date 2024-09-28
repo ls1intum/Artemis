@@ -15,6 +15,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
             [
                 ...LAYOUT_ROUTES,
                 {
+                    path: '',
+                    loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
+                },
+                {
                     path: 'admin',
                     loadChildren: () => import('./admin/admin.module').then((m) => m.ArtemisAdminModule),
                 },

@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.assessment.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
@@ -15,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -24,8 +23,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Repository
 public interface ComplaintResponseRepository extends ArtemisJpaRepository<ComplaintResponse, Long> {
-
-    Optional<ComplaintResponse> findByComplaint_Id(Long complaintId);
 
     /**
      * This magic method counts the number of complaints responses by complaint type associated to a course id
@@ -69,7 +66,7 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      * @return List of exercise ids with their number of complaints
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
                 cr.complaint.result.participation.exercise.id,
                 COUNT(DISTINCT cr)
             )
@@ -80,7 +77,7 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
                 AND cr.complaint.result.participation.testRun = FALSE
             GROUP BY cr.complaint.result.participation.exercise.id
             """)
-    List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
+    List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
 
     /**
@@ -91,7 +88,7 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
      * @return list of exercise ids with their number of complaints based on the complaint type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
                 cr.complaint.result.participation.exercise.id,
                 COUNT(DISTINCT cr)
             )
@@ -101,7 +98,8 @@ public interface ComplaintResponseRepository extends ArtemisJpaRepository<Compla
                 AND cr.complaint.complaintType = :complaintType
             GROUP BY cr.complaint.result.participation.exercise.id
             """)
-    List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
+    List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintComplaintType(@Param("exerciseIds") Set<Long> exerciseIds,
+            @Param("complaintType") ComplaintType complaintType);
 
     /**
      * Delete all complaint responses that belong to the given result
