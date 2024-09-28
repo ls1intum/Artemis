@@ -9,5 +9,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param sumPointsAchieved the sum of points achieved by the student
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record StudentScoreSum(long userId, double sumPointsAchieved) {
+public record StudentScoreSumDTO(long userId, double sumPointsAchieved) {
+
+    public StudentScoreSumDTO(Long userId, Double sumPointsAchieved) {
+        this(userId != null ? userId : 0, sumPointsAchieved != null ? sumPointsAchieved : 0.0);
+    }
 }
