@@ -10,7 +10,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlab
 /**
  * Base class for Athena tests providing common functionality
  */
-public abstract class AbstractAthenaTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+public abstract class AbstractAthenaTest extends AbstractSpringIntegrationJenkinsGitlabTest { // change
 
     @Autowired
     protected AthenaRequestMockProvider athenaRequestMockProvider;
