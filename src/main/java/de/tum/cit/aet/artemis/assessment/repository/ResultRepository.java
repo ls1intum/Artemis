@@ -147,23 +147,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findResultWithSubmissionsById(long resultId);
 
-    /**
-     * Finds the first result by participation ID, including its submissions, ordered by completion date in descending order.
-     * This method avoids in-memory paging by retrieving the first result directly from the database.
-     *
-     * @param participationId the ID of the participation to find the result for
-     * @return an {@code Optional} containing the first {@code Result} with submissions, ordered by completion date in descending order,
-     *         or an empty {@code Optional} if no result is found
-     */
-    default Optional<Result> findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
-        if (resultOptional.isEmpty()) {
-            return Optional.empty();
-        }
-        var id = resultOptional.get().getId();
-        return findResultWithSubmissionsById(id);
-    }
-
     Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
 
     /**
@@ -184,11 +167,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return findResultWithSubmissionsById(id);
     }
 
-    Optional<Result> findDistinctBySubmissionId(long submissionId);
-
-    @EntityGraph(type = LOAD, attributePaths = "feedbacks")
-    Optional<Result> findDistinctWithFeedbackBySubmissionId(long submissionId);
-
     @Query("""
             SELECT r
             FROM Result r
@@ -207,8 +185,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") long resultId);
-
-    Set<Result> findAllByParticipationExerciseId(long exerciseId);
 
     /**
      * Load a result from the database by its id together with the associated submission, the list of feedback items, its assessor and assessment note.
@@ -351,9 +327,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             GROUP BY p.id
             """)
     List<Long> countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(@Param("examId") long examId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
-    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(long exerciseId);
 
     @Query("""
             SELECT COUNT(DISTINCT p)
@@ -800,10 +773,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         else {
             return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         }
-    }
-
-    default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return getValueElseThrow(findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId));
     }
 
     default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(long resultId) {
