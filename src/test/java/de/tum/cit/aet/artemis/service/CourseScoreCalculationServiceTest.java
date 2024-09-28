@@ -22,7 +22,7 @@ import de.tum.cit.aet.artemis.assessment.GradingScaleFactory;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
-import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePoints;
+import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -157,7 +157,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         result.score(null);
 
         StudentScoresDTO studentScoresDTO = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), studentParticipations,
-                new MaxAndReachablePoints(25.0, 5.0, 0.0), List.of());
+                new MaxAndReachablePointsDTO(25.0, 5.0, 0.0), List.of());
         if (withDueDate) {
             assertThat(studentScoresDTO.absoluteScore()).isEqualTo(2.1);
             assertThat(studentScoresDTO.relativeScore()).isEqualTo(8.4);
@@ -281,7 +281,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationIndepen
         User student = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
 
         StudentScoresDTO studentScore = courseScoreCalculationService.calculateCourseScoreForStudent(course, null, student.getId(), Collections.emptyList(),
-                new MaxAndReachablePoints(100.00, 100.00, 0.0), Collections.emptyList());
+                new MaxAndReachablePointsDTO(100.00, 100.00, 0.0), Collections.emptyList());
         assertThat(studentScore.absoluteScore()).isZero();
         assertThat(studentScore.relativeScore()).isZero();
         assertThat(studentScore.currentRelativeScore()).isZero();

@@ -18,13 +18,11 @@
         "strictNullChecks": true,
         "resolveJsonModule": true,
         "skipLibCheck": true,
-        "allowSyntheticDefaultImports":true,
+        "allowSyntheticDefaultImports": true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
         "lib": ["es2022", "dom"],
-        "typeRoots": [
-            "node_modules/@types"
-        ],
+        "typeRoots": ["node_modules/@types"],
         "baseUrl": "./",
         "paths": {
             "app/*": ["src/main/webapp/app/*"]
@@ -34,7 +32,7 @@
     },
     "angularCompilerOptions": {
         "genDir": "build/resources/main/aot",
-        "skipMetadataEmit" : true,
+        "skipMetadataEmit": true,
         "fullTemplateTypeCheck": true,
         "strictTemplates": true,
         "preserveWhitespaces": true,
@@ -44,10 +42,6 @@
             }
         }
     },
-    "include": [
-        "src/main/webapp/app"
-    ],
-    "exclude": [
-        "node_modules"
-    ]
+    "include": ["src/main/webapp/app"],
+    "exclude": ["node_modules"]
 }

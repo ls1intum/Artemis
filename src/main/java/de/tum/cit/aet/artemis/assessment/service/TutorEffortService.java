@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.dto.TutorEffort;
+import de.tum.cit.aet.artemis.assessment.dto.TutorEffortDTO;
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 
@@ -41,17 +41,17 @@ public class TutorEffortService {
      * @param exerciseId id of the exercise to calculate for
      * @return a list of built tutor efforts
      */
-    public List<TutorEffort> buildTutorEffortList(Long courseId, Long exerciseId) {
+    public List<TutorEffortDTO> buildTutorEffortList(Long courseId, Long exerciseId) {
         Map<Long, Integer> submissionsPerTutor = textAssessmentEventRepository.getAssessedSubmissionCountPerTutor(courseId, exerciseId);
         List<TextAssessmentEvent> listOfEvents = textAssessmentEventRepository.findAllNonEmptyEvents(courseId, exerciseId);
 
-        List<TutorEffort> tutorEffortList = new ArrayList<>();
+        List<TutorEffortDTO> tutorEffortList = new ArrayList<>();
         Map<Long, List<TextAssessmentEvent>> newMap = listOfEvents.stream().collect(groupingBy(TextAssessmentEvent::getUserId));
         if (newMap.isEmpty()) {
             return tutorEffortList;
         }
         newMap.forEach((currentUserId, currentUserEvents) -> {
-            TutorEffort effort = createTutorEffortWithInformation(currentUserId, currentUserEvents, submissionsPerTutor.get(currentUserId));
+            TutorEffortDTO effort = createTutorEffortWithInformation(currentUserId, currentUserEvents, submissionsPerTutor.get(currentUserId));
             tutorEffortList.add(effort);
         });
         return tutorEffortList;
@@ -65,14 +65,9 @@ public class TutorEffortService {
      * @param submissions the number of submissions the tutor assessed
      * @return a TutorEffort object with all the data set
      */
-    private TutorEffort createTutorEffortWithInformation(Long userId, List<TextAssessmentEvent> events, int submissions) {
-        TutorEffort effort = new TutorEffort();
-        effort.setUserId(userId);
-        effort.setCourseId(events.getFirst().getCourseId());
-        effort.setExerciseId(events.getFirst().getTextExerciseId());
-        effort.setTotalTimeSpentMinutes(calculateTutorOverallTimeSpent(events));
-        effort.setNumberOfSubmissionsAssessed(submissions);
-        return effort;
+    private TutorEffortDTO createTutorEffortWithInformation(Long userId, List<TextAssessmentEvent> events, int submissions) {
+        var firstEvent = events.getFirst();
+        return new TutorEffortDTO(userId, submissions, calculateTutorOverallTimeSpent(events), firstEvent.getTextExerciseId(), firstEvent.getCourseId());
     }
 
     /**

@@ -14,7 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.assessment.dto.TutorEffort;
+import de.tum.cit.aet.artemis.assessment.dto.TutorEffortDTO;
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -74,9 +74,10 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         textAssessmentEventRepository.saveAll(events);
 
-        List<TutorEffort> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK, TutorEffort.class);
+        List<TutorEffortDTO> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK,
+                TutorEffortDTO.class);
 
-        TutorEffort effortExpected = createTutorEffortObject(0);
+        TutorEffortDTO effortExpected = createTutorEffortObject(0);
 
         assertThat(tutorEfforts).isNotNull().hasSize(1);
         assertThat(tutorEfforts.getFirst()).usingRecursiveComparison().isEqualTo(effortExpected);
@@ -93,9 +94,10 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
 
         textAssessmentEventRepository.saveAll(events);
 
-        List<TutorEffort> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK, TutorEffort.class);
+        List<TutorEffortDTO> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK,
+                TutorEffortDTO.class);
 
-        TutorEffort effortExpected = createTutorEffortObject(25);
+        TutorEffortDTO effortExpected = createTutorEffortObject(25);
 
         assertThat(tutorEfforts).isNotNull().hasSize(1);
         assertThat(tutorEfforts.getFirst()).usingRecursiveComparison().isEqualTo(effortExpected);
@@ -112,22 +114,17 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationIndependentTes
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(11, 10);
         textAssessmentEventRepository.saveAll(events);
 
-        List<TutorEffort> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK, TutorEffort.class);
+        List<TutorEffortDTO> tutorEfforts = request.getList("/api/courses/" + course.getId() + "/exercises/" + exercise.getId() + "/tutor-effort", HttpStatus.OK,
+                TutorEffortDTO.class);
 
-        TutorEffort effortExpected = createTutorEffortObject(0);
+        TutorEffortDTO effortExpected = createTutorEffortObject(0);
 
         assertThat(tutorEfforts).isNotNull().hasSize(1);
         assertThat(tutorEfforts.getFirst()).usingRecursiveComparison().isEqualTo(effortExpected);
     }
 
-    TutorEffort createTutorEffortObject(int minutes) {
-        TutorEffort tutorEffort = new TutorEffort();
-        tutorEffort.setUserId(1L);
-        tutorEffort.setNumberOfSubmissionsAssessed(1);
-        tutorEffort.setExerciseId(exercise.getId());
-        tutorEffort.setCourseId(course.getId());
-        tutorEffort.setTotalTimeSpentMinutes(minutes);
-        return tutorEffort;
+    TutorEffortDTO createTutorEffortObject(int minutes) {
+        return new TutorEffortDTO(1L, 1, minutes, exercise.getId(), course.getId());
     }
 
     List<TextAssessmentEvent> createTextAssessmentEventsInIntervals(int timestamps, int distance) {
