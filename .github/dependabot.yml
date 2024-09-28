@@ -29,8 +29,8 @@ updates:
       - "ready for review"
       - "dependencies"
 
-  # Check for Maven updates (if using Java)
-  - package-ecosystem: "maven"
+  # Check for Gradle updates
+  - package-ecosystem: "gradle"
     directory: "/"
     schedule:
       interval: "daily"
