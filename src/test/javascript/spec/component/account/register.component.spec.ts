@@ -152,5 +152,18 @@ describe('Register Component Tests', () => {
                 expect(comp.error).toBeTrue();
             }),
         ));
+
+        it('should focus login input if login is defined', () => {
+            const focusSpy = jest.fn();
+            comp.login = {
+                nativeElement: {
+                    focus: focusSpy,
+                },
+            } as ElementRef;
+
+            comp.ngAfterViewInit();
+
+            expect(focusSpy).toHaveBeenCalled();
+        });
     });
 });

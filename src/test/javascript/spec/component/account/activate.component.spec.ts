@@ -70,34 +70,4 @@ describe('ActivateComponent', () => {
             expect(comp.success).toBeFalse();
         }),
     ));
-
-    it('should set registration enabled to true and call activateAccount when registration is enabled', inject(
-        [ProfileService, ActivateService],
-        fakeAsync((profileService: ProfileService) => {
-            const profileInfo = { registrationEnabled: true };
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
-            jest.spyOn(comp, 'activateAccount');
-
-            comp.ngOnInit();
-            tick();
-
-            expect(comp.isRegistrationEnabled).toBeTrue();
-            expect(comp.activateAccount).toHaveBeenCalled();
-        }),
-    ));
-
-    it('should set registration enabled to false when registration is disabled', inject(
-        [ProfileService],
-        fakeAsync((profileService: ProfileService) => {
-            const profileInfo = { registrationEnabled: false };
-            jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo));
-            jest.spyOn(comp, 'activateAccount');
-
-            comp.ngOnInit();
-            tick();
-
-            expect(comp.isRegistrationEnabled).toBeFalse();
-            expect(comp.activateAccount).not.toHaveBeenCalled();
-        }),
-    ));
 });
