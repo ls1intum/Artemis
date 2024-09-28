@@ -34,9 +34,9 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-      reviewers:
-        - "bassner"
-        - "krusche"
+    reviewers:
+      - "bassner"
+      - "krusche"
     open-pull-requests-limit: 5
     labels:
       - "ready for review"
@@ -47,9 +47,9 @@ updates:
     directory: "/docs"
     schedule:
       interval: "weekly"
-      reviewers:
-        - "bassner"
-        - "krusche"
+    reviewers:
+      - "bassner"
+      - "krusche"
     open-pull-requests-limit: 5
     labels:
       - "ready for review"
@@ -60,9 +60,9 @@ updates:
     directory: "/supporting_scripts/generate_code_cov_table"
     schedule:
       interval: "weekly"
-      reviewers:
-        - "bassner"
-        - "krusche"
+    reviewers:
+      - "bassner"
+      - "krusche"
     open-pull-requests-limit: 5
     labels:
       - "ready for review"
@@ -73,9 +73,9 @@ updates:
     directory: "/supporting_scripts/course-scripts/quick-course-setup"
     schedule:
       interval: "weekly"
-      reviewers:
-        - "bassner"
-        - "krusche"
+    reviewers:
+      - "bassner"
+      - "krusche"
     open-pull-requests-limit: 5
     labels:
       - "ready for review"
