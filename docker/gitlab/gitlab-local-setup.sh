@@ -47,7 +47,7 @@ artemis:
 "
 
 echo
-echo 'The access Jenkins token has been created and can be copied into your jenkins-casc-config.yml file:'
+echo 'The access Jenkins token has been created and can be copied into your jenkins-casc-config-gitlab.yml file:'
 echo "
 credentials:
   system:

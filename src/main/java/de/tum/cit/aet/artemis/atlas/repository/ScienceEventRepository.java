@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEvent;
-import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -21,8 +20,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Profile(PROFILE_CORE)
 @Repository
 public interface ScienceEventRepository extends ArtemisJpaRepository<ScienceEvent, Long> {
-
-    Set<ScienceEvent> findAllByType(ScienceEventType type);
 
     @Transactional // ok because of modifying query
     @Modifying
