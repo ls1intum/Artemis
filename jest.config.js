@@ -14,7 +14,7 @@ const esModules = [
     '@angular/service-worker',
     '@ctrl/ngx-emoji-mart',
     '@danielmoncada/angular-datetime-picker',
-    '@flaviosantoro92/ngx-datatable',
+    '@siemens/ngx-datatable',
     '@fortawesome/angular-fontawesome',
     '@ls1intum/apollon',
     '@ng-bootstrap/ng-bootstrap',
