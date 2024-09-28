@@ -59,13 +59,13 @@ function parseTypeScriptFile(filePath: string): TSESTree.Program | null {
     }
 }
 
-function readConfigFile(filePath: string): Config | null {
+function readConfigFile(filePath: string): Config | undefined {
     try {
         const fileContent = readFileSync(filePath, 'utf8');
         return load(fileContent) as Config;
     } catch (error) {
         console.error('Failed to read config file:', error);
-        return null;
+        return undefined;
     }
 }
 

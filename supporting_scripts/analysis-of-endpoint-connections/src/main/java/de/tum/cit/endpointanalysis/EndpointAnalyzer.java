@@ -119,15 +119,13 @@ public class EndpointAnalyzer {
      * 1. Removes entire files that are excluded from the analysis based on the file paths specified in the configuration.
      * 2. Removes individual endpoints that are excluded from the analysis based on the endpoint URIs specified in the configuration.
      *
-     * @param endpoints The list of EndpointClassInformation objects to be filtered.
+     * @param endpoints The list of {@link de.tum.cit.endpointanalysis.EndpointClassInformation} objects to be filtered.
      */
     private static void excludeExcludedEndpoints(List<EndpointClassInformation> endpoints) {
-        // remove entire files that are excluded from the analysis
         CONFIG.excludedEndpointFiles().forEach(excludedEndpointFile -> {
             endpoints.removeIf(endpointFile -> CONFIG.excludedEndpointFiles().contains(endpointFile.filePath()));
         });
 
-        // remove entire files that are excluded from the analysis by URI
         for (EndpointClassInformation endpointFile : endpoints) {
             endpointFile.endpoints().removeIf(endpoint -> CONFIG.excludedEndpoints().contains(endpoint.buildCompleteEndpointURI()));
         }

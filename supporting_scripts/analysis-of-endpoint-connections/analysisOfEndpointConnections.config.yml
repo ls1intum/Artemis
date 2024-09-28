@@ -1,6 +1,15 @@
-# This File is the configuration file for the analysisOfEndpointConnections. It allows to exclude certain endpoints
+# This file is the configuration file for the GitHub action Analysis Of Endpoint Connections. It allows to exclude certain endpoints
 # (either by URI or by file name) from the analysis, and to define the output file paths.
 
+# These are the paths to the files that contain the parsing results and the analysis results and to the client directory.
+# Adjust the paths as necessary.
+endpointParsingResultPath: 'endpoints.json'
+restCallParsingResultPath: 'restCalls.json'
+endpointAnalysisResultPath: 'endpointAnalysisResult.json'
+restCallAnalysisResultPath: 'restCallAnalysisResult.json'
+clientDirPath: 'src/main/webapp/app'
+
+# This sections holds a list of files that should be excluded from the parsing and the analysis. Adjust the list as necessary.
 excludedServerFiles:
   -
 
@@ -271,9 +280,3 @@ excludedRestCalls:
   - 'api/results/${resultId}'
   - 'api/attachments'
   - 'api/repository/${participationId}/file'
-
-endpointParsingResultPath: 'endpoints.json'
-restCallParsingResultPath: 'restCalls.json'
-endpointAnalysisResultPath: 'endpointAnalysisResult.json'
-restCallAnalysisResultPath: 'restCallAnalysisResult.json'
-clientDirPath: 'src/main/webapp/app'

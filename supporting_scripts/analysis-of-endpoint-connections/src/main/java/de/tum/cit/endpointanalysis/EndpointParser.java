@@ -60,7 +60,7 @@ public class EndpointParser {
             return mapper.readValue(new File("analysisOfEndpointConnections.config.yml"), Config.class);
         }
         catch (IOException e) {
-            System.err.println("Failed to read config file: " + e.getMessage());
+            log.error("Failed to read config file: {}", e.getMessage(), e);
             return null;
         }
     }
