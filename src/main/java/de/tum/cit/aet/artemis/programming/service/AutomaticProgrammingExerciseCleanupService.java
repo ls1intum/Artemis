@@ -150,7 +150,7 @@ public class AutomaticProgrammingExerciseCleanupService {
             gitService.deleteLocalRepository(vcsRepositoryUrl);
         }
         catch (URISyntaxException e) {
-            log.error("Cannot create URI for repositoryUri: {} due to the following error: {}", uri, e.getMessage());
+            log.error("Cannot create URI for repositoryUri: {}", uri, e);
         }
     }
 
