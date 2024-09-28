@@ -10,25 +10,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
-import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
-import de.tum.cit.aet.artemis.assessment.repository.TutorParticipationRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ExampleSubmissionTestRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.TutorParticipationTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "tutorparticipationresource";
 
     @Autowired
-    private TutorParticipationRepository tutorParticipationRepository;
+    private TutorParticipationTestRepository tutorParticipationRepository;
 
     @Autowired
-    private ExampleSubmissionRepository exampleSubmissionRepository;
+    private ExampleSubmissionTestRepository exampleSubmissionRepository;
 
     @Autowired
     private ParticipationUtilService participationUtilService;
