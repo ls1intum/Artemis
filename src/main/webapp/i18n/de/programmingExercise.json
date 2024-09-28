@@ -128,9 +128,9 @@
                 "warningBuildScript": "Stellen Sie sicher, dass Sie das Build-Skript und die Repositories entsprechend anpassen."
             },
             "timeout": {
-                "title": "Timeout",
-                "customize": "Sie können das Timeout für den Build anpassen. Stellen Sie sicher, dass Sie einen gültigen Ganzzahlwert angeben. Die Einheit ist Sekunden. Beachten Sie, dass dieser Wert durch das von den Administratoren festgelegte obere Limit überschrieben werden kann.",
-                "alert": "Das Timeout muss ein gültiger Ganzzahlwert sein."
+                "title": "Maximale Build-Dauer in Sekunden ",
+                "customize": "Setze den Wert auf 0, um den Standardwert zu verwenden. Stelle sicher, dass du einen gültigen ganzzahligen Wert angibst. Die Einheit ist Sekunden. Beachte, dass dieser Wert durch das von den Administratoren festgelegte maximale Limit (Standard ist 240s) überschrieben werden kann.",
+                "alert": "Das Timeout muss ein gültiger ganzzahliger Wert sein."
             },
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {

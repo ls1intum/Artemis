@@ -16,19 +16,30 @@
         />
     </div>
     @if (!isAeolus()) {
-        <label>
-            <span jhiTranslate="artemisApp.programmingExercise.timeout.title"></span>
-        </label>
-        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeout.customize" />
-        <input
-            #timeoutField="ngModel"
-            type="number"
-            min="0"
-            class="form-control"
-            name="timeout"
-            id="field_timeout"
-            [ngModel]="timeout()"
-            (ngModelChange)="timeoutChange!.emit($event)"
-        />
+        <div class="d-flex align-items-center justify-content-start gap-4 mb-3">
+            <div>
+                <label>
+                    <span jhiTranslate="artemisApp.programmingExercise.timeout.title"></span>
+                </label>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.timeout.customize" />
+            </div>
+            <div class="w-50">
+                <input
+                    class="w-100 mt-1"
+                    #timeoutField="ngModel"
+                    type="range"
+                    min="0"
+                    max="240"
+                    step="1"
+                    value="0"
+                    id="field_timeout"
+                    [ngModel]="timeout()"
+                    (ngModelChange)="timeoutChange!.emit($event)"
+                />
+            </div>
+            <span class="slider-label">
+                <span class="slider-value">{{ timeout() }} s</span>
+            </span>
+        </div>
     }
 </div>

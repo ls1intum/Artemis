@@ -141,8 +141,8 @@
                 "warningBuildScript": "Make sure to adjust the build script and repositories accordingly."
             },
             "timeout": {
-                "title": "Timeout",
-                "customize": "You can customize the timeout for the build. Make sure to provide a valid integer value. The unit is seconds. Note that this value may be overridden by the maximum limit set by the administrators.",
+                "title": "Maximum build duration in seconds",
+                "customize": "Set to 0 to use default value. Make sure to provide a valid integer value. The unit is seconds. Note that this value may be overridden by the maximum limit set by the administrators (default is 240s).",
                 "alert": "The timeout must be a valid integer value."
             },
             "allowOnlineEditor": {
