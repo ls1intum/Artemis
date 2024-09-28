@@ -4,11 +4,11 @@ import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-// Custom object for sql query
+// Custom object for sql query, we cannot use primitive types here, because otherwise Hibernate gets confused
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorLeaderboardComplaintResponses(Long userId, Long complaintResponses, Double points) {
+public record TutorLeaderboardAnsweredMoreFeedbackRequestsDTO(Long userId, Long answeredRequests, Double points) {
 
-    public TutorLeaderboardComplaintResponses() {
+    public TutorLeaderboardAnsweredMoreFeedbackRequestsDTO() {
         this(0L, 0L, 0.0);
     }
 
@@ -20,8 +20,8 @@ public record TutorLeaderboardComplaintResponses(Long userId, Long complaintResp
 
     @Override
     @NotNull
-    public Long complaintResponses() {
-        return complaintResponses != null ? complaintResponses : 0L;
+    public Long answeredRequests() {
+        return answeredRequests != null ? answeredRequests : 0L;
     }
 
     @Override

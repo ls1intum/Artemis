@@ -23,7 +23,7 @@ public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFee
             FROM LongFeedbackText longFeedback
                 JOIN longFeedback.feedback feedback
             WHERE feedback.id IN :feedbackIds
-                """)
+            """)
     List<LongFeedbackText> findByFeedbackIds(@Param("feedbackIds") List<Long> feedbackIds);
 
     @Query("""
