@@ -620,6 +620,41 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestModelingFeedbackSuccess_withAthenaSuccess() throws Exception {
+
+        var modelingCourse = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
+        modelingCourse.setRestrictedAthenaModulesAccess(true);
+        this.courseRepository.save(modelingCourse);
+
+        this.modelingExercise.setFeedbackSuggestionModule("module_modeling_test");
+        this.exerciseRepository.save(modelingExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+
+        var modelingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, modelingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        participationRepo.save(modelingParticipation);
+
+        Result resultModeling1 = participationUtilService.createSubmissionAndResult(modelingParticipation, 100, true);
+        Result resultModeling2 = participationUtilService.addResultToParticipation(modelingParticipation, resultModeling1.getSubmission());
+        resultModeling2.setAssessmentType(AssessmentType.MANUAL);
+        resultModeling2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(resultModeling2);
+
+        request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
+
+        verify(resultWebsocketService, timeout(2000).times(2)).broadcastNewResult(any(), resultCaptor.capture());
+
+        Result invokedModelingResult = resultCaptor.getAllValues().get(1);
+        assertThat(invokedModelingResult).isNotNull();
+        assertThat(invokedModelingResult.getId()).isNotNull();
+        assertThat(invokedModelingResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedModelingResult.getFeedbacks()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestFeedbackSuccess_withAthenaFailure() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -696,6 +731,40 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedTextResult).isNotNull();
         assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
         assertThat(invokedTextResult.getFeedbacks()).hasSize(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestModelingFeedbackSuccess_withAthenaFailure() throws Exception {
+
+        var modelingCourse = modelingExercise.getCourseViaExerciseGroupOrCourseMember();
+        modelingCourse.setRestrictedAthenaModulesAccess(true);
+        this.courseRepository.save(modelingCourse);
+
+        this.modelingExercise.setFeedbackSuggestionModule("module_modeling_test");
+        this.exerciseRepository.save(modelingExercise);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("modeling");
+
+        var modelingParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.INACTIVE, modelingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+
+        participationRepo.save(modelingParticipation);
+
+        Result resultModeling1 = participationUtilService.createSubmissionAndResult(modelingParticipation, 100, false);
+        Result resultModeling2 = participationUtilService.addResultToParticipation(modelingParticipation, resultModeling1.getSubmission());
+        resultModeling2.setAssessmentType(AssessmentType.MANUAL);
+        resultModeling2.setCompletionDate(ZonedDateTime.now());
+        resultRepository.save(resultModeling2);
+
+        request.putWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.OK);
+
+        verify(resultWebsocketService, timeout(2000).times(1)).broadcastNewResult(any(), resultCaptor.capture());
+
+        Result invokedModelingResult = resultCaptor.getAllValues().getFirst();
+        assertThat(invokedModelingResult).isNotNull();
+        assertThat(invokedModelingResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedModelingResult.getFeedbacks()).hasSize(0);
     }
 
     @Test
