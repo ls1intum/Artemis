@@ -15,7 +15,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
@@ -325,7 +325,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      *         exercise due date at all
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
                 p.exercise.id,
                 COUNT(DISTINCT p)
             )
@@ -338,7 +338,8 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             GROUP BY p.exercise.id
             """)
-    List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    List<ExerciseMapEntryDTO> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Calculate the number of submissions for the given exercise by the given student.
@@ -361,7 +362,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
      * @return the numbers of submissions belonging to each exercise id, which have the submitted flag set to true and the submission date after the exercise due date
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
                 e.id,
                 COUNT(DISTINCT p)
             )
@@ -373,7 +374,7 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 AND s.submissionDate > e.dueDate
             GROUP BY e.id
             """)
-    List<ExerciseMapEntry> countByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<ExerciseMapEntryDTO> countByExerciseIdsSubmittedAfterDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Returns submissions for an exercise. Returns only a submission that has a result with a matching assessor. Since the results list may also contain

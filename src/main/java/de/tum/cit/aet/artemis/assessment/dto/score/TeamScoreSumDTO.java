@@ -9,5 +9,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param sumPointsAchieved the sum of points achieved by the team
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TeamScoreSum(long teamId, double sumPointsAchieved) {
+public record TeamScoreSumDTO(long teamId, double sumPointsAchieved) {
 }

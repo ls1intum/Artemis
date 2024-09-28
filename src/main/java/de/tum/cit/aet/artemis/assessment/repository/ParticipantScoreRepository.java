@@ -19,7 +19,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
-import de.tum.cit.aet.artemis.assessment.dto.ScoreDistribution;
+import de.tum.cit.aet.artemis.assessment.dto.ScoreDistributionDTO;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
@@ -43,6 +43,10 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
             WHERE p.lastResult IS NULL
             """)
     List<ParticipantScore> findAllOutdated();
+
+    @Override
+    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
+    List<ParticipantScore> findAll();
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAllByExercise(Exercise exercise);
@@ -88,6 +92,7 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
      * @param resultId the id of the result to be removed
      * @see ParticipantScoreScheduleService
      */
+    @Transactional // ok because of delete
     default void clearAllByResultId(Long resultId) {
         this.clearLastResultByResultId(resultId);
         this.clearLastRatedResultByResultId(resultId);
@@ -112,13 +117,13 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     List<ExerciseScoresAggregatedInformation> getAggregatedExerciseScoresInformation(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.ScoreDistribution(count(p.id), p.lastRatedScore)
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.ScoreDistributionDTO(count(p.id), p.lastRatedScore)
             FROM ParticipantScore p
             WHERE p.exercise.id = :exerciseId
             GROUP BY p.id
             ORDER BY p.lastRatedScore ASC
             """)
-    List<ScoreDistribution> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
+    List<ScoreDistributionDTO> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
 
     /**
      * Delete all participant scores for a given exercise
