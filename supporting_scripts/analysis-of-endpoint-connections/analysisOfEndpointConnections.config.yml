@@ -1,17 +1,17 @@
 # This File is the configuration file for the analysisOfEndpointConnections. It allows to exclude certain endpoints
 # (either by URI or by file name) from the analysis, and to define the output file paths.
 
-serverFilesExcludedFromParsing:
+excludedServerFiles:
   -
 
 excludedEndpointFiles:
+  # These files only contain endpoints that are not used by the WebApp
   - 'de/tum/in/www1/artemis/web/rest/open/PublicBuildPlanResource.java'
   - 'src/main/java/de/tum/in/www1/artemis/web/rest/AppleAppSiteAssociationResource.java'
 
 excludedEndpoints:
+    # Endpoints not used by the Artemis WebApp
   - '/api/push_notification/register'
-
-  # Excluded for presentation purposes?
   - '.well-known/apple-app-site-association'
   - 'api/courses/{courseId}/programming-exercises'
   - 'api/programming-exercises/with-sca'
@@ -24,18 +24,16 @@ excludedEndpoints:
   - 'api/courses/{courseId}/exams/{examId}/grading-scale/grade-steps/{gradeStepId}'
   - 'api/push_notification/register'
   - 'api/push_notification/unregister'
-  - 'api/courses/{courseId}/exams/{examId}/students/{studentLogin: + Constants.LOGIN_REGEX + }/attendance-check' # used but not assigned correctly
   - 'api/management/statistics/data-for-content'
   - 'api/management/statistics/course-statistics'
   - 'api/management/statistics/exercise-statistics'
-  - 'api/quiz-exercises/{quizExerciseId}/{action' # used but not assigned correctly
   - 'api/participations/{participationId}/results/{resultId}'
   - 'api/participations/{participationId}/results/{resultId}/details'
   - 'api/participations/{participationId}/results/{resultId}'
   - 'api/apollon-diagrams/{diagramId}/title'
   - 'api/courses/{courseId}/answer-messages'
   - 'api/courses/{courseId}/answer-messages/{answerMessageId}'
-  - 'api/quiz-exercises/{quizExerciseId}/{action}'
+
   # helperFromHere
   - 'api/courses/{courseId}/messages'
   - 'api/courses/{courseId}/messages/{messageId}'
@@ -84,7 +82,7 @@ excludedEndpoints:
   - 'api/repository/{participationId}/file-plagiarism-view'
   - 'api/repository/{participationId}/files-content'
   - 'api/repository/{participationId}/file-names'
-  #  - 'api/repository/{participationId}/files' # this could be a real error, maybe show in presentation
+  - 'api/repository/{participationId}/files'
   - 'api/repository/{participationId}/reset'
   - 'api/test-repository/{exerciseId}/files'
   - 'api/test-repository/{exerciseId}/reset'
@@ -96,26 +94,34 @@ excludedEndpoints:
   - 'api/test-repository/{exerciseId}'
   - 'api/courses'
   - 'api/courses/{courseId}/download-archive'
+
+  # Issue: #9372 and #9371
   - 'api/courses/{courseId}/students'
   - 'api/courses/{courseId}/tutors'
   - 'api/courses/{courseId}/editors'
   - 'api/courses/{courseId}/instructors'
   - 'api/courses/{courseId}/title'
-  - 'api/courses/{courseId}/students/{studentLogin: + Constants.LOGIN_REGEX + }'  # used but not assigned correctly
-  - 'api/courses/{courseId}/tutors/{tutorLogin: + Constants.LOGIN_REGEX + }' # used but not assigned correctly
-  - 'api/courses/{courseId}/editors/{editorLogin: + Constants.LOGIN_REGEX + }' # used but not assigned correctly
-  - 'api/courses/{courseId}/instructors/{instructorLogin: + Constants.LOGIN_REGEX + }' # used but not assigned correctly
-  - 'api/courses/{courseId}/students/{studentLogin: + Constants.LOGIN_REGEX + }' # used but not assigned correctly
-  - 'api/courses/{courseId}/tutors/{tutorLogin: + Constants.LOGIN_REGEX + }' # used but not assigned correctly
-  - 'api/courses/{courseId}/editors/{editorLogin: + Constants.LOGIN_REGEX + }' # used but not assigned correctly
-  - 'api/courses/{courseId}/instructors/{instructorLogin: + Constants.LOGIN_REGEX + }' # used but not assigned correctly
-  - 'api/programming-exercises/{exerciseId} + /static-code-analysis-categories/import'  # probably used but not assigned correctly
+  - 'api/courses/{courseId}/students/{studentLogin: + Constants.LOGIN_REGEX + }'
+  - 'api/courses/{courseId}/tutors/{tutorLogin: + Constants.LOGIN_REGEX + }'
+  - 'api/courses/{courseId}/editors/{editorLogin: + Constants.LOGIN_REGEX + }'
+  - 'api/courses/{courseId}/instructors/{instructorLogin: + Constants.LOGIN_REGEX + }'
+  - 'api/courses/{courseId}/students/{studentLogin: + Constants.LOGIN_REGEX + }'
+  - 'api/courses/{courseId}/tutors/{tutorLogin: + Constants.LOGIN_REGEX + }'
+  - 'api/courses/{courseId}/editors/{editorLogin: + Constants.LOGIN_REGEX + }'
+  - 'api/courses/{courseId}/instructors/{instructorLogin: + Constants.LOGIN_REGEX + }'
+  - 'api/courses/{courseId}/exams/{examId}/students/{studentLogin: + Constants.LOGIN_REGEX + }/attendance-check'
+  - 'api/programming-exercises/{exerciseId} + /static-code-analysis-categories/import'
+
+  # Issue: #9371
   - 'api/athena/text-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions'
   - 'api/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions'
   - 'api/athena/modeling-exercises/{exerciseId}/submissions/{submissionId}/feedback-suggestions'
   - 'api/athena/courses/{courseId}/text-exercises/available-modules'
   - 'api/athena/courses/{courseId}/programming-exercises/available-modules'
   - 'api/athena/courses/{courseId}/modeling-exercises/available-modules'
+  - 'api/quiz-exercises/{quizExerciseId}/{action}'
+
+
   - 'api/public/athena/programming-exercises/{exerciseId}/submissions/{submissionId}/repository'
   - 'api/public/athena/programming-exercises/{exerciseId}/repository/template'
   - 'api/public/athena/programming-exercises/{exerciseId}/repository/solution'
@@ -173,8 +179,6 @@ excludedEndpoints:
   - 'api/public/pyris/webhooks/ingestion/runs/{runId}/status'
   - 'api/public/programming-submissions/{participationId}'
   - 'api/public/programming-exercises/test-cases-changed/{exerciseId}'
-  - 'LTI13_LOGIN_REDIRECT_PROXY_PATH'
-  - 'LTI13_DEEPLINK_REDIRECT_PATH'
   - 'api/public/programming-exercises/{exerciseId}/build-plan'
   - 'api/public/time'
   - 'api/public/programming-exercises/new-result'
@@ -182,18 +186,12 @@ excludedEndpoints:
   - 'api/programming-exercises/{exerciseId}/submission-policy'
   - 'api/data-exports/{dataExportId}'
 
-  - 'api/repository/{participationId}/files'
-
-
-endpointsParsedIncorrectly:
-  - file: 'publicLtiResource.java'
-    line: 52
-
-  - file: 'CourseResource.java'
-    line: 1182
+  # Issue #9377
+  - 'LTI13_LOGIN_REDIRECT_PROXY_PATH'
+  - 'LTI13_DEEPLINK_REDIRECT_PATH'
 
 excludedRestCallFiles:
-  # Files that contain REST calls that are not yet parsed correctly
+  # Files that only contain REST calls that are not yet parsed correctly
   - 'src/main/webapp/app/assessment/athena.service.ts'
   - 'src/main/webapp/app/shared/statistics-graph/statistics.service.ts'
   - 'src/main/webapp/app/shared/server-date.service.ts'
@@ -206,9 +204,6 @@ excludedRestCallFiles:
   - 'src/main/webapp/app/exam/manage/exams/exam-import/exam-import-paging.service.ts'
 
 excludedRestCalls:
-#  - '/index.html'
-#  - '/manifest.webapp'
-#  - '/robots.txt'
   # The Endpoints matching the following REST calls are provided by SpringBootActuator and spring,
   # see src/main/resources/config/application.yml management.endpoints.web.exposure.include
   - 'management/configprops'
@@ -221,52 +216,52 @@ excludedRestCalls:
   - 'management/jhimetrics'
   - 'management/threaddump'
 
-  # The following Endpoints are all from this file: src/main/webapp/app/course/manage/course-management.service.ts
+  # The following Endpoints are all from this file: course-management.service.ts
   # The Endpoint on the server looks like this: 'api/courses/{courseId}/instructors'
   # or this: api/courses/{courseId}/tutors etc.
-  #- 'api/courses/${courseId}/results'
+  # Issue: #9372 and #9371
   - 'api/courses/${courseId}/${courseGroup}'
   - 'api/courses/${courseId}/${courseGroup}/${login}'
 
-  # The following Endpoints are all from this file: src/main/webapp/app/exercises/quiz/manage/quiz-exercise.service.ts
+  # The following Endpoints are all from this file: quiz-exercise.service.ts
   # The Endpoint on the server looks like this: 'api/quiz-exercises/{quizExerciseId}/{action}'
   - 'api/quiz-exercises/${quizExerciseId}/open-for-practice'
   - 'api/quiz-exercises/${quizExerciseId}/start-now'
   - 'api/quiz-exercises/${quizExerciseId}/end-now'
   - 'api/quiz-exercises/${quizExerciseId}/set-visible'
 
-  # These 3 files are part of the file 'src/main/webapp/app/iris/iris-chat-http.service.ts'
+  # These 3 files are part of the file: iris-chat-http.service.ts
   - 'api/iris/sessions/${sessionId}/messages/${messageId}/helpful/${helpful}'
   - 'api/iris/${identifier}/sessions/current'
   - 'api/iris/${identifier}/sessions'
 
   - 'api/public/lti13/auth-login'
   - '${this.resourceUrl}'
-  # The following Endpoints are all from this file: src/main/webapp/app/exercises/shared/course-exercises/course-exercise.service.ts
+  # The following Endpoints are all from this file: course-exercise.service.ts
   - '${this.resourceUrl}/${courseId}/file-upload-exercises'
   - '${this.resourceUrl}/${courseId}/text-exercises'
   - '${this.resourceUrl}/${courseId}/modeling-exercises'
   - '${this.resourceUrl}/${courseId}/programming-exercises'
-  # this one is not anymore (Not assignable due to edge case in Endpoint definition)
+
+  # Issue: #9372
   - 'api/programming-exercises/${targetExerciseId}/static-code-analysis-categories/import'
-  # Edge case in src/main/webapp/app/exam/manage/exam-management.service.ts
+
+  # Edge case in exam-management.service.ts
   - '${url}'
-  # Edge cases with multilple possible values in src/main/webapp/app/assessment/athena.service.ts
+
+  # Edge cases with multiple possible values in athena.service.ts
+  # Issue: #9371
   - 'api/athena/${exercise.type}-exercises/${exercise.id}/submissions/${submissionId}/feedback-suggestions'
   - 'api/athena/courses/${courseId}/${exercise.type}-exercises/available-modules'
 
-  # POSSIBLY UNUSED ENDPOINTS
+  # POSSIBLY UNUSED REST CALLS
   - 'api/courses/${courseId}/posts/similarity-check'
   - 'public/content/${filename}'
   - 'api/courses/${courseId}/results'
   - 'api/exercises'
   - 'api/results/${resultId}'
   - 'api/attachments'
-
   - 'api/repository/${participationId}/file'
-
-restCallsParsedIncorrectly:
-  -
 
 endpointParsingResultPath: 'endpoints.json'
 restCallParsingResultPath: 'restCalls.json'

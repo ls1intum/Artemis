@@ -9,8 +9,7 @@ interface Config {
     excludedEndpointFiles: string[];
     excludedEndpoints: string[];
 
-    endpointsParsedIncorrectly: { file: string, line: number }[];
-    restCallsParsedIncorrectly: { file: string, line: number, uri: string }[];
+
 
     endpointParsingResultPath: string;
     restCallParsingResultPath: string;
