@@ -222,12 +222,6 @@ test.describe('Exam grading', () => {
     });
 });
 
-test.describe('This test should fail', () => {
-    test('Check exam statistics', () => {
-        expect(true).toBe(false);
-    });
-});
-
 test.describe('Exam statistics', () => {
     let exercise: Exercise;
     const students = [studentOne, studentTwo, studentThree, studentFour];
