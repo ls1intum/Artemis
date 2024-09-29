@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci;
+package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -9,11 +9,8 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
-import de.tum.cit.aet.artemis.buildagent.service.BuildAgentSshKeyService;
-import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
 class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -26,9 +23,6 @@ class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrati
 
     @Autowired
     private SharedQueueProcessingService sharedQueueProcessingService;
-
-    @Value("${artemis.version-control.ssh-private-key-folder-path}")
-    protected String gitSshPrivateKeyPath;
 
     @Test
     void testWriteSSHKey() {

@@ -180,10 +180,4 @@ public class ContinuousIntegrationTestService {
         assertThat(health.isUp()).isFalse();
         assertThat(health.exception()).isNotNull();
     }
-
-    public void testConfigureBuildPlan() throws Exception {
-        mockDelegate.mockConfigureBuildPlan(participation, defaultBranch);
-        continuousIntegrationService.configureBuildPlan(participation, defaultBranch);
-        mockDelegate.verifyMocks();
-    }
 }
