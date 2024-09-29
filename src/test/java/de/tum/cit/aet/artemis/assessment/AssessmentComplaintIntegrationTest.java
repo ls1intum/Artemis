@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
@@ -29,43 +28,45 @@ import de.tum.cit.aet.artemis.assessment.dto.ComplaintAction;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ComplaintResponseTestRepository;
+import de.tum.cit.aet.artemis.assessment.util.ComplaintUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.exam.ExamFactory;
+import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
-import de.tum.cit.aet.artemis.exercise.fileupload.FileUploadExerciseUtilService;
-import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseUtilService;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.fileupload.util.FileUploadExerciseUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.participation.ParticipationFactory;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.util.TestResourceUtils;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "assessmentcomplaintintegration";
 
     @Autowired
-    private SubmissionRepository submissionRepo;
+    private SubmissionTestRepository submissionRepo;
 
     @Autowired
     private ComplaintRepository complaintRepo;
 
     @Autowired
-    private ComplaintResponseRepository complaintResponseRepo;
+    private ComplaintResponseTestRepository complaintResponseTestRepository;
 
     @Autowired
     private ExamRepository examRepository;
@@ -356,7 +357,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
         assertThat(complaintRepo.findByResultId(textSubmission.getLatestResult().getId())).isPresent();
 
         Complaint finalExamExerciseComplaint = examExerciseComplaint;
-        await().untilAsserted(() -> assertThat(complaintResponseRepo.findByComplaint_Id(finalExamExerciseComplaint.getId())).isPresent());
+        await().untilAsserted(() -> assertThat(complaintResponseTestRepository.findByComplaintId(finalExamExerciseComplaint.getId())).isPresent());
     }
 
     @Test
@@ -421,7 +422,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationIndepe
     void getComplaintByResultid_student_sensitiveDataHidden() throws Exception {
         complaint = complaintRepo.save(complaint);
         ComplaintResponse complaintResponse = complaintUtilService.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
-        complaintResponseRepo.save(complaintResponse);
+        complaintResponseTestRepository.save(complaintResponse);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("submissionId", modelingSubmission.getId().toString());
 
