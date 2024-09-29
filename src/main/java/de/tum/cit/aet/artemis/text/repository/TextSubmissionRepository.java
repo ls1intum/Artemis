@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
-import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -47,23 +46,9 @@ public interface TextSubmissionRepository extends ArtemisJpaRepository<TextSubmi
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor", "blocks", "results.feedbacks" })
     Optional<TextSubmission> findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(long resultId);
 
-    /**
-     * Gets all TextSubmissions which are submitted and loads all blocks
-     *
-     * @param exerciseId the ID of the exercise
-     * @return Set of Text Submissions
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "blocks" })
-    Set<TextSubmission> findByParticipation_ExerciseIdAndSubmittedIsTrue(long exerciseId);
-
     @NotNull
     default TextSubmission getTextSubmissionWithResultAndTextBlocksAndFeedbackByResultIdElseThrow(long resultId) {
         return getValueElseThrow(findWithEagerResultAndTextBlocksAndFeedbackByResults_Id(resultId));
-    }
-
-    @NotNull
-    default TextSubmission findByIdWithParticipationExerciseResultAssessorElseThrow(long submissionId) {
-        return getValueElseThrow(findWithEagerParticipationExerciseResultAssessorById(submissionId), submissionId);
     }
 
     @NotNull

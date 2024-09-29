@@ -31,16 +31,21 @@
                             <input
                                 #usernameForm="ngModel"
                                 [(ngModel)]="username"
-                                [ngModelOptions]="{ updateOn: 'blur' }"
+                                [ngModelOptions]="{ updateOn: 'change' }"
                                 [pattern]="usernameRegexPattern"
                                 autocomplete="username"
                                 class="form-control"
                                 id="username"
                                 name="username"
                                 [placeholder]="usernamePlaceholderTranslated"
+                                [minlength]="USERNAME_MIN_LENGTH"
+                                [maxLength]="USERNAME_MAX_LENGTH"
+                                (ngModelChange)="checkFormValidity()"
+                                (blur)="usernameTouched = true"
                                 type="text"
+                                tabindex="1"
                             />
-                            @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched)) {
+                            @if (usernameForm.errors && (usernameForm.dirty || usernameForm.touched) && usernameTouched) {
                                 <span class="mt-1 text-danger small" [jhiTranslate]="errorMessageUsername"></span>
                             }
                         </div>
@@ -48,13 +53,13 @@
                             <div class="d-flex mb-2">
                                 <label for="password" jhiTranslate="login.form.password"></label>
                                 <div class="ms-auto">
-                                    <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="account/reset/request"></a>
+                                    <a class="text-primary small" jhiTranslate="login.password.forgot" routerLink="account/reset/request" tabindex="4"></a>
                                 </div>
                             </div>
                             <input
                                 #passwordForm="ngModel"
                                 [(ngModel)]="password"
-                                [ngModelOptions]="{ updateOn: 'blur' }"
+                                [ngModelOptions]="{ updateOn: 'change' }"
                                 autocomplete="current-password"
                                 class="form-control"
                                 id="password"
@@ -62,8 +67,11 @@
                                 type="password"
                                 [minlength]="PASSWORD_MIN_LENGTH"
                                 [maxLength]="PASSWORD_MAX_LENGTH"
+                                (ngModelChange)="checkFormValidity()"
+                                (blur)="passwordTouched = true"
+                                tabindex="2"
                             />
-                            @if (passwordForm.errors && (passwordForm.dirty || passwordForm.touched)) {
+                            @if (passwordForm.errors && (passwordForm.dirty || passwordForm.touched) && passwordTouched) {
                                 <span class="mt-1 text-danger small" jhiTranslate="home.errors.passwordIncorrect"></span>
                             }
                         </div>
@@ -85,17 +93,11 @@
                         </div>
                         <div class="btn-toolbar">
                             <button
-                                [disabled]="
-                                    isSubmittingLogin ||
-                                    (!userAcceptedTerms && needsToAcceptTerms) ||
-                                    !password ||
-                                    password.length < PASSWORD_MIN_LENGTH ||
-                                    !username ||
-                                    username.length < USERNAME_MIN_LENGTH
-                                "
+                                [disabled]="isSubmittingLogin || (!userAcceptedTerms && needsToAcceptTerms) || !isFormValid"
                                 class="btn btn-primary w-100"
                                 id="login-button"
                                 type="submit"
+                                tabindex="3"
                             >
                                 @if (isSubmittingLogin) {
                                     <span class="me-1"><fa-icon [icon]="faCircleNotch" animation="spin" /></span>
