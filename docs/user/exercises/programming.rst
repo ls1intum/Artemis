@@ -225,18 +225,3 @@ Integrated Code Lifecycle
 -------------------------
 
 The following sections describe programming exercise features that are part of the integrated code lifecycle system.
-
-Repository View
-^^^^^^^^^^^^^^^
-
-.. include:: programming-integrated-code-lifecycle-repository-view.inc
-
-Build Agent View
-^^^^^^^^^^^^^^^^
-
-.. include:: programming-integrated-code-lifecycle-build-agent-view.inc
-
-Build Overview View
-^^^^^^^^^^^^^^^^^^^
-
-.. include:: programming-integrated-code-lifecycle-build-queue-view.inc
