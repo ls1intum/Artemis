@@ -51,9 +51,9 @@ public class FaqResource {
 
     private final CourseRepository courseRepository;
 
-    private final FaqRepository faqRepository;
-
     private final AuthorizationCheckService authCheckService;
+
+    private final FaqRepository faqRepository;
 
     public FaqResource(CourseRepository courseRepository, AuthorizationCheckService authCheckService, FaqRepository faqRepository) {
 
@@ -63,10 +63,11 @@ public class FaqResource {
     }
 
     /**
-     * POST /faqs : Create a new faq.
+     * POST /courses/:courseId/faqs : Create a new faq.
      *
      * @param faq the faq to create
      * @return the ResponseEntity with status 201 (Created) and with body the new faq, or with status 400 (Bad Request) if the faq has already an ID
+     *         or with status 500 if the faq course id does not match with the path variable
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/faqs")
@@ -88,10 +89,11 @@ public class FaqResource {
     }
 
     /**
-     * PUT /faqs/{faqId} : Updates an existing faq.
+     * PUT /courses/:courseId/faqs/{faqId} : Updates an existing faq.
      *
-     * @param faq   the faq to update
-     * @param faqId id of the faq to be updated
+     * @param faq      the faq to update
+     * @param faqId    id of the faq to be updated *
+     * @param courseId the id of the course the faq belongs to
      * @return the ResponseEntity with status 200 (OK) and with body the updated faq, or with status 400 (Bad Request) if the faq is not valid, or with status 500 (Internal
      *         Server Error) if the faq couldn't be updated
      */
@@ -113,9 +115,10 @@ public class FaqResource {
     }
 
     /**
-     * GET /faqs/:faqId : get the faq with the id faqId.
+     * GET /courses/:courseId/faqs/:faqId : get the faq with the id faqId.
      *
-     * @param faqId the faqId of the faq to retrieve
+     * @param faqId    the faqId of the faq to retrieve *
+     * @param courseId the id of the course the faq belongs to
      * @return the ResponseEntity with status 200 (OK) and with body the faq, or with status 404 (Not Found)
      */
     @GetMapping("courses/{courseId}/faqs/{faqId}")
@@ -132,9 +135,10 @@ public class FaqResource {
     }
 
     /**
-     * DELETE /faqs/:faqId : delete the "id" faq.
+     * DELETE /courses/:courseId/faqs/:faqId : delete the "id" faq.
      *
-     * @param faqId the id of the faq to delete
+     * @param faqId    the id of the faq to delete
+     * @param courseId the id of the course the faq belongs to
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}/faqs/{faqId}")

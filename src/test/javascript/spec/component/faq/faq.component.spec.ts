@@ -8,39 +8,38 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { FAQService } from 'app/faq/faq.service';
-import { FAQ } from 'app/entities/faq.model';
+import { FaqService } from 'app/faq/faq.service';
+import { Faq } from 'app/entities/faq.model';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
-import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { FAQComponent } from 'app/faq/faq.component';
-import { FAQCategory } from 'app/entities/faq-category.model';
+import { FaqComponent } from 'app/faq/faq.component';
+import { FaqCategory } from 'app/entities/faq-category.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortService } from 'app/shared/service/sort.service';
 
-function createFaq(id: number, category: string, color: string): FAQ {
-    const faq = new FAQ();
+function createFaq(id: number, category: string, color: string): Faq {
+    const faq = new Faq();
     faq.id = id;
     faq.questionTitle = 'questionTitle';
     faq.questionAnswer = 'questionAnswer';
-    faq.categories = [new FAQCategory(category, color)];
+    faq.categories = [new FaqCategory(category, color)];
     return faq;
 }
 
 describe('FaqComponent', () => {
-    let faqComponentFixture: ComponentFixture<FAQComponent>;
-    let faqComponent: FAQComponent;
+    let faqComponentFixture: ComponentFixture<FaqComponent>;
+    let faqComponent: FaqComponent;
 
-    let faqService: FAQService;
+    let faqService: FaqService;
     let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
     let sortService: SortService;
 
-    let faq1: FAQ;
-    let faq2: FAQ;
-    let faq3: FAQ;
+    let faq1: Faq;
+    let faq2: Faq;
+    let faq3: Faq;
 
     let courseId: number;
 
@@ -53,8 +52,8 @@ describe('FaqComponent', () => {
         courseId = 1;
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ArtemisMarkdownEditorModule, MockModule(BrowserAnimationsModule)],
-            declarations: [FAQComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
+            imports: [ArtemisTestModule, MockModule(ArtemisMarkdownEditorModule), MockModule(BrowserAnimationsModule)],
+            declarations: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
@@ -71,7 +70,7 @@ describe('FaqComponent', () => {
                         },
                     },
                 },
-                MockProvider(FAQService, {
+                MockProvider(FaqService, {
                     findAllByCourseId: () => {
                         return of(
                             new HttpResponse({
@@ -99,13 +98,10 @@ describe('FaqComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
-                    return new MockResizeObserver(callback);
-                });
-                faqComponentFixture = TestBed.createComponent(FAQComponent);
+                faqComponentFixture = TestBed.createComponent(FaqComponent);
                 faqComponent = faqComponentFixture.componentInstance;
 
-                faqService = TestBed.inject(FAQService);
+                faqService = TestBed.inject(FaqService);
                 alertService = TestBed.inject(AlertService);
                 sortService = TestBed.inject(SortService);
             });
@@ -136,8 +132,7 @@ describe('FaqComponent', () => {
         const deleteSpy = jest.spyOn(faqService, 'delete');
         faqComponentFixture.detectChanges();
         faqComponent.deleteFaq(courseId, faq1.id!);
-        expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith(courseId, faq1.id!);
+        expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(courseId, faq1.id!);
         expect(faqComponent.faqs).toHaveLength(2);
         expect(faqComponent.faqs).not.toContain(faq1);
         expect(faqComponent.faqs).toEqual(faqComponent.filteredFaqs);
@@ -148,8 +143,7 @@ describe('FaqComponent', () => {
         const deleteSpy = jest.spyOn(faqService, 'delete').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         faqComponent.deleteFaq(courseId, faq1.id!);
-        expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith(courseId, faq1.id!);
+        expect(deleteSpy).toHaveBeenCalledExactlyOnceWith(courseId, faq1.id!);
         expect(faqComponent.faqs).toHaveLength(3);
         expect(faqComponent.faqs).toContain(faq1);
     });

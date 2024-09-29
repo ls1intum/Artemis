@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis;
+package de.tum.cit.aet.artemis.communication;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -79,7 +80,7 @@ class FaqIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createFaq_alreadyId_shouldReturnBadRequest() throws Exception {
         Faq newFaq = FaqFactory.generateFaq(course1, FaqState.ACCEPTED, "title", "answer");
-        faq.setId(this.faq.getId());
+        newFaq.setId(this.faq.getId());
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/faqs", newFaq, Faq.class, HttpStatus.BAD_REQUEST);
     }
 

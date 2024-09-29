@@ -507,6 +507,7 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['editorGroupName'].setValue(editorGroupName);
         this.courseForm.controls['instructorGroupName'].setValue(instructorGroupName);
     }
+
     changeFaqEnabled() {
         this.faqEnabled = !this.faqEnabled;
         this.courseForm.controls['faqEnabled'].setValue(this.faqEnabled);

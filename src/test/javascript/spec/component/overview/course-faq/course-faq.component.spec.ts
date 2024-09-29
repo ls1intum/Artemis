@@ -10,21 +10,21 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseFaqComponent } from 'app/overview/course-faq/course-faq.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { FAQService } from 'app/faq/faq.service';
+import { FaqService } from 'app/faq/faq.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
-import { FAQ } from 'app/entities/faq.model';
-import { FAQCategory } from 'app/entities/faq-category.model';
+import { Faq } from 'app/entities/faq.model';
+import { FaqCategory } from 'app/entities/faq-category.model';
 
-function createFaq(id: number, category: string, color: string): FAQ {
-    const faq = new FAQ();
+function createFaq(id: number, category: string, color: string): Faq {
+    const faq = new Faq();
     faq.id = id;
     faq.questionTitle = 'questionTitle';
     faq.questionAnswer = 'questionAnswer';
-    faq.categories = [new FAQCategory(category, color)];
+    faq.categories = [new FaqCategory(category, color)];
     return faq;
 }
 
@@ -32,13 +32,13 @@ describe('CourseFaqs', () => {
     let courseFaqComponentFixture: ComponentFixture<CourseFaqComponent>;
     let courseFaqComponent: CourseFaqComponent;
 
-    let faqService: FAQService;
+    let faqService: FaqService;
     let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
 
-    let faq1: FAQ;
-    let faq2: FAQ;
-    let faq3: FAQ;
+    let faq1: Faq;
+    let faq2: Faq;
+    let faq3: Faq;
 
     beforeEach(() => {
         // In beforeEach:
@@ -50,7 +50,7 @@ describe('CourseFaqs', () => {
             imports: [ArtemisSharedComponentModule, ArtemisSharedModule, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent)],
             declarations: [CourseFaqComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
             providers: [
-                MockProvider(FAQService),
+                MockProvider(FaqService),
                 { provide: Router, useClass: MockRouter },
                 { provide: TranslateService, useClass: MockTranslateService },
                 {
@@ -61,7 +61,7 @@ describe('CourseFaqs', () => {
                         },
                     },
                 },
-                MockProvider(FAQService, {
+                MockProvider(FaqService, {
                     findAllByCourseId: () => {
                         return of(
                             new HttpResponse({
@@ -92,7 +92,7 @@ describe('CourseFaqs', () => {
                 courseFaqComponentFixture = TestBed.createComponent(CourseFaqComponent);
                 courseFaqComponent = courseFaqComponentFixture.componentInstance;
 
-                faqService = TestBed.inject(FAQService);
+                faqService = TestBed.inject(FaqService);
                 alertService = TestBed.inject(AlertService);
             });
     });

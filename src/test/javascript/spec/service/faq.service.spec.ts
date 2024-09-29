@@ -8,15 +8,15 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
-import { FAQ, FAQState } from 'app/entities/faq.model';
-import { FAQCategory } from 'app/entities/faq-category.model';
-import { FAQService } from 'app/faq/faq.service';
+import { Faq, FaqState } from 'app/entities/faq.model';
+import { FaqCategory } from 'app/entities/faq-category.model';
+import { FaqService } from 'app/faq/faq.service';
 
 describe('Faq Service', () => {
     let httpMock: HttpTestingController;
-    let service: FAQService;
+    let service: FaqService;
     let expectedResult: any;
-    let elemDefault: FAQ;
+    let elemDefault: Faq;
     let courseId: number;
 
     beforeEach(() => {
@@ -28,16 +28,16 @@ describe('Faq Service', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         });
-        service = TestBed.inject(FAQService);
+        service = TestBed.inject(FaqService);
         httpMock = TestBed.inject(HttpTestingController);
 
-        expectedResult = {} as HttpResponse<FAQ>;
-        elemDefault = new FAQ();
+        expectedResult = {} as HttpResponse<Faq>;
+        elemDefault = new Faq();
         elemDefault.questionTitle = 'Title';
         elemDefault.course = new Course();
         elemDefault.questionAnswer = 'Answer';
         elemDefault.id = 1;
-        elemDefault.faqState = FAQState.ACCEPTED;
+        elemDefault.faqState = FaqState.ACCEPTED;
         courseId = 1;
     });
 
@@ -96,9 +96,9 @@ describe('Faq Service', () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
-            } as FAQCategory;
+            } as FaqCategory;
             const returnedFromService = { ...elemDefault, categories: [JSON.stringify(category)] };
-            const expected = { ...elemDefault, categories: [new FAQCategory('category1', '#6ae8ac')] };
+            const expected = { ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] };
             const faqId = elemDefault.id!;
             service
                 .find(courseId, faqId)
@@ -116,9 +116,9 @@ describe('Faq Service', () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
-            } as FAQCategory;
+            } as FaqCategory;
             const returnedFromService = [{ ...elemDefault, categories: [JSON.stringify(category)] }];
-            const expected = [{ ...elemDefault, categories: [new FAQCategory('category1', '#6ae8ac')] }];
+            const expected = [{ ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] }];
             const courseId = 1;
             service
                 .findAllByCourseId(courseId)
@@ -136,7 +136,7 @@ describe('Faq Service', () => {
             const category = {
                 color: '#6ae8ac',
                 category: 'category1',
-            } as FAQCategory;
+            } as FaqCategory;
             const returnedFromService = { categories: [JSON.stringify(category)] };
             const expected = { ...returnedFromService };
             const courseId = 1;
@@ -172,14 +172,14 @@ describe('Faq Service', () => {
         it('should apply faqFilter correctly', () => {
             const activeFilters = new Set<string>();
 
-            const faq1 = new FAQ();
-            faq1.categories = [new FAQCategory('test', 'red'), new FAQCategory('test2', 'blue')];
+            const faq1 = new Faq();
+            faq1.categories = [new FaqCategory('test', 'red'), new FaqCategory('test2', 'blue')];
 
-            const faq11 = new FAQ();
-            faq11.categories = [new FAQCategory('test', 'red'), new FAQCategory('test2', 'blue')];
+            const faq11 = new Faq();
+            faq11.categories = [new FaqCategory('test', 'red'), new FaqCategory('test2', 'blue')];
 
-            const faq2 = new FAQ();
-            faq2.categories = [new FAQCategory('testing', 'red'), new FAQCategory('test2', 'blue')];
+            const faq2 = new Faq();
+            faq2.categories = [new FaqCategory('testing', 'red'), new FaqCategory('test2', 'blue')];
 
             let filteredFaq = [faq1, faq11, faq2];
 
@@ -200,9 +200,9 @@ describe('Faq Service', () => {
         });
 
         it('should convert FAQ categories into strings', () => {
-            const faq2 = new FAQ();
-            faq2.categories = [new FAQCategory('testing', 'red')];
-            const convertedCategory = FAQService.stringifyFaqCategories(faq2);
+            const faq2 = new Faq();
+            faq2.categories = [new FaqCategory('testing', 'red')];
+            const convertedCategory = FaqService.stringifyFaqCategories(faq2);
             expect(convertedCategory).toEqual(['{"color":"red","category":"testing"}']);
         });
     });

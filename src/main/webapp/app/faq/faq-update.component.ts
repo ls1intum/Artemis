@@ -7,10 +7,10 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
-import { FAQ, FAQState } from 'app/entities/faq.model';
-import { FAQService } from 'app/faq/faq.service';
+import { Faq, FaqState } from 'app/entities/faq.model';
+import { FaqService } from 'app/faq/faq.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FAQCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
@@ -25,14 +25,13 @@ import { Course } from 'app/entities/course.model';
     standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisMarkdownEditorModule, ArtemisCategorySelectorModule],
 })
-export class FAQUpdateComponent implements OnInit {
-    faq: FAQ;
+export class FaqUpdateComponent implements OnInit {
+    faq: Faq;
     isSaving: boolean;
     isAllowedToSave: boolean;
-    existingCategories: FAQCategory[];
-    faqCategories: FAQCategory[];
+    existingCategories: FaqCategory[];
+    faqCategories: FaqCategory[];
     courseId: number;
-    courseTitle: string;
     course: Course;
 
     domainActionsDescription = [new FormulaAction()];
@@ -43,7 +42,7 @@ export class FAQUpdateComponent implements OnInit {
     faBan = faBan;
 
     private alertService = inject(AlertService);
-    private faqService = inject(FAQService);
+    private faqService = inject(FaqService);
     private activatedRoute = inject(ActivatedRoute);
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private router = inject(Router);
@@ -55,7 +54,7 @@ export class FAQUpdateComponent implements OnInit {
         this.activatedRoute.parent?.data.subscribe((data) => {
             // Create a new faq to use unless we fetch an existing faq
             const faq = data['faq'];
-            this.faq = faq ?? new FAQ();
+            this.faq = faq ?? new Faq();
             const course = data['course'];
             if (course) {
                 this.faq.course = course;
@@ -63,7 +62,7 @@ export class FAQUpdateComponent implements OnInit {
             }
             this.faqCategories = faq?.categories ? faq.categories : [];
         });
-        this.canSave();
+        this.validate();
     }
 
     /**
@@ -84,7 +83,7 @@ export class FAQUpdateComponent implements OnInit {
         if (this.faq.id !== undefined) {
             this.subscribeToSaveResponse(this.faqService.update(this.courseId, this.faq));
         } else {
-            this.faq.faqState = FAQState.ACCEPTED;
+            this.faq.faqState = FaqState.ACCEPTED;
             this.subscribeToSaveResponse(this.faqService.create(this.courseId, this.faq));
         }
     }
@@ -92,9 +91,9 @@ export class FAQUpdateComponent implements OnInit {
     /**
      * @param result The Http response from the server
      */
-    protected subscribeToSaveResponse(result: Observable<HttpResponse<FAQ>>) {
+    protected subscribeToSaveResponse(result: Observable<HttpResponse<Faq>>) {
         result.subscribe({
-            next: (response: HttpResponse<FAQ>) => this.onSaveSuccess(response.body!),
+            next: (response: HttpResponse<Faq>) => this.onSaveSuccess(response.body!),
             error: (error: HttpErrorResponse) => this.onSaveError(error),
         });
     }
@@ -102,10 +101,10 @@ export class FAQUpdateComponent implements OnInit {
     /**
      * Action on successful faq creation or edit
      */
-    protected onSaveSuccess(faq: FAQ) {
+    protected onSaveSuccess(faq: Faq) {
         if (!this.faq.id) {
             this.faqService.find(this.courseId, faq.id!).subscribe({
-                next: (response: HttpResponse<FAQ>) => {
+                next: (response: HttpResponse<Faq>) => {
                     this.isSaving = false;
                     const faqBody = response.body;
                     if (faqBody) {
@@ -135,7 +134,7 @@ export class FAQUpdateComponent implements OnInit {
         }
     }
 
-    updateCategories(categories: FAQCategory[]) {
+    updateCategories(categories: FaqCategory[]) {
         this.faq.categories = categories;
         this.faqCategories = categories;
     }
@@ -146,7 +145,7 @@ export class FAQUpdateComponent implements OnInit {
         });
     }
 
-    canSave() {
+    validate() {
         if (this.faq.questionTitle && this.faq.questionAnswer) {
             this.isAllowedToSave = this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0;
         } else {

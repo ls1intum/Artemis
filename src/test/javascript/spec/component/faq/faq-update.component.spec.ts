@@ -9,38 +9,38 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { FAQUpdateComponent } from 'app/faq/faq-update.component';
-import { FAQService } from 'app/faq/faq.service';
-import { FAQ, FAQState } from 'app/entities/faq.model';
+import { FaqUpdateComponent } from 'app/faq/faq-update.component';
+import { FaqService } from 'app/faq/faq.service';
+import { Faq, FaqState } from 'app/entities/faq.model';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
-import { FAQCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/entities/faq-category.model';
 
 describe('FaqUpdateComponent', () => {
-    let faqUpdateComponentFixture: ComponentFixture<FAQUpdateComponent>;
-    let faqUpdateComponent: FAQUpdateComponent;
-    let faqService: FAQService;
+    let faqUpdateComponentFixture: ComponentFixture<FaqUpdateComponent>;
+    let faqUpdateComponent: FaqUpdateComponent;
+    let faqService: FaqService;
     let activatedRoute: ActivatedRoute;
     let router: Router;
-    let faq1: FAQ;
+    let faq1: Faq;
     let courseId: number;
 
     let alertServiceStub: jest.SpyInstance;
     let alertService: AlertService;
 
     beforeEach(() => {
-        faq1 = new FAQ();
+        faq1 = new Faq();
         faq1.id = 1;
         faq1.questionTitle = 'questionTitle';
         faq1.questionAnswer = 'questionAnswer';
-        faq1.categories = [new FAQCategory('category1', '#94a11c')];
+        faq1.categories = [new FaqCategory('category1', '#94a11c')];
         courseId = 1;
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MonacoEditorModule, MockModule(BrowserAnimationsModule)],
-            declarations: [FAQUpdateComponent, MockComponent(MonacoEditorComponent), MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
+            declarations: [FaqUpdateComponent, MockComponent(MonacoEditorComponent), MockPipe(HtmlForMarkdownPipe), MockRouterLinkDirective],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
@@ -57,7 +57,7 @@ describe('FaqUpdateComponent', () => {
                         },
                     },
                 },
-                MockProvider(FAQService, {
+                MockProvider(FaqService, {
                     find: () => {
                         return of(
                             new HttpResponse({
@@ -81,10 +81,10 @@ describe('FaqUpdateComponent', () => {
         global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
             return new MockResizeObserver(callback);
         });
-        faqUpdateComponentFixture = TestBed.createComponent(FAQUpdateComponent);
+        faqUpdateComponentFixture = TestBed.createComponent(FaqUpdateComponent);
         faqUpdateComponent = faqUpdateComponentFixture.componentInstance;
 
-        faqService = TestBed.inject(FAQService);
+        faqService = TestBed.inject(FaqService);
         alertService = TestBed.inject(AlertService);
 
         router = TestBed.inject(Router);
@@ -97,8 +97,7 @@ describe('FaqUpdateComponent', () => {
     });
 
     it('should create faq', fakeAsync(() => {
-        faqUpdateComponent.faq = { questionTitle: 'test1' } as FAQ;
-        faq1.categories = undefined;
+        faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
         const createSpy = jest.spyOn(faqService, 'create').mockReturnValue(
             of(
                 new HttpResponse({
@@ -108,7 +107,7 @@ describe('FaqUpdateComponent', () => {
                         course: {
                             id: 1,
                         },
-                    } as FAQ,
+                    } as Faq,
                 }),
             ),
         );
@@ -117,7 +116,7 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent.save();
         tick();
 
-        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { faqState: FAQState.ACCEPTED, questionTitle: 'test1' });
+        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { faqState: FaqState.ACCEPTED, questionTitle: 'test1' });
         expect(faqUpdateComponent.isSaving).toBeFalse();
     }));
 
@@ -125,10 +124,10 @@ describe('FaqUpdateComponent', () => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, faq: { id: 6 } });
 
         faqUpdateComponentFixture.detectChanges();
-        faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as FAQ;
+        faqUpdateComponent.faq = { id: 6, questionTitle: 'test1Updated' } as Faq;
 
         const updateSpy = jest.spyOn(faqService, 'update').mockReturnValue(
-            of<HttpResponse<FAQ>>(
+            of<HttpResponse<Faq>>(
                 new HttpResponse({
                     body: {
                         id: 6,
@@ -137,7 +136,7 @@ describe('FaqUpdateComponent', () => {
                         course: {
                             id: 1,
                         },
-                    } as FAQ,
+                    } as Faq,
                 }),
             ),
         );
@@ -146,8 +145,7 @@ describe('FaqUpdateComponent', () => {
         tick();
         faqUpdateComponentFixture.detectChanges();
 
-        expect(updateSpy).toHaveBeenCalledOnce();
-        expect(updateSpy).toHaveBeenCalledWith(courseId, { id: 6, questionTitle: 'test1Updated' });
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated' });
     }));
 
     it('should navigate to previous state', fakeAsync(() => {
@@ -168,7 +166,7 @@ describe('FaqUpdateComponent', () => {
     }));
 
     it('should update categories', fakeAsync(() => {
-        const categories = [new FAQCategory('category1', 'red'), new FAQCategory('category2', 'blue')];
+        const categories = [new FaqCategory('category1', 'red'), new FaqCategory('category2', 'blue')];
         faqUpdateComponentFixture.detectChanges();
         faqUpdateComponent.updateCategories(categories);
         expect(faqUpdateComponent.faqCategories).toEqual(categories);
@@ -177,14 +175,14 @@ describe('FaqUpdateComponent', () => {
 
     it('should not be able to save unless title and question are filled', fakeAsync(() => {
         faqUpdateComponentFixture.detectChanges();
-        faqUpdateComponent.faq = { questionTitle: 'test1' } as FAQ;
-        faqUpdateComponent.canSave();
+        faqUpdateComponent.faq = { questionTitle: 'test1' } as Faq;
+        faqUpdateComponent.validate();
         expect(faqUpdateComponent.isAllowedToSave).toBeFalse();
-        faqUpdateComponent.faq = { questionAnswer: 'test1' } as FAQ;
-        faqUpdateComponent.canSave();
+        faqUpdateComponent.faq = { questionAnswer: 'test1' } as Faq;
+        faqUpdateComponent.validate();
         expect(faqUpdateComponent.isAllowedToSave).toBeFalse();
-        faqUpdateComponent.faq = { questionTitle: 'test', questionAnswer: 'test1' } as FAQ;
-        faqUpdateComponent.canSave();
+        faqUpdateComponent.faq = { questionTitle: 'test', questionAnswer: 'test1' } as Faq;
+        faqUpdateComponent.validate();
         expect(faqUpdateComponent.isAllowedToSave).toBeTrue();
     }));
 

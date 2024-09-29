@@ -1,18 +1,18 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { map } from 'rxjs/operators';
 import { Subject, Subscription } from 'rxjs';
-import { faFilter, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { SidebarData } from 'app/types/sidebar';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
-import { FAQ } from 'app/entities/faq.model';
-import { FAQService } from 'app/faq/faq.service';
+import { Faq } from 'app/entities/faq.model';
+import { FaqService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { FAQCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
@@ -30,28 +30,24 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     private parentParamSubscription: Subscription;
 
     courseId: number;
-    faqs: FAQ[];
+    faqs: Faq[];
 
-    filteredFaqs: FAQ[];
-    existingCategories: FAQCategory[];
+    filteredFaqs: Faq[];
+    existingCategories: FaqCategory[];
     activeFilters = new Set<string>();
 
     sidebarData: SidebarData;
     hasCategories = false;
     isCollapsed = false;
-    isProduction = true;
-    isTestServer = false;
 
     readonly ButtonType = ButtonType;
 
     // Icons
-    faPlus = faPlus;
-    faTimes = faTimes;
     faFilter = faFilter;
 
     private route = inject(ActivatedRoute);
-    private router = inject(Router);
-    private faqService = inject(FAQService);
+
+    private faqService = inject(FaqService);
     private alertService = inject(AlertService);
 
     ngOnInit(): void {
@@ -72,9 +68,9 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     private loadFaqs() {
         this.faqService
             .findAllByCourseId(this.courseId)
-            .pipe(map((res: HttpResponse<FAQ[]>) => res.body))
+            .pipe(map((res: HttpResponse<Faq[]>) => res.body))
             .subscribe({
-                next: (res: FAQ[]) => {
+                next: (res: Faq[]) => {
                     this.faqs = res;
                     this.applyFilters();
                 },

@@ -1,14 +1,14 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { FAQ } from 'app/entities/faq.model';
-import { faEdit, faFile, faFileExport, faFileImport, faFilter, faPencilAlt, faPlus, faPuzzlePiece, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { Faq } from 'app/entities/faq.model';
+import { faEdit, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute } from '@angular/router';
-import { FAQService } from 'app/faq/faq.service';
+import { FaqService } from 'app/faq/faq.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { FAQCategory } from 'app/entities/faq-category.model';
+import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
@@ -23,10 +23,10 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
     standalone: true,
     imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule],
 })
-export class FAQComponent implements OnInit, OnDestroy {
-    faqs: FAQ[];
-    filteredFaqs: FAQ[];
-    existingCategories: FAQCategory[];
+export class FaqComponent implements OnInit, OnDestroy {
+    faqs: Faq[];
+    filteredFaqs: Faq[];
+    existingCategories: FaqCategory[];
     courseId: number;
     hasCategories: boolean = false;
 
@@ -37,21 +37,15 @@ export class FAQComponent implements OnInit, OnDestroy {
     predicate: string;
     ascending: boolean;
 
-    irisEnabled = false;
-
     // Icons
     faEdit = faEdit;
     faPlus = faPlus;
-    faFileImport = faFileImport;
-    faFileExport = faFileExport;
     faTrash = faTrash;
     faPencilAlt = faPencilAlt;
-    faFile = faFile;
-    faPuzzlePiece = faPuzzlePiece;
     faFilter = faFilter;
     faSort = faSort;
 
-    protected faqService = inject(FAQService);
+    private faqService = inject(FaqService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
@@ -71,10 +65,6 @@ export class FAQComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.complete();
     }
 
-    trackId(index: number, item: FAQ) {
-        return item.id;
-    }
-
     deleteFaq(courseId: number, faqId: number) {
         this.faqService.delete(courseId, faqId).subscribe({
             next: () => this.handleDeleteSuccess(faqId),
@@ -86,7 +76,6 @@ export class FAQComponent implements OnInit, OnDestroy {
         this.faqs = this.faqs.filter((faq) => faq.id !== faqId);
         this.dialogErrorSource.next('');
         this.loadCourseFaqCategories(this.courseId);
-        this.applyFilters();
     }
 
     toggleFilters(category: string) {
@@ -105,9 +94,9 @@ export class FAQComponent implements OnInit, OnDestroy {
     private loadAll() {
         this.faqService
             .findAllByCourseId(this.courseId)
-            .pipe(map((res: HttpResponse<FAQ[]>) => res.body))
+            .pipe(map((res: HttpResponse<Faq[]>) => res.body))
             .subscribe({
-                next: (res: FAQ[]) => {
+                next: (res: Faq[]) => {
                     this.faqs = res;
                     this.applyFilters();
                 },
@@ -119,6 +108,16 @@ export class FAQComponent implements OnInit, OnDestroy {
         loadCourseFaqCategories(courseId, this.alertService, this.faqService).subscribe((existingCategories) => {
             this.existingCategories = existingCategories;
             this.hasCategories = existingCategories.length > 0;
+            this.checkAppliedFilter(this.activeFilters, this.existingCategories);
         });
+    }
+
+    private checkAppliedFilter(activeFilters: Set<string>, existingCategories: FaqCategory[]) {
+        activeFilters.forEach((activeFilter) => {
+            if (!existingCategories.some((category) => category.category === activeFilter)) {
+                activeFilters.delete(activeFilter);
+            }
+        });
+        this.applyFilters();
     }
 }

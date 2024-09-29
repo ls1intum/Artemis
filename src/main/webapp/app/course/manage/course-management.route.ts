@@ -33,9 +33,9 @@ import { ImportPrerequisitesComponent } from 'app/course/competencies/import/imp
 import { CreatePrerequisiteComponent } from 'app/course/competencies/create/create-prerequisite.component';
 import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
 import { CourseImportStandardizedPrerequisitesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-prerequisites.component';
-import { FAQComponent } from 'app/faq/faq.component';
-import { FAQUpdateComponent } from 'app/faq/faq-update.component';
-import { FAQResolve } from 'app/faq/faq.routes';
+import { FaqComponent } from 'app/faq/faq.component';
+import { FaqUpdateComponent } from 'app/faq/faq-update.component';
+import { FaqResolve } from 'app/faq/faq.routes';
 
 export const courseManagementState: Routes = [
     {
@@ -342,7 +342,7 @@ export const courseManagementState: Routes = [
                         children: [
                             {
                                 path: '',
-                                component: FAQComponent,
+                                component: FaqComponent,
                                 resolve: {
                                     course: CourseManagementResolve,
                                 },
@@ -361,7 +361,7 @@ export const courseManagementState: Routes = [
                                 children: [
                                     {
                                         path: 'new',
-                                        component: FAQUpdateComponent,
+                                        component: FaqUpdateComponent,
                                         data: {
                                             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                             pageTitle: 'global.generic.create',
@@ -371,12 +371,12 @@ export const courseManagementState: Routes = [
                                     {
                                         path: ':faqId',
                                         resolve: {
-                                            faq: FAQResolve,
+                                            faq: FaqResolve,
                                         },
                                         children: [
                                             {
                                                 path: 'edit',
-                                                component: FAQUpdateComponent,
+                                                component: FaqUpdateComponent,
                                                 data: {
                                                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                                                     pageTitle: 'global.generic.edit',
