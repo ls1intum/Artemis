@@ -2,7 +2,7 @@
     "artemisApp": {
         "quizQuestionStatistic": {
             "home": {
-                "title": "Frage Statistken",
+                "title": "FrageStatistiken",
                 "createLabel": "Fragestatistik erstellen"
             },
             "created": "Fragestatistik erstellt mit ID {{ param }}",
