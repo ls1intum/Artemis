@@ -338,7 +338,6 @@ public interface SubmissionRepository extends ArtemisJpaRepository<Submission, L
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
             GROUP BY p.exercise.id
             """)
-
     List<ExerciseMapEntryDTO> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
