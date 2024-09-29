@@ -13,10 +13,9 @@ import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { jsPDF } from 'jspdf';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import { Image } from 'fabric';
+import { PDFDocument } from 'pdf-lib';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -33,7 +32,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef<HTMLInputElement>;
 
     readonly DEFAULT_SLIDE_WIDTH = 250;
-    readonly DEFAULT_GENERATED_SLIDE_FORMAT = [1920, 1080]; //Represents 16:9 aspect ratio
     course?: Course;
     attachment?: Attachment;
     attachmentUnit?: AttachmentUnit;
@@ -45,6 +43,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     selectedPages: Set<number> = new Set();
     isPdfLoading = false;
     attachmentToBeEdited?: Attachment;
+    currentPdfBlob: Blob | null = null;
 
     dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -65,16 +64,22 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.route.data.subscribe((data) => {
             this.course = data.course;
+
+            const handleBlob = (blob: Blob) => {
+                this.currentPdfBlob = blob;
+                this.loadOrAppendPdf(URL.createObjectURL(blob));
+            };
+
             if ('attachment' in data) {
                 this.attachment = data.attachment;
                 this.attachmentSub = this.attachmentService.getAttachmentFile(this.course!.id!, this.attachment!.id!).subscribe({
-                    next: (blob: Blob) => this.loadOrAppendPdf(URL.createObjectURL(blob)),
+                    next: (blob: Blob) => handleBlob(blob),
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit = data.attachmentUnit;
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course!.id!, this.attachmentUnit!.id!).subscribe({
-                    next: (blob: Blob) => this.loadOrAppendPdf(URL.createObjectURL(blob)),
+                    next: (blob: Blob) => handleBlob(blob),
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             }
@@ -116,29 +121,27 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @returns A promise that resolves when the PDF is loaded.
      */
     async loadOrAppendPdf(fileUrl: string, append = false): Promise<void> {
+        this.pdfContainer.nativeElement.querySelectorAll('.pdf-canvas-container').forEach((canvas) => canvas.remove());
+        this.totalPages = 0;
         this.isPdfLoading = true;
         try {
             const loadingTask = PDFJS.getDocument(fileUrl);
             const pdf = await loadingTask.promise;
-            const numPages = pdf.numPages;
-            const initialPageCount = this.totalPages;
+            this.totalPages = pdf.numPages;
 
-            for (let i = 1; i <= numPages; i++) {
+            for (let i = 1; i <= this.totalPages; i++) {
                 const page = await pdf.getPage(i);
                 const viewport = page.getViewport({ scale: 2 });
-                const canvas = this.createCanvas(viewport, initialPageCount + i);
+                const canvas = this.createCanvas(viewport, i);
                 const context = canvas.getContext('2d');
                 await page.render({ canvasContext: context!, viewport }).promise;
 
-                const canvasContainer = this.createCanvasContainer(canvas, initialPageCount + i);
+                const canvasContainer = this.createCanvasContainer(canvas, i);
                 this.pdfContainer.nativeElement.appendChild(canvasContainer);
             }
 
-            this.totalPages += numPages;
-            URL.revokeObjectURL(fileUrl);
-
             if (append) {
-                setTimeout(() => this.scrollToBottom(), 100);
+                this.scrollToBottom();
             }
         } catch (error) {
             onError(this.alertService, error);
@@ -405,17 +408,30 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     /**
      * Deletes selected slides from the PDF viewer.
      */
-    deleteSelectedSlides() {
-        this.selectedPages.forEach((page) => {
-            const pageElement = this.pdfContainer.nativeElement.querySelector(`#pdf-page-${page}`);
-            if (pageElement) {
-                this.pdfContainer.nativeElement.removeChild(pageElement);
-            }
-        });
-        this.totalPages -= this.selectedPages.size;
-        this.updatePageIDs();
-        this.selectedPages.clear();
-        this.dialogErrorSource.next('');
+    async deleteSelectedSlides() {
+        this.isPdfLoading = true;
+        try {
+            const existingPdfBytes = await this.currentPdfBlob!.arrayBuffer();
+            const pdfDoc = await PDFDocument.load(existingPdfBytes);
+
+            const pagesToDelete = Array.from(this.selectedPages)
+                .map((page) => page - 1)
+                .sort((a, b) => b - a);
+            pagesToDelete.forEach((pageIndex) => {
+                pdfDoc.removePage(pageIndex);
+            });
+
+            const pdfBytes = await pdfDoc.save();
+            this.currentPdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
+            this.selectedPages.clear();
+
+            this.loadOrAppendPdf(URL.createObjectURL(this.currentPdfBlob), false);
+            this.dialogErrorSource.next('');
+        } catch (error) {
+            this.alertService.error('Failed to delete selected pages.', { error: error.message });
+        } finally {
+            this.isPdfLoading = false;
+        }
     }
 
     /**
@@ -429,11 +445,29 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * Adds a selected PDF file at the end of the current PDF document.
      * @param event - The event containing the file input.
      */
-    mergePDF(event: Event): void {
+    async mergePDF(event: Event): Promise<void> {
         const file = (event.target as HTMLInputElement).files?.[0];
-        if (file) {
-            const fileUrl = URL.createObjectURL(file);
-            this.loadOrAppendPdf(fileUrl, true);
+
+        this.isPdfLoading = true;
+        try {
+            const newPdfBytes = await file!.arrayBuffer();
+            const existingPdfBytes = await this.currentPdfBlob!.arrayBuffer();
+            const existingPdfDoc = await PDFDocument.load(existingPdfBytes);
+            const newPdfDoc = await PDFDocument.load(newPdfBytes);
+
+            const copiedPages = await existingPdfDoc.copyPages(newPdfDoc, newPdfDoc.getPageIndices());
+            copiedPages.forEach((page) => existingPdfDoc.addPage(page));
+
+            const mergedPdfBytes = await existingPdfDoc.save();
+            this.currentPdfBlob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+
+            this.selectedPages.clear();
+
+            this.loadOrAppendPdf(URL.createObjectURL(this.currentPdfBlob), true);
+        } catch (error) {
+            this.alertService.error('Failed to merge PDFs.', { error: error.message });
+        } finally {
+            this.isPdfLoading = false;
         }
     }
 
@@ -454,48 +488,15 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
     }
 
-    generatePdfFromCanvases() {
-        const doc = new jsPDF({
-            orientation: 'landscape',
-            unit: 'px',
-            format: this.DEFAULT_GENERATED_SLIDE_FORMAT,
-            compress: true,
-        });
-
-        const canvasElements = this.pdfContainer.nativeElement.querySelectorAll('canvas');
-        const scaleFactor = 0.5;
-
-        Array.from(canvasElements).forEach((canvas, index) => {
-            if (index > 0) doc.addPage();
-
-            const fabricImage = new Image(canvas, {
-                crossOrigin: 'anonymous',
-            });
-
-            const imgData = fabricImage.toDataURL({
-                format: 'jpeg',
-                quality: scaleFactor,
-            });
-
-            const imgProps = doc.getImageProperties(imgData);
-            const pdfWidth = doc.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            doc.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-        });
-
-        return doc.output('blob');
-    }
-
     updateAttachmentWithFile(): void {
-        const pdfBlob = this.generatePdfFromCanvases();
-        const pdfFile = new File([pdfBlob], 'updatedAttachment.pdf', { type: 'application/pdf' });
+        const pdfFile = new File([this.currentPdfBlob!], 'updatedAttachment.pdf', { type: 'application/pdf' });
 
         if (this.attachment) {
             this.attachmentToBeEdited = this.attachment;
             this.attachmentToBeEdited!.version!++;
-            this.attachmentToBeEdited!.uploadDate = dayjs();
+            this.attachmentToBeEdited.uploadDate = dayjs();
 
-            this.attachmentService.update(this.attachmentToBeEdited!.id!, this.attachmentToBeEdited!, pdfFile).subscribe({
+            this.attachmentService.update(this.attachmentToBeEdited!.id!, this.attachmentToBeEdited, pdfFile).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
                 },
