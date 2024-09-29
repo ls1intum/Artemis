@@ -444,7 +444,10 @@ public class LocalVCServletService {
         String commitHash = null;
         try {
             if (repositoryActionType == RepositoryActionType.READ) {
-                commitHash = getLatestCommitHash(repositories.get(localVCRepositoryUri.getRelativeRepositoryPath().toString()));
+                String uri = localVCRepositoryUri.getRelativeRepositoryPath().toString();
+                if (repositories.containsKey(uri)) {
+                    commitHash = getLatestCommitHash(repositories.get(uri));
+                }
             }
         }
         catch (GitAPIException e) {
