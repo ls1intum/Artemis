@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class RegisterService {
-    constructor(private http: HttpClient) {}
+    private http = inject(HttpClient);
 
     /**
      * Registers a new user. This is only possible if the password is long enough and there is no other user with the
