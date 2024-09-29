@@ -65,25 +65,25 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         this.route.data.subscribe((data) => {
             this.course = data.course;
 
-            const handleBlob = (blob: Blob) => {
-                this.currentPdfBlob = blob;
-                this.loadOrAppendPdf(URL.createObjectURL(blob));
-            };
-
             if ('attachment' in data) {
                 this.attachment = data.attachment;
                 this.attachmentSub = this.attachmentService.getAttachmentFile(this.course!.id!, this.attachment!.id!).subscribe({
-                    next: (blob: Blob) => handleBlob(blob),
+                    next: (blob: Blob) => this.handleBlob(blob),
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             } else if ('attachmentUnit' in data) {
                 this.attachmentUnit = data.attachmentUnit;
                 this.attachmentUnitSub = this.attachmentUnitService.getAttachmentFile(this.course!.id!, this.attachmentUnit!.id!).subscribe({
-                    next: (blob: Blob) => handleBlob(blob),
+                    next: (blob: Blob) => this.handleBlob(blob),
                     error: (error: HttpErrorResponse) => onError(this.alertService, error),
                 });
             }
         });
+    }
+
+    handleBlob(blob: Blob): void {
+        this.currentPdfBlob = blob;
+        this.loadOrAppendPdf(URL.createObjectURL(blob));
     }
 
     ngOnDestroy() {
@@ -264,9 +264,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     };
 
     /**
-     * Displays a canvas in an enlarged view for detailed examination.
-     * @param originalCanvas The original canvas element displaying the page.
-     */
+     * Displays the selected PDF page in an enlarged view for detailed examination.
+     * @param originalCanvas - The original canvas element of the PDF page to be enlarged.
+     * */
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.isEnlargedView = true;
         this.currentPage = Number(originalCanvas.id);
@@ -330,10 +330,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     redrawCanvas(originalCanvas: HTMLCanvasElement): void {
         const enlargedCanvas = this.enlargedCanvas.nativeElement;
         const context = enlargedCanvas.getContext('2d');
-        if (context) {
-            context.clearRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
-            context.drawImage(originalCanvas, 0, 0, enlargedCanvas.width, enlargedCanvas.height);
-        }
+        context!.clearRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
+        context!.drawImage(originalCanvas, 0, 0, enlargedCanvas.width, enlargedCanvas.height);
     }
 
     /**
