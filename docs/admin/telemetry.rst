@@ -26,7 +26,7 @@ Example configuration in `application-prod.yml`:
         telemetry:
             enabled: true
             sendAdminDetails: false
-            destination: telemetry.artemis.cit.tum.de
+            destination: https://telemetry.artemis.cit.tum.de
 
     info:
         contact: contactMailAddress@cit.tum.de
