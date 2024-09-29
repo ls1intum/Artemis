@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.buildagent.service.connectors.localci;
+package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -9,7 +9,6 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
-import de.tum.cit.aet.artemis.buildagent.service.TestResultXmlParser;
 
 class TestResultXmlParserTest {
 
@@ -89,7 +88,7 @@ class TestResultXmlParserTest {
         TestResultXmlParser.processTestResultFile(exampleXml, failedTests, successfulTests);
         assertThat(failedTests).isEmpty();
         assertThat(successfulTests).hasSize(4);
-        assertThat(successfulTests).map(test -> test.getName()).containsExactlyInAnyOrder("testMergeSort()", "testUseBubbleSortForSmallList()", "testBubbleSort()",
+        assertThat(successfulTests).map(BuildResult.LocalCITestJobDTO::getName).containsExactlyInAnyOrder("testMergeSort()", "testUseBubbleSortForSmallList()", "testBubbleSort()",
                 "testUseMergeSortForBigList()");
     }
 
