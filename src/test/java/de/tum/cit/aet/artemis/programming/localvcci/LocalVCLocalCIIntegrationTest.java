@@ -31,6 +31,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
@@ -59,8 +60,8 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
+import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
@@ -76,7 +77,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private ExamUtilService examUtilService;
 
     @Autowired
-    private BuildJobRepository buildJobRepository;
+    private BuildJobTestRepository buildJobRepository;
 
     @Autowired
     protected LocalCITriggerService localCITriggerService;
@@ -947,94 +948,93 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         practiceRepository.resetLocalRepo();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildPriorityAfterDueDate() throws Exception {
-        // Set dueDate before now
-        sharedQueueProcessingService.removeListener();
-        programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
-        programmingExerciseRepository.save(programmingExercise);
+    @Nested
+    class BuildJobPriorityTest {
 
-        testPriority(instructor1Login, PRIORITY_OPTIONAL_EXERCISE);
+        @BeforeEach
+        void setUp() {
+            sharedQueueProcessingService.removeListener();
+        }
 
-        queuedJobs.clear();
-        sharedQueueProcessingService.init();
-    }
+        @AfterEach
+        void tearDown() {
+            queuedJobs.clear();
+            log.info("Clear queued jobs done");
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildPriorityBeforeDueDate() throws Exception {
-        sharedQueueProcessingService.removeListener();
+            sharedQueueProcessingService.init();
+            log.info("Cleanup queue processing service done");
+        }
 
-        testPriority(student1Login, PRIORITY_NORMAL);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testBuildPriorityBeforeDueDate() throws Exception {
+            testPriority(student1Login, PRIORITY_NORMAL);
+        }
 
-        queuedJobs.clear();
-        sharedQueueProcessingService.init();
-    }
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testBuildPriorityAfterDueDate() throws Exception {
+            // Set dueDate before now
+            programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+            programmingExerciseRepository.save(programmingExercise);
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testPriorityRunningExam() throws Exception {
-        sharedQueueProcessingService.removeListener();
+            testPriority(instructor1Login, PRIORITY_OPTIONAL_EXERCISE);
+        }
 
-        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testPriorityRunningExam() throws Exception {
+            Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+            ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
-        programmingExercise.setCourse(null);
-        programmingExercise.setExerciseGroup(exerciseGroup);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+            programmingExercise.setCourse(null);
+            programmingExercise.setExerciseGroup(exerciseGroup);
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // Exam is running
-        var now = ZonedDateTime.now();
-        exam.setStartDate(now.minusHours(1));
-        exam.setEndDate(now.plusHours(1));
-        exam.setWorkingTime(2 * 60 * 60);
-        exam = examRepository.save(exam);
+            // Exam is running
+            var now = ZonedDateTime.now();
+            exam.setStartDate(now.minusHours(1));
+            exam.setEndDate(now.plusHours(1));
+            exam.setWorkingTime(2 * 60 * 60);
+            exam = examRepository.save(exam);
 
-        // Create StudentExam.
-        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student1);
-        studentExam.setExercises(List.of(programmingExercise));
-        studentExam.setWorkingTime(exam.getWorkingTime());
-        studentExam.setStartedAndStartDate(now.minusHours(1));
-        studentExamRepository.save(studentExam);
+            // Create StudentExam.
+            StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student1);
+            studentExam.setExercises(List.of(programmingExercise));
+            studentExam.setWorkingTime(exam.getWorkingTime());
+            studentExam.setStartedAndStartDate(now.minusHours(1));
+            studentExamRepository.save(studentExam);
 
-        testPriority(student1Login, PRIORITY_EXAM_CONDUCTION);
+            testPriority(student1Login, PRIORITY_EXAM_CONDUCTION);
+        }
 
-        queuedJobs.clear();
-        log.info("Clear queued jobs done");
+        private void testPriority(String login, int expectedPriority) throws Exception {
+            log.info("Creating participation");
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
-        sharedQueueProcessingService.init();
-        log.info("Cleanup queue processing service done");
-    }
+            localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
+            String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit);
+            localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                    Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
+            localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
 
-    private void testPriority(String login, int expectedPriority) throws Exception {
-        log.info("Creating participation");
-        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+            log.info("Trigger build done");
 
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
-        String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit);
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
-                Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                log.info("Poll queue jobs: is null %s".formatted(buildJobQueueItem == null ? "true" : "false"));
+                if (buildJobQueueItem == null) {
+                    queuedJobs.forEach(item -> log.info("Item in Queue: %s".formatted(item.toString())));
+                }
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+            log.info("Polled queue item");
 
-        localCITriggerService.triggerBuild(studentParticipation, false);
-        log.info("Trigger build done");
-
-        await().until(() -> {
-            BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
-            log.info("Poll queue jobs: is null %s".formatted(buildJobQueueItem == null ? "true" : "false"));
-            if (buildJobQueueItem == null) {
-                queuedJobs.forEach(item -> log.info("Item in Queue: %s".formatted(item.toString())));
-            }
-
-            return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
-        });
-        BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
-        log.info("Polled queue item");
-
-        assertThat(buildJobQueueItem).isNotNull();
-        assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
-        log.info("Assertions done");
-
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
+            log.info("Assertions done");
+        }
     }
 }
