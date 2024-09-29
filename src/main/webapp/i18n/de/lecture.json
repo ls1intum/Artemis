@@ -104,7 +104,10 @@
                 "removePageButton": "Entferne Seiten",
                 "appendFileButton": "Anhänge Datei",
                 "attachmentUpdateSuccess": "Anhang erfolgreich aktualisiert.",
-                "attachmentUpdateError": "Fehler beim Aktualisieren des Anhangs: {{error}}"
+                "attachmentUpdateError": "Fehler beim Aktualisieren des Anhangs: {{error}}",
+                "mergeFailedError": "Fehler beim Zusammenführen der Dateien: {{error}}",
+                "pageDeleteError": "Fehler beim Löschen der Seiten: {{error}}",
+                "fileSizeError": "Die Datei ist zu groß. Die maximale Dateigröße beträgt 20MB."
             }
         }
     }

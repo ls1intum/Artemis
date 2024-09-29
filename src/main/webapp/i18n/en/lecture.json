@@ -104,7 +104,10 @@
                 "removePageButton": "Remove Page(s)",
                 "appendFileButton": "Append File",
                 "attachmentUpdateSuccess": "Attachment updated successfully.",
-                "attachmentUpdateError": "Failed to update attachment: {{error}}"
+                "attachmentUpdateError": "Failed to update attachment: {{error}}",
+                "mergeFailedError": "Failed to merge files: {{error}}",
+                "pageDeleteError": "Failed to delete pages: {{error}}",
+                "fileSizeError": "The file size exceeds the limit of 20MB."
             }
         }
     }

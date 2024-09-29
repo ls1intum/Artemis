@@ -16,6 +16,7 @@ import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { PDFDocument } from 'pdf-lib';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -426,7 +427,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.loadOrAppendPdf(URL.createObjectURL(this.currentPdfBlob), false);
             this.dialogErrorSource.next('');
         } catch (error) {
-            this.alertService.error('Failed to delete selected pages.', { error: error.message });
+            this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         } finally {
             this.isPdfLoading = false;
         }
@@ -463,7 +464,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
             this.loadOrAppendPdf(URL.createObjectURL(this.currentPdfBlob), true);
         } catch (error) {
-            this.alertService.error('Failed to merge PDFs.', { error: error.message });
+            this.alertService.error('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
         } finally {
             this.isPdfLoading = false;
         }
@@ -488,6 +489,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     updateAttachmentWithFile(): void {
         const pdfFile = new File([this.currentPdfBlob!], 'updatedAttachment.pdf', { type: 'application/pdf' });
+
+        if (pdfFile.size > MAX_FILE_SIZE) {
+            this.alertService.error('artemisApp.attachment.pdfPreview.fileSizeError');
+            return;
+        }
 
         if (this.attachment) {
             this.attachmentToBeEdited = this.attachment;
