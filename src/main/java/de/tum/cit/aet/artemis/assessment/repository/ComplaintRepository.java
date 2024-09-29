@@ -256,7 +256,6 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
     List<Complaint> getAllByResult_Assessor_IdAndResult_Participation_Exercise_Course_Id(Long assessorId, Long courseId);
 
-    // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
      * Get the number of Complaints for all tutors of a course
      *
@@ -267,8 +266,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO(
                 r.assessor.id,
                 COUNT(c),
-                SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted = TRUE) THEN e.maxPoints ELSE 0.0 END)
+                SUM(CASE WHEN c.accepted = TRUE THEN 1L ELSE 0L END),
+                CAST(SUM(CASE WHEN c.accepted = TRUE THEN e.maxPoints ELSE 0.0 END) AS double)
             )
             FROM Complaint c
                 JOIN c.result r
@@ -282,7 +281,6 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             """)
     List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByCourseId(@Param("courseId") long courseId);
 
-    // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
      * Get the number of Complaints for all tutors of an exercise
      *
@@ -293,8 +291,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO(
                 r.assessor.id,
                 COUNT(c),
-                SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted = TRUE) THEN CAST(e.maxPoints AS double) ELSE 0.0 END)
+                SUM(CASE WHEN c.accepted = TRUE THEN 1L ELSE 0L END),
+                CAST(SUM(CASE WHEN c.accepted = TRUE THEN e.maxPoints ELSE 0.0 END) AS double)
             )
             FROM Complaint c
                 JOIN c.result r
@@ -308,7 +306,6 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             """)
     List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByExerciseId(@Param("exerciseId") long exerciseId);
 
-    // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
      * Get the number of Complaints for all tutors of an exam
      *
@@ -319,8 +316,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO(
                 r.assessor.id,
                 COUNT(c),
-                SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted = TRUE) THEN CAST(e.maxPoints AS double) ELSE 0.0 END)
+                SUM(CASE WHEN c.accepted = TRUE THEN 1L ELSE 0L END),
+                CAST(SUM(CASE WHEN c.accepted = TRUE THEN e.maxPoints ELSE 0.0 END) AS double)
             )
             FROM Complaint c
                 JOIN c.result r
@@ -422,8 +419,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequestsDTO(
                 r.assessor.id,
                 COUNT(c),
-                SUM( CASE WHEN (c.accepted IS NULL) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted IS NULL) THEN e.maxPoints ELSE 0.0 END)
+                SUM(CASE WHEN c.accepted IS NULL THEN 1L ELSE 0L END),
+                CAST(SUM(CASE WHEN c.accepted IS NULL THEN e.maxPoints ELSE 0.0 END) AS double)
             )
             FROM Complaint c
                 JOIN c.result r
@@ -447,8 +444,8 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequestsDTO(
                 r.assessor.id,
                 COUNT(c),
-                SUM( CASE WHEN (c.accepted IS NULL) THEN 1L ELSE 0L END),
-                SUM( CASE WHEN (c.accepted IS NULL) THEN e.maxPoints ELSE 0.0 END)
+                SUM(CASE WHEN c.accepted IS NULL THEN 1L ELSE 0L END),
+                CAST(SUM(CASE WHEN c.accepted IS NULL THEN e.maxPoints ELSE 0.0 END) AS double)
             )
             FROM Complaint c
                 JOIN c.result r

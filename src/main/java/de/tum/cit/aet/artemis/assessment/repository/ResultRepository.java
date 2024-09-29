@@ -574,11 +574,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
-                SUM(CAST(e.maxPoints AS double)),
+                SUM(e.maxPoints),
                 AVG(r.score),
                 CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
-                )
+            )
             FROM Result r
                 JOIN r.participation p
                 JOIN p.exercise e
@@ -594,7 +594,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
-                SUM(CAST(e.maxPoints AS double)),
+                SUM(e.maxPoints),
                 AVG(r.score),
                 CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
@@ -610,12 +610,11 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
-    // Valid JPQL syntax, only SCA is not able to parse it due to mixing primitive and object types
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
-                SUM(CAST(e.maxPoints AS double)),
+                SUM(e.maxPoints),
                 AVG(r.score),
                 CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
