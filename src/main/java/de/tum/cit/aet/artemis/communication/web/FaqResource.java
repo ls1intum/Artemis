@@ -65,7 +65,8 @@ public class FaqResource {
     /**
      * POST /courses/:courseId/faqs : Create a new faq.
      *
-     * @param faq the faq to create
+     * @param faq      the faq to create *
+     * @param courseId the id of the course the faq belongs to
      * @return the ResponseEntity with status 201 (Created) and with body the new faq, or with status 400 (Bad Request) if the faq has already an ID
      *         or with status 500 if the faq course id does not match with the path variable
      * @throws URISyntaxException if the Location URI syntax is incorrect
