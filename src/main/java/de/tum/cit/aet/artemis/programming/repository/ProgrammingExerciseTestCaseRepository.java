@@ -23,8 +23,6 @@ public interface ProgrammingExerciseTestCaseRepository extends ArtemisJpaReposit
 
     Set<ProgrammingExerciseTestCase> findByExerciseId(long exerciseId);
 
-    Optional<ProgrammingExerciseTestCase> findByExerciseIdAndTestName(long exerciseId, String testName);
-
     default ProgrammingExerciseTestCase findByIdWithExerciseElseThrow(long testCaseId) {
         return getValueElseThrow(findByIdWithExercise(testCaseId), testCaseId);
     }
@@ -42,20 +40,6 @@ public interface ProgrammingExerciseTestCaseRepository extends ArtemisJpaReposit
             WHERE tc.id = :testCaseId
             """)
     Optional<ProgrammingExerciseTestCase> findByIdWithExercise(@Param("testCaseId") long testCaseId);
-
-    /**
-     * Returns all test cases with the associated solution entries for a programming exercise
-     *
-     * @param exerciseId of the exercise
-     * @return all test cases with the associated solution entries
-     */
-    @Query("""
-            SELECT DISTINCT tc
-            FROM ProgrammingExerciseTestCase tc
-                LEFT JOIN FETCH tc.solutionEntries se
-            WHERE tc.exercise.id = :exerciseId
-            """)
-    Set<ProgrammingExerciseTestCase> findByExerciseIdWithSolutionEntries(@Param("exerciseId") long exerciseId);
 
     /**
      * Returns all test cases with the associated solution entries for a programming exercise

@@ -1,23 +1,17 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
-
-import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 
 /**
  * Spring Data repository for the IrisMessage entity.
@@ -45,26 +39,4 @@ public interface IrisMessageRepository extends ArtemisJpaRepository<IrisMessage,
                 AND m.sentAt BETWEEN :start AND :end
             """)
     int countLlmResponsesOfUserWithinTimeframe(@Param("userId") long userId, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
-
-    Optional<IrisMessage> findFirstBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender);
-
-    @EntityGraph(type = LOAD, attributePaths = { "content" })
-    IrisMessage findIrisMessageById(long irisMessageId);
-
-    /**
-     * Finds the first message with content by session ID and sender, ordered by the sent date in descending order.
-     * This method avoids in-memory paging by retrieving the message directly from the database.
-     *
-     * @param sessionId the ID of the session to find the message for
-     * @param sender    the sender of the message
-     * @return the first {@code IrisMessage} with content, ordered by sent date in descending order,
-     *         or null if no message is found
-     */
-    default IrisMessage findFirstWithContentBySessionIdAndSenderOrderBySentAtDesc(long sessionId, @NotNull IrisMessageSender sender) {
-        var irisMessage = findFirstBySessionIdAndSenderOrderBySentAtDesc(sessionId, sender);
-        if (irisMessage.isEmpty()) {
-            return null;
-        }
-        return findIrisMessageById(irisMessage.get().getId());
-    }
 }

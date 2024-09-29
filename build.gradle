@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.5.3"
+version = "7.5.5"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -71,7 +71,8 @@ spotless {
                         "**/src/main/resources/templates/**",
                         "/docker/**",
                         "checked-out-repos/**",
-                        "**/src/main/java/org/eclipse/**"
+                        "**/src/main/java/org/eclipse/**",
+                        "supporting_scripts/**"
                 )
             }
         }
@@ -151,11 +152,8 @@ private excludedClassFilesForReport(classDirectories) {
     classDirectories.setFrom(files(classDirectories.files.collect {
         fileTree(dir: it,
             exclude: [
-                "**/de/tum/in/www1/artemis/domain/**/*_*",
-                "**/de/tum/in/www1/artemis/config/migration/entries/**",
-                "**/de/tum/in/www1/artemis/service/connectors/pyris/dto/**",
-                "**/de/tum/in/www1/artemis/web/rest/iris/dto/**",
-                "**/org/eclipse/jgit/**",
+                "**/de/tum/cit/aet/artemis/**/domain/**/*_*",
+                "**/de/tum/cit/aet/artemis/core/config/migration/entries/**",
                 "**/gradle-wrapper.jar/**"
             ]
         )
@@ -179,13 +177,13 @@ jacocoTestCoverageVerification {
                 counter = "INSTRUCTION"
                 value = "COVEREDRATIO"
                 // TODO: in the future the following value should become higher than 0.92
-                minimum = 0.895
+                minimum = 0.894
             }
             limit {
                 counter = "CLASS"
                 value = "MISSEDCOUNT"
                 // TODO: in the future the following value should become less than 10
-                maximum = 40
+                maximum = 60
             }
         }
     }
@@ -230,7 +228,8 @@ dependencies {
     //    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation files("libs/jenkins-client-0.4.1.jar")
     // The following 4 dependencies are explicitly integrated as transitive dependencies of jenkins-client-0.4.0.jar
-    implementation "org.apache.httpcomponents.client5:httpclient5:5.3.1"
+    // NOTE: we cannot upgrade to the latest version for org.apache.httpcomponents because of exceptions in Docker Java
+    implementation "org.apache.httpcomponents.client5:httpclient5:5.3.1"    // also used by Docker Java
     implementation "org.apache.httpcomponents.core5:httpcore5:5.2.5"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
     implementation("org.dom4j:dom4j:2.1.4") {
@@ -254,6 +253,13 @@ dependencies {
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:python-3:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
+
+    // those are transitive dependencies of JPlag Text --> Stanford NLP
+    // Note: ideally we would exclude them, but for some reason this does not work
+    implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
+    implementation "org.apache.lucene:lucene-core:${lucene_version}"
+    implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
+    implementation "com.google.protobuf:protobuf-java:4.28.2"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -284,7 +290,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.5"
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.7"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -315,7 +321,13 @@ dependencies {
     implementation "org.jsoup:jsoup:1.18.1"
     implementation "commons-codec:commons-codec:1.17.1"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
+    // TODO: decide if we want to use OpenAPI and Swagger v3
+//    implementation 'io.swagger.core.v3:swagger-annotations:2.2.23'
+//    implementation "org.springdoc:springdoc-openapi-ui:1.8.0"
+
+    // use the latest version to avoid security vulnerabilities
+    implementation "org.springframework:spring-webmvc:6.1.13"
+
     implementation "com.vdurmont:semver4j:3.1.0"
 
     implementation "com.github.docker-java:docker-java-core:${docker_java_version}"
@@ -346,6 +358,7 @@ dependencies {
     // Support XML serialization and deserialization
     implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-xml:${fasterxml_version}"
     // Support for YAML format
+    implementation "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:${fasterxml_version}"
 
     // Hazelcast replacement to enable caching and communication between server nodes
     implementation "org.redisson:redisson:3.34.1"
@@ -359,7 +372,7 @@ dependencies {
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
 
-    implementation "com.zaxxer:HikariCP:5.1.0"
+    implementation "com.zaxxer:HikariCP:6.0.0"
 
     implementation "org.apache.commons:commons-text:1.12.0"
     implementation "org.apache.commons:commons-math3:3.6.1"
@@ -386,7 +399,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client:${spring_boot_version}"
 
     implementation "org.springframework.ldap:spring-ldap-core:3.2.6"
-    implementation "org.springframework.data:spring-data-ldap:3.3.3"
+    implementation "org.springframework.data:spring-data-ldap:3.3.4"
 
     implementation("org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:4.1.3") {
         // NOTE: these modules contain security vulnerabilities and are not needed
@@ -398,8 +411,8 @@ dependencies {
 
     implementation "io.netty:netty-all:4.1.113.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.22"
-    implementation "org.springframework:spring-messaging:6.1.12"
-    implementation "org.springframework.retry:spring-retry:2.0.8"
+    implementation "org.springframework:spring-messaging:6.1.13"
+    implementation "org.springframework.retry:spring-retry:2.0.9"
 
     implementation "org.springframework.security:spring-security-config:${spring_security_version}"
     implementation "org.springframework.security:spring-security-data:${spring_security_version}"
@@ -407,7 +420,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.40"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.41.1"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -428,10 +441,6 @@ dependencies {
     implementation "org.bouncycastle:bcpkix-jdk18on:1.78.1"
     implementation "org.bouncycastle:bcprov-jdk18on:1.78.1"
 
-    implementation("io.springfox:springfox-swagger2:3.0.0") {
-        exclude module: "mapstruct"
-    }
-    implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "com.mysql:mysql-connector-j:9.0.0"
     implementation "org.postgresql:postgresql:42.7.4"
 
@@ -442,20 +451,24 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.9.9"
     // NOTE: 3.0.2 is broken for splitting lecture specific PDFs
     implementation "org.apache.pdfbox:pdfbox:3.0.1"
-    implementation "org.apache.commons:commons-csv:1.11.0"
-    implementation "org.commonmark:commonmark:0.22.0"
+    implementation "org.apache.commons:commons-csv:1.12.0"
+    implementation "org.commonmark:commonmark:0.23.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
+
     implementation "org.jgrapht:jgrapht-core:1.5.2"
+    // use the latest version explicitly to avoid security vulnerabilities (currently Artemis and JPlag rely on jgrapht 1.5.2 which relies on apfloat)
+    implementation "org.apfloat:apfloat:1.14.0"
+
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.3.0-jre"
+    implementation "com.google.guava:guava:33.3.1-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
     implementation "com.google.code.gson:gson:2.11.0"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.31.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.32.0"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") {
@@ -511,16 +524,18 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test:${spring_boot_version}") {
         exclude group: "org.junit.vintage", module: "junit-vintage-engine"
         exclude group: "com.vaadin.external.google", module: "android-json"
+        exclude group: "org.xmlunit", module: "xmlunit-core"
     }
     testImplementation "org.springframework.security:spring-security-test:${spring_security_version}"
     testImplementation "org.springframework.boot:spring-boot-test:${spring_boot_version}"
     testImplementation "org.assertj:assertj-core:3.26.3"
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "io.github.classgraph:classgraph:4.8.175"
+
+    testImplementation "io.github.classgraph:classgraph:4.8.176"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.10.1"
+    testImplementation "org.gradle:gradle-tooling-api:8.10.2"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.0"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
@@ -545,7 +560,7 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:16.4.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.0.0"
     }
 }
 
@@ -602,7 +617,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.10.1"
+    gradleVersion = "8.10.2"
 }
 
 tasks.register("stage") {

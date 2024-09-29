@@ -51,12 +51,4 @@ public interface LtiPlatformConfigurationRepository extends ArtemisJpaRepository
      */
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfigurations" })
     LtiPlatformConfiguration findWithEagerOnlineCourseConfigurationsById(long platformId);
-
-    /**
-     * Finds an LTI platform configuration by its client ID.
-     *
-     * @param clientId The registration ID.
-     * @return Optional of LtiPlatformConfiguration.
-     */
-    Optional<LtiPlatformConfiguration> findByClientId(String clientId);
 }
