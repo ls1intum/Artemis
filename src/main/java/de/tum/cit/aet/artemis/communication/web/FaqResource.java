@@ -67,8 +67,8 @@ public class FaqResource {
      *
      * @param faq      the faq to create *
      * @param courseId the id of the course the faq belongs to
-     * @return the ResponseEntity with status 201 (Created) and with body the new faq, or with status 400 (Bad Request) if the faq has already an ID
-     *         or with status 500 if the faq course id does not match with the path variable
+     * @return the ResponseEntity with status 201 (Created) and with body the new faq, or with status 400 (Bad Request)
+     *         if the faq has already an ID or if the faq course id does not match with the path variable
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/faqs")
@@ -95,8 +95,8 @@ public class FaqResource {
      * @param faq      the faq to update
      * @param faqId    id of the faq to be updated *
      * @param courseId the id of the course the faq belongs to
-     * @return the ResponseEntity with status 200 (OK) and with body the updated faq, or with status 400 (Bad Request) if the faq is not valid, or with status 500 (Internal
-     *         Server Error) if the faq couldn't be updated
+     * @return the ResponseEntity with status 200 (OK) and with body the updated faq, or with status 400 (Bad Request)
+     *         if the faq is not valid or if the faq course id does not match with the path variable
      */
     @PutMapping("courses/{courseId}/faqs/{faqId}")
     @EnforceAtLeastInstructor

@@ -16,7 +16,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
-import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -32,8 +31,6 @@ export class FaqUpdateComponent implements OnInit {
     existingCategories: FaqCategory[];
     faqCategories: FaqCategory[];
     courseId: number;
-    course: Course;
-
     domainActionsDescription = [new FormulaAction()];
 
     // Icons
