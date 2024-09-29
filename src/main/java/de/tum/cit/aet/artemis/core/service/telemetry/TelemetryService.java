@@ -10,8 +10,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 
 @Service
@@ -52,15 +50,7 @@ public class TelemetryService {
             return;
         }
 
-        log.info("Sending telemetry information");
-        try {
-            telemetrySendingService.sendTelemetryByPostRequest(eurekaEnabled, sendAdminDetails);
-        }
-        catch (JsonProcessingException e) {
-            log.warn("JsonProcessingException in sendTelemetry.", e);
-        }
-        catch (Exception e) {
-            log.warn("Exception in sendTelemetry, with dst URI: {}", destination, e);
-        }
+        log.info("Sending telemetry information asynchronously");
+        telemetrySendingService.sendTelemetryByPostRequest(eurekaEnabled, sendAdminDetails);
     }
 }

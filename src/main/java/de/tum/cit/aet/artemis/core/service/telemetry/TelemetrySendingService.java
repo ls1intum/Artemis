@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
@@ -83,17 +84,25 @@ public class TelemetrySendingService {
      *                             the method retrieves the number of instances registered with Eureka.
      * @param sendAdminDetails a flag indicating whether to include administrator details in the
      *                             telemetry data (such as contact information and admin name).
-     * @throws Exception if an error occurs while sending the telemetry data or constructing the request.
      */
     @Async
-    public void sendTelemetryByPostRequest(boolean eurekaEnabled, boolean sendAdminDetails) throws Exception {
-        String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(buildTelemetryData(sendAdminDetails, eurekaEnabled));
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
+    public void sendTelemetryByPostRequest(boolean eurekaEnabled, boolean sendAdminDetails) {
+        try {
+            String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(buildTelemetryData(sendAdminDetails, eurekaEnabled));
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
 
-        var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
-        log.info("Successfully sent telemetry data. {}", response.getBody());
+            log.info("Sending telemetry to {}", destination);
+            var response = restTemplate.postForEntity(destination + "/api/telemetry", requestEntity, String.class);
+            log.info("Successfully sent telemetry data. {}", response.getBody());
+        }
+        catch (JsonProcessingException e) {
+            log.warn("JsonProcessingException in sendTelemetry.", e);
+        }
+        catch (Exception e) {
+            log.warn("Exception in sendTelemetry, with dst URI: {}", destination, e);
+        }
     }
 
     /**
