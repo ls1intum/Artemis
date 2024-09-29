@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../../course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -9,7 +9,6 @@ import { faAngleDown, faAngleUp, faArrowDownAZ, faArrowUpAZ, faQuestionCircle } 
 import { sortCourses } from 'app/shared/util/course.util';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
 
 @Component({
@@ -17,10 +16,12 @@ import { CourseCardHeaderComponent } from '../course-card-header/course-card-hea
     templateUrl: './course-archive.component.html',
     styleUrls: ['./course-archive.component.scss'],
     standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, CourseCardHeaderComponent],
+    imports: [ArtemisSharedModule, CourseCardHeaderComponent],
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {
     private archiveCourseSubscription: Subscription;
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
 
     courses: Course[];
     semesters: string[];
@@ -37,11 +38,6 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     readonly faArrowDownAZ = faArrowDownAZ;
     readonly faArrowUpAZ = faArrowUpAZ;
     readonly faQuestionCircle = faQuestionCircle;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.loadArchivedCourses();

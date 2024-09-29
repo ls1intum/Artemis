@@ -3,7 +3,6 @@ import { Course } from 'app/entities/course.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 /** TODO '@edkaya': New course card design also uses this header design.
  * Therefore, this component will be reused in course-card.component.html
@@ -15,7 +14,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
     templateUrl: './course-card-header.component.html',
     styleUrls: ['./course-card-header.component.scss'],
     standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
+    imports: [ArtemisSharedModule],
 })
 export class CourseCardHeaderComponent implements OnInit {
     protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
