@@ -19,7 +19,6 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -107,8 +106,7 @@ public class AthenaRepositoryExportService {
         if (repositoryType == null) { // Export student repository
             var submission = programmingSubmissionRepository.findById(submissionId).orElseThrow();
             // Load participation with eager submissions
-            var participation = (ProgrammingExerciseStudentParticipation) programmingExerciseStudentParticipationRepository
-                    .findWithSubmissionsById(submission.getParticipation().getId()).getFirst();
+            var participation = programmingExerciseStudentParticipationRepository.findWithSubmissionsById(submission.getParticipation().getId()).getFirst();
             zipFile = programmingExerciseExportService.getRepositoryWithParticipation(programmingExercise, participation, exportOptions, exportDir, exportDir, true);
         }
         else {

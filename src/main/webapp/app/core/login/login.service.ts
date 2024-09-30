@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs/operators';
@@ -10,12 +10,10 @@ import { AccountService } from 'app/core/auth/account.service';
 export class LoginService {
     logoutWasForceful = false;
 
-    constructor(
-        private accountService: AccountService,
-        private authServerProvider: AuthServerProvider,
-        private router: Router,
-        private alertService: AlertService,
-    ) {}
+    private accountService = inject(AccountService);
+    private authServerProvider = inject(AuthServerProvider);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
 
     /**
      * Login the user with the given credentials.

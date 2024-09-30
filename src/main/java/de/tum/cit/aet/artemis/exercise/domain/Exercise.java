@@ -613,7 +613,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
         boolean isAssessmentOver = getAssessmentDueDate() == null || getAssessmentDueDate().isBefore(ZonedDateTime.now());
         if (!isAssessmentOver) {
             // This allows the showing of preliminary feedback in case the assessment due date is set before its over.
-            if (this instanceof TextExercise) {
+            if (this instanceof TextExercise || this instanceof ModelingExercise) {
                 return participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).collect(Collectors.toSet());
             }
             return Set.of();

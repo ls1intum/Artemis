@@ -787,6 +787,7 @@ public class SubmissionService {
             // add each submission with its complaint to the DTO
             submissions.stream().filter(submission -> submission.getResultWithComplaint() != null).forEach(submission -> {
                 // get the complaint which belongs to the submission
+                submission.setResults(submission.getNonAthenaResults());
                 Complaint complaintOfSubmission = complaintMap.get(submission.getResultWithComplaint().getId());
                 prepareComplaintAndSubmission(complaintOfSubmission, submission);
                 submissionWithComplaintDTOs.add(new SubmissionWithComplaintDTO(submission, complaintOfSubmission));
