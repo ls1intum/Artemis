@@ -156,8 +156,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
 
         var programmingExSCAEnabled = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
-        ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).orElseThrow();
+        programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExSCAEnabled.getId()).orElseThrow();
         var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories", programmingExSCAEnabled);
         // Change the first category
         var categoryIterator = programmingExSCAEnabled.getStaticCodeAnalysisCategories().iterator();
@@ -349,8 +348,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
 
         staticCodeAnalysisCategoryRepository.saveAll(categories);
 
-        ProgrammingExercise exerciseWithSolutionParticipation = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseSCAEnabled.getId()).orElseThrow();
+        programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseSCAEnabled.getId()).orElseThrow();
 
         var endpoint = parameterizeEndpoint("/api/programming-exercises/{exerciseId}/static-code-analysis-categories/import", programmingExerciseSCAEnabled);
         var newCategories = request.patchWithResponseBodyList(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, StaticCodeAnalysisCategory.class, HttpStatus.OK);

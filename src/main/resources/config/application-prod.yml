@@ -20,7 +20,7 @@ artemis:
     telemetry:
         enabled: true # Disable sending any telemetry information to the telemetry service by setting this to false
         sendAdminDetails: true # Include personal identifiable information of the admin, including email and name in the telemetry data
-        destination: telemetry.artemis.cit.tum.de
+        destination: https://telemetry.artemis.cit.tum.de
 
 spring:
     devtools:
