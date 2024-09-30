@@ -348,6 +348,7 @@ public class TextExerciseUtilService {
         return submission;
     }
 
+    /**
      * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves an Athena Result for the StudentParticipation
      *
      * @param exercise     The TextExercise the TextSubmission belongs to
@@ -386,6 +387,7 @@ public class TextExerciseUtilService {
         return submission;
     }
 
+    /**
      * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves a Result for the StudentParticipation given the
      * assessorLogin.
      *
@@ -399,6 +401,7 @@ public class TextExerciseUtilService {
         return saveTextSubmissionWithResultAndAssessor(exercise, submission, login, null, assessorLogin);
     }
 
+    /**
      * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves an Athena Result for the StudentParticipation.
      *
      * @param exercise   The TextExercise the TextSubmission belongs to
@@ -410,6 +413,7 @@ public class TextExerciseUtilService {
         return saveTextSubmissionWithAthenaResult(exercise, submission, login, null);
     }
 
+    /**
      * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and teamId. Also creates and saves a Result for the StudentParticipation given the
      * assessorLogin.
      *
