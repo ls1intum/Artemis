@@ -3,6 +3,10 @@
 Creating SSH keys
 ^^^^^^^^^^^^^^^^^
 
+.. contents:: Content of this document
+    :local:
+    :depth: 2
+
 SSH keys can be used to establish a secure connection with the Artemis Local Version Control, where you are performing Git operations from your local machine.
 The SSH key needs to be added to Artemis before you can make use of the key.
 
@@ -43,7 +47,7 @@ If you don't have an existing SSH key that you wish to use, generate one as foll
 1. Log in to your local computer as an administrator.
 2. In a command prompt, run:
 
-.. _Git (with Git Bash): <https://gitforwindows.org/>
+.. _Git (with Git Bash): https://gitforwindows.org/
 
 
 .. code-block:: bash
@@ -154,4 +158,4 @@ Associating the key with your email address helps you to identify the key later 
     +----[SHA256]-----+
     artemis@homemac ~ %
 
-5. You're done and you can now :ref:`add your key to Artemis<use ssh key>`.
+4. You're done and you can now :ref:`add your key to Artemis<use ssh key>`.

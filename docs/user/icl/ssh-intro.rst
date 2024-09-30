@@ -3,6 +3,10 @@
 SSH
 ^^^
 
+.. contents:: Content of this document
+    :local:
+    :depth: 2
+
 Artemis uses SSH as a simple way for users to connect securely to repositories to perform Git operations.
 
 What is SSH?
@@ -15,7 +19,7 @@ It’s mostly used by system administrators, developers, and IT professionals to
 SSH provides a secure, encrypted communication channel between your computer and a remote machine, so any data passed (like passwords or commands) is protected from eavesdropping.
 In Artemis you cna use SSH to access your repositories with Git.
 
-Why Use SSH?
+Why use SSH?
 """"""""""""
 
 The main advantage of SSH is security.
@@ -34,7 +38,7 @@ When you want to connect, your SSH client sends a request to the server.
 If the connection is successful, you can log in to the server and start working as if you were sitting in front of it.
 The connection uses SSH keys for authentication.
 
-What Are SSH Keys?
+What are SSH Keys?
 """"""""""""""""""
 
 .. _public-key cryptography: https://en.wikipedia.org/wiki/Public-key_cryptography
@@ -49,6 +53,7 @@ They are based on `public-key cryptography`_ and come in pairs: a public key and
 When you try to connect to the server, your computer proves it has the private key that matches the server's public key, allowing you access.
 You can add a personal SSH key to your user account to easily authenticate when performing read operations from your local machine.
 An Artemis user can currently add one key to their account.
+For instructions on how to add your SSH key to your Artemis account, please refer to :ref:`link to relevant documentation<use ssh key>`.
 
 Before you can use SSH keys to secure a connection with Artemis the following must have already been done:
 

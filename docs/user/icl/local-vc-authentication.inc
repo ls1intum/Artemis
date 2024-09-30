@@ -18,6 +18,13 @@ Clone over HTTPS:
    git clone https://username@artemis.cit.tum.de/course/documentation-tests.git
 
 
+Clone over HTTPS with access token:
+
+.. code-block:: bash
+
+   git clone https://username:<ACCESS-TOKEN>@artemis.cit.tum.de/course/documentation-tests.git
+
+
 Clone over SSH:
 
 .. code-block:: bash
@@ -35,6 +42,9 @@ HTTPS access tokens
 Instructors can create HTTP access tokens for repository access in Artemis.
 They are created in the account settings and are used in place of passwords for Git over HTTPS.
 For every student's exercise, Artemis automatically generates an access token, only associated with the repository of this particular exercise.
+You can use
+
+
 
 Token Creation
 """"""""""""""
