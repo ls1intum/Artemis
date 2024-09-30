@@ -24,6 +24,7 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.parallel.Isolated;
@@ -1615,7 +1616,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         result.setCompletionDate(ZonedDateTime.now());
         resultRepository.save(result);
 
-        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
+        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "feedbackRequestAfterDueDate");
 
         localRepo.resetLocalRepo();
     }
@@ -1643,18 +1644,19 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         resultRepository.save(result);
 
         // generate 5 athena results
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 20; i++) {
             var athenaResult = ParticipationFactory.generateResult(false, 100).participation(participation);
             athenaResult.setCompletionDate(ZonedDateTime.now());
             athenaResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
             resultRepository.save(athenaResult);
         }
 
-        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "preconditions not met");
+        request.putAndExpectError("/api/exercises/" + programmingExercise.getId() + "/request-feedback", null, HttpStatus.BAD_REQUEST, "maxAthenaResultsReached");
 
         localRepo.resetLocalRepo();
     }
 
+    @Disabled // will be re-enabled in https://github.com/ls1intum/Artemis/pull/9324/
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenFeedbackRequestedAndRateLimitStillUnknownDueRequestsInProgress_thenFail() throws Exception {

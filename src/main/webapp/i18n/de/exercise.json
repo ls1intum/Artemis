@@ -168,7 +168,7 @@
             "resumeProgrammingExercise": "Die Aufgabe wurde wieder aufgenommen. Du kannst nun weiterarbeiten!",
             "feedbackRequestSent": "Deine Feedbackanfrage wurde gesendet.",
             "feedbackRequestAlreadySent": "Deine Feedbackanfrage wurde bereits gesendet.",
-            "submissionExists": "Um eine Feedbackanfrage zu senden, brauchst du mindestens eine Abgabe.",
+            "noSubmissionExists": "Um eine Feedbackanfrage zu senden, brauchst du mindestens eine Abgabe.",
             "lockRepositoryWarning": "Dein Repository wird gesperrt. Du kannst erst weiterarbeiten wenn deine Feedbackanfrage beantwortet wird.",
             "feedbackRequestAfterDueDate": "Du kannst nach der Abgabefrist keine weiteren Anfragen einreichen.",
             "maxAthenaResultsReached": "Du hast die maximale Anzahl an KI-Feedbackanfragen erreicht.",
