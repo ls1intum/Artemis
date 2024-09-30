@@ -34,6 +34,7 @@ HTTPS access tokens
 
 Instructors can create HTTP access tokens for repository access in Artemis.
 They are created in the account settings and are used in place of passwords for Git over HTTPS.
+For every student's exercise, Artemis automatically generates an access token, only associated with the repository of this particular exercise.
 
 Token Creation
 """"""""""""""
@@ -44,23 +45,7 @@ Token Creation
 Using SSH keys to secure Git operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Artemis provides a simple way for users and other systems to connect securely to repositories, using SSH keys, in order to perform Git operations.
-You can add a personal SSH key to your user account to easily authenticate when performing read operations from your local machine. An Artemis user can currently add one key to their account.
-Read more at SSH user keys for personal use.
+Artemis provides a simple way for users to connect securely to repositories, using SSH to perform Git operations.
+Next is a :ref:`small and basic introduction to SSH<basic SSH introduction>`, and if you already know it, :ref:`here is a guide on how to create SSH keys<create ssh key>`.
+If you already have an SSH key, :ref:`add it to your Artemis account here<create ssh key>`.
 
-Before you can use SSH keys to secure a connection with Artemis the following must have already been done:
-
-- SSH is enabled on your universities Artemis instance
-- you need an SSH key! See Creating SSH keys.
-
-Note that:
-
-- You can use the same SSH key for multiple repositories or projects.
-- An Artemis user can add only one key to their account.
-- Artemis supports ECDSA, RSA2, and Ed25519 key types.
-
-
-Creating SSH keys
-^^^^^^^^^^^^^^^^^
-
-dasf

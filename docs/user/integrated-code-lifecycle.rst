@@ -9,4 +9,7 @@ Artemis' Integrated code lifecycle consists of two main components: Local versio
 
    icl/general
    icl/local-version-control
+   icl/ssh-intro
+   icl/ssh-key-creation
+   icl/ssh-add-key-to-artemis
    icl/local-continuous-integration
