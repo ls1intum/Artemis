@@ -640,7 +640,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         @Test
         @WithMockUser(username = STUDENT2_OF_COURSE, roles = "USER")
         void shouldReturnForbiddenIfNotOwn() throws Exception {
-            final var student = userRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+            final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
             request.patch("/api/learning-path/" + learningPath.getId() + "/start", null, HttpStatus.FORBIDDEN);
         }
@@ -648,7 +648,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         @Test
         @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
         void shouldReturnBadRequestIfAlreadyStarted() throws Exception {
-            final var student = userRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+            final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
             learningPath.setStartedByStudent(true);
             learningPathRepository.save(learningPath);
@@ -658,7 +658,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         @Test
         @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
         void shouldStartLearningPath() throws Exception {
-            final var student = userRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+            final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
             request.patch("/api/learning-path/" + learningPath.getId() + "/start", null, HttpStatus.NO_CONTENT);
             final var updatedLearningPath = learningPathRepository.findByIdElseThrow(learningPath.getId());
