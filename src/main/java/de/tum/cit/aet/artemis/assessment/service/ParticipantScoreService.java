@@ -22,8 +22,8 @@ import de.tum.cit.aet.artemis.assessment.ResultListener;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.dto.score.ScoreDTO;
-import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum;
-import de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSum;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSumDTO;
+import de.tum.cit.aet.artemis.assessment.dto.score.TeamScoreSumDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
@@ -148,16 +148,16 @@ public class ParticipantScoreService {
                 .getCourseViaExerciseGroupOrCourseMember();
 
         // individual exercises
-        final Set<StudentScoreSum> studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(individualExercises);
-        Map<Long, Double> pointsAchieved = studentAndAchievedPoints.stream().collect(Collectors.toMap(StudentScoreSum::userId, StudentScoreSum::sumPointsAchieved));
+        final Set<StudentScoreSumDTO> studentAndAchievedPoints = studentScoreRepository.getAchievedPointsOfStudents(individualExercises);
+        Map<Long, Double> pointsAchieved = studentAndAchievedPoints.stream().collect(Collectors.toMap(StudentScoreSumDTO::userId, StudentScoreSumDTO::sumPointsAchieved));
 
         // We have to retrieve this separately because the students are not directly retrievable due to the taxonomy structure
-        Set<TeamScoreSum> teamScoreSums = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
-        Set<Long> teamIds = teamScoreSums.stream().map(TeamScoreSum::teamId).collect(Collectors.toSet());
+        Set<TeamScoreSumDTO> teamScoreSums = teamScoreRepository.getAchievedPointsOfTeams(teamExercises);
+        Set<Long> teamIds = teamScoreSums.stream().map(TeamScoreSumDTO::teamId).collect(Collectors.toSet());
         var teamList = teamRepository.findAllWithStudentsByIdIn(teamIds);
         var teamMap = teamList.stream().collect(Collectors.toMap(Team::getId, Function.identity()));
         final Set<Long> userIds = users.stream().map(User::getId).collect(Collectors.toSet());
-        for (TeamScoreSum teamScoreSum : teamScoreSums) {
+        for (TeamScoreSumDTO teamScoreSum : teamScoreSums) {
             Team team = teamMap.get(teamScoreSum.teamId());
             for (User student : team.getStudents()) {
                 if (userIds.contains(student.getId())) {

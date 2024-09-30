@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import org.springframework.context.annotation.Profile;
@@ -43,14 +42,6 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
             WHERE qe.exerciseGroup.exam.id = :examId
             """)
     List<QuizExercise> findByExamId(@Param("examId") Long examId);
-
-    @Query("""
-            SELECT DISTINCT qe
-            FROM QuizExercise qe
-                LEFT JOIN qe.quizBatches b
-            WHERE b.startTime > :earliestReleaseDate
-            """)
-    List<QuizExercise> findAllPlannedToStartAfter(@Param("earliestReleaseDate") ZonedDateTime earliestReleaseDate);
 
     /**
      * Find all quiz exercises that are planned to start in the future
@@ -115,17 +106,6 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     }
 
     /**
-     * Get one quiz exercise
-     *
-     * @param quizExerciseId the id of the entity
-     * @return the entity
-     */
-    @Nullable
-    default QuizExercise findOne(Long quizExerciseId) {
-        return findById(quizExerciseId).orElse(null);
-    }
-
-    /**
      * Get one quiz exercise by id and eagerly load questions
      *
      * @param quizExerciseId the id of the entity
@@ -158,17 +138,6 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
         return getValueElseThrow(findWithEagerBatchesById(quizExerciseId), quizExerciseId);
     }
 
-    /**
-     * Get one quiz exercise by id and eagerly load questions and statistics
-     *
-     * @param quizExerciseId the id of the entity
-     * @return the quiz exercise entity
-     */
-    @Nullable
-    default QuizExercise findOneWithQuestionsAndStatistics(Long quizExerciseId) {
-        return findWithEagerQuestionsAndStatisticsById(quizExerciseId).orElse(null);
-    }
-
     @NotNull
     default QuizExercise findByIdWithQuestionsAndStatisticsElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndStatisticsById(quizExerciseId), quizExerciseId);
@@ -178,9 +147,4 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
     default QuizExercise findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(Long quizExerciseId) {
         return getValueElseThrow(findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(quizExerciseId), quizExerciseId);
     }
-
-    default List<QuizExercise> findAllPlannedToStartInTheFuture() {
-        return findAllPlannedToStartAfter(ZonedDateTime.now());
-    }
-
 }

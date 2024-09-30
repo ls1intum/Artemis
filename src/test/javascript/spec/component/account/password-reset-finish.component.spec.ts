@@ -20,8 +20,7 @@ describe('Component Tests', () => {
 
         beforeEach(() => {
             fixture = TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
-                declarations: [PasswordResetFinishComponent],
+                imports: [ArtemisTestModule, PasswordResetFinishComponent],
                 providers: [
                     FormBuilder,
                     {
