@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCount;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCountDTO;
 import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 
@@ -94,7 +94,7 @@ public class RatingService {
      * @param exerciseId - id of the exercise
      * @return the rating information of the exercise
      */
-    public ExerciseRatingCount averageRatingByExerciseId(Long exerciseId) {
+    public ExerciseRatingCountDTO averageRatingByExerciseId(Long exerciseId) {
         return ratingRepository.averageRatingByExerciseId(exerciseId);
     }
 }

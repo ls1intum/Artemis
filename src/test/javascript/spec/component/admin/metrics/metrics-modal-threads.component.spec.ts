@@ -12,26 +12,19 @@ describe('MetricsModalThreadsComponent', () => {
     let fixture: ComponentFixture<MetricsModalThreadsComponent>;
     let activeModal: NgbActiveModal;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [MetricsModalThreadsComponent],
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [ArtemisTestModule, MetricsModalThreadsComponent],
         })
             .overrideTemplate(MetricsModalThreadsComponent, '')
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(MetricsModalThreadsComponent);
-                comp = fixture.componentInstance;
-                activeModal = TestBed.inject(NgbActiveModal);
+            .compileComponents();
 
-                runnableThreads = [createThread(1, ThreadState.Runnable), createThread(2, ThreadState.Runnable), createThread(3, ThreadState.Runnable)];
-                waitingThreads = [
-                    createThread(4, ThreadState.Waiting),
-                    createThread(5, ThreadState.Waiting),
-                    createThread(6, ThreadState.Waiting),
-                    createThread(7, ThreadState.Waiting),
-                ];
-            });
+        fixture = TestBed.createComponent(MetricsModalThreadsComponent);
+        comp = fixture.componentInstance;
+        activeModal = TestBed.inject(NgbActiveModal);
+
+        runnableThreads = [createThread(1, ThreadState.Runnable), createThread(2, ThreadState.Runnable), createThread(3, ThreadState.Runnable)];
+        waitingThreads = [createThread(4, ThreadState.Waiting), createThread(5, ThreadState.Waiting), createThread(6, ThreadState.Waiting), createThread(7, ThreadState.Waiting)];
     });
 
     afterEach(() => {
@@ -46,9 +39,9 @@ describe('MetricsModalThreadsComponent', () => {
             blockedCount: -1,
             waitedTime: -1,
             waitedCount: -1,
-            lockName: null,
+            lockName: undefined,
             lockOwnerId: -1,
-            lockOwnerName: null,
+            lockOwnerName: undefined,
             daemon: false,
             inNative: false,
             suspended: false,
@@ -57,7 +50,7 @@ describe('MetricsModalThreadsComponent', () => {
             stackTrace: [],
             lockedMonitors: [],
             lockedSynchronizers: [],
-            lockInfo: null,
+            lockInfo: undefined,
         };
     }
 

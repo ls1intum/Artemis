@@ -1,0 +1,24 @@
+name: Check if German and English translations are consistent
+
+on:
+  pull_request:
+    paths:
+      - 'src/main/webapp/i18n/**'
+  push:
+    paths:
+      - 'src/main/webapp/i18n/**'
+
+jobs:
+  build:
+    name: Check if translation keys are consistent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Check if translation keys match
+        run: >
+          python .ci/translation-file-checker/translation_file_checker.py
+            --german-files src/main/webapp/i18n/de/
+            --english-files src/main/webapp/i18n/en/
