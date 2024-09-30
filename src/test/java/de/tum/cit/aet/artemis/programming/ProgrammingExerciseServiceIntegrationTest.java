@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepository
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPenaltyPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasicService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -39,9 +38,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     private static final String TEST_PREFIX = "progexserviceintegration";
 
     private static final String BASE_RESOURCE = "/api/programming-exercises";
-
-    @Autowired
-    ProgrammingExerciseService programmingExerciseService;
 
     @Autowired
     ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
