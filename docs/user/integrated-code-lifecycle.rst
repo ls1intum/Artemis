@@ -1,6 +1,6 @@
 .. _integrated-code-lifecycle:
 
-Integrated code Lifecycle
+Integrated Code Lifecycle
 =========================
 
 Artemis' Integrated code lifecycle consists of two main components: Local version control and Local Continuous Integration.
