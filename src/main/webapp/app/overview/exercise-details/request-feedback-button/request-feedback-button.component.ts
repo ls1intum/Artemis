@@ -58,16 +58,17 @@ export class RequestFeedbackButtonComponent implements OnInit {
         this.updateParticipation();
     }
 
-    private updateParticipation(): Observable<StudentParticipation | undefined> {
+    private updateParticipation() {
         if (this.exercise().id) {
-            return this.exerciseService.getExerciseDetails(this.exercise().id!).pipe(
-                map((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+            this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
+                next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
                     this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
-                    return this.participation;
-                }),
-            );
+                },
+                error: (error: HttpErrorResponse) => {
+                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                },
+            });
         }
-        return of(undefined);
     }
 
     requestFeedback() {
@@ -124,8 +125,3 @@ export class RequestFeedbackButtonComponent implements OnInit {
         return false;
     }
 }
-
-// tests: athena enabled, athena disabled if I can see the buttons
-// check disabled status
-// check names, symbols, icons
-// click effect
