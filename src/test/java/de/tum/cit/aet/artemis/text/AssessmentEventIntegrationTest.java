@@ -10,28 +10,28 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.repository.TextAssessmentEventRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "assessmentevent";
 
     @Autowired
-    private TextSubmissionRepository textSubmissionRepository;
+    private TextSubmissionTestRepository textSubmissionTestRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private TextAssessmentEventRepository textAssessmentEventRepository;
@@ -56,11 +56,11 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 0, 1, 1, 1);
         course = courseUtilService.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
-        tutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
+        tutor = userTestRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
         // we exactly create 1 exercise, 1 participation and 1 submission (which was submitted), so the following code should be fine
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).iterator().next();
-        textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
+        textSubmission = textSubmissionTestRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
     }
 
     /**
@@ -125,7 +125,7 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationIndependen
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddSingleCompleteAssessmentEvent_withExampleSubmission() throws Exception {
         textSubmission.setExampleSubmission(true);
-        textSubmissionRepository.saveAndFlush(textSubmission);
+        textSubmissionTestRepository.saveAndFlush(textSubmission);
         TextAssessmentEvent event = textExerciseUtilService.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
         request.post("/api/event-insights/text-assessment/events", event, HttpStatus.BAD_REQUEST);

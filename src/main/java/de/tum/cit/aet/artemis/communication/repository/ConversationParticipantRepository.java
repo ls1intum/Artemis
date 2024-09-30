@@ -64,10 +64,6 @@ public interface ConversationParticipantRepository extends ArtemisJpaRepository<
 
     Optional<ConversationParticipant> findConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
-    default ConversationParticipant findConversationParticipantByConversationIdAndUserIdElseThrow(Long conversationId, Long userId) {
-        return getValueElseThrow(findConversationParticipantByConversationIdAndUserId(conversationId, userId));
-    }
-
     @Query("""
             SELECT DISTINCT conversationParticipant
             FROM ConversationParticipant conversationParticipant
