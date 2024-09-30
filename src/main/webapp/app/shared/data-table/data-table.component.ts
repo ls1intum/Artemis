@@ -1,7 +1,7 @@
 import { Component, ContentChild, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { ColumnMode, SortType } from '@flaviosantoro92/ngx-datatable';
+import { ColumnMode, SortType } from '@siemens/ngx-datatable';
 import { flatten, get, isNumber } from 'lodash-es';
 import { BaseEntity, StringBaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
