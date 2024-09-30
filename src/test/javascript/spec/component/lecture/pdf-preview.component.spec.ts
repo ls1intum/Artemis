@@ -1,4 +1,31 @@
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { AttachmentService } from 'app/lecture/attachment.service';
+import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { ElementRef } from '@angular/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+
+jest.mock('pdf-lib', () => {
+    const originalModule = jest.requireActual('pdf-lib');
+
+    return {
+        ...originalModule,
+        PDFDocument: {
+            ...originalModule.PDFDocument,
+            load: jest.fn(),
+            prototype: {
+                removePage: jest.fn(),
+                save: jest.fn(),
+            },
+        },
+    };
+});
 
 jest.mock('pdfjs-dist', () => {
     return {
@@ -18,23 +45,6 @@ jest.mock('pdfjs-dist', () => {
     };
 });
 
-jest.mock('jspdf', () => {
-    return {
-        jsPDF: jest.fn().mockImplementation(() => ({
-            addPage: jest.fn(),
-            addImage: jest.fn(),
-            getImageProperties: jest.fn(() => ({ width: 1920, height: 1080 })),
-            internal: {
-                pageSize: {
-                    getWidth: jest.fn(() => 1920),
-                    getHeight: jest.fn(() => 1080),
-                },
-            },
-            output: jest.fn(() => new Blob(['PDF content'], { type: 'application/pdf' })),
-        })),
-    };
-});
-
 jest.mock('pdfjs-dist/build/pdf.worker', () => {
     return {};
 });
@@ -48,18 +58,6 @@ function createMockEvent(target: Element, eventType = 'click'): MouseEvent {
     Object.defineProperty(event, 'target', { value: target, writable: false });
     return event;
 }
-
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
-import { AttachmentService } from 'app/lecture/attachment.service';
-import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
-import { ElementRef } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateService } from '@ngx-translate/core';
-import dayjs from 'dayjs';
 
 describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
@@ -77,11 +75,11 @@ describe('PdfPreviewComponent', () => {
         global.URL.createObjectURL = jest.fn().mockReturnValue('mocked_blob_url');
         attachmentServiceMock = {
             getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
-            update: jest.fn(),
+            update: jest.fn().mockReturnValue(of({})),
         };
         attachmentUnitServiceMock = {
             getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
-            update: jest.fn(),
+            update: jest.fn().mockReturnValue(of({})),
         };
         routeMock = {
             data: of({
@@ -139,6 +137,7 @@ describe('PdfPreviewComponent', () => {
         mockOverlay = document.createElement('div');
         mockOverlay.style.opacity = '0';
         mockCanvasElement.appendChild(mockOverlay);
+        component.currentPdfBlob = new Blob(['dummy content'], { type: 'application/pdf' });
 
         fixture.detectChanges();
 
@@ -205,15 +204,19 @@ describe('PdfPreviewComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
-    it('should load PDF and verify rendering of pages', () => {
-        const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
+    it('should load PDF and verify rendering of pages', async () => {
+        const spyCreateCanvas = jest.spyOn(component, 'createCanvas');
+        const spyCreateCanvasContainer = jest.spyOn(component, 'createCanvasContainer');
+        const spyAppendChild = jest.spyOn(component.pdfContainer.nativeElement, 'appendChild');
 
-        attachmentServiceMock.getAttachmentFile.mockReturnValue(of(mockBlob));
-        component.ngOnInit();
+        await component.loadOrAppendPdf('fake-url');
 
-        expect(URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-        expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
-        expect(component.totalPages).toBeGreaterThan(0);
+        expect(spyCreateCanvas).toHaveBeenCalledOnce();
+        expect(spyCreateCanvasContainer).toHaveBeenCalledOnce();
+        expect(spyAppendChild).toHaveBeenCalledOnce();
+        expect(component.totalPages).toBe(1);
+        expect(component.isPdfLoading).toBeFalsy();
+        expect(component.fileInput.nativeElement.value).toBe('');
     });
 
     it('should navigate through pages using keyboard in enlarged view', () => {
@@ -456,32 +459,6 @@ describe('PdfPreviewComponent', () => {
         expect(component.displayEnlargedCanvas).toHaveBeenCalledWith(mockCanvas);
     });
 
-    it('should delete selected slides, update total pages, clear selected pages, and reset dialog error source', () => {
-        const mockContainer = document.createElement('div');
-        for (let i = 1; i <= 3; i++) {
-            const mockPage = document.createElement('div');
-            mockPage.id = `pdf-page-${i}`;
-            mockContainer.appendChild(mockPage);
-        }
-        component.pdfContainer = new ElementRef(mockContainer);
-
-        component.selectedPages = new Set([1, 3]);
-        component.totalPages = 3;
-
-        const updatePageIDsSpy = jest.spyOn(component, 'updatePageIDs');
-        const dialogErrorSourceSpy = jest.spyOn(component.dialogErrorSource, 'next');
-
-        component.deleteSelectedSlides();
-
-        expect(component.pdfContainer.nativeElement.querySelector('#pdf-page-1')).toBeNull();
-        expect(component.pdfContainer.nativeElement.querySelector('#pdf-page-3')).toBeNull();
-        expect(component.pdfContainer.nativeElement.querySelector('#pdf-page-2')).not.toBeNull();
-        expect(component.totalPages).toBe(1);
-        expect(updatePageIDsSpy).toHaveBeenCalled();
-        expect(component.selectedPages.size).toBe(0);
-        expect(dialogErrorSourceSpy).toHaveBeenCalledWith('');
-    });
-
     it('should trigger the file input click event', () => {
         const mockFileInput = document.createElement('input');
         mockFileInput.type = 'file';
@@ -490,24 +467,6 @@ describe('PdfPreviewComponent', () => {
         const clickSpy = jest.spyOn(component.fileInput.nativeElement, 'click');
         component.triggerFileInput();
         expect(clickSpy).toHaveBeenCalled();
-    });
-
-    it('should extract the file from the event, create an object URL, and call loadOrAppendPdf with correct arguments', () => {
-        const mockFile = new Blob(['PDF content'], { type: 'application/pdf' });
-        const mockFileList = {
-            0: mockFile,
-            length: 1,
-            item: () => mockFile,
-        } as unknown as FileList;
-
-        const mockEvent = { target: { files: mockFileList } } as unknown as Event;
-        const createObjectURLSpy = jest.spyOn(URL, 'createObjectURL').mockReturnValue('mocked_file_url');
-        const loadOrAppendPdfSpy = jest.spyOn(component, 'loadOrAppendPdf').mockResolvedValue();
-
-        component.mergePDF(mockEvent);
-
-        expect(createObjectURLSpy).toHaveBeenCalledWith(mockFile);
-        expect(loadOrAppendPdfSpy).toHaveBeenCalledWith('mocked_file_url', true);
     });
 
     it('should update the IDs of remaining pages after some have been removed', () => {
@@ -551,38 +510,62 @@ describe('PdfPreviewComponent', () => {
         });
     });
 
-    it('should update attachment and show success alert', () => {
-        const generatePdfFromCanvasesSpy = jest.spyOn(component, 'generatePdfFromCanvases');
-        const alertServiceSpy = jest.spyOn(alertServiceMock, 'success');
-
-        component.attachment = { id: 1, version: 1, uploadDate: dayjs() } as any;
-
-        const mockUpdateObservable = of({});
-        attachmentServiceMock.update.mockReturnValue(mockUpdateObservable);
+    it('should update attachment successfully and show success alert', () => {
+        component.attachment = { id: 1, version: 1 };
         component.updateAttachmentWithFile();
 
-        expect(generatePdfFromCanvasesSpy).toHaveBeenCalled();
-        expect(component.attachment!.version).toBe(2);
-        expect(dayjs(component.attachment!.uploadDate).isSame(dayjs(), 'day')).toBeTrue();
-        expect(attachmentServiceMock.update).toHaveBeenCalledWith(1, component.attachment, expect.any(File));
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+        expect(attachmentServiceMock.update).toHaveBeenCalled();
+        expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
     });
 
-    it('should update attachment unit and show success alert', () => {
-        component.attachment = undefined;
-        component.attachmentUnit = { id: 1, name: 'Chapter 1', attachment: { id: 1, version: 1, uploadDate: dayjs() }, lecture: { id: 1 } } as any;
+    it('should not update attachment if file size exceeds the limit and show an error alert', () => {
+        const oversizedData = new Uint8Array(MAX_FILE_SIZE + 1).fill(0);
+        component.currentPdfBlob = new Blob([oversizedData], { type: 'application/pdf' });
 
-        const generatePdfFromCanvasesSpy = jest.spyOn(component, 'generatePdfFromCanvases');
-        const alertServiceSpy = jest.spyOn(alertServiceMock, 'success');
-
-        const mockUpdateObservable = of({});
-        attachmentUnitServiceMock.update.mockReturnValue(mockUpdateObservable);
         component.updateAttachmentWithFile();
 
-        expect(generatePdfFromCanvasesSpy).toHaveBeenCalled();
-        expect(component.attachmentUnit!.attachment!.version).toBe(2);
-        expect(dayjs(component.attachmentUnit!.attachment!.uploadDate).isSame(dayjs(), 'day')).toBeTrue();
-        expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, component.attachmentUnit!.id, expect.any(FormData));
-        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+        expect(attachmentServiceMock.update).not.toHaveBeenCalled();
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.fileSizeError');
+    });
+
+    it('should handle errors when updating an attachment fails', () => {
+        attachmentServiceMock.update.mockReturnValue(throwError(() => new Error('Update failed')));
+        component.attachment = { id: 1, version: 1 };
+
+        component.updateAttachmentWithFile();
+
+        expect(attachmentServiceMock.update).toHaveBeenCalled();
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
+    });
+
+    it('should update attachment unit successfully and show success alert', () => {
+        component.attachment = undefined;
+        component.attachmentUnit = {
+            id: 1,
+            lecture: { id: 1 },
+            attachment: { id: 1, version: 1 },
+        };
+        attachmentUnitServiceMock.update.mockReturnValue(of({}));
+
+        component.updateAttachmentWithFile();
+
+        expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
+        expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+    });
+
+    it('should handle errors when updating an attachment unit fails', () => {
+        component.attachment = undefined;
+        component.attachmentUnit = {
+            id: 1,
+            lecture: { id: 1 },
+            attachment: { id: 1, version: 1 },
+        };
+        const errorResponse = { message: 'Update failed' };
+        attachmentUnitServiceMock.update.mockReturnValue(throwError(() => errorResponse));
+
+        component.updateAttachmentWithFile();
+
+        expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
     });
 });

@@ -13,9 +13,9 @@ import { Course } from 'app/entities/course.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { PDFDocument } from 'pdf-lib';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
-import { PDFDocument } from 'pdf-lib';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 
 type NavigationDirection = 'next' | 'prev';
@@ -84,7 +84,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
 
     handleBlob(blob: Blob): void {
         this.currentPdfBlob = blob;
-        this.loadOrAppendPdf(URL.createObjectURL(blob));
+        const objectUrl = URL.createObjectURL(blob);
+        this.loadOrAppendPdf(objectUrl).then(() => URL.revokeObjectURL(objectUrl));
     }
 
     ngOnDestroy() {
@@ -172,7 +173,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      * @param pageIndex The index of the page within the PDF document.
      * @returns A new HTMLCanvasElement configured for the PDF page.
      */
-    private createCanvas(viewport: PDFJS.PageViewport, pageIndex: number): HTMLCanvasElement {
+    createCanvas(viewport: PDFJS.PageViewport, pageIndex: number): HTMLCanvasElement {
         const canvas = document.createElement('canvas');
         canvas.id = `${pageIndex}`;
         /* Canvas styling is predefined because Canvas tags do not support CSS classes
