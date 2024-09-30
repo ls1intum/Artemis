@@ -73,9 +73,6 @@ export class FeedbackAnalysisComponent {
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true });
 
         modalRef.componentInstance.localStorageService = this.localStorage;
-        modalRef.componentInstance.tasks = savedTasks;
-        modalRef.componentInstance.testCases = savedTestCases;
-        modalRef.componentInstance.occurrenceRange = savedOccurrence;
 
         // Initialize the form values based on applied filters or default values
         modalRef.componentInstance.filterForm.setValue({

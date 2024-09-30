@@ -9,7 +9,7 @@
         <div class="form-group">
             <label for="tasks">Tasks</label>
             <select id="tasks" formControlName="tasks" multiple class="form-control">
-                <option *ngFor="let task of tasks" [value]="task">{{ task }}</option>
+                <option *ngFor="let task of []" [value]="task">{{ task }}</option>
             </select>
         </div>
 
@@ -17,7 +17,7 @@
         <div class="form-group">
             <label for="testCases">Test Cases</label>
             <select id="testCases" formControlName="testCases" multiple class="form-control">
-                <option *ngFor="let testCase of testCases" [value]="testCase">{{ testCase }}</option>
+                <option *ngFor="let testCase of []" [value]="testCase">{{ testCase }}</option>
             </select>
         </div>
 
@@ -27,10 +27,10 @@
             formControlName="occurrence"
             [generalMinValue]="0"
             [generalMaxValue]="100"
-            [(selectedMinValue)]="occurrenceRange[0]"
-            [(selectedMaxValue)]="occurrenceRange[1]"
-            (selectedMinValueChange)="occurrenceRange = [$event, occurrenceRange[1]]"
-            (selectedMaxValueChange)="occurrenceRange = [occurrenceRange[0], $event]"
+            [(selectedMinValue)]="occurrence[0]"
+            [(selectedMaxValue)]="occurrence[1]"
+            (selectedMinValueChange)="occurrence = [$event, occurrence[1]]"
+            (selectedMaxValueChange)="occurrence = [occurrence[0], $event]"
         >
         </jhi-range-slider>
     </div>

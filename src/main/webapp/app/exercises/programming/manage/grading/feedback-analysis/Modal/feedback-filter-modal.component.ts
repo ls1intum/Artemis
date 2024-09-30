@@ -18,9 +18,6 @@ export class FeedbackFilterModalComponent {
     @Output() filterApplied = new EventEmitter<any>();
 
     filterForm: FormGroup;
-    tasks: string[] = [];
-    testCases: string[] = [];
-    occurrenceRange = [0, 100]; // Default occurrence range if needed
 
     private FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     private FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
@@ -30,7 +27,6 @@ export class FeedbackFilterModalComponent {
         private activeModal: NgbActiveModal,
         private fb: FormBuilder,
     ) {
-        // Initialize form without any default values, will be set from the parent component
         this.filterForm = this.fb.group({
             tasks: [],
             testCases: [],
@@ -41,14 +37,12 @@ export class FeedbackFilterModalComponent {
     applyFilter(): void {
         const filters = this.filterForm.value;
 
-        filters.occurrence = this.occurrenceRange; // Add occurrence range to filters
-
         // Store applied filters into LocalStorage
         this.localStorageService.store(this.FILTER_TASKS_KEY, filters.tasks);
         this.localStorageService.store(this.FILTER_TEST_CASES_KEY, filters.testCases);
         this.localStorageService.store(this.FILTER_OCCURRENCE_KEY, filters.occurrence);
 
-        this.filterApplied.emit(filters); // Emit the filters to parent
+        this.filterApplied.emit(filters); // Emit the filters to the parent component
         this.activeModal.close();
     }
 
@@ -71,5 +65,13 @@ export class FeedbackFilterModalComponent {
 
     closeModal(): void {
         this.activeModal.dismiss();
+    }
+
+    get occurrence(): number[] {
+        return this.filterForm.get('occurrence')?.value;
+    }
+
+    set occurrence(value: number[]) {
+        this.filterForm.get('occurrence')?.setValue(value);
     }
 }
