@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci;
+package de.tum.cit.aet.artemis.buildagent.service;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
@@ -30,8 +30,6 @@ import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
-import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
-import de.tum.cit.aet.artemis.buildagent.service.BuildLogsMap;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;

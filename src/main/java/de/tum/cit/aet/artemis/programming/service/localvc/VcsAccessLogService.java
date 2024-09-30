@@ -44,6 +44,7 @@ public class VcsAccessLogService {
      * @param commitHash              The latest commit hash
      * @param ipAddress               The ip address of the user accessing the repository
      */
+    // TODO: this should be ASYNC to avoid long waiting times during permission check
     public void storeAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
             String commitHash, String ipAddress) {
         log.debug("Storing access operation for user {}", user);
@@ -59,6 +60,7 @@ public class VcsAccessLogService {
      * @param participation The participation to which the repository belongs to
      * @param commitHash    The newest commit hash which should get set for the access log entry
      */
+    // TODO: this should be ASYNC to avoid long waiting times during permission check
     public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
         vcsAccessLogRepository.findNewestByParticipationIdWhereCommitHashIsNull(participation.getId()).ifPresent(entry -> {
             entry.setCommitHash(commitHash);
