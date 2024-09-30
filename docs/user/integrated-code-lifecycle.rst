@@ -3,7 +3,7 @@
 Integrated Code Lifecycle
 =========================
 
-Artemis' Integrated code lifecycle consists of two main components: Local version control and Local Continuous Integration.
+Artemis' Integrated Code Lifecycle consists of two main components: Local Version Control and Local Continuous Integration.
 
 .. toctree::
 
