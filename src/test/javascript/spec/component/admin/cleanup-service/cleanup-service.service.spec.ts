@@ -98,7 +98,7 @@ describe('DataCleanupService', () => {
             expect(res.body).toEqual(mockExecutionRecords);
         });
 
-        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/get-last-executions' });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/admin/cleanup/last-executions' });
         expect(req.request.method).toBe('GET');
         req.flush(mockExecutionRecords);
     });

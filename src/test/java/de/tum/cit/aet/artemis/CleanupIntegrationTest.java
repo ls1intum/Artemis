@@ -527,7 +527,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         jobExecution.setDeletionTimestamp(now);
         cleanupJobExecutionRepository.save(jobExecution);
 
-        var response = request.getList("/api/admin/cleanup/get-last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
+        var response = request.getList("/api/admin/cleanup/last-executions", HttpStatus.OK, CleanupServiceExecutionRecordDTO.class);
 
         List<String> enumJobTypes = Arrays.stream(CleanupJobType.values()).map(CleanupJobType::label).toList();
 
@@ -549,7 +549,7 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         request.postWithoutResponseBody("/api/admin/cleanup/delete-old-rated-results", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
         request.postWithoutResponseBody("/api/admin/cleanup/delete-old-submission-versions", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
         request.postWithoutResponseBody("/api/admin/cleanup/delete-old-feedback", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
-        request.get("/api/admin/cleanup/get-last-executions", HttpStatus.FORBIDDEN, List.class);
+        request.get("/api/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test

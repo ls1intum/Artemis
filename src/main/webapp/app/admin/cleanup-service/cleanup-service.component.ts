@@ -4,7 +4,7 @@ import { CleanupOperation } from 'app/admin/cleanup-service/cleanup-operation.mo
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service.ts';
+import { CleanupServiceExecutionRecordDTO, DataCleanupService } from 'app/admin/cleanup-service/data-cleanup.service';
 import { Observer } from 'rxjs';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';

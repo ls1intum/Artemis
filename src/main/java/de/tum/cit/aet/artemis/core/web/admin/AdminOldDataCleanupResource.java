@@ -102,12 +102,12 @@ public class AdminOldDataCleanupResource {
     }
 
     /**
-     * GET admin/cleanup/get-last-executions
+     * GET admin/cleanup/last-executions
      * Retrieves the last execution records of the data cleanup operations.
      *
      * @return a {@link ResponseEntity} containing a list of execution records
      */
-    @GetMapping("get-last-executions")
+    @GetMapping("last-executions")
     @EnforceAdmin
     public ResponseEntity<List<CleanupServiceExecutionRecordDTO>> getLastExecutions() {
         List<CleanupServiceExecutionRecordDTO> result = dataCleanupService.getLastExecutions();

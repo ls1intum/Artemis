@@ -366,6 +366,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         standardized_competencies: 'artemisApp.standardizedCompetency.manage.title',
         prerequisites: 'artemisApp.prerequisite.title',
         import_standardized: 'artemisApp.standardizedCompetency.courseImport.title',
+        cleanup_service: 'cleanupService.title',
     };
 
     studentPathBreadcrumbTranslations: { [key: string]: string } = {
