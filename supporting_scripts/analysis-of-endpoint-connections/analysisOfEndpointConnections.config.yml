@@ -19,7 +19,8 @@ excludedEndpointFiles:
   - 'src/main/java/de/tum/in/www1/artemis/web/rest/AppleAppSiteAssociationResource.java'
 
 excludedEndpoints:
-    # Endpoints not used by the Artemis WebApp
+    # Some of these Endpoints are not used by the Artemis WebApp, others cannot automatically be assigned to one or more REST
+    # calls because the REST call is not yet parsed correctly.
   - '/api/push_notification/register'
   - '.well-known/apple-app-site-association'
   - 'api/courses/{courseId}/programming-exercises'
@@ -153,6 +154,8 @@ excludedEndpoints:
   - 'api/courses/{courseId}/posts'
   - 'api/courses/{courseId}/posts/{postId}'
   - 'api/lectures/{lectureId}/attachment-units/{attachmentUnitId}'
+
+  # Issue: 9393
   - 'api/course-competencies/{competencyId}/title'
   - 'api/courses/{courseId}/competencies'
   - 'api/courses/{courseId}/competencies/{competencyId}'
@@ -170,6 +173,7 @@ excludedEndpoints:
   - 'api/courses/{courseId}/prerequisites/import/bulk'
   - 'api/courses/{courseId}/prerequisites/import-all/{sourceCourseId}'
   - 'api/courses/{courseId}/prerequisites/import-standardized'
+
   - 'api/courses/{courseId}/exams/{examId}/exam-users'
   - 'api/programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/title'
   - 'api/programming-exercises/{exerciseId}/solution-entries/{solutionEntryId}'
@@ -253,9 +257,12 @@ excludedRestCalls:
   - 'api/iris/${identifier}/sessions/current'
   - 'api/iris/${identifier}/sessions'
 
-  - 'api/public/lti13/auth-login'
+  # This REST call is not yet parsed correctly.
+  # Issues #9393 and #9372
   - '${this.resourceUrl}'
+
   # The following Endpoints are all from this file: course-exercise.service.ts
+  # Issue: #9393
   - '${this.resourceUrl}/${courseId}/file-upload-exercises'
   - '${this.resourceUrl}/${courseId}/text-exercises'
   - '${this.resourceUrl}/${courseId}/modeling-exercises'
@@ -273,6 +280,7 @@ excludedRestCalls:
   - 'api/athena/courses/${courseId}/${exercise.type}-exercises/available-modules'
 
   # POSSIBLY UNUSED REST CALLS
+  # Issue: #9386
   - 'api/courses/${courseId}/posts/similarity-check'
   - 'public/content/${filename}'
   - 'api/courses/${courseId}/results'
@@ -280,3 +288,4 @@ excludedRestCalls:
   - 'api/results/${resultId}'
   - 'api/attachments'
   - 'api/repository/${participationId}/file'
+  - 'api/public/lti13/auth-login'
