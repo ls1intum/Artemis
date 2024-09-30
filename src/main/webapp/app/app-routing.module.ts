@@ -1,11 +1,10 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
+import { Authority } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/shared/layouts/navbar/navbar.route';
 import { errorRoute } from 'app/shared/layouts/error/error.route';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { AboutIrisComponent } from 'app/iris/about-iris/about-iris.component';
-import { ProblemStatementComponent } from './overview/exercise-details/problem-statement/problem-statement.component';
-import { StandaloneFeedbackComponent } from './exercises/shared/feedback/standalone-feedback/standalone-feedback.component';
 
 const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 
@@ -17,14 +16,13 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: '',
                     loadComponent: () => import('./home/home.component').then((m) => m.HomeComponent),
+                    data: {
+                        pageTitle: 'home.title',
+                    },
                 },
                 {
                     path: 'admin',
                     loadChildren: () => import('./admin/admin.module').then((m) => m.ArtemisAdminModule),
-                },
-                {
-                    path: 'account',
-                    loadChildren: () => import('./account/account.module').then((m) => m.ArtemisAccountModule),
                 },
                 {
                     path: 'privacy',
@@ -46,6 +44,64 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'courses/:courseId/exercises/:exerciseId/teams',
                     loadChildren: () => import('./exercises/shared/team/team.module').then((m) => m.ArtemisTeamModule),
+                },
+                // ===== ACCOUNT ====
+                {
+                    path: 'account',
+                    children: [
+                        {
+                            path: 'activate',
+                            pathMatch: 'full',
+                            loadComponent: () => import('./account/activate/activate.component').then((m) => m.ActivateComponent),
+                            data: {
+                                pageTitle: 'activate.title',
+                            },
+                        },
+                        {
+                            path: 'password',
+                            pathMatch: 'full',
+                            loadComponent: () => import('./account/password/password.component').then((m) => m.PasswordComponent),
+                            data: {
+                                authorities: [Authority.USER],
+                                pageTitle: 'global.menu.account.password',
+                            },
+                            canActivate: [UserRouteAccessService],
+                        },
+                        {
+                            path: 'reset/finish',
+                            pathMatch: 'full',
+                            loadComponent: () => import('./account/password-reset/finish/password-reset-finish.component').then((m) => m.PasswordResetFinishComponent),
+                            data: {
+                                pageTitle: 'global.menu.account.password',
+                            },
+                        },
+                        {
+                            path: 'reset/request',
+                            pathMatch: 'full',
+                            loadComponent: () => import('./account/password-reset/init/password-reset-init.component').then((m) => m.PasswordResetInitComponent),
+                            data: {
+                                pageTitle: 'global.menu.account.password',
+                            },
+                        },
+                        {
+                            path: 'register',
+                            pathMatch: 'full',
+                            loadComponent: () => import('./account/register/register.component').then((m) => m.RegisterComponent),
+                            data: {
+                                pageTitle: 'register.title',
+                            },
+                        },
+                        {
+                            path: 'settings',
+                            pathMatch: 'full',
+                            loadComponent: () => import('./account/settings/settings.component').then((m) => m.SettingsComponent),
+                            data: {
+                                authorities: [Authority.USER],
+                                pageTitle: 'global.menu.account.settings',
+                            },
+                            canActivate: [UserRouteAccessService],
+                        },
+                    ],
                 },
                 // ===== COURSE MANAGEMENT =====
                 {
@@ -82,17 +138,17 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 {
                     path: 'courses/:courseId/exercises/:exerciseId/problem-statement',
                     pathMatch: 'full',
-                    component: ProblemStatementComponent,
+                    loadComponent: () => import('./overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
                 },
                 {
                     pathMatch: 'full',
                     path: 'courses/:courseId/exercises/:exerciseId/problem-statement/:participationId',
-                    component: ProblemStatementComponent,
+                    loadComponent: () => import('./overview/exercise-details/problem-statement/problem-statement.component').then((m) => m.ProblemStatementComponent),
                 },
                 {
                     path: 'courses/:courseId/exercises/:exerciseId/participations/:participationId/results/:resultId/feedback',
                     pathMatch: 'full',
-                    component: StandaloneFeedbackComponent,
+                    loadComponent: () => import('./exercises/shared/feedback/standalone-feedback/standalone-feedback.component').then((m) => m.StandaloneFeedbackComponent),
                 },
 
                 // ===== EXAM =====
@@ -119,8 +175,8 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'about-iris',
-                    component: AboutIrisComponent,
                     pathMatch: 'full',
+                    loadComponent: () => import('./iris/about-iris/about-iris.component').then((m) => m.AboutIrisComponent),
                 },
             ],
             { enableTracing: false, onSameUrlNavigation: 'reload' },

@@ -30,7 +30,7 @@ class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCI
                 stage: test
                 script:
                     - echo "Test"
-                        """;
+            """;
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
