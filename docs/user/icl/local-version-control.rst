@@ -1,4 +1,4 @@
-.. _local-version-control:
+.. _local-vc:
 
 Local Version Control
 =====================

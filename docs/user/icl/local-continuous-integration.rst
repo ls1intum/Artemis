@@ -1,4 +1,4 @@
-.. local-ci:
+.. _local-ci:
 
 Continuous Integration
 ======================
