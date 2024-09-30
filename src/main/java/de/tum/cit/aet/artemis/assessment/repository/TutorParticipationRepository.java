@@ -12,7 +12,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -24,8 +23,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 @Repository
 public interface TutorParticipationRepository extends ArtemisJpaRepository<TutorParticipation, Long> {
 
-    List<TutorParticipation> findByAssessedExercise(Exercise assessedExercise);
-
     @EntityGraph(type = LOAD, attributePaths = { "trainedExampleSubmissions", "trainedExampleSubmissions.submission.results" })
     TutorParticipation findWithEagerExampleSubmissionAndResultsByAssessedExerciseAndTutor(Exercise assessedExercise, User tutor);
 
@@ -33,8 +30,6 @@ public interface TutorParticipationRepository extends ArtemisJpaRepository<Tutor
 
     @EntityGraph(type = LOAD, attributePaths = { "trainedExampleSubmissions", "trainedExampleSubmissions.submission.results" })
     List<TutorParticipation> findAllByAssessedExercise_Course_IdAndTutor_Id(long courseId, long tutorId);
-
-    List<TutorParticipation> findAllByAssessedExercise_Course(Course course);
 
     @EntityGraph(type = LOAD, attributePaths = { "trainedExampleSubmissions", "trainedExampleSubmissions.submission.results" })
     List<TutorParticipation> findAllByAssessedExercise_ExerciseGroup_Exam_IdAndTutor_Id(long examId, long tutorId);

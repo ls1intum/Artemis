@@ -21,17 +21,18 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
-import de.tum.cit.aet.artemis.communication.repository.ConversationParticipantRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.course.CourseTestService;
-import de.tum.cit.aet.artemis.course.CourseUtilService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.CourseTestService;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
@@ -39,15 +40,14 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
-import de.tum.cit.aet.artemis.user.UserUtilService;
+import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupRegistrationTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupScheduleTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroups.util.TutorialGroupUtilService;
 
 /**
  * Contains useful methods for testing the tutorial groups feature.
@@ -58,19 +58,19 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     CourseTestService courseTestService;
 
     @Autowired
-    UserRepository userRepository;
+    UserTestRepository userRepository;
 
     @Autowired
-    CourseRepository courseRepository;
+    CourseTestRepository courseRepository;
 
     @Autowired
-    TutorialGroupRepository tutorialGroupRepository;
+    TutorialGroupTestRepository tutorialGroupTestRepository;
 
     @Autowired
     TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
     @Autowired
-    TutorialGroupScheduleRepository tutorialGroupScheduleRepository;
+    TutorialGroupScheduleTestRepository tutorialGroupScheduleTestRepository;
 
     @Autowired
     TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository;
@@ -79,10 +79,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
     @Autowired
-    TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
-
-    @Autowired
-    TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
+    TutorialGroupRegistrationTestRepository tutorialGroupRegistrationTestRepository;
 
     @Autowired
     TutorialGroupService tutorialGroupService;
@@ -91,7 +88,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     ChannelRepository channelRepository;
 
     @Autowired
-    ConversationParticipantRepository conversationParticipantRepository;
+    ConversationParticipantTestRepository conversationParticipantRepository;
 
     @Autowired
     TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
@@ -269,7 +266,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(courseId), newTutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
 
-        newTutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        newTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         this.assertTutorialGroupPersistedWithSchedule(newTutorialGroup, scheduleToCreate);
         return newTutorialGroup;
     }
@@ -352,9 +349,9 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
             var cleanedTitle = tg.getTitle().replaceAll("\\s", "-").toLowerCase();
             return "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
         };
-        var tutorialGroupFromDb = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroup.getId());
+        var tutorialGroupFromDb = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroup.getId());
 
-        var channelOptional = tutorialGroupRepository.getTutorialGroupChannel(tutorialGroupFromDb.getId());
+        var channelOptional = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroupFromDb.getId());
         assertThat(channelOptional).isPresent();
         var channel = channelOptional.get();
         assertThat(channel.getName()).isEqualTo(expectedTutorialGroupName.apply(tutorialGroupFromDb));
@@ -385,7 +382,7 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     }
 
     void assertTutorialGroupChannelDoesNotExist(TutorialGroup tutorialGroup) {
-        var channelOptional = tutorialGroupRepository.getTutorialGroupChannel(tutorialGroup.getId());
+        var channelOptional = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup.getId());
         assertThat(channelOptional).isEmpty();
     }
 
