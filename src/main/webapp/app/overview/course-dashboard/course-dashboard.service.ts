@@ -112,7 +112,7 @@ export class CourseDashboardService {
                 return ExerciseType.QUIZ;
             case 'de.tum.cit.aet.artemis.text.domain.TextExercise':
                 return ExerciseType.TEXT;
-            case 'de.tum.cit.aet.artemis.file.domain.FileUploadExercise':
+            case 'de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise':
                 return ExerciseType.FILE_UPLOAD;
             default:
                 throw new Error(`Unknown exercise type: ${type}`);
@@ -121,15 +121,15 @@ export class CourseDashboardService {
 
     private mapToLectureUnitType(type: string): LectureUnitType {
         switch (type) {
-            case 'de.tum.cit.aet.artemis.domain.lecture.AttachmentUnit':
+            case 'de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit':
                 return LectureUnitType.ATTACHMENT;
-            case 'de.tum.cit.aet.artemis.domain.lecture.ExerciseUnit':
+            case 'de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit':
                 return LectureUnitType.EXERCISE;
-            case 'de.tum.cit.aet.artemis.domain.lecture.TextUnit':
+            case 'de.tum.cit.aet.artemis.lecture.domain.TextUnit':
                 return LectureUnitType.TEXT;
-            case 'de.tum.cit.aet.artemis.domain.lecture.VideoUnit':
+            case 'de.tum.cit.aet.artemis.lecture.domain.VideoUnit':
                 return LectureUnitType.VIDEO;
-            case 'de.tum.cit.aet.artemis.domain.lecture.OnlineUnit':
+            case 'de.tum.cit.aet.artemis.lecture.domain.OnlineUnit':
                 return LectureUnitType.ONLINE;
             default:
                 throw new Error(`Unknown lecture unit type: ${type}`);
