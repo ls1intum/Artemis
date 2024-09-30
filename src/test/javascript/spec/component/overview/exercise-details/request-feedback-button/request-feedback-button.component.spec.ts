@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { of, Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { By } from '@angular/platform-browser';
@@ -10,10 +10,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ArtemisTestModule } from '../../../../test.module';
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -23,7 +23,6 @@ describe('RequestFeedbackButtonComponent', () => {
     let alertService: AlertService;
     let courseExerciseService: CourseExerciseService;
     let exerciseService: ExerciseService;
-    let participationService: ParticipationService;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -37,14 +36,13 @@ describe('RequestFeedbackButtonComponent', () => {
                 debugElement = fixture.debugElement;
                 courseExerciseService = debugElement.injector.get(CourseExerciseService);
                 exerciseService = debugElement.injector.get(ExerciseService);
-                participationService = debugElement.injector.get(ParticipationService);
                 profileService = debugElement.injector.get(ProfileService);
                 alertService = debugElement.injector.get(AlertService);
             });
     });
 
     function setAthenaEnabled(enabled: boolean) {
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles: enabled ? ['athena'] : [] }));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ activeProfiles: enabled ? ['athena'] : [] } as ProfileInfo));
     }
 
     function mockExerciseDetails(exercise: Exercise) {
