@@ -44,9 +44,9 @@ Users for MySQL
   ``application-local.yml`` *(spring > datasource > password)* and in ``liquibase.gradle``
   *(within the 'liquibaseCommand' as argument password)*).
 
-Set empty root password for MySQL 8
+Set empty root password for MySQL 9
 """""""""""""""""""""""""""""""""""
-If you have problems connecting to the MySQL 8 database using an empty root password, you can try the following command
+If you have problems connecting to the MySQL 9 database using an empty root password, you can try the following command
 to reset the root password to an empty password:
 
 .. code::

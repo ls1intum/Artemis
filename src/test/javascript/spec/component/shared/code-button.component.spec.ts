@@ -63,6 +63,7 @@ describe('CodeButtonComponent', () => {
         externalUserManagementURL: '',
         features: [],
         inProduction: false,
+        inDevelopment: true,
         programmingLanguageFeatures: [],
         ribbonEnv: '',
         sshCloneURLTemplate: 'ssh://git@gitlab.ase.in.tum.de:7999/',

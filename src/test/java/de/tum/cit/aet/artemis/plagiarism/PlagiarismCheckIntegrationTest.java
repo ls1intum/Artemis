@@ -11,9 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
+import de.tum.cit.aet.artemis.core.util.TestResourceUtils;
 import de.tum.cit.aet.artemis.plagiarism.dto.PlagiarismResultDTO;
-import de.tum.cit.aet.artemis.util.TestResourceUtils;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 

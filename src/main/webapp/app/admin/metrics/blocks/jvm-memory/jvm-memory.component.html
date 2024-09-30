@@ -1,7 +1,7 @@
 <h4 jhiTranslate="metrics.jvm.memory.title"></h4>
-@if (!updating && jvmMemoryMetrics) {
+@if (!updating() && jvmMemoryMetrics()) {
     <div>
-        @for (entry of jvmMemoryMetrics | keyvalue; track entry) {
+        @for (entry of jvmMemoryMetrics() | keyvalue; track entry) {
             <div>
                 @if (entry.value.max !== -1) {
                     <span>
