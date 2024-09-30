@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.text;
+package de.tum.cit.aet.artemis.text.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -16,28 +16,29 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
-import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
+import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.course.CourseFactory;
-import de.tum.cit.aet.artemis.exam.ExamUtilService;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.participation.ParticipationFactory;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismResultRepository;
 import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
@@ -47,8 +48,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.dto.TextAssessmentEventType;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.text.repository.TextSubmissionRepository;
-import de.tum.cit.aet.artemis.user.UserUtilService;
+import de.tum.cit.aet.artemis.text.test_repository.TextSubmissionTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to text exercises for use in integration tests.
@@ -66,19 +66,19 @@ public class TextExerciseUtilService {
     private ExerciseRepository exerciseRepo;
 
     @Autowired
-    private CourseRepository courseRepo;
+    private CourseTestRepository courseRepo;
 
     @Autowired
-    private TextSubmissionRepository textSubmissionRepo;
+    private TextSubmissionTestRepository textSubmissionRepo;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private ResultRepository resultRepo;
+    private ResultTestRepository resultRepo;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepo;
+    private StudentParticipationTestRepository studentParticipationRepo;
 
     @Autowired
     private FeedbackRepository feedbackRepo;
@@ -93,10 +93,10 @@ public class TextExerciseUtilService {
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserTestRepository userRepository;
 
     @Autowired
-    private ParticipationRepository participationRepository;
+    private ParticipationTestRepository participationRepository;
 
     @Autowired
     private ExamUtilService examUtilService;
