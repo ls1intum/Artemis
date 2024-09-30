@@ -22,6 +22,8 @@
     <include file="classpath:config/liquibase/changelog/20240626200000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20240708144500_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20240802091201_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20240804144500_changelog.xml" relativeToChangelogFile="false"/>
+
     <!-- NOTE: please use the format "YYYYMMDDhhmmss_changelog.xml", i.e. year month day hour minutes seconds and not something else! -->
     <!-- we should also stay in a chronological order! -->
     <!-- you can use the command 'date '+%Y%m%d%H%M%S'' to get the current date and time in the correct format -->

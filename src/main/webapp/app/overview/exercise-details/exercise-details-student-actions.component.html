@@ -66,7 +66,7 @@
             </div>
         }
         <!-- QUIZ EXERCISE ACTIONS END -->
-        <!-- PROGRAMMING EXERCISE ACTIONS START -->
+            <!-- PROGRAMMING EXERCISE ACTIONS START -->
         @case (ExerciseType.PROGRAMMING) {
             <div class="d-flex flex-wrap gap-1">
                 @if (isTeamAvailable) {
@@ -135,7 +135,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
                             </a>
                         }
-                        @if (exercise.allowFeedbackRequests && gradedParticipation) {
+                        @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
                             <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons"></jhi-request-feedback-button>
                         }
                     </ng-container>
@@ -144,7 +144,7 @@
                 @if (
                     (gradedParticipation?.initializationState === InitializationState.INACTIVE || gradedParticipation?.initializationState === InitializationState.FINISHED) &&
                     isResumeExerciseAvailable(gradedParticipation)
-                ) {
+                    ) {
                     <button
                         [id]="'resume-exercise-' + exercise.id"
                         jhi-exercise-action-button
@@ -160,7 +160,7 @@
                 @if (
                     (practiceParticipation?.initializationState === InitializationState.INACTIVE || practiceParticipation?.initializationState === InitializationState.FINISHED) &&
                     isResumeExerciseAvailable(practiceParticipation)
-                ) {
+                    ) {
                     <button
                         [id]="'resume-practice-exercise-' + exercise.id"
                         jhi-exercise-action-button
@@ -176,7 +176,7 @@
             </div>
         }
         <!-- PROGRAMMING EXERCISE ACTIONS END -->
-        <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS START -->
+            <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS START -->
         @default {
             <div class="btn-group gap-1">
                 @if (isTeamAvailable) {
@@ -209,7 +209,7 @@
                 @if (
                     (gradedParticipation?.initializationState === InitializationState.INITIALIZED && this.beforeDueDate) ||
                     gradedParticipation?.initializationState === InitializationState.FINISHED
-                ) {
+                    ) {
                     <button
                         [id]="'open-exercise-' + exercise.id"
                         class="open-exercise"
@@ -229,13 +229,18 @@
                         [hideLabelMobile]="false"
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
-                    @if (exercise.allowFeedbackRequests && gradedParticipation) {
-                        <jhi-request-feedback-button
-                            [isGeneratingFeedback]="isGeneratingFeedback"
-                            (generatingFeedback)="generatingFeedback.emit()"
-                            [exercise]="exercise"
-                            [smallButtons]="smallButtons"
-                        ></jhi-request-feedback-button>
+                    @if (exercise.allowFeedbackRequests && athenaEnabled && (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)) {
+                        <button
+                            class="btn btn-primary"
+                            (click)="requestFeedback()"
+                            [class.btn-sm]="smallButtons"
+                            [disabled]="!gradedParticipation?.submissions?.last()?.submitted || isGeneratingFeedback"
+                            [id]="'request-feedback-' + exercise.id"
+                            [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+                        </button>
                     }
                 }
             </div>

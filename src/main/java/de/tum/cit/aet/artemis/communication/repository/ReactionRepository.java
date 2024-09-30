@@ -17,9 +17,5 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface ReactionRepository extends ArtemisJpaRepository<Reaction, Long> {
 
-    List<Reaction> findReactionsByPostId(Long postId);
-
     List<Reaction> findReactionsByUserId(long userId);
-
-    List<Reaction> findReactionsByAnswerPostId(Long answerPostId);
 }
