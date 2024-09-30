@@ -1,4 +1,4 @@
-import { Component, input, inject, OnInit, output } from '@angular/core';
+import { Component, inject, input, OnInit, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -12,13 +12,10 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import dayjs from 'dayjs/esm';
 import { isExamExercise } from 'app/shared/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-request-feedback-button',

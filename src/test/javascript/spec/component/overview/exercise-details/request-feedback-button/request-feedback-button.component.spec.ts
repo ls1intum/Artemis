@@ -1,7 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { of, Observable } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -13,26 +11,9 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import dayjs from 'dayjs/esm';
-import { AssessmentType } from 'app/entities/assessment-type.model';
 import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ArtemisTestModule } from '../../../../test.module';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { CodeButtonComponent } from 'app/shared/components/code-button/code-button.component';
-import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
-import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
-import { MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { MockCourseExerciseService } from '../../../../helpers/mocks/service/mock-course-exercise.service';
-import { Router } from '@angular/router';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { PasswordComponent } from 'app/account/password/password.component';
 import { MockProfileService } from '../../../../helpers/mocks/service/mock-profile.service';
-import { MockExerciseService } from '../../../../helpers/mocks/service/mock-exercise.service';
 
 describe('RequestFeedbackButtonComponent', () => {
     let component: RequestFeedbackButtonComponent;
@@ -107,7 +88,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBe(true);
+        expect(button.nativeElement.disabled).toBeTrue();
     }));
 
     it('should not display the button when it is an exam exercise', fakeAsync(() => {
@@ -136,7 +117,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBe(true);
+        expect(button.nativeElement.disabled).toBeTrue();
     }));
 
     it('should display the correct button label and style when Athena is enabled', fakeAsync(() => {
@@ -274,7 +255,7 @@ describe('RequestFeedbackButtonComponent', () => {
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBe(true);
+        expect(button.nativeElement.disabled).toBeTrue();
     }));
 
     it('should enable the button if latest submission is submitted and feedback is not generating', fakeAsync(() => {
@@ -295,6 +276,6 @@ describe('RequestFeedbackButtonComponent', () => {
 
         const button = debugElement.query(By.css('button'));
         expect(button).not.toBeNull();
-        expect(button.nativeElement.disabled).toBe(false);
+        expect(button.nativeElement.disabled).toBeFalse();
     }));
 });
