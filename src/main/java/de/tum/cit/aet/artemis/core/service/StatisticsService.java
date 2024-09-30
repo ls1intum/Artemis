@@ -24,7 +24,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
-import de.tum.cit.aet.artemis.assessment.dto.ScoreDistribution;
+import de.tum.cit.aet.artemis.assessment.dto.ScoreDistributionDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -222,12 +222,12 @@ public class StatisticsService {
         Double maxPoints = exercise.getMaxPoints();
         Double averageScore = participantScoreRepository.findAvgScore(Set.of(exercise));
         double averageScoreForExercise = averageScore != null ? roundScoreSpecifiedByCourseSettings(averageScore, course) : 0.0;
-        List<ScoreDistribution> scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
+        List<ScoreDistributionDTO> scores = participantScoreRepository.getScoreDistributionForExercise(exercise.getId());
         var scoreDistribution = new int[10];
         Arrays.fill(scoreDistribution, 0);
 
         scores.forEach(score -> {
-            var index = (int) (score.getScore() / 10.0);
+            var index = (int) (score.score() / 10.0);
             if (index >= 10) {
                 scoreDistribution[9] += 1;
             }

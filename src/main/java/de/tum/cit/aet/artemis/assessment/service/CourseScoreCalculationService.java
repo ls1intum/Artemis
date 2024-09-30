@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.BonusSourceResultDTO;
-import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePoints;
+import de.tum.cit.aet.artemis.assessment.dto.MaxAndReachablePointsDTO;
 import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoresDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -87,10 +87,10 @@ public class CourseScoreCalculationService {
      * @param exercises    the exercises which are included into max points calculation
      * @return the max and reachable max points for the given exercises
      */
-    private MaxAndReachablePoints calculateMaxAndReachablePoints(GradingScale gradingScale, Set<Exercise> exercises) {
+    private MaxAndReachablePointsDTO calculateMaxAndReachablePoints(GradingScale gradingScale, Set<Exercise> exercises) {
 
         if (exercises.isEmpty()) {
-            return new MaxAndReachablePoints(0, 0, 0);
+            return new MaxAndReachablePointsDTO(0, 0, 0);
         }
 
         double maxPoints = 0.0;
@@ -116,7 +116,7 @@ public class CourseScoreCalculationService {
             reachableMaxPoints += reachablePresentationPoints;
         }
 
-        return new MaxAndReachablePoints(maxPoints, reachableMaxPoints, reachablePresentationPoints);
+        return new MaxAndReachablePointsDTO(maxPoints, reachableMaxPoints, reachablePresentationPoints);
     }
 
     /**
@@ -140,7 +140,7 @@ public class CourseScoreCalculationService {
             return null;
         }
 
-        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(gradingScale, courseExercises);
+        MaxAndReachablePointsDTO maxAndReachablePoints = calculateMaxAndReachablePoints(gradingScale, courseExercises);
 
         List<PlagiarismCase> plagiarismCases;
 
@@ -175,7 +175,7 @@ public class CourseScoreCalculationService {
     }
 
     private BonusSourceResultDTO constructBonusSourceResultDTO(Course course, GradingScale gradingScale, Long studentId, List<StudentParticipation> participations,
-            MaxAndReachablePoints maxAndReachablePoints, List<PlagiarismCase> plagiarismCases) {
+            MaxAndReachablePointsDTO maxAndReachablePoints, List<PlagiarismCase> plagiarismCases) {
         StudentScoresDTO studentScores = calculateCourseScoreForStudent(course, gradingScale, studentId, participations, maxAndReachablePoints, plagiarismCases);
 
         boolean presentationScorePassed;
@@ -232,7 +232,7 @@ public class CourseScoreCalculationService {
 
         Set<Exercise> courseExercises = course.getExercises();
 
-        MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(gradingScale, courseExercises);
+        MaxAndReachablePointsDTO maxAndReachablePoints = calculateMaxAndReachablePoints(gradingScale, courseExercises);
 
         List<PlagiarismCase> plagiarismCases = new ArrayList<>();
         for (Exercise exercise : courseExercises) {
@@ -315,7 +315,7 @@ public class CourseScoreCalculationService {
      * @return a StudentScoresDTO instance with the presentation score, relative and absolute points achieved by the given student.
      */
     public StudentScoresDTO calculateCourseScoreForStudent(Course course, GradingScale gradingScale, Long studentId, Collection<StudentParticipation> participationsOfStudent,
-            MaxAndReachablePoints maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
+            MaxAndReachablePointsDTO maxAndReachablePoints, Collection<PlagiarismCase> plagiarismCases) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
 
