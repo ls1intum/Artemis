@@ -9,6 +9,10 @@
         <h3 class="m-0 col p-0" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
 
         <div class="col-md-auto d-flex align-items-center position-relative">
+            <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount == 0, 'btn-success': selectedFiltersCount != 0 }">
+                <fa-icon [icon]="faFilter"></fa-icon> Filters ({{ selectedFiltersCount }})
+            </button>
+
             <input
                 type="search"
                 class="form-control"

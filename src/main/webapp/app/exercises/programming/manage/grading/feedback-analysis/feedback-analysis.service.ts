@@ -28,4 +28,14 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details-paged`, { params });
     }
+
+    getTasks(): Promise<string[]> {
+        // Adjust the endpoint as needed
+        return this.get<string[]>('/api/exercises/tasks');
+    }
+
+    getTestCases(): Promise<string[]> {
+        // Adjust the endpoint as needed
+        return this.get<string[]>('/api/exercises/testcases');
+    }
 }

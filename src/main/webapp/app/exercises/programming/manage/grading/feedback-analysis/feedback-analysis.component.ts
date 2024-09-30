@@ -2,10 +2,12 @@ import { Component, InputSignal, computed, effect, inject, input, signal, untrac
 import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faSort, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faSort, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
+import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-feedback-analysis',
@@ -34,9 +36,18 @@ export class FeedbackAnalysisComponent {
     private modalService = inject(NgbModal);
 
     readonly faSort = faSort;
+    readonly faFilter = faFilter;
     readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
+
+    selectedFiltersCount = 0;
+    currentFilters: any = {};
+
+    private localStorage = inject(LocalStorageService);
+    readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
+    readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
+    readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
 
     constructor() {
         effect(() => {
@@ -44,6 +55,61 @@ export class FeedbackAnalysisComponent {
                 await this.loadData();
             });
         });
+    }
+
+    async openFilterModal(): Promise<void> {
+        // Fetch tasks and test cases from the service
+        //const tasks = await this.feedbackAnalysisService.getTasks();
+        //const testCases = await this.feedbackAnalysisService.getTestCases();
+
+        // Retrieve saved filter values from local storage
+        const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY) || [];
+        const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY) || [];
+        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [0, 100];
+
+        // Determine whether to use default values (first-time or cleared filters)
+        const hasAppliedFilters = savedTasks.length || savedTestCases.length || savedOccurrence[0] !== 0 || savedOccurrence[1] !== 100;
+
+        const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true });
+
+        modalRef.componentInstance.localStorageService = this.localStorage;
+        modalRef.componentInstance.tasks = savedTasks;
+        modalRef.componentInstance.testCases = savedTestCases;
+        modalRef.componentInstance.occurrenceRange = savedOccurrence;
+
+        // Initialize the form values based on applied filters or default values
+        modalRef.componentInstance.filterForm.setValue({
+            tasks: hasAppliedFilters ? savedTasks : [], // Use empty array if no filters are applied
+            testCases: hasAppliedFilters ? savedTestCases : [],
+            occurrence: hasAppliedFilters ? savedOccurrence : [0, 100], // Default occurrence range if no filters
+        });
+
+        // Subscribe to the applied filters event
+        modalRef.componentInstance.filterApplied.subscribe((filters: any) => {
+            this.applyFilters(filters);
+        });
+    }
+
+    applyFilters(filters: any): void {
+        // Save applied filters to local storage
+        this.localStorage.store(this.FILTER_TASKS_KEY, filters.tasks);
+        this.localStorage.store(this.FILTER_TEST_CASES_KEY, filters.testCases);
+        this.localStorage.store(this.FILTER_OCCURRENCE_KEY, filters.occurrence);
+
+        // Update the selected filters count
+        this.selectedFiltersCount = this.countAppliedFilters(filters);
+
+        // Load data with the applied filters
+        this.loadData();
+    }
+
+    // Method to count the number of applied filters
+    countAppliedFilters(filters: any): number {
+        let count = 0;
+        if (filters.tasks && filters.tasks.length > 0) count++;
+        if (filters.testCases && filters.testCases.length > 0) count++;
+        if (filters.occurrence && (filters.occurrence[0] !== 0 || filters.occurrence[1] !== 100)) count++;
+        return count;
     }
 
     private async loadData(): Promise<void> {

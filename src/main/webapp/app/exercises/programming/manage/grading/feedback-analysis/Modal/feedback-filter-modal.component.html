@@ -1,0 +1,43 @@
+<form [formGroup]="filterForm" (ngSubmit)="applyFilter()">
+    <div class="modal-header">
+        <h5 class="modal-title">Filter Options</h5>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+    </div>
+
+    <div class="modal-body">
+        <!-- Task Filters -->
+        <div class="form-group">
+            <label for="tasks">Tasks</label>
+            <select id="tasks" formControlName="tasks" multiple class="form-control">
+                <option *ngFor="let task of tasks" [value]="task">{{ task }}</option>
+            </select>
+        </div>
+
+        <!-- Test Case Filters -->
+        <div class="form-group">
+            <label for="testCases">Test Cases</label>
+            <select id="testCases" formControlName="testCases" multiple class="form-control">
+                <option *ngFor="let testCase of testCases" [value]="testCase">{{ testCase }}</option>
+            </select>
+        </div>
+
+        <!-- Occurrence Range Slider -->
+        <label for="occurrence">Occurrence (%)</label>
+        <jhi-range-slider
+            formControlName="occurrence"
+            [generalMinValue]="0"
+            [generalMaxValue]="100"
+            [(selectedMinValue)]="occurrenceRange[0]"
+            [(selectedMaxValue)]="occurrenceRange[1]"
+            (selectedMinValueChange)="occurrenceRange = [$event, occurrenceRange[1]]"
+            (selectedMaxValueChange)="occurrenceRange = [occurrenceRange[0], $event]"
+        >
+        </jhi-range-slider>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="clearFilter()">Clear Filter</button>
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" (click)="closeModal()">Apply Filter</button>
+    </div>
+</form>
