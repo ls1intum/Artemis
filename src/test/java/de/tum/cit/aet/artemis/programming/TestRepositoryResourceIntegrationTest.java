@@ -15,7 +15,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
@@ -38,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.dto.FileMove;
 import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTO;
+import de.tum.cit.aet.artemis.programming.dto.RepositoryStatusDTOType;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -492,10 +492,11 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationJen
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testIsClean() throws Exception {
+    void testRepositoryState() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         doReturn(true).when(gitService).isRepositoryCached(any());
-        var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, Map.class);
-        assertThat(status).isNotEmpty();
+        var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
+        assertThat(status.repositoryStatus()).isEqualTo(RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
+        // TODO: also test other states
     }
 }

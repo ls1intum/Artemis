@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.quiz.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,7 +26,6 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
 import de.tum.cit.aet.artemis.quiz.repository.QuizExerciseRepository;
 import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
 import de.tum.cit.aet.artemis.quiz.repository.SubmittedAnswerRepository;
@@ -92,18 +90,9 @@ public class QuizParticipationResource {
 
         StudentParticipation participation = participationService.startExercise(exercise, user, true);
 
-        Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true);
-        Result result;
-        if (optionalResult.isPresent()) {
-            var quizSubmission = (QuizSubmission) optionalResult.get().getSubmission();
-            var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
-            quizSubmission.setSubmittedAnswers(submittedAnswers);
-            result = optionalResult.get();
-        }
-        else {
-            result = new Result();
-            result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).orElseThrow());
-        }
+        // NOTE: starting exercise prevents that two participation will exist, but ensures that a submission is created
+        var result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(new Result());
+        result.setSubmission(quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participation.getId()).orElseThrow());
 
         participation.setResults(Set.of(result));
         participation.setExercise(exercise);
