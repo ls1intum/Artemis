@@ -27,12 +27,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
@@ -92,6 +94,24 @@ public class PublicUserJwtResource {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    /**
+     * Sends the token back as either a cookie or a bearer token
+     *
+     * @param response HTTP response
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized)
+     */
+    @PostMapping("re-key")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> reKey(@RequestParam(value = "as-bearer", defaultValue = "false") boolean asBearer, HttpServletResponse response) {
+        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
+        if (asBearer) {
+            return ResponseEntity.ok(responseCookie.getValue());
+        }
+        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
+        return ResponseEntity.ok().build();
     }
 
     /**
