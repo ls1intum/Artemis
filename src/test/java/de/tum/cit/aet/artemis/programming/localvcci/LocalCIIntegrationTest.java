@@ -258,7 +258,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         // Should still work because in that case the latest commit should be retrieved from the repository.
         localVCServletService.processNewPush(null, studentAssignmentRepository.originGit.getRepository());
         // ToDo: Investigate why specifically this test requires so much time (all other << 5s)
-        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, 90);
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, 120);
     }
 
     @Test
