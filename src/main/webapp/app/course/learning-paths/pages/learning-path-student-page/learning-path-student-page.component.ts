@@ -44,10 +44,10 @@ export class LearningPathStudentPageComponent {
     readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 
     constructor() {
-        effect(() => this.loadLearningPathId(this.courseId()), { allowSignalWrites: true });
+        effect(() => this.loadLearningPath(this.courseId()), { allowSignalWrites: true });
     }
 
-    private async loadLearningPathId(courseId: number): Promise<void> {
+    private async loadLearningPath(courseId: number): Promise<void> {
         try {
             this.isLearningPathLoading.set(true);
             const learningPath = await this.learningApiService.getLearningPathForCurrentUser(courseId);

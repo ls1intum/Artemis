@@ -222,7 +222,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
     @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
-        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.BAD_REQUEST, Long.class);
+        request.get("/api/courses/" + course.getId() + "/learning-path/me", HttpStatus.BAD_REQUEST, LearningPathDTO.class);
     }
 
     @Test
@@ -613,7 +613,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
         void shouldReturnBadRequestIfAlreadyExists() throws Exception {
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.CONFLICT);
         }
 
         @Test
@@ -652,7 +652,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
             learningPath.setStartedByStudent(true);
             learningPathRepository.save(learningPath);
-            request.patch("/api/learning-path/" + learningPath.getId() + "/start", null, HttpStatus.BAD_REQUEST);
+            request.patch("/api/learning-path/" + learningPath.getId() + "/start", null, HttpStatus.CONFLICT);
         }
 
         @Test

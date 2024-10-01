@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +40,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -267,14 +267,14 @@ public class LearningPathService {
         final var currentUser = userRepository.getUser();
         final var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
         if (learningPathRepository.findByCourseIdAndUserId(courseId, currentUser.getId()).isPresent()) {
-            throw new BadRequestException("Learning path already exists.");
+            throw new ConflictException("Learning path already exists.", "LearningPath", "learningPathAlreadyExists");
         }
         final var learningPath = generateLearningPathForUser(course, currentUser);
         return LearningPathDTO.of(learningPath);
     }
 
     /**
-     * Start the learning path for the current user in the given course.
+     * Start the learning path for the current user
      *
      * @param learningPathId the id of the learning path
      */
@@ -285,7 +285,7 @@ public class LearningPathService {
             throw new AccessForbiddenException("You are not allowed to start this learning path.");
         }
         else if (learningPath.isStartedByStudent()) {
-            throw new BadRequestException("Learning path already started.");
+            throw new ConflictException("Learning path already started.", "LearningPath", "learningPathAlreadyStarted");
         }
         learningPath.setStartedByStudent(true);
         learningPathRepository.save(learningPath);

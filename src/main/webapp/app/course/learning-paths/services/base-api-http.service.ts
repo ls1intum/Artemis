@@ -31,7 +31,7 @@ export abstract class BaseApiHttpService {
      * @param url     The endpoint URL excluding the base server url (/api).
      * @param options The HTTP options to send with the request.
      *
-     * @return  An `Promise` of the response body of type `T`.
+     * @return  A `Promise` of the response body of type `T`.
      */
     private async request<T>(
         method: HttpMethod,
@@ -73,7 +73,7 @@ export abstract class BaseApiHttpService {
      * @param options The HTTP options to send with the request.
      * @protected
      *
-     * @return An `Promise` of type `Object` (T),
+     * @return A `Promise` of type `Object` (T),
      */
     protected async get<T>(
         url: string,
@@ -102,7 +102,7 @@ export abstract class BaseApiHttpService {
      * @param options The HTTP options to send with the request.
      * @protected
      *
-     * @return An `Promise` of type `Object` (T),
+     * @return A `Promise` of type `Object` (T),
      */
     protected async post<T>(
         url: string,
@@ -124,7 +124,7 @@ export abstract class BaseApiHttpService {
     }
 
     /**
-     * Constructs a `PUT` request that interprets the body as JSON and
+     * Constructs a `PATCH` request that interprets the body as JSON and
      * returns a Promise of an object of type `T`.
      *
      * @param url The endpoint URL excluding the base server url (/api).
@@ -132,7 +132,7 @@ export abstract class BaseApiHttpService {
      * @param options The HTTP options to send with the request.
      * @protected
      *
-     * @return An `Promise` of type `Object` (T),
+     * @return A `Promise` of type `Object` (T),
      */
     protected async patch<T>(
         url: string,
