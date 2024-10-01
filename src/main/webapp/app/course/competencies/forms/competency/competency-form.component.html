@@ -14,6 +14,9 @@
                     (onLectureUnitSelectionChange)="onLectureUnitSelectionChange($event)"
                 />
                 <div>
+                    @if (competency) {
+                        <div class="alert alert-danger" role="alert" jhiTranslate="artemisApp.forms.scheduleForm.scheduleChangeWarning"></div>
+                    }
                     <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">
                         <span jhiTranslate="entity.action.submit"></span>
                     </button>

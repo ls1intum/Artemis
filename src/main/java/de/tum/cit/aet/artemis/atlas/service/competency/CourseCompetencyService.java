@@ -359,6 +359,7 @@ public class CourseCompetencyService {
         competencyToUpdate.setMasteryThreshold(competency.getMasteryThreshold());
         competencyToUpdate.setTaxonomy(competency.getTaxonomy());
         competencyToUpdate.setOptional(competency.isOptional());
+        competencyToUpdate.setLinkedStandardizedCompetency(null);
         final var persistedCompetency = courseCompetencyRepository.save(competencyToUpdate);
 
         // update competency progress if necessary
