@@ -14,7 +14,7 @@ describe('MonacoEditorService', () => {
             imports: [ArtemisTestModule],
         });
         registerLanguageSpy = jest.spyOn(monaco.languages, 'register');
-        service = TestBed.runInInjectionContext(() => new MonacoEditorService());
+        service = TestBed.inject(MonacoEditorService);
     });
 
     afterEach(() => {

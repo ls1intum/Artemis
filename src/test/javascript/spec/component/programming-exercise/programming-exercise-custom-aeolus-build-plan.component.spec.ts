@@ -8,7 +8,6 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
-import { runInInjectionContext } from '@angular/core';
 import { MockComponent } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
@@ -77,10 +76,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         comp = fixture.componentInstance;
 
         comp.programmingExercise = programmingExercise;
-
-        runInInjectionContext(fixture.debugElement.injector, () => {
-            monacoEditorComponent = new MonacoEditorComponent();
-        });
+        monacoEditorComponent = TestBed.createComponent(MonacoEditorComponent).componentInstance;
     });
 
     afterEach(() => {
