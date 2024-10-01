@@ -31,7 +31,6 @@ import org.springframework.util.ResourceUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -41,9 +40,11 @@ import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.util.LocalRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 
 class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -56,7 +57,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
     private ObjectMapper mapper;
 
     @Autowired
-    private StudentExamRepository studentExamRepository;
+    private StudentExamTestRepository studentExamRepository;
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -89,16 +90,16 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest
 
         // same registration number as in test pdf file
         student1.setRegistrationNumber("03756882");
-        userRepository.save(student1);
+        userTestRepository.save(student1);
 
         student2.setRegistrationNumber("03756883");
-        userRepository.save(student2);
+        userTestRepository.save(student2);
 
         student3.setRegistrationNumber("03756884");
-        userRepository.save(student3);
+        userTestRepository.save(student3);
 
         student4.setRegistrationNumber("03756885");
-        userRepository.save(student4);
+        userTestRepository.save(student4);
 
         exam1 = examUtilService.addActiveExamWithRegisteredUser(course1, student2);
         exam1 = examUtilService.addExerciseGroupsAndExercisesToExam(exam1, false);

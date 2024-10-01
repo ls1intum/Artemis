@@ -22,8 +22,7 @@ describe('Password Component Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
-                declarations: [PasswordComponent],
+                imports: [ArtemisTestModule, PasswordComponent],
                 providers: [
                     FormBuilder,
                     { provide: LocalStorageService, useClass: MockSyncStorage },
