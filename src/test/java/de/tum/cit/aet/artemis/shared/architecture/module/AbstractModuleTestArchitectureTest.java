@@ -1,22 +1,20 @@
-package de.tum.cit.aet.artemis.shared.architecture;
+package de.tum.cit.aet.artemis.shared.architecture.module;
 
-import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noMembers;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-public abstract class AbstractModuleTestArchitectureTest<T> extends AbstractArchitectureTest {
+import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
-    abstract protected String getModulePackageName();
+public abstract class AbstractModuleTestArchitectureTest<T> extends AbstractArchitectureTest implements ModuleArchitectureTest {
 
     abstract protected Class<T> getAbstractModuleIntegrationTestClass();
 
     @Test
     void integrationTestsShouldExtendAbstractModuleIntegrationTest() {
-        classes().that().resideInAPackage(ARTEMIS_PACKAGE + "." + getModulePackageName()).and().haveSimpleNameEndingWith("IntegrationTest").should()
-                .beAssignableTo(getAbstractModuleIntegrationTestClass()).because("All integration tests should extend %s".formatted(getAbstractModuleIntegrationTestClass()))
-                .check(testClasses);
+        classesOfThisModuleThat().haveSimpleNameEndingWith("IntegrationTest").should().beAssignableTo(getAbstractModuleIntegrationTestClass())
+                .because("All integration tests should extend %s".formatted(getAbstractModuleIntegrationTestClass())).check(testClasses);
     }
 
     @Test
