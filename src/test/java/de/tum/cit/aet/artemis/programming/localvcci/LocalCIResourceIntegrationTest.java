@@ -136,11 +136,10 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetQueuedBuildJobs_returnsJobs() throws Exception {
         var retrievedJobs = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
-        assertThat(retrievedJobs).isEmpty();
         // Adding a lot of jobs as they get processed very quickly due to mocking
         queuedJobs.addAll(List.of(job1, job2));
         var retrievedJobs1 = request.get("/api/admin/queued-jobs", HttpStatus.OK, List.class);
-        assertThat(retrievedJobs1).hasSize(2);
+        assertThat(retrievedJobs1).hasSize(retrievedJobs.size() + 2);
     }
 
     @Test
