@@ -59,10 +59,10 @@ export abstract class CourseCompetencyFormComponent {
     isInConnectMode = input<boolean>(false);
     isInSingleLectureMode = input<boolean>(false);
     hasLinkedStandardizedCompetency = input<boolean>(false);
-    courseId = input<number>();
+    courseId = input.required<number>();
     lecturesOfCourseWithLectureUnits = input<Lecture[]>([]);
-    averageStudentScore = input<number | undefined>();
-    hasCancelButton = input<boolean>();
+    averageStudentScore = input<number>();
+    hasCancelButton = input<boolean>(true);
 
     @Output()
     onCancel: EventEmitter<any> = new EventEmitter<any>();
@@ -123,7 +123,7 @@ export abstract class CourseCompetencyFormComponent {
             title: [
                 undefined as string | undefined,
                 [Validators.required, Validators.maxLength(255)],
-                [titleUniqueValidator(this.courseCompetencyService, this.courseId()!, initialTitle)],
+                [titleUniqueValidator(this.courseCompetencyService, this.courseId(), initialTitle)],
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             softDueDate: [undefined],
