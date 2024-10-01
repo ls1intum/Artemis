@@ -41,7 +41,7 @@ public class StudentScoreUtilService {
      * @param user     the user that is linked to the score
      * @param score    the score and rated score that the specified user has reached for the given exercise
      */
-    public void createStudentScoreIsRated(Exercise exercise, User user, double score) {
+    public void createRatedStudentScore(Exercise exercise, User user, double score) {
         final var studentScore = new StudentScore();
         studentScore.setExercise(exercise);
         studentScore.setUser(user);
