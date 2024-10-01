@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.atlas.domain.competency;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.persistence.CascadeType;
@@ -235,5 +236,19 @@ public abstract class CourseCompetency extends BaseCompetency {
     @PreUpdate
     public void prePersistOrUpdate() {
         this.lectureUnits.removeIf(lectureUnit -> lectureUnit instanceof ExerciseUnit);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        CourseCompetency other = (CourseCompetency) obj;
+        return Objects.equals(this.getTitle(), other.getTitle()) && Objects.equals(this.getDescription(), other.getDescription())
+                && this.softDueDate.compareTo(other.softDueDate) == 0 && Objects.equals(this.getTaxonomy(), other.getTaxonomy()) && this.masteryThreshold == other.masteryThreshold
+                && this.optional == other.optional;
     }
 }
