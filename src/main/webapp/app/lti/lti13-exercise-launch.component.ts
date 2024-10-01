@@ -145,6 +145,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     replaceWindowLocationWrapper(url: string): void {
         this.ltiService.setLti(true);
+        console.log(url);
         this.router.navigateByUrl(url);
     }
 }
