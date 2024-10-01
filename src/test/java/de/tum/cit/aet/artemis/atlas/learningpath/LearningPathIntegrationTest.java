@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
@@ -65,7 +66,9 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final int NUMBER_OF_STUDENTS = 5;
 
-    private static final String STUDENT_OF_COURSE = TEST_PREFIX + "student1";
+    private static final String STUDENT1_OF_COURSE = TEST_PREFIX + "student1";
+
+    private static final String STUDENT2_OF_COURSE = TEST_PREFIX + "student2";
 
     private static final String TUTOR_OF_COURSE = TEST_PREFIX + "tutor1";
 
@@ -102,7 +105,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         lecture.setCourse(course);
         lectureRepository.save(lecture);
 
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
 
         textUnit = createAndLinkTextUnit(student, competencies[0], true);
         textExercise = createAndLinkTextExercise(competencies[1], false);
@@ -160,10 +163,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
-        request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.BAD_REQUEST, Long.class);
+        request.get("/api/courses/" + course.getId() + "/learning-path/me", HttpStatus.BAD_REQUEST, LearningPathDTO.class);
     }
 
     @Test
@@ -259,7 +262,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathsOnPageForCourseEmpty() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE + "SuffixThatAllowsTheResultToBeEmpty");
+        final var search = pageableSearchUtilService.configureSearch(STUDENT1_OF_COURSE + "SuffixThatAllowsTheResultToBeEmpty");
         final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
@@ -269,7 +272,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathsOnPageForCourseExactlyStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var search = pageableSearchUtilService.configureSearch(STUDENT_OF_COURSE);
+        final var search = pageableSearchUtilService.configureSearch(STUDENT1_OF_COURSE);
         final var result = request.getSearchResult("/api/courses/" + course.getId() + "/learning-paths", HttpStatus.OK, LearningPathInformationDTO.class,
                 pageableSearchUtilService.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
@@ -303,7 +306,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
         final var newCompetency = restCall.apply(this);
 
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
         assertThat(learningPathOptional).isPresent();
         assertThat(learningPathOptional.get().getCompetencies()).as("should contain new competency").contains(newCompetency);
@@ -321,7 +324,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         final var competencyDTOs = importCompetenciesRESTCall(numberOfNewCompetencies);
         final var newCompetencies = competencyDTOs.stream().map(CompetencyWithTailRelationDTO::competency).toList();
 
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
 
         assertThat(newCompetencies).hasSize(numberOfNewCompetencies);
@@ -339,7 +342,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
         deleteCompetencyRESTCall(competencies[0]);
 
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPathOptional = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserId(course.getId(), student.getId());
         assertThat(learningPathOptional).isPresent();
         assertThat(learningPathOptional.get().getCompetencies()).as("should not contain deleted competency").doesNotContain(competencies[0]);
@@ -356,7 +359,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         // add competency with completed learning unit
         final var createdCompetency = createCompetencyRESTCall();
 
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         var learningPath = learningPathRepository.findWithEagerCompetenciesByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         assertThat(learningPath.getProgress()).as("contains no completed competency").isEqualTo(0);
 
@@ -376,16 +379,16 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathWithOwner() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         request.get("/api/learning-path/" + learningPath.getId(), HttpStatus.OK, NgxLearningPathDTO.class);
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var otherStudent = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
@@ -394,7 +397,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathCompetencyGraphOfOtherUser() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
         final var otherStudent = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
@@ -403,10 +406,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathCompetencyGraph() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
         Arrays.stream(competencies).forEach(competency -> competencyProgressService.updateCompetencyProgress(competency.getId(), student));
@@ -432,10 +435,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNgxForLearningPathsDisabled(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         course.setLearningPathsEnabled(false);
         courseRepository.save(course);
@@ -447,7 +450,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetLearningPathNgxForOtherStudent(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.FORBIDDEN, NgxLearningPathDTO.class);
     }
@@ -460,10 +463,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(LearningPathResource.NgxRequestType.class)
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNgxAsStudent(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
     }
@@ -511,33 +514,33 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = INSTRUCTOR_OF_COURSE, roles = "INSTRUCTOR")
     void testGetLearningPathNgxAsInstructor(LearningPathResource.NgxRequestType type) throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/" + type, HttpStatus.OK, NgxLearningPathDTO.class);
     }
 
     @Nested
-    class GetLearningPathId {
+    class GetLearningPath {
 
         @Test
-        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
-        void shouldReturnExistingId() throws Exception {
+        @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+        void shouldReturnExisting() throws Exception {
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-            final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
-            final var result = request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.OK, Long.class);
-            assertThat(result).isEqualTo(learningPath.getId());
+            final var result = request.get("/api/courses/" + course.getId() + "/learning-path/me", HttpStatus.OK, LearningPathDTO.class);
+            assertThat(result).isEqualTo(LearningPathDTO.of(learningPath));
         }
 
         @Test
-        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
         void shouldReturnNotFoundIfNotExists() throws Exception {
             course.setLearningPathsEnabled(true);
             course = courseRepository.save(course);
-            var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             student = userTestRepository.findWithLearningPathsByIdElseThrow(student.getId());
             learningPathRepository.deleteAll(student.getLearningPaths());
-            request.get("/api/courses/" + course.getId() + "/learning-path-id", HttpStatus.NOT_FOUND, Long.class);
+            request.get("/api/courses/" + course.getId() + "/learning-path/me", HttpStatus.NOT_FOUND, LearningPathDTO.class);
         }
     }
 
@@ -545,28 +548,65 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     class GenerateLearningPath {
 
         @Test
-        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
         void shouldReturnForbiddenIfNotEnabled() throws Exception {
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
         void shouldReturnBadRequestIfAlreadyExists() throws Exception {
             course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.BAD_REQUEST);
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.CONFLICT);
         }
 
         @Test
-        @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+        @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
         void shouldGenerateLearningPath() throws Exception {
             course.setLearningPathsEnabled(true);
             course = courseRepository.save(course);
-            final var response = request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, Long.class, HttpStatus.CREATED);
+            final var response = request.postWithResponseBody("/api/courses/" + course.getId() + "/learning-path", null, LearningPathDTO.class, HttpStatus.CREATED);
             assertThat(response).isNotNull();
-            final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
             assertThat(learningPath).isNotNull();
+        }
+    }
+
+    @Nested
+    class StartLearningPath {
+
+        @BeforeEach
+        void setup() {
+            course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT2_OF_COURSE, roles = "USER")
+        void shouldReturnForbiddenIfNotOwn() throws Exception {
+            final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+            final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+            request.patch("/api/learning-path/" + learningPath.getId() + "/start", null, HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+        void shouldReturnBadRequestIfAlreadyStarted() throws Exception {
+            final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+            final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+            learningPath.setStartedByStudent(true);
+            learningPathRepository.save(learningPath);
+            request.patch("/api/learning-path/" + learningPath.getId() + "/start", null, HttpStatus.CONFLICT);
+        }
+
+        @Test
+        @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
+        void shouldStartLearningPath() throws Exception {
+            final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
+            final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
+            request.patch("/api/learning-path/" + learningPath.getId() + "/start", null, HttpStatus.NO_CONTENT);
+            final var updatedLearningPath = learningPathRepository.findByIdElseThrow(learningPath.getId());
+            assertThat(updatedLearningPath.isStartedByStudent()).isTrue();
         }
     }
 
@@ -574,13 +614,13 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetCompetencyProgressForLearningPathByOtherStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.FORBIDDEN, Set.class);
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetCompetencyProgressForLearningPathByOwner() throws Exception {
         testGetCompetencyProgressForLearningPath();
     }
@@ -592,10 +632,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigation() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
         competencyProgressService.updateProgressByLearningObjectSync(textUnit, Set.of(student));
@@ -607,10 +647,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigationEmptyCompetencies() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
         textExercise.setCompetencies(Set.of());
@@ -632,10 +672,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigationDoesNotLeakUnreleasedLearningObjects() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
         textExercise.setCompetencies(Set.of());
@@ -680,10 +720,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetRelativeLearningPathNavigation() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/relative-navigation?learningObjectId=" + textUnit.getId() + "&learningObjectType="
                 + LearningPathNavigationObjectDTO.LearningObjectType.LECTURE + "&competencyId=" + competencies[0].getId(), HttpStatus.OK, LearningPathNavigationDTO.class);
@@ -697,16 +737,16 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
     void testGetLearningPathNavigationForOtherStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/navigation", HttpStatus.FORBIDDEN, LearningPathNavigationDTO.class);
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningPathNavigationOverview() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.OK, LearningPathNavigationOverviewDTO.class);
 
@@ -720,26 +760,26 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1337", roles = "USER")
     void testGetLearningPathNavigationOverviewForOtherStudent() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         request.get("/api/learning-path/" + learningPath.getId() + "/navigation-overview", HttpStatus.FORBIDDEN, LearningPathNavigationOverviewDTO.class);
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetCompetencyOrderForLearningPath() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies", HttpStatus.OK, CompetencyNameDTO.class);
         assertThat(result).containsExactlyElementsOf(Arrays.stream(competencies).map(CompetencyNameDTO::of).toList());
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningObjectsForCompetency() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         var result = request.getList("/api/learning-path/" + learningPath.getId() + "/competencies/" + competencies[0].getId() + "/learning-objects", HttpStatus.OK,
                 LearningPathNavigationObjectDTO.class);
@@ -753,10 +793,10 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
     }
 
     @Test
-    @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
+    @WithMockUser(username = STUDENT1_OF_COURSE, roles = "USER")
     void testGetLearningObjectsForCompetencyMultipleObjects() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
 
         List<LearningObject> completedLectureUnits = List.of(createAndLinkTextUnit(student, competencies[4], true), createAndLinkTextUnit(student, competencies[4], true));
@@ -787,7 +827,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
 
     void testGetCompetencyProgressForLearningPath() throws Exception {
         course = learningPathUtilService.enableAndGenerateLearningPathsForCourse(course);
-        final var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+        final var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
         final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(course.getId(), student.getId());
         final var result = request.get("/api/learning-path/" + learningPath.getId() + "/competency-progress", HttpStatus.OK, Set.class);
         assertThat(result).hasSize(5);
@@ -798,7 +838,7 @@ class LearningPathIntegrationTest extends AbstractAtlasIntegrationTest {
         Set<GradingCriterion> gradingCriteria = exerciseUtilService.addGradingInstructionsToExercise(textExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
         if (withAssessment) {
-            var student = userTestRepository.findOneByLogin(STUDENT_OF_COURSE).orElseThrow();
+            var student = userTestRepository.findOneByLogin(STUDENT1_OF_COURSE).orElseThrow();
             studentScoreUtilService.createStudentScore(textExercise, student, 100.0);
         }
         competencyUtilService.linkExerciseToCompetency(competency, textExercise);
