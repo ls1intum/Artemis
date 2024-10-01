@@ -1,0 +1,54 @@
+<div class="form-check">
+    <label class="form-check-label" for="field_editDockerFlags">
+        <input class="form-check-input" type="checkbox" name="editDockerFlags" id="field_editDockerFlags" (click)="onDisplayEditDockerFlags()"/>
+        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.title"></span>
+        <jhi-help-icon text="artemisApp.programmingExercise.dockerFlags.description" />
+    </label>
+</div>
+
+@if (displayEditDockerFlags) {
+    <ngx-datatable
+        id="editDockerFlagsTable"
+        class="bootstrap"
+        trackByProp="id"
+        [headerHeight]="50"
+        [limit]="10"
+        [columnMode]="'force'"
+        [rowHeight]="'auto'"
+        [rows]="dockerFlags"
+    >
+        <ngx-datatable-column [name]="'Flag'" [minWidth]='200' [maxWidth]='300'>
+            <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
+                <div class="d-flex align-items-center gap-2">
+                    <select class="form-select" [(ngModel)]="row[0]">
+                        <option value="" disabled selected>
+                            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.selectFlag"></span>
+                        </option>
+                        @for (flag of allowedDockerFlagOptions; track flag) {
+                            <option [value]="flag">{{ flag }}</option>
+                        }
+                    </select>
+                    <jhi-help-icon [text]="'artemisApp.programmingExercise.dockerFlags.' + (row[0] || 'default')"/>
+                </div>
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column [name]="'Value'">
+            <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
+                <jhi-table-editable-field
+                    [value]="row[1]"
+                    [onValueUpdate]="updateFlagValue(rowIndex)"
+                />
+            </ng-template>
+        </ngx-datatable-column>
+        <ngx-datatable-column [maxWidth]='100'>
+            <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
+                <button class="btn btn-sm btn-danger" (click)="removeDockerFlag(rowIndex)">
+                    <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.removeFlag"></span>
+                </button>
+            </ng-template>
+        </ngx-datatable-column>
+    </ngx-datatable>
+    <button class="btn btn-sm btn-primary" (click)="addDockerFlag()">
+        <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.addFlag"></span>
+    </button>
+}

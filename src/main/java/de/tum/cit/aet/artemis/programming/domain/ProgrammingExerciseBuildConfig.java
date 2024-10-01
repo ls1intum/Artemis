@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
@@ -301,18 +303,66 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
             List<List<String>> list = objectMapper.readValue(dockerFlags, new TypeReference<>() {
             });
 
-            Map<String, String> flagsMap = new HashMap<>();
+            DockerRunConfig dockerRunConfig = new DockerRunConfig();
             for (List<String> entry : list) {
-                flagsMap.put(entry.get(0), entry.get(1)); // First element is key, second is value
-            }
+                if (entry.size() != 2 || entry.get(0) == null || entry.get(1) == null || entry.get(0).isBlank() || entry.get(1).isBlank() || !DockerRunConfig.AllowedDockerFlags.isAllowed(entry.get(0))) {
+                    log.error("Invalid Docker flag entry: {}. Skipping.", entry);
+                    continue;
+                }
+                switch (entry.get(0)) {
+                    case "network":
+                        dockerRunConfig.setNetworkDisabled(entry.get(1).equals("none"));
+                        break;
+                    case "dns":
+                        dockerRunConfig.setDns(entry.get(1));
+                        break;
+                    case "dns-search":
+                        dockerRunConfig.setDnsSearch(entry.get(1));
+                        break;
+                    case "dns-option":
+                        dockerRunConfig.setDnsOption(Arrays.stream(entry.get(1).split(",")).toList());
+                        break;
+                    case "env":
+                        dockerRunConfig.setEnv(parseEnvVariableString(entry.get(1)));
+                        break;
+                    case "hostname":
+                        dockerRunConfig.setHostname(entry.get(1));
+                        break;
+                    case "ip":
+                        dockerRunConfig.setIp(entry.get(1));
+                        break;
+                    case "ipv6":
+                        dockerRunConfig.setIpv6(entry.get(1));
+                        break;
+                    case "user":
+                        dockerRunConfig.setUser(entry.get(1));
+                        break;
+                    default:
+                        log.error("Invalid Docker flag entry: {}. Skipping.", entry);
+                        break;
+                }
 
-            return new DockerRunConfig(flagsMap);
+            }
+            return dockerRunConfig;
         }
         catch (Exception e) {
             log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", dockerFlags, e);
         }
 
         return null;
+    }
+
+    private List<String> parseEnvVariableString(String envVariableString) {
+        Pattern pattern = Pattern.compile("(\\w+)=\"([^\"]*)\"");
+        Matcher matcher = pattern.matcher(envVariableString);
+
+        List<String> envVars = new ArrayList<>();
+        while (matcher.find()) {
+            envVars.add(matcher.group(1) + "=" + matcher.group(2));
+        }
+
+
+        return envVars;
     }
 
     @Override

@@ -158,9 +158,22 @@
                 "title": "Check out repository of sample solution",
                 "description": "Activate this option to checkout the solution repository into the 'solution' path. This is useful for comparing the student's submission with the sample solution."
             },
-            "disableNetworkAccess": {
-                "title": "Disable Network Access",
-                "description": "Activate this option to disable network access for containers. This is done by providing the '--network none' option to the Docker container."
+            "dockerFlags": {
+                "title": "Edit Docker Run Flags",
+                "description": "This option allows you to customize the Docker run flags. The default flags are set by Artemis and should not be changed unless necessary.",
+                "selectFlag": "Select a flag",
+                "addFlag": "Add flag",
+                "removeFlag": "Remove flag",
+                "network": "This option allows you to disable the network for the Docker container. The only allowed value is 'none'.",
+                "hostname": "This option allows you to set the hostname for the Docker container.",
+                "ip": "This option allows you to set the IP address for the Docker container.",
+                "ipv6": "This option allows you to set the IPv6 address for the Docker container.",
+                "dns": "This option allows you to set the DNS server for the Docker container.",
+                "dns-search": "This option allows you to set the DNS search domain for the Docker container.",
+                "dns-option": "This option allows you to set the DNS option for the Docker container.",
+                "env": "This option allows you to set the environment variable for the Docker container. Please follow the following format KEY_1=\"value_1\",KEY_2=\"value_2\"",
+                "user": "This option allows you to set the user for the Docker container.",
+                "default": "Please select a flag to add it to the Docker run flags."
             },
             "enableStaticCodeAnalysis": {
                 "title": "Enable Static Code Analysis",

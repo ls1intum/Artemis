@@ -146,9 +146,22 @@
                 "title": "Checke Repository der Lösung aus",
                 "description": "Aktiviere diese Checkbox, um das Repository der Lösung in ein Verzeichnis 'solution' auszuchecken. Dies ist nützlich, um die Abgabe von Studierenden mit der Musterlösung zu vergleichen."
             },
-            "disableNetworkAccess": {
-                "title": "Netzwerkzugriff deaktivieren",
-                "description": "Aktivieren Sie diese Option, um den Netzwerkzugriff für Container zu deaktivieren. Dies wird durch die Bereitstellung der Option '--network none' für den Docker-Container erreicht."
+            "dockerFlags": {
+                "title": "Docker Run Flags bearbeiten",
+                "description": "Diese Option ermöglicht es dir, die Docker Run Flags anzupassen. Die Standard-Flags werden von Artemis gesetzt und sollten nur bei Bedarf geändert werden.",
+                "selectFlag": "Wähle ein Flag aus",
+                "addFlag": "Flag hinzufügen",
+                "removeFlag": "Flag entfernen",
+                "network": "Diese Option ermöglicht es dir, das Netzwerk für den Docker-Container zu deaktivieren. Der einzige zulässige Wert ist 'none'.",
+                "hostname": "Diese Option ermöglicht es dir, den Hostnamen für den Docker-Container festzulegen.",
+                "ip": "Diese Option ermöglicht es dir, die IP-Adresse für den Docker-Container festzulegen.",
+                "ipv6": "Diese Option ermöglicht es dir, die IPv6-Adresse für den Docker-Container festzulegen.",
+                "dns": "Diese Option ermöglicht es dir, den DNS-Server für den Docker-Container festzulegen.",
+                "dns-search": "Diese Option ermöglicht es dir, die DNS-Suchdomäne für den Docker-Container festzulegen.",
+                "dns-option": "Diese Option ermöglicht es dir, die DNS-Option für den Docker-Container festzulegen.",
+                "env": "Diese Option ermöglicht es dir, die Umgebungsvariablen für den Docker-Container festzulegen. Bitte folge folgendem Format KEY_1=\"value_1\",KEY_2=\"value_2\".",
+                "user": "Diese Option ermöglicht es dir, den Benutzer für den Docker-Container festzulegen.",
+                "default": "Bitte wähle ein Flag aus, um es zu den Docker Run Flags hinzuzufügen."
             },
             "enableStaticCodeAnalysis": {
                 "title": "Aktiviere Statische Code-Analyse",

@@ -11,7 +11,6 @@ import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -304,7 +303,6 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         }
 
         DockerRunConfig dockerRunConfig = buildConfig.getDockerRunConfigFromString();
-        boolean disableNetwork = dockerRunConfig != null && StringUtils.equals(dockerRunConfig.flags().get(DockerRunConfig.NETWORK_FLAG), "none");
 
         List<String> resultPaths = getTestResultPaths(windfile);
 
@@ -313,7 +311,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
-                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, disableNetwork);
+                staticCodeAnalysisEnabled, sequentialTestRunsEnabled, testwiseCoverageEnabled, resultPaths, dockerRunConfig);
     }
 
     private ProgrammingExerciseBuildConfig loadBuildConfig(ProgrammingExercise programmingExercise) {

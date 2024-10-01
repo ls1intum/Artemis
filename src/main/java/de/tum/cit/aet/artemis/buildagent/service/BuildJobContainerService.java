@@ -21,9 +21,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -87,10 +90,10 @@ public class BuildJobContainerService {
      * @param containerName  the name of the container to be created
      * @param image          the Docker image to use for the container
      * @param buildScript    the build script to be executed in the container
-     * @param disableNetwork whether to disable the network for the container
+     * @param dockerRunConfig the configuration for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, boolean disableNetwork) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, DockerRunConfig dockerRunConfig) {
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
@@ -98,23 +101,57 @@ public class BuildJobContainerService {
             envVars.add("NO_PROXY=" + noProxy);
         }
         envVars.add("SCRIPT=" + buildScript);
-        HostConfig containerHostConfig = disableNetwork ? cloneHostConfigWithDisabledNetwork(hostConfig) : hostConfig;
-        return dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(containerHostConfig).withEnv(envVars)
+        HostConfig containerHostConfig = dockerRunConfig != null ? cloneHostConfigWithDisabledNetwork(hostConfig, dockerRunConfig) : hostConfig;
+        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(containerHostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
                 // by the creation of a file "stop_container.txt" in the container's root directory.
-                // .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done")
-                .withCmd("tail", "-f", "/dev/null") // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
+                // .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done");
+                .withCmd("tail", "-f", "/dev/null"); // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
                 // "docker exec -it <container-id> /bin/bash".
-                .exec();
+
+
+        if (dockerRunConfig != null && dockerRunConfig.getEnv() != null && !dockerRunConfig.getEnv().isEmpty()) {
+            envVars.addAll(dockerRunConfig.getEnv());
+            createContainerCmd.withEnv(envVars);
+        }
+        if (dockerRunConfig != null && StringUtils.isNotBlank(dockerRunConfig.getHostname())) {
+            createContainerCmd.withHostName(dockerRunConfig.getHostname());
+        }
+        if (dockerRunConfig != null && StringUtils.isNotBlank(dockerRunConfig.getUser())) {
+            createContainerCmd.withUser(dockerRunConfig.getUser());
+        }
+        if (dockerRunConfig != null && StringUtils.isNotBlank(dockerRunConfig.getIpv6())) {
+            createContainerCmd.withIpv6Address(dockerRunConfig.getIpv6());
+        }
+        if (dockerRunConfig != null && StringUtils.isNotBlank(dockerRunConfig.getIp())) {
+            createContainerCmd.withIpv4Address(dockerRunConfig.getIp());
+        }
+
+        return createContainerCmd.exec();
+
     }
 
-    private HostConfig cloneHostConfigWithDisabledNetwork(HostConfig originalConfig) {
-        return HostConfig.newHostConfig().withCpuQuota(originalConfig.getCpuQuota()).withCpuPeriod(originalConfig.getCpuPeriod()).withMemory(originalConfig.getMemory())
-                .withMemorySwap(originalConfig.getMemorySwap()).withPidsLimit(originalConfig.getPidsLimit()).withAutoRemove(true)
-                // We only offer the option to disable the network. Other flags could be a security risk.
-                .withNetworkMode("none");
+    private HostConfig cloneHostConfigWithDisabledNetwork(HostConfig originalConfig, DockerRunConfig dockerRunConfig) {
+        HostConfig hostConfig = HostConfig.newHostConfig().withCpuQuota(originalConfig.getCpuQuota()).withCpuPeriod(originalConfig.getCpuPeriod()).withMemory(originalConfig.getMemory())
+                .withMemorySwap(originalConfig.getMemorySwap()).withPidsLimit(originalConfig.getPidsLimit()).withAutoRemove(true);
+
+        if (dockerRunConfig.isNetworkDisabled()) {
+            // we only allow disabling the network, as we do not want to expose other options to the user
+            hostConfig.withNetworkMode("none");
+        }
+        if (StringUtils.isNotBlank(dockerRunConfig.getDns())) {
+            hostConfig.withDns(dockerRunConfig.getDns());
+        }
+        if (StringUtils.isNotBlank(dockerRunConfig.getDnsSearch())) {
+            hostConfig.withDnsSearch(dockerRunConfig.getDnsSearch());
+        }
+        if (dockerRunConfig.getDnsOption() != null && !dockerRunConfig.getDnsOption().isEmpty()) {
+            hostConfig.withDnsOptions(dockerRunConfig.getDnsOption());
+        }
+
+        return hostConfig;
     }
 
     /**

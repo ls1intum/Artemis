@@ -33,6 +33,9 @@ import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/ex
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import {
+    ProgrammingExerciseDockerFlagsComponent
+} from "app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-flags/programming-exercise-docker-flags.component";
 
 @NgModule({
     imports: [
@@ -59,6 +62,7 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         MonacoEditorModule,
         ProgrammingExerciseTheiaComponent,
+        ProgrammingExerciseDockerFlagsComponent,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,

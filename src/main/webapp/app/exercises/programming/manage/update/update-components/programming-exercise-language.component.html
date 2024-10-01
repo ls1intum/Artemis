@@ -218,13 +218,7 @@
         </div>
     }
     @if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
-        <div class="form-check">
-            <label class="form-check-label" for="field_disableNetworkAccess">
-                <input class="form-check-input" type="checkbox" name="disableNetworkAccess" id="field_disableNetworkAccess" (change)="onDisableNetworkAccessChange($event)" />
-                <span jhiTranslate="artemisApp.programmingExercise.disableNetworkAccess.title"></span>
-                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.disableNetworkAccess.description" />
-            </label>
-        </div>
+        <jhi-programming-exercise-docker-flags [programmingExercise]="programmingExercise"/>
         <jhi-programming-exercise-custom-build-plan [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig" />
     } @else if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
         <jhi-programming-exercise-custom-aeolus-build-plan
