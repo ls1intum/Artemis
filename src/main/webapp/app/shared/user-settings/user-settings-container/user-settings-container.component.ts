@@ -20,6 +20,7 @@ export class UserSettingsContainerComponent implements OnInit {
 
     currentUser?: User;
     localVCEnabled = false;
+    isAtLeastTutor = false;
 
     constructor(
         private profileService: ProfileService,
@@ -33,7 +34,18 @@ export class UserSettingsContainerComponent implements OnInit {
 
         this.accountService
             .getAuthenticationState()
-            .pipe(tap((user: User) => (this.currentUser = user)))
+            .pipe(
+                tap((user: User) => {
+                    this.currentUser = user;
+                    this.authorizeTutor();
+                    console.log(this.currentUser.authorities);
+                    return this.currentUser;
+                }),
+            )
             .subscribe();
+    }
+
+    authorizeTutor() {
+        this.isAtLeastTutor = !!this.currentUser?.authorities?.includes('ROLE_USER') && this.currentUser?.authorities?.length > 1;
     }
 }
