@@ -3,10 +3,10 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 
-export const ALLOWED_DOCKER_FLAG_OPTIONS = [
+const ALLOWED_DOCKER_FLAG_OPTIONS = [
     'network',
     'dns',
     'dns-search',
