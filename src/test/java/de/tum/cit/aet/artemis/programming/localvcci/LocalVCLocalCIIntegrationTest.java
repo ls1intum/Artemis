@@ -15,6 +15,7 @@ import static org.mockito.Mockito.doReturn;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -41,6 +42,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -1001,6 +1003,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         var before = new Date().getTime();
         await().atMost(15, TimeUnit.SECONDS).until(() -> {
+            participantScoreScheduleService.executeScheduledTasks();
+            await().until(participantScoreScheduleService::isIdle);
+
             log.info("Search for a build job for participation id: {}", studentParticipation.getId());
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
             if (buildJobOptional.isPresent()) {
