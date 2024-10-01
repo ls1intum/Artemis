@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphEdgeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyGraphNodeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationOverviewDTO;
@@ -39,6 +40,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -241,6 +243,52 @@ public class LearningPathService {
         }
         learningPathRepository.save(learningPath);
         log.debug("Updated LearningPath (id={}) for user (id={})", learningPath.getId(), userId);
+    }
+
+    /**
+     * Get the learning path for the current user in the given course.
+     *
+     * @param courseId the id of the course
+     * @return the learning path of the current user
+     */
+    public LearningPathDTO getLearningPathForCurrentUser(long courseId) {
+        final var currentUser = userRepository.getUser();
+        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(courseId, currentUser.getId());
+        return LearningPathDTO.of(learningPath);
+    }
+
+    /**
+     * Generate a learning path for the current user in the given course.
+     *
+     * @param courseId the id of the course
+     * @return the generated learning path
+     */
+    public LearningPathDTO generateLearningPathForCurrentUser(long courseId) {
+        final var currentUser = userRepository.getUser();
+        final var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
+        if (learningPathRepository.findByCourseIdAndUserId(courseId, currentUser.getId()).isPresent()) {
+            throw new ConflictException("Learning path already exists.", "LearningPath", "learningPathAlreadyExists");
+        }
+        final var learningPath = generateLearningPathForUser(course, currentUser);
+        return LearningPathDTO.of(learningPath);
+    }
+
+    /**
+     * Start the learning path for the current user
+     *
+     * @param learningPathId the id of the learning path
+     */
+    public void startLearningPathForCurrentUser(long learningPathId) {
+        final var learningPath = learningPathRepository.findByIdElseThrow(learningPathId);
+        final var currentUser = userRepository.getUser();
+        if (!learningPath.getUser().equals(currentUser)) {
+            throw new AccessForbiddenException("You are not allowed to start this learning path.");
+        }
+        else if (learningPath.isStartedByStudent()) {
+            throw new ConflictException("Learning path already started.", "LearningPath", "learningPathAlreadyStarted");
+        }
+        learningPath.setStartedByStudent(true);
+        learningPathRepository.save(learningPath);
     }
 
     /**
