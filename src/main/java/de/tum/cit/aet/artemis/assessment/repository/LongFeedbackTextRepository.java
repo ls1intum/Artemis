@@ -7,11 +7,13 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
+@Repository
 public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFeedbackText, Long> {
 
     @Query("""
