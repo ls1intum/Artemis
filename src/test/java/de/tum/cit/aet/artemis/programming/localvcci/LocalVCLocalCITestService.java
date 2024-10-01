@@ -616,6 +616,10 @@ public class LocalVCLocalCITestService {
         testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0, null);
     }
 
+    public void testLatestSubmission(Long participationId, String expectedCommitHash, int expectedSuccessfulTestCaseCount, boolean buildFailed, int timeoutInSeconds) {
+        testLatestSubmission(participationId, expectedCommitHash, expectedSuccessfulTestCaseCount, buildFailed, false, 0, timeoutInSeconds);
+    }
+
     /**
      * Perform a push operation and fail if there was no exception.
      *
