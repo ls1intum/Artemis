@@ -214,6 +214,7 @@ export class LectureComponent implements OnInit, OnDestroy {
      */
     ingestLecturesInPyris() {
         if (this.lectures.first()) {
+            console.log('lecture ' + this.lectures.first()?.id + ' found');
             this.lectureService.ingestLecturesInPyris(this.lectures.first()!.course!.id!).subscribe({
                 error: (error) => console.error('Failed to send Ingestion request', error),
             });
@@ -225,6 +226,7 @@ export class LectureComponent implements OnInit, OnDestroy {
      */
     private updateIngestionStates() {
         this.lectures.forEach((lecture) => {
+            console.log('lecture ' + lecture.id + ' found');
             this.lectureService.getIngestionState(lecture.course!.id!, lecture.id!).subscribe({
                 next: (res: HttpResponse<IngestionState>) => {
                     if (res.body) {

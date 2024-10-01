@@ -3,6 +3,9 @@
 # ===================================================================
 
 artemis:
+  iris:
+    url: http://localhost:8000
+    secret: secret
   course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
   legal-path: ./legal                             # a folder in which legal documents (imprint and privacy statements) are stored.
   repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
@@ -64,15 +67,6 @@ artemis:
     password: <password>
     token: <token>                  # Enter a valid token generated in the CI system giving Artemis full Admin access
     url: <url>
-    # Some CI systems, like Jenkins, offer a specific token that gets checked against any incoming notifications
-    # from a VCS trying to trigger a build plan. Only if the notification request contains the correct token, the plan
-    # is triggered. This can be seen as an alternative to sending an authenticated request to a REST API and then
-    # triggering the plan.
-    # In the case of Artemis, this is only really needed for the Jenkins + GitLab setup, since the GitLab plugin in
-    # Jenkins only allows triggering the Jenkins jobs using such a token. Furthermore, in this case, the value of the
-    # hudson.util.Secret is stored in the build plan, so you also have to specify this encrypted string here and NOT the actual token value itself!
-    # You can retrieve this by getting any job.xml for a job with an activated GitLab step and your token value of choice.
-    secret-push-token: <token hash>
     # Key of the saved credentials for the VCS service
     # GitLab CI: not needed
     # Jenkins: You have to specify the key from the credentials page in Jenkins under which the user and
@@ -90,7 +84,7 @@ artemis:
     notification-plugin: "ls1tum/artemis-notification-plugin:1.0.0" # Docker image for the generic notification plugin. This value is set in an CI variable in GitLab CI.
     build-log:
       file-expiry-days: 30 # The amount of days until build log files can be deleted
-      cleanup-schedule: 0 0 3 1 * ? # Cron expression for schedule to delete old build log files
+      cleanup-schedule: 0 0 3 * * ? # Cron expression for schedule to delete old build log files
   git:
     name: Artemis
     email: artemis@xcit.tum.de

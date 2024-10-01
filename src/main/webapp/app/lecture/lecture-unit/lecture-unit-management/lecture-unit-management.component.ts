@@ -12,9 +12,8 @@ import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-manage
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
-import { faEye } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faCheckCircle, faEye, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { IconDefinition, faCheckCircle, faFileExport, faPencilAlt, faRepeat, faSpinner, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
@@ -270,7 +269,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             if (lectureUnit.id) {
                 this.lectureUnitService.getIngestionState(this.lecture.course!.id!, this.lecture.id!, lectureUnit.id).subscribe({
                     next: (res: HttpResponse<IngestionState>) => {
-                        if (res.body) {
+                        if (res.body && res.body == 'DONE') {
                             (<AttachmentUnit>lectureUnit).pyrisIngestionState = res.body;
                         }
                     },
@@ -282,9 +281,11 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         });
     }
     onIngestButtonClicked(lectureUnitId: number) {
-        const unit: AttachmentUnit | undefined = this.lectureUnits.find((unit) => unit.id === lectureUnitId);
-        if (unit) {
+        const unitIndex: number = this.lectureUnits.findIndex((unit) => unit.id === lectureUnitId);
+        if (unitIndex > -1) {
+            const unit: AttachmentUnit = this.lectureUnits[unitIndex];
             unit.pyrisIngestionState = IngestionState.IN_PROGRESS;
+            this.lectureUnits[unitIndex] = unit;
         }
         this.lectureUnitService.ingestLectureUnitInPyris(lectureUnitId, this.lecture.id!).subscribe({
             error: (error) => console.error('Failed to send Ingestion request', error),

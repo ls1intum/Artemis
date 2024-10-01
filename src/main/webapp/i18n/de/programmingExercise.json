@@ -273,7 +273,8 @@
                     "settingNegative": "Der Testfall {{testCase}} darf keine Einstellungen mit negativen Werten haben."
                 },
                 "categories": {
-                    "title": "Code-Analyse-Kategorien",
+                    "titleHeader": "Quelltext-Analyse",
+                    "title": "Quelltext-Analyse-Kategorien",
                     "notGraded": "Nicht bewertet.",
                     "noFeedback": "Ohne sichtbares Feedback.",
                     "updated": "Die Kategorien wurden erfolgreich gespeichert.",
@@ -318,6 +319,17 @@
                     "resultingPoints": "Resultierende Punkte",
                     "testType": "Type",
                     "passedPercent": "Bestanden %"
+                },
+                "feedbackAnalysis": {
+                    "titleHeader": "Feedback Analyse",
+                    "title": "Fehleranalyse für {{exerciseTitle}}",
+                    "occurrence": "Häufigkeit",
+                    "feedback": "Feedback",
+                    "task": "Aufgabe",
+                    "testcase": "Testfall",
+                    "errorCategory": "Fehlerkategorie",
+                    "totalItems": "Insgesamt {{count}} Elemente",
+                    "error": "Beim Laden des Feedback ist ein Fehler aufgetreten."
                 },
                 "help": {
                     "name": "Aufgabennamen werden fett geschrieben, während Testnamen normal sind. Ob es ein Aufgabenname oder Testname ist hängt davon ab, ob die Reihe eine Aufgabe oder einen Test darstellt.",
@@ -645,6 +657,19 @@
                 "template": "Vorlage",
                 "history": "Commit-Historie",
                 "result": "Ergebnis"
+            },
+            "otherLanguageHints": {
+                "title": "Führe folgende Schritte aus, um eine andere Sprache zu benutzen. Siehe die <a href=\"{{documentationLink}}\">Dokumentation</a> für Details.",
+                "setImage": "Lege ein angepasstes Docker Image mit benötigten Abhängigkeiten fest (erstelle möglicherweise ein eigenes und lade es in die <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> oder auf den <a href=\"{{dockerhubLink}}\">Docker Hub</a> hoch).",
+                "buildScript": {
+                    "title": "Passe das Build Skript an:",
+                    "dependencies": "Optional: Installiere aufgabenspezifische Abhängigkeiten.",
+                    "runTests": "Führe alle Tests aus. Sie sollten JUnit XML Dateien generieren.",
+                    "moveResults": "Bewege die XML Dateien in das <code>{{resultsDirectory}}</code> Verzeichnis."
+                },
+                "pushExercise": "Lade den Aufgaben-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt.",
+                "pushSolution": "Lade den Lösungs-Code in das entsprechende Repository. Es wird nicht ausgecheckt.",
+                "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
             }
         },
         "error": {
