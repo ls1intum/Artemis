@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.text;
+package de.tum.cit.aet.artemis.text.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationFactory;
 import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextPlagiarismResult;
