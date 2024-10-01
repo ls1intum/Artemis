@@ -41,7 +41,6 @@ export class UserSettingsContainerComponent implements OnInit {
                 tap((user: User) => {
                     this.currentUser = user;
                     this.authorizeTutor();
-                    return this.currentUser;
                 }),
             )
             .subscribe();
