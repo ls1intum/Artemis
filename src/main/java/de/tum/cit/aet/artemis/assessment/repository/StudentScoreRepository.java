@@ -16,7 +16,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
-import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum;
+import de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSumDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -33,13 +33,13 @@ public interface StudentScoreRepository extends ArtemisJpaRepository<StudentScor
     Optional<StudentScore> findByExercise_IdAndUser_Id(long exerciseId, long userId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSum(u.id, COALESCE(SUM(s.lastRatedPoints), 0))
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.score.StudentScoreSumDTO(u.id, COALESCE(SUM(s.lastRatedPoints), 0))
             FROM StudentScore s
                 LEFT JOIN s.user u
             WHERE s.exercise IN :exercises
             GROUP BY u.id
             """)
-    Set<StudentScoreSum> getAchievedPointsOfStudents(@Param("exercises") Set<Exercise> exercises);
+    Set<StudentScoreSumDTO> getAchievedPointsOfStudents(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
             SELECT s

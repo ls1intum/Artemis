@@ -21,6 +21,8 @@ import de.tum.cit.aet.artemis.programming.service.localci.scaparser.utils.FileUt
  */
 public class ReportParser {
 
+    private final ObjectMapper mapper = new ObjectMapper();
+
     // Reports that are bigger then the threshold will not be parsed
     // and an issue will be generated. The unit is in megabytes.
     private static final int STATIC_CODE_ANALYSIS_REPORT_FILESIZE_LIMIT_IN_MB = 1;
@@ -36,7 +38,6 @@ public class ReportParser {
     public String transformToJSONReport(File file) throws ParserException {
         try {
             StaticCodeAnalysisReportDTO report = transformToReport(file);
-            ObjectMapper mapper = new ObjectMapper();
             return mapper.writeValueAsString(report);
         }
         catch (Exception e) {

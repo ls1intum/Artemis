@@ -27,8 +27,8 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ResultWithPointsPerGradingCriterionDTO;
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCount;
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCountDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -147,23 +147,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @EntityGraph(type = LOAD, attributePaths = "submission")
     Optional<Result> findResultWithSubmissionsById(long resultId);
 
-    /**
-     * Finds the first result by participation ID, including its submissions, ordered by completion date in descending order.
-     * This method avoids in-memory paging by retrieving the first result directly from the database.
-     *
-     * @param participationId the ID of the participation to find the result for
-     * @return an {@code Optional} containing the first {@code Result} with submissions, ordered by completion date in descending order,
-     *         or an empty {@code Optional} if no result is found
-     */
-    default Optional<Result> findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(long participationId) {
-        var resultOptional = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
-        if (resultOptional.isEmpty()) {
-            return Optional.empty();
-        }
-        var id = resultOptional.get().getId();
-        return findResultWithSubmissionsById(id);
-    }
-
     Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(long participationId, boolean rated);
 
     /**
@@ -184,11 +167,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return findResultWithSubmissionsById(id);
     }
 
-    Optional<Result> findDistinctBySubmissionId(long submissionId);
-
-    @EntityGraph(type = LOAD, attributePaths = "feedbacks")
-    Optional<Result> findDistinctWithFeedbackBySubmissionId(long submissionId);
-
     @Query("""
             SELECT r
             FROM Result r
@@ -208,8 +186,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     Optional<Result> findByIdWithEagerFeedbacksAndAssessor(@Param("resultId") long resultId);
 
-    Set<Result> findAllByParticipationExerciseId(long exerciseId);
-
     /**
      * Load a result from the database by its id together with the associated submission, the list of feedback items, its assessor and assessment note.
      *
@@ -224,7 +200,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 LEFT JOIN FETCH r.feedbacks
                 LEFT JOIN FETCH r.assessor
                 LEFT JOIN FETCH r.assessmentNote
-                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH TREAT (r.participation AS StudentParticipation ) p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId
@@ -238,7 +214,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
      * @return a list with 3 elements: count of rated (in time) and unrated (late) assessments of a course and count of assessments without rating (null)
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCount(r.rated, COUNT(r))
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ResultCountDTO(r.rated, COUNT(r))
             FROM Result r
                 JOIN r.participation p
             WHERE r.completionDate IS NOT NULL
@@ -246,7 +222,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND p.exercise.id IN :exerciseIds
             GROUP BY r.rated
             """)
-    List<ResultCount> countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
+    List<ResultCountDTO> countAssessmentsByExerciseIdsAndRated(@Param("exerciseIds") Set<Long> exerciseIds);
 
     /**
      * Load a result from the database by its id together with the associated submission and the list of feedback items.
@@ -259,7 +235,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             FROM Result r
                 LEFT JOIN FETCH r.submission
                 LEFT JOIN FETCH r.feedbacks
-                LEFT JOIN FETCH r.participation p
+                LEFT JOIN FETCH TREAT (r.participation AS StudentParticipation ) p
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
             WHERE r.id = :resultId
@@ -352,9 +328,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             """)
     List<Long> countNumberOfFinishedAssessmentsByExamIdIgnoreTestRuns(@Param("examId") long examId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "feedbacks" })
-    Set<Result> findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(long exerciseId);
-
     @Query("""
             SELECT COUNT(DISTINCT p)
             FROM Participation p
@@ -365,7 +338,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND r.rated = TRUE
                 AND r.completionDate IS NOT NULL
                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate)
-              """)
+            """)
     long countNumberOfAssessmentsByTypeForExerciseBeforeDueDate(@Param("exerciseId") long exerciseId, @Param("types") List<AssessmentType> types);
 
     @Query("""
@@ -597,14 +570,13 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return new DueDateStat(inTime, late);
     }
 
-    // Valid JPQL syntax, only SCA is not able to parse it
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -616,18 +588,15 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND e.id IN :exerciseIds
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
-
-    // Alternative which might be faster, in particular for complaints in the other repositories
-    // Valid JPQL syntax, only SCA is not able to parse it
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -639,15 +608,16 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND e.id = :exerciseId
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExerciseId(@Param("exerciseId") long exerciseId);
 
+    // Valid JPQL syntax, only SCA is not able to parse it due to mixing primitive and object types
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO(
                 r.assessor.id,
                 COUNT(r),
                 SUM(e.maxPoints),
                 AVG(r.score),
-                CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END),
+                CAST(CAST(SUM(rating.rating) AS double) / SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                 SUM(CASE WHEN rating.rating IS NOT NULL THEN 1 ELSE 0 END)
             )
             FROM Result r
@@ -661,7 +631,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                 AND ex.id = :examId
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardAssessmentsDTO> findTutorLeaderboardAssessmentByExamId(@Param("examId") long examId);
 
     /**
      * This function is used for submitting a manual assessment/result.
@@ -803,10 +773,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         else {
             return findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         }
-    }
-
-    default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return getValueElseThrow(findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId));
     }
 
     default Result findWithBidirectionalSubmissionAndFeedbackAndAssessorAndAssessmentNoteAndTeamStudentsByIdElseThrow(long resultId) {
