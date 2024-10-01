@@ -2,15 +2,18 @@ package de.tum.cit.aet.artemis.assessment.repository;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
@@ -95,4 +98,58 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
                 .map(GradingInstruction::getId).toList();
         return hasFeedbackFromGradingInstructionIds(gradingInstructionsIds);
     }
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM Feedback f
+            WHERE f.result IN (SELECT r
+                               FROM Result r
+                               WHERE r.submission IS NULL
+                                   AND r.participation IS NULL)
+            """)
+    void deleteFeedbackForOrphanResults();
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM Feedback f WHERE f.result IS NULL
+            """)
+    void deleteOrphanFeedback();
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM Feedback f
+                                    WHERE f.result IN (
+                                        SELECT r
+                                        FROM Result r
+                                        JOIN r.participation p
+                                        LEFT JOIN p.exercise e
+                                        LEFT JOIN e.course c
+                                        WHERE r.id NOT IN (
+                                            SELECT MAX(r2.id)
+                                            FROM Result r2
+                                            WHERE r2.participation.id = p.id AND r2.rated=true
+                                        ) AND c.endDate < :deleteTo
+                                        AND c.startDate > :deleteFrom
+                                    )
+                """)
+    void deleteOldFeedbackThatAreNotLatestRatedResults(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM Feedback f
+                                    WHERE f.result IN (
+                                        SELECT r
+                                        FROM Result r
+                                        JOIN r.participation p
+                                        JOIN p.exercise e
+                                        JOIN e.course c
+                                        WHERE r.rated=false AND c.endDate < :deleteTo
+                                        AND c.startDate > :deleteFrom
+                                    )
+                """)
+    void deleteOldNonRatedFeedbackWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

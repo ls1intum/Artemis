@@ -9,48 +9,115 @@ import java.util.List;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ParticipantScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.RatingRepository;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
+import de.tum.cit.aet.artemis.assessment.repository.StudentScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TeamScoreRepository;
+import de.tum.cit.aet.artemis.assessment.repository.TextBlockRepository;
 import de.tum.cit.aet.artemis.core.domain.CleanupJobExecution;
 import de.tum.cit.aet.artemis.core.domain.CleanupJobType;
 import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository;
-import de.tum.cit.aet.artemis.core.repository.cleanup.DataCleanupRepository;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 
 @Profile(PROFILE_CORE)
 @Service
 public class DataCleanupService {
 
-    private final DataCleanupRepository dataCleanUpRepository;
-
     private final CleanupJobExecutionRepository cleanupJobExecutionRepository;
 
     private final PlagiarismComparisonRepository plagiarismComparisonRepository;
 
-    public DataCleanupService(DataCleanupRepository dataCleanUpRepository, CleanupJobExecutionRepository cleanupJobExecutionRepository,
-            PlagiarismComparisonRepository plagiarismComparisonRepository) {
-        this.dataCleanUpRepository = dataCleanUpRepository;
+    private final ResultRepository resultRepository;
+
+    private final RatingRepository ratingRepository;
+
+    private final FeedbackRepository feedbackRepository;
+
+    private final TextBlockRepository textBlockRepository;
+
+    private final LongFeedbackTextRepository longFeedbackTextRepository;
+
+    private final StudentScoreRepository studentScoreRepository;
+
+    private final TeamScoreRepository teamScoreRepository;
+
+    private final ParticipantScoreRepository participantScoreRepository;
+
+    public DataCleanupService(CleanupJobExecutionRepository cleanupJobExecutionRepository, PlagiarismComparisonRepository plagiarismComparisonRepository,
+            ResultRepository resultRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository, TextBlockRepository textBlockRepository,
+            LongFeedbackTextRepository longFeedbackTextRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
+            ParticipantScoreRepository participantScoreRepository) {
+        this.resultRepository = resultRepository;
+        this.ratingRepository = ratingRepository;
+        this.feedbackRepository = feedbackRepository;
+        this.textBlockRepository = textBlockRepository;
+        this.longFeedbackTextRepository = longFeedbackTextRepository;
+        this.studentScoreRepository = studentScoreRepository;
+        this.teamScoreRepository = teamScoreRepository;
         this.cleanupJobExecutionRepository = cleanupJobExecutionRepository;
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
+        this.participantScoreRepository = participantScoreRepository;
     }
 
+    /**
+     * Deletes orphaned entities that are no longer associated with valid results or participations.
+     * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     */
     public CleanupServiceExecutionRecordDTO deleteOrphans() {
-        dataCleanUpRepository.deleteOrphans();
+        this.longFeedbackTextRepository.deleteLongFeedbackTextForEmptyFeedback();
+        this.textBlockRepository.deleteTextBlockForEmptyFeedback();
+        this.feedbackRepository.deleteOrphanFeedback();
+        this.studentScoreRepository.deleteOrphanStudentScore();
+        this.teamScoreRepository.deleteOrphanTeamScore();
+        this.longFeedbackTextRepository.deleteLongFeedbackTextForOrphanRepository();
+        this.textBlockRepository.deleteTextBlockForOrphanResults();
+        this.feedbackRepository.deleteFeedbackForOrphanResults();
+        this.ratingRepository.deleteOrphanRating();
+        this.resultRepository.deleteResultWithoutParticipationsAndSubmissions();
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.ORPHANS, null, null));
     }
 
     public CleanupServiceExecutionRecordDTO deletePlagiarismComparisons(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        var pcIds = dataCleanUpRepository.getUnnecessaryPlagiarismComparisons(deleteFrom, deleteTo);
+        var pcIds = plagiarismComparisonRepository.findPlagiarismComparisonIdWithStatusNoneThatBelongToCourseWithDates(deleteFrom, deleteTo);
         plagiarismComparisonRepository.deleteByIdIn(pcIds);
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.PLAGIARISM_COMPARISONS, deleteFrom, deleteTo));
     }
 
+    /**
+     * Deletes non-rated results within the specified date range, along with associated long feedback texts,
+     * text blocks, feedback items, and participant scores.
+     *
+     * @param deleteFrom The start of the date range for deleting non-rated results.
+     * @param deleteTo   The end of the date range for deleting non-rated results.
+     */
     public CleanupServiceExecutionRecordDTO deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        dataCleanUpRepository.deleteNonRatedResults(deleteFrom, deleteTo);
+        this.longFeedbackTextRepository.deleteLongFeedbackTextForNonRatedResultsWhereCourseBetween(deleteFrom, deleteTo);
+        this.textBlockRepository.deleteTextBlockForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.feedbackRepository.deleteOldNonRatedFeedbackWhereCourseBetween(deleteFrom, deleteTo);
+        this.participantScoreRepository.deleteParticipantScoresForLatestNonRatedResultsWhereCourseBetween(deleteFrom, deleteTo);
+        this.participantScoreRepository.deleteParticipantScoresForNonRatedResultsWhereCourseBetween(deleteFrom, deleteTo);
+        this.resultRepository.deleteNonRatedResultsWhereCourseBetween(deleteFrom, deleteTo);
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.NON_RATED_RESULTS, deleteFrom, deleteTo));
     }
 
+    /**
+     * Deletes rated results, excluding the latest rated result for each participation, for courses conducted within the specified date range.
+     * Also deletes associated long feedback texts, text blocks, feedback items, and participant scores.
+     *
+     * @param deleteFrom The start of the date range for deleting rated results.
+     * @param deleteTo   The end of the date range for deleting rated results.
+     */
     public CleanupServiceExecutionRecordDTO deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
-        dataCleanUpRepository.deleteRatedResults(deleteFrom, deleteTo);
+        this.longFeedbackTextRepository.deleteLongFeedbackTextForRatedResultsBetween(deleteFrom, deleteTo);
+        this.textBlockRepository.deleteTextBlockForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
+        this.feedbackRepository.deleteOldFeedbackThatAreNotLatestRatedResults(deleteFrom, deleteTo);
+        this.participantScoreRepository.deleteParticipantScoresForNonLatestLastResultsWhereCourseBetween(deleteFrom, deleteTo);
+        this.participantScoreRepository.deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseBetween(deleteFrom, deleteTo);
+        this.resultRepository.deleteNonLatestResultsWhereCourseBetween(deleteFrom, deleteTo);
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo));
     }
 

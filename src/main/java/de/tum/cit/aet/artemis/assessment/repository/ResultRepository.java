@@ -17,9 +17,11 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -821,4 +823,56 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         }
         return results;
     }
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE
+            FROM Result r
+            WHERE r.participation IS NULL
+                AND r.submission IS NULL
+            """)
+    void deleteResultWithoutParticipationsAndSubmissions();
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM Result r
+                                                                WHERE r.rated = true
+                                                                  AND r.participation IS NOT NULL
+                                                                  AND r.participation.exercise IS NOT NULL
+                                                                  AND EXISTS (
+                                                                      SELECT 1
+                                                                      FROM Course c
+                                                                      JOIN Exercise e ON e.course = c
+                                                                      WHERE e = r.participation.exercise
+                                                                        AND c.endDate < :deleteTo
+                                                                        AND c.startDate > :deleteFrom
+                                                                  )
+                                                                  AND r.id NOT IN (
+                                                                      SELECT MAX(r2.id)
+                                                                      FROM Result r2
+                                                                      WHERE r2.participation = r.participation
+                                                                        AND r2.rated = true
+                                                                  )
+                """)
+    void deleteNonLatestResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM Result r
+                                                                                       WHERE r.rated = false
+                                                                                         AND r.participation IS NOT NULL
+                                                                                         AND r.participation.exercise IS NOT NULL
+                                                                                         AND EXISTS (
+                                                                                             SELECT 1
+                                                                                             FROM Course c
+                                                                                             JOIN Exercise e ON e.course = c
+                                                                                             WHERE e = r.participation.exercise
+                                                                                               AND c.endDate < :deleteTo
+                                                                                               AND c.startDate > :deleteFrom
+                                                                                         )
+                """)
+    void deleteNonRatedResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

@@ -75,4 +75,11 @@ public interface TeamScoreRepository extends ArtemisJpaRepository<TeamScore, Lon
     @Transactional // ok because of delete
     @Modifying
     void deleteByExerciseAndTeam(Exercise exercise, Team team);
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM TeamScore ps WHERE ps.team IS NULL
+            """)
+    void deleteOrphanTeamScore();
 }

@@ -69,4 +69,12 @@ public interface StudentScoreRepository extends ArtemisJpaRepository<StudentScor
     @Transactional // ok because of delete
     @Modifying
     void deleteByExerciseAndUser(Exercise exercise, User user);
+
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM StudentScore ps WHERE ps.user IS NULL
+            """)
+    void deleteOrphanStudentScore();
+
 }

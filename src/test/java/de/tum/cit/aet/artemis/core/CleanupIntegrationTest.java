@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis;
+package de.tum.cit.aet.artemis.core;
 
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.CONFIRMED;
 import static de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE;
@@ -39,24 +39,24 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CleanupServiceExecutionRecordDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.cleanup.CleanupJobExecutionRepository;
-import de.tum.cit.aet.artemis.core.repository.cleanup.DataCleanupRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.cit.aet.artemis.participation.ParticipationFactory;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismComparison;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismMatch;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismSubmission;
 import de.tum.cit.aet.artemis.plagiarism.domain.text.TextSubmissionElement;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismComparisonRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.text.domain.TextBlock;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -107,9 +107,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
 
     @Autowired
     private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private DataCleanupRepository dataCleanupRepository;
 
     @Autowired
     private TransactionTemplate transactionTemplate;
@@ -550,22 +547,6 @@ class CleanupIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest 
         request.postWithoutResponseBody("/api/admin/cleanup/delete-old-submission-versions", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
         request.postWithoutResponseBody("/api/admin/cleanup/delete-old-feedback", HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
         request.get("/api/admin/cleanup/last-executions", HttpStatus.FORBIDDEN, List.class);
-    }
-
-    @Test
-    void testTransactionalBehavior() {
-
-        long count = resultRepository.count();
-
-        var orphanResult = new Result();
-        resultRepository.save(orphanResult);
-
-        transactionTemplate.executeWithoutResult(status -> {
-            dataCleanupRepository.deleteOrphans();
-            status.setRollbackOnly();
-        });
-
-        assertThat(resultRepository.count()).as("Expected no entities get deleted after rollback").isEqualTo(count + 1);
     }
 
     private Feedback createFeedbackWithLinkedLongFeedback() {
