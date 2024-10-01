@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.tutorialgroups.test_repository;
+package de.tum.cit.aet.artemis.tutorialgroup.test_repository;
 
 import jakarta.validation.constraints.NotNull;
 

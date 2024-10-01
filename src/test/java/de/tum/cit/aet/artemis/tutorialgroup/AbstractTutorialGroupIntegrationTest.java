@@ -1,6 +1,6 @@
-package de.tum.cit.aet.artemis.tutorialgroups;
+package de.tum.cit.aet.artemis.tutorialgroup;
 
-import static de.tum.cit.aet.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
+import static de.tum.cit.aet.artemis.tutorialgroup.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
@@ -44,10 +44,10 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepos
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupRegistrationTestRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupScheduleTestRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.util.TutorialGroupUtilService;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupScheduleTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
 
 /**
  * Contains useful methods for testing the tutorial groups feature.

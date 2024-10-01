@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.tutorialgroups.util;
+package de.tum.cit.aet.artemis.tutorialgroup.util;
 
 import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,8 +28,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupRegistrationTestRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 
 /**
  * Service responsible for initializing the database with specific testdata related to tutorial groups for use in integration tests.

@@ -1,7 +1,7 @@
-package de.tum.cit.aet.artemis.tutorialgroups;
+package de.tum.cit.aet.artemis.tutorialgroup;
 
+import static de.tum.cit.aet.artemis.tutorialgroup.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
-import static de.tum.cit.aet.artemis.tutorialgroups.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;

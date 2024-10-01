@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.tutorialgroups;
+package de.tum.cit.aet.artemis.tutorialgroup;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

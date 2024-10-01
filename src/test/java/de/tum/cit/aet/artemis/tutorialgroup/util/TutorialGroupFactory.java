@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.tutorialgroups.util;
+package de.tum.cit.aet.artemis.tutorialgroup.util;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
