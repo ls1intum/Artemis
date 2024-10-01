@@ -22,12 +22,14 @@ import static de.tum.cit.aet.artemis.communication.domain.notification.Notificat
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.MESSAGE_REPLY_IN_CONVERSATION_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.NEW_PLAGIARISM_CASE_STUDENT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_ASSIGNED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_ASSIGNED_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE;
+import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UNASSIGNED_TEXT;
 import static de.tum.cit.aet.artemis.communication.domain.notification.NotificationConstants.TUTORIAL_GROUP_UNASSIGNED_TITLE;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_CREATED;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION_USER_NOTIFICATION_DATA_EXPORT_FAILED;
@@ -63,6 +65,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
@@ -135,6 +138,12 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
     @Autowired
     private ParticipationUtilService participationUtilService;
+
+    @Captor
+    private ArgumentCaptor<Notification> appleNotificationCaptor;
+
+    @Captor
+    private ArgumentCaptor<Notification> firebaseNotificationCaptor;
 
     private User user;
 
@@ -535,24 +544,23 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
     @Test
     void testTutorialGroupNotifications_groupAssigned() {
         notificationSettingRepository.deleteAll();
-        notificationSettingRepository
-                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
-        singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
+        User teachingAssistant = tutorialGroup.getTeachingAssistant();
+        notificationSettingRepository.save(new NotificationSetting(teachingAssistant, true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_ASSIGNED_TITLE);
         verifyEmail();
-        verifyPush(1);
+        verifyPush(1, TUTORIAL_GROUP_ASSIGNED_TEXT, teachingAssistant);
 
     }
 
     @Test
     void testTutorialGroupNotifications_groupUnassigned() {
         notificationSettingRepository.deleteAll();
-        notificationSettingRepository
-                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
+        User teachingAssistant = tutorialGroup.getTeachingAssistant();
+        notificationSettingRepository.save(new NotificationSetting(teachingAssistant, true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
         singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_UNASSIGNED_TITLE);
         verifyEmail();
-        verifyPush(1);
+        verifyPush(1, TUTORIAL_GROUP_UNASSIGNED_TEXT, teachingAssistant);
     }
 
     @Test
@@ -583,9 +591,20 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
      *
      * @param times how often the email should have been sent
      */
-    private void verifyPush(int times) {
-        verify(applePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anySet(), any(Object.class));
-        verify(firebasePushNotificationService, timeout(1500).times(times)).sendNotification(any(Notification.class), anySet(), any(Object.class));
+    private void verifyPush(int times, String text, User recipient) {
+        verify(applePushNotificationService, timeout(1500).atLeast(times)).sendNotification(appleNotificationCaptor.capture(), anySet(), any(Object.class));
+        verify(firebasePushNotificationService, timeout(1500).atLeast(times)).sendNotification(firebaseNotificationCaptor.capture(), anySet(), any(Object.class));
+
+        List<SingleUserNotification> appleNotifications = filterRelevantNotifications(appleNotificationCaptor.getAllValues(), text, recipient);
+        assertThat(appleNotifications).as(times + " Apple notifications should have been sent").hasSize(times);
+
+        List<SingleUserNotification> firebaseNotifications = filterRelevantNotifications(firebaseNotificationCaptor.getAllValues(), text, recipient);
+        assertThat(firebaseNotifications).as(times + " Firebase notifications should have been sent").hasSize(times);
+    }
+
+    private List<SingleUserNotification> filterRelevantNotifications(List<Notification> notifications, String title, User recipient) {
+        return notifications.stream().filter(notification -> notification instanceof SingleUserNotification).map(notification -> (SingleUserNotification) notification)
+                .filter(notification -> title.equals(notification.getText()) && recipient.getId().equals(notification.getRecipient().getId())).toList();
     }
 
     private static Stream<Arguments> getNotificationTypesAndTitlesParametersForGroupChat() {
