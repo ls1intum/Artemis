@@ -193,6 +193,7 @@ class LearningPathIntegrationTest extends AbstractSpringIntegrationIndependentTe
         competencyToCreate.setTitle("CompetencyToCreateTitle");
         competencyToCreate.setCourse(course);
         competencyToCreate.setLectureUnits(Set.of(textUnit));
+        competencyToCreate.setMasteryThreshold(42);
         return request.postWithResponseBody("/api/courses/" + course.getId() + "/competencies", competencyToCreate, Competency.class, HttpStatus.CREATED);
     }
 

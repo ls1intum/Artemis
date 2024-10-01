@@ -56,6 +56,7 @@ public class CompetencyUtilService {
         competency.setDescription("Magna pars studiorum, prodita quaerimus.");
         competency.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
         competency.setCourse(course);
+        competency.setMasteryThreshold(42);
 
         return competencyRepo.save(competency);
     }
