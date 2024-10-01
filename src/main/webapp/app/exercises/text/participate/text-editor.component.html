@@ -10,6 +10,7 @@
                     @if (isReadOnlyWithShowResult) {
                         @if ((sortedHistoryResults?.length || 0) > 1) {
                             <jhi-button
+                                class="mb-2 me-2"
                                 id="toggleTimeline"
                                 [icon]="faTimeline"
                                 [title]="showHistory ? 'entity.action.hideTimeline' : 'entity.action.viewTimeline'"
@@ -18,6 +19,7 @@
                         }
                         @if (isActive || !textExercise.dueDate) {
                             <jhi-button
+                                class="mb-2 me-2"
                                 id="Continue"
                                 [title]="'entity.action.continueSubmission'"
                                 [routerLink]="['/courses', course?.id, 'exercises', 'text-exercises', textExercise?.id!, 'participate', result.participation?.id]"
@@ -26,7 +28,7 @@
                     } @else {
                         @if (textExercise.allowFeedbackRequests && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
                             <jhi-button
-                                class="mb-2 ml-2"
+                                class="mb-2 me-2"
                                 id="request-feedback"
                                 [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
                                 [icon]="faPenSquare"
@@ -40,6 +42,7 @@
                     }
                     @if (!this.isReadOnlyWithShowResult) {
                         <jhi-button
+                            class="mb-2 me-2"
                             id="submit"
                             [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
                             (onClick)="submit()"
