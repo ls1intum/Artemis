@@ -20,6 +20,7 @@ import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
+import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
@@ -111,8 +112,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     void testConnectOverSshAndReceivePack() throws IOException, GeneralSecurityException {
         try (var client = clientConnectToArtemisSshServer()) {
             assertThat(client).isNotNull();
-            var serverSessions = sshServer.getActiveSessions();
-            var serverSession = serverSessions.getFirst();
+            var user = userTestRepository.getUser();
+            var serverSession = getCurrentServerSession(user);
 
             final var uploadCommandString = "git-upload-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'";
 
@@ -146,7 +147,6 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     private SshClient clientConnectToArtemisSshServer() throws GeneralSecurityException, IOException {
         var serverSessions = sshServer.getActiveSessions();
-        var numberOfSessions = serverSessions.size();
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
         User user = userTestRepository.getUser();
@@ -155,10 +155,12 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         client.start();
 
         ClientSession clientSession;
+        int numberOfSessions;
         try {
             ConnectFuture connectFuture = client.connect(user.getName(), hostname, port);
             connectFuture.await(10, TimeUnit.SECONDS);
 
+            numberOfSessions = serverSessions.size();
             clientSession = connectFuture.getSession();
             clientSession.addPublicKeyIdentity(keyPair);
 
@@ -170,8 +172,16 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
         serverSessions = sshServer.getActiveSessions();
         assertThat(clientSession.isAuthenticated()).isTrue();
-        assertThat(serverSessions.size()).isEqualTo(numberOfSessions + 1);
+        assertThat(serverSessions.size()).as("There are more server sessions activated than expected.").isEqualTo(numberOfSessions + 1);
         return client;
+    }
+
+    private AbstractSession getCurrentServerSession(User user) {
+        var serverSessions = sshServer.getActiveSessions();
+        // parallel tests might create additional sessions, we need to be specific
+        var serverSession = serverSessions.stream().filter(session -> user.getName().equals(session.getUsername())).findFirst();
+
+        return serverSession.orElseThrow(() -> new IllegalStateException("No server session found for user " + user.getName()));
     }
 
     private KeyPair setupKeyPairAndAddToUser() throws GeneralSecurityException, IOException {
