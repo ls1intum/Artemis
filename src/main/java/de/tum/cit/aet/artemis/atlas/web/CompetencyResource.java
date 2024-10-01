@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -136,9 +135,8 @@ public class CompetencyResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Competency> createCompetency(@PathVariable long courseId, @RequestBody Competency competency) throws URISyntaxException {
         log.debug("REST request to create Competency : {}", competency);
-        if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
-            throw new BadRequestException();
-        }
+        checkCompetencyAttributesForCreation(competency);
+
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         final var persistedCompetency = competencyService.createCourseCompetency(competency, course);
@@ -159,9 +157,7 @@ public class CompetencyResource {
     public ResponseEntity<List<Competency>> createCompetencies(@PathVariable Long courseId, @RequestBody List<Competency> competencies) throws URISyntaxException {
         log.debug("REST request to create Competencies : {}", competencies);
         for (Competency competency : competencies) {
-            if (competency.getId() != null || competency.getTitle() == null || competency.getTitle().trim().isEmpty()) {
-                throw new BadRequestException();
-            }
+            checkCompetencyAttributesForCreation(competency);
         }
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
@@ -300,9 +296,8 @@ public class CompetencyResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Competency> updateCompetency(@PathVariable long courseId, @RequestBody Competency competency) {
         log.debug("REST request to update Competency : {}", competency);
-        if (competency.getId() == null) {
-            throw new BadRequestException();
-        }
+        checkCompetencyAttributesForUpdate(competency);
+
         var course = courseRepository.findByIdElseThrow(courseId);
         var existingCompetency = competencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
         checkCourseForCompetency(course, existingCompetency);
@@ -332,6 +327,26 @@ public class CompetencyResource {
         courseCompetencyService.deleteCourseCompetency(competency, course);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, competency.getTitle())).build();
+    }
+
+    private void checkCompetencyAttributesForCreation(Competency competency) {
+        if (competency.getId() != null) {
+            throw new BadRequestAlertException("A new competency should not have an id", ENTITY_NAME, "existingCompetencyId");
+        }
+        checkCompetencyAttributes(competency);
+    }
+
+    private void checkCompetencyAttributesForUpdate(Competency competency) {
+        if (competency.getId() == null) {
+            throw new BadRequestAlertException("An updated competency should have an id", ENTITY_NAME, "missingCompetencyId");
+        }
+        checkCompetencyAttributes(competency);
+    }
+
+    private void checkCompetencyAttributes(Competency competency) {
+        if (competency.getTitle() == null || competency.getTitle().trim().isEmpty() || competency.getMasteryThreshold() < 1 || competency.getMasteryThreshold() > 100) {
+            throw new BadRequestAlertException("The attributes of the competency are invalid!", ENTITY_NAME, "invalidPrerequisiteAttributes");
+        }
     }
 
     /**
