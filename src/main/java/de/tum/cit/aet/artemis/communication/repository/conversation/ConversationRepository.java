@@ -27,9 +27,6 @@ public interface ConversationRepository extends ArtemisJpaRepository<Conversatio
     @Modifying
     void deleteAllByCourseId(long courseId);
 
-    // This is used only for testing purposes
-    List<Conversation> findAllByCourseId(long courseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants" })
     Optional<Conversation> findWithParticipantsById(long conversationId);
 

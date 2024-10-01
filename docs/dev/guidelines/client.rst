@@ -9,11 +9,14 @@ The Artemis client is an Angular project. Keep https://angular.io/guide/stylegui
 
 Some general aspects:
 
-* The Artemis client uses lazy loading to keep the initial bundle size below 2 MB.
+* The Artemis client uses lazy loading to keep the initial bundle size as small as possible.
 * Code quality and test coverage are important. Try to reuse code and avoid code duplication. Write meaningful tests!
+
+**Angular Migration**
+
 * Use **standalone components** instead of Angular modules: https://angular.dev/reference/migrations/standalone
-* Use the new ``signals`` to granularly track how and where state is used throughout an application, allowing Angular to optimize rendering updates: https://angular.dev/guide/signals
-* Find out more in the following guide: https://blog.angular-university.io/angular-signal-components/
+* Use the new ``signals`` to granular track how and where state is used throughout an application, allowing Angular to optimize rendering updates: https://angular.dev/guide/signals
+* Find out more in the following guide: https://blog.angular-university.io/angular-signal-components
 * Use the new ``input()`` and ``output()`` decorators instead of ``@Input()`` and ``@Output()``.
 
     .. code-block:: ts
@@ -27,8 +30,9 @@ Some general aspects:
         myOutput = output<string>();
 
 * Use the new ``inject`` function, because it offers more accurate types and better compatibility with standard decorators, compared to constructor-based injection: https://angular.dev/reference/migrations/inject-function
-* Use the new way of defining queries for ``viewChild()``, ``contentChild()``, ``viewChildren()``, ``contentChildren()``: https://ngxtension.netlify.app/utilities/migrations/queries-migration/
-* Use ``OnPush`` change detection strategy for components whenever possible: https://blog.angular-university.io/onpush-change-detection-how-it-works/
+* Use the new way of defining queries for ``viewChild()``, ``contentChild()``, ``viewChildren()``, ``contentChildren()``: https://ngxtension.netlify.app/utilities/migrations/queries-migration
+* You can find an example for a migration in the pull request `9299 <https://github.com/ls1intum/Artemis/pull/9299>`_.
+* Use ``OnPush`` change detection strategy for components whenever possible: https://blog.angular-university.io/onpush-change-detection-how-it-works
 
 .. WARNING::
     **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**

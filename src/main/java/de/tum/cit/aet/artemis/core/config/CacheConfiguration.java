@@ -241,7 +241,6 @@ public class CacheConfiguration {
         }
         config.getMapConfigs().put("default", initializeDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("files", initializeFilesMapConfig(jHipsterProperties));
-        // TODO Ole: investigate if the following * in artemis.*.domain works for database entity caching or if we need to specify all module domain paths here
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", initializeDomainMapConfig(jHipsterProperties));
 
         // Configure split brain protection if the cluster was split at some point

@@ -39,17 +39,6 @@ public interface QuizSubmissionRepository extends ArtemisJpaRepository<QuizSubmi
     @EntityGraph(type = LOAD, attributePaths = { "submittedAnswers" })
     Optional<QuizSubmission> findWithEagerSubmittedAnswersByParticipationId(long participationId);
 
-    Set<QuizSubmission> findByParticipation_Exercise_Id(long exerciseId);
-
-    @Query("""
-            SELECT submission
-            FROM QuizSubmission submission
-                JOIN submission.participation participation
-                JOIN participation.exercise exercise
-            WHERE exercise.id = :quizExerciseId
-            """)
-    Optional<QuizSubmission> findByQuizExerciseId(@Param("quizExerciseId") long quizExerciseId);
-
     /**
      * Retrieve QuizSubmission for given quiz batch and studentLogin
      *

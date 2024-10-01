@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.assessment.dto.TutorEffort;
+import de.tum.cit.aet.artemis.assessment.dto.TutorEffortDTO;
 import de.tum.cit.aet.artemis.assessment.service.TutorEffortService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -63,7 +63,7 @@ public class TutorEffortResource {
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/tutor-effort")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<TutorEffort>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+    public ResponseEntity<List<TutorEffortDTO>> calculateTutorEfforts(@PathVariable Long courseId, @PathVariable Long exerciseId) {
         log.debug("tutor-effort with argument[s] course = {}, exercise = {}", courseId, exerciseId);
 
         // check courseId and exerciseId exist and are linked to each other
@@ -75,7 +75,7 @@ public class TutorEffortResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, user);
 
-        List<TutorEffort> tutorEffortList = tutorEffortService.buildTutorEffortList(courseId, exerciseId);
+        List<TutorEffortDTO> tutorEffortList = tutorEffortService.buildTutorEffortList(courseId, exerciseId);
         if (tutorEffortList.isEmpty()) {
             return ResponseEntity.noContent().build();
         }
