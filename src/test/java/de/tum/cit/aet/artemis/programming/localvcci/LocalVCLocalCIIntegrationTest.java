@@ -66,6 +66,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
+    private static final String TEST_PREFIX = "localvcciint";
+
     @Autowired
     private ExamUtilService examUtilService;
 
@@ -87,6 +89,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     @Value("${artemis.user-management.internal-admin.password}")
     private String localVCPassword;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @BeforeAll
     void setupAll() {

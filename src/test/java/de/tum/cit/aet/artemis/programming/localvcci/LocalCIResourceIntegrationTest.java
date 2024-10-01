@@ -42,6 +42,8 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "localciresourceint";
+
     protected BuildJobQueueItem job1;
 
     protected BuildJobQueueItem job2;
@@ -74,6 +76,11 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @BeforeEach
     void createJobs() {

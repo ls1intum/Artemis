@@ -56,6 +56,11 @@ class StructuralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
 
     private ProgrammingExercise exercise;
 
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @BeforeEach
     void initTestCase() {
         Course course = courseUtilService.addEmptyCourse();

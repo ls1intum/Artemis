@@ -36,6 +36,8 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 @Profile(PROFILE_LOCALVC)
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "localvcsshint";
+
     private final String hostname = "localhost";
 
     private final int port = 7921;

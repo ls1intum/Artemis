@@ -39,6 +39,8 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  */
 class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "localvcint";
+
     @Autowired
     ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
@@ -63,6 +65,11 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Create tests repository
         testsRepository = localVCLocalCITestService.createAndConfigureLocalRepository(projectKey1, projectKey1.toLowerCase() + "-tests");
+    }
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
     }
 
     @AfterEach
@@ -136,7 +143,7 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     void testFetchPush_wrongCredentials() throws InvalidNameException {
-        var student1 = new LdapUserDto().login(TEST_PREFIX + "student1");
+        var student1 = new LdapUserDto().login(getTestPrefix() + "student1");
         student1.setUid(new LdapName("cn=student1,ou=test,o=lab"));
 
         var fakeUser = new LdapUserDto().login(localVCBaseUsername);
