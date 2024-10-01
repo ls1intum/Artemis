@@ -218,7 +218,7 @@
         </div>
     }
     @if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_LOCALCI) {
-        <jhi-programming-exercise-docker-flags [programmingExercise]="programmingExercise"/>
+        <jhi-programming-exercise-docker-flags [programmingExercise]="programmingExercise" (isValidEmitter)="isValidDockerFlagsChange($event)"/>
         <jhi-programming-exercise-custom-build-plan [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="this.programmingExerciseCreationConfig" />
     } @else if (programmingExerciseCreationConfig.customBuildPlansSupported === PROFILE_AEOLUS) {
         <jhi-programming-exercise-custom-aeolus-build-plan

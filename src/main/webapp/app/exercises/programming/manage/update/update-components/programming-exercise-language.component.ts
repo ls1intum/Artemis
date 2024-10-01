@@ -30,6 +30,8 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     formValid: boolean;
     formValidChanges = new Subject<boolean>();
 
+    dockerFlagsValid: boolean = true;
+
     fieldSubscriptions: (Subscription | undefined)[] = [];
 
     faExclamationTriangle = faExclamationTriangle;
@@ -68,7 +70,7 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
     calculateFormValid() {
         const isPackageNameValid = this.isPackageNameValid();
         const isCustomBuildPlanValid = this.isCustomBuildPlanValid();
-        this.formValid = Boolean((this.selectLanguageField.isDisabled || this.selectLanguageField.valid) && isPackageNameValid && isCustomBuildPlanValid);
+        this.formValid = Boolean((this.selectLanguageField.isDisabled || this.selectLanguageField.valid) && isPackageNameValid && isCustomBuildPlanValid && this.dockerFlagsValid);
         this.formValidChanges.next(this.formValid);
     }
 
@@ -96,5 +98,10 @@ export class ProgrammingExerciseLanguageComponent implements AfterViewChecked, A
         }
 
         return true;
+    }
+
+    isValidDockerFlagsChange(isValid: boolean) {
+        this.dockerFlagsValid = isValid
+        this.calculateFormValid();
     }
 }

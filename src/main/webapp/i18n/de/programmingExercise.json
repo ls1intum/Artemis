@@ -161,7 +161,10 @@
                 "dns-option": "Diese Option ermöglicht es dir, die DNS-Option für den Docker-Container festzulegen.",
                 "env": "Diese Option ermöglicht es dir, die Umgebungsvariablen für den Docker-Container festzulegen. Bitte folge folgendem Format KEY_1=\"value_1\",KEY_2=\"value_2\".",
                 "user": "Diese Option ermöglicht es dir, den Benutzer für den Docker-Container festzulegen.",
-                "default": "Bitte wähle ein Flag aus, um es zu den Docker Run Flags hinzuzufügen."
+                "default": "Bitte wähle ein Flag aus, um es zu den Docker Run Flags hinzuzufügen.",
+                "error": "Ungültige Konfiguration. Stelle sicher, dass keine doppelten Flags vorhanden sind und alle Werte ausgefüllt sind.",
+                "duplicate": "Die Docker-Run-Flags enthalten doppelte Einträge. Bitte entferne diese, bevor du die Konfiguration speicherst.",
+                "empty": "Der Wert der Docker-Run-Flags darf nicht leer sein."
             },
             "enableStaticCodeAnalysis": {
                 "title": "Aktiviere Statische Code-Analyse",

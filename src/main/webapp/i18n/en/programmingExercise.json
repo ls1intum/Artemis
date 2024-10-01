@@ -173,7 +173,10 @@
                 "dns-option": "This option allows you to set the DNS option for the Docker container.",
                 "env": "This option allows you to set the environment variable for the Docker container. Please follow the following format KEY_1=\"value_1\",KEY_2=\"value_2\"",
                 "user": "This option allows you to set the user for the Docker container.",
-                "default": "Please select a flag to add it to the Docker run flags."
+                "default": "Please select a flag to add it to the Docker run flags.",
+                "error": "Invalid configuration. Ensure there are no duplicate flags and all values are filled.",
+                "duplicate": "The Docker run flags contain duplicate entries. Please remove them before saving the configuration.",
+                "empty": "The value of the Docker run flags must not be empty."
             },
             "enableStaticCodeAnalysis": {
                 "title": "Enable Static Code Analysis",

@@ -20,7 +20,7 @@
         <ngx-datatable-column [name]="'Flag'" [minWidth]='200' [maxWidth]='300'>
             <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
                 <div class="d-flex align-items-center gap-2">
-                    <select class="form-select" [(ngModel)]="row[0]">
+                    <select class="form-select" [ngModel]="row[0]" (change)="updateFlagKey($event, rowIndex)">
                         <option value="" disabled selected>
                             <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.selectFlag"></span>
                         </option>
@@ -53,4 +53,10 @@
         <fa-icon [icon]="faPlus"></fa-icon>
         <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.addFlag"></span>
     </button>
+
+    @if (!isValid) {
+        <div class="alert alert-danger" role="alert">
+            <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.error"></span>
+        </div>
+    }
 }

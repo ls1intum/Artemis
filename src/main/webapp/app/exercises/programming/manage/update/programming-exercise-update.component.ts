@@ -870,6 +870,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateExerciseBonusPoints(validationErrorReasons);
         this.validateExerciseSCAMaxPenalty(validationErrorReasons);
         this.validateExerciseSubmissionLimit(validationErrorReasons);
+        this.validateCustomDockerFlags(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -1078,6 +1079,27 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                 translateKey: 'artemisApp.programmingExercise.theiaImage.alert',
                 translateValues: {},
             });
+        }
+    }
+
+    private validateCustomDockerFlags(validationErrorReasons: ValidationReason[]): void {
+        if (this.programmingExercise.buildConfig?.dockerFlags) {
+            const dockerFlags = JSON.parse(this.programmingExercise.buildConfig?.dockerFlags || '[]') as [string, string][];
+            const isDuplicate = dockerFlags.some(([key, _], index) => dockerFlags.findIndex(([k]) => k === key) !== index);
+            if (isDuplicate) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.programmingExercise.dockerFlags.duplicate',
+                    translateValues: {},
+                });
+            }
+            const emptyEntry = dockerFlags.some(([key, value]) => key === '' || value === '');
+            if (emptyEntry) {
+                validationErrorReasons.push({
+                    translateKey: 'artemisApp.programmingExercise.dockerFlags.empty',
+                    translateValues: {},
+                });
+            }
+
         }
     }
 
