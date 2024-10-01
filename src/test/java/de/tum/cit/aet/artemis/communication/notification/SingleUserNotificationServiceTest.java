@@ -42,7 +42,6 @@ import static de.tum.cit.aet.artemis.communication.service.notifications.Notific
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
@@ -276,8 +275,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
 
         dataExport = new DataExport();
         dataExport.setUser(user);
-
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     /**
