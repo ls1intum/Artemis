@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.assessment.domain.GradeStep;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
@@ -21,15 +20,16 @@ import de.tum.cit.aet.artemis.assessment.dto.GradeStepsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.exam.ExamUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -281,7 +281,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         Long individualTextExerciseId = textExercise.getId();
         textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
-        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 70, true);
 
         GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
@@ -328,7 +328,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationIndependentTest 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         Long individualTextExerciseId = textExercise.getId();
-        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
         participationUtilService.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 50, true);
 
         var coursePlagiarismCase = new PlagiarismCase();

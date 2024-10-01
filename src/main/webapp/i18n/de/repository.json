@@ -20,6 +20,17 @@
                     "empty": "Keine Änderungen",
                     "fileUnchanged": "Keine Änderungen am Dateiinhalt"
                 }
+            },
+            "vcsAccessLog": {
+                "title": "VCS-Zugriffsprotokoll",
+                "openVcsAccessLog": "Zugriffsprotokoll öffnen",
+                "userId": "Benutzer Id",
+                "author": "Autor",
+                "actionType": "Aktionstyp",
+                "authMechanism": "Zugriffsart",
+                "commitHash": "Commit Hash",
+                "timeStamp": "Zeitstempel",
+                "error": "VCS-Zugriffsprotokoll konnte nicht abgerufen werden"
             }
         }
     }
