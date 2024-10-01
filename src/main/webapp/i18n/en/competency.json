@@ -199,7 +199,7 @@
                 }
             },
             "edit": {
-                "unlinkStandardizedCompetenciesWarning": "Editing will unlink the standardized competencie!"
+                "unlinkStandardizedCompetenciesWarning": "Editing will unlink the standardized competency!"
             },
             "taxonomies": {
                 "REMEMBER": "Remember",
