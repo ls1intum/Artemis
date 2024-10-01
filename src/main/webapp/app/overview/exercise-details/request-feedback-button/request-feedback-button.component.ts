@@ -1,4 +1,4 @@
-import { Component, inject, input, OnInit, output } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -12,13 +12,10 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import dayjs from 'dayjs/esm';
 import { isExamExercise } from 'app/shared/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -58,34 +55,42 @@ export class RequestFeedbackButtonComponent implements OnInit {
         this.updateParticipation();
     }
 
-    private updateParticipation(): Observable<StudentParticipation | undefined> {
+    private updateParticipation() {
         if (this.exercise().id) {
-            return this.exerciseService.getExerciseDetails(this.exercise().id!).pipe(
-                map((exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
+            this.exerciseService.getExerciseDetails(this.exercise().id!).subscribe({
+                next: (exerciseResponse: HttpResponse<ExerciseDetailsType>) => {
                     this.participation = this.participationService.getSpecificStudentParticipation(exerciseResponse.body!.exercise.studentParticipations ?? [], false);
-                    return this.participation;
-                }),
-            );
-        }
-        return of(undefined);
-    }
-
-    requestFeedback() {
-        this.assureConditionsSatisfied().subscribe((conditionsSatisfied: boolean) => {
-            if (!this.assureConditionsSatisfied()) return;
-
-            this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
-                next: (participation: StudentParticipation) => {
-                    if (participation) {
-                        this.generatingFeedback.emit();
-                        this.feedbackSent = true;
-                        this.alertService.success('artemisApp.exercise.feedbackRequestSent');
-                    }
                 },
-                error: (error) => {
+                error: (error: HttpErrorResponse) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             });
+        }
+    }
+
+    requestFeedback() {
+        if (!this.assureConditionsSatisfied()) {
+            return;
+        }
+
+        if (this.exercise().type === ExerciseType.PROGRAMMING) {
+            const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
+            if (!window.confirm(confirmLockRepository)) {
+                return;
+            }
+        }
+
+        this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
+            next: (participation: StudentParticipation) => {
+                if (participation) {
+                    this.generatingFeedback.emit();
+                    this.feedbackSent = true;
+                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                }
+            },
+            error: (error: HttpErrorResponse) => {
+                this.alertService.error(`artemisApp.exercise.${error.error.errorKey}`);
+            },
         });
     }
 
@@ -97,54 +102,13 @@ export class RequestFeedbackButtonComponent implements OnInit {
      * 3. There is no already pending feedback request.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
-    assureConditionsSatisfied(): Observable<boolean> {
-        return this.updateParticipation().pipe(
-            map(() => {
-                const latestResult = this.participation?.results?.find(({ assessmentType }) => assessmentType === AssessmentType.AUTOMATIC);
-
-                if (this.exercise().type === ExerciseType.PROGRAMMING) {
-                    const scoreNotNull = latestResult?.score !== undefined;
-                    const testsNotPassedWarning = this.translateService.instant('artemisApp.exercise.submissionExists');
-                    if (!scoreNotNull) {
-                        window.alert(testsNotPassedWarning);
-                        return false;
-                    }
-                }
-
-                const afterDueDate = !this.exercise().dueDate || dayjs().isSameOrAfter(this.exercise().dueDate);
-                const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
-                if (afterDueDate) {
-                    this.alertService.warning(dueDateWarning);
-                    return false;
-                }
-
-                const requestAlreadySent = (latestResult?.assessmentType === AssessmentType.AUTOMATIC_ATHENA && dayjs().isBefore(latestResult?.completionDate)) ?? false;
-                const requestAlreadySentWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAlreadySent');
-                if (requestAlreadySent) {
-                    this.alertService.warning(requestAlreadySentWarning);
-                    return false;
-                }
-
-                if (this.participation?.results) {
-                    const athenaResults = this.participation.results!.filter((result) => result.assessmentType === 'AUTOMATIC_ATHENA' && result.successful);
-                    const countOfSuccessfulRequests = athenaResults.length;
-
-                    if (countOfSuccessfulRequests >= 20) {
-                        const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
-                        this.alertService.warning(rateLimitExceededWarning);
-                        return false;
-                    }
-                }
-
-                if (this.exercise().type !== ExerciseType.PROGRAMMING && this.hasAthenaResultForLatestSubmission()) {
-                    const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
-                    this.alertService.warning(submitFirstWarning);
-                    return false;
-                }
-
-                return true;
-            }),
-        );
+    assureConditionsSatisfied(): boolean {
+        if (this.exercise().type !== ExerciseType.PROGRAMMING && this.hasAthenaResultForLatestSubmission()) {
+            const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
+            this.alertService.warning(submitFirstWarning);
+            return false;
+        }
+        return true;
     }
 
     hasAthenaResultForLatestSubmission(): boolean {

@@ -18,7 +18,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import dayjs from 'dayjs/esm';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
+import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
@@ -40,6 +40,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     @Input() smallButtons: boolean;
     @Input() examMode: boolean;
     @Input() isGeneratingFeedback: boolean;
+
     @Output() generatingFeedback: EventEmitter<void> = new EventEmitter<void>();
 
     // extension points, see shared/extension-point
@@ -55,6 +56,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     beforeDueDate: boolean;
     editorLabel?: string;
     localVCEnabled = false;
+    athenaEnabled = false;
     routerLink: string;
     repositoryLink: string;
 
@@ -70,6 +72,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly faCodeBranch = faCodeBranch;
     readonly faDesktop = faDesktop;
     readonly faPenSquare = faPenSquare;
+
+    private feedbackSent = false;
 
     constructor(
         private alertService: AlertService,
@@ -106,6 +110,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.localVCEnabled = profileInfo.activeProfiles?.includes(PROFILE_LOCALVC);
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
+
                 // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
                 if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.programmingExercise) {
                     this.theiaEnabled = true;
@@ -131,11 +136,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
         } else if (this.exercise.type === ExerciseType.MODELING) {
             this.editorLabel = 'openModelingEditor';
+        } else if (this.exercise.type === ExerciseType.TEXT) {
+            this.editorLabel = 'openTextEditor';
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 this.athenaEnabled = profileInfo.activeProfiles?.includes(PROFILE_ATHENA);
             });
-        } else if (this.exercise.type === ExerciseType.TEXT) {
-            this.editorLabel = 'openTextEditor';
         } else if (this.exercise.type === ExerciseType.FILE_UPLOAD) {
             this.editorLabel = 'uploadFile';
         }
@@ -250,6 +255,30 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
+    // this method will be removed once text and modeling support new component
+    requestFeedback() {
+        if (!this.assureConditionsSatisfied()) return;
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
+            if (!window.confirm(confirmLockRepository)) {
+                return;
+            }
+        }
+
+        this.courseExerciseService.requestFeedback(this.exercise.id!).subscribe({
+            next: (participation: StudentParticipation) => {
+                if (participation) {
+                    this.generatingFeedback.emit();
+                    this.feedbackSent = true;
+                    this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                }
+            },
+            error: (error) => {
+                this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+            },
+        });
+    }
+
     get isBeforeStartDateAndStudent(): boolean {
         return !this.exercise.isAtLeastTutor && !!this.exercise.startDate && dayjs().isBefore(this.exercise.startDate);
     }
@@ -311,6 +340,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * 3. There is no already pending feedback request.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
+    // this method will be removed once text and modeling support new component
     assureConditionsSatisfied(): boolean {
         this.updateParticipations();
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -358,27 +388,12 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     hasAthenaResultForlatestSubmission(): boolean {
         if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
-            const sortedSubmissions = this.gradedParticipation.submissions.slice().sort((a, b) => {
-                const dateA = this.getDateValue(a.submissionDate) ?? -Infinity;
-                const dateB = this.getDateValue(b.submissionDate) ?? -Infinity;
-                return dateB - dateA;
-            });
-
-            return this.gradedParticipation.results.some((result) => result.submission?.id === sortedSubmissions[0]?.id);
+            // submissions.results is always undefined so this is neccessary
+            return (
+                this.gradedParticipation.submissions.last()?.id ===
+                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id
+            );
         }
         return false;
     }
-
-    private getDateValue = (date: any): number => {
-        if (dayjs.isDayjs(date)) {
-            return date.valueOf();
-        }
-        if (date instanceof Date) {
-            return date.valueOf();
-        }
-        if (typeof date === 'string') {
-            return new Date(date).valueOf();
-        }
-        return -Infinity; // fallback for null, undefined, or invalid dates
-    };
 }

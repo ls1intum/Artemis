@@ -112,7 +112,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId())
                 .findLatestSubmission();
         if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmission");
+            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionÊxists");
         }
         var submission = submissionOptional.get();
 
@@ -222,15 +222,10 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         List<Result> athenaResults = participation.getResults().stream().filter(result -> result.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA).toList();
 
-        long countOfAthenaResultsInProcessOrSuccessful = athenaResults.stream().filter(result -> result.isSuccessful() == null || result.isSuccessful() == Boolean.TRUE).count();
-
         long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
 
-        if (countOfAthenaResultsInProcessOrSuccessful >= 20) {
-            throw new BadRequestAlertException("Cannot send additional AI feedback requests now. Try again later!", "participation", "preconditions not met");
-        }
         if (countOfSuccessfulRequests >= 20) {
-            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "preconditions not met");
+            throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "maxAthenaResultsReached", true);
         }
     }
 }

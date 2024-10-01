@@ -1,37 +1,39 @@
-@if (athenaEnabled && !isExamExercise) {
-    @if (exercise().type === ExerciseType.TEXT) {
-        <button
-            class="btn btn-primary"
-            (click)="requestFeedback()"
-            [class.btn-sm]="smallButtons()"
-            [disabled]="!participation?.submissions?.last()?.submitted || isGeneratingFeedback()"
-            [id]="'request-feedback-' + exercise().id"
-            [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
-        >
-            <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
-        </button>
+@if (!isExamExercise) {
+    @if (athenaEnabled) {
+        @if (exercise().type === ExerciseType.TEXT) {
+            <button
+                class="btn btn-primary"
+                (click)="requestFeedback()"
+                [class.btn-sm]="smallButtons()"
+                [disabled]="!participation?.submissions?.last()?.submitted || isGeneratingFeedback()"
+                [id]="'request-feedback-' + exercise().id"
+                [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+            >
+                <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+            </button>
+        } @else {
+            <a
+                class="btn btn-primary"
+                (click)="requestFeedback()"
+                [class.btn-sm]="smallButtons()"
+                [id]="'request-feedback-' + exercise().id"
+                [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+            >
+                <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+            </a>
+        }
     } @else {
         <a
             class="btn btn-primary"
             (click)="requestFeedback()"
             [class.btn-sm]="smallButtons()"
             [id]="'request-feedback-' + exercise().id"
-            [ngbTooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip' | artemisTranslate"
+            [ngbTooltip]="'artemisApp.exerciseActions.requestManualFeedbackTooltip' | artemisTranslate"
         >
             <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestAutomaticFeedback"></span>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestManualFeedback"></span>
         </a>
     }
-} @else {
-    <a
-        class="btn btn-primary"
-        (click)="requestFeedback()"
-        [class.btn-sm]="smallButtons()"
-        [id]="'request-feedback-' + exercise().id"
-        [ngbTooltip]="'artemisApp.exerciseActions.requestManualFeedbackTooltip' | artemisTranslate"
-    >
-        <fa-icon [icon]="faPenSquare" [fixedWidth]="true" />
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.requestManualFeedback"></span>
-    </a>
 }

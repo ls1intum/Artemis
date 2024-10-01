@@ -135,7 +135,7 @@
                                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
                             </a>
                         }
-                        @if (exercise.allowFeedbackRequests && gradedParticipation) {
+                        @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
                             <jhi-request-feedback-button [exercise]="exercise" [smallButtons]="smallButtons"></jhi-request-feedback-button>
                         }
                     </ng-container>
@@ -229,13 +229,6 @@
                         [hideLabelMobile]="false"
                         [routerLink]="['/courses', courseId, 'exercises', exercise.type + '-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                     ></button>
-                    @if (exercise.allowFeedbackRequests && gradedParticipation && exercise.type === ExerciseType.PROGRAMMING) {
-                        <jhi-request-feedback-button
-                            [isGeneratingFeedback]="isGeneratingFeedback"
-                            (generatingFeedback)="generatingFeedback.emit()"
-                            [exercise]="exercise"
-                            [smallButtons]="smallButtons"
-                        ></jhi-request-feedback-button>
                     @if (exercise.allowFeedbackRequests && athenaEnabled && (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.MODELING)) {
                         <button
                             class="btn btn-primary"

@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
-import org.apache.velocity.exception.ResourceNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -382,7 +381,7 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
         }
         if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate())) {
-            throw new BadRequestAlertException("The due date is over", "participation", "preconditions not met");
+            throw new BadRequestAlertException("The due date is over", "participation", "feedbackRequestAfterDueDate", true);
         }
         if (exercise instanceof ProgrammingExercise) {
             ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
@@ -393,7 +392,7 @@ public class ParticipationResource {
         StudentParticipation participation = (exercise instanceof ProgrammingExercise)
                 ? programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, principal.getName())
                 : studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), principal.getName())
-                        .orElseThrow(() -> new ResourceNotFoundException("Participation not found"));
+                        .orElseThrow(() -> new BadRequestAlertException("Participation not found", "participation", "noSubmissionExists", true));
 
         checkAccessPermissionOwner(participation, user);
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
@@ -406,7 +405,7 @@ public class ParticipationResource {
         }
         else if (exercise instanceof ProgrammingExercise) {
             if (participation.findLatestLegalResult() == null) {
-                throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
+                throw new BadRequestAlertException("You need to submit at least once and have the build results", "participation", "noSubmissionExists", true);
             }
         }
 
@@ -414,7 +413,7 @@ public class ParticipationResource {
         var currentDate = now();
         var latestResult = participation.findLatestResult();
         if (latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate().isAfter(now())) {
-            throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
+            throw new BadRequestAlertException("Request has already been sent", "participation", "feedbackRequestAlreadySent", true);
         }
 
         // Process feedback request
