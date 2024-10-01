@@ -21,8 +21,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import com.github.dockerjava.api.command.CreateContainerCmd;
-import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -35,6 +33,7 @@ import org.springframework.stereotype.Service;
 
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmd;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
@@ -45,6 +44,7 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
@@ -87,9 +87,9 @@ public class BuildJobContainerService {
     /**
      * Configure a container with the Docker image, the container name, optional proxy config variables, and set the command that runs when the container starts.
      *
-     * @param containerName  the name of the container to be created
-     * @param image          the Docker image to use for the container
-     * @param buildScript    the build script to be executed in the container
+     * @param containerName   the name of the container to be created
+     * @param image           the Docker image to use for the container
+     * @param buildScript     the build script to be executed in the container
      * @param dockerRunConfig the configuration for the container
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
@@ -109,8 +109,7 @@ public class BuildJobContainerService {
                 // by the creation of a file "stop_container.txt" in the container's root directory.
                 // .withCmd("sh", "-c", "while [ ! -f " + LOCALCI_WORKING_DIRECTORY + "/stop_container.txt ]; do sleep 0.5; done");
                 .withCmd("tail", "-f", "/dev/null"); // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
-                // "docker exec -it <container-id> /bin/bash".
-
+        // "docker exec -it <container-id> /bin/bash".
 
         if (dockerRunConfig != null && dockerRunConfig.getEnv() != null && !dockerRunConfig.getEnv().isEmpty()) {
             envVars.addAll(dockerRunConfig.getEnv());
@@ -134,8 +133,8 @@ public class BuildJobContainerService {
     }
 
     private HostConfig cloneHostConfigWithDisabledNetwork(HostConfig originalConfig, DockerRunConfig dockerRunConfig) {
-        HostConfig hostConfig = HostConfig.newHostConfig().withCpuQuota(originalConfig.getCpuQuota()).withCpuPeriod(originalConfig.getCpuPeriod()).withMemory(originalConfig.getMemory())
-                .withMemorySwap(originalConfig.getMemorySwap()).withPidsLimit(originalConfig.getPidsLimit()).withAutoRemove(true);
+        HostConfig hostConfig = HostConfig.newHostConfig().withCpuQuota(originalConfig.getCpuQuota()).withCpuPeriod(originalConfig.getCpuPeriod())
+                .withMemory(originalConfig.getMemory()).withMemorySwap(originalConfig.getMemorySwap()).withPidsLimit(originalConfig.getPidsLimit()).withAutoRemove(true);
 
         if (dockerRunConfig.isNetworkDisabled()) {
             // we only allow disabling the network, as we do not want to expose other options to the user

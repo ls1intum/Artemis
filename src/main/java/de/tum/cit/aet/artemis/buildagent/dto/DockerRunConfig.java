@@ -6,14 +6,23 @@ import java.util.List;
 import java.util.Set;
 
 public class DockerRunConfig implements Serializable {
+
     private boolean isNetworkDisabled;
+
     private String dns;
+
     private String dnsSearch;
+
     private List<String> dnsOption;
+
     private List<String> env;
+
     private String hostname;
+
     private String ip;
+
     private String ipv6;
+
     private String user;
 
     public boolean isNetworkDisabled() {
@@ -88,17 +97,9 @@ public class DockerRunConfig implements Serializable {
         this.user = user;
     }
 
-
     public enum AllowedDockerFlags {
-        NETWORK("network"),
-        DNS("dns"),
-        DNS_SEARCH("dns-search"),
-        DNS_OPTION("dns-option"),
-        ENV("env"),
-        HOSTNAME("hostname"),
-        IP("ip"),
-        IPV6("ipv6"),
-        USER("user");
+
+        NETWORK("network"), DNS("dns"), DNS_SEARCH("dns-search"), DNS_OPTION("dns-option"), ENV("env"), HOSTNAME("hostname"), IP("ip"), IPV6("ipv6"), USER("user");
 
         private final String flag;
 
