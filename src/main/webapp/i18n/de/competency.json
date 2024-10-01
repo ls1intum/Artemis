@@ -211,7 +211,7 @@
                 }
             },
             "edit": {
-                "unlinkStandardizedCompetenciesWarning": "Das Bearbeiten wird dazu führen, dass die Verbindung zu standardisierten Kompetenzen gelöst wird!"
+                "unlinkStandardizedCompetenciesWarning": "Das Bearbeiten führt zum Lösen der Verbindung zur standardisierten Kompetenz!"
             }
         },
         "prerequisite": {
