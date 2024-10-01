@@ -209,6 +209,9 @@
                     "noOfParticipants": "Anzahl der Teilnehmenden",
                     "participationRate": "Teilnahmerate"
                 }
+            },
+            "edit": {
+                "unlinkStandardizedCompetenciesWarning": "Das Editieren wird dazu führen, dass die Verbindung zu standardisierten Kompetenzen gelöst wird!"
             }
         },
         "prerequisite": {

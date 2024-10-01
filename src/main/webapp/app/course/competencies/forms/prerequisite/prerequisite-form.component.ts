@@ -39,7 +39,7 @@ export class PrerequisiteFormComponent extends CourseCompetencyFormComponent imp
 
     ngOnChanges(): void {
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
+        if (this.isEditMode() && this.formData) {
             this.setFormValues(this.formData);
         }
     }

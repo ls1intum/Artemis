@@ -198,6 +198,9 @@
                     "participationRate": "Participation Rate"
                 }
             },
+            "edit": {
+                "unlinkStandardizedCompetenciesWarning": "Editing will unlink the standardized competencie!"
+            },
             "taxonomies": {
                 "REMEMBER": "Remember",
                 "UNDERSTAND": "Understand",

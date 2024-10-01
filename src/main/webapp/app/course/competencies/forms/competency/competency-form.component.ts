@@ -39,7 +39,7 @@ export class CompetencyFormComponent extends CourseCompetencyFormComponent imple
 
     ngOnChanges(): void {
         this.initializeForm();
-        if (this.isEditMode && this.formData) {
+        if (this.isEditMode() && this.formData) {
             this.setFormValues(this.formData);
         }
     }
