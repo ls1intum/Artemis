@@ -51,7 +51,6 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Frame;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -132,22 +131,10 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         localVCLocalCITestService.mockInspectImage(dockerClient);
     }
 
-    @BeforeEach
-    void setupScheduler() {
-        participantScoreScheduleService.activate();
-        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
-    }
-
     @AfterEach
     void removeRepositories() throws IOException {
         studentAssignmentRepository.resetLocalRepo();
         testsRepository.resetLocalRepo();
-    }
-
-    @AfterEach
-    void cleanupScheduler() {
-        participantScoreScheduleService.shutdown();
-        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     @Test

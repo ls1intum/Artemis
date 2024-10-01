@@ -42,7 +42,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -148,24 +147,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockInspectImage(dockerClient);
     }
 
-    @BeforeEach
-    void setupScheduler() {
-        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-        participantScoreScheduleService.activate();
-    }
-
     @AfterEach
     void removeRepositories() throws IOException {
         templateRepository.resetLocalRepo();
         testsRepository.resetLocalRepo();
         solutionRepository.resetLocalRepo();
         assignmentRepository.resetLocalRepo();
-    }
-
-    @AfterEach
-    void cleanupScheduler() {
-        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
-        participantScoreScheduleService.shutdown();
     }
 
     // ---- Tests for the base repositories ----

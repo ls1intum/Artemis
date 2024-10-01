@@ -207,6 +207,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         // Prevents the ParticipantScoreScheduleService from scheduling tasks related to prior results
         ReflectionTestUtils.setField(participantScoreScheduleService, "lastScheduledRun", Optional.of(Instant.now()));
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
+        participantScoreScheduleService.activate();
     }
 
     @AfterEach
