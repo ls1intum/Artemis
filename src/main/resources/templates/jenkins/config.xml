@@ -12,36 +12,6 @@
 <description></description>
 <keepDependencies>false</keepDependencies>
 <properties>
-    <com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty plugin="gitlab-plugin">
-        <gitLabConnection>GitLab</gitLabConnection>
-    </com.dabsquared.gitlabjenkins.connection.GitLabConnectionProperty>
-    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
-        <triggers>
-            <com.dabsquared.gitlabjenkins.GitLabPushTrigger plugin="gitlab-plugin">
-                <spec></spec>
-                <triggerOnPush>true</triggerOnPush>
-                <triggerOnMergeRequest>false</triggerOnMergeRequest>
-                <triggerOnPipelineEvent>false</triggerOnPipelineEvent>
-                <triggerOnAcceptedMergeRequest>false</triggerOnAcceptedMergeRequest>
-                <triggerOnClosedMergeRequest>false</triggerOnClosedMergeRequest>
-                <triggerOnApprovedMergeRequest>false</triggerOnApprovedMergeRequest>
-                <triggerOpenMergeRequestOnPush>never</triggerOpenMergeRequestOnPush>
-                <triggerOnNoteRequest>false</triggerOnNoteRequest>
-                <noteRegex>Jenkins please retry a build</noteRegex>
-                <ciSkip>true</ciSkip>
-                <skipWorkInProgressMergeRequest>true</skipWorkInProgressMergeRequest>
-                <setBuildDescription>true</setBuildDescription>
-                <branchFilterType>All</branchFilterType>
-                <includeBranchesSpec></includeBranchesSpec>
-                <excludeBranchesSpec></excludeBranchesSpec>
-                <sourceBranchRegex></sourceBranchRegex>
-                <targetBranchRegex></targetBranchRegex>
-                <secretToken>{#secretPushToken}</secretToken>
-                <pendingBuildName></pendingBuildName>
-                <cancelPendingBuildsOnUpdate>false</cancelPendingBuildsOnUpdate>
-            </com.dabsquared.gitlabjenkins.GitLabPushTrigger>
-        </triggers>
-    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
 </properties>
 <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.83">
     <script>#pipelineScript</script>

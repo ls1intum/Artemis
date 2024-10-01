@@ -148,8 +148,6 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
             """)
     Optional<ProgrammingExerciseStudentParticipation> findTeamParticipationByExerciseIdAndStudentId(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
-    List<ProgrammingExerciseStudentParticipation> findByExerciseId(long exerciseId);
-
     @EntityGraph(type = LOAD, attributePaths = { "submissions", "team.students" })
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsById(long participationId);
 

@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.exam;
 
-import static de.tum.cit.aet.artemis.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredFileUploadExercise;
-import static de.tum.cit.aet.artemis.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredModelingExercise;
-import static de.tum.cit.aet.artemis.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredProgrammingExercise;
-import static de.tum.cit.aet.artemis.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredTextExercise;
-import static de.tum.cit.aet.artemis.util.TestConstants.COMMIT_HASH_OBJECT_ID;
-import static de.tum.cit.aet.artemis.util.TestConstants.COMMIT_HASH_STRING;
+import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredFileUploadExercise;
+import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredModelingExercise;
+import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredProgrammingExercise;
+import static de.tum.cit.aet.artemis.core.util.SensitiveInformationUtil.assertSensitiveInformationWasFilteredTextExercise;
+import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_OBJECT_ID;
+import static de.tum.cit.aet.artemis.core.util.TestConstants.COMMIT_HASH_STRING;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.fail;
@@ -58,8 +58,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.cit.aet.artemis.assessment.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradeType;
@@ -67,12 +65,12 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.BonusRepository;
 import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
-import de.tum.cit.aet.artemis.bonus.BonusFactory;
+import de.tum.cit.aet.artemis.assessment.util.BonusFactory;
+import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
-import de.tum.cit.aet.artemis.core.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.util.RoundingUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -87,26 +85,27 @@ import de.tum.cit.aet.artemis.exam.dto.examevent.WorkingTimeUpdateEventDTO;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamSessionRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
 import de.tum.cit.aet.artemis.exam.service.ExamQuizService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionVersionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.participation.ParticipationFactory;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismVerdict;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
@@ -115,6 +114,10 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
+import de.tum.cit.aet.artemis.programming.util.LocalRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -128,11 +131,10 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedAnswer;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSubmittedText;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.repository.QuizSubmissionRepository;
+import de.tum.cit.aet.artemis.quiz.test_repository.QuizSubmissionTestRepository;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.util.ExamPrepareExercisesTestUtil;
-import de.tum.cit.aet.artemis.util.LocalRepository;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
@@ -150,10 +152,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     private ExamUserRepository examUserRepository;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
-    private StudentExamRepository studentExamRepository;
+    private StudentExamTestRepository studentExamRepository;
 
     @Autowired
     private ExamSessionRepository examSessionRepository;
@@ -162,7 +164,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     private ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private StudentParticipationTestRepository studentParticipationRepository;
 
     @Autowired
     private SubmissionVersionRepository submissionVersionRepository;
@@ -171,7 +173,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
     private ExamQuizService examQuizService;
 
     @Autowired
-    private QuizSubmissionRepository quizSubmissionRepository;
+    private QuizSubmissionTestRepository quizSubmissionTestRepository;
 
     @Autowired
     private ParticipationService participationService;
@@ -2484,7 +2486,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
     private void checkQuizSubmission(long quizExerciseId, long quizSubmissionId) {
 
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseId)).hasSize(1);
+        assertThat(quizSubmissionTestRepository.findByParticipation_Exercise_Id(quizExerciseId)).hasSize(1);
 
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExerciseId);
         assertThat(results).hasSize(1);
@@ -2493,7 +2495,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabT
 
         assertThat(result.getScore()).isEqualTo(44.4);
         var resultQuizSubmission = (QuizSubmission) result.getSubmission();
-        resultQuizSubmission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(resultQuizSubmission.getId()).orElseThrow();
+        resultQuizSubmission = quizSubmissionTestRepository.findWithEagerResultAndFeedbackById(resultQuizSubmission.getId()).orElseThrow();
         assertThat(resultQuizSubmission.getScoreInPoints()).isEqualTo(4D);
         var submittedAnswers = resultQuizSubmission.getSubmittedAnswers();
         for (SubmittedAnswer submittedAnswer : submittedAnswers) {

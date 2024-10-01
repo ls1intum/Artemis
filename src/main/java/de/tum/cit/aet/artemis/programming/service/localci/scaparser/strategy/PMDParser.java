@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
@@ -25,22 +26,18 @@ record FileViolation(@JacksonXmlProperty(isAttribute = true, localName = "name")
 }
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-record Violation(@JacksonXmlProperty(isAttribute = true, localName = "rule") String rule,
+record Violation(String rule, String ruleset, String priority, int beginLine, int endLine, int beginColumn, int endColumn, String message) {
 
-        @JacksonXmlProperty(isAttribute = true, localName = "ruleset") String ruleset,
-
-        @JacksonXmlProperty(isAttribute = true, localName = "priority") String priority,
-
-        @JacksonXmlProperty(isAttribute = true, localName = "beginline") int beginLine,
-
-        @JacksonXmlProperty(isAttribute = true, localName = "endline") int endLine,
-
-        @JacksonXmlProperty(isAttribute = true, localName = "begincolumn") int beginColumn,
-
-        @JacksonXmlProperty(isAttribute = true, localName = "endcolumn") int endColumn,
-
-        @JacksonXmlProperty(localName = "") @JacksonXmlText String message // inner text
-) {
+    // NOTE: we need the json creator here, otherwise parsing does not work with the newest version of Jackson (2.18.0)
+    @JsonCreator
+    public static Violation createViolation(@JacksonXmlProperty(isAttribute = true, localName = "rule") String rule,
+            @JacksonXmlProperty(isAttribute = true, localName = "ruleset") String ruleset, @JacksonXmlProperty(isAttribute = true, localName = "priority") String priority,
+            @JacksonXmlProperty(isAttribute = true, localName = "beginline") int beginLine, @JacksonXmlProperty(isAttribute = true, localName = "endline") int endLine,
+            @JacksonXmlProperty(isAttribute = true, localName = "begincolumn") int beginColumn, @JacksonXmlProperty(isAttribute = true, localName = "endcolumn") int endColumn,
+            @JacksonXmlProperty(localName = "") @JacksonXmlText String message  // inner text
+    ) {
+        return new Violation(rule, ruleset, priority, beginLine, endLine, beginColumn, endColumn, message);
+    }
 }
 
 class PMDParser implements ParserStrategy {
@@ -54,7 +51,7 @@ class PMDParser implements ParserStrategy {
             return createReportFromPMDReport(pmdReport);
         }
         catch (IOException e) {
-            throw new RuntimeException("Failed to parse XML", e);
+            throw new RuntimeException("Failed to parse XML: " + e.getMessage(), e);
         }
     }
 
