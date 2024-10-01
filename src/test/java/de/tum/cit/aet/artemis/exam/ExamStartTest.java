@@ -57,7 +57,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
-import de.tum.cit.aet.artemis.user.UserUtilService;
 
 // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
 class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {

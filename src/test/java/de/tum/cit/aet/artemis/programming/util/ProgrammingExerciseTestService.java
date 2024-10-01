@@ -79,10 +79,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.exception.GitException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
-import de.tum.cit.aet.artemis.core.repository.ParticipationTestRepository;
-import de.tum.cit.aet.artemis.core.repository.ProgrammingExerciseStudentParticipationTestRepository;
-import de.tum.cit.aet.artemis.core.repository.ProgrammingExerciseTestRepository;
-import de.tum.cit.aet.artemis.core.repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.export.CourseExamExportService;
@@ -156,14 +152,6 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTes
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.GitUtilService.MockFileRepositoryUri;
-import de.tum.cit.aet.artemis.user.UserFactory;
-import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.util.GitUtilService.MockFileRepositoryUri;
-import de.tum.cit.aet.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.cit.aet.artemis.util.LocalRepository;
-import de.tum.cit.aet.artemis.util.RequestUtilService;
-import de.tum.cit.aet.artemis.util.TestConstants;
-import de.tum.cit.aet.artemis.util.ZipFileTestUtilService;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for scenarios:

@@ -88,7 +88,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlab
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
-import de.tum.cit.aet.artemis.util.LocalRepository;
 
 class ExamParticipationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
