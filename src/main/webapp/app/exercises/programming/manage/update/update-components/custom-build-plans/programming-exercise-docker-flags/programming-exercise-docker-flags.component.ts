@@ -5,6 +5,7 @@ import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 
 const ALLOWED_DOCKER_FLAG_OPTIONS = [
     'network',
@@ -29,6 +30,9 @@ export class ProgrammingExerciseDockerFlagsComponent implements OnInit {
     displayEditDockerFlags: boolean = false;
     dockerFlags: [string, string][] = [];
     allowedDockerFlagOptions: string[] = ALLOWED_DOCKER_FLAG_OPTIONS;
+
+    readonly faPlus = faPlus;
+    readonly faTrash = faTrash;
 
     ngOnInit() {
         let existingFlags = JSON.parse(this.programmingExercise().buildConfig?.dockerFlags || '[]') as [string, string][];

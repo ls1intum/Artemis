@@ -40,15 +40,17 @@
                 />
             </ng-template>
         </ngx-datatable-column>
-        <ngx-datatable-column [maxWidth]='100'>
+        <ngx-datatable-column [maxWidth]='150'>
             <ng-template ngx-datatable-cell-template let-row="row" let-rowIndex="rowIndex">
                 <button class="btn btn-sm btn-danger" (click)="removeDockerFlag(rowIndex)">
+                    <fa-icon [icon]="faTrash"></fa-icon>
                     <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.removeFlag"></span>
                 </button>
             </ng-template>
         </ngx-datatable-column>
     </ngx-datatable>
-    <button class="btn btn-sm btn-primary" (click)="addDockerFlag()">
+    <button class="btn btn-sm btn-primary mb-2" (click)="addDockerFlag()">
+        <fa-icon [icon]="faPlus"></fa-icon>
         <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.addFlag"></span>
     </button>
 }
