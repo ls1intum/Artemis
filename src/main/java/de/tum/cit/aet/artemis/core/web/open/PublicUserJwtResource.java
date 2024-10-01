@@ -69,7 +69,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<Void> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
+    public ResponseEntity<String> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
 
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();
@@ -86,7 +86,7 @@ public class PublicUserJwtResource {
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
-            return ResponseEntity.ok().build();
+            return ResponseEntity.ok(responseCookie.getValue());
         }
         catch (BadCredentialsException ex) {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());

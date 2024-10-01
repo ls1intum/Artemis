@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
-import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -52,7 +52,6 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
-import org.springframework.web.util.WebUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
@@ -203,8 +202,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     @NotNull Map<String, Object> attributes) {
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                    Cookie jwtCookie = WebUtils.getCookie(servletRequest.getServletRequest(), JWTFilter.JWT_COOKIE_NAME);
-                    return JWTFilter.isJwtCookieValid(tokenProvider, jwtCookie);
+                    return JWTFilter.extractValidJwt((HttpServletRequest) servletRequest, tokenProvider) != null;
                 }
                 return false;
             }
