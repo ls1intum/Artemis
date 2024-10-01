@@ -66,7 +66,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoDiffEditorContainerElement);
         this.setupDiffListener();
         this.setupContentHeightListeners();
-        this.monacoEditorService.foo();
 
         effect(() => {
             this._editor.updateOptions({
@@ -153,7 +152,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
      * @param artemisTheme The active Artemis theme.
      */
     changeTheme(artemisTheme: Theme): void {
-        monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
+        this.monacoEditorService.applyTheme(artemisTheme);
     }
 
     /**

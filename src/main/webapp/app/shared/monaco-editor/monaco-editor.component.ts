@@ -97,7 +97,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
-        this.monacoEditorService.foo();
 
         effect(() => {
             // TODO: The CSS class below allows the editor to shrink in the CodeEditorContainerComponent. We should eventually remove this class and handle the editor size differently in the code editor grid.
@@ -298,7 +297,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     }
 
     changeTheme(artemisTheme: Theme): void {
-        monaco.editor.setTheme(artemisTheme === Theme.DARK ? 'vs-dark' : 'vs-light');
+        this.monacoEditorService.applyTheme(artemisTheme);
     }
 
     layout(): void {
