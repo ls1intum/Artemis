@@ -40,13 +40,9 @@ export class UserSettingsContainerComponent implements OnInit {
             .pipe(
                 tap((user: User) => {
                     this.currentUser = user;
-                    this.authorizeTutor();
+                    this.isAtLeastTutor = this.accountService.isAtLeastTutor();
                 }),
             )
             .subscribe();
-    }
-
-    authorizeTutor() {
-        this.isAtLeastTutor = !!this.currentUser?.authorities?.includes('ROLE_USER') && this.currentUser?.authorities?.length > 1;
     }
 }
