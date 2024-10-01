@@ -1,4 +1,4 @@
-.. _integrated-code-lifecycle:
+.. _integrated code lifecycle:
 
 Integrated Code Lifecycle
 =========================

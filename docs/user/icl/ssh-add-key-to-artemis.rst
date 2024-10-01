@@ -8,8 +8,8 @@ Using SSH with Artemis
     :depth: 1
 
 You can use SSH keys to establish a secure connection between your computer and Artemis when you are performing Git operations (pull, clone, push) from your local machine.
-Personal keys are attached to your Artemis account – they are bound by that account's permissions and use the account's identity for any operations.
-To use your generated SSH keys with Artemis, you need to add it in the account Settings.
+Personal keys are linked to your Artemis account, inheriting its permissions and operating under its unique identity.
+To use your generated SSH keys with Artemis, you need to add it in the account settings.
 
 
 Add an SSH key to your Artemis account
@@ -26,12 +26,14 @@ On Windows in your command prompt, change directory to your .ssh directory, and 
 
 On macOS or Linux simply run the following in a terminal:
 
+.. _xclip: https://wiki.ubuntuusers.de/xclip/
+
 .. code-block:: bash
 
     pbcopy < ~/.ssh/id_ed25519.pub
 
 If pbcopy isn't working, locate the hidden .ssh folder, open the file in a text editor, and copy it to your clipboard.
-Note that on Linux, you may need to download and install xclip, then use that, as shown in this code snippet:
+Note that on Linux, you may need to download and install `xclip`_, then use that, as shown in this code snippet:
 
 .. code-block:: bash
 

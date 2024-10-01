@@ -3,8 +3,8 @@ These changes are stored in a repository. A repository is a collection of files 
 How to navigate through the repository and view the code is explained in the following sections. This guide is divided into two parts: one for students and one for instructors.
 It is demonstrated using course programming exercises, but the same principles apply to exams as well.
 
-Access Repositories as Student
-""""""""""""""""""""""""""""""
+Access Repositories as a Student
+""""""""""""""""""""""""""""""""
 
 As a student, you can use the repository to view your course submissions.
 To access your submissions, you need to navigate to the exercise, press the '*Code*' button, and click on |open-repository-button|.
@@ -50,8 +50,8 @@ You can also see the commit message, the author of the commit, the date of the c
 
    Commit Diff View
 
-Access Repositories as Instructor
-"""""""""""""""""""""""""""""""""
+Access Repositories as an Instructor
+""""""""""""""""""""""""""""""""""""
 
 As an instructor, you can use the repository to view the submissions of your students. For this purpose, you need to navigate to the exercise participations page.
 Here you can see all the students’ participations for the exercise and navigate to the repository of a student by pressing the '*Code*' button and clicking on |open-repository-button|.

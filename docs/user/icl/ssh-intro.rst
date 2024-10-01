@@ -36,7 +36,7 @@ SSH works by using two components:
 
 When you want to connect, your SSH client sends a request to the server.
 If the connection is successful, you can log in to the server and start working as if you were sitting in front of it.
-The connection uses SSH keys for authentication.
+The connection uses SSH keys for authentication. Although it is also possible to use username and password to connect over SSH, this is discouraged.
 
 What are SSH Keys?
 """"""""""""""""""
