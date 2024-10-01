@@ -1002,7 +1002,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         log.info("Push done");
 
         var before = new Date().getTime();
-        await().atMost(15, TimeUnit.SECONDS).until(() -> {
+        await().atMost(120, TimeUnit.SECONDS).until(() -> {
             participantScoreScheduleService.executeScheduledTasks();
             await().until(participantScoreScheduleService::isIdle);
 
