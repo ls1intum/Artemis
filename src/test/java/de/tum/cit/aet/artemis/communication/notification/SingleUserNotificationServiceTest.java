@@ -286,8 +286,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
      * @param expectedNotificationTitle is the title (NotificationTitleTypeConstants) of the expected notification
      */
     private void verifyRepositoryCallWithCorrectNotification(String expectedNotificationTitle) {
-        Notification capturedNotification = notificationRepository.findAll().getFirst();
-        assertThat(capturedNotification.getTitle()).as("Title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
+        List<Notification> capturedNotifications = notificationRepository.findAll();
+        assertThat(capturedNotifications).isNotEmpty();
+        List<Notification> relevantNotifications = capturedNotifications.stream().filter(e -> e.getTitle().equals(expectedNotificationTitle)).toList();
+        assertThat(relevantNotifications).as("Title of the captured notification should be equal to the expected one").hasSize(1);
     }
 
     /// General notify Tests
@@ -546,6 +548,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationIndepen
         notificationSettingRepository.deleteAll();
         User teachingAssistant = tutorialGroup.getTeachingAssistant();
         notificationSettingRepository.save(new NotificationSetting(teachingAssistant, true, true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
+        singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_ASSIGNED_TITLE);
         verifyEmail();
         verifyPush(1, TUTORIAL_GROUP_ASSIGNED_TEXT, teachingAssistant);
