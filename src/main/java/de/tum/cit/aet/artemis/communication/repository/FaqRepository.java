@@ -32,11 +32,6 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
 
     @Transactional
     @Modifying
-    @Query("""
-            DELETE
-            FROM Faq faq
-            WHERE faq.course.id = :courseId
-            """)
     void deleteAllByCourseId(@Param("courseId") Long courseId);
 
 }
