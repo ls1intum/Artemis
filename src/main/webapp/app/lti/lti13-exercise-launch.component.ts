@@ -35,13 +35,12 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
      */
     ngOnInit(): void {
         this.sendRequest();
+        this.ltiService.setLti(true);
     }
 
     sendRequest(): void {
         const state = this.route.snapshot.queryParamMap.get('state');
         const idToken = this.route.snapshot.queryParamMap.get('id_token');
-
-        this.ltiService.setLti(true);
 
         if (!state || !idToken) {
             console.error('Required parameter for LTI launch missing');
@@ -49,7 +48,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
             return;
         }
 
-        const requestBody = new HttpParams().set('state', state).set('id_token', idToken).set('lti', true);
+        const requestBody = new HttpParams().set('state', state).set('id_token', idToken);
 
         this.http
             .post<LtiLaunchResponse>('api/public/lti13/auth-login', requestBody.toString(), {
