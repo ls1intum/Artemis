@@ -33,7 +33,7 @@
                                 [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
                                 [icon]="faPenSquare"
                                 (onClick)="requestFeedback()"
-                                [disabled]="!submission.submitted || isGeneratingFeedback || hasAthenaResultForLatestSubmission || (answer?.length ?? 0) < 1"
+                                [disabled]="!submission.submitted || isGeneratingFeedback || hasAthenaResultForLatestSubmission || (answer?.trim().length ?? 0) < 1"
                                 [btnType]="ButtonType.PRIMARY"
                                 [isLoading]="isGeneratingFeedback"
                                 [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip'"
