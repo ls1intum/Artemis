@@ -73,13 +73,6 @@ export class RequestFeedbackButtonComponent implements OnInit {
             return;
         }
 
-        if (this.exercise().type === ExerciseType.PROGRAMMING) {
-            const confirmLockRepository = this.translateService.instant('artemisApp.exercise.lockRepositoryWarning');
-            if (!window.confirm(confirmLockRepository)) {
-                return;
-            }
-        }
-
         this.courseExerciseService.requestFeedback(this.exercise().id!).subscribe({
             next: (participation: StudentParticipation) => {
                 if (participation) {

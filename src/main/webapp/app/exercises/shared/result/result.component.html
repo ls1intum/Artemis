@@ -12,6 +12,9 @@
         }
         @case (ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
             @if (result) {
+                @if (showIcon) {
+                    <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" size="lg" />
+                }
                 <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
                     <span [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}
@@ -27,6 +30,9 @@
         }
         @case (ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT) {
             @if (result) {
+                @if (showIcon) {
+                    <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" size="lg" />
+                }
                 <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
                     <span [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}

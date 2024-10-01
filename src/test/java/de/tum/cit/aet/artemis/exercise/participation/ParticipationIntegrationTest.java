@@ -537,9 +537,11 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 HttpStatus.BAD_REQUEST);
     }
 
+    // todo due date, already sent, all server side cases
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void requestFeedbackSuccess_withAthenaSuccess() throws Exception {
+    void requestProgrammingFeedbackSuccess_withAthenaSuccess() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setRestrictedAthenaModulesAccess(true);
@@ -656,7 +658,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void requestFeedbackSuccess_withAthenaFailure() throws Exception {
+    void requestProgrammingFeedbackSuccess_withAthenaFailure() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setRestrictedAthenaModulesAccess(true);
