@@ -17,9 +17,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 /**
  * Spring Data JPA repository for the Exercise entity for Tests.
  */
-@Profile(PROFILE_CORE)
 @Repository
-public interface ExerciseTestRepository extends ArtemisJpaRepository<Exercise, Long> {
+public interface ExerciseTestRepository extends ExerciseRepository {
 
     @EntityGraph(attributePaths = { "studentParticipations", "studentParticipations.student", "studentParticipations.submissions" })
     @Query("""
