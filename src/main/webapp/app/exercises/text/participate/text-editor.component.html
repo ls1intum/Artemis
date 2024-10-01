@@ -26,11 +26,12 @@
                     } @else {
                         @if (textExercise.allowFeedbackRequests && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
                             <jhi-button
+                                class="mb-2 ml-2"
                                 id="request-feedback"
                                 [title]="'artemisApp.exerciseActions.requestAutomaticFeedback'"
                                 [icon]="faPenSquare"
                                 (onClick)="requestFeedback()"
-                                [disabled]="!submission.submitted || isGeneratingFeedback || hasAthenaResultForLatestSubmission"
+                                [disabled]="!submission.submitted || isGeneratingFeedback || hasAthenaResultForLatestSubmission || answer?.length < 1"
                                 [btnType]="ButtonType.PRIMARY"
                                 [isLoading]="isGeneratingFeedback"
                                 [tooltip]="'artemisApp.exerciseActions.requestAutomaticFeedbackTooltip'"
