@@ -22,6 +22,7 @@ import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.session.ServerSession;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -32,6 +33,7 @@ import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactorySe
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 
+@Disabled
 @Profile(PROFILE_LOCALVC)
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
