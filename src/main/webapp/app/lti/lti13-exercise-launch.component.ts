@@ -35,7 +35,6 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
      */
     ngOnInit(): void {
         this.sendRequest();
-        this.ltiService.setLti(true);
     }
 
     sendRequest(): void {
@@ -145,6 +144,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     replaceWindowLocationWrapper(url: string): void {
+        this.ltiService.setLti(true);
         window.location.replace(url);
     }
 }
