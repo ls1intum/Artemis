@@ -146,12 +146,24 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         localVCLocalCITestService.mockInspectImage(dockerClient);
     }
 
+    @BeforeEach
+    void setupScheduler() {
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
+        participantScoreScheduleService.activate();
+    }
+
     @AfterEach
     void removeRepositories() throws IOException {
         templateRepository.resetLocalRepo();
         testsRepository.resetLocalRepo();
         solutionRepository.resetLocalRepo();
         assignmentRepository.resetLocalRepo();
+    }
+
+    @AfterEach
+    void cleanupScheduler() {
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+        participantScoreScheduleService.shutdown();
     }
 
     // ---- Tests for the base repositories ----
