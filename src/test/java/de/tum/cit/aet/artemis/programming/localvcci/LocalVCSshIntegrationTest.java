@@ -45,6 +45,11 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     @Autowired
     private SshServer sshServer;
 
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPushCommandWithoutSession() {
