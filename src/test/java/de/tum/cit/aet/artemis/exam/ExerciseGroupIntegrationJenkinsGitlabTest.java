@@ -19,24 +19,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.course.CourseUtilService;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamFactory;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import de.tum.cit.aet.artemis.user.UserUtilService;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 

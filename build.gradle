@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.5.4"
+version = "7.5.6"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -259,7 +259,7 @@ dependencies {
     implementation "org.apache.lucene:lucene-queryparser:${lucene_version}"
     implementation "org.apache.lucene:lucene-core:${lucene_version}"
     implementation "org.apache.lucene:lucene-analyzers-common:${lucene_version}"
-
+    implementation "com.google.protobuf:protobuf-java:4.28.2"
 
     // we have to override those values to use the latest version
     implementation "org.slf4j:jcl-over-slf4j:${slf4j_version}"
@@ -290,7 +290,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    implementation "net.sourceforge.plantuml:plantuml:1.2024.5"
+    implementation "net.sourceforge.plantuml:plantuml:1.2024.7"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -368,7 +368,7 @@ dependencies {
     implementation "javax.cache:cache-api:1.1.1"
     implementation "org.hibernate.orm:hibernate-core:${hibernate_version}"
 
-    implementation "com.zaxxer:HikariCP:5.1.0"
+    implementation "com.zaxxer:HikariCP:6.0.0"
 
     implementation "org.apache.commons:commons-text:1.12.0"
     implementation "org.apache.commons:commons-math3:3.6.1"
@@ -447,7 +447,7 @@ dependencies {
     implementation "org.apache.maven:maven-model:3.9.9"
     // NOTE: 3.0.2 is broken for splitting lecture specific PDFs
     implementation "org.apache.pdfbox:pdfbox:3.0.1"
-    implementation "org.apache.commons:commons-csv:1.11.0"
+    implementation "org.apache.commons:commons-csv:1.12.0"
     implementation "org.commonmark:commonmark:0.23.0"
     implementation "commons-fileupload:commons-fileupload:1.5"
     implementation "net.lingala.zip4j:zip4j:2.11.5"
@@ -457,7 +457,7 @@ dependencies {
     implementation "org.apfloat:apfloat:1.14.0"
 
     // use newest version of guava to avoid security issues through outdated dependencies
-    implementation "com.google.guava:guava:33.3.0-jre"
+    implementation "com.google.guava:guava:33.3.1-jre"
     implementation "com.sun.activation:jakarta.activation:2.0.1"
 
     // use newest version of gson to avoid security issues through outdated dependencies
@@ -531,7 +531,7 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.176"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:8.10.1"
+    testImplementation "org.gradle:gradle-tooling-api:8.10.2"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.0"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
@@ -556,7 +556,7 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:16.4.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:17.0.0"
     }
 }
 
@@ -613,7 +613,7 @@ tasks.withType(Test).configureEach {
 }
 
 wrapper {
-    gradleVersion = "8.10.1"
+    gradleVersion = "8.10.2"
 }
 
 tasks.register("stage") {

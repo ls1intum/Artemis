@@ -17,11 +17,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.web.client.HttpClientErrorException;
 
 import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupFreePeriodDTO;
-import de.tum.cit.aet.artemis.user.UserFactory;
 
 class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -119,7 +119,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     void create_overlapsWithExistingScheduledSession_shouldCancelSession() throws Exception {
         // given
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_00_00, FIRST_AUGUST_MONDAY_23_59, "Holiday");
         // when
@@ -139,7 +139,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     void create_startDateIsAfterEndDate_shouldNotCreateFreePeriod() throws Exception {
         // given
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_23_59, FIRST_AUGUST_MONDAY_00_00, "Holiday");
         // when
@@ -159,7 +159,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     void create_freePeriodEndTimeMatchesSessionStartTime_shouldNotCancelSession() throws Exception {
         // given
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_08_00, FIRST_AUGUST_MONDAY_10_00, "Holiday");
         // when
@@ -179,7 +179,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     void create_freePeriodStartTimeMatchesSessionEndTime_shouldNotCancelSession() throws Exception {
         // given
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_12_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
         // when
@@ -199,7 +199,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     void create_partialOverlapsWithExistingScheduledSession_shouldCancelSession_PeriodWithinDay() throws Exception {
         // given
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_10_00, FIRST_AUGUST_MONDAY_13_00, "Holiday");
         // when
@@ -219,7 +219,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     void create_noOverlapsWithExistingScheduledSessionOnSameDay_shouldNotCancelSession_PeriodWithinDay() throws Exception {
         // given
         TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
-        var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
+        var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroup.getId()).orElseThrow();
 
         var dto = createTutorialGroupFreePeriodDTO(FIRST_AUGUST_MONDAY_13_00, FIRST_AUGUST_MONDAY_18_00, "Holiday");
         // when
