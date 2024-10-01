@@ -20,6 +20,8 @@ import { LocalStorageService } from 'ngx-webstorage';
 export class FeedbackAnalysisComponent {
     exerciseTitle: InputSignal<string> = input.required<string>();
     exerciseId: InputSignal<number> = input.required<number>();
+    totalAmountOfTasks = signal<number>(0);
+    testCaseNames = signal<string[]>([]);
 
     readonly page = signal<number>(1);
     readonly pageSize = signal<number>(20);
@@ -41,10 +43,9 @@ export class FeedbackAnalysisComponent {
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
 
-    selectedFiltersCount = 0;
-    currentFilters: any = {};
-
     private localStorage = inject(LocalStorageService);
+    selectedFiltersCount = 0;
+    private hasAppliedFilters: boolean = false;
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
     readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
@@ -58,49 +59,31 @@ export class FeedbackAnalysisComponent {
     }
 
     async openFilterModal(): Promise<void> {
-        // Fetch tasks and test cases from the service
-        //const tasks = await this.feedbackAnalysisService.getTasks();
-        //const testCases = await this.feedbackAnalysisService.getTestCases();
-
-        // Retrieve saved filter values from local storage
         const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY) || [];
         const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY) || [];
         const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [0, 100];
 
-        // Determine whether to use default values (first-time or cleared filters)
-        const hasAppliedFilters = savedTasks.length || savedTestCases.length || savedOccurrence[0] !== 0 || savedOccurrence[1] !== 100;
-
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true });
 
-        modalRef.componentInstance.localStorageService = this.localStorage;
-
-        // Initialize the form values based on applied filters or default values
         modalRef.componentInstance.filterForm.setValue({
-            tasks: hasAppliedFilters ? savedTasks : [], // Use empty array if no filters are applied
-            testCases: hasAppliedFilters ? savedTestCases : [],
-            occurrence: hasAppliedFilters ? savedOccurrence : [0, 100], // Default occurrence range if no filters
+            tasks: this.hasAppliedFilters ? savedTasks : [],
+            testCases: this.hasAppliedFilters ? savedTestCases : [],
+            occurrence: this.hasAppliedFilters ? savedOccurrence : [0, 100],
         });
 
-        // Subscribe to the applied filters event
+        modalRef.componentInstance.totalAmountOfTasks = this.totalAmountOfTasks;
+        modalRef.componentInstance.testCaseNames = this.testCaseNames;
         modalRef.componentInstance.filterApplied.subscribe((filters: any) => {
             this.applyFilters(filters);
         });
     }
 
     applyFilters(filters: any): void {
-        // Save applied filters to local storage
-        this.localStorage.store(this.FILTER_TASKS_KEY, filters.tasks);
-        this.localStorage.store(this.FILTER_TEST_CASES_KEY, filters.testCases);
-        this.localStorage.store(this.FILTER_OCCURRENCE_KEY, filters.occurrence);
-
-        // Update the selected filters count
         this.selectedFiltersCount = this.countAppliedFilters(filters);
-
-        // Load data with the applied filters
+        this.hasAppliedFilters = this.selectedFiltersCount !== 0;
         this.loadData();
     }
 
-    // Method to count the number of applied filters
     countAppliedFilters(filters: any): number {
         let count = 0;
         if (filters.tasks && filters.tasks.length > 0) count++;
@@ -113,7 +96,7 @@ export class FeedbackAnalysisComponent {
         const state = {
             page: this.page(),
             pageSize: this.pageSize(),
-            searchTerm: this.searchTerm() || '', // Pass empty string if searchTerm is not set
+            searchTerm: this.searchTerm() || '',
             sortingOrder: this.sortingOrder(),
             sortedColumn: this.sortedColumn(),
         };
@@ -122,6 +105,8 @@ export class FeedbackAnalysisComponent {
             const response = await this.feedbackAnalysisService.search(state, { exerciseId: this.exerciseId() });
             this.content.set(response.feedbackDetails);
             this.totalItems.set(response.totalItems);
+            this.totalAmountOfTasks.set(response.totalAmountOfTasks);
+            this.testCaseNames.set(response.testCaseNames);
         } catch (error) {
             this.alertService.error('artemisApp.programmingExercise.configureGrading.feedbackAnalysis.error');
         }

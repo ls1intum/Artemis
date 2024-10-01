@@ -9,7 +9,7 @@
         <div class="form-group">
             <label for="tasks">Tasks</label>
             <select id="tasks" formControlName="tasks" multiple class="form-control">
-                <option *ngFor="let task of []" [value]="task">{{ task }}</option>
+                <option *ngFor="let task of generateTaskArray()" [value]="task">{{ task }}</option>
             </select>
         </div>
 
@@ -17,12 +17,12 @@
         <div class="form-group">
             <label for="testCases">Test Cases</label>
             <select id="testCases" formControlName="testCases" multiple class="form-control">
-                <option *ngFor="let testCase of []" [value]="testCase">{{ testCase }}</option>
+                <option *ngFor="let testCase of testCaseNames()" [value]="testCase">{{ testCase }}</option>
             </select>
         </div>
 
         <!-- Occurrence Range Slider -->
-        <label for="occurrence">Occurrence (%)</label>
+        <label>Occurrence (%)</label>
         <jhi-range-slider
             formControlName="occurrence"
             [generalMinValue]="0"
@@ -38,6 +38,6 @@
     <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" (click)="clearFilter()">Clear Filter</button>
         <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary" (click)="closeModal()">Apply Filter</button>
+        <button type="submit" class="btn btn-primary">Apply Filter</button>
     </div>
 </form>

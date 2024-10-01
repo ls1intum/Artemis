@@ -556,23 +556,23 @@ public class ResultService {
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
 
-        // Create PageRequest using PageUtil
-        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS); // Add FEEDBACK_ANALYSIS to your ColumnMapping
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
-        // Extract search term
         final var searchTerm = search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "";
 
-        // Execute the query using pageable
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId, searchTerm, pageable);
 
-        // Map to DTOs if necessary
+        ArrayList<String> testCaseNames = new ArrayList<>();
+
         final List<FeedbackDetailDTO> contentDTOs = feedbackDetailPage.getContent().stream().map(detail -> {
             double relativeCount = (detail.count() * 100.0) / distinctResultCount;
             int taskNumber = determineTaskNumberOfTestCase(detail.testCaseName(), tasks);
+            testCaseNames.add(detail.testCaseName());
             return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber);
         }).toList();
 
-        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(contentDTOs, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements());
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(contentDTOs, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), tasks.size(),
+                testCaseNames);
     }
 
     private int determineTaskNumberOfTestCase(String testCaseName, List<ProgrammingExerciseTask> tasks) {

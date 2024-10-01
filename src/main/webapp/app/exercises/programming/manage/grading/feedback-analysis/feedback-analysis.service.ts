@@ -6,6 +6,8 @@ import { HttpParams } from '@angular/common/http';
 export interface FeedbackAnalysisResponse {
     feedbackDetails: SearchResult<FeedbackDetail>;
     totalItems: number;
+    totalAmountOfTasks: number;
+    testCaseNames: [];
 }
 
 export interface FeedbackDetail {
@@ -27,15 +29,5 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('sortedColumn', pageable.sortedColumn);
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details-paged`, { params });
-    }
-
-    getTasks(): Promise<string[]> {
-        // Adjust the endpoint as needed
-        return this.get<string[]>('/api/exercises/tasks');
-    }
-
-    getTestCases(): Promise<string[]> {
-        // Adjust the endpoint as needed
-        return this.get<string[]>('/api/exercises/testcases');
     }
 }

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
@@ -14,8 +14,11 @@ import { LocalStorageService } from 'ngx-webstorage';
     standalone: true,
 })
 export class FeedbackFilterModalComponent {
-    @Input() localStorageService!: LocalStorageService;
+    private localStorage = inject(LocalStorageService);
     @Output() filterApplied = new EventEmitter<any>();
+
+    totalAmountOfTasks = signal<number>(0);
+    testCaseNames = signal<string[]>([]);
 
     filterForm: FormGroup;
 
@@ -27,39 +30,37 @@ export class FeedbackFilterModalComponent {
         private activeModal: NgbActiveModal,
         private fb: FormBuilder,
     ) {
+        // Initialize form without any default values, values are set dynamically
         this.filterForm = this.fb.group({
-            tasks: [],
-            testCases: [],
-            occurrence: [],
+            tasks: [[]], // Array to hold selected tasks
+            testCases: [[]], // Array to hold selected test cases
+            occurrence: [[0, 100]], // Default occurrence range
         });
     }
 
     applyFilter(): void {
         const filters = this.filterForm.value;
 
-        // Store applied filters into LocalStorage
-        this.localStorageService.store(this.FILTER_TASKS_KEY, filters.tasks);
-        this.localStorageService.store(this.FILTER_TEST_CASES_KEY, filters.testCases);
-        this.localStorageService.store(this.FILTER_OCCURRENCE_KEY, filters.occurrence);
+        this.localStorage.store(this.FILTER_TASKS_KEY, filters.tasks);
+        this.localStorage.store(this.FILTER_TEST_CASES_KEY, filters.testCases);
+        this.localStorage.store(this.FILTER_OCCURRENCE_KEY, filters.occurrence);
 
-        this.filterApplied.emit(filters); // Emit the filters to the parent component
+        this.filterApplied.emit(filters);
         this.activeModal.close();
     }
 
     clearFilter(): void {
-        // Clear local storage entries
-        this.localStorageService.clear(this.FILTER_TASKS_KEY);
-        this.localStorageService.clear(this.FILTER_TEST_CASES_KEY);
-        this.localStorageService.clear(this.FILTER_OCCURRENCE_KEY);
+        this.localStorage.clear(this.FILTER_TASKS_KEY);
+        this.localStorage.clear(this.FILTER_TEST_CASES_KEY);
+        this.localStorage.clear(this.FILTER_OCCURRENCE_KEY);
 
-        // Reset form values
         this.filterForm.reset({
             tasks: [],
             testCases: [],
-            occurrence: [0, 100], // Reset to default occurrence range
+            occurrence: [0, 100],
         });
 
-        this.filterApplied.emit(this.filterForm.value); // Emit the cleared filter state
+        this.filterApplied.emit(this.filterForm.value);
         this.activeModal.close();
     }
 
@@ -73,5 +74,9 @@ export class FeedbackFilterModalComponent {
 
     set occurrence(value: number[]) {
         this.filterForm.get('occurrence')?.setValue(value);
+    }
+
+    generateTaskArray(): number[] {
+        return Array.from({ length: this.totalAmountOfTasks() }, (_, i) => i + 1);
     }
 }
