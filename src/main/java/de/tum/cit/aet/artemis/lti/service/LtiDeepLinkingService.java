@@ -87,7 +87,6 @@ public class LtiDeepLinkingService {
         uriComponentsBuilder.queryParam("jwt", jwt);
         uriComponentsBuilder.queryParam("id", lti13DeepLinkingResponse.deploymentId());
         uriComponentsBuilder.queryParam("deepLinkUri", UriComponent.encode(returnUrl, UriComponent.Type.QUERY_PARAM));
-        uriComponentsBuilder.queryParam("lti", true);
 
         return uriComponentsBuilder.build().toUriString();
 

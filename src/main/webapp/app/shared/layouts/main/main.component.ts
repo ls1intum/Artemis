@@ -115,7 +115,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isTestRunExam = isStarted;
         });
 
-        //this.checkLtiParameter();
+        this.checkLtiParameter();
 
         this.ltiService.isLti$.subscribe((isLti) => {
             this.isLti = isLti;
@@ -128,6 +128,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         this.route.queryParams.subscribe((params) => {
             //this.isLti = params['lti'] === 'true';
             this.ltiService.setLti(params['lti'] === 'true');
+            console.log(params);
         });
     }
 
