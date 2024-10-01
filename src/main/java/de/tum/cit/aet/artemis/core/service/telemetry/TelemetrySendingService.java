@@ -30,8 +30,8 @@ public class TelemetrySendingService {
     private static final Logger log = LoggerFactory.getLogger(TelemetrySendingService.class);
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TelemetryData(String version, String serverUrl, String operator, List<String> profiles, boolean isProductionInstance, String dataSource, boolean isMultiNode,
-            long buildAgentCount, String contact, String adminName) {
+    public record TelemetryData(String version, String serverUrl, String operator, List<String> profiles, boolean isProductionInstance, boolean isTestServer, String dataSource,
+            boolean isMultiNode, long numberOfNodes, long buildAgentCount, String contact, String adminName) {
     }
 
     private final Environment env;
@@ -40,10 +40,13 @@ public class TelemetrySendingService {
 
     private final ProfileService profileService;
 
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService) {
+    private final EurekaClientService eurekaClientService;
+
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, EurekaClientService eurekaClientService) {
         this.env = env;
         this.restTemplate = restTemplate;
         this.profileService = profileService;
+        this.eurekaClientService = eurekaClientService;
     }
 
     @Value("${artemis.version}")
@@ -70,6 +73,9 @@ public class TelemetrySendingService {
     @Value("${artemis.continuous-integration.concurrent-build-size:0}")
     private long buildAgentCount;
 
+    @Value("${info.test-server:false}")
+    private boolean isTestServer;
+
     /**
      * Sends telemetry data to a specified destination via an HTTP POST request asynchronously.
      * The telemetry includes information about the application version, environment, data source,
@@ -87,8 +93,16 @@ public class TelemetrySendingService {
      */
     @Async
     public void sendTelemetryByPostRequest(boolean eurekaEnabled, boolean sendAdminDetails) {
+
+        long numberOfNodes = 1;
+
+        if (eurekaEnabled) {
+            log.info("Querying other instances from Eureka...");
+            numberOfNodes = eurekaClientService.getNumberOfReplicas();
+        }
+
         try {
-            String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(buildTelemetryData(sendAdminDetails, eurekaEnabled));
+            String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(buildTelemetryData(sendAdminDetails, eurekaEnabled, numberOfNodes));
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
@@ -113,7 +127,7 @@ public class TelemetrySendingService {
      * @param isMultiNode      whether the application runs in multi node or single node mode
      * @return an instance of {@link TelemetryData} containing the gathered telemetry information
      */
-    private TelemetryData buildTelemetryData(boolean sendAdminDetails, boolean isMultiNode) {
+    private TelemetryData buildTelemetryData(boolean sendAdminDetails, boolean isMultiNode, long numberOfNodes) {
         TelemetryData telemetryData;
         var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
@@ -124,8 +138,8 @@ public class TelemetrySendingService {
             contact = operatorContact;
             adminName = operatorAdminName;
         }
-        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), dataSource, isMultiNode, buildAgentCount, contact,
-                adminName);
+        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, isMultiNode, numberOfNodes,
+                buildAgentCount, contact, adminName);
         return telemetryData;
     }
 }
