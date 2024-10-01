@@ -987,6 +987,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         log.info("Push done");
 
+        var before = new Date().getTime();
         await().atMost(15, TimeUnit.SECONDS).until(() -> {
             log.info("Search for a build job for participation id: {}", studentParticipation.getId());
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
@@ -999,6 +1000,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
                 return false;
             }
         });
+        var after = new Date().getTime();
+        log.info("Time to find build job: {} ms", after - before);
 
         BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
         assertThat(buildJob.getPriority()).isEqualTo(expectedPriority);
