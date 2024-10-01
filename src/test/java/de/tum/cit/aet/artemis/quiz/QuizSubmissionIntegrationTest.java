@@ -451,7 +451,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         QuizExercise quizExercise = QuizExerciseFactory.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
-        verifyNoWebsocketMessageForExercise(quizExerciseServer);
+        verifyNoWebsocketMessageForExercise(quizExercise);
     }
 
     @Test
