@@ -105,7 +105,7 @@ describe('CompetencyFormComponent', () => {
     }));
 
     it('should correctly set form values in edit mode', () => {
-        competencyFormComponent.isEditMode = true;
+        competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
         const textUnit = new TextUnit();
         textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
@@ -169,7 +169,7 @@ describe('CompetencyFormComponent', () => {
         const competencyService = TestBed.inject(CompetencyService);
         const existingTitles = ['nameExisting'];
         jest.spyOn(competencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
-        competencyFormComponent.isEditMode = true;
+        competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
         competencyFormComponent.formData.title = 'initialName';
 
         competencyFormComponentFixture.detectChanges();

@@ -9,6 +9,7 @@
         <h3 jhiTranslate="artemisApp.prerequisite.edit.title"></h3>
         <jhi-prerequisite-form
             [isEditMode]="true"
+            [hasLinkedStandardizedCompetency]="!!prerequisite?.linkedStandardizedCompetency"
             [formData]="formData"
             (formSubmitted)="updateCompetency($event)"
             [courseId]="courseId"

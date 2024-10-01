@@ -9,7 +9,7 @@
         <h3 jhiTranslate="artemisApp.competency.edit.title"></h3>
         <jhi-competency-form
             [isEditMode]="true"
-            [hasLinkedStandardizedCompetency]="!!competency.linkedStandardizedCompetency"
+            [hasLinkedStandardizedCompetency]="!!competency?.linkedStandardizedCompetency"
             [formData]="formData"
             (formSubmitted)="updateCompetency($event)"
             [courseId]="courseId"

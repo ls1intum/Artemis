@@ -12,7 +12,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
-import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-competency-form.component';
 import { By } from '@angular/platform-browser';
 import { CommonCourseCompetencyFormComponent } from 'app/course/competencies/forms/common-course-competency-form.component';
@@ -30,7 +29,7 @@ describe('PrerequisiteFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CompetencyFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
+            imports: [PrerequisiteFormComponent, ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
             providers: [MockProvider(PrerequisiteService), MockProvider(LectureUnitService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideModule(ArtemisMarkdownEditorModule, {
@@ -106,7 +105,7 @@ describe('PrerequisiteFormComponent', () => {
     }));
 
     it('should correctly set form values in edit mode', () => {
-        prerequisiteFormComponent.isEditMode = true;
+        prerequisiteFormComponentFixture.componentRef.setInput('isEditMode', true);
         const textUnit = new TextUnit();
         textUnit.id = 1;
         const formData: CourseCompetencyFormData = {
@@ -170,7 +169,7 @@ describe('PrerequisiteFormComponent', () => {
         const prerequisiteService = TestBed.inject(PrerequisiteService);
         const existingTitles = ['nameExisting'];
         jest.spyOn(prerequisiteService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
-        prerequisiteFormComponent.isEditMode = true;
+        prerequisiteFormComponentFixture.componentRef.setInput('isEditMode', true);
         prerequisiteFormComponent.formData.title = 'initialName';
 
         prerequisiteFormComponentFixture.detectChanges();
