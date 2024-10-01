@@ -54,6 +54,7 @@ import com.github.dockerjava.api.command.InspectImageResponse;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.assessment.test_repository.ResultTestRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
@@ -90,6 +91,9 @@ public class LocalVCLocalCITestService {
 
     @Autowired
     private ParticipationVcsAccessTokenService participationVcsAccessTokenService;
+
+    @Autowired
+    private ParticipantScoreScheduleService participantScoreScheduleService;
 
     @Autowired
     private ResultTestRepository resultRepository;
@@ -572,7 +576,11 @@ public class LocalVCLocalCITestService {
             int expectedCodeIssueCount, Integer timeoutInSeconds) {
         // wait for result to be persisted
         Duration timeoutDuration = timeoutInSeconds != null ? Duration.ofSeconds(timeoutInSeconds) : Duration.ofSeconds(DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS);
-        await().atMost(timeoutDuration).until(() -> resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participationId).isPresent());
+        await().atMost(timeoutDuration).until(() -> {
+            participantScoreScheduleService.executeScheduledTasks();
+            await().until(participantScoreScheduleService::isIdle);
+            return resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participationId).isPresent();
+        });
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
