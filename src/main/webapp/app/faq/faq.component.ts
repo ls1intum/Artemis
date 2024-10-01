@@ -99,6 +99,7 @@ export class FaqComponent implements OnInit, OnDestroy {
                 next: (res: Faq[]) => {
                     this.faqs = res;
                     this.applyFilters();
+                    this.sortRows();
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

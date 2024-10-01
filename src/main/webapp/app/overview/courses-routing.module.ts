@@ -261,7 +261,7 @@ const routes: Routes = [
                 data: {
                     authorities: [Authority.USER],
                     pageTitle: 'overview.faq',
-                    hasSidebar: true,
+                    hasSidebar: false,
                     showRefreshButton: true,
                 },
             },
