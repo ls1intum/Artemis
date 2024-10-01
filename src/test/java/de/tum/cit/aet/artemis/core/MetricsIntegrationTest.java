@@ -149,7 +149,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnAverageScores() throws Exception {
             final var exercises = exerciseTestRepository.findAllExercisesByCourseIdWithEagerParticipation(course.getId());
-            exercises.forEach(exercise -> studentScoreUtilService.createStudentScoreIsRated(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 5));
+            exercises.forEach(exercise -> studentScoreUtilService.createRatedStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 5));
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
             assertThat(result.exerciseMetrics()).isNotNull();
@@ -168,7 +168,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         void shouldReturnScore() throws Exception {
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
 
-            exercises.forEach(exercise -> studentScoreUtilService.createStudentScoreIsRated(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 0.5));
+            exercises.forEach(exercise -> studentScoreUtilService.createRatedStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), 0.5));
 
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
@@ -269,7 +269,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @WithMockUser(username = STUDENT_OF_COURSE, roles = "USER")
         void shouldReturnCompleted() throws Exception {
             final var exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
-            exercises.forEach(exercise -> studentScoreUtilService.createStudentScoreIsRated(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), MIN_SCORE_GREEN));
+            exercises.forEach(exercise -> studentScoreUtilService.createRatedStudentScore(exercise, userUtilService.getUserByLogin(STUDENT_OF_COURSE), MIN_SCORE_GREEN));
 
             final var result = request.get("/api/metrics/course/" + course.getId() + "/student", HttpStatus.OK, StudentMetricsDTO.class);
             assertThat(result).isNotNull();
