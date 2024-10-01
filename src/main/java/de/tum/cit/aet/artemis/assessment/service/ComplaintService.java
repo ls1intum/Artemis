@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintRequestDTO;
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
@@ -210,10 +210,10 @@ public class ComplaintService {
         if (exercises.isEmpty()) {
             return;
         }
-        List<ExerciseMapEntry> numberOfComplaintsOfExercise = List.of();
-        List<ExerciseMapEntry> numberOfComplaintResponsesOfExercise = List.of();
-        List<ExerciseMapEntry> numberOfMoreFeedbackRequestsOfExercise = List.of();
-        List<ExerciseMapEntry> numberOfMoreFeedbackResponsesOfExercise = List.of();
+        List<ExerciseMapEntryDTO> numberOfComplaintsOfExercise = List.of();
+        List<ExerciseMapEntryDTO> numberOfComplaintResponsesOfExercise = List.of();
+        List<ExerciseMapEntryDTO> numberOfMoreFeedbackRequestsOfExercise = List.of();
+        List<ExerciseMapEntryDTO> numberOfMoreFeedbackResponsesOfExercise = List.of();
 
         Set<Long> exerciseIds = exercises.stream().map(DomainObject::getId).collect(Collectors.toSet());
         // only invoke the query for non empty exercise sets to avoid performance issues
@@ -235,10 +235,12 @@ public class ComplaintService {
                         ComplaintType.MORE_FEEDBACK);
             }
         }
-        var numberOfComplaintsMap = numberOfComplaintsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
-        var numberOfComplaintResponsesMap = numberOfComplaintResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
-        var numberOfMoreFeedbackRequestsMap = numberOfMoreFeedbackRequestsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
-        var numberOfMoreFeedbackResponsesMap = numberOfMoreFeedbackResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
+        var numberOfComplaintsMap = numberOfComplaintsOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
+        var numberOfComplaintResponsesMap = numberOfComplaintResponsesOfExercise.stream().collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
+        var numberOfMoreFeedbackRequestsMap = numberOfMoreFeedbackRequestsOfExercise.stream()
+                .collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
+        var numberOfMoreFeedbackResponsesMap = numberOfMoreFeedbackResponsesOfExercise.stream()
+                .collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
         exercises.forEach(exercise -> {
             exercise.setNumberOfOpenComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L) - numberOfComplaintResponsesMap.getOrDefault(exercise.getId(), 0L));
             exercise.setNumberOfComplaints(numberOfComplaintsMap.getOrDefault(exercise.getId(), 0L));

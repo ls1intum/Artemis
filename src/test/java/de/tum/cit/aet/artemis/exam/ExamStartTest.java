@@ -26,38 +26,39 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.ParticipationTestRepository;
-import de.tum.cit.aet.artemis.course.CourseUtilService;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
-import de.tum.cit.aet.artemis.exam.repository.StudentExamRepository;
+import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
+import de.tum.cit.aet.artemis.exam.util.ExamPrepareExercisesTestUtil;
+import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseFactory;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseTestService;
-import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlRepositoryPermission;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseTestService;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
-import de.tum.cit.aet.artemis.user.UserUtilService;
-import de.tum.cit.aet.artemis.util.ExamPrepareExercisesTestUtil;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
 class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
@@ -74,7 +75,7 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private ExerciseGroupRepository exerciseGroupRepository;
 
     @Autowired
-    private StudentExamRepository studentExamRepository;
+    private StudentExamTestRepository studentExamRepository;
 
     @Autowired
     private ParticipationTestRepository participationTestRepository;
