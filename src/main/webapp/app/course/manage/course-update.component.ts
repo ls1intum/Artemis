@@ -121,7 +121,6 @@ export class CourseUpdateComponent implements OnInit {
                 this.complaintsEnabled =
                     (this.course.maxComplaints! > 0 || this.course.maxTeamComplaints! > 0) &&
                     this.course.maxComplaintTimeDays! > 0 &&
-                    this.course.maxComplaintTimeDays! > 0 &&
                     this.course.maxComplaintTextLimit! > 0 &&
                     this.course.maxComplaintResponseTextLimit! > 0;
                 this.requestMoreFeedbackEnabled = this.course.maxRequestMoreFeedbackTimeDays! > 0;

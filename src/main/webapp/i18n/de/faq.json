@@ -11,8 +11,8 @@
             "updated": "Das FAQ wurde erfolgreich aktualisiert",
             "deleted": "Das FAQ wurde erfolgreich gelöscht",
             "delete": {
-                "question": "Soll das FAQ <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen des FAQ zur Bestätigung ein."
+                "question": "Soll die FAQ <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNameToConfirm": "Bitte gib der Namen des FAQ zur Bestätigung ein."
             },
 
             "table": {

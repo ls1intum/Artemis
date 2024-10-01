@@ -21,11 +21,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
 
-    @Query("""
-            SELECT faq
-            FROM Faq faq
-            WHERE faq.course.id = :courseId
-            """)
     Set<Faq> findAllByCourseId(@Param("courseId") Long courseId);
 
     @Query("""

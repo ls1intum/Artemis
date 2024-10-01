@@ -108,7 +108,7 @@
                     "codeOfConduct": "Nachrichten: Code of Conduct"
                 },
                 "faqEnabled": {
-                    "label": "FAQ aktivieren",
+                    "label": "FAQs aktivieren",
                     "tooltip": "Ermöglicht das Anlegen von FAQ-Einträgen, in denen Lehrende häufig gestellte Fragen übersichtlich sammeln. Studierende können auf diese Wissensbasis zugreifen, um selbstständig Themen nachzuarbeiten und offene Fragen eigenständig zu klären."
                 }
             },

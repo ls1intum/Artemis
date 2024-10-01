@@ -39,8 +39,8 @@ public class Faq extends AbstractAuditingEntity {
     private String questionAnswer;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "faq_categories", joinColumns = @JoinColumn(name = "faq_id"))
-    @Column(name = "categories")
+    @CollectionTable(name = "faq_category", joinColumns = @JoinColumn(name = "faq_id"))
+    @Column(name = "category")
     private Set<String> categories = new HashSet<>();
 
     @Enumerated(EnumType.STRING)

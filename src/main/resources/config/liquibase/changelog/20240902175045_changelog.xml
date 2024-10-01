@@ -26,11 +26,11 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <createTable tableName="faq_categories">
+        <createTable tableName="faq_category">
             <column name="faq_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="categories" type="varchar(50)"/>
+            <column name="category" type="varchar(50)"/>
         </createTable>
         <addColumn tableName="course">
             <column name="faq_enabled" type="boolean" defaultValue="false">
@@ -47,8 +47,8 @@
                                  referencedTableName="course"
                                  validate="true"/>
         <addForeignKeyConstraint baseColumnNames="faq_id"
-                                 baseTableName="faq_categories"
-                                 constraintName="faq_categories_id"
+                                 baseTableName="faq_category"
+                                 constraintName="faq_category_id"
                                  deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT"
                                  referencedColumnNames="id"
