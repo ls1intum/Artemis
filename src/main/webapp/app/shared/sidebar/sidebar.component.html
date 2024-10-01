@@ -25,8 +25,14 @@
                             <button type="button" class="btn btn-primary" (click)="toggleChatDropdown()" jhiTranslate="artemisApp.courseOverview.sidebar.createChat"></button>
 
                             <div [hidden]="!showChatDropdown" class="dropdown-menu">
-                                <button (click)="createDirectChat()" class="dropdown-item" jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></button>
-                                <button (click)="createGroupChat()" class="dropdown-item" jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></button>
+                                <button (click)="createDirectChat()" class="dropdown-item">
+                                    <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true"></fa-icon>
+                                    <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
+                                </button>
+                                <button (click)="createGroupChat()" class="dropdown-item">
+                                    <fa-icon [icon]="faUsers" class="item-icon" [fixedWidth]="true"></fa-icon>
+                                    <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -39,8 +45,14 @@
                                 jhiTranslate="artemisApp.courseOverview.sidebar.addChannel"
                             ></button>
                             <div [hidden]="!showChannelDropdown" class="dropdown-menu">
-                                <button (click)="createNewChannel()" class="dropdown-item" jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></button>
-                                <button (click)="browseChannels()" class="dropdown-item" jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></button>
+                                <button (click)="createNewChannel()" class="dropdown-item">
+                                    <fa-icon [icon]="faPlusCircle" class="item-icon"></fa-icon>
+                                    <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
+                                </button>
+                                <button (click)="browseChannels()" class="dropdown-item">
+                                    <fa-icon [icon]="faSearch" class="item-icon"></fa-icon>
+                                    <span jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></span>
+                                </button>
                             </div>
                         </div>
                     </div>

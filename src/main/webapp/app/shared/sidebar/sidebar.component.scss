@@ -63,6 +63,12 @@
     font-size: 0.88em;
 }
 
+.item-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+}
+
 .dropdown-menu {
     position: absolute;
     top: 100%;
@@ -97,9 +103,8 @@
 
 .dropdown-menu .dropdown-item {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
+    align-items: start;
+    justify-content: left;
     min-width: 100px;
     max-width: 200px;
 }
