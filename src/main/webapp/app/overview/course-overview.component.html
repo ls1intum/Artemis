@@ -146,7 +146,7 @@
                             @if (hasSidebar) {
                                 <button
                                     [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
-                                    [ngClass]="isSidebarCollapsed ? 'is-collapsed' : ''"
+                                    [ngClass]="{ 'is-collapsed': isSidebarCollapsed }"
                                     triggers="hover"
                                     class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
                                     (click)="toggleSidebar()"
