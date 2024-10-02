@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -59,6 +60,9 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ProgrammingMessagingService programmingMessagingService;
+
+    @Value("${artemis.athena.allowed-feedback-attempts:20}")
+    private int allowedFeedbackAttempts;
 
     public ProgrammingExerciseCodeReviewFeedbackService(GroupNotificationService groupNotificationService,
             Optional<AthenaFeedbackSuggestionsService> athenaFeedbackSuggestionsService, SubmissionService submissionService, ResultService resultService,
@@ -224,7 +228,7 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
 
         long countOfSuccessfulRequests = athenaResults.stream().filter(result -> result.isSuccessful() == Boolean.TRUE).count();
 
-        if (countOfSuccessfulRequests >= 20) {
+        if (countOfSuccessfulRequests >= this.allowedFeedbackAttempts) {
             throw new BadRequestAlertException("Maximum number of AI feedback requests reached.", "participation", "maxAthenaResultsReached", true);
         }
     }
