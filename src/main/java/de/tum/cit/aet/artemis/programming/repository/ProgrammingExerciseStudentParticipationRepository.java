@@ -176,7 +176,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                     OR (eg IS NOT NULL AND exam IS NOT NULL AND :earliestDate <= exam.endDate AND exam.endDate <= :latestDate)
                 )
             """)
-    Page<String> findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
+    Page<String> findRepositoryUrisByRecentDueDateOrRecentExamEndDate(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
             Pageable pageable);
 
     @Query("""

@@ -130,13 +130,13 @@ public class AutomaticProgrammingExerciseCleanupService {
         log.info("Search for exercises with due date from {} until {}", earliestDate, latestDate);
         // Get all relevant participation ids
         Pageable pageable = Pageable.ofSize(STUDENT_PARTICIPATION_CLEANUP_BATCH_SIZE);
-        Page<String> uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
+        Page<String> uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
                 pageable);
         log.info("Found {} student participations to clean local student repositories in {} batches.", uriBatch.getTotalElements(), uriBatch.getTotalPages());
         if (uriBatch.getTotalElements() > 0) {
             uriBatch.forEach(this::deleteLocalRepositoryByUriString);
             while (!uriBatch.isLast()) {
-                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisForGitCleanupByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
+                uriBatch = programmingExerciseStudentParticipationRepository.findRepositoryUrisByRecentDueDateOrRecentExamEndDate(earliestDate, latestDate,
                         uriBatch.nextPageable());
                 uriBatch.forEach(this::deleteLocalRepositoryByUriString);
             }
