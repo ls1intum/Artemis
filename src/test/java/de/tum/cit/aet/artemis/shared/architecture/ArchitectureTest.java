@@ -101,7 +101,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 .areAnnotatedWith(BeforeAll.class).or().areAnnotatedWith(AfterEach.class).or().areAnnotatedWith(AfterAll.class).should().bePublic();
 
         classNames.check(testClasses);
-        noPublicTestClasses.check(testClasses.that(are(not(simpleNameContaining("Abstract")))));
+        noPublicTestClasses.check(testClasses.that(are(not(or(simpleNameContaining("Abstract"), INTERFACES)))));
         noPublicTests.check(testClasses);
     }
 

@@ -4,7 +4,7 @@ import java.util.Set;
 
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleRepositoryArchitectureTest;
 
-public class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitectureTest {
+class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitectureTest {
 
     public String getModulePackage() {
         return ARTEMIS_PACKAGE + ".lecture";
