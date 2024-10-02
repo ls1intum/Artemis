@@ -30,7 +30,7 @@
             <column name="faq_id" type="bigint">
                 <constraints nullable="false"/>
             </column>
-            <column name="category" type="varchar(50)"/>
+            <column name="category" type="varchar(255)"/>
         </createTable>
         <addColumn tableName="course">
             <column name="faq_enabled" type="boolean" defaultValue="false">
