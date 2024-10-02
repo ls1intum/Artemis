@@ -49,7 +49,7 @@ public interface TextBlockRepository extends ArtemisJpaRepository<TextBlock, Str
     @Transactional
     @Query("""
             DELETE FROM TextBlock tb
-            WHERE tb.feedback IN (SELECT f FROM Feedback f JOIN f.result WHERE f.result IS NULL)
+            WHERE tb.feedback IN (SELECT f FROM Feedback f WHERE f.result IS NULL)
             """)
     void deleteTextBlockForEmptyFeedback();
 
