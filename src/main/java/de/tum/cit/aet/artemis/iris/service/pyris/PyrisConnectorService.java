@@ -52,6 +52,8 @@ public class PyrisConnectorService {
 
     private final LectureRepository lectureRepository;
 
+    private final PyrisJobService pyrisJobService;
+
     @Value("${server.url}")
     private String artemisBaseUrl;
 
@@ -59,10 +61,11 @@ public class PyrisConnectorService {
     private String pyrisUrl;
 
     public PyrisConnectorService(@Qualifier("pyrisRestTemplate") RestTemplate restTemplate, MappingJackson2HttpMessageConverter springMvcJacksonConverter,
-            LectureRepository lectureRepository) {
+            LectureRepository lectureRepository, PyrisJobService pyrisJobService) {
         this.restTemplate = restTemplate;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.lectureRepository = lectureRepository;
+        this.pyrisJobService = pyrisJobService;
     }
 
     /**
@@ -176,7 +179,15 @@ public class PyrisConnectorService {
             String encodedBaseUrl = URLEncoder.encode(artemisBaseUrl, StandardCharsets.UTF_8);
             String url = String.format("%s/api/v1/courses/%d/lectures/%d/lectureUnits/%d/ingestion-state?base_url=%s", pyrisUrl, courseId, lectureId, lectureUnitId,
                     encodedBaseUrl);
-            return restTemplate.getForObject(url, IngestionState.class);
+
+            IngestionState state = restTemplate.getForObject(url, IngestionState.class);
+
+            if (state != null && state != IngestionState.DONE) {
+                if (pyrisJobService.jobExists(courseId, lectureId, lectureUnitId)) {
+                    return IngestionState.IN_PROGRESS;
+                }
+            }
+            return state;
         }
         catch (RestClientException e) {
             log.error("Error fetching ingestion state for lecture {}, lecture unit {}, baseUrl {}", lectureId, lectureUnitId, pyrisUrl, e);

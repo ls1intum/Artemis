@@ -269,7 +269,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             if (lectureUnit.id) {
                 this.lectureUnitService.getIngestionState(this.lecture.course!.id!, this.lecture.id!, lectureUnit.id).subscribe({
                     next: (res: HttpResponse<IngestionState>) => {
-                        if (res.body && res.body == 'DONE') {
+                        if (res.body) {
                             (<AttachmentUnit>lectureUnit).pyrisIngestionState = res.body;
                         }
                     },
