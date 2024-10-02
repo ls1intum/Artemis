@@ -143,10 +143,15 @@ export class FaqUpdateComponent implements OnInit {
     }
 
     validate() {
-        if (this.faq.questionTitle) {
-            this.isAllowedToSave = this.faq.questionTitle?.trim().length > 0;
+        if (this.faq.questionTitle && this.faq.questionAnswer) {
+            this.isAllowedToSave = this.faq.questionTitle?.trim().length > 0 && this.faq.questionAnswer?.trim().length > 0;
         } else {
             this.isAllowedToSave = false;
         }
+    }
+
+    handleMarkdownChange(markdown: string): void {
+        this.faq.questionAnswer = markdown;
+        this.validate();
     }
 }

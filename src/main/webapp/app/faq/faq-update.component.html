@@ -21,8 +21,8 @@
                         id="field_description"
                         class="markdown-editor"
                         [domainActions]="domainActionsDescription"
-                        [(markdown)]="faq.questionAnswer"
-                        (change)="validate()"
+                        [markdown]="faq.questionAnswer"
+                        (markdownChange)="handleMarkdownChange($event)"
                     />
                 </div>
                 <div class="form-group position-relative">

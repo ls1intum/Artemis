@@ -90,7 +90,7 @@ public class FaqResource {
     }
 
     /**
-     * PUT /courses/:courseId/faqs/{faqId} : Updates an existing faq.
+     * PUT /courses/:courseId/faqs/:faqId : Updates an existing faq.
      *
      * @param faq      the faq to update
      * @param faqId    id of the faq to be updated *
