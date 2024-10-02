@@ -249,26 +249,58 @@ jhi-secured-image {
 }
 
 .btn-sidebar-collapse {
+    position: relative;
+    overflow: hidden;
     display: inline-flex;
     align-items: center;
     justify-content: start;
-    background-color: var(--link-item-bg);
+    background-color: transparent;
     &:hover {
-        background-color: var(--sidebar-card-selected-bg);
         color: var(--primary);
     }
     &:focus {
         border-color: transparent;
     }
 
-    transition:
-        background-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out,
-        border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
+    transition: border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
+}
+
+.btn-sidebar-collapse::after,
+.btn-sidebar-collapse::before {
+    content: '';
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    position: absolute;
+
+    transition: background-color $transition-color-length ease-in-out;
+}
+
+.btn-sidebar-collapse::after {
+    background-color: var(--link-item-bg);
+}
+
+.btn-sidebar-collapse::before {
+    opacity: 0;
+    z-index: -1;
+    background-color: var(--white);
+
+    transition: opacity $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
+}
+
+.btn-sidebar-collapse:hover::after,
+.btn-sidebar-collapse:hover::before {
+    background-color: var(--sidebar-card-selected-bg);
 }
 
 .btn-sidebar-collapse.is-collapsed {
-    background-color: var(--body-background-color);
     border-color: var(--bs-secondary);
+}
+
+.is-collapsed.btn-sidebar-collapse::before {
+    opacity: 1;
 }
 
 .btn-sidebar-collapse-chevron-start {
