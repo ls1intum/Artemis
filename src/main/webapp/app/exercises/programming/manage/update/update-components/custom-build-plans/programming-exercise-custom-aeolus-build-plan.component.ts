@@ -1,5 +1,6 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
-import { BuildAction, ProgrammingExercise, ProgrammingLanguage, ProjectType, ScriptAction } from 'app/entities/programming-exercise.model';
+import { BuildAction, ScriptAction } from 'app/entities/programming/build.action';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
@@ -42,7 +43,8 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     ngOnChanges(changes: SimpleChanges) {
         if (changes.programmingExerciseCreationConfig || changes.programmingExercise) {
             if (this.shouldReloadTemplate()) {
-                this.loadAeolusTemplate();
+                const isImportFromFile = changes.programmingExerciseCreationConfig?.currentValue?.isImportFromFile ?? false;
+                this.loadAeolusTemplate(isImportFromFile);
             }
         }
     }
@@ -52,8 +54,8 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
             this.programmingExercise.programmingLanguage !== this.programmingLanguage ||
             this.programmingExercise.projectType !== this.projectType ||
             this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
-            this.programmingExercise.sequentialTestRuns !== this.sequentialTestRuns ||
-            this.programmingExercise.testwiseCoverageEnabled !== this.testwiseCoverageEnabled
+            this.programmingExercise.buildConfig?.sequentialTestRuns !== this.sequentialTestRuns ||
+            this.programmingExercise.buildConfig?.testwiseCoverageEnabled !== this.testwiseCoverageEnabled
         );
     }
 
@@ -62,20 +64,21 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
      * @private
      */
     resetCustomBuildPlan() {
-        this.programmingExercise.windFile = undefined;
-        this.programmingExercise.buildPlanConfiguration = undefined;
+        this.programmingExercise.buildConfig!.windfile = undefined;
+        this.programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
     }
 
     /**
      * Loads the predefined template for the selected programming language and project type
      * if there is one available.
+     * @param isImportFromFile whether the exercise is imported from a file
      * @private
      */
-    loadAeolusTemplate() {
-        if (this.programmingExercise?.id) {
-            if (!this.programmingExerciseCreationConfig.buildPlanLoaded && !this.programmingExercise.windFile) {
-                if (this.programmingExercise.buildPlanConfiguration) {
-                    this.programmingExercise.windFile = this.aeolusService.parseWindFile(this.programmingExercise.buildPlanConfiguration);
+    loadAeolusTemplate(isImportFromFile: boolean = false) {
+        if (this.programmingExercise?.id || isImportFromFile) {
+            if (!this.programmingExerciseCreationConfig.buildPlanLoaded && !this.programmingExercise.buildConfig?.windfile) {
+                if (this.programmingExercise.buildConfig?.buildPlanConfiguration) {
+                    this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(this.programmingExercise.buildConfig?.buildPlanConfiguration);
                 }
                 this.programmingExerciseCreationConfig.buildPlanLoaded = true;
             }
@@ -88,18 +91,20 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
         this.programmingLanguage = this.programmingExercise.programmingLanguage;
         this.projectType = this.programmingExercise.projectType;
         this.staticCodeAnalysisEnabled = this.programmingExercise.staticCodeAnalysisEnabled;
-        this.sequentialTestRuns = this.programmingExercise.sequentialTestRuns;
-        this.testwiseCoverageEnabled = this.programmingExercise.testwiseCoverageEnabled;
-        this.aeolusService
-            .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
-            .subscribe({
-                next: (file) => {
-                    this.programmingExercise.windFile = this.aeolusService.parseWindFile(file);
-                },
-                error: () => {
-                    this.programmingExercise.windFile = undefined;
-                },
-            });
+        this.sequentialTestRuns = this.programmingExercise.buildConfig?.sequentialTestRuns;
+        this.testwiseCoverageEnabled = this.programmingExercise.buildConfig?.testwiseCoverageEnabled;
+        if (!isImportFromFile || !this.programmingExercise.buildConfig?.windfile) {
+            this.aeolusService
+                .getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
+                .subscribe({
+                    next: (file) => {
+                        this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
+                    },
+                    error: () => {
+                        this.programmingExercise.buildConfig!.windfile = undefined;
+                    },
+                });
+        }
         this.programmingExerciseCreationConfig.buildPlanLoaded = true;
     }
 
@@ -110,7 +115,7 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     faQuestionCircle = faQuestionCircle;
 
     protected getActionScript(action: string): string {
-        const foundAction: BuildAction | undefined = this.programmingExercise.windFile?.actions.find((a) => a.name === action);
+        const foundAction: BuildAction | undefined = this.programmingExercise.buildConfig?.windfile?.actions.find((a) => a.name === action);
         if (foundAction && foundAction instanceof ScriptAction) {
             return (foundAction as ScriptAction).script;
         }
@@ -118,12 +123,12 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     changeActiveAction(action: string): void {
-        if (!this.programmingExercise.windFile) {
+        if (!this.programmingExercise.buildConfig?.windfile) {
             return;
         }
 
         this.code = this.getActionScript(action);
-        this.active = this.programmingExercise.windFile.actions.find((a) => a.name === action);
+        this.active = this.programmingExercise.buildConfig?.windfile.actions.find((a) => a.name === action);
         this.isScriptAction = this.active instanceof ScriptAction;
         if (this.isScriptAction && this.editor) {
             this.editor.setText(this.code);
@@ -131,8 +136,8 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     deleteAction(action: string): void {
-        if (this.programmingExercise.windFile) {
-            this.programmingExercise.windFile.actions = this.programmingExercise.windFile.actions.filter((a) => a.name !== action);
+        if (this.programmingExercise.buildConfig?.windfile) {
+            this.programmingExercise.buildConfig!.windfile.actions = this.programmingExercise.buildConfig?.windfile.actions.filter((a) => a.name !== action);
             if (this.active?.name === action) {
                 this.active = undefined;
                 this.code = '';
@@ -141,12 +146,12 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     addAction(action: string): void {
-        if (this.programmingExercise.windFile) {
+        if (this.programmingExercise.buildConfig?.windfile) {
             const newAction = new ScriptAction();
             newAction.script = '#!/bin/bash\n\n# Add your custom build plan action here\n\nexit 0';
             newAction.name = action;
             newAction.runAlways = false;
-            this.programmingExercise.windFile.actions.push(newAction);
+            this.programmingExercise.buildConfig?.windfile.actions.push(newAction);
             this.changeActiveAction(action);
         }
     }
@@ -194,9 +199,9 @@ export class ProgrammingExerciseCustomAeolusBuildPlanComponent implements OnChan
     }
 
     setDockerImage(dockerImage: string) {
-        if (!this.programmingExercise.windFile || !this.programmingExercise.windFile.metadata.docker) {
+        if (!this.programmingExercise.buildConfig?.windfile || !this.programmingExercise.buildConfig?.windfile.metadata.docker) {
             return;
         }
-        this.programmingExercise.windFile.metadata.docker.image = dockerImage.trim();
+        this.programmingExercise.buildConfig!.windfile.metadata.docker.image = dockerImage.trim();
     }
 }

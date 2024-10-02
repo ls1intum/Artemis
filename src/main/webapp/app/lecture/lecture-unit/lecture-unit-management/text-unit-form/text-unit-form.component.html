@@ -14,14 +14,10 @@
                     @if (nameControl?.invalid && (nameControl?.dirty || nameControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (nameControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.textUnit.createTextUnit.nameRequiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.textUnit.createTextUnit.nameRequiredValidationError"></div>
                             }
                             @if (nameControl?.errors?.maxlength) {
-                                <div>
-                                    {{ 'artemisApp.textUnit.createTextUnit.nameMaxLengthValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.textUnit.createTextUnit.nameMaxLengthValidationError"></div>
                             }
                         </div>
                     }
@@ -38,18 +34,24 @@
                     />
                 </div>
                 <div class="form-group">
-                    <label class="d-block" for="content">{{ 'artemisApp.textUnit.createTextUnit.content' | artemisTranslate }}</label>
+                    <label class="d-block" for="content" jhiTranslate="artemisApp.textUnit.createTextUnit.content"></label>
                     <small id="contentHelp" class="form-text mb-1 text-body-secondary">
                         {{ 'artemisApp.textUnit.markdownHelp' | artemisTranslate }}
                         <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
                     </small>
                     <!-- not included in reactive form -->
-                    <jhi-markdown-editor aria-describedby="contentHelp" id="content" class="markdown-editor" [(markdown)]="content" (markdownChange)="onMarkdownChange($event)" />
+                    <jhi-markdown-editor-monaco
+                        aria-describedby="contentHelp"
+                        id="content"
+                        class="markdown-editor"
+                        [(markdown)]="content"
+                        (markdownChange)="onMarkdownChange($event)"
+                    />
                 </div>
                 <div class="row">
                     <div class="col-12">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                            <span jhiTranslate="entity.action.submit"></span>
                         </button>
                         @if (hasCancelButton) {
                             <button type="button" (click)="cancelForm()" class="btn btn-default">

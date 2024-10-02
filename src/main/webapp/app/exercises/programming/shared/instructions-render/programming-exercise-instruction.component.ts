@@ -14,12 +14,12 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/theme.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { ShowdownExtension } from 'showdown';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, merge, of } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
@@ -27,7 +27,6 @@ import { TaskArray } from 'app/exercises/programming/shared/instructions-render/
 import { Participation } from 'app/entities/participation/participation.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { problemStatementHasChanged } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { Result } from 'app/entities/result.model';
@@ -51,7 +50,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     @Input() public participation: Participation;
     @Input() generateHtmlEvents: Observable<void>;
     @Input() personalParticipation: boolean;
-    // If there are no instructions available (neither in the exercise problemStatement nor the legacy README.md) emits an event
+    // Emits an event if the instructions are not available via the problemStatement
     @Output()
     public onNoInstructionsAvailable = new EventEmitter();
 
@@ -94,7 +93,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     constructor(
         public viewContainerRef: ViewContainerRef,
         private resultService: ResultService,
-        private repositoryFileService: RepositoryFileService,
         private participationWebsocketService: ParticipationWebsocketService,
         private programmingExerciseTaskWrapper: ProgrammingExerciseTaskExtensionWrapper,
         private programmingExercisePlantUmlWrapper: ProgrammingExercisePlantUmlExtensionWrapper,
@@ -155,7 +153,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                     // If the exercise is not loaded, the instructions can't be loaded and so there is no point in loading the results, etc, yet.
                     if (!this.isLoading && this.exercise && this.participation && (this.isInitial || participationHasChanged)) {
                         this.isLoading = true;
-                        return this.loadInstructions().pipe(
+                        return of(this.exercise.problemStatement).pipe(
                             // If no instructions can be loaded, abort pipe and hide the instruction panel
                             tap((problemStatement) => {
                                 if (!problemStatement) {
@@ -291,26 +289,6 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
         );
     }
 
-    /**
-     * Loads the instructions for the programming exercise.
-     * We added the problemStatement later, historically the instructions where a file in the student's repository
-     * This is why we now prefer the problemStatement and if it doesn't exist try to load the readme.
-     */
-    loadInstructions(): Observable<string | undefined> {
-        if (this.exercise.problemStatement) {
-            return of(this.exercise.problemStatement);
-        } else {
-            if (!this.participation.id) {
-                return of(undefined);
-            }
-            return this.repositoryFileService.get(this.participation.id, 'README.md').pipe(
-                catchError(() => of(undefined)),
-                // Old readme files contain chars instead of our domain command tags - replace them when loading the file
-                map((fileObj) => fileObj && fileObj.fileContent.replace(new RegExp(/✅/, 'g'), '[task]')),
-            );
-        }
-    }
-
     private renderMarkdown(): void {
         // Highlight differences between previous and current markdown
         if (
@@ -370,14 +348,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
                 // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise.id}-task-${id.toString()} d-flex">&#8203;</div>`),
             problemStatementHtml,
         );
     }
 
     private injectTasksIntoDocument = () => {
         this.tasks.forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
+            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const taskHtmlContainer = taskHtmlContainers[i];

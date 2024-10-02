@@ -1,14 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
-import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { cloneDeep } from 'lodash-es';
-import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
+import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -24,8 +23,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     @Output() questionMoveUp = new EventEmitter<object>();
     @Output() questionMoveDown = new EventEmitter<object>();
 
-    editorMode = EditorMode.NONE;
     markdownMap: Map<number, string>;
+    questionText: string;
 
     // Create Backup Question for resets
     @Input() backupQuestion: MultipleChoiceQuestion;
@@ -46,9 +45,10 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
         for (const answer of this.question.answerOptions!) {
             this.markdownMap.set(
                 answer.id!,
-                (answer.isCorrect ? CorrectOptionCommand.IDENTIFIER : IncorrectOptionCommand.IDENTIFIER) + ' ' + generateExerciseHintExplanation(answer),
+                (answer.isCorrect ? CorrectMultipleChoiceAnswerAction.IDENTIFIER : WrongMultipleChoiceAnswerAction.IDENTIFIER) + ' ' + generateExerciseHintExplanation(answer),
             );
         }
+        this.questionText = this.getQuestionText(this.question);
     }
 
     /**
@@ -102,9 +102,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
         const startOfThisPart = text.indexOf(answerOptionText);
         const box = text.substring(0, startOfThisPart);
         // Check if box says this answer option is correct or not
-        if (box === CorrectOptionCommand.IDENTIFIER) {
+        if (box === CorrectMultipleChoiceAnswerAction.IDENTIFIER) {
             answer.isCorrect = true;
-        } else if (box === IncorrectOptionCommand.IDENTIFIER) {
+        } else if (box === WrongMultipleChoiceAnswerAction.IDENTIFIER) {
             answer.isCorrect = false;
         } else {
             answer.isCorrect = undefined;
@@ -117,7 +117,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
      * @param text
      */
     private static splitByCorrectIncorrectTag(text: string): string[] {
-        const stringForSplit = escapeStringForUseInRegex(`${CorrectOptionCommand.IDENTIFIER}`) + '|' + escapeStringForUseInRegex(`${IncorrectOptionCommand.IDENTIFIER}`);
+        const stringForSplit =
+            escapeStringForUseInRegex(`${CorrectMultipleChoiceAnswerAction.IDENTIFIER}`) + '|' + escapeStringForUseInRegex(`${WrongMultipleChoiceAnswerAction.IDENTIFIER}`);
         const splitRegExp = new RegExp(stringForSplit, 'g');
         return text.split(splitRegExp);
     }

@@ -32,17 +32,24 @@ export interface LearningPathCompetencyDTO {
     masteryProgress: number;
 }
 
+export interface LearningPathDTO {
+    id: number;
+    progress: number;
+    startedByStudent: boolean;
+}
+
 export interface LearningPathNavigationObjectDTO {
     id: number;
     completed: boolean;
-    name: string;
+    name?: string;
     competencyId: number;
     type: LearningObjectType;
+    unreleased: boolean;
 }
 
 export interface LearningPathNavigationDTO {
     predecessorLearningObject?: LearningPathNavigationObjectDTO;
-    currentLearningObject: LearningPathNavigationObjectDTO;
+    currentLearningObject?: LearningPathNavigationObjectDTO;
     successorLearningObject?: LearningPathNavigationObjectDTO;
     progress: number;
 }
@@ -51,13 +58,16 @@ export interface LearningPathNavigationOverviewDTO {
     learningObjects: LearningPathNavigationObjectDTO[];
 }
 
+export enum CompetencyGraphNodeValueType {
+    MASTERY_PROGRESS = 'MASTERY_PROGRESS',
+}
+
 export interface CompetencyGraphNodeDTO {
     id: string;
     label: string;
     softDueDate: Date;
-    progress: number;
-    confidence: number;
-    masteryProgress: number;
+    value: number;
+    valueType: CompetencyGraphNodeValueType;
     dimension?: NodeDimension;
 }
 

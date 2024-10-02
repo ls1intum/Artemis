@@ -11,7 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 
 describe('TutorLeaderboardComponent', () => {

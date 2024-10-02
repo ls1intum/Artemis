@@ -19,6 +19,7 @@ import { MockCodeEditorConflictStateService } from '../../helpers/mocks/service/
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
+import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CodeEditorFileBrowserComponent', () => {
     let comp: CodeEditorFileBrowserComponent;
@@ -149,6 +150,25 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renderedFiles).toHaveLength(3);
     });
 
+    it('should toggle tree compression', () => {
+        comp.repositoryFiles = {
+            file1: FileType.FILE,
+        };
+        const treeNode = {
+            folder: '',
+            file: 'file1',
+            children: [],
+            text: 'file1',
+            value: 'file1',
+        };
+        jest.spyOn(comp, 'buildTree').mockReturnValue([treeNode]);
+        const transformTreeToTreeViewItemStub = jest.spyOn(comp, 'transformTreeToTreeViewItem').mockReturnValue([new TreeviewItem(treeNode)]);
+        comp.compressFolders = false;
+        comp.toggleTreeCompress();
+        expect(comp.compressFolders).toBeTrue();
+        expect(transformTreeToTreeViewItemStub).toHaveBeenCalledExactlyOnceWith([treeNode]);
+    });
+
     it('should create compressed treeviewItems with nested folder structure', () => {
         comp.repositoryFiles = {
             folder: FileType.FOLDER,
@@ -205,7 +225,6 @@ describe('CodeEditorFileBrowserComponent', () => {
         };
         const forbiddenFiles = {
             'danger.bin': FileType.FILE,
-            'README.md': FileType.FILE,
             '.hidden': FileType.FILE,
             '.': FileType.FOLDER,
         };
@@ -308,6 +327,42 @@ describe('CodeEditorFileBrowserComponent', () => {
         const renderedFiles = debugElement.queryAll(By.css('jhi-code-editor-file-browser-file'));
         expect(renderedFolders).toHaveLength(0);
         expect(renderedFiles).toHaveLength(0);
+    });
+
+    it('should select the correct file based on the user selection', () => {
+        const fileToSelect = 'folder/file1';
+        const otherFile = 'folder2/file2';
+        comp.repositoryFiles = {
+            folder: FileType.FOLDER,
+            'folder/file1': FileType.FILE,
+            folder2: FileType.FOLDER,
+            'folder/file2': FileType.FILE,
+        };
+        comp.filesTreeViewItem = [
+            new TreeviewItem({
+                checked: false,
+                text: fileToSelect,
+                value: fileToSelect,
+                children: [],
+            } as any),
+            new TreeviewItem({
+                checked: false,
+                text: otherFile,
+                value: otherFile,
+                children: [],
+            }),
+        ];
+        comp.selectedFile = undefined;
+        const nodeFirstFile = comp.filesTreeViewItem[0];
+        comp.handleNodeSelected(nodeFirstFile);
+        expect(nodeFirstFile.checked).toBeTrue();
+        expect(comp.selectedFile).toBe(fileToSelect);
+        // Deselect the current file.
+        const nodeSecondFile = comp.filesTreeViewItem[1];
+        comp.handleNodeSelected(nodeSecondFile);
+        expect(nodeFirstFile.checked).toBeFalse();
+        expect(nodeSecondFile.checked).toBeTrue();
+        expect(comp.selectedFile).toBe(otherFile);
     });
 
     it('should set node to checked if its file gets selected and update ui', () => {
@@ -503,6 +558,26 @@ describe('CodeEditorFileBrowserComponent', () => {
         fixture.detectChanges();
         expect(onErrorSpy).toHaveBeenCalledOnce();
         expect(createFileStub).not.toHaveBeenCalled();
+    });
+
+    it('should manage the root file/folder it is currently creating', () => {
+        comp.setCreatingFileInRoot(FileType.FILE);
+        expect(comp.creatingFile).toEqual(['', FileType.FILE]);
+        comp.setCreatingFileInRoot(FileType.FOLDER);
+        expect(comp.creatingFile).toEqual(['', FileType.FOLDER]);
+        comp.clearCreatingFile();
+        expect(comp.creatingFile).toBeUndefined();
+    });
+
+    it('should manage the file/folder it is currently creating within another folder', () => {
+        const folder = 'folder';
+        const item = { value: folder } as TreeviewItem<string>;
+        comp.setCreatingFile({ item, fileType: FileType.FILE });
+        expect(comp.creatingFile).toEqual([folder, FileType.FILE]);
+        comp.setCreatingFile({ item, fileType: FileType.FOLDER });
+        expect(comp.creatingFile).toEqual([folder, FileType.FOLDER]);
+        comp.clearCreatingFile();
+        expect(comp.creatingFile).toBeUndefined();
     });
 
     it('should update repository file entry on rename', fakeAsync(() => {
@@ -761,6 +836,18 @@ describe('CodeEditorFileBrowserComponent', () => {
         expect(renamingInput).toBeNull();
     }));
 
+    it('should manage the file it is currently renaming', () => {
+        comp.repositoryFiles = {
+            'folder/file1': FileType.FILE,
+            folder: FileType.FOLDER,
+        };
+        const item = { value: 'folder/file1', text: 'file1' } as TreeviewItem<string>;
+        comp.setRenamingFile(item);
+        expect(comp.renamingFile).toEqual(['folder/file1', 'file1', FileType.FILE]);
+        comp.clearRenamingFile();
+        expect(comp.renamingFile).toBeUndefined();
+    });
+
     it('should disable action buttons if there is a git conflict', () => {
         const repositoryContent: { [fileName: string]: string } = {};
         getStatusStub.mockReturnValue(of({ repositoryStatus: CommitState.CONFLICT }));
@@ -806,6 +893,7 @@ describe('CodeEditorFileBrowserComponent', () => {
         const filteredChangeInformation = {
             'Class.java': true,
             'Document.md': false,
+            'README.md': true,
         };
         const getFilesWithChangeInfoStub = jest.fn().mockReturnValue(of(changeInformation));
         codeEditorRepositoryFileService.getFilesWithInformationAboutChange = getFilesWithChangeInfoStub;
@@ -820,6 +908,21 @@ describe('CodeEditorFileBrowserComponent', () => {
 
         loadFiles.unsubscribe();
     }));
+
+    it('should open a modal when trying to delete a file', () => {
+        comp.repositoryFiles = {
+            'folder/file1': FileType.FILE,
+            folder: FileType.FOLDER,
+        };
+        const item = { value: 'folder/file1', text: 'file1' } as TreeviewItem<string>;
+        const modalRef = { componentInstance: { parent: undefined, fileNameToDelete: undefined, fileType: undefined } } as NgbModalRef;
+        const openModalStub = jest.spyOn(comp.modalService, 'open').mockReturnValue(modalRef);
+        comp.openDeleteFileModal(item);
+        expect(openModalStub).toHaveBeenCalledOnce();
+        expect(modalRef.componentInstance.parent).toBe(comp);
+        expect(modalRef.componentInstance.fileNameToDelete).toBe('folder/file1');
+        expect(modalRef.componentInstance.fileType).toBe(FileType.FILE);
+    });
 
     describe('getFolderBadges', () => {
         // Mock fileBadges data

@@ -1,4 +1,3 @@
-import * as ace from 'brace';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
@@ -19,7 +18,7 @@ import { TeamsExportButtonComponent } from 'app/exercises/shared/team/teams-impo
 import { TeamsImportButtonComponent } from 'app/exercises/shared/team/teams-import-dialog/teams-import-button.component';
 import { TeamUpdateButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TeamStudentsListComponent } from 'app/exercises/shared/team/team-participate/team-students-list.component';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { TeamDeleteButtonComponent } from 'app/exercises/shared/team/team-update-dialog/team-delete-button.component';
@@ -27,9 +26,6 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { teamRoute } from 'app/exercises/shared/team/team.route';
 
 describe('TeamsComponent', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist.js');
-
     let comp: TeamsComponent;
     let fixture: ComponentFixture<TeamsComponent>;
     let debugElement: DebugElement;

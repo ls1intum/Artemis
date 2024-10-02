@@ -1,4 +1,3 @@
-import * as ace from 'brace';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
@@ -15,10 +14,10 @@ import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
@@ -86,8 +85,6 @@ function addFeedbackAndValidateScore(comp: CodeEditorTutorAssessmentContainerCom
 }
 
 describe('CodeEditorTutorAssessmentContainerComponent', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist.js');
     let comp: CodeEditorTutorAssessmentContainerComponent;
     let fixture: ComponentFixture<CodeEditorTutorAssessmentContainerComponent>;
     let debugElement: DebugElement;
@@ -267,7 +264,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         // Stub
         const getFilesWithContentStub = jest.spyOn(repositoryFileService, 'getFilesWithContent');
         getFilesWithContentStub.mockReturnValue(of(templateFileSessionReturn));
-        // Stub for ace editor
+        // Stub for code editor
         const getFileStub = jest.spyOn(repositoryFileService, 'getFile');
         const fileSubject = new BehaviorSubject({ fileContent: 'new file text' });
         getFileStub.mockReturnValue(fileSubject);

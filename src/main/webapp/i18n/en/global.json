@@ -123,12 +123,13 @@
             "continueTutorial": "Continue tutorial"
         },
         "form": {
-            "username": "Username",
+            "username": "Login or email",
             "firstname": "First name",
-            "firstname.placeholder": "Your first name",
+            "firstname.placeholder": "First name",
             "lastname": "Last name",
-            "lastname.placeholder": "Your last name",
-            "username.placeholder": "Your Username",
+            "lastname.placeholder": "Last name",
+            "username.placeholder": "Login or email",
+            "username.tumPlaceholder": "e.g. go42tum / example@tum.de",
             "currentpassword": "Current password",
             "currentpassword.placeholder": "Current password",
             "newpassword": "New password",
@@ -320,7 +321,9 @@
         "timeZoneWarning": "You are currently in the {{ timeZone }} time zone.",
         "dateMissingOrNotValid": "'{{labelName}}' is missing/invalid",
         "startDateError": "'Start of working time' should be between 'Visible from' and 'End of working time'",
-        "endDateError": "'End of working time' should be later than 'Start of working time'"
+        "endDateError": "'End of working time' should be later than 'Start of working time'",
+        "warningError": "'Visible from' is set too early. We recommend setting it within 4 hours before the 'Start of working time'.",
+        "warningToolTip": "Setting the date too early may cause confusion and lead to premature access to exam materials. It is recommended to make the exam visible only a few hours before the start time."
     },
     "aboutUs": "About",
     "contact": "Contact us",

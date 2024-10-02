@@ -167,7 +167,7 @@ examples.forEach((activeConversation) => {
             expect(section).toBeFalsy();
         }
 
-        function genericEditPropertyDialogTest(sectionName: string, expectedComponentInstance: object) {
+        function genericEditPropertyDialogTest(sectionName: string, expectedComponentInstance: any) {
             const button = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
             const modalService = TestBed.inject(NgbModal);
             const mockModalRef = {
@@ -191,23 +191,23 @@ examples.forEach((activeConversation) => {
                 expect(openDialogSpy).toHaveBeenCalledOnce();
                 expect(openDialogSpy).toHaveBeenCalledWith(GenericUpdateTextPropertyDialogComponent, defaultSecondLayerDialogOptions);
                 for (const [key, value] of Object.entries(expectedComponentInstance)) {
-                    expect(mockModalRef.componentInstance[key]).toEqual(value);
+                    expect(mockModalRef.componentInstance[key as keyof typeof mockModalRef.componentInstance]).toEqual(value);
                 }
                 if (isGroupChatDTO(activeConversation)) {
                     const expectedUpdateDTO = new GroupChatDTO();
-                    expectedUpdateDTO[expectedComponentInstance['propertyName']] = 'updated';
+                    (expectedUpdateDTO as any)[expectedComponentInstance['propertyName']] = 'updated';
                     expect(updateGroupChatSpy).toHaveBeenCalledOnce();
                     expect(updateGroupChatSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);
                 }
 
                 if (isChannelDTO(activeConversation)) {
                     const expectedUpdateDTO = new ChannelDTO();
-                    expectedUpdateDTO[expectedComponentInstance['propertyName']] = 'updated';
+                    (expectedUpdateDTO as any)[expectedComponentInstance['propertyName']] = 'updated';
                     expect(updateChannelSpy).toHaveBeenCalledOnce();
                     expect(updateChannelSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);
                 }
 
-                expect(activeConversation[expectedComponentInstance['propertyName']]).toBe('updated');
+                expect((activeConversation as any)[expectedComponentInstance['propertyName']]).toBe('updated');
             });
         }
     });

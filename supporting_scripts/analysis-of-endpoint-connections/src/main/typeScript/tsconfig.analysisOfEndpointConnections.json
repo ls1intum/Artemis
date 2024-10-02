@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "module": "CommonJS",
+        "target": "es2022",
+        "lib": ["es2022", "dom"],
+        "types": ["node"],
+        "moduleResolution": "node"
+    },
+    "include": ["AnalysisOfEndpointConnectionsClient.ts", "Preprocessor.ts", "Postprocessor.ts"],
+    "exclude": ["node_modules"]
+}

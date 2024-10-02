@@ -27,7 +27,7 @@ import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-score
 import { ArtemisComplaintsForTutorModule } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.module';
 import { ArtemisFileUploadAssessmentModule } from 'app/exercises/file-upload/assess/file-upload-assessment.module';
 import { ArtemisModelingAssessmentEditorModule } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.module';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisModelingExerciseModule } from 'app/exercises/modeling/manage/modeling-exercise.module';
 import { ArtemisTextExerciseModule } from 'app/exercises/text/manage/text-exercise/text-exercise.module';
@@ -69,6 +69,7 @@ import { BuildQueueComponent } from 'app/localci/build-queue/build-queue.compone
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ImageCropperModalComponent } from 'app/course/manage/image-cropper-modal.component';
 import { HeaderCourseComponent } from 'app/overview/header-course.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 @NgModule({
     imports: [
@@ -122,6 +123,7 @@ import { HeaderCourseComponent } from 'app/overview/header-course.component';
         IrisModule,
         DetailModule,
         SubmissionResultStatusModule,
+        ArtemisMarkdownEditorModule,
     ],
     declarations: [
         CourseManagementComponent,

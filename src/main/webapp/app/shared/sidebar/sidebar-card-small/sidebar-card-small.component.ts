@@ -4,6 +4,7 @@ import { SidebarCardElement, SidebarTypes } from 'app/types/sidebar';
 import { SidebarEventService } from '../sidebar-event.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
+
 @Component({
     selector: 'jhi-small-sidebar-card',
     templateUrl: './sidebar-card-small.component.html',

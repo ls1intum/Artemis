@@ -53,13 +53,9 @@
             <ngx-datatable-column [minWidth]="120" [width]="120" [maxWidth]="120" [frozenLeft]="true">
                 <ng-template ngx-datatable-cell-template let-value="row">
                     @if (exercise.id !== value.id) {
-                        <a (click)="onActivate()" [routerLink]="['/courses', course.id, 'exercises', value.id, 'teams', value.team.id]">
-                            {{ 'entity.action.view' | artemisTranslate }}
-                        </a>
+                        <a (click)="onActivate()" [routerLink]="['/courses', course.id, 'exercises', value.id, 'teams', value.team.id]" jhiTranslate="entity.action.view"></a>
                     } @else {
-                        <span class="current-team">
-                            {{ 'entity.action.view' | artemisTranslate }}
-                        </span>
+                        <span class="current-team" jhiTranslate="entity.action.view"></span>
                     }
                 </ng-template>
             </ngx-datatable-column>
@@ -67,9 +63,7 @@
                 <ngx-datatable-column prop="participation" [minWidth]="150" [width]="150" [maxWidth]="150">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('id')">
-                            <span class="datatable-header-cell-label bold sortable">
-                                {{ 'artemisApp.team.detail.participationsTable.columns.participationId.label' | artemisTranslate }}
-                            </span>
+                            <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.team.detail.participationsTable.columns.participationId.label"></span>
                             <fa-icon [icon]="controls.iconForSortPropField('id')" />
                         </span>
                     </ng-template>

@@ -7,7 +7,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
-import { CommitInfo } from 'app/entities/programming-submission.model';
+import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
@@ -20,17 +20,44 @@ describe('CommitsInfoComponent', () => {
     let programmingExerciseParticipationServiceSpy: jest.SpyInstance;
     let profileService: ProfileService;
     let profileServiceSpy: jest.SpyInstance;
+
     const commitInfo1 = {
         hash: '123',
         author: 'author',
-        timestamp: dayjs('2021-01-02'),
+        timestamp: dayjs('2021-01-01'),
         message: 'commit message',
     } as CommitInfo;
     const commitInfo2 = {
         hash: '456',
-        author: 'author2',
-        timestamp: dayjs('2021-01-01'),
+        author: 'author',
+        timestamp: dayjs('2021-01-02'),
         message: 'other message',
+        result: { successful: true },
+    } as CommitInfo;
+    const commitInfo3 = {
+        hash: '789',
+        author: 'author',
+        timestamp: dayjs('2021-01-03'),
+        message: 'another message',
+    } as CommitInfo;
+    const commitInfo4 = {
+        hash: '012',
+        author: 'author',
+        timestamp: dayjs('2021-01-04'),
+        message: 'yet another message',
+        result: { successful: false },
+    } as CommitInfo;
+    const commitInfo5 = {
+        hash: '890',
+        author: 'author',
+        timestamp: dayjs('2021-01-05'),
+        message: 'another message',
+    } as CommitInfo;
+    const commitInfo6 = {
+        hash: '014',
+        author: 'author',
+        timestamp: dayjs('2021-01-06'),
+        message: 'yet another message',
     } as CommitInfo;
 
     beforeEach(() => {
@@ -44,7 +71,7 @@ describe('CommitsInfoComponent', () => {
         programmingExerciseParticipationService = TestBed.inject(ProgrammingExerciseParticipationService);
         programmingExerciseParticipationServiceSpy = jest
             .spyOn(programmingExerciseParticipationService, 'retrieveCommitsInfoForParticipation')
-            .mockReturnValue(of([commitInfo2, commitInfo1] as CommitInfo[]));
+            .mockReturnValue(of([commitInfo1, commitInfo2, commitInfo3, commitInfo4, commitInfo5, commitInfo6] as CommitInfo[]));
         profileService = TestBed.inject(ProfileService);
         profileServiceSpy = jest
             .spyOn(profileService, 'getProfileInfo')
@@ -55,11 +82,27 @@ describe('CommitsInfoComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should call participation service to retrieve commits onInit if no commits are passed as input and sort the commits descending by timestamp', () => {
+    it('should call participation service to retrieve commits onInit if no commits are passed as input, group commits by push, and sort the grouped commits descending by timestamp', () => {
         component.participationId = 1;
         component.ngOnInit();
         expect(programmingExerciseParticipationServiceSpy).toHaveBeenCalledExactlyOnceWith(1);
-        expect(component.commits).toEqual([commitInfo1, commitInfo2]);
+        expect((component as any).groupedCommits).toEqual([
+            {
+                key: 'no-result',
+                commits: [commitInfo6, commitInfo5],
+                date: '2021-01-06',
+            },
+            {
+                key: '2021-01-04-author',
+                commits: [commitInfo4, commitInfo3],
+                date: '2021-01-04',
+            },
+            {
+                key: '2021-01-02-author',
+                commits: [commitInfo2, commitInfo1],
+                date: '2021-01-02',
+            },
+        ]);
     });
 
     it('should do nothing onInit if commits are passed as input', () => {

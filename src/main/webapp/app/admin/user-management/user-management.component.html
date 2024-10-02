@@ -45,6 +45,7 @@
                         </div>
                         <div class="col p-0">
                             <div class="d-flex justify-content-center justify-content-md-end">
+                                <jhi-delete-users-button (deletionCompleted)="this.deleteNotEnrolledUsersComplete()" />
                                 <button
                                     jhiDeleteButton
                                     [buttonSize]="medium"
@@ -63,9 +64,11 @@
                                     [ngClass]="{ 'btn-secondary': !filters.numberOfAppliedFilters, 'btn-success': !!filters.numberOfAppliedFilters }"
                                 >
                                     <fa-icon [icon]="faFilter" />
-                                    <span class="d-s-none d-md-inline">{{
-                                        'artemisApp.userManagement.filter.modal.open' | artemisTranslate: { num: filters.numberOfAppliedFilters }
-                                    }}</span>
+                                    <span
+                                        class="d-s-none d-md-inline"
+                                        jhiTranslate="artemisApp.userManagement.filter.modal.open"
+                                        [translateValues]="{ num: filters.numberOfAppliedFilters }"
+                                    ></span>
                                 </button>
                             </div>
                         </div>
@@ -227,14 +230,14 @@
 <!-- Modal -->
 <ng-template #content let-modal>
     <div class="modal-header">
-        <h5 class="modal-title">{{ 'artemisApp.userManagement.filter.modal.title' | artemisTranslate }}</h5>
+        <h5 class="modal-title" jhiTranslate="artemisApp.userManagement.filter.modal.title"></h5>
         <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
     </div>
     <div class="modal-body">
         <div class="container-fluid">
             <div class="row user-management-border-bottom">
                 <div class="col d-flex flex-row pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.authority.title' | artemisTranslate: { num: this.filters.authorityFilter.size } }}</h5>
+                    <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.authority.title" [translateValues]="{ num: this.filters.authorityFilter.size }"></h5>
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.tooltip" />
                 </div>
             </div>
@@ -250,9 +253,7 @@
                                     (click)="selectAllRoles()"
                                     [checked]="this.filters.authorityFilter.size === this.authorityFilters.length && !this.filters.noAuthority"
                                 />
-                                <label for="authorityFilter" class="form-check-label ps-1">
-                                    {{ 'artemisApp.userManagement.filter.all' | artemisTranslate }}
-                                </label>
+                                <label for="authorityFilter" class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.all"></label>
                             </div>
                             <div class="form-check col-6 d-flex justify-content-center">
                                 <input
@@ -262,9 +263,7 @@
                                     (click)="selectEmptyRoles()"
                                     [checked]="this.filters.authorityFilter.size === 0 && this.filters.noAuthority"
                                 />
-                                <label for="emptyRoles" class="form-check-label ps-1">
-                                    {{ 'artemisApp.userManagement.filter.authority.without' | artemisTranslate }}
-                                </label>
+                                <label for="emptyRoles" class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.authority.without"></label>
                                 <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.authority.withoutTooltip" />
                             </div>
                             <div class="form-check col-3 d-flex justify-content-center">
@@ -275,9 +274,7 @@
                                     (click)="deselectAllRoles()"
                                     [checked]="this.filters.authorityFilter.size === 0 && !this.filters.noAuthority"
                                 />
-                                <label for="deselectAll" class="form-check-label ps-1">
-                                    {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
-                                </label>
+                                <label for="deselectAll" class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                             </div>
                         </div>
                     </div>
@@ -304,7 +301,7 @@
             </div>
             <div class="row row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.origin.title' | artemisTranslate: { num: this.filters.originFilter.size } }}</h5>
+                    <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.origin.title" [translateValues]="{ num: this.filters.originFilter.size }"></h5>
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.origin.tooltip" />
                 </div>
             </div>
@@ -321,16 +318,18 @@
                         }
                         <li class="col-3">
                             <input class="form-check-input" type="radio" (click)="this.toggleOriginFilter()" [checked]="this.filters.originFilter.size === 0" />
-                            <label class="form-check-label ps-1">
-                                {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
-                            </label>
+                            <label class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                         </li>
                     </ul>
                 </div>
             </div>
             <div class="row row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.registrationNumber.title' | artemisTranslate: { num: this.filters.registrationNumberFilter.size } }}</h5>
+                    <h5
+                        class="my-0"
+                        jhiTranslate="artemisApp.userManagement.filter.registrationNumber.title"
+                        [translateValues]="{ num: this.filters.registrationNumberFilter.size }"
+                    ></h5>
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.registrationNumber.tooltip" />
                 </div>
             </div>
@@ -360,16 +359,14 @@
                                 (click)="this.toggleRegistrationNumberFilter()"
                                 [checked]="this.filters.registrationNumberFilter.size === 0"
                             />
-                            <label for="toggleRegistrationNumberFilter" class="form-check-label ps-1">
-                                {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
-                            </label>
+                            <label for="toggleRegistrationNumberFilter" class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                         </li>
                     </ul>
                 </div>
             </div>
             <div class="row user-management-border-bottom">
                 <div class="col d-flex flex-row pt-3 pb-1">
-                    <h5 class="my-0">{{ 'artemisApp.userManagement.filter.status.title' | artemisTranslate: { num: this.filters.statusFilter.size } }}</h5>
+                    <h5 class="my-0" jhiTranslate="artemisApp.userManagement.filter.status.title" [translateValues]="{ num: this.filters.statusFilter.size }"></h5>
                     <jhi-help-icon class="ps-1" text="artemisApp.userManagement.filter.status.tooltip" />
                 </div>
             </div>
@@ -386,9 +383,7 @@
                         }
                         <li class="col-3">
                             <input class="form-check-input" type="radio" (click)="this.toggleStatusFilter()" [checked]="this.filters.statusFilter.size === 0" />
-                            <label class="form-check-label ps-1">
-                                {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
-                            </label>
+                            <label class="form-check-label ps-1" jhiTranslate="artemisApp.userManagement.filter.none"></label>
                         </li>
                     </ul>
                 </div>
@@ -396,9 +391,7 @@
         </div>
     </div>
     <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" (click)="modal.close()">
-            {{ 'artemisApp.userManagement.filter.modal.close' | artemisTranslate }}
-        </button>
+        <button type="button" class="btn btn-secondary" (click)="modal.close()" jhiTranslate="artemisApp.userManagement.filter.modal.close"></button>
         <button class="btn btn-primary" (click)="applyFilter()">
             <span jhiTranslate="artemisApp.userManagement.filter.apply"></span>
         </button>

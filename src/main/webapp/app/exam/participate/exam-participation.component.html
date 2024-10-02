@@ -18,10 +18,12 @@
         @if (isVisible() && isActive() && !isOver() && examStartConfirmed) {
             <div class="exam-background-wrapper" [ngClass]="{ 'py-2': testRunId }">
                 <jhi-exam-bar
-                    [examTitle]="exam.title!"
+                    [exam]="exam"
+                    [studentExam]="studentExam"
                     [endDate]="individualStudentEndDate"
                     [exerciseIndex]="exerciseIndex"
-                    [exercises]="studentExam.exercises!"
+                    [isEndView]="false"
+                    [examStartDate]="exam.startDate!"
                     (examAboutToEnd)="examEnded()"
                     (onExamHandInEarly)="toggleHandInEarly()"
                     (heightChange)="updateHeight($event)"
@@ -94,9 +96,11 @@
                             @if ((generateParticipationStatus | async) === 'failed') {
                                 <div class="d-flex justify-content-center align-items-center">
                                     <p class="mb-0" jhiTranslate="artemisApp.examParticipation.generateParticipationFailed"></p>
-                                    <button class="btn btn-sm btn-primary px-3 ms-2" (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()">
-                                        {{ 'artemisApp.examParticipation.generateParticipationRetry' | artemisTranslate }}
-                                    </button>
+                                    <button
+                                        class="btn btn-sm btn-primary px-3 ms-2"
+                                        (click)="createParticipationForExercise(this.activeExamPage.exercise!).subscribe()"
+                                        jhiTranslate="artemisApp.examParticipation.generateParticipationRetry"
+                                    ></button>
                                 </div>
                             }
 
@@ -139,19 +143,49 @@
             </div>
         }
         @if (!studentExam.submitted && ((isOver() && examStartConfirmed) || isGracePeriodOver())) {
-            <div class="p-3">
-                <jhi-exam-participation-cover
-                    [startView]="false"
-                    [exam]="exam"
-                    [studentExam]="studentExam"
-                    [handInEarly]="handInEarly"
-                    [handInPossible]="handInPossible"
-                    [submitInProgress]="submitInProgress"
-                    [attendanceChecked]="attendanceChecked"
-                    (onExamEnded)="onExamEndConfirmed()"
-                    (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
-                />
-            </div>
+            @if (!studentFailedToSubmit) {
+                <div class="exam-background-wrapper" [ngClass]="{ 'py-2': testRunId }">
+                    <jhi-exam-bar
+                        [endDate]="individualStudentEndDateWithGracePeriod"
+                        [exerciseIndex]="exerciseIndex"
+                        [isEndView]="true"
+                        [examStartDate]="exam.startDate!"
+                        [exam]="exam"
+                        [studentExam]="studentExam"
+                        [testRunStartTime]="testStartTime"
+                        (examAboutToEnd)="examEnded()"
+                        (onExamHandInEarly)="toggleHandInEarly()"
+                        (heightChange)="updateHeight($event)"
+                    />
+
+                    <div
+                        class="module-bg rounded-3 px-3 pt-3 end-view content-exam-height"
+                        [ngClass]="{ 'content-exam-height-dev content-exam-height-testRun-dev': !isProduction || isTestServer, 'content-exam-height-testRun': testRunId }"
+                    >
+                        <jhi-exam-participation-cover
+                            [startView]="false"
+                            [exam]="exam"
+                            [studentExam]="studentExam"
+                            [handInEarly]="handInEarly"
+                            [handInPossible]="handInPossible"
+                            [submitInProgress]="submitInProgress"
+                            [attendanceChecked]="attendanceChecked"
+                            (onExamEnded)="onExamEndConfirmed()"
+                            (onExamContinueAfterHandInEarly)="toggleHandInEarly()"
+                        />
+                    </div>
+                </div>
+            } @else {
+                <!-- Display submission not in time view -->
+                <div class="d-flex justify-content-between">
+                    <div class="col-12 text-center my-auto">
+                        <h3 class="mt-2">{{ exam.title }}</h3>
+                        <div class="mb-2 font-weight-bold text-danger">
+                            <span jhiTranslate="artemisApp.studentExam.submissionNotInTime"></span>
+                        </div>
+                    </div>
+                </div>
+            }
         }
         @if (this.studentExam?.submitted && !showExamSummary && !loadingExam) {
             <div class="submissionSuccessfulHint pb-3">

@@ -40,7 +40,7 @@
                         @if (currentTourStep.headlineTranslateKey) {
                             <h3 class="headline">
                                 @if (!guidedTourService.isOnResizeMessage && guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1) {
-                                    <span>{{ 'tour.step' | artemisTranslate: { string: guidedTourService.getCurrentStepString() } }} </span>
+                                    <span jhiTranslate="tour.step" [translateValues]="{ string: guidedTourService.getCurrentStepString() }"></span>
                                 }
                                 {{ currentTourStep.headlineTranslateKey | artemisTranslate }}
                             </h3>
@@ -92,7 +92,7 @@
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK) {
                                             <fa-icon [icon]="faHandPointUp" />
                                         }
-                                        @if (currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR) {
+                                        @if (currentTourStep.userInteractionEvent === UserInteractionEvent.MONACO_EDITOR) {
                                             <fa-icon [icon]="faICursor" />
                                         }
                                         @if (currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR) {
@@ -110,7 +110,7 @@
                                     @if (currentTourStep.userInteractionEvent === UserInteractionEvent.CLICK) {
                                         <span [jhiTranslate]="'tour.clickHint.text'"></span>
                                     }
-                                    @if (currentTourStep.userInteractionEvent === UserInteractionEvent.ACE_EDITOR) {
+                                    @if (currentTourStep.userInteractionEvent === UserInteractionEvent.MONACO_EDITOR) {
                                         <span [jhiTranslate]="'tour.typeHint.text'"></span>
                                     }
                                     @if (currentTourStep.userInteractionEvent === UserInteractionEvent.WAIT_FOR_SELECTOR) {

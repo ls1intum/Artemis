@@ -58,21 +58,12 @@ artemis:
     #        ssh-private-key-folder-path: <ssh-private-key-folder-path>       # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored that can be used to clone git repos on the version control server
     #        ssh-private-key-password: <ssh-private-key-password>        # the password for the private ssh key
     default-branch: main            # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
-    version-control-access-token: false # only for Gitlab setups: a Gitlab-API token can be generated for each user and used as part of the Git clone URL shown to students to allow for password-less Git operations via HTTP
+    use-version-control-access-token: true # for Gitlab and LocalVC setups. For gitlab: a Gitlab-API token can be generated for each user and used as part of the Git clone URL shown to students to allow for password-less Git operations via HTTP. For LocalVC: Artemis generates access tokens for users to use repositories similar to the gitlab setup
   continuous-integration:
     user: <username>                # e.g. ga12abc
     password: <password>
     token: <token>                  # Enter a valid token generated in the CI system giving Artemis full Admin access
     url: <url>
-    # Some CI systems, like Jenkins, offer a specific token that gets checked against any incoming notifications
-    # from a VCS trying to trigger a build plan. Only if the notification request contains the correct token, the plan
-    # is triggered. This can be seen as an alternative to sending an authenticated request to a REST API and then
-    # triggering the plan.
-    # In the case of Artemis, this is only really needed for the Jenkins + GitLab setup, since the GitLab plugin in
-    # Jenkins only allows triggering the Jenkins jobs using such a token. Furthermore, in this case, the value of the
-    # hudson.util.Secret is stored in the build plan, so you also have to specify this encrypted string here and NOT the actual token value itself!
-    # You can retrieve this by getting any job.xml for a job with an activated GitLab step and your token value of choice.
-    secret-push-token: <token hash>
     # Key of the saved credentials for the VCS service
     # GitLab CI: not needed
     # Jenkins: You have to specify the key from the credentials page in Jenkins under which the user and
@@ -90,7 +81,7 @@ artemis:
     notification-plugin: "ls1tum/artemis-notification-plugin:1.0.0" # Docker image for the generic notification plugin. This value is set in an CI variable in GitLab CI.
     build-log:
       file-expiry-days: 30 # The amount of days until build log files can be deleted
-      cleanup-schedule: 0 0 3 1 * ? # Cron expression for schedule to delete old build log files
+      cleanup-schedule: 0 0 3 * * ? # Cron expression for schedule to delete old build log files
   git:
     name: Artemis
     email: artemis@xcit.tum.de

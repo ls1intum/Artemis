@@ -4,17 +4,17 @@
             <div class="plagiarism-header-top-left">
                 <h4 class="plagiarism-page-title fw-medium" (click)="showOptions = !showOptions" [class.active]="showOptions">
                     <fa-icon class="plagiarism-options-toggle" [icon]="faChevronRight" />
-                    <span>{{ 'artemisApp.plagiarism.plagiarismDetection' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection"></span>
                 </h4>
                 <div class="plagiarism-warning">
                     <fa-icon [icon]="faExclamationTriangle" id="plagiarismCaution" />
-                    <span>{{ 'artemisApp.plagiarism.caution' | artemisTranslate }}</span>
+                    <span jhiTranslate="artemisApp.plagiarism.caution"></span>
                 </div>
             </div>
             <div class="plagiarism-header-top-right">
                 @if (chartFilterApplied) {
                     <button class="check-plagiarism btn btn-info" (click)="resetFilter()">
-                        <span>{{ 'artemisApp.plagiarism.resetFilter' | artemisTranslate }}</span>
+                        <span jhiTranslate="artemisApp.plagiarism.resetFilter"></span>
                     </button>
                 }
                 <button
@@ -23,7 +23,7 @@
                     (click)="checkPlagiarism()"
                     [overwriteDisabled]="detectionInProgress"
                 >
-                    <span>{{ plagiarismResult ? ('artemisApp.plagiarism.rerun' | artemisTranslate) : ('artemisApp.plagiarism.detect' | artemisTranslate) }}</span>
+                    <span jhiTranslate="{{ plagiarismResult ? 'artemisApp.plagiarism.rerun' : 'artemisApp.plagiarism.detect' }}"></span>
                 </button>
                 <ng-template #toggleDeleteModal let-modal>
                     <div class="modal-header">
@@ -42,9 +42,7 @@
                                 [checked]="deleteAllPlagiarismComparisons"
                                 (change)="toggleDeleteAllPlagiarismComparisons()"
                             />
-                            <label for="deleteAllPlagiarismComparisons" class="form-check-label">{{
-                                'artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll' | artemisTranslate
-                            }}</label>
+                            <label for="deleteAllPlagiarismComparisons" class="form-check-label" jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.deleteAll"></label>
                         </div>
                         @if (deleteAllPlagiarismComparisons) {
                             <p jhiTranslate="artemisApp.plagiarism.cleanUp.confirmDialog.warning" class="text-warning"></p>
@@ -140,9 +138,7 @@
                 </div>
             }
             @if (!detectionInProgress) {
-                <span class="plagiarism-empty-label">
-                    {{ 'artemisApp.plagiarism.empty' | artemisTranslate }}
-                </span>
+                <span class="plagiarism-empty-label" jhiTranslate="artemisApp.plagiarism.empty"></span>
             }
         </div>
     }

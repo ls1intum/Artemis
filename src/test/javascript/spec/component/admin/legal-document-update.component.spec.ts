@@ -6,7 +6,6 @@ import { UnsavedChangesWarningComponent } from 'app/admin/legal/unsaved-changes-
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { MockLanguageHelper } from '../../helpers/mocks/service/mock-translate.service';
@@ -19,6 +18,7 @@ import { ActivatedRoute, UrlSegment } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PrivacyStatement } from 'app/entities/privacy-statement.model';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('LegalDocumentUpdateComponent', () => {
     let component: LegalDocumentUpdateComponent;
@@ -35,7 +35,7 @@ describe('LegalDocumentUpdateComponent', () => {
                 MockComponent(UnsavedChangesWarningComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(TranslateDirective),
-                MockComponent(MarkdownEditorComponent),
+                MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(ModePickerComponent),
                 MockPipe(ArtemisTranslatePipe),
             ],
@@ -117,7 +117,7 @@ describe('LegalDocumentUpdateComponent', () => {
     it('should correctly determine unsaved changes', () => {
         component.unsavedChanges = false;
         component.legalDocument.text = 'text';
-        component.checkUnsavedChanges('changed text');
+        component.onContentChanged('changed text');
         expect(component.unsavedChanges).toBeTrue();
     });
 
@@ -135,7 +135,7 @@ describe('LegalDocumentUpdateComponent', () => {
                 updateFile = jest.spyOn(legalDocumentService, 'updateImprint').mockReturnValue(of(returnValue));
             }
             component.markdownEditor.markdown = 'text';
-            component.unsavedChanges = true;
+            component.onContentChanged('text');
             const expected = new LegalDocument(documentType, LegalDocumentLanguage.GERMAN);
             expected.text = 'text';
             fixture.detectChanges();
@@ -149,13 +149,12 @@ describe('LegalDocumentUpdateComponent', () => {
             expect(component.unsavedChanges).toBeFalse();
         }),
     );
-    it('should set the value of the markdown editor when switching to the edit mode if the language is changed while in preview mode', () => {
+    it('should set the value of the markdown editor when the language is changed while in preview mode', () => {
         setupRoutes(LegalDocumentType.PRIVACY_STATEMENT);
         const returnValue = new PrivacyStatement(LegalDocumentLanguage.GERMAN);
         returnValue.text = 'new content';
-        const updateTextOnEditSelect = jest.spyOn(component, 'updateTextIfLanguageChangedInPreview').mockImplementation();
+        const parseMarkdownStub = jest.spyOn(component.markdownEditor, 'parseMarkdown').mockImplementation();
         component.markdownEditor.markdown = 'text';
-        component.markdownEditor.previewMode = true;
         component.unsavedChanges = false;
         component.ngOnInit();
         const loadFile = jest.spyOn(legalDocumentService, 'getPrivacyStatementForUpdate').mockReturnValue(of(returnValue));
@@ -164,7 +163,7 @@ describe('LegalDocumentUpdateComponent', () => {
         expect(loadFile).toHaveBeenCalledOnce();
         expect(component.legalDocument.text).toBe('new content');
         component.markdownEditor.onEditSelect.emit();
-        expect(updateTextOnEditSelect).toHaveBeenCalledOnce();
+        expect(parseMarkdownStub).toHaveBeenCalledOnce();
     });
 
     function setupRoutes(documentType: LegalDocumentType) {

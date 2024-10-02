@@ -1,18 +1,18 @@
 import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
-import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';
-import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedback.command';
-import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { GradingScaleCommand } from 'app/shared/markdown-editor/domainCommands/gradingScaleCommand';
-import { GradingInstructionCommand } from 'app/shared/markdown-editor/domainCommands/gradingInstruction.command';
-import { InstructionDescriptionCommand } from 'app/shared/markdown-editor/domainCommands/instructionDescription.command';
-import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
+import { GradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-credits.action';
+import { GradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-scale.action';
+import { GradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-description.action';
+import { GradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-feedback.action';
+import { GradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
+import { MarkdownEditorHeight, MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { GradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
+import { GradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
@@ -20,51 +20,51 @@ import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./grading-instructions-details.component.scss'],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
-    /** Ace Editor configuration constants **/
-    markdownEditorText = '';
     @ViewChildren('markdownEditors')
-    private markdownEditors: QueryList<MarkdownEditorComponent>;
+    private markdownEditors: QueryList<MarkdownEditorMonacoComponent>;
     @ViewChild('markdownEditor', { static: false })
-    private markdownEditor: MarkdownEditorComponent;
+    private markdownEditor: MarkdownEditorMonacoComponent;
     @Input()
     exercise: Exercise;
     private instructions: GradingInstruction[];
     private criteria: GradingCriterion[];
 
     backupExercise: Exercise;
-
-    gradingCriterionCommand = new GradingCriterionCommand();
-    gradingInstructionCommand = new GradingInstructionCommand();
-    creditsCommand = new CreditsCommand();
-    gradingScaleCommand = new GradingScaleCommand();
-    instructionDescriptionCommand = new InstructionDescriptionCommand();
-    feedbackCommand = new FeedbackCommand();
-    usageCountCommand = new UsageCountCommand();
-
+    markdownEditorText = '';
     showEditMode: boolean;
 
-    domainCommands: DomainCommand[] = [
-        this.creditsCommand,
-        this.gradingScaleCommand,
-        this.instructionDescriptionCommand,
-        this.feedbackCommand,
-        this.usageCountCommand,
-        this.gradingCriterionCommand,
-        this.gradingInstructionCommand,
+    creditsAction = new GradingCreditsAction();
+    gradingScaleAction = new GradingScaleAction();
+    descriptionAction = new GradingDescriptionAction();
+    feedbackAction = new GradingFeedbackAction();
+    usageCountAction = new GradingUsageCountAction();
+    gradingInstructionAction = new GradingInstructionAction(this.creditsAction, this.gradingScaleAction, this.descriptionAction, this.feedbackAction, this.usageCountAction);
+    gradingCriterionAction = new GradingCriterionAction(this.gradingInstructionAction);
+
+    domainActionsForMainEditor = [
+        this.creditsAction,
+        this.gradingScaleAction,
+        this.descriptionAction,
+        this.feedbackAction,
+        this.usageCountAction,
+        this.gradingInstructionAction,
+        this.gradingCriterionAction,
     ];
 
-    domainCommandsGradingInstructions: DomainCommand[] = [
-        this.creditsCommand,
-        this.gradingScaleCommand,
-        this.instructionDescriptionCommand,
-        this.feedbackCommand,
-        this.usageCountCommand,
+    domainActionsForGradingInstructionParsing: TextEditorDomainAction[] = [
+        this.creditsAction,
+        this.gradingScaleAction,
+        this.descriptionAction,
+        this.feedbackAction,
+        this.usageCountAction,
     ];
 
     // Icons
     faPlus = faPlus;
     faTrash = faTrash;
     faUndo = faUndo;
+
+    protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
 
     constructor(private changeDetector: ChangeDetectorRef) {}
 
@@ -87,7 +87,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.changeDetector.detectChanges();
         this.criteria!.forEach((criterion) => {
             criterion.structuredGradingInstructions.forEach((instruction) => {
-                this.markdownEditors.get(index)!.markdownTextChange(this.generateInstructionText(instruction));
+                this.markdownEditors.get(index)!.markdown = this.generateInstructionText(instruction);
                 index += 1;
             });
         });
@@ -99,10 +99,10 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         if (this.exercise.gradingCriteria) {
             for (const criterion of this.exercise.gradingCriteria) {
                 if (criterion.title == undefined) {
-                    // if it is a dummy criterion, leave out the command identifier
+                    // if it is a dummy criterion, leave out the action identifier
                     markdownText += this.generateInstructionsMarkdown(criterion);
                 } else {
-                    markdownText += GradingCriterionCommand.IDENTIFIER + criterion.title + '\n' + '\t' + this.generateInstructionsMarkdown(criterion);
+                    markdownText += `${GradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
                 }
             }
         }
@@ -130,7 +130,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     generateInstructionText(instruction: GradingInstruction): string {
         let markdownText = '';
         markdownText =
-            GradingInstructionCommand.IDENTIFIER +
+            GradingInstructionAction.IDENTIFIER +
             '\n' +
             '\t' +
             this.generateCreditsText(instruction) +
@@ -152,59 +152,52 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     generateCreditsText(instruction: GradingInstruction): string {
+        const creditsText = GradingCreditsAction.TEXT;
+        const creditsIdentifier = GradingCreditsAction.IDENTIFIER;
         if (instruction.credits == undefined) {
-            instruction.credits = parseFloat(CreditsCommand.TEXT);
-            return CreditsCommand.IDENTIFIER + ' ' + CreditsCommand.TEXT;
+            instruction.credits = parseFloat(creditsText) || 0;
         }
-        return CreditsCommand.IDENTIFIER + ' ' + instruction.credits;
+        return `${creditsIdentifier} ${instruction.credits || creditsText}`;
     }
 
     generateGradingScaleText(instruction: GradingInstruction): string {
         if (instruction.gradingScale == undefined) {
-            instruction.gradingScale = GradingScaleCommand.TEXT;
-            return GradingScaleCommand.IDENTIFIER + ' ' + GradingScaleCommand.TEXT;
+            instruction.gradingScale = GradingScaleAction.TEXT;
         }
-        return GradingScaleCommand.IDENTIFIER + ' ' + instruction.gradingScale;
+        return `${GradingScaleAction.IDENTIFIER} ${instruction.gradingScale}`;
     }
 
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
         if (instruction.instructionDescription == undefined) {
-            instruction.instructionDescription = InstructionDescriptionCommand.TEXT;
-            return InstructionDescriptionCommand.IDENTIFIER + ' ' + InstructionDescriptionCommand.TEXT;
+            instruction.instructionDescription = GradingDescriptionAction.TEXT;
         }
-        return InstructionDescriptionCommand.IDENTIFIER + ' ' + instruction.instructionDescription;
+        return `${GradingDescriptionAction.IDENTIFIER} ${instruction.instructionDescription}`;
     }
 
     generateInstructionFeedback(instruction: GradingInstruction): string {
         if (instruction.feedback == undefined) {
-            instruction.feedback = FeedbackCommand.TEXT;
-            return FeedbackCommand.IDENTIFIER + ' ' + FeedbackCommand.TEXT;
+            instruction.feedback = GradingFeedbackAction.TEXT;
         }
-        return FeedbackCommand.IDENTIFIER + ' ' + instruction.feedback;
+        return `${GradingFeedbackAction.IDENTIFIER} ${instruction.feedback}`;
     }
 
     generateUsageCount(instruction: GradingInstruction): string {
         if (instruction.usageCount == undefined) {
-            instruction.usageCount = parseInt(UsageCountCommand.TEXT, 10);
-            return UsageCountCommand.IDENTIFIER + ' ' + UsageCountCommand.TEXT;
+            instruction.usageCount = parseInt(GradingUsageCountAction.TEXT, 10) || 0;
         }
-        return UsageCountCommand.IDENTIFIER + ' ' + instruction.usageCount;
+        return `${GradingUsageCountAction.IDENTIFIER} ${instruction.usageCount}`;
     }
 
     initializeExerciseGradingInstructionText(): string {
-        if (this.exercise.gradingInstructions) {
-            return this.exercise.gradingInstructions + '\n\n';
-        } else {
-            return 'Add Assessment Instruction text here' + '\n\n';
-        }
+        return `${this.exercise.gradingInstructions || 'Add Assessment Instruction text here'}\n\n`;
     }
 
     prepareForSave(): void {
         this.cleanupExerciseGradingInstructions();
-        this.markdownEditor.parse();
+        this.markdownEditor.parseMarkdown();
         if (this.exercise.gradingInstructionFeedbackUsed) {
             this.markdownEditors.forEach((component) => {
-                component.parse();
+                component.parseMarkdown(this.domainActionsForGradingInstructionParsing);
             });
         }
     }
@@ -217,37 +210,33 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.exercise.gradingInstructions = undefined;
     }
 
-    hasCriterionCommand(domainCommands: [string, DomainCommand | null][]): boolean {
-        return domainCommands.some(([, command]) => command instanceof GradingCriterionCommand);
+    hasCriterionAction(textWithDomainActions: TextWithDomainAction[]): boolean {
+        return textWithDomainActions.some(({ action }) => action instanceof GradingCriterionAction);
     }
 
     /**
-     * @function createSubInstructionCommands
-     * @desc 1. divides the input: domainCommands in two subarrays:
-     *          instructionCommands, which consists of all stand-alone instructions
-     *          criteriaCommands, which consists of instructions that belong to a criterion
-     *       2. for each subarrray a method is called to create the criterion and instruction objects
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * Creates criterion and instruction objects based on the parsed markdown text.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
-    createSubInstructionCommands(domainCommands: [string, DomainCommand | null][]): void {
-        let instructionCommands;
-        let criteriaCommands;
-        let endOfInstructionsCommand = 0;
-        if (!this.hasCriterionCommand(domainCommands)) {
-            this.setParentForInstructionsWithNoCriterion(domainCommands);
+    createSubInstructionActions(textWithDomainActions: TextWithDomainAction[]): void {
+        let instructionActions;
+        let criterionActions;
+        let endOfInstructionsAction = 0;
+        if (!this.hasCriterionAction(textWithDomainActions)) {
+            this.setParentForInstructionsWithNoCriterion(textWithDomainActions);
         } else {
-            for (const [, command] of domainCommands) {
-                endOfInstructionsCommand++;
-                this.setExerciseGradingInstructionText(domainCommands);
-                if (command instanceof GradingCriterionCommand) {
-                    instructionCommands = domainCommands.slice(0, endOfInstructionsCommand - 1);
-                    if (instructionCommands.length !== 0) {
-                        this.setParentForInstructionsWithNoCriterion(instructionCommands);
+            for (const { action } of textWithDomainActions) {
+                endOfInstructionsAction++;
+                this.setExerciseGradingInstructionText(textWithDomainActions);
+                if (action instanceof GradingCriterionAction) {
+                    instructionActions = textWithDomainActions.slice(0, endOfInstructionsAction - 1);
+                    if (instructionActions.length !== 0) {
+                        this.setParentForInstructionsWithNoCriterion(instructionActions);
                     }
-                    criteriaCommands = domainCommands.slice(endOfInstructionsCommand - 1);
-                    if (criteriaCommands.length !== 0) {
+                    criterionActions = textWithDomainActions.slice(endOfInstructionsAction - 1);
+                    if (criterionActions.length !== 0) {
                         this.instructions = []; // resets the instructions array to be filled with the instructions of the criteria
-                        this.groupInstructionsToCriteria(criteriaCommands); // creates criterion object for each criterion and their corresponding instruction objects
+                        this.groupInstructionsToCriteria(criterionActions);
                     }
                     break;
                 }
@@ -256,14 +245,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function setParentForInstructionsWithNoCriterion
-     * @desc 1. creates a dummy criterion object for each stand-alone instruction
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * Creates a dummy grading criterion object for each instruction that does not belong to a criterion and assigns the instruction to it.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
-    setParentForInstructionsWithNoCriterion(domainCommands: [string, DomainCommand | null][]): void {
-        for (const [, command] of domainCommands) {
-            this.setExerciseGradingInstructionText(domainCommands);
-            if (command instanceof GradingInstructionCommand) {
+    setParentForInstructionsWithNoCriterion(textWithDomainActions: TextWithDomainAction[]): void {
+        for (const { action } of textWithDomainActions) {
+            this.setExerciseGradingInstructionText(textWithDomainActions);
+            if (action instanceof GradingInstructionAction) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
                 dummyCriterion.structuredGradingInstructions = [];
@@ -273,68 +261,63 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             }
         }
         this.exercise.gradingCriteria = this.criteria;
-        this.setInstructionParameters(domainCommands);
+        this.setInstructionParameters(textWithDomainActions);
     }
 
     /**
-     * @function groupInstructionsToCriteria
-     * @desc 1. creates a criterion for each GradingCriterionCommandIdentifier
-     *          and creates the instruction objects of this criterion then assigns them to their parent criterion
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * Creates a grading criterion object for each criterion action found in the parsed markdown text and assigns the corresponding grading instructions to it.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
-    groupInstructionsToCriteria(domainCommands: [string, DomainCommand | null][]): void {
-        const initialCriteriaCommands = domainCommands;
+    groupInstructionsToCriteria(textWithDomainActions: TextWithDomainAction[]): void {
+        const initialCriterionActions = textWithDomainActions;
         if (this.exercise.gradingCriteria == undefined) {
             this.exercise.gradingCriteria = [];
         }
-        for (const [text, command] of domainCommands) {
-            if (command instanceof GradingCriterionCommand) {
+        for (const { text, action } of textWithDomainActions) {
+            if (action instanceof GradingCriterionAction) {
                 const newCriterion = new GradingCriterion();
                 newCriterion.title = text;
                 this.exercise.gradingCriteria.push(newCriterion);
                 newCriterion.structuredGradingInstructions = [];
-                const modifiedArray = domainCommands.slice(1); // remove GradingCriterionCommandIdentifier after creating its criterion object
+                const arrayWithoutCriterion = textWithDomainActions.slice(1); // remove the identifier after creating its criterion object
                 let endOfCriterion = 0;
-                for (const [, instrCommand] of modifiedArray) {
+                for (const remainingTextWithDomainAction of arrayWithoutCriterion) {
+                    const instrAction = remainingTextWithDomainAction.action;
                     endOfCriterion++;
-                    if (instrCommand instanceof GradingInstructionCommand) {
+                    if (instrAction instanceof GradingInstructionAction) {
                         const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion
                         newCriterion.structuredGradingInstructions.push(newInstruction);
                         this.instructions.push(newInstruction);
                     }
-                    if (instrCommand instanceof GradingCriterionCommand) {
-                        domainCommands = domainCommands.slice(endOfCriterion, domainCommands.length);
+                    if (instrAction instanceof GradingCriterionAction) {
+                        textWithDomainActions = textWithDomainActions.slice(endOfCriterion, textWithDomainActions.length);
                         break;
                     }
                 }
             }
         }
-        this.setInstructionParameters(initialCriteriaCommands.filter(([, command]) => !(command instanceof GradingCriterionCommand)));
+        this.setInstructionParameters(initialCriterionActions.filter(({ action }) => !(action instanceof GradingCriterionAction)));
     }
 
     /**
-     * @function setInstructionParameters
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers not including GradingCriterionCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
-     *       instruction objects must be created before the method gets triggered
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * Sets the parameters of the GradingInstruction objects based on the parsed markdown text. Note that the instruction objects must be created before this method is called.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
-
-    setInstructionParameters(domainCommands: [string, DomainCommand | null][]): void {
+    setInstructionParameters(textWithDomainActions: TextWithDomainAction[]): void {
         let index = 0;
-        for (const [text, command] of domainCommands) {
+        for (const { text, action } of textWithDomainActions) {
             if (!this.instructions[index]) {
                 break;
             }
-            if (command instanceof CreditsCommand) {
+            if (action instanceof GradingCreditsAction) {
                 this.instructions[index].credits = parseFloat(text);
-            } else if (command instanceof GradingScaleCommand) {
+            } else if (action instanceof GradingScaleAction) {
                 this.instructions[index].gradingScale = text;
-            } else if (command instanceof InstructionDescriptionCommand) {
+            } else if (action instanceof GradingDescriptionAction) {
                 this.instructions[index].instructionDescription = text;
-            } else if (command instanceof FeedbackCommand) {
+            } else if (action instanceof GradingFeedbackAction) {
                 this.instructions[index].feedback = text;
-            } else if (command instanceof UsageCountCommand) {
+            } else if (action instanceof GradingUsageCountAction) {
                 this.instructions[index].usageCount = parseInt(text, 10);
                 index++; // index must be increased after the last parameter of the instruction to continue with the next instruction object
             }
@@ -342,28 +325,19 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function domainCommandsFound
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * Updates the grading instructions of the exercise based on the parsed markdown text.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
-    domainCommandsFound(domainCommands: [string, DomainCommand | null][]): void {
+    onDomainActionsFound(textWithDomainActions: TextWithDomainAction[]): void {
         this.instructions = [];
         this.criteria = [];
         this.exercise.gradingCriteria = [];
-        this.createSubInstructionCommands(domainCommands);
+        this.createSubInstructionActions(textWithDomainActions);
     }
 
-    /**
-     * @function onInstructionChange
-     * @desc 1. Gets a tuple of text and domainCommandIdentifiers and assigns text values according to the domainCommandIdentifiers
-     *       2. The tuple order is the same as the order of the commands in the markdown text inserted by the user
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
-     * @param {GradingInstruction} instruction
-     */
-    onInstructionChange(domainCommands: [string, DomainCommand | null][], instruction: GradingInstruction): void {
+    onInstructionChange(textWithDomainActions: TextWithDomainAction[], instruction: GradingInstruction): void {
         this.instructions = [instruction];
-        this.setInstructionParameters(domainCommands);
+        this.setInstructionParameters(textWithDomainActions);
     }
 
     /**
@@ -423,9 +397,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     /**
-     * @function addNewInstruction
-     * @desc Adds new grading instruction for desired grading criteria
-     * @param criterion {GradingCriterion} the criteria, which includes the instruction that will be inserted
+     * Adds a new grading instruction for the specified grading criterion.
+     * @param criterion The grading criterion that contains the instruction to insert.
      */
     addNewInstruction(criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
@@ -438,10 +411,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.initializeMarkdown();
     }
 
-    /**
-     * @function addNewGradingCriteria
-     * @desc Adds new grading criteria for the exercise
-     */
     addNewGradingCriterion() {
         const criterion = new GradingCriterion();
         criterion.structuredGradingInstructions = [];
@@ -453,21 +422,11 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         }
     }
 
-    /**
-     * @function onCriteriaTitleChange
-     * @desc Detects changes for grading criteria title
-     * @param {GradingCriterion} criterion the criteria, which includes title that will be changed
-     */
     onCriterionTitleChange($event: any, criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         this.exercise.gradingCriteria![criterionIndex].title = $event.target.value;
     }
 
-    /**
-     * @function resetCriteriaTitle
-     * @desc Resets the whole grading criteria title
-     * @param criterion {GradingCriterion} the criteria, which includes title that will be reset
-     */
     resetCriterionTitle(criterion: GradingCriterion) {
         const criterionIndex = this.findCriterionIndex(criterion, this.exercise);
         const backupCriterionIndex = this.findCriterionIndex(criterion, this.backupExercise);
@@ -478,24 +437,21 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         }
     }
 
-    /**
-     * @function deleteGradingCriteria
-     * @desc Deletes the grading criteria with sub-grading instructions
-     * @param criterion {GradingCriterion} the criteria, which will be deleted
-     */
     deleteGradingCriterion(criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         this.exercise.gradingCriteria!.splice(criterionIndex, 1);
     }
 
     /**
-     * @function setExerciseGradingInstructionText
-     * @desc Gets a tuple of text and domainCommandIdentifiers and assigns text values as grading instructions of exercise
-     * @param domainCommands containing tuples of [text, domainCommandIdentifiers]
+     * Extracts the exercise grading instruction text from the start of the parsed markdown text.
+     * @param textWithDomainActions The parsed text segments with their corresponding domain actions.
      */
-    setExerciseGradingInstructionText(domainCommands: [string, DomainCommand | null][]): void {
-        const [text, command] = domainCommands[0];
-        if (command === null && text.length > 0) {
+    setExerciseGradingInstructionText(textWithDomainActions: TextWithDomainAction[]): void {
+        if (!textWithDomainActions.length) {
+            return;
+        }
+        const { text, action } = textWithDomainActions[0];
+        if (action === undefined && text.length > 0) {
             this.exercise.gradingInstructions = text;
         }
     }
@@ -509,12 +465,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.markdownEditorText = this.generateMarkdown();
     }
 
-    /**
-     * Updates given grading instruction in exercise
-     *
-     * @param instruction needs to be updated
-     * @param criterion includes instruction needs to be updated
-     */
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);

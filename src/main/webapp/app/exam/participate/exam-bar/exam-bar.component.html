@@ -1,20 +1,28 @@
-<div class="h5 module-bg exam-bar mx-3 mt-0 px-3 py-2 rounded rounded-3 sticky-top">
+<div class="h5 module-bg exam-bar mt-0 px-3 py-2 rounded rounded-3 sticky-top" [ngClass]="{ 'end-view': isEndView, 'mx-3': !isEndView }">
     <div class="d-flex justify-content-between">
         <h3 class="align-self-center mb-0 me-3">
             {{ examTitle }}
         </h3>
         @if (!examTimeLineView) {
             <div class="d-flex justify-content-between align-items-center">
-                <jhi-exam-timer class="me-3" [criticalTime]="criticalTime" [endDate]="endDate" (timerAboutToEnd)="triggerExamAboutToEnd()" />
-                <jhi-exam-live-events-button />
-                <button id="hand-in-early" class="btn btn-danger ms-2" aria-label="Hand In Early" (click)="handInEarly()">
-                    <div class="d-flex justify-content-between">
-                        <span>
-                            <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
-                            <span class="d-none d-sm-inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
-                        </span>
-                    </div>
-                </button>
+                <jhi-exam-timer
+                    class="me-3"
+                    [criticalTime]="isEndView ? criticalTimeEndView : criticalTime"
+                    [endDate]="endDate"
+                    [isEndView]="isEndView"
+                    (timerAboutToEnd)="triggerExamAboutToEnd()"
+                />
+                <jhi-exam-live-events-button [examStartDate]="examStartDate" />
+                @if (!isEndView) {
+                    <button id="hand-in-early" class="btn btn-danger ms-2" aria-label="Hand In Early" (click)="handInEarly()">
+                        <div class="d-flex justify-content-between">
+                            <span>
+                                <fa-icon [fixedWidth]="true" [icon]="faDoorClosed" />
+                                <span class="d-none d-sm-inline" jhiTranslate="artemisApp.examParticipation.handInEarly"></span>
+                            </span>
+                        </div>
+                    </button>
+                }
             </div>
         }
     </div>

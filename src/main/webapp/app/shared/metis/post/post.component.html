@@ -1,5 +1,5 @@
-<div class="row module-bg mb-1 pb-1 rounded-2" [ngClass]="{ 'mx-0': !isThreadSidebar, 'highlight-pinned': posting.displayPriority === DisplayPriority.PINNED }">
-    <div class="align-items-center">
+<div class="mb-3" [ngClass]="{ 'mx-0': !isThreadSidebar }">
+    <div>
         <jhi-post-header
             [previewMode]="previewMode"
             [readOnlyMode]="readOnlyMode"
@@ -10,7 +10,7 @@
             [lastReadDate]="lastReadDate"
         />
     </div>
-    <div class="row align-items-center">
+    <div class="align-items-center post-content-margin">
         <div class="col">
             <div class="mb-1">
                 @if (showAnnouncementIcon) {
@@ -64,24 +64,24 @@
         </div>
     </div>
     @if (displayInlineInput && !readOnlyMode) {
-        <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
+        <div class="post-content-margin">
+            <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
+        </div>
     }
-    <div class="me-0 mt-2 row justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
+    <div class="post-content-margin me-0 mt-2 justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
         <!-- Post reactions -->
         @if (!previewMode) {
-            <div class="col-auto ps-3 pe-0">
-                <jhi-post-reactions-bar
-                    [lastReadDate]="lastReadDate"
-                    [readOnlyMode]="readOnlyMode"
-                    [posting]="posting"
-                    [(showAnswers)]="showAnswers"
-                    [sortedAnswerPosts]="sortedAnswerPosts"
-                    [isCommunicationPage]="isCommunicationPage"
-                    [isThreadSidebar]="isThreadSidebar"
-                    (openPostingCreateEditModal)="openCreateAnswerPostModal()"
-                    (openThread)="openThread.emit()"
-                />
-            </div>
+            <jhi-post-reactions-bar
+                [lastReadDate]="lastReadDate"
+                [readOnlyMode]="readOnlyMode"
+                [posting]="posting"
+                [(showAnswers)]="showAnswers"
+                [sortedAnswerPosts]="sortedAnswerPosts"
+                [isCommunicationPage]="isCommunicationPage"
+                [isThreadSidebar]="isThreadSidebar"
+                (openPostingCreateEditModal)="openCreateAnswerPostModal()"
+                (openThread)="openThread.emit()"
+            />
         }
     </div>
 </div>

@@ -237,8 +237,8 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
         if (this.result?.feedbacks) {
             this.result = this.modelingAssessmentService.convertResult(this.result);
-        } else {
-            this.result!.feedbacks = [];
+        } else if (this.result) {
+            this.result.feedbacks = [];
         }
 
         // Only load suggestions for new assessments, they don't make sense later.
@@ -354,8 +354,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
 
     /**
      * Remove a feedback suggestion because it was accepted or discarded.
-     * The actual feedback creation when accepting happens in code-editor-ace-component/unreferenced-feedback because they have full control over the suggestion cards.
-     * @param feedback Feedback suggestion that is removed
+     * @param feedback Feedback suggestion to remove
      */
     removeSuggestion(feedback: Feedback) {
         this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);

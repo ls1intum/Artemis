@@ -1,19 +1,30 @@
-import { AfterViewInit, Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { PasswordResetInitService } from './password-reset-init.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { FormBuilder } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExternalUserPasswordResetModalComponent } from 'app/account/password-reset/external/external-user-password-reset-modal.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-password-reset-init',
     templateUrl: './password-reset-init.component.html',
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, ArtemisSharedCommonModule, ArtemisSharedModule],
 })
 export class PasswordResetInitComponent implements OnInit, AfterViewInit {
+    private passwordResetInitService = inject(PasswordResetInitService);
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private modalService = inject(NgbModal);
+
     @ViewChild('emailUsername', { static: false })
     emailUsernameElement?: ElementRef;
     emailUsernameValue = '';
@@ -22,15 +33,6 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
     externalPasswordResetLink?: string;
     externalResetModalRef: NgbModalRef | undefined;
 
-    constructor(
-        private passwordResetInitService: PasswordResetInitService,
-        private fb: FormBuilder,
-        private profileService: ProfileService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private modalService: NgbModal,
-    ) {}
-
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
@@ -38,10 +40,10 @@ export class PasswordResetInitComponent implements OnInit, AfterViewInit {
                 this.externalCredentialProvider = profileInfo.externalCredentialProvider;
                 const lang = this.translateService.currentLang;
                 const linkMap = profileInfo.externalPasswordResetLinkMap;
-                if (linkMap[lang]) {
-                    this.externalPasswordResetLink = linkMap[lang];
+                if (linkMap.get(lang)) {
+                    this.externalPasswordResetLink = linkMap.get(lang);
                 } else {
-                    this.externalPasswordResetLink = linkMap['en'];
+                    this.externalPasswordResetLink = linkMap.get('en');
                 }
             }
         });

@@ -31,7 +31,7 @@ on:
     types:
     - created
 
-# Keep in sync with codeql-analysis.yml and test.yml
+# Keep in sync with codeql-analysis.yml and test.yml and analysis-of-endpoint-connections.yml
 env:
   CI: true
   node: 20
@@ -56,6 +56,8 @@ jobs:
         distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v3
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
     - name: Upload Artifact

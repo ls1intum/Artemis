@@ -10,7 +10,8 @@
             "color": "Farbe",
             "preview": {
                 "slideNotFound": "Referenzierte Folie wurde nicht gefunden"
-            }
+            },
+            "slideWithNumber": "Folie {{ number }}"
         }
     }
 }

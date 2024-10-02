@@ -242,6 +242,12 @@ $stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
 $stat-av-sc-legend-median: rgba(127, 127, 127, 255);
 $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
 
+// Component: pdf-preview.component.scss
+$pdf-preview-pdf-container-shadow: scale-color($black, $alpha: -90%);
+$pdf-preview-canvas-shadow: scale-color($black, $alpha: -90%);
+$pdf-preview-container-overlay: scale-color($black, $alpha: -60%);
+$pdf-preview-enlarged-container-overlay: scale-color($black, $alpha: -80%);
+
 // Programming Exercise Update
 $update-programming-exercise-plan-preview-box-background: transparentize(black, 0.95);
 
@@ -359,6 +365,7 @@ $code-editor-gutter-newline-background: rgba(63, 185, 80, 0.8);
 $code-editor-grid-grip-lines-color: $gray-500;
 
 // Monaco editor
+$monaco-suggest-widget-background: $white;
 $monaco-editor-build-annotation-error-background: scale-color($danger, $alpha: -80%);
 $monaco-editor-build-annotation-error-glyph: $danger;
 $monaco-editor-build-annotation-warning-background: scale-color($warning, $alpha: -80%);
@@ -367,6 +374,7 @@ $monaco-editor-build-annotation-outdated-background: scale-color($gray-500, $alp
 $monaco-editor-build-annotation-outdated-glyph: $gray-500;
 $monaco-editor-diff-highlight-green: rgb(63, 185, 80);
 $monaco-editor-diff-line-highlight: scale-color($monaco-editor-diff-highlight-green, $alpha: -60%);
+$monaco-editor-test-coverage-highlight: scale-color($warning, $alpha: -80%);
 $monaco-editor-add-feedback-button-background: $gray-400;
 $monaco-editor-add-feedback-button-hover-background: $gray-500;
 $monaco-editor-add-feedback-button-text: $black;

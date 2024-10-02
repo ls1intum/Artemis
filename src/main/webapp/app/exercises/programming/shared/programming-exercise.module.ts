@@ -15,6 +15,8 @@ import { ProgrammingExerciseResetDialogComponent } from 'app/exercises/programmi
 import { ProgrammingExerciseCreateButtonsComponent } from 'app/exercises/programming/manage/programming-exercise-create-buttons.component';
 import { CommitsInfoComponent } from './commits-info/commits-info.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
+import { CommitsInfoGroupComponent } from 'app/exercises/programming/shared/commits-info/commits-info-group/commits-info-group.component';
+import { CommitsInfoRowComponent } from 'app/exercises/programming/shared/commits-info/commits-info-group/commits-info-row/commits-info-row.component';
 
 @NgModule({
     imports: [
@@ -36,6 +38,8 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
         ProgrammingExerciseResetButtonDirective,
         ProgrammingExerciseResetDialogComponent,
         CommitsInfoComponent,
+        CommitsInfoGroupComponent,
+        CommitsInfoRowComponent,
     ],
     exports: [
         ProgrammingExerciseComponent,

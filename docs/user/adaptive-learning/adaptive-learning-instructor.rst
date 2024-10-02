@@ -36,7 +36,7 @@ Instructors can manage competencies and prerequisites of a course in the *Compet
 
 * View all competencies and prerequisites of their course
 * Create, edit or delete competencies and prerequisites
-* Manage relations between competencies (which are necessary to build learning paths)
+* :ref:`manage_relations` between competencies
 * :ref:`import_competencies` from other courses or the :ref:`standardized competency catalog<standardized_competency_catalog>`
 * :ref:`generate_competencies` using LLMs
 
@@ -58,6 +58,26 @@ Create/Edit Competencies
 Alternatively, instructors can also link competencies to an exercise or lecture unit on the respective management page using the selection box shown below.
 
 |instructor-competency-link|
+
+.. _manage_relations:
+
+Manage Relations
+^^^^^^^^^^^^^^^^
+
+| An Instructor can create relations between competencies by selecting a source and target competency from the dropdown menus.
+  They can also set a relation type, which can be one of the following:
+
+* *Assumes*: The head competency assumes the knowledge of the tail competency but does not deepen it. E.g. Class diagrams assume knowledge about object-oriented programming.
+* *Extends*: The head competency builds upon the knowledge of the tail competency and deepens it. E.g. Inheritance deepens the knowledge about object-oriented programming.
+* *Matches*: The knowledge of the head and tail competency match each other.
+
+| The relations are displayed in a diagram below the form and can be deleted by clicking on them.
+
+.. note::
+
+    Relations are necessary for the learning path generation. Without them, Artemis cannot suggest a reasonable order of competencies for students.
+
+|instructor-competency-relations|
 
 .. _import_competencies:
 
@@ -149,6 +169,8 @@ Once the feature is enabled, instructors get access to each student's learning p
     :width: 1000
 .. |instructor-competency-link| image:: instructor/competency-link.png
     :width: 600
+.. |instructor-competency-relations| image:: instructor/competency-relations.png
+    :width: 1000
 .. |instructor-generate-competencies| image:: instructor/generate-competencies.png
     :width: 1000
 .. |instructor-competency-recommendation| image:: instructor/competency-recommendation.png

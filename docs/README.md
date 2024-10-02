@@ -56,6 +56,25 @@ For pull requests, the documentation is available at `https://artemis-platform--
 RtD will build and deploy changes automatically.
 
 ## Installing Sphinx Locally
+
+Optionally, create and activate a virtual environment:
+```
+python3 -m venv venv
+```
+On Linux or macOS:
+```
+source venv/bin/activate
+```
+On Windows (CMD):
+```
+venv\Scripts\activate.bat
+```
+On Windows (PowerShell):
+```
+venv\Scripts\Activate.ps1
+```
+
+
 [Sphinx] can run locally to generate the documentation in HTML and other formats.
 You can install Sphinx using `pip` or choose a system-wide installation instead.
 When using pip, consider using [Python virtual environments].
@@ -128,3 +147,17 @@ A list of useful tools to write documentation:
 [Python virtual environments]: https://docs.python.org/3/library/venv.html
 [sphinx-autobuild]: https://pypi.org/project/sphinx-autobuild/
 [Read the Docs]: https://readthedocs.org
+
+
+### Dependency management
+
+Find outdated dependencies using the following command:
+```
+pip list --outdated
+```
+
+Find unused dependencies using the following command:
+```
+pip install deptry
+deptry .
+```

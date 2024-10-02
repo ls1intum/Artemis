@@ -1,9 +1,8 @@
 .markdown-editor-wrapper {
-    margin-top: 5px;
     background-color: transparent !important;
 
     .markdown-editor {
-        min-height: 100px !important;
+        border: 1px solid var(--border-color);
         background-color: transparent !important;
     }
 }

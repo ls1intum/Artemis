@@ -3,8 +3,8 @@ import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextExamSubmissionComponent } from 'app/exam/participate/exercises/text/text-exam-submission.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
@@ -16,6 +16,7 @@ import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exe
 import { ArtemisTestModule } from '../../../../test.module';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import dayjs from 'dayjs/esm';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TextExamSubmissionComponent', () => {
     let fixture: ComponentFixture<TextExamSubmissionComponent>;
@@ -38,6 +39,7 @@ describe('TextExamSubmissionComponent', () => {
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
                 MockComponent(ResizeableContainerComponent),
+                MockDirective(TranslateDirective),
             ],
             providers: [MockProvider(TextEditorService), MockProvider(ArtemisMarkdownService)],
         })

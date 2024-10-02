@@ -12,7 +12,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { Course } from 'app/entities/course.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -27,6 +27,7 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 import { NgModel } from '@angular/forms';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 describe('ModelingExerciseUpdateComponent', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -34,7 +35,8 @@ describe('ModelingExerciseUpdateComponent', () => {
     let service: ModelingExerciseService;
     let courseService: CourseManagementService;
     let exerciseService: ExerciseService;
-    const categories = [{ category: 'testCat' }, { category: 'testCat2' }];
+    const categories = [new ExerciseCategory('testCat', undefined), new ExerciseCategory('testCat2', undefined)];
+
     const categoriesStringified = categories.map((cat) => JSON.stringify(cat));
 
     beforeEach(() => {
@@ -262,7 +264,8 @@ describe('ModelingExerciseUpdateComponent', () => {
         const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         modelingExercise.categories = categories;
         comp.modelingExercise = modelingExercise;
-        const newCategories = [{ category: 'newCat1' }, { category: 'newCat2' }];
+        const newCategories = [new ExerciseCategory('newCat1', undefined), new ExerciseCategory('newCat2', undefined)];
+
         comp.updateCategories(newCategories);
         expect(comp.modelingExercise.categories).toEqual(newCategories);
     });
@@ -285,7 +288,7 @@ describe('ModelingExerciseUpdateComponent', () => {
     it('should updateCategories properly by making category available for selection again when removing it', () => {
         comp.modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
         comp.exerciseCategories = [];
-        const newCategories = [{ category: 'Easy' }, { category: 'Hard' }];
+        const newCategories = [new ExerciseCategory('Easy', undefined), new ExerciseCategory('Hard', undefined)];
 
         comp.updateCategories(newCategories);
 

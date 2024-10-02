@@ -14,8 +14,8 @@ import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.uti
 import { TranslateService } from '@ngx-translate/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { captureException } from '@sentry/angular';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
@@ -26,6 +26,7 @@ import {
     isAIResultAndTimedOut,
     isStudentParticipation,
 } from 'app/exercises/shared/result/result.utils';
+import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -56,6 +57,7 @@ export class ResultService implements IResultService {
     constructor(
         private http: HttpClient,
         private translateService: TranslateService,
+        private csvDownloadService: CsvDownloadService,
     ) {}
 
     find(resultId: number): Observable<EntityResponseType> {
@@ -92,6 +94,9 @@ export class ResultService implements IResultService {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
+            if (Result.isAthenaAIResult(result)) {
+                return this.getResultStringNonProgrammingExerciseWithAIFeedback(result, relativeScore, points, short);
+            }
             return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
         } else {
             return this.getResultStringProgrammingExercise(result, exercise as ProgrammingExercise, relativeScore, points, short);
@@ -99,7 +104,23 @@ export class ResultService implements IResultService {
     }
 
     /**
-     * Generates the result string for a programming exercise. Contains the score and points
+     * Generates the result string for a text exercise. Contains the score and points
+     * @param result the result object
+     * @param relativeScore the achieved score in percent
+     * @param points the amount of achieved points
+     * @param short flag that indicates if the resultString should use the short format
+     */
+    private getResultStringNonProgrammingExerciseWithAIFeedback(result: Result, relativeScore: number, points: number, short: boolean | undefined): string {
+        let aiFeedbackMessage: string = '';
+        if (result && Result.isAthenaAIResult(result) && result.successful === undefined) {
+            return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
+        }
+        aiFeedbackMessage = this.getResultStringNonProgrammingExercise(relativeScore, points, short);
+        return `${aiFeedbackMessage} (${this.translateService.instant('artemisApp.result.preliminary')})`;
+    }
+
+    /**
+     * Generates the result string for a non programming exercise. Contains the score and points
      * @param relativeScore the achieved score in percent
      * @param points the amount of achieved points
      * @param short flag that indicates if the resultString should use the short format
@@ -236,8 +257,8 @@ export class ResultService implements IResultService {
                 this.convertResultDatesFromServer(resultWithPoints.result);
                 const pointsMap = new Map<number, number>();
                 if (resultWithPoints.pointsPerCriterion) {
-                    Object.keys(resultWithPoints.pointsPerCriterion).forEach((key) => {
-                        pointsMap.set(Number(key), resultWithPoints.pointsPerCriterion[key]);
+                    resultWithPoints.pointsPerCriterion.forEach((value, key) => {
+                        pointsMap.set(Number(key), value);
                     });
                 }
                 resultWithPoints.pointsPerCriterion = pointsMap;
@@ -301,13 +322,8 @@ export class ResultService implements IResultService {
      * Utility function used to trigger the download of a CSV file
      */
     public triggerDownloadCSV(rows: string[], csvFileName: string) {
-        const csvContent = rows.join('\n');
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement('a');
-        link.setAttribute('href', encodedUri);
-        link.setAttribute('download', `${csvFileName}`);
-        document.body.appendChild(link); // Required for FF
-        link.click();
+        const csvContent = 'data:text/csv;charset=utf-8,' + rows.join('\n');
+        this.csvDownloadService.downloadCSV(csvContent, csvFileName);
     }
 
     public static evaluateBadge(participation: Participation, result: Result): Badge {

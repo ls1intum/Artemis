@@ -15,7 +15,10 @@ import { NgbTimepickerModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootst
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ScheduleFormComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
+import {
+    ScheduleFormComponent,
+    ScheduleFormData,
+} from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -23,7 +26,7 @@ import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredPr
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
 import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 
-@Component({ selector: 'jhi-markdown-editor', template: '' })
+@Component({ selector: 'jhi-markdown-editor-monaco', template: '' })
 class MarkdownEditorStubComponent {
     @Input() markdown: string;
     @Input() enableResize = false;
@@ -176,13 +179,13 @@ describe('TutorialGroupFormComponent', () => {
             component.formData = formData;
             component.ngOnChanges();
 
-            const groupFormControlNames = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
+            const groupFormControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
             for (const controlName of groupFormControlNames) {
-                expect(component.form.get(controlName)!.value).toEqual(formData[controlName]);
+                expect(component.form.get(controlName)?.value).toEqual(formData[controlName]);
             }
             expect(component.additionalInformation).toEqual(formData.additionalInformation);
 
-            const scheduleFormControlNames = ['dayOfWeek', 'startTime', 'endTime', 'repetitionFrequency', 'period', 'location'];
+            const scheduleFormControlNames: Array<keyof ScheduleFormData> = ['dayOfWeek', 'startTime', 'endTime', 'repetitionFrequency', 'period', 'location'];
             for (const controlName of scheduleFormControlNames) {
                 expect(component.form.get('schedule')!.get(controlName)!.value).toEqual(formData.schedule![controlName]);
             }
@@ -240,7 +243,7 @@ describe('TutorialGroupFormComponent', () => {
             component.formData = formData;
             component.ngOnChanges();
 
-            const formControlNames = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
+            const formControlNames: Array<keyof TutorialGroupFormData> = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
             for (const controlName of formControlNames) {
                 expect(component.form.get(controlName)!.value).toEqual(formData[controlName]);
             }

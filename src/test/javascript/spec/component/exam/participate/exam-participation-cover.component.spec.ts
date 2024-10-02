@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamParticipationCoverComponent } from 'app/exam/participate/exam-cover/exam-participation-cover.component';
@@ -30,7 +30,6 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { MockExamParticipationService } from '../../../helpers/mocks/service/mock-exam-participation.service';
 import { MockArtemisServerDateService } from '../../../helpers/mocks/service/mock-server-date.service';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
-import { By } from '@angular/platform-browser';
 
 describe('ExamParticipationCoverComponent', () => {
     const course = { id: 456 } as Course;
@@ -95,43 +94,8 @@ describe('ExamParticipationCoverComponent', () => {
     it('should initialize with ngOnInit', fakeAsync(() => {
         const user = { name: 'admin' } as User;
         jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
-
-        let now = dayjs();
-        component.studentExam.workingTime = 1;
-        component.exam.gracePeriod = 1;
-        component.exam.startDate = now;
-
         component.ngOnChanges();
         tick();
-
-        expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
-        expect(component.accountName).toBe(user.name);
-
-        now = dayjs();
-        component.startView = true;
-        component.exam.startDate = now;
-        component.ngOnChanges();
-
-        // Case TestRun
-        now = dayjs();
-        component.studentExam.workingTime = 1;
-        component.exam.gracePeriod = 1;
-        component.testRunStartTime = now;
-        component.studentExam.testRun = true;
-        component.ngOnChanges();
-        expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
-
-        // Case test exam
-        now = dayjs();
-        component.studentExam.workingTime = 1;
-        component.exam.testExam = true;
-        component.exam.gracePeriod = 1;
-        component.exam.startDate = dayjs().subtract(4, 'hours');
-
-        component.ngOnChanges();
-        tick();
-
-        expect(component.graceEndDate).toEqual(now.add(1, 'seconds').add(1, 'seconds'));
         expect(component.accountName).toBe(user.name);
     }));
 
@@ -292,67 +256,5 @@ describe('ExamParticipationCoverComponent', () => {
         component.exam.visibleDate = dayjs().subtract(1, 'hours');
         component.exam.visibleDate = dayjs().add(1, 'hours');
         expect(component.startButtonEnabled).toBeFalse();
-    });
-
-    it('should get whether student failed to submit', () => {
-        component.testRun = true;
-        expect(component.studentFailedToSubmit).toBeFalse();
-
-        component.testRun = false;
-        const startDate = dayjs();
-        const now = dayjs();
-        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
-        component.exam.startDate = startDate.subtract(2, 'hours');
-        component.exam.testExam = false;
-        component.studentExam.workingTime = 3600;
-        component.exam.gracePeriod = 1;
-        component.studentExam.submitted = false;
-        expect(component.studentFailedToSubmit).toBeTrue();
-    });
-
-    it('should get whether student failed to submit a TestExam', () => {
-        component.testRun = false;
-        component.exam.testExam = true;
-
-        component.studentExam.started = false;
-        expect(component.studentFailedToSubmit).toBeFalse();
-
-        component.studentExam.started = true;
-        component.studentExam.startedDate = undefined;
-        expect(component.studentFailedToSubmit).toBeFalse();
-
-        const now = dayjs();
-        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
-        component.studentExam.startedDate = now.subtract(2, 'hours');
-        component.studentExam.workingTime = 3600;
-        component.exam.gracePeriod = 1;
-        component.studentExam.submitted = false;
-        expect(component.studentFailedToSubmit).toBeTrue();
-
-        component.studentExam.startedDate = now.subtract(1, 'hours');
-        component.studentExam.workingTime = 3600;
-        component.exam.gracePeriod = 1;
-        component.studentExam.submitted = false;
-        expect(component.studentFailedToSubmit).toBeFalse();
-    });
-
-    it('should not display timer when exam was not submitted', () => {
-        jest.spyOn(component, 'studentFailedToSubmit', 'get').mockReturnValue(true);
-        component.startView = false;
-
-        fixture.detectChanges();
-
-        const examTimerDebugElement = fixture.debugElement.query(By.directive(ExamTimerComponent));
-        expect(examTimerDebugElement).toBeFalsy();
-    });
-
-    it('should display timer during working time', () => {
-        jest.spyOn(component, 'studentFailedToSubmit', 'get').mockReturnValue(false);
-        component.startView = false;
-
-        fixture.detectChanges();
-
-        const examTimerDebugElement = fixture.debugElement.query(By.directive(ExamTimerComponent));
-        expect(examTimerDebugElement).toBeTruthy();
     });
 });

@@ -2,9 +2,7 @@
     <div ngbAccordion [closeOthers]="true">
         <div ngbAccordionItem>
             <div ngbAccordionHeader>
-                <button ngbAccordionButton>
-                    {{ 'artemisApp.competency.relation.competencyRelations' | artemisTranslate }}
-                </button>
+                <button ngbAccordionButton jhiTranslate="artemisApp.competency.relation.competencyRelations"></button>
             </div>
             <div ngbAccordionCollapse>
                 <div ngbAccordionBody>
@@ -12,7 +10,7 @@
                         <form class="row p-3 pb-0 g-3 align-items-end">
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="tail">{{ 'artemisApp.competency.relation.tailCompetency' | artemisTranslate }}</label>
+                                    <label for="tail" jhiTranslate="artemisApp.competency.relation.tailCompetency"></label>
                                     <select
                                         [ngClass]="{ 'border-danger': relationError }"
                                         class="form-select"
@@ -29,7 +27,7 @@
                             </div>
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="type">{{ 'artemisApp.competency.relation.relationType' | artemisTranslate }}</label>
+                                    <label for="type" jhiTranslate="artemisApp.competency.relation.relationType"></label>
                                     <select
                                         [ngClass]="{ 'border-danger': relationError }"
                                         class="form-select"
@@ -39,14 +37,18 @@
                                         (change)="validate()"
                                     >
                                         @for (relationType of competencyRelationType | keyvalue: keepOrder; track relationType) {
-                                            <option [ngValue]="relationType.key">{{ 'artemisApp.competency.relation.type.' + relationType.value | artemisTranslate }}</option>
+                                            <option
+                                                [jhiTranslate]="'artemisApp.competency.relation.type.' + relationType.value"
+                                                [title]="'artemisApp.competency.relation.typeExplanation.' + relationType.value | artemisTranslate"
+                                                [value]="relationType.value"
+                                            ></option>
                                         }
                                     </select>
                                 </div>
                             </div>
                             <div class="col">
                                 <div class="form-group">
-                                    <label for="head">{{ 'artemisApp.competency.relation.headCompetency' | artemisTranslate }}</label>
+                                    <label for="head" jhiTranslate="artemisApp.competency.relation.headCompetency"></label>
                                     <select
                                         [ngClass]="{ 'border-danger': relationError }"
                                         class="form-select"

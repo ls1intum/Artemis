@@ -99,7 +99,7 @@ Avoid code duplication. If we cannot reuse a method elsewhere, then the method i
 8. Comments
 ===========
 
-Only write comments for complicated algorithms, to help other developers better understand them. We should only add a comment, if our code is not self-explanatory.
+Always add JavaDoc and inline comments to help other developers better understand the code and the rationale behind it. ChatGPT can be a great help. It can generate comments for you, but you should always check them and adjust them to your needs. Prefer more extensive comments and documentation and avoid useless and non sense documentation. Comments should always be in English.
 
 9. Utility
 ==========
@@ -121,10 +121,10 @@ It gets activated when a particular jar file is detected on the classpath. The s
 
 * RestControllers should be stateless.
 * RestControllers are by default singletons.
-* RestControllers should not execute business logic but rely on delegation.
-* RestControllers should deal with the HTTP layer of the application.
+* RestControllers should not execute business logic but rely on delegation to ``@Service`` classes.
+* RestControllers should deal with the HTTP layer of the application, handle access control, input data validation, output data cleanup (if necessary) and error handling.
 * RestControllers should be oriented around a use-case/business-capability.
-* RestControllers should return DTOs that are as small as possible
+* RestControllers must always return DTOs that are as small as possible (please focus on data economy to improve performance and follow data privacy principles).
 
 Route naming conventions:
 

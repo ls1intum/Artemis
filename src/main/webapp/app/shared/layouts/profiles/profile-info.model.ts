@@ -7,6 +7,7 @@ export class ProfileInfo {
     public activeProfiles: string[];
     public ribbonEnv: string;
     public inProduction: boolean;
+    public inDevelopment: boolean;
     public openApiEnabled?: boolean;
     public sentry?: { dsn: string };
     public postHog?: {
@@ -33,7 +34,8 @@ export class ProfileInfo {
     public accountName?: string;
     public versionControlUrl?: string;
     public versionControlName?: string;
-    public versionControlAccessToken?: boolean;
+    public useVersionControlAccessToken?: boolean;
+    public showCloneUrlWithoutToken?: boolean;
     public continuousIntegrationName?: string;
     public programmingLanguageFeatures: ProgrammingLanguageFeature[];
     public saml2?: Saml2Config;
@@ -55,6 +57,8 @@ export class ProfileInfo {
         };
     };
     public theiaPortalURL: string;
+    public operatorName: string;
+    public operatorAdminName?: string;
 }
 
 export const hasEditableBuildPlan = (profileInfo: ProfileInfo): boolean => {

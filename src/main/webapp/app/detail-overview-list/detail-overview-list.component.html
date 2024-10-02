@@ -15,124 +15,6 @@
                     </dt>
                 }
                 @switch (detail.type) {
-                    @case (DetailType.ProgrammingRepositoryButtons) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            @if (detail.data.participation?.repositoryUri && detail.data.exerciseId) {
-                                <div class="clone-buttons">
-                                    <jhi-code-button
-                                        [smallButtons]="true"
-                                        [routerLinkForRepositoryView]="['.', 'repository', detail.data.type]"
-                                        [repositoryUri]="detail.data.participation?.repositoryUri!"
-                                    />
-                                    <jhi-programming-exercise-instructor-repo-download class="ms-2" [exerciseId]="detail.data.exerciseId" [repositoryType]="detail.data.type" />
-                                </div>
-                            } @else {
-                                <ng-container *ngTemplateOutlet="noData" />
-                            }
-                        </dd>
-                    }
-                    @case (DetailType.ProgrammingAuxiliaryRepositoryButtons) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <ul>
-                                @for (auxiliaryRepository of detail.data.auxiliaryRepositories; track auxiliaryRepository) {
-                                    @if (auxiliaryRepository.id && auxiliaryRepository.repositoryUri && detail.data.exerciseId) {
-                                        <li class="mt-2">
-                                            <span>Repository: {{ auxiliaryRepository.name }}</span>
-                                            <jhi-code-button class="ms-2" [smallButtons]="true" [repositoryUri]="auxiliaryRepository.repositoryUri" />
-                                            <jhi-programming-exercise-instructor-repo-download
-                                                class="ms-2"
-                                                [exerciseId]="detail.data.exerciseId"
-                                                [repositoryType]="'AUXILIARY'"
-                                                [auxiliaryRepositoryId]="auxiliaryRepository.id"
-                                            />
-                                            <div class="auxiliaryRepositoryDescription">
-                                                @if (!auxiliaryRepository.checkoutDirectory) {
-                                                    <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="noCheckoutDirectorySetTooltip" />
-                                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySet"></span>
-                                                }
-                                                <ng-template #noCheckoutDirectorySetTooltip>
-                                                    <span jhiTranslate="artemisApp.programmingExercise.noCheckoutDirectorySetTooltip"></span>
-                                                </ng-template>
-                                            </div>
-                                        </li>
-                                    }
-                                }
-                            </ul>
-                        </dd>
-                    }
-                    @case (DetailType.ProgrammingTestStatus) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            @if (detail.data.participation) {
-                                <div class="d-flex align-items-center">
-                                    @if (!detail.data.loading) {
-                                        <jhi-updating-result
-                                            [exercise]="detail.data.exercise"
-                                            [participation]="detail.data.participation"
-                                            [showUngradedResults]="true"
-                                            [personalParticipation]="false"
-                                            [short]="false"
-                                            (onParticipationChange)="detail.data.onParticipationChange()"
-                                            class="me-2"
-                                        />
-                                    }
-                                    @if (detail.data.participation.results?.length) {
-                                        <jhi-programming-exercise-instructor-status
-                                            class="repository-status-icon me-2"
-                                            [participationType]="detail.data.type"
-                                            [participation]="detail.data.participation"
-                                            [exercise]="detail.data.exercise"
-                                        />
-                                        @if (detail.data.exercise.isAtLeastEditor) {
-                                            <jhi-programming-exercise-instructor-trigger-build-button
-                                                [exercise]="detail.data.exercise"
-                                                [participation]="detail.data.participation"
-                                            />
-                                        }
-                                    }
-                                    @if (detail.data.exercise.isAtLeastEditor && detail.data.participation.id) {
-                                        <a [routerLink]="detail.data.submissionRouterLink" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }" class="ms-2">
-                                            @switch (detail.data.type) {
-                                                @case (ProgrammingExerciseParticipationType.TEMPLATE) {
-                                                    <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions"></span>
-                                                }
-                                                @case (ProgrammingExerciseParticipationType.SOLUTION) {
-                                                    <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions"></span>
-                                                }
-                                            }
-                                        </a>
-                                    }
-                                </div>
-                            }
-                        </dd>
-                    }
-                    @case (DetailType.ProgrammingDiffReport) {
-                        <dd id="detail-value-{{ detail.title }}">
-                            <span jhiTranslate="artemisApp.programmingExercise.diffReport.shortDescription"></span>
-                            <div class="fw-bold">
-                                <jhi-git-diff-line-stat
-                                    [addedLineCount]="detail.data.addedLineCount"
-                                    [removedLineCount]="detail.data.removedLineCount"
-                                    ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
-                                    placement="right"
-                                />
-                            </div>
-                            @if (detail.data.addedLineCount > 0 || detail.data.removedLineCount > 0) {
-                                <div class="mt-1">
-                                    <jhi-button
-                                        [featureToggle]="FeatureToggle.ProgrammingExercises"
-                                        [isLoading]="detail.data.isLoadingDiffReport ?? false"
-                                        [btnSize]="ButtonSize.SMALL"
-                                        [icon]="faCodeCompare"
-                                        [title]="'artemisApp.programmingExercise.diffReport.button'"
-                                        [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
-                                        (onClick)="showGitDiff(detail.data.gitDiffReport)"
-                                        [btnType]="WARNING"
-                                        [tooltipPlacement]="TooltipPlacement.RIGHT"
-                                    />
-                                </div>
-                            }
-                        </dd>
-                    }
                     @case (DetailType.ProgrammingProblemStatement) {
                         @if (detail.data.exercise?.templateParticipation) {
                             <dd class="p-3 border" id="detail-value-{{ detail.title }}">
@@ -238,7 +120,7 @@
                                 [programmingExercise]="detail.data.exercise"
                                 [programmingLanguage]="detail.data.programmingLanguage"
                                 [isLocal]="detail.data.isLocal"
-                                [checkoutSolutionRepository]="detail.data.exercise.checkoutSolutionRepository"
+                                [checkoutSolutionRepository]="detail.data.exercise.buildConfig?.checkoutSolutionRepository"
                             />
                         </dd>
                     }

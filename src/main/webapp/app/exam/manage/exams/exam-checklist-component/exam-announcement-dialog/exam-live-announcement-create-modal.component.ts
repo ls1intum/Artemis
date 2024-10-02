@@ -1,18 +1,17 @@
 import { Component } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
-import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
-import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
-import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
-import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
-import { OrderedListCommand } from 'app/shared/markdown-editor/commands/orderedListCommand';
-import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamLiveEventType, ExamWideAnnouncementEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { faCheckCircle, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
+import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordered-list.action';
 
 @Component({
     selector: 'jhi-exam-live-announcement-create-modal',
@@ -20,7 +19,7 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['./exam-live-announcement-create-modal.component.scss'],
 })
 export class ExamLiveAnnouncementCreateModalComponent {
-    COMMANDS = [new BoldCommand(), new ItalicCommand(), new UnderlineCommand(), new CodeCommand(), new CodeBlockCommand(), new OrderedListCommand(), new UnorderedListCommand()];
+    actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new OrderedListAction()];
 
     courseId: number;
     examId: number;

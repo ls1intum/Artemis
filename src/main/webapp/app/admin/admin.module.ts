@@ -4,7 +4,7 @@ import { adminState } from './admin.route';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { AdminFeatureToggleComponent } from 'app/admin/features/admin-feature-toggle.component';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { UserManagementDetailComponent } from 'app/admin/user-management/user-management-detail.component';
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { HealthComponent } from 'app/admin/health/health.component';
@@ -23,7 +23,6 @@ import { OrganizationManagementComponent } from './organization-management/organ
 import { OrganizationManagementDetailComponent } from './organization-management/organization-management-detail.component';
 import { OrganizationManagementUpdateComponent } from './organization-management/organization-management-update.component';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { MetricsModule } from 'app/admin/metrics/metrics.module';
 import { ArtemisChartsModule } from 'app/shared/chart/artemis-charts.module';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -44,7 +43,10 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { BuildAgentDetailsComponent } from 'app/localci/build-agents/build-agent-details/build-agent-details/build-agent-details.component';
 import { KnowledgeAreaEditComponent } from 'app/admin/standardized-competencies/knowledge-area-edit.component';
 import { AdminImportStandardizedCompetenciesComponent } from 'app/admin/standardized-competencies/import/admin-import-standardized-competencies.component';
-import { ArtemisStandardizedCompetencyModule } from 'app/shared/standardized-competencies/standardized-competency.module';
+import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies/knowledge-area-tree.component';
+import { StandardizedCompetencyFilterComponent } from 'app/shared/standardized-competencies/standardized-competency-filter.component';
+import { StandardizedCompetencyDetailComponent } from 'app/shared/standardized-competencies/standardized-competency-detail.component';
+import { DeleteUsersButtonComponent } from 'app/admin/user-management/delete-users-button.component';
 
 const ENTITY_STATES = [...adminState];
 
@@ -55,7 +57,6 @@ const ENTITY_STATES = [...adminState];
         FormDateTimePickerModule,
         NgxDatatableModule,
         ArtemisDataTableModule,
-        MetricsModule,
         ArtemisChartsModule,
         MatChipsModule,
         MatAutocompleteModule,
@@ -68,7 +69,10 @@ const ENTITY_STATES = [...adminState];
         ArtemisCompetenciesModule,
         UserImportModule,
         SubmissionResultStatusModule,
-        ArtemisStandardizedCompetencyModule,
+        KnowledgeAreaTreeComponent,
+        StandardizedCompetencyFilterComponent,
+        StandardizedCompetencyDetailComponent,
+        DeleteUsersButtonComponent,
     ],
     declarations: [
         AuditsComponent,

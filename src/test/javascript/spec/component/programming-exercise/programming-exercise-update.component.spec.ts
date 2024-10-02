@@ -2,13 +2,14 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { DebugElement } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
+import { WindFile } from 'app/entities/programming/wind.file';
 import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise, ProgrammingLanguage, ProjectType, WindFile } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -23,7 +24,7 @@ import {
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -62,11 +63,14 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseUpdateNotificationComponent } from 'app/exercises/shared/exercise-update-notification/exercise-update-notification.component';
 import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.component';
 import * as Utils from 'app/exercises/shared/course-exercises/course-utils';
-import { AuxiliaryRepository } from 'app/entities/programming-exercise-auxiliary-repository-model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FormStatusBarComponent } from 'app/forms/form-status-bar/form-status-bar.component';
 import { FormFooterComponent } from 'app/forms/form-footer/form-footer.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { PROFILE_THEIA } from 'app/app.constants';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -80,6 +84,9 @@ describe('ProgrammingExerciseUpdateComponent', () => {
     let exerciseGroupService: ExerciseGroupService;
     let programmingExerciseFeatureService: ProgrammingLanguageFeatureService;
     let alertService: AlertService;
+    let profileService: ProfileService;
+
+    let getProfileInfoSub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -147,6 +154,12 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 exerciseGroupService = debugElement.injector.get(ExerciseGroupService);
                 programmingExerciseFeatureService = debugElement.injector.get(ProgrammingLanguageFeatureService);
                 alertService = debugElement.injector.get(AlertService);
+                profileService = debugElement.injector.get(ProfileService);
+
+                getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+                const newProfileInfo = new ProfileInfo();
+                newProfileInfo.activeProfiles = [];
+                getProfileInfoSub.mockReturnValue(of(newProfileInfo));
             });
     });
 
@@ -437,15 +450,15 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         it('should clear custom build definition on programming language change', fakeAsync(() => {
             // WHEN
             fixture.detectChanges();
-            comp.programmingExercise.buildPlanConfiguration = 'some custom build definition';
-            comp.programmingExercise.windFile = new WindFile();
+            comp.programmingExercise.buildConfig!.buildPlanConfiguration = 'some custom build definition';
+            comp.programmingExercise.buildConfig!.windfile = new WindFile();
             tick();
             comp.onProgrammingLanguageChange(ProgrammingLanguage.C);
             comp.onProjectTypeChange(ProjectType.FACT);
 
             // THEN
-            expect(comp.programmingExercise.buildPlanConfiguration).toBeUndefined();
-            expect(comp.programmingExercise.windFile).toBeUndefined();
+            expect(comp.programmingExercise.buildConfig?.buildPlanConfiguration).toBeUndefined();
+            expect(comp.programmingExercise.buildConfig?.windfile).toBeUndefined();
         }));
     });
 
@@ -792,11 +805,56 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
-        it('find validation errors for invalid ide selection', () => {
+        it.each([
+            [
+                'find validation errors for invalid ide selection',
+                {
+                    activeProfiles: [PROFILE_THEIA],
+                },
+                {
+                    translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                    translateValues: {},
+                },
+            ],
+            [
+                'find validation errors for invalid ide selection without theia profile',
+                {
+                    activeProfiles: [],
+                },
+                {
+                    translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alertNoTheia',
+                    translateValues: {},
+                },
+            ],
+        ])('%s', (description, profileInfo, expectedException) => {
+            getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
+
+            const newProfileInfo = new ProfileInfo();
+            newProfileInfo.activeProfiles = profileInfo.activeProfiles;
+
+            getProfileInfoSub.mockReturnValue(of(newProfileInfo));
+
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'new' } as UrlSegment]);
+            route.data = of({ programmingExercise: comp.programmingExercise });
+
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue(getProgrammingLanguageFeature(ProgrammingLanguage.JAVA));
+
             comp.programmingExercise.allowOnlineEditor = false;
             comp.programmingExercise.allowOfflineIde = false;
+            comp.programmingExercise.allowOnlineIde = false;
+
+            fixture.detectChanges();
+
+            expect(comp.getInvalidReasons()).toContainEqual(expectedException);
+        });
+
+        it('find validation errors for invalid online IDE image', () => {
+            comp.programmingExercise.allowOnlineIde = true;
+            comp.programmingExercise.buildConfig!.theiaImage = undefined;
             expect(comp.getInvalidReasons()).toContainEqual({
-                translateKey: 'artemisApp.programmingExercise.allowOnlineEditor.alert',
+                translateKey: 'artemisApp.programmingExercise.theiaImage.alert',
                 translateValues: {},
             });
         });
@@ -832,6 +890,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             comp.programmingExercise.maxStaticCodeAnalysisPenalty = 60;
             comp.programmingExercise.allowOfflineIde = true;
             comp.programmingExercise.allowOnlineEditor = false;
+            comp.programmingExercise.allowOnlineIde = false;
             comp.programmingExercise.packageName = 'de.tum.in';
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
 
@@ -906,7 +965,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             tick();
 
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-            expect(comp.programmingExercise.testwiseCoverageEnabled).toBeFalse();
+            expect(comp.programmingExercise.buildConfig?.testwiseCoverageEnabled).toBeFalse();
         }));
 
         it('should disable options for java dejagnu project type and re-enable them after changing back to maven or gradle', fakeAsync(() => {
@@ -975,7 +1034,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
         fixture.detectChanges();
         tick();
 
-        const categories = [new ExerciseCategory()];
+        const categories = [new ExerciseCategory(undefined, undefined)];
         expect(comp.exerciseCategories).toBeUndefined();
         comp.updateCategories(categories);
         expect(comp.exerciseCategories).toBe(categories);
@@ -1017,6 +1076,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
         comp.programmingExercise.allowOfflineIde = false;
         comp.programmingExercise.allowOnlineEditor = false;
+        comp.programmingExercise.allowOnlineIde = false;
         comp.calculateFormStatusSections();
         expect(comp.formStatusSections[1].valid).toBeFalse();
         comp.programmingExercise.allowOnlineEditor = true;

@@ -68,6 +68,7 @@
             },
             "courseImport": {
                 "title": "Import Standardized Competencies",
+                "prerequisiteTitle": "Import Standardized Competencies as Prerequisites",
                 "empty": "No knowledge areas or standardized competencies exist.",
                 "success": "Successfully imported {{count}} standardized competencies",
                 "selectedTitle": "Selected Competencies",

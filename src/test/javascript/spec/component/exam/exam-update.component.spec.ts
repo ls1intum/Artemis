@@ -15,11 +15,10 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
@@ -42,7 +41,8 @@ import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 @Component({
     template: '',
@@ -77,7 +77,7 @@ describe('ExamUpdateComponent', () => {
                 declarations: [
                     ExamUpdateComponent,
                     MockComponent(FormDateTimePickerComponent),
-                    MockComponent(MarkdownEditorComponent),
+                    MockComponent(MarkdownEditorMonacoComponent),
                     MockComponent(DataTableComponent),
                     DummyComponent,
                     MockPipe(ArtemisTranslatePipe),
@@ -407,6 +407,33 @@ describe('ExamUpdateComponent', () => {
             expect(component.isValidEndDateValue).toBeTrue();
         });
 
+        it('exam visibility check returns false if the dates are not set', () => {
+            examWithoutExercises.testExam = false;
+            examWithoutExercises.visibleDate = dayjs('this is not a date');
+            fixture.detectChanges();
+            const result = component.checkExamVisibilityTime;
+            expect(result).toBeFalse();
+
+            examWithoutExercises.visibleDate = dayjs();
+            examWithoutExercises.startDate = dayjs('this is not a date');
+            const result2 = component.checkExamVisibilityTime;
+            expect(result2).toBeFalse();
+        });
+
+        it('exam visibility check returns true if the difference between dates are more than 4 hours', () => {
+            examWithoutExercises.testExam = false;
+            examWithoutExercises.visibleDate = dayjs();
+            examWithoutExercises.startDate = dayjs().add(240, 'minute');
+            fixture.detectChanges();
+            const result = component.checkExamVisibilityTime;
+            expect(result).toBeFalse();
+
+            examWithoutExercises.startDate = dayjs().add(241, 'minute');
+            fixture.detectChanges();
+            const result2 = component.checkExamVisibilityTime;
+            expect(result2).toBeTrue();
+        });
+
         it('should correctly catch HTTPError when updating the examWithoutExercises', fakeAsync(() => {
             const alertService = TestBed.inject(AlertService);
             const httpError = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
@@ -579,7 +606,7 @@ describe('ExamUpdateComponent', () => {
                     ExamUpdateComponent,
                     ExamExerciseImportComponent,
                     MockComponent(FormDateTimePickerComponent),
-                    MockComponent(MarkdownEditorComponent),
+                    MockComponent(MarkdownEditorMonacoComponent),
                     MockComponent(DataTableComponent),
                     DummyComponent,
                     MockPipe(ArtemisTranslatePipe),

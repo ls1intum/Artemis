@@ -1,42 +1,35 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { CUSTOM_ELEMENTS_SCHEMA, DebugElement, Directive, EventEmitter, Input, Output } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
-import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
-import { MockProvider } from 'ng-mocks';
-import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
-import { UnderlineCommand } from 'app/shared/markdown-editor/commands/underline.command';
-import { ReferenceCommand } from 'app/shared/markdown-editor/commands/reference.command';
-import { CodeCommand } from 'app/shared/markdown-editor/commands/code.command';
-import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
-import { LinkCommand } from 'app/shared/markdown-editor/commands/link.command';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { By } from '@angular/platform-browser';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
-import { ExerciseReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/exerciseReferenceCommand';
-import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/lectureAttachmentReferenceCommand';
 import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { LectureService } from 'app/lecture/lecture.service';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
-import { UserMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/userMentionCommand';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ChannelMentionCommand } from 'app/shared/markdown-editor/commands/courseArtifactReferenceCommands/channelMentionCommand';
 import { ChannelService } from 'app/shared/metis/conversations/channel.service';
 import * as CourseModel from 'app/entities/course.model';
-
-// eslint-disable-next-line @angular-eslint/directive-selector
-@Directive({ selector: 'jhi-markdown-editor' })
-class MockMarkdownEditorDirective {
-    @Input() markdown?: string;
-    @Output() markdownChange = new EventEmitter<string>();
-}
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ChannelReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/channel-reference.action';
+import { UserMentionAction } from 'app/shared/monaco-editor/model/actions/communication/user-mention.action';
+import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
+import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
+import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
+import { QuoteAction } from 'app/shared/monaco-editor/model/actions/quote.action';
+import { CodeAction } from 'app/shared/monaco-editor/model/actions/code.action';
+import { CodeBlockAction } from 'app/shared/monaco-editor/model/actions/code-block.action';
+import { ExerciseReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/exercise-reference.action';
+import { LectureAttachmentReferenceAction } from 'app/shared/monaco-editor/model/actions/communication/lecture-attachment-reference.action';
 
 describe('PostingsMarkdownEditor', () => {
     let component: PostingMarkdownEditorComponent;
-    let mockMarkdownEditorDirective: MockMarkdownEditorDirective;
     let fixture: ComponentFixture<PostingMarkdownEditorComponent>;
     let debugElement: DebugElement;
+    let mockMarkdownEditorComponent: MarkdownEditorMonacoComponent;
     let metisService: MetisService;
     let courseManagementService: CourseManagementService;
     let channelService: ChannelService;
@@ -46,8 +39,7 @@ describe('PostingsMarkdownEditor', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             providers: [{ provide: MetisService, useClass: MockMetisService }, MockProvider(LectureService), MockProvider(CourseManagementService), MockProvider(ChannelService)],
-            declarations: [PostingMarkdownEditorComponent, MockMarkdownEditorDirective],
-            schemas: [CUSTOM_ELEMENTS_SCHEMA], // required because we mock the nested MarkdownEditorComponent
+            declarations: [PostingMarkdownEditorComponent, MockComponent(MarkdownEditorMonacoComponent)],
         })
             .compileComponents()
             .then(() => {
@@ -62,8 +54,7 @@ describe('PostingsMarkdownEditor', () => {
                 const returnValue = of(new HttpResponse({ body: [], status: 200 }));
                 findLectureWithDetailsSpy.mockReturnValue(returnValue);
                 fixture.autoDetectChanges();
-                const mockMarkdownEditorElement = fixture.debugElement.query(By.directive(MockMarkdownEditorDirective));
-                mockMarkdownEditorDirective = mockMarkdownEditorElement.injector.get(MockMarkdownEditorDirective) as MockMarkdownEditorDirective;
+                mockMarkdownEditorComponent = fixture.debugElement.query(By.directive(MarkdownEditorMonacoComponent)).componentInstance;
                 component.ngOnInit();
                 component.content = metisPostExerciseUser1.content;
             });
@@ -72,36 +63,36 @@ describe('PostingsMarkdownEditor', () => {
     it('should have set the correct default commands on init if messaging or communication is enabled', () => {
         component.ngOnInit();
 
-        expect(component.defaultCommands).toEqual([
-            new BoldCommand(),
-            new ItalicCommand(),
-            new UnderlineCommand(),
-            new ReferenceCommand(),
-            new CodeCommand(),
-            new CodeBlockCommand(),
-            new LinkCommand(),
-            new UserMentionCommand(courseManagementService, metisService),
-            new ChannelMentionCommand(channelService, metisService),
-            new ExerciseReferenceCommand(metisService),
-            new LectureAttachmentReferenceCommand(metisService, lectureService),
+        expect(component.defaultActions).toEqual([
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new QuoteAction(),
+            new CodeAction(),
+            new CodeBlockAction(),
+            new UserMentionAction(courseManagementService, metisService),
+            new ChannelReferenceAction(metisService, channelService),
+            new ExerciseReferenceAction(metisService),
         ]);
+
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
 
     it('should have set the correct default commands on init if communication and messaging and communication is disabled', () => {
         jest.spyOn(CourseModel, 'isCommunicationEnabled').mockReturnValueOnce(false);
         component.ngOnInit();
 
-        expect(component.defaultCommands).toEqual([
-            new BoldCommand(),
-            new ItalicCommand(),
-            new UnderlineCommand(),
-            new ReferenceCommand(),
-            new CodeCommand(),
-            new CodeBlockCommand(),
-            new LinkCommand(),
-            new ExerciseReferenceCommand(metisService),
-            new LectureAttachmentReferenceCommand(metisService, lectureService),
+        expect(component.defaultActions).toEqual([
+            new BoldAction(),
+            new ItalicAction(),
+            new UnderlineAction(),
+            new QuoteAction(),
+            new CodeAction(),
+            new CodeBlockAction(),
+            new ExerciseReferenceAction(metisService),
         ]);
+
+        expect(component.lectureAttachmentReferenceAction).toEqual(new LectureAttachmentReferenceAction(metisService, lectureService));
     });
 
     it('should show the correct amount of characters below the markdown input', () => {
@@ -125,18 +116,53 @@ describe('PostingsMarkdownEditor', () => {
     it('should initialize markdown correctly with post content', () => {
         component.maxContentLength = 200;
         fixture.detectChanges();
-        expect(mockMarkdownEditorDirective.markdown).toEqual(component.content);
+        expect(mockMarkdownEditorComponent.markdown).toEqual(component.content);
     });
 
     it('should update value if markdown change is emitted', () => {
         component.maxContentLength = 200;
         fixture.detectChanges();
-        mockMarkdownEditorDirective.markdownChange.emit('updated text');
+        mockMarkdownEditorComponent.markdownChange.emit('updated text');
         expect(component.content).toBe('updated text');
     });
 
     it('should write value of form group in content variable', () => {
         component.writeValue(metisAnswerPostUser2);
         expect(component.content).toEqual(metisAnswerPostUser2);
+    });
+
+    it('should write an empty string into content for undefined values', () => {
+        component.writeValue(undefined);
+        expect(component.content).toBe('');
+    });
+
+    it('should register onChange', () => {
+        const onChange = jest.fn();
+        component.registerOnChange(onChange);
+        expect(component.onChange).toBe(onChange);
+    });
+
+    it('should call preventDefault when the user presses enter', () => {
+        component.suppressNewlineOnEnter = true;
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        component.onKeyDown(event);
+        expect(preventDefaultSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should not call preventDefault when the user presses shift+enter', () => {
+        component.suppressNewlineOnEnter = true;
+        const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        component.onKeyDown(event);
+        expect(preventDefaultSpy).not.toHaveBeenCalled();
+    });
+
+    it('should not suppress newlines on enter if disabled', () => {
+        component.suppressNewlineOnEnter = false;
+        const event = new KeyboardEvent('keydown', { key: 'Enter' });
+        const preventDefaultSpy = jest.spyOn(event, 'preventDefault');
+        component.onKeyDown(event);
+        expect(preventDefaultSpy).not.toHaveBeenCalled();
     });
 });

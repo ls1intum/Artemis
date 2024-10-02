@@ -1,9 +1,11 @@
 <mat-expansion-panel>
-    <mat-expansion-panel-header>
+    <mat-expansion-panel-header class="me-2">
         <mat-panel-title>
             {{ fileName }}
         </mat-panel-title>
-        <mat-panel-description> {{ (proportionCoveredLines * 100).toFixed(1) + ' %' }} </mat-panel-description>
+        <mat-panel-description class="text-nowrap flex-grow-0"> {{ proportionString }} </mat-panel-description>
     </mat-expansion-panel-header>
-    <jhi-ace-editor #editor [mode]="'java'" [readOnly]="true" [autoUpdateContent]="true" [hidden]="false" class="code-editor-ace__content__editor" />
+    <div [style.height.px]="editorHeight">
+        <jhi-monaco-editor #editor [shrinkToFit]="false" [readOnly]="true" (contentHeightChanged)="editorHeight = $event" />
+    </div>
 </mat-expansion-panel>

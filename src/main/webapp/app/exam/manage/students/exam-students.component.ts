@@ -1,6 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ExamUser } from 'app/entities/exam-user.model';
+import { ExamUser } from 'app/entities/exam/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
@@ -9,7 +9,7 @@ import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';

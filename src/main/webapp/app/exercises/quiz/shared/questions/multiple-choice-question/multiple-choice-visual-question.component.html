@@ -1,5 +1,5 @@
 <div class="markdown-preview visual-mode">
-    <h4>{{ 'artemisApp.multipleChoiceQuestion.visualEditor.questionTitle' | artemisTranslate }}</h4>
+    <h4 jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.questionTitle"></h4>
     <textarea
         id="mc-question"
         class="form-control form-group-narrow"
@@ -30,7 +30,7 @@
             placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationPlaceholder' | artemisTranslate }}"
         />
     </div>
-    <h4>{{ 'artemisApp.multipleChoiceQuestion.visualEditor.answersTitle' | artemisTranslate }}</h4>
+    <h4 jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.answersTitle"></h4>
     @for (answerOption of question.answerOptions; track answerOption; let i = $index) {
         <div id="answer-option-{{ i }}" class="visual-answer-option form-group-narrow">
             <div class="form-group-narrow visual-answer-question-container">
@@ -42,12 +42,13 @@
                     <fa-icon [icon]="answerOption.isCorrect ? faCheck : faXmark" />
                 </div>
                 <input
+                    id="answer-option-{{ i }}-text"
                     class="form-control"
                     [(ngModel)]="answerOption.text"
                     (input)="this.questionChanged.emit()"
                     placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}"
                 />
-                <div class="visual-answer-delete-container" (click)="deleteAnswer(i)">
+                <div id="answer-option-{{ i }}-delete" class="visual-answer-delete-container" (click)="deleteAnswer(i)">
                     <fa-icon [icon]="faTrash" />
                 </div>
             </div>
@@ -75,7 +76,7 @@
             </div>
         </div>
     }
-    <button id="quiz-add-mc-question" class="btn btn-block btn-success mt-2" (click)="addNewAnswer()">
+    <button id="add-mc-answer-option" class="btn btn-block btn-success mt-2" (click)="addNewAnswer()">
         <fa-icon [icon]="faPlus" />
         <span jhiTranslate="artemisApp.multipleChoiceQuestion.visualEditor.newAnswerTitle"></span>
     </button>

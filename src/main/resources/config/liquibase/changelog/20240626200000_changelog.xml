@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet id="20240626200000_1" author="bbesrour">
+        <!-- Create the new build_job_config table -->
+        <createTable tableName="programming_exercise_build_config">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="sequential_test_runs" type="BOOLEAN"/>
+            <column name="branch" type="VARCHAR(128)"/>
+            <column name="build_plan_configuration" type="longtext"/>
+            <column name="build_script" type="longtext"/>
+            <column defaultValueBoolean="false" name="checkout_solution_repository" type="BOOLEAN"/>
+            <column name="checkout_path" type="VARCHAR(128)"/>
+            <column name="timeout_seconds" type="INT" defaultValueNumeric="0"/>
+            <column name="docker_flags" type="VARCHAR(255)"/>
+            <column defaultValueBoolean="false" name="testwise_coverage_enabled" type="BOOLEAN"/>
+            <column name="build_plan_access_secret" type="varchar(36)"/>
+            <column name="theia_image" type="varchar(128)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="allow_branching" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="branch_regex" type="varchar(128)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <!-- Add a new column to the programming_exercise table to reference the programming_exercise_build_config -->
+        <addColumn tableName="programming_exercise_details">
+            <column name="programming_exercise_build_config_id" type="BIGINT"/>
+            <column name="allow_online_ide" defaultValueBoolean="false" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+
+
+        <!-- Add foreign key constraint, on delete cascade -->
+        <addForeignKeyConstraint baseTableName="programming_exercise_details"
+                                 baseColumnNames="programming_exercise_build_config_id"
+                                 referencedTableName="programming_exercise_build_config"
+                                 referencedColumnNames="id"
+                                 constraintName="fk_programming_exercise_build_config"
+                                 onDelete="CASCADE"/>
+
+        <rollback>
+            <dropForeignKeyConstraint baseTableName="programming_exercise_details" constraintName="fk_programming_exercise_build_config"/>
+            <dropColumn tableName="programming_exercise_details" columnName="programming_exercise_build_config_id"/>
+            <dropColumn tableName="programming_exercise_details" columnName="allow_online_ide"/>
+            <dropTable tableName="programming_exercise_build_config"/>
+        </rollback>
+    </changeSet>
+
+    <!-- Move data from programming_exercise to programming_exercise_build_config and remove the column from programming_exercise -->
+    <changeSet id="20240626200000_2" author="bbesrour">
+        <sql>
+            INSERT INTO programming_exercise_build_config (id, sequential_test_runs, branch, build_plan_configuration, build_script, checkout_solution_repository, testwise_coverage_enabled, build_plan_access_secret)
+            SELECT exercise.id, exercise.sequential_test_runs, programming_exercise_details.branch, programming_exercise_details.build_plan_configuration, programming_exercise_details.build_script, programming_exercise_details.checkout_solution_repository, programming_exercise_details.testwise_coverage_enabled, programming_exercise_details.build_plan_access_secret
+            FROM exercise JOIN programming_exercise_details ON exercise.id = programming_exercise_details.id
+            WHERE exercise.discriminator = 'P';
+
+            UPDATE programming_exercise_details SET programming_exercise_build_config_id = (
+                SELECT programming_exercise_build_config.id
+                FROM programming_exercise_build_config
+                WHERE programming_exercise_build_config.id = programming_exercise_details.id
+            );
+        </sql>
+    </changeSet>
+
+    <changeSet id="20240626200000_3" author="bbesrour">
+        <dropColumn tableName="exercise" columnName="sequential_test_runs"/>
+        <dropColumn tableName="programming_exercise_details" columnName="branch"/>
+        <dropColumn tableName="programming_exercise_details" columnName="build_plan_configuration"/>
+        <dropColumn tableName="programming_exercise_details" columnName="build_script"/>
+        <dropColumn tableName="programming_exercise_details" columnName="checkout_solution_repository"/>
+        <dropColumn tableName="programming_exercise_details" columnName="testwise_coverage_enabled"/>
+        <dropColumn tableName="programming_exercise_details" columnName="build_plan_access_secret"/>
+    </changeSet>
+
+    <changeSet id="20240626200000_4_postgres" author="bbesrour">
+        <!-- Reset the sequence to the maximum value in the table -->
+        <!-- This is necessary because postgresql does not automatically update the sequence value when inserting data -->
+        <preConditions onFail="CONTINUE">
+            <dbms type="postgresql"/>
+        </preConditions>
+
+        <sql dbms="postgresql" splitStatements="false">
+            DO $$
+                DECLARE max_id BIGINT;
+            BEGIN
+                max_id := (SELECT (MAX(id)) as id FROM programming_exercise_build_config);
+                IF (max_id IS NOT NULL) THEN
+                        EXECUTE 'ALTER SEQUENCE programming_exercise_build_config_id_seq RESTART WITH ' || (max_id + 1);
+            END IF;
+            END $$;
+        </sql>
+    </changeSet>
+</databaseChangeLog>

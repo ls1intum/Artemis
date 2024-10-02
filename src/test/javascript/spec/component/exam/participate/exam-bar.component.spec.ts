@@ -12,6 +12,8 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { TranslateService } from '@ngx-translate/core';
 import { ExamBarComponent } from 'app/exam/participate/exam-bar/exam-bar.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
+import { Exam } from 'app/entities/exam/exam.model';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 describe('ExamBarComponent', () => {
     let fixture: ComponentFixture<ExamBarComponent>;
@@ -35,8 +37,11 @@ describe('ExamBarComponent', () => {
         fixture = TestBed.createComponent(ExamBarComponent);
         comp = fixture.componentInstance;
 
+        comp.exam = new Exam();
+        comp.exam.title = 'Test Exam';
+        comp.studentExam = new StudentExam();
         comp.endDate = dayjs();
-        comp.exercises = [
+        const exercises = [
             {
                 id: 0,
                 type: ExerciseType.PROGRAMMING,
@@ -49,6 +54,7 @@ describe('ExamBarComponent', () => {
             { id: 1, type: ExerciseType.TEXT } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
+        comp.studentExam.exercises = exercises;
     });
 
     beforeEach(() => {

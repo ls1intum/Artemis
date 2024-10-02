@@ -1,4 +1,3 @@
-import * as ace from 'brace';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
@@ -20,8 +19,6 @@ import { TeamStudentSearchComponent } from 'app/exercises/shared/team/team-stude
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('TeamUpdateDialogComponent', () => {
-    // needed to make sure ace is defined
-    ace.acequire('ace/ext/modelist.js');
     let comp: TeamUpdateDialogComponent;
     let fixture: ComponentFixture<TeamUpdateDialogComponent>;
     let debugElement: DebugElement;

@@ -25,15 +25,14 @@
 
     .left-col {
         flex: 1 1 auto;
+        flex-direction: column;
+        min-width: 0;
+        display: flex;
+        gap: 5px;
 
         @supports (flex-basis: min-content) {
             flex: 1 1 min-content;
         }
-
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
 
         .title-row {
             display: flex;

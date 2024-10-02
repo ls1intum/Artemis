@@ -3,7 +3,7 @@
         "dataExport": {
             "title": "Datenexport",
             "titleDownload": "Datenexport herunterladen",
-            "description": "Hier kannst du einen Datenexport gemäß Art.15 DSGVO Auskunftsrecht der betroffenen Person anfordern. Sobald der Export erstellt wurde, erhältst du eine Email mit einem Link um diesen herunterzuladen. Du kannst den Export sieben Tage lang herunterladen, danach wird er gelöscht. ",
+            "description": "Hier kannst du einen Datenexport gemäß Art.15 DSGVO Auskunftsrecht der betroffenen Person anfordern. Sobald der Export erstellt wurde, erhältst du eine E-Mail mit einem Link um diesen herunterzuladen. Du kannst den Export sieben Tage lang herunterladen, danach wird er gelöscht. ",
             "descriptionDownload": "Hier kannst du deinen angeforderten Datenexport herunterladen.",
             "request": "Datenexport anfordern",
             "download": "Datenexport herunterladen",

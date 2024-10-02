@@ -1,10 +1,11 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService, ProblemStatementUpdateEvent } from 'app/exam/participate/exam-participation-live-events.service';
 import { USER_DISPLAY_RELEVANT_EVENTS, USER_DISPLAY_RELEVANT_EVENTS_REOPEN } from 'app/exam/participate/events/exam-live-events-button.component';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-exam-live-events-overlay',
@@ -19,6 +20,7 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
     eventsToDisplay?: ExamLiveEvent[];
     events: ExamLiveEvent[] = [];
 
+    @Input() examStartDate: dayjs.Dayjs;
     // Icons
     faCheck = faCheck;
 
@@ -37,13 +39,14 @@ export class ExamLiveEventsOverlayComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.allLiveEventsSubscription = this.liveEventsService.observeAllEvents(USER_DISPLAY_RELEVANT_EVENTS_REOPEN).subscribe((events: ExamLiveEvent[]) => {
-            this.events = events;
+            // display the problem statements events only after the start of the exam
+            this.events = events.filter((event) => !(event.eventType === ExamLiveEventType.PROBLEM_STATEMENT_UPDATE && event.createdDate.isBefore(this.examStartDate)));
             if (!this.eventsToDisplay) {
                 this.updateEventsToDisplay();
             }
         });
 
-        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS).subscribe((event: ExamLiveEvent) => {
+        this.newLiveEventsSubscription = this.liveEventsService.observeNewEventsAsUser(USER_DISPLAY_RELEVANT_EVENTS, this.examStartDate).subscribe((event: ExamLiveEvent) => {
             this.unacknowledgedEvents.unshift(event);
             this.updateEventsToDisplay();
         });

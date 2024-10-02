@@ -42,7 +42,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInModal(content: string) {
-        const contentField = this.page.locator('.modal-content .markdown-editor .ace_editor');
+        const contentField = this.page.locator('.modal-content .markdown-editor .monaco-editor');
         await contentField.click();
         await contentField.pressSequentially(content);
     }
@@ -52,7 +52,7 @@ export class CourseCommunicationPage {
      * @param content - The content to be set.
      */
     async setContentInline(content: string) {
-        const contentField = this.page.locator('.markdown-editor-wrapper .markdown-editor .ace_editor');
+        const contentField = this.page.locator('.markdown-editor-wrapper .markdown-editor .monaco-editor');
         await contentField.click();
         await contentField.pressSequentially(content);
     }
@@ -156,7 +156,7 @@ export class CourseCommunicationPage {
      */
     async reply(postID: number, content: string) {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .ace_content');
+        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .monaco-editor');
         await postReplyField.click();
         await postReplyField.pressSequentially(content);
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/answer-posts`);
@@ -172,7 +172,7 @@ export class CourseCommunicationPage {
      */
     async replyWithMessage(postID: number, content: string): Promise<Post> {
         const postElement = this.getSinglePost(postID);
-        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .ace_content');
+        const postReplyField = postElement.locator('.new-reply-inline-input .markdown-editor .monaco-editor');
         await postReplyField.click();
         await postReplyField.pressSequentially(content);
         const responsePromise = this.page.waitForResponse(`${COURSE_BASE}/*/answer-messages`);

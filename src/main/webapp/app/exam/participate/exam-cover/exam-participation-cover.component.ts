@@ -3,7 +3,7 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { Course } from 'app/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -12,7 +12,7 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import dayjs from 'dayjs/esm';
 import { EXAM_START_WAIT_TIME_MINUTES } from 'app/app.constants';
 import { UI_RELOAD_TIME } from 'app/shared/constants/exercise-exam-constants';
-import { faArrowLeft, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faCircleExclamation, faDoorClosed, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -59,12 +59,11 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
     accountName = '';
     enteredName = '';
 
-    graceEndDate: dayjs.Dayjs;
-    criticalTime = dayjs.duration(30, 'seconds');
-
     // Icons
     faSpinner = faSpinner;
     faArrowLeft = faArrowLeft;
+    faCircleExclamation = faCircleExclamation;
+    faDoorClosed = faDoorClosed;
 
     constructor(
         private courseService: CourseManagementService,
@@ -98,14 +97,6 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
             this.examParticipationService.setEndView(true);
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
-            // this should be the individual working end + the grace period
-            if (this.testRun) {
-                this.graceEndDate = dayjs(this.testRunStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else if (this.testExam) {
-                this.graceEndDate = dayjs(this.studentExam.startedDate!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            } else {
-                this.graceEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
-            }
         }
 
         this.accountService.identity().then((user) => {
@@ -249,25 +240,5 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
 
     get inserted(): boolean {
         return this.enteredName.trim() !== '';
-    }
-
-    /**
-     * Returns whether the student failed to submit on time. In this case the end page is adapted.
-     */
-    get studentFailedToSubmit(): boolean {
-        if (this.testRun) {
-            return false;
-        }
-        let individualStudentEndDate;
-        if (this.exam.testExam) {
-            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
-                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
-            } else {
-                return false;
-            }
-        } else {
-            individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
-        }
-        return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 }

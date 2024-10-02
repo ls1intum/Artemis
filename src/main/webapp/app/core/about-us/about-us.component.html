@@ -1,26 +1,26 @@
 <div class="page">
     <div class="card-title ms-2">
-        <h2 class="mb-3 mt-3 font-weight-bold">{{ 'artemisApp.aboutUsOverview.title' | artemisTranslate }}</h2>
+        <h2 class="mb-3 mt-3 font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.title"></h2>
     </div>
     <div>
-        <h3 class="mb-3 ms-2 font-weight-bold">{{ 'artemisApp.aboutUsOverview.getInTouch' | artemisTranslate }}</h3>
+        <h3 class="mb-3 ms-2 font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.getInTouch"></h3>
         <ul>
             <li>
-                <a [href]="BUG_REPORT_URL" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{ 'bug' | artemisTranslate }}</a>
+                <a [href]="BUG_REPORT_URL" rel="noreferrer noopener" class="footer-text ms-3" target="_blank" jhiTranslate="bug"></a>
             </li>
             <li>
-                <a [href]="FEATURE_REQUEST_URL" class="footer-text ms-3" target="_blank"> {{ 'feature' | artemisTranslate }}</a>
+                <a [href]="FEATURE_REQUEST_URL" class="footer-text ms-3" target="_blank" jhiTranslate="feature"></a>
             </li>
             <li>
-                <a [href]="email" class="footer-text ms-3" target="_top"> {{ 'contact' | artemisTranslate }}</a>
+                <a [href]="email" class="footer-text ms-3" target="_top" jhiTranslate="contact"></a>
             </li>
             <li>
-                <a [href]="RELEASE_NOTES_URL" class="footer-text ms-3" target="_blank">{{ 'releaseNotes' | artemisTranslate }}</a>
+                <a [href]="RELEASE_NOTES_URL" class="footer-text ms-3" target="_blank" jhiTranslate="releaseNotes"></a>
             </li>
         </ul>
     </div>
     <div class="mb-5 ms-2">
-        <h3 class="mb-3 font-weight-bold">{{ 'artemisApp.aboutUsOverview.feature' | artemisTranslate }}</h3>
+        <h3 class="mb-3 font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.feature"></h3>
         <ol>
             @for (section of SECTIONS; track section) {
                 <li>
@@ -41,7 +41,7 @@
                                 <h5>{{ 'artemisApp.aboutUsOverview.roles.' + pm.role | artemisTranslate }}</h5>
                                 <span>
                                     <i></i>
-                                    <a href="{{ pm.website }}" target="_blank" rel="noopener noreferrer">{{ 'artemisApp.aboutUsOverview.website' | artemisTranslate }}</a>
+                                    <a href="{{ pm.website }}" target="_blank" rel="noopener noreferrer" jhiTranslate="artemisApp.aboutUsOverview.website"></a>
                                 </span>
                             </div>
                         </div>
@@ -52,7 +52,7 @@
     }
     @if (data && data.contributors) {
         <div class="mt-5 ms-2 me-2">
-            <h3 class="font-weight-bold">{{ 'artemisApp.aboutUsOverview.contributors' | artemisTranslate }}</h3>
+            <h3 class="font-weight-bold" jhiTranslate="artemisApp.aboutUsOverview.contributors"></h3>
             <div class="row">
                 @for (contributor of data.contributors; track contributor) {
                     <div class="contributor text-center">
@@ -66,10 +66,37 @@
         </div>
     }
     <div class="mt-5 ms-2 me-2">
-        <h3 class="font-weight-bold">{{ 'artemisApp.git.title' | artemisTranslate }}</h3>
+        <h3 class="font-weight-bold" jhiTranslate="artemisApp.git.title"></h3>
         <div>
-            {{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranchName }}<br />
-            {{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }}
+            <div class="inline-block fixed-width" jhiTranslate="artemisApp.git.branch"></div>
+            <div class="inline-block">{{ gitBranchName }}</div>
         </div>
+        <div>
+            <div class="inline-block fixed-width" jhiTranslate="artemisApp.git.commit"></div>
+            <div class="inline-block">{{ gitCommitId }}</div>
+        </div>
+    </div>
+    <div class="mt-5 ms-2 me-2">
+        <h3 class="font-weight-bold" jhiTranslate="artemisApp.operatorInfo.title"></h3>
+        <div>
+            <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.name"></div>
+            <div class="inline-block">{{ operatorName }}</div>
+        </div>
+        @if (operatorAdminName) {
+            <div>
+                <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.admin"></div>
+                <div class="inline-block">{{ operatorAdminName }}</div>
+            </div>
+        }
+        @if (operatorContactEmail) {
+            <div>
+                <div class="inline-block fixed-width" jhiTranslate="artemisApp.operatorInfo.adminEmail"></div>
+                <div class="inline-block">
+                    <a [href]="email" class="footer-text" target="_top">
+                        {{ operatorContactEmail }}
+                    </a>
+                </div>
+            </div>
+        }
     </div>
 </div>

@@ -4,7 +4,7 @@
             <form class="row" [formGroup]="form" (ngSubmit)="submitForm()">
                 <!-- Period -->
                 <div class="col-auto">
-                    <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>
+                    <label class="form-label" for="period" jhiTranslate="artemisApp.forms.configurationForm.periodInput.label"></label>
                     <div class="input-group">
                         <input
                             name="period"
@@ -23,25 +23,17 @@
                         </button>
                         <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period />
                     </div>
-                    <div class="form-text">
-                        {{ 'artemisApp.forms.configurationForm.periodInput.explanation' | artemisTranslate }}
-                    </div>
+                    <div class="form-text" jhiTranslate="artemisApp.forms.configurationForm.periodInput.explanation"></div>
                     @if (periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)) {
                         <div class="alert alert-danger">
                             @if (periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required) {
-                                <div>
-                                    {{ 'artemisApp.forms.configurationForm.periodInput.requiredValidationError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.requiredValidationError"></div>
                             }
                             @if (periodControl?.errors?.owlDateTimeParse) {
-                                <div>
-                                    {{ 'artemisApp.forms.configurationForm.periodInput.parseError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.parseError"></div>
                             }
                             @if (periodControl?.errors?.owlDateTimeRange) {
-                                <div>
-                                    {{ 'artemisApp.forms.configurationForm.periodInput.invalidRangeError' | artemisTranslate }}
-                                </div>
+                                <div jhiTranslate="artemisApp.forms.configurationForm.periodInput.invalidRangeError"></div>
                             }
                         </div>
                     }
@@ -49,41 +41,46 @@
                     <div [hidden]="!isMessagingEnabled(course)">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" formControlName="useTutorialGroupChannels" id="useTutorialGroupChannels" />
-                            <label class="form-check-label" for="useTutorialGroupChannels">
-                                {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label' | artemisTranslate }}
-                            </label>
-                            <small id="channelHelp" class="form-text text-body-secondary d-block">{{
-                                'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation' | artemisTranslate
-                            }}</small>
+                            <label
+                                class="form-check-label"
+                                for="useTutorialGroupChannels"
+                                jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.label"
+                            ></label>
+                            <small
+                                id="channelHelp"
+                                class="form-text text-body-secondary d-block"
+                                jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.explanation"
+                            ></small>
                             @if (showChannelDeletionWarning) {
-                                <div class="alert alert-danger" role="alert" id="channelDeletionWarning">
-                                    {{ 'artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning' | artemisTranslate }}
-                                </div>
+                                <div
+                                    class="alert alert-danger"
+                                    role="alert"
+                                    id="channelDeletionWarning"
+                                    jhiTranslate="artemisApp.forms.configurationForm.useTutorialGroupChannelsInput.channelDeletionWarning"
+                                ></div>
                             }
                         </div>
                         <!--Public Channel / Private Channel -->
                         <div class="form-group" [hidden]="!useTutorialGroupChannelsControl?.value">
-                            <label class="d-block">{{ 'artemisApp.dialogs.createChannel.channelForm.isPublicInput.label' | artemisTranslate }}</label>
+                            <label class="d-block" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.label"></label>
                             <div class="btn-group" role="group">
                                 <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="public" autocomplete="off" checked [value]="true" />
-                                <label class="btn btn-outline-secondary" for="public">{{
-                                    'artemisApp.dialogs.createChannel.channelForm.isPublicInput.public' | artemisTranslate
-                                }}</label>
+                                <label class="btn btn-outline-secondary" for="public" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.public"></label>
                                 <input formControlName="usePublicTutorialGroupChannels" type="radio" class="btn-check" id="private" autocomplete="off" [value]="false" />
-                                <label class="btn btn-outline-secondary" for="private">{{
-                                    'artemisApp.dialogs.createChannel.channelForm.isPublicInput.private' | artemisTranslate
-                                }}</label>
+                                <label class="btn btn-outline-secondary" for="private" jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.private"></label>
                             </div>
-                            <small id="isPublicHelp" class="form-text text-body-secondary d-block">{{
-                                'artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation' | artemisTranslate
-                            }}</small>
+                            <small
+                                id="isPublicHelp"
+                                class="form-text text-body-secondary d-block"
+                                jhiTranslate="artemisApp.dialogs.createChannel.channelForm.isPublicInput.explanation"
+                            ></small>
                         </div>
                     </div>
                 </div>
                 <div class="row mt-2">
                     <div class="col-12">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
+                            <span jhiTranslate="{{ isEditMode ? 'global.generic.edit' : 'global.generic.create' }}"></span>
                         </button>
                     </div>
                 </div>

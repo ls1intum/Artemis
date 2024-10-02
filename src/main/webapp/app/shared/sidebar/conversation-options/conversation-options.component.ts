@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO, shouldNotifyRecipient } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsisVertical, faEye, faEyeSlash, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
 import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
-import { mergeWith } from 'rxjs/operators';
+import { catchError, mergeWith } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -18,7 +18,6 @@ import {
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/overview/course-conversations/other/conversation.util';
-import { catchError } from 'rxjs/operators';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NotificationService } from 'app/shared/notification/notification.service';
 
@@ -27,6 +26,7 @@ import { NotificationService } from 'app/shared/notification/notification.servic
     templateUrl: './conversation-options.component.html',
     styleUrls: ['./conversation-options.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();

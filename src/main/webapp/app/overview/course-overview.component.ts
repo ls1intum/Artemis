@@ -119,9 +119,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
     isExamStarted = false;
-    isExamEndView = false;
     private examStartedSubscription: Subscription;
-    private examEndViewSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
 
     // Properties to track hidden items for dropdown menu
@@ -208,9 +206,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
         this.examStartedSubscription = this.examParticipationService.examIsStarted$.subscribe((isStarted) => {
             this.isExamStarted = isStarted;
-        });
-        this.examEndViewSubscription = this.examParticipationService.endViewDisplayed$.subscribe((isEndView) => {
-            this.isExamEndView = isEndView;
         });
         this.getCollapseStateFromStorage();
         this.course = this.courseStorageService.getCourse(this.courseId);
@@ -714,7 +709,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.subscription?.unsubscribe();
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
-        this.examEndViewSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();

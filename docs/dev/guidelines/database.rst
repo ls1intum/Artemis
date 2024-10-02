@@ -1,8 +1,6 @@
-**********************
-Database Relationships
-**********************
-
-WORK IN PROGRESS
+********
+Database
+********
 
 1. Retrieving and Building Objects
 ==================================
@@ -155,7 +153,7 @@ In order to load the relationships of an entity on demand, we then use one of 3 
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "exercises.teamAssignmentConfig" })
     Course findWithEagerExercisesById(long courseId);
 
-2. **JOIN FETCH**: The ``JOIN FETCH`` keyword is used in a custom query to specify a graph of relationships to fetch. It should be used when a query is custom and has a custom ``@Query`` annotation. Example:
+2. **JOIN FETCH**: The ``JOIN FETCH`` keyword is used in a custom query to specify a graph of relationships to fetch. It should be used when a query is custom and has a custom ``@Query`` annotation. You can see the example below. Also, explicitly or implicitly limiting queries in Hibernate can lead to in-memory paging. For more details, see the 'In-memory paging' section.
 
  .. code-block:: java
 
@@ -203,6 +201,73 @@ In order to load the relationships of an entity on demand, we then use one of 3 
     // ProgrammingExerciseService.java
     final Set<ProgrammingExerciseFetchOptions> fetchOptions = withGradingCriteria ? Set.of(GradingCriteria, AuxiliaryRepositories) : Set.of(AuxiliaryRepositories);
     var programmingExercise = programmingExerciseRepository.findByIdWithDynamicFetchElseThrow(exerciseId, fetchOptions);
+
+4. **In memory paging**: Since the flag ``hibernate.query.fail_on_pagination_over_collection_fetch: true`` is now active, it is crucial to carefully craft database queries that involve FETCH statements with collections and thoroughly test the changes. In-memory paging would cause performance decrements and is, therefore, disabled. Any use of it will lead to runtime errors.
+Queries that may result in this error can return Page<> and contain JOIN FETCHES or involve internal limiting in Hibernate, such as findFirst, findLast, or findOne. One solution is to split the original query into multiple queries and a default method. The first query fetches only the IDs of entities whose full dependencies need to be fetched. The second query eagerly fetches all necessary dependencies, and the third query uses counting to build Pages, if they are utilized.
+When possible, use the default Spring Data/JPA methods for second(fetching) and third(counting) queries.
+An example implementation could look like this:
+
+ .. code-block:: java
+
+    // Repository interface
+    default Page<User> searchAllByLoginOrNameInCourseAndReturnPage(Pageable pageable, String loginOrName, long courseId) {
+        List<Long> userIds = findUserIdsByLoginOrNameInCourse(loginOrName, courseId, pageable).stream().map(DomainObject::getId).toList();;
+
+        if (userIds.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        }
+
+        List<User> users = findUsersWithGroupsByIds(userIds);
+        long total = countUsersByLoginOrNameInCourse(loginOrName, courseId);
+
+        return new PageImpl<>(users, pageable, total);
+    }
+
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                JOIN user.groups userGroup
+                JOIN Course course ON course.id = :courseId
+            WHERE user.isDeleted = FALSE
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
+                AND (course.studentGroupName = userGroup
+                    OR course.teachingAssistantGroupName = userGroup
+                    OR course.editorGroupName = userGroup
+                    OR course.instructorGroupName = userGroup
+                )
+            """)
+    List<User> findUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId, Pageable pageable);
+
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+                LEFT JOIN FETCH user.groups userGroup
+            WHERE user.id IN :ids
+            """)
+    List<User> findUsersWithGroupsByIds(@Param("ids") List<Long> ids);
+
+    @Query("""
+            SELECT COUNT(DISTINCT user)
+            FROM User user
+                JOIN user.groups userGroup
+                JOIN Course course ON course.id = :courseId
+            WHERE user.isDeleted = FALSE
+                AND (
+                    user.login LIKE :#{#loginOrName}%
+                    OR CONCAT(user.firstName, ' ', user.lastName) LIKE %:#{#loginOrName}%
+                )
+                AND (
+                    course.studentGroupName = userGroup
+                    OR course.teachingAssistantGroupName = userGroup
+                    OR course.editorGroupName = userGroup
+                    OR course.instructorGroupName = userGroup
+                )
+            """)
+    long countUsersByLoginOrNameInCourse(@Param("loginOrName") String loginOrName, @Param("courseId") long courseId);
+
 
 
 
@@ -287,7 +352,7 @@ Solutions for known issues
 
  There is a problem with the way you save the associated objects. You must follow this procedure:
 
- #. Save the child entity (e.g., `Feedback <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Feedback.java>`_) without connection to the parent entity (e.g., `Result <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/in/www1/artemis/domain/Result.java>`_)
+ #. Save the child entity (e.g., `Feedback <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Feedback.java>`_) without connection to the parent entity (e.g., `Result <https://github.com/ls1intum/Artemis/blob/develop/src/main/java/de/tum/cit/aet/artemis/domain/Result.java>`_)
  #. Add back the connection of the child entity to the parent entity.
  #. Save the parent entity.
  #. Always use the returned value after saving the entity, see: ``feedback = feedbackRepository.save(feedback);``

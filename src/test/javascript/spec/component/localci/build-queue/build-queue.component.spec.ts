@@ -8,10 +8,10 @@ import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AccountService } from 'app/core/auth/account.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTestModule } from '../../../test.module';
-import { BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/build-job.model';
-import { TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { BuildJobStatistics, FinishedBuildJob, SpanType } from 'app/entities/programming/build-job.model';
+import { TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { waitForAsync } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -45,7 +45,9 @@ describe('BuildQueueComponent', () => {
     const mockLocalStorageService = new MockLocalStorageService();
     mockLocalStorageService.clear = (key?: string) => {
         if (key) {
-            delete mockLocalStorageService.storage[key];
+            if (key in mockLocalStorageService.storage) {
+                delete mockLocalStorageService.storage[key];
+            }
         } else {
             mockLocalStorageService.storage = {};
         }

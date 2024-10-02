@@ -1,13 +1,14 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faAngleDown, faAngleRight, faAsterisk, faMedal, faQuestionCircle, faScaleUnbalanced, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseGradingStatistics } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { ProgrammingExerciseTask } from './programming-exercise-task';
 import { Observable, Subject } from 'rxjs';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { isExamExercise } from 'app/shared/util/utils';
+import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
 
 type Sort = {
     by: 'name' | 'weight' | 'multiplier' | 'bonusPoints' | 'visibility' | 'resulting' | 'type';
@@ -137,14 +138,20 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
         this.tasks.filter(({ testCases }) => testCases).forEach((task) => task.testCases.sort(comparator));
     };
 
-    private compareNumForAttribute = (attributeKey: string): TaskComparator => {
-        return (a, b) => {
+    private compareNumForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseTestCase>(attributeKey: keyof T): TaskComparator => {
+        return (a: T, b: T) => {
             return ((a[attributeKey] as number) ?? 0) - ((b[attributeKey] as number) ?? 0);
         };
     };
 
-    private compareStringForAttribute = (attributeKey: string): TaskComparator => {
-        return (a, b) => {
+    /**
+     * {@link ProgrammingExerciseTask} extends {@link ProgrammingExerciseServerSideTask} which is why we need to explicitly add it here for the type
+     * @param attributeKey
+     */
+    private compareStringForAttribute = <T extends ProgrammingExerciseTask | ProgrammingExerciseServerSideTask | ProgrammingExerciseTestCase>(
+        attributeKey: keyof T,
+    ): TaskComparator => {
+        return (a: T, b: T) => {
             const aType = a[attributeKey] ?? '';
             const bType = b[attributeKey] ?? '';
 

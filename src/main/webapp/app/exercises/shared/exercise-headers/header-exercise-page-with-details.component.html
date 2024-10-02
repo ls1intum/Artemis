@@ -86,14 +86,10 @@
                         @if (course?.presentationScore) {
                             {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
                             @if ((studentParticipation?.presentationScore ?? 0) > 0) {
-                                <span class="badge bg-success">
-                                    {{ 'global.generic.yes' | artemisTranslate }}
-                                </span>
+                                <span class="badge bg-success" jhiTranslate="global.generic.yes"></span>
                             }
                             @if ((studentParticipation?.presentationScore ?? 0) <= 0) {
-                                <span class="badge bg-secondary">
-                                    {{ 'global.generic.no' | artemisTranslate }}
-                                </span>
+                                <span class="badge bg-secondary" jhiTranslate="global.generic.no"></span>
                             }
                         } @else {
                             {{ 'artemisApp.courseOverview.exerciseDetails.presentation' | artemisTranslate }}
@@ -103,9 +99,7 @@
                                 </span>
                             }
                             @if (!studentParticipation?.presentationScore) {
-                                <span class="badge bg-secondary">
-                                    {{ 'global.generic.unset' | artemisTranslate }}
-                                </span>
+                                <span class="badge bg-secondary" jhiTranslate="global.generic.unset"></span>
                             }
                         }
                     </div>
@@ -144,14 +138,10 @@
                         @if (course?.presentationScore) {
                             {{ 'artemisApp.courseOverview.exerciseDetails.presented' | artemisTranslate }}
                             @if ((studentParticipation?.presentationScore ?? 0) > 0) {
-                                <span class="badge bg-success">
-                                    {{ 'global.generic.yes' | artemisTranslate }}
-                                </span>
+                                <span class="badge bg-success" jhiTranslate="global.generic.yes"></span>
                             }
                             @if ((studentParticipation?.presentationScore ?? 0) <= 0) {
-                                <span class="badge bg-secondary">
-                                    {{ 'global.generic.no' | artemisTranslate }}
-                                </span>
+                                <span class="badge bg-secondary" jhiTranslate="global.generic.no"></span>
                             }
                         }
                         @if (!course?.presentationScore) {
@@ -162,9 +152,7 @@
                                 </span>
                             }
                             @if (!studentParticipation?.presentationScore) {
-                                <span class="badge bg-secondary">
-                                    {{ 'global.generic.unset' | artemisTranslate }}
-                                </span>
+                                <span class="badge bg-secondary" jhiTranslate="global.generic.unset"></span>
                             }
                         }
                     </div>
@@ -176,9 +164,8 @@
                     <span
                         class="badge bg-success"
                         [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: course?.maxComplaintTimeDays }"
-                    >
-                        {{ 'global.generic.yes' | artemisTranslate }}
-                    </span>
+                        jhiTranslate="global.generic.yes"
+                    ></span>
                 </div>
             }
         </div>

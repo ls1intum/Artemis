@@ -7,7 +7,7 @@ import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Observable, of, throwError } from 'rxjs';
-import { CommitInfo } from 'app/entities/programming-submission.model';
+import { CommitInfo } from 'app/entities/programming/programming-submission.model';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -16,7 +16,7 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { HttpResponse } from '@angular/common/http';
 
 describe('CommitDetailsViewComponent', () => {

@@ -1,73 +1,72 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { of, throwError } from 'rxjs';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { EditPrerequisiteComponent } from 'app/course/competencies/prerequisite-form/edit-prerequisite.component';
-import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
-import { Prerequisite } from 'app/entities/prerequisite.model';
-import { CompetencyTaxonomy } from 'app/entities/competency.model';
-import dayjs from 'dayjs';
-import { Dayjs } from 'dayjs/esm';
-import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
-import { PrerequisiteFormComponent } from 'app/course/competencies/prerequisite-form/prerequisite-form.component';
-import { PrerequisiteFormStubComponent } from './prerequisite-form-stub.component';
+import { of } from 'rxjs';
+import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureService } from 'app/lecture/lecture.service';
+import { CourseCompetencyProgress } from 'app/entities/competency.model';
+import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { ArtemisTestModule } from '../../test.module';
+import { Prerequisite } from 'app/entities/prerequisite.model';
+import { EditPrerequisiteComponent } from 'app/course/competencies/edit/edit-prerequisite.component';
+import { PrerequisiteService } from 'app/course/competencies/prerequisite.service';
+import { PrerequisiteFormComponent } from 'app/course/competencies/forms/prerequisite/prerequisite-form.component';
+import { PrerequisiteFormStubComponent } from './prerequisite-form-stub.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 
 describe('EditPrerequisiteComponent', () => {
-    let componentFixture: ComponentFixture<EditPrerequisiteComponent>;
-    let component: EditPrerequisiteComponent;
-    const prerequisite: Prerequisite = {
-        id: 1,
-        title: 'Title1',
-        description: 'Description1',
-        taxonomy: CompetencyTaxonomy.APPLY,
-        masteryThreshold: 50,
-        optional: true,
-        softDueDate: dayjs('2022-02-20') as Dayjs,
-    };
-    let prerequisiteService: PrerequisiteService;
-
+    let editPrerequisiteComponentFixture: ComponentFixture<EditPrerequisiteComponent>;
+    let editPrerequisiteComponent: EditPrerequisiteComponent;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [EditPrerequisiteComponent],
+            imports: [ArtemisTestModule, EditPrerequisiteComponent, PrerequisiteFormStubComponent],
+            declarations: [],
             providers: [
-                provideHttpClient(),
+                MockProvider(LectureService),
                 MockProvider(PrerequisiteService),
                 MockProvider(AlertService),
-                {
-                    provide: TranslateService,
-                    useClass: MockTranslateService,
-                },
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
                     useValue: {
-                        params: of({
-                            prerequisiteId: 1,
-                            courseId: 1,
+                        paramMap: of({
+                            get: (key: string) => {
+                                switch (key) {
+                                    case 'competencyId':
+                                        return 1;
+                                }
+                            },
                         }),
+                        parent: {
+                            parent: {
+                                paramMap: of({
+                                    get: (key: string) => {
+                                        switch (key) {
+                                            case 'courseId':
+                                                return 1;
+                                        }
+                                    },
+                                }),
+                            },
+                        },
                     },
                 },
             ],
+            schemas: [],
         })
-            .overrideComponent(EditPrerequisiteComponent, {
-                remove: {
-                    imports: [PrerequisiteFormComponent],
-                },
-                add: {
-                    imports: [PrerequisiteFormStubComponent],
-                },
+            .overrideModule(ArtemisMarkdownEditorModule, {
+                remove: { exports: [MarkdownEditorMonacoComponent] },
+                add: { exports: [MockComponent(MarkdownEditorMonacoComponent)], declarations: [MockComponent(MarkdownEditorMonacoComponent)] },
             })
             .compileComponents()
             .then(() => {
-                componentFixture = TestBed.createComponent(EditPrerequisiteComponent);
-                component = componentFixture.componentInstance;
-                prerequisiteService = TestBed.inject(PrerequisiteService);
-                jest.spyOn(prerequisiteService, 'getPrerequisite').mockReturnValue(of(prerequisite));
+                editPrerequisiteComponentFixture = TestBed.createComponent(EditPrerequisiteComponent);
+                editPrerequisiteComponent = editPrerequisiteComponentFixture.componentInstance;
             });
     });
 
@@ -75,46 +74,125 @@ describe('EditPrerequisiteComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize correctly', () => {
-        componentFixture.detectChanges();
-
-        expect(component.existingPrerequisite).toEqual(prerequisite);
-        expect(component.isLoading).toBeFalse();
+    it('should initialize', () => {
+        editPrerequisiteComponentFixture.detectChanges();
+        expect(editPrerequisiteComponent).toBeDefined();
     });
 
-    it('should navigate back after updating prerequisite', () => {
-        const router = TestBed.inject(Router);
+    it('should set form data correctly', () => {
+        // mocking competency service
+        const prerequisiteService = TestBed.inject(PrerequisiteService);
+        const lectureUnit = new TextUnit();
+        lectureUnit.id = 1;
+
+        const competencyOfResponse: Prerequisite = {};
+        competencyOfResponse.id = 1;
+        competencyOfResponse.title = 'test';
+        competencyOfResponse.description = 'lorem ipsum';
+        competencyOfResponse.optional = true;
+        competencyOfResponse.lectureUnits = [lectureUnit];
+
+        const competencyResponse: HttpResponse<Prerequisite> = new HttpResponse({
+            body: competencyOfResponse,
+            status: 200,
+        });
+        const competencyCourseProgressResponse: HttpResponse<CourseCompetencyProgress> = new HttpResponse({
+            body: { competencyId: 1, numberOfStudents: 8, numberOfMasteredStudents: 5, averageStudentScore: 90 } as CourseCompetencyProgress,
+            status: 200,
+        });
+
+        const findByIdSpy = jest.spyOn(prerequisiteService, 'findById').mockReturnValue(of(competencyResponse));
+        const getCourseProgressSpy = jest.spyOn(prerequisiteService, 'getCourseProgress').mockReturnValue(of(competencyCourseProgressResponse));
+
+        // mocking lecture service
+        const lectureService = TestBed.inject(LectureService);
+        const lectureOfResponse = new Lecture();
+        lectureOfResponse.id = 1;
+        lectureOfResponse.lectureUnits = [lectureUnit];
+
+        const lecturesResponse: HttpResponse<Lecture[]> = new HttpResponse<Lecture[]>({
+            body: [lectureOfResponse],
+            status: 200,
+        });
+
+        const findAllByCourseSpy = jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(lecturesResponse));
+
+        editPrerequisiteComponentFixture.detectChanges();
+        const competencyFormComponent = editPrerequisiteComponentFixture.debugElement.query(By.directive(PrerequisiteFormComponent)).componentInstance;
+        expect(findByIdSpy).toHaveBeenCalledOnce();
+        expect(getCourseProgressSpy).toHaveBeenCalledOnce();
+        expect(findAllByCourseSpy).toHaveBeenCalledOnce();
+
+        expect(editPrerequisiteComponent.formData.title).toEqual(competencyOfResponse.title);
+        expect(editPrerequisiteComponent.formData.description).toEqual(competencyOfResponse.description);
+        expect(editPrerequisiteComponent.formData.optional).toEqual(competencyOfResponse.optional);
+        expect(editPrerequisiteComponent.formData.connectedLectureUnits).toEqual(competencyOfResponse.lectureUnits);
+        expect(editPrerequisiteComponent.lecturesWithLectureUnits).toEqual([lectureOfResponse]);
+        expect(competencyFormComponent.formData).toEqual(editPrerequisiteComponent.formData);
+    });
+
+    it('should send PUT request upon form submission and navigate', () => {
+        const router: Router = TestBed.inject(Router);
+        const prerequisiteService = TestBed.inject(PrerequisiteService);
+        const lectureService = TestBed.inject(LectureService);
+
+        const textUnit = new TextUnit();
+        textUnit.id = 1;
+
+        const competencyDatabase: Prerequisite = {};
+        competencyDatabase.id = 1;
+        competencyDatabase.title = 'test';
+        competencyDatabase.description = 'lorem ipsum';
+        competencyDatabase.optional = true;
+        competencyDatabase.lectureUnits = [textUnit];
+
+        const findByIdResponse: HttpResponse<Prerequisite> = new HttpResponse({
+            body: competencyDatabase,
+            status: 200,
+        });
+        const findByIdSpy = jest.spyOn(prerequisiteService, 'findById').mockReturnValue(of(findByIdResponse));
+        jest.spyOn(prerequisiteService, 'getCourseProgress').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: {},
+                    status: 200,
+                }),
+            ),
+        );
+        jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(
+            of(
+                new HttpResponse({
+                    body: [new Lecture()],
+                    status: 200,
+                }),
+            ),
+        );
+        editPrerequisiteComponentFixture.detectChanges();
+        expect(findByIdSpy).toHaveBeenCalledOnce();
+        expect(editPrerequisiteComponent.prerequisite).toEqual(competencyDatabase);
+
+        const changedUnit: Prerequisite = {
+            ...competencyDatabase,
+            title: 'Changed',
+            optional: false,
+        };
+
+        const updateResponse: HttpResponse<Prerequisite> = new HttpResponse({
+            body: changedUnit,
+            status: 200,
+        });
+        const updatedSpy = jest.spyOn(prerequisiteService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
-        const updatedPrerequisite: Prerequisite = { ...prerequisite, title: 'new title', description: 'new description' };
-        const updateSpy = jest.spyOn(prerequisiteService, 'updatePrerequisite').mockReturnValue(of(updatedPrerequisite));
 
-        componentFixture.detectChanges();
-        const prerequisiteForm: PrerequisiteFormStubComponent = componentFixture.debugElement.query(By.directive(PrerequisiteFormStubComponent)).componentInstance;
-        prerequisiteForm.onSubmit.emit(updatedPrerequisite);
+        const competencyForm = editPrerequisiteComponentFixture.debugElement.query(By.directive(PrerequisiteFormComponent)).componentInstance;
+        competencyForm.formSubmitted.emit({
+            title: changedUnit.title,
+            description: changedUnit.description,
+            optional: changedUnit.optional,
+            connectedLectureUnits: changedUnit.lectureUnits,
+        });
 
-        expect(updateSpy).toHaveBeenCalledWith(updatedPrerequisite, updatedPrerequisite.id, component.courseId);
-        expect(navigateSpy).toHaveBeenCalled();
-    });
-
-    it('should navigate on cancel', () => {
-        const router = TestBed.inject(Router);
-        const navigateSpy = jest.spyOn(router, 'navigate');
-
-        componentFixture.detectChanges();
-        const prerequisiteForm: PrerequisiteFormStubComponent = componentFixture.debugElement.query(By.directive(PrerequisiteFormStubComponent)).componentInstance;
-        prerequisiteForm.onCancel.emit();
-
-        expect(navigateSpy).toHaveBeenCalled();
-    });
-
-    it('should alert on error', () => {
-        const alertService = TestBed.inject(AlertService);
-        const errorSpy = jest.spyOn(alertService, 'error');
-        jest.spyOn(prerequisiteService, 'updatePrerequisite').mockReturnValue(throwError(() => new HttpErrorResponse({ status: 400 })));
-
-        componentFixture.detectChanges();
-        component.updatePrerequisite(prerequisite);
-
-        expect(errorSpy).toHaveBeenCalled();
+        expect(updatedSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 });

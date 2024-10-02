@@ -3,7 +3,7 @@ import { tutorialGroupManagementRoutes } from 'app/course/tutorial-groups/tutori
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { ArtemisTutorialGroupsSharedModule } from '../shared/tutorial-groups-shared.module';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
@@ -38,6 +38,8 @@ import { TutorialGroupsChecklistComponent } from './tutorial-groups-checklist/tu
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TutorialGroupFreePeriodsTableComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { TutorialGroupsExportButtonComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-export-button.component/tutorial-groups-export-button.component';
+import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
+
 @NgModule({
     imports: [
         RouterModule.forChild(tutorialGroupManagementRoutes),
@@ -50,6 +52,7 @@ import { TutorialGroupsExportButtonComponent } from 'app/course/tutorial-groups/
         ArtemisTutorialGroupsSharedModule,
         ArtemisSidePanelModule,
         ArtemisSharedComponentModule,
+        ArtemisMarkdownEditorModule,
     ],
     declarations: [
         TutorialGroupsManagementComponent,

@@ -1,7 +1,7 @@
 import { Conversation, ConversationDTO, ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 
 // IMPORTANT NOTICE: The following strings have to be consistent with
 // the types defined in ChannelSubType.java
@@ -66,11 +66,11 @@ export class ChannelIdAndNameDTO {
     public name?: string;
 }
 
-export function isChannelDTO(conversation: ConversationDTO): conversation is ChannelDTO {
+export function isChannelDTO(conversation: ConversationDTO | Conversation): conversation is ChannelDTO {
     return conversation.type === ConversationType.CHANNEL;
 }
 
-export function getAsChannelDTO(conversation: ConversationDTO | undefined): ChannelDTO | undefined {
+export function getAsChannelDTO(conversation: ConversationDTO | Conversation | undefined): ChannelDTO | undefined {
     if (!conversation) {
         return undefined;
     }

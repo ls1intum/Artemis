@@ -1,4 +1,4 @@
-@if (isLectureUnitLoading()) {
+@if (isLoading()) {
     <div class="row justify-content-center m-4">
         <div class="spinner-border text-primary" role="status">
             <span class="sr-only" jhiTranslate="loading"></span>
@@ -6,21 +6,30 @@
     </div>
 }
 @if (lectureUnit(); as lectureUnit) {
-    @switch (lectureUnit.type) {
-        @case (LectureUnitType.VIDEO) {
-            <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+    <div class="row m-0">
+        <div class="col p-0">
+            @switch (lectureUnit.type) {
+                @case (LectureUnitType.VIDEO) {
+                    <jhi-video-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                }
+                @case (LectureUnitType.TEXT) {
+                    <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                }
+                @case (LectureUnitType.ATTACHMENT) {
+                    <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                }
+                @case (LectureUnitType.EXERCISE) {
+                    <jhi-exercise-unit [exerciseUnit]="lectureUnit" />
+                }
+                @case (LectureUnitType.ONLINE) {
+                    <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
+                }
+            }
+        </div>
+        @if (isCommunicationEnabled()) {
+            <div class="col-md-auto p-0 ms-2">
+                <jhi-discussion-section [lecture]="this.lecture()" />
+            </div>
         }
-        @case (LectureUnitType.TEXT) {
-            <jhi-text-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
-        }
-        @case (LectureUnitType.ATTACHMENT) {
-            <jhi-attachment-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
-        }
-        @case (LectureUnitType.EXERCISE) {
-            <jhi-exercise-unit [exerciseUnit]="lectureUnit" />
-        }
-        @case (LectureUnitType.ONLINE) {
-            <jhi-online-unit [lectureUnit]="lectureUnit" (onCompletion)="setLearningObjectCompletion($event)" />
-        }
-    }
+    </div>
 }

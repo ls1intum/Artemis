@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { NgModel } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Course } from 'app/entities/course.model';
@@ -11,7 +11,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Result } from 'app/entities/result.model';
 import { Submission } from 'app/entities/submission.model';
 import { Team } from 'app/entities/team.model';

@@ -4,7 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 
 /*
  * Common primitives
@@ -12,8 +12,8 @@ import { Exam } from 'app/entities/exam.model';
 const examData = {
     title: 'exam' + generateUUID(),
     visibleDate: dayjs(),
-    startDate: dayjs().add(1, 'day'),
-    endDate: dayjs().add(2, 'day'),
+    startDate: dayjs().add(1, 'hour'),
+    endDate: dayjs().add(2, 'hour'),
     numberOfExercisesInExam: 4,
     examMaxPoints: 40,
     startText: 'Exam start text',
@@ -25,8 +25,8 @@ const examData = {
 const editedExamData = {
     title: 'exam' + generateUUID(),
     visibleDate: dayjs(),
-    startDate: dayjs().add(2, 'day'),
-    endDate: dayjs().add(4, 'day'),
+    startDate: dayjs().add(1, 'hour'),
+    endDate: dayjs().add(5, 'hour'),
     numberOfExercisesInExam: 3,
     examMaxPoints: 30,
     startText: 'Edited exam start text',
@@ -78,7 +78,7 @@ test.describe('Exam creation/deletion', () => {
         await expect(examManagement.getExamEndText()).toContainText(examData.endText);
         await expect(examManagement.getExamConfirmationStartText()).toContainText(examData.confirmationStartText);
         await expect(examManagement.getExamConfirmationEndText()).toContainText(examData.confirmationEndText);
-        await expect(examManagement.getExamWorkingTime()).toHaveText('1d 0h');
+        await expect(examManagement.getExamWorkingTime()).toHaveText('1h 0min');
     });
 
     test.describe('Exam deletion', () => {
@@ -107,6 +107,8 @@ test.describe('Exam creation/deletion', () => {
             const examConfig = {
                 course,
                 title: examData.title,
+                visibleDate: dayjs(),
+                startDate: dayjs().add(1, 'hour'),
             };
             const examResponse = await examAPIRequests.createExam(examConfig);
             examId = examResponse.id!;
@@ -158,7 +160,7 @@ test.describe('Exam creation/deletion', () => {
             await expect(examManagement.getExamEndText()).toContainText(editedExamData.endText);
             await expect(examManagement.getExamConfirmationStartText()).toContainText(editedExamData.confirmationStartText);
             await expect(examManagement.getExamConfirmationEndText()).toContainText(editedExamData.confirmationEndText);
-            await expect(examManagement.getExamWorkingTime()).toHaveText('2d 0h');
+            await expect(examManagement.getExamWorkingTime()).toHaveText('4h 0min');
         });
     });
 

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbModal, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
@@ -13,10 +13,6 @@ import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-sc
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
-import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
-import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';
-import { HintCommand } from 'app/shared/markdown-editor/domainCommands/hint.command';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
@@ -27,8 +23,9 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { ChangeDetectorRef } from '@angular/core';
 import { clone } from 'lodash-es';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
+import { MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('DragAndDropQuestionEditComponent', () => {
     let fixture: ComponentFixture<DragAndDropQuestionEditComponent>;
@@ -75,7 +72,7 @@ describe('DragAndDropQuestionEditComponent', () => {
                 DragAndDropQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(QuizScoringInfoModalComponent),
-                MockComponent(MarkdownEditorComponent),
+                MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(DragAndDropQuestionComponent),
                 MockDirective(NgModel),
@@ -603,36 +600,36 @@ describe('DragAndDropQuestionEditComponent', () => {
         expect(component.questionEditorText).toBe(newValue);
     });
 
-    it('should detect domain commands', () => {
+    it('should detect domain actions', () => {
         component.question = new DragAndDropQuestion();
         component.question.text = 'text';
         component.question.explanation = 'explanation';
         component.question.hint = 'hint';
-        let domainCommand: [string, DomainCommand];
+        let textWithDomainAction: TextWithDomainAction;
 
         // explanation
-        let command = new ExplanationCommand();
+        let action = new QuizExplanationAction();
         let text = 'take this as an explanationCommand';
-        domainCommand = [text, command];
+        textWithDomainAction = { text, action };
 
-        component.domainCommandsFound([domainCommand]);
+        component.domainActionsFound([textWithDomainAction]);
 
         expect(component.question.explanation).toBe(text);
 
         // hint
-        command = new HintCommand();
+        action = new QuizHintAction();
         text = 'take this as a hintCommand';
-        domainCommand = [text, command];
+        textWithDomainAction = { text, action };
 
-        component.domainCommandsFound([domainCommand]);
+        component.domainActionsFound([textWithDomainAction]);
 
         expect(component.question.hint).toBe(text);
 
         // text
         text = 'take this null as a command';
-        domainCommand = [text, null as unknown as DomainCommand];
+        textWithDomainAction = { text, action: undefined };
 
-        component.domainCommandsFound([domainCommand]);
+        component.domainActionsFound([textWithDomainAction]);
 
         expect(component.question.text).toBe(text);
     });

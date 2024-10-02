@@ -1,8 +1,6 @@
 <div class="row">
     <div class="col-12 mb-2">
-        <div class="alert alert-info">
-            {{ 'artemisApp.generic.timeZone' | artemisTranslate: { timeZone } }}
-        </div>
+        <div class="alert alert-info" jhiTranslate="artemisApp.generic.timeZone" [translateValues]="{ timeZone }"></div>
     </div>
     <div class="col-12">
         @if (form) {
@@ -17,7 +15,7 @@
                         [checked]="timeFrame === TimeFrame.Period"
                         (click)="setTimeFrame(TimeFrame.Period)"
                     />
-                    <label class="btn btn-outline-primary" for="FreePeriod">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.period' | artemisTranslate }}</label>
+                    <label class="btn btn-outline-primary" for="FreePeriod" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.period"></label>
 
                     <input
                         type="radio"
@@ -28,7 +26,7 @@
                         [checked]="timeFrame === TimeFrame.Day"
                         (click)="setTimeFrame(TimeFrame.Day)"
                     />
-                    <label class="btn btn-outline-primary" for="FreeDay">{{ 'artemisApp.forms.tutorialFreePeriodForm.timeFrame.day' | artemisTranslate }}</label>
+                    <label class="btn btn-outline-primary" for="FreeDay" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.day"></label>
 
                     <input
                         type="radio"
@@ -39,20 +37,20 @@
                         [checked]="timeFrame === TimeFrame.PeriodWithinDay"
                         (click)="setTimeFrame(TimeFrame.PeriodWithinDay)"
                     />
-                    <label class="btn btn-outline-primary" for="FreePeriodWithinDay">{{
-                        'artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay' | artemisTranslate
-                    }}</label>
+                    <label class="btn btn-outline-primary" for="FreePeriodWithinDay" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.timeFrame.periodWithinDay"></label>
                 </div>
 
                 <!-- Date -->
                 <div>
-                    <label class="form-label" for="startDate">
-                        {{
+                    <label
+                        class="form-label"
+                        for="startDate"
+                        [jhiTranslate]="
                             timeFrame !== TimeFrame.Period
-                                ? ('artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate)
-                                : ('artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart' | artemisTranslate)
-                        }}
-                    </label>
+                                ? 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label'
+                                : 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStart'
+                        "
+                    ></label>
                     <div class="input-group">
                         <input
                             name="startDate"
@@ -70,14 +68,12 @@
                         <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #startDatePicker [pickerMode]="'dialog'" />
                     </div>
                     @if (form.controls.startDate?.invalid && (form.controls.startDate?.dirty || form.controls.startDate?.touched) && form.controls.startDate?.errors?.required) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError"></div>
                     }
                 </div>
 
                 @if (timeFrame === TimeFrame.Period) {
-                    <label class="form-label" for="endDate">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd' | artemisTranslate }}</label>
+                    <label class="form-label" for="endDate" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEnd"></label>
                     <div class="input-group">
                         <input
                             name="endDate"
@@ -95,21 +91,17 @@
                         <owl-date-time [firstDayOfWeek]="1" datePickerInput [pickerType]="'calendar'" #endDatePicker [pickerMode]="'dialog'" />
                     </div>
                     @if (form.controls.endDate?.invalid && (form.controls.endDate?.dirty || form.controls.endDate?.touched) && form.controls.endDate?.errors?.required) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredEndDateError"></div>
                     } @else if (
                         form.controls.endDate?.touched &&
                         form.controls.startDate?.touched &&
                         (form.controls.endDate?.value | artemisDate: 'short-date' : false : timeZone) <=
                             (form.controls.startDate?.value | artemisDate: 'short-date' : false : timeZone)
                     ) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></div>
                     }
                 } @else if (timeFrame === TimeFrame.PeriodWithinDay) {
-                    <label class="form-label" for="startTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime' | artemisTranslate }}</label>
+                    <label class="form-label" for="startTime" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelStartTime"></label>
                     <div class="input-group">
                         <input
                             name="startTime"
@@ -126,7 +118,7 @@
                         <owl-date-time timePickerInput [pickerType]="'timer'" #startTimePicker [pickerMode]="'dialog'" />
                     </div>
 
-                    <label class="form-label" for="endTime">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime' | artemisTranslate }}</label>
+                    <label class="form-label" for="endTime" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.labelEndTime"></label>
                     <div class="input-group">
                         <input
                             name="endTime"
@@ -148,14 +140,12 @@
                         form.controls.startTime &&
                         (form.controls.endTime?.value | artemisDate: 'time' : false : timeZone) <= (form.controls.startTime?.value | artemisDate: 'time' : false : timeZone)
                     ) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.dateInput.invalidEndDateError"></div>
                     }
                 }
                 <!-- Reason -->
                 <div class="form-group">
-                    <label for="reason">{{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.label' | artemisTranslate }}</label>
+                    <label for="reason" jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.reasonInput.label"></label>
                     <textarea
                         class="form-control"
                         id="reason"
@@ -164,15 +154,17 @@
                         [placeholder]="'artemisApp.forms.tutorialFreePeriodForm.reasonInput.placeholder' | artemisTranslate"
                     ></textarea>
                     @if (form.controls.reason?.invalid && (form.controls.reason?.dirty || (form.controls.reason?.touched && form.controls.reason?.errors?.maxlength))) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
-                        </div>
+                        <div
+                            class="alert alert-danger"
+                            jhiTranslate="artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError"
+                            [translateValues]="{ max: '256' }"
+                        ></div>
                     }
                 </div>
                 <div class="row mt-2">
                     <div class="col-12">
                         <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                            <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
+                            <span jhiTranslate="{{ isEditMode ? 'global.generic.edit' : 'global.generic.create' }}"></span>
                         </button>
                     </div>
                 </div>

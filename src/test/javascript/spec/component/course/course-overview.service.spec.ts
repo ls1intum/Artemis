@@ -11,8 +11,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { Exam } from 'app/entities/exam.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ChannelDTO, ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 describe('CourseOverviewService', () => {

@@ -33,12 +33,11 @@
         <h3 jhiTranslate="artemisApp.exercise.sections.problem" id="artemisApp.exercise.sections.problem"></h3>
         <div class="form-group">
             <label jhiTranslate="artemisApp.exercise.problemStatement" for="problemStatement"></label>
-            <jhi-markdown-editor
+            <jhi-markdown-editor-monaco
                 id="problemStatement"
                 class="markdown-editor"
-                [domainCommands]="domainCommandsProblemStatement"
+                [domainActions]="domainActionsProblemStatement"
                 [(markdown)]="textExercise.problemStatement"
-                [editorMode]="EditorMode.LATEX"
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
@@ -57,12 +56,11 @@
         <h3 jhiTranslate="artemisApp.exercise.sections.solution" id="artemisApp.exercise.sections.solution"></h3>
         <div class="form-group">
             <label jhiTranslate="artemisApp.exercise.exampleSolution" for="exampleSolution"></label>
-            <jhi-markdown-editor
+            <jhi-markdown-editor-monaco
                 id="exampleSolution"
                 class="markdown-editor"
-                [domainCommands]="domainCommandsSampleSolution"
+                [domainActions]="domainActionsExampleSolution"
                 [(markdown)]="textExercise.exampleSolution"
-                [editorMode]="EditorMode.LATEX"
                 (markdownChange)="calculateFormSectionStatus()"
             />
         </div>
@@ -78,7 +76,7 @@
                     (valueChange)="validateDate()"
                 />
                 @if (textExercise.exampleSolutionPublicationDateError) {
-                    <span class="invalid-feedback">{{ 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate }}</span>
+                    <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.exampleSolutionPublicationDateError"></span>
                 }
             </div>
         }
@@ -112,7 +110,7 @@
                         [(ngModel)]="textExercise.startDate"
                     />
                     @if (textExercise.startDateError) {
-                        <span class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.startDateError"></span>
                     }
                 </div>
             </div>
@@ -131,7 +129,7 @@
                         [(ngModel)]="textExercise.dueDate"
                     />
                     @if (textExercise.dueDateError) {
-                        <span class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.dueDateError"></span>
                     }
                 </div>
                 <div class="form-group flex-grow-1 ms-3">
@@ -148,13 +146,13 @@
                         [(ngModel)]="textExercise.assessmentDueDate"
                     />
                     @if (textExercise.assessmentDueDateError) {
-                        <span class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
+                        <span class="invalid-feedback" jhiTranslate="artemisApp.exercise.assessmentDueDateError"></span>
                     }
                 </div>
             </div>
         }
         <div class="form-group">
-            <label class="form-control-label">{{ 'artemisApp.exercise.includedInOverallScore' + (textExercise.course ? 'Course' : 'Exam') + 'Label' | artemisTranslate }}</label>
+            <label class="form-control-label" jhiTranslate="artemisApp.exercise.includedInOverallScore{{ textExercise.course ? 'Course' : 'Exam' }}Label"></label>
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="textExercise.includedInOverallScore"
@@ -179,9 +177,7 @@
                         [(ngModel)]="textExercise.maxPoints"
                     />
                     @if (points?.invalid && (points?.dirty || points?.touched) && points?.errors) {
-                        <div class="alert alert-danger">
-                            {{ 'artemisApp.exercise.pointsError' | artemisTranslate }}
-                        </div>
+                        <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.pointsError"></div>
                     }
                 </div>
             </div>
@@ -200,9 +196,11 @@
                         #bonusPoints="ngModel"
                     />
                     @if (bonusPoints?.invalid && (bonusPoints?.dirty || bonusPoints?.touched) && bonusPoints?.errors) {
-                        <div class="alert alert-danger" [hidden]="textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY">
-                            {{ 'artemisApp.exercise.bonusPointsError' | artemisTranslate }}
-                        </div>
+                        <div
+                            class="alert alert-danger"
+                            [hidden]="textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
+                            jhiTranslate="artemisApp.exercise.bonusPointsError"
+                        ></div>
                     }
                 </div>
             </div>

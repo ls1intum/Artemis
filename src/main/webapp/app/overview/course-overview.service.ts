@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
@@ -13,7 +13,8 @@ import { cloneDeep } from 'lodash-es';
 import { faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelSubType, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { faBullhorn, faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faBullhorn, faHashtag, faLock } from '@fortawesome/free-solid-svg-icons';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -73,8 +74,9 @@ export class CourseOverviewService {
         private conversationService: ConversationService,
     ) {}
 
-    faBullhorn = faBullhorn;
-    faHashtag = faHashtag;
+    readonly faBullhorn = faBullhorn;
+    readonly faHashtag = faHashtag;
+    readonly faLock = faLock;
 
     getUpcomingTutorialGroup(tutorialGroups: TutorialGroup[] | undefined): TutorialGroup | undefined {
         if (tutorialGroups && tutorialGroups.length) {
@@ -308,12 +310,23 @@ export class CourseOverviewService {
         return examCardItem;
     }
 
+    private getChannelIcon(conversation: ConversationDTO): IconDefinition {
+        const channelDTO = getAsChannelDTO(conversation);
+        if (channelDTO?.isPublic === false) {
+            return this.faLock;
+        } else if (channelDTO?.name === 'announcement') {
+            return this.faBullhorn;
+        } else {
+            return this.faHashtag;
+        }
+    }
+
     mapConversationToSidebarCardElement(conversation: ConversationDTO): SidebarCardElement {
         const conversationCardItem: SidebarCardElement = {
             title: this.conversationService.getConversationName(conversation) ?? '',
             id: conversation.id ?? '',
             type: conversation.type,
-            icon: getAsChannelDTO(conversation)?.name === 'announcement' ? this.faBullhorn : this.faHashtag,
+            icon: this.getChannelIcon(conversation),
             conversation: conversation,
             size: 'S',
         };

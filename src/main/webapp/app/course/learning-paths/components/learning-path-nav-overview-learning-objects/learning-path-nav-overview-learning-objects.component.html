@@ -1,12 +1,20 @@
 <div class="bg-light">
     @if (learningObjects()) {
-        @for (learningObject of learningObjects(); track learningObject) {
+        @for (learningObject of learningObjects(); let last = $last; track learningObject) {
             <div
                 (click)="selectLearningObject(learningObject)"
-                class="row p-3 m-0 clickable align-items-center"
-                [ngClass]="{ 'selected-learning-object': currentLearningObject()?.id === learningObject.id && currentLearningObject()?.type === learningObject.type }"
+                class="row p-3 m-0 align-items-center"
+                [ngClass]="{
+                    'selected-learning-object': currentLearningObject()?.id === learningObject.id && currentLearningObject()?.type === learningObject.type,
+                    clickable: !learningObject.unreleased,
+                }"
             >
-                <span class="col-md-auto p-0">{{ learningObject.name }}</span>
+                @if (learningObject.unreleased) {
+                    <span class="col-md-auto p-0 text-muted" jhiTranslate="artemisApp.learningPath.navigation.overview.unreleasedLearningObjectLabel"></span>
+                    <fa-icon [icon]="faLock" class="col-md-auto text-muted" />
+                } @else {
+                    <span class="col-md-auto p-0">{{ learningObject.name }}</span>
+                }
                 @if (learningObject.completed) {
                     <fa-icon [icon]="faCheckCircle" class="col-md-auto text-success" />
                 } @else if (nextLearningObjectOnPath()?.id === learningObject.id) {
@@ -17,7 +25,7 @@
                     </div>
                 }
             </div>
-            @if (!$last) {
+            @if (!last) {
                 <hr class="m-0 p-0" />
             }
         } @empty {

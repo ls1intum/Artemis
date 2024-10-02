@@ -15,9 +15,13 @@
         <div ngbDropdown class="col-4 dropdown" (openChange)="setIsDropdownOpen($event)" #navOverview="ngbDropdown">
             @if (!isLoading()) {
                 <div type="button" class="row justify-content-center align-items-center h-100" id="navigation-overview" ngbDropdownToggle>
-                    <span class="col-md-auto fw-bold">
-                        {{ currentLearningObject()?.name }}
-                    </span>
+                    @if (currentLearningObject()) {
+                        <span class="col-md-auto fw-bold">
+                            {{ currentLearningObject()?.name }}
+                        </span>
+                    } @else {
+                        <span class="col-md-auto fw-bold" jhiTranslate="artemisApp.learningPath.navigation.recapLabel"></span>
+                    }
                     <fa-icon [icon]="faChevronDown" class="col-md-auto ps-0" />
                 </div>
             }
@@ -34,6 +38,13 @@
                     <div class="col-md-auto">
                         <button id="next-button" (click)="selectLearningObject(successorLearningObject)" type="button" class="btn btn-primary">
                             <span jhiTranslate="artemisApp.learningPath.navigation.nextButton"></span>
+                        </button>
+                    </div>
+                } @else if (currentLearningObject() && !successorLearningObject()) {
+                    <div class="col-md-auto">
+                        <button id="complete-button" (click)="completeLearningPath()" type="button" class="btn btn-primary">
+                            <fa-icon [icon]="faFlag" />
+                            <span jhiTranslate="artemisApp.learningPath.navigation.completeButton"></span>
                         </button>
                     </div>
                 }

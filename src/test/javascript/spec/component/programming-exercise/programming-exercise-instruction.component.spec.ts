@@ -1,16 +1,15 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, VERSION } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import dayjs from 'dayjs/esm';
-import { Subject, Subscription, of, throwError } from 'rxjs';
+import { Subscription, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
-import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
 import {
     problemStatementBubbleSortNotExecutedHtml,
     problemStatementEmptySecondTask,
@@ -28,36 +27,31 @@ import { triggerChanges } from '../../helpers/utils/general.utils';
 import { LocalStorageService } from 'ngx-webstorage';
 import { Participation } from 'app/entities/participation/participation.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockModule } from 'ng-mocks';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
-import { VERSION } from '@angular/core';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
     let fixture: ComponentFixture<ProgrammingExerciseInstructionComponent>;
     let debugElement: DebugElement;
     let participationWebsocketService: ParticipationWebsocketService;
-    let repositoryFileService: RepositoryFileService;
     let programmingExerciseParticipationService: ProgrammingExerciseParticipationService;
     let programmingExerciseGradingService: ProgrammingExerciseGradingService;
     let modalService: NgbModal;
     let themeService: ThemeService;
 
     let subscribeForLatestResultOfParticipationStub: jest.SpyInstance;
-    let getFileStub: jest.SpyInstance;
     let openModalStub: jest.SpyInstance;
     let getLatestResultWithFeedbacks: jest.SpyInstance;
 
@@ -82,7 +76,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
-                { provide: RepositoryFileService, useClass: MockRepositoryFileService },
                 { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: ProgrammingExerciseGradingService, useValue: { getTestCases: () => of() } },
             ],
@@ -96,13 +89,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 participationWebsocketService = debugElement.injector.get(ParticipationWebsocketService);
                 programmingExerciseParticipationService = debugElement.injector.get(ProgrammingExerciseParticipationService);
                 programmingExerciseGradingService = debugElement.injector.get(ProgrammingExerciseGradingService);
-                repositoryFileService = debugElement.injector.get(RepositoryFileService);
                 modalService = debugElement.injector.get(NgbModal);
                 themeService = debugElement.injector.get(ThemeService);
 
                 subscribeForLatestResultOfParticipationStub = jest.spyOn(participationWebsocketService, 'subscribeForLatestResultOfParticipation');
                 openModalStub = jest.spyOn(modalService, 'open');
-                getFileStub = jest.spyOn(repositoryFileService, 'get');
                 getLatestResultWithFeedbacks = jest.spyOn(programmingExerciseParticipationService, 'getLatestResultWithFeedback');
 
                 comp.personalParticipation = true;
@@ -113,13 +104,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should on participation change clear old subscription for participation results set up new one', () => {
+    it('should on participation change clear old subscription for participation results set up new one', fakeAsync(() => {
         const exercise: ProgrammingExercise = {
             id: 1,
             numberOfAssessmentsOfCorrectionRounds: [],
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
             isAtLeastTutor: true,
+            problemStatement: 'lorem ipsum dolor sit amet',
         };
         const oldParticipation: Participation = { id: 1 };
         const result: Result = { id: 1 };
@@ -138,10 +130,11 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true, exercise.id);
         expect(comp.participationSubscription).not.toEqual(oldSubscription);
+        flush();
         expect(comp.isInitial).toBeTrue();
-    });
+    }));
 
-    it('should try to fetch README.md from assignment repository if no problemStatement was provided', () => {
+    it('should emit that no instructions are available if there is no problem statement', () => {
         const result: Result = { id: 1, feedbacks: [] };
         const participation: Participation = { id: 2 };
         const exercise: ProgrammingExercise = {
@@ -151,85 +144,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             secondCorrectionEnabled: false,
             studentAssignedTeamIdComputed: false,
         };
-        const getFileSubject = new Subject<{ fileContent: string; fileName: string }>();
-        const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
-        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        getFileStub.mockReturnValue(getFileSubject);
-        comp.participation = participation;
-        comp.exercise = exercise;
-        comp.isInitial = true;
-        comp.isLoading = false;
-
-        fixture.detectChanges();
-        triggerChanges(comp);
-        fixture.detectChanges();
-        expect(comp.isLoading).toBeTrue();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).not.toBeNull();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).toBeNull();
-        expect(getFileStub).toHaveBeenCalledOnce();
-        expect(getFileStub).toHaveBeenCalledWith(participation.id, 'README.md');
-
-        getFileSubject.next({ fileContent: 'lorem ipsum', fileName: 'README.md' });
-        expect(comp.problemStatement).toBe('lorem ipsum');
-        expect(loadInitialResultStub).toHaveBeenCalledOnce();
-        expect(comp.latestResult).toEqual(result);
-        expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.isInitial).toBeFalse();
-        expect(comp.isLoading).toBeFalse();
-        fixture.detectChanges();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
-    });
-
-    it('should NOT try to fetch README.md from assignment repository if a problemStatement was provided', () => {
-        const result: Result = { id: 1, feedbacks: [] };
-        const participation: Participation = { id: 2 };
-        const problemstatement = 'lorem ipsum';
-        const exercise: ProgrammingExercise = {
-            id: 3,
-            course: { id: 4 },
-            problemStatement: problemstatement,
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-        };
-        const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
-        const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
-        comp.participation = participation;
-        comp.exercise = exercise;
-        comp.isInitial = true;
-        comp.isLoading = false;
-
-        fixture.detectChanges();
-        triggerChanges(comp);
-
-        expect(getFileStub).not.toHaveBeenCalled();
-        expect(comp.problemStatement).toBe('lorem ipsum');
-        expect(loadInitialResultStub).toHaveBeenCalledOnce();
-        expect(comp.latestResult).toEqual(result);
-        expect(updateMarkdownStub).toHaveBeenCalledOnce();
-        expect(comp.isInitial).toBeFalse();
-        expect(comp.isLoading).toBeFalse();
-        fixture.detectChanges();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
-    });
-
-    it('should emit that no instructions are available if there is neither a problemStatement provided nor a README.md can be retrieved', () => {
-        const result: Result = { id: 1, feedbacks: [] };
-        const participation: Participation = { id: 2 };
-        const exercise: ProgrammingExercise = {
-            id: 3,
-            course: { id: 4 },
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-        };
-        const getFileSubject = new Subject<{ fileContent: string; fileName: string }>();
         const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
         const noInstructionsAvailableSpy = jest.spyOn(comp.onNoInstructionsAvailable, 'emit');
-        getFileStub.mockReturnValue(getFileSubject);
         comp.participation = participation;
         comp.exercise = exercise;
         comp.isInitial = true;
@@ -237,11 +154,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         fixture.detectChanges();
         triggerChanges(comp);
-        expect(comp.isLoading).toBeTrue();
-        expect(getFileStub).toHaveBeenCalledOnce();
-        expect(getFileStub).toHaveBeenCalledWith(participation.id, 'README.md');
-
-        getFileSubject.error('fatal error');
         expect(comp.problemStatement).toBeUndefined();
         expect(loadInitialResultStub).not.toHaveBeenCalled();
         expect(comp.latestResult).toBeUndefined();

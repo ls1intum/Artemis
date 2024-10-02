@@ -141,6 +141,8 @@ canvas#complete-chart {
     text-align: left;
     color: white;
     background-color: #3e8acc;
+    border: none;
+    border-radius: 1px;
     &:hover {
         background-color: #0f6ab4;
     }
@@ -150,8 +152,6 @@ canvas#complete-chart {
     &:disabled {
         background-color: gray;
     }
-    border: none;
-    border-radius: 1px;
 }
 
 /* Default the color to white even on bootstrap 5 */

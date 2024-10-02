@@ -8,16 +8,14 @@
     @if (isLoading) {
         <div class="d-flex flex-column align-items-center mb-1">
             <div class="spinner-border" role="status">
-                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+                <span jhiTranslate="loading" class="sr-only"></span>
             </div>
-            <span class="">{{ 'artemisApp.competency.generate.loading' | artemisTranslate }}</span>
+            <span jhiTranslate="artemisApp.competency.generate.loading"></span>
         </div>
     }
     <form [formGroup]="form" (ngSubmit)="onSubmit()">
         @if (!competencies.length && !isLoading) {
-            <div class="mb-1">
-                {{ 'global.generic.emptyList' | artemisTranslate }}
-            </div>
+            <div class="mb-1" jhiTranslate="global.generic.emptyList"></div>
         }
         <div class="border-0" formArrayName="competencies">
             @for (competencies of competencies.controls; track competencies; let i = $index) {

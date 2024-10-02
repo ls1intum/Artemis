@@ -102,7 +102,11 @@ export const isParticipationInDueTime = (participation: Participation, exercise:
  * @param participation
  * @param showUngradedResults
  */
-export function getLatestResultOfStudentParticipation(participation: StudentParticipation, showUngradedResults: boolean): Result | undefined {
+export function getLatestResultOfStudentParticipation(participation: StudentParticipation | undefined, showUngradedResults: boolean): Result | undefined {
+    if (!participation) {
+        return undefined;
+    }
+
     // Sort participation results by completionDate desc.
     if (participation.results) {
         participation.results = _orderBy(participation.results, 'completionDate', 'desc');

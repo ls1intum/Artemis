@@ -7,14 +7,13 @@ describe('CompetencyNodeComponent', () => {
     let fixture: ComponentFixture<CompetencyNodeComponent>;
     let sizeUpdateEmitSpy: jest.SpyInstance;
 
-    const competencyNode = {
+    const competencyNode = <CompetencyGraphNodeDTO>{
         id: '1',
         label: 'Competency',
-        confidence: 1.2,
-        masteryProgress: 0.7144,
-        progress: 80,
+        value: 71,
+        valueType: 'MASTERY_PROGRESS',
         softDueDate: new Date(),
-    } as CompetencyGraphNodeDTO;
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -38,23 +37,21 @@ describe('CompetencyNodeComponent', () => {
     it('should initialize and emit size update', async () => {
         expect(component).toBeTruthy();
         expect(component.competencyNode()).toEqual(competencyNode);
+        expect(component.value()).toBe(71);
+        expect(component.valueType()).toBe(competencyNode.valueType);
         expect(sizeUpdateEmitSpy).toHaveBeenCalled();
     });
 
-    it('should calculate rounded mastery', () => {
-        expect(component.masteryProgress()).toBe(71);
+    it('should check if competency is green', () => {
+        expect(component.isGreen()).toBeFalse();
     });
 
-    it('should check if competency is mastered', () => {
-        expect(component.isMastered()).toBeFalse();
+    it('should check if competency is yellow', () => {
+        expect(component.isYellow()).toBeTrue();
     });
 
-    it('should check if competency is started', () => {
-        expect(component.isStarted()).toBeTrue();
-    });
-
-    it('should check if competency is not started', () => {
-        expect(component.isNotStarted()).toBeFalse();
+    it('should check if competency is gray', () => {
+        expect(component.isGray()).toBeFalse();
     });
 
     it('should set dimensions', () => {

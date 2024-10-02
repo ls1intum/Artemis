@@ -17,9 +17,7 @@
             [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
         >
             @for (supportedLanguage of programmingExerciseCreationConfig.supportedLanguages; track supportedLanguage) {
-                <option [value]="supportedLanguage">
-                    {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
-                </option>
+                <option [value]="supportedLanguage" [jhiTranslate]="'artemisApp.ProgrammingLanguage.' + supportedLanguage"></option>
             }
         </select>
     </div>
@@ -56,6 +54,28 @@
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip" />
                 </div>
             }
+        </div>
+    }
+    @if (programmingExercise.programmingLanguage === ProgrammingLanguage.EMPTY) {
+        <div>
+            <p>
+                <fa-icon [icon]="faExclamationTriangle" size="xl" class="text-warning"></fa-icon>
+                <span jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.title" [translateValues]="{ documentationLink: DOCUMENTATION_LINK }"></span>
+            </p>
+            <ol>
+                <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.setImage" [translateValues]="DOCKER_REGISTRY_LINKS"></li>
+                <li>
+                    <p jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.buildScript.title" class="mb-0"></p>
+                    <ol>
+                        <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.buildScript.dependencies"></li>
+                        <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.buildScript.runTests"></li>
+                        <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.buildScript.moveResults" [translateValues]="{ resultsDirectory: './results/' }"></li>
+                    </ol>
+                </li>
+                <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.pushExercise" [translateValues]="{ checkoutDirectory: './assignment/' }"></li>
+                <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.pushSolution"></li>
+                <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.pushTest" [translateValues]="{ checkoutDirectory: './' }"></li>
+            </ol>
         </div>
     }
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE) {
@@ -111,6 +131,13 @@
             }
         </div>
     }
+
+    <!-- Theia Image Selection -->
+    @if (programmingExercise.allowOnlineIde && programmingExercise.programmingLanguage) {
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.theiaImage.title"></label>
+        <jhi-programming-exercise-theia [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="programmingExerciseCreationConfig" />
+    }
+
     <!-- Static code analysis checkbox -->
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed) {
         <div>
@@ -120,7 +147,9 @@
                     class="form-check-input custom-control-input"
                     id="field_staticCodeAnalysisEnabled"
                     name="staticCodeAnalysisEnabled"
-                    [disabled]="!!programmingExercise.sequentialTestRuns || (!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id)"
+                    [disabled]="
+                        !!programmingExercise.buildConfig?.sequentialTestRuns || (!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise.id)
+                    "
                     [(ngModel)]="programmingExercise.staticCodeAnalysisEnabled"
                     (change)="programmingExerciseCreationConfig.onStaticCodeAnalysisChanged()"
                 />
@@ -145,8 +174,8 @@
                     type="checkbox"
                     name="sequentialTestRuns"
                     id="field_sequentialTestRuns"
-                    [disabled]="!!programmingExercise.id || !!programmingExercise.staticCodeAnalysisEnabled || !!programmingExercise.testwiseCoverageEnabled"
-                    [(ngModel)]="programmingExercise.sequentialTestRuns"
+                    [disabled]="!!programmingExercise.id || !!programmingExercise.staticCodeAnalysisEnabled || !!programmingExercise.buildConfig!.testwiseCoverageEnabled"
+                    [(ngModel)]="programmingExercise.buildConfig!.sequentialTestRuns"
                     checked
                 />
                 <label class="form-check-label custom-control-label" for="field_sequentialTestRuns" jhiTranslate="artemisApp.programmingExercise.sequentialTestRuns.title">
@@ -164,8 +193,8 @@
                 type="checkbox"
                 name="testwiseCoverageEnabled"
                 id="field_testwiseCoverageEnabled"
-                [disabled]="!!programmingExercise.sequentialTestRuns || !!programmingExercise.id"
-                [(ngModel)]="programmingExercise.testwiseCoverageEnabled"
+                [disabled]="!!programmingExercise.buildConfig!.sequentialTestRuns || !!programmingExercise.id"
+                [(ngModel)]="programmingExercise.buildConfig!.testwiseCoverageEnabled"
                 checked
             />
             <label class="form-check-label custom-control-label" for="field_testwiseCoverageEnabled" jhiTranslate="artemisApp.programmingExercise.recordTestwiseCoverage"></label>
@@ -181,7 +210,7 @@
                     type="checkbox"
                     name="checkoutSolutionRepository"
                     id="field_checkoutSolutionRepository"
-                    [(ngModel)]="programmingExercise.checkoutSolutionRepository"
+                    [(ngModel)]="programmingExercise.buildConfig!.checkoutSolutionRepository"
                 />
                 <span jhiTranslate="artemisApp.programmingExercise.checkoutSolutionRepository.title"></span>
                 <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.checkoutSolutionRepository.description" />

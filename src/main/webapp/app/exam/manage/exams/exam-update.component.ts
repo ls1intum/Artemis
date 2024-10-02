@@ -6,8 +6,7 @@ import { Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/c
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { faBan, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
-
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -161,6 +160,28 @@ export class ExamUpdateComponent implements OnInit, OnDestroy {
      */
     roundWorkingTime() {
         this.workingTimeInMinutes = this.workingTimeInMinutesRounded;
+    }
+
+    /**
+     * Checks if the exam visibility date is set too early relative to the exam start date.
+     * If the visibility date is more than 4 hours (240 minutes) before the start date.
+     * it indicates that the visibility date is set too early.
+     *
+     * @returns {boolean} true if the visibility date is more than 4 hours before the start date, false otherwise.
+     */
+    get checkExamVisibilityTime(): boolean {
+        if (!this.isVisibleDateSet || !this.isStartDateSet) {
+            return false;
+        }
+
+        const visibleDate = dayjs(this.exam.visibleDate);
+        const startDate = dayjs(this.exam.startDate);
+
+        // Calculate the difference in minutes
+        const differenceInMinutes = startDate.diff(visibleDate, 'minute');
+
+        // Check if the difference is more than 4 hours (240 minutes)
+        return differenceInMinutes > 240;
     }
 
     /**

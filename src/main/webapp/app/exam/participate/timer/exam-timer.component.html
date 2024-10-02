@@ -1,6 +1,6 @@
-<div class="col-auto mb-0 timer px-1" [ngClass]="{ 'h3 end-view ': isEndView }">
+<div class="col-auto mb-0 timer px-1">
     {{ 'artemisApp.examParticipation.' + (isEndView ? 'timerEndView' : 'timer') | artemisTranslate }}
 </div>
-<div class="col-auto text-overflow remaining-time m-0 px-0" [ngClass]="{ 'h3 end-view': isEndView }" [class.critical]="isCriticalTime" id="displayTime">
+<div class="col-auto text-overflow remaining-time m-0 px-0" [class.critical]="isCriticalTime" id="displayTime">
     {{ displayTime$ | async }}
 </div>

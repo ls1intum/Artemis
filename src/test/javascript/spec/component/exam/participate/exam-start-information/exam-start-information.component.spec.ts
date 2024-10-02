@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { User } from 'app/core/user/user.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamStartInformationComponent } from 'app/exam/participate/exam-start-information/exam-start-information.component';
 import { InformationBoxComponent } from 'app/shared/information-box/information-box.component';

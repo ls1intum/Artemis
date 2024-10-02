@@ -15,6 +15,10 @@
     max-height: 99%;
 }
 
+.suggest-widget {
+    background-color: var(--monaco-suggest-widget-background) !important;
+}
+
 /*
  * Adjusts the font size to better match the glyph margin
  */

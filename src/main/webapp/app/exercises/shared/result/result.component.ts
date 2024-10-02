@@ -3,11 +3,11 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import dayjs from 'dayjs/esm';
 import { isProgrammingExerciseStudentParticipation, isResultPreliminary } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { Participation, ParticipationType, getExercise } from 'app/entities/participation/participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
@@ -23,6 +23,7 @@ import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cac
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
 import { prepareFeedbackComponentParameters } from 'app/exercises/shared/feedback/feedback.utils';
+import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
 
 @Component({
     selector: 'jhi-result',
@@ -42,6 +43,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
+    protected readonly AssessmentType = AssessmentType;
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
@@ -79,6 +81,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         private exerciseService: ExerciseService,
         @Optional() private exerciseCacheService: ExerciseCacheService,
         private resultService: ResultService,
+        private csvDownloadService: CsvDownloadService,
     ) {}
 
     /**
@@ -299,13 +302,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     downloadBuildResult(participationId?: number) {
         if (participationId) {
             this.participationService.downloadArtifact(participationId).subscribe((artifact) => {
-                const fileURL = URL.createObjectURL(artifact.fileContent);
-                const link = document.createElement('a');
-                link.href = fileURL;
-                link.target = '_blank';
-                link.download = artifact.fileName;
-                document.body.appendChild(link);
-                link.click();
+                this.csvDownloadService.downloadArtifact(artifact.fileContent, artifact.fileName);
             });
         }
     }

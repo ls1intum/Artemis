@@ -1,0 +1,20 @@
+{
+  "type": "commonjs",
+  "name": "analysis-of-endpoint-connections",
+  "version": "1.0.0",
+  "description": "Parses Typescript files and generates a report of all the endpoint connections in the file.",
+  "main": "AnalysisOfEndpointConnectionsClient.ts",
+  "license": "MIT",
+  "scripts": {
+    "start": "node -r esm AnalysisOfEndpointConnectionsClient.ts",
+    "update": "ncu -i --format group"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.9.0",
+    "@types/eslint__js": "8.42.3",
+    "@types/node": "22.4.2",
+    "eslint": "9.9",
+    "typescript": "5.5.4",
+    "typescript-eslint": "8.2.0"
+  }
+}

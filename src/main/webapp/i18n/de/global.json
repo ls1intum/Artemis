@@ -122,12 +122,13 @@
             "continueTutorial": "Tutorial fortsetzen"
         },
         "form": {
-            "username": "Login",
+            "username": "Login oder E-Mail",
             "firstname": "Vorname",
             "firstname.placeholder": "Vorname",
             "lastname": "Nachname",
             "lastname.placeholder": "Nachname",
-            "username.placeholder": "Login",
+            "username.placeholder": "Login oder E-Mail",
+            "username.tumPlaceholder": "z.B. go42tum / example@tum.de",
             "currentpassword": "Aktuelles Passwort",
             "currentpassword.placeholder": "Aktuelles Passwort",
             "newpassword": "Neues Passwort",
@@ -318,7 +319,9 @@
         "timeZoneWarning": "Du befindest dich aktuell in der {{ timeZone }} Zeitzone.",
         "dateMissingOrNotValid": "'{{labelName}}' fehlt/ungültig",
         "startDateError": "'Bearbeitungszeit ab' sollte zwischen 'Sichtbar ab' und 'Bearbeitungszeit bis' liegen",
-        "endDateError": "'Bearbeitungszeit bis' sollte nach 'Bearbeitungszeit ab' liegen"
+        "endDateError": "'Bearbeitungszeit bis' sollte nach 'Bearbeitungszeit ab' liegen",
+        "warningError": "'Sichtbar ab' ist zu früh eingestellt. Wir empfehlen, es innerhalb von 4 Stunden vor dem 'Bearbeitungszeit ab' festzulegen.",
+        "warningToolTip": "Das Datum zu früh festzulegen kann Verwirrung stiften und zu einem vorzeitigen Zugriff auf die Klausurunterlagen führen. Es wird empfohlen, die Klausur erst wenige Stunden vor dem Beginn sichtbar zu machen."
     },
     "aboutUs": "Über",
     "contact": "Kontaktiere uns",

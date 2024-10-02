@@ -13,7 +13,7 @@ import { Course } from 'app/entities/course.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { FilterProp as TeamFilterProp } from 'app/exercises/shared/team/teams.component';
 import { SortService } from 'app/shared/service/sort.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';

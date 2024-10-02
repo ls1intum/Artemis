@@ -1,7 +1,7 @@
 apply plugin: "war"
 
 bootWar {
-    mainClass = 'de.tum.in.www1.artemis.ArtemisApp'
+    mainClass = 'de.tum.cit.aet.artemis.ArtemisApp'
     includes = ["WEB-INF/**", "META-INF/**"]
     webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
     manifest {
@@ -13,7 +13,7 @@ bootWar {
 // Command for production build: ./gradlew -Pprod -Pwar clean bootWar
 
 war {
-    webAppDirName = file("build/resources/main/static/")
+    webAppDirectory = file("build/resources/main/static/")
     includes = ["WEB-INF/**", "META-INF/**"]
     webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
     enabled = true

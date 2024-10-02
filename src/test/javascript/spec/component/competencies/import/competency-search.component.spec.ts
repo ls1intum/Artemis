@@ -2,10 +2,11 @@ import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe } from 'ng-mocks';
-import { CompetencySearchComponent } from 'app/course/competencies/import-competencies/competency-search.component';
+import { CompetencySearchComponent } from 'app/course/competencies/import/competency-search.component';
 import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { FormsModule } from 'app/forms/forms.module';
+import { CourseCompetencyFilter } from 'app/shared/table/pageable-table';
 
 describe('CompetencySearchComponent', () => {
     let componentFixture: ComponentFixture<CompetencySearchComponent>;
@@ -41,14 +42,12 @@ describe('CompetencySearchComponent', () => {
 
     it('should reset', () => {
         componentFixture.detectChanges();
-        for (const key in component.search) {
-            component.search[key] = 'any value';
-        }
+        initializeSearch();
 
         componentFixture.debugElement.nativeElement.querySelector('#resetFilterButton > .jhi-btn').click();
 
         for (const key in component.search) {
-            expect(component.search[key]).toBe('');
+            expect(component.search[key as keyof CourseCompetencyFilter]).toBe('');
         }
     });
 
@@ -56,9 +55,7 @@ describe('CompetencySearchComponent', () => {
         componentFixture.detectChanges();
         const searchChangeEmitSpy = jest.spyOn(component.searchChange, 'emit');
 
-        for (const key in component.search) {
-            component.search[key] = 'any value';
-        }
+        initializeSearch();
 
         componentFixture.debugElement.nativeElement.querySelector('#submitFilterButton > .jhi-btn').click();
         expect(searchChangeEmitSpy).toHaveBeenCalledWith({ title: 'any value', description: '', courseTitle: '', semester: '' });
@@ -68,9 +65,7 @@ describe('CompetencySearchComponent', () => {
         componentFixture.detectChanges();
         const searchChangeEmitSpy = jest.spyOn(component.searchChange, 'emit');
 
-        for (const key in component.search) {
-            component.search[key] = 'any value';
-        }
+        initializeSearch();
         component.advancedSearchEnabled = true;
 
         componentFixture.debugElement.nativeElement.querySelector('#submitFilterButton > .jhi-btn').click();
@@ -87,4 +82,10 @@ describe('CompetencySearchComponent', () => {
         advancedSearchToggle.click();
         expect(component.advancedSearchEnabled).toBeFalse();
     });
+
+    function initializeSearch(): void {
+        for (const key in component.search) {
+            component.search[key as keyof CourseCompetencyFilter] = 'any value';
+        }
+    }
 });

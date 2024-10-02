@@ -10,7 +10,6 @@ import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -23,6 +22,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { LectureTitleChannelNameComponent } from 'app/lecture/lecture-title-channel-name.component';
+import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 
 describe('LectureUpdateComponent', () => {
     let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
@@ -51,7 +51,7 @@ describe('LectureUpdateComponent', () => {
                 MockComponent(LectureTitleChannelNameComponent),
                 MockComponent(LectureUpdateWizardComponent),
                 MockComponent(FormDateTimePickerComponent),
-                MockComponent(MarkdownEditorComponent),
+                MockComponent(MarkdownEditorMonacoComponent),
                 MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),

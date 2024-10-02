@@ -3,11 +3,16 @@ import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
 import { MatTreeNestedDataSource } from '@angular/material/tree';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeAreaForTree } from 'app/entities/competency/standardized-competency.model';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { MatTreeModule } from '@angular/material/tree';
 
 @Component({
     selector: 'jhi-knowledge-area-tree',
     templateUrl: './knowledge-area-tree.component.html',
     styleUrls: ['./knowledge-area-tree.component.scss'],
+    standalone: true,
+    imports: [ArtemisSharedCommonModule, MatTreeModule, ArtemisMarkdownModule],
 })
 export class KnowledgeAreaTreeComponent {
     @Input() dataSource: MatTreeNestedDataSource<KnowledgeAreaForTree> = new MatTreeNestedDataSource<KnowledgeAreaForTree>();

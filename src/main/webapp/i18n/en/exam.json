@@ -143,6 +143,7 @@
             "imported": "Exam imported",
             "deleted": "Deleted exam \"{{ param }}\"",
             "startCheckBoxText": "I confirm that I have read the rules above and that I will comply with these rules during the exam.",
+            "endCheckBoxText": "I confirm that I have completed the exam and am ready to submit my answers.",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
             "endConsentText": "I hereby confirm with my full name, representing my signature, that this exam is my own work and I have only used the indicated aids.",
             "notConfirmed": "Please tick the checkbox to continue.",
@@ -323,14 +324,11 @@
             "saveSubmissionError": "Your changes could not be saved! Please make sure that you are online and try saving again.",
             "pendingChanges": "All unsaved changes will be lost when leaving the exam! Are you sure that you want to continue?",
             "handInEarly": "Hand in Early",
-            "continueAfterHandInEarly": "Continue",
+            "continueAfterHandInEarly": "Back",
             "attendanceCheck": "Attendance check",
-            "continueAfterHandInEarlyDescription": "You don't want to hand in yet?",
-            "handInEarlyNotice": "You are about to hand in your submission before the end of the exam.\nAfter finishing the exam you cannot participate any longer.",
-            "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
-            "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
-            "attendanceNotVerifiedWarningFirstSentence": "Your attendance has not been checked yet.",
-            "attendanceNotVerifiedWarningSecondSentence": "Please wait for your attendance to be checked or contact your instructors if you believe this is a mistake.",
+            "continueAfterHandInEarlyDescription": "To continue working on the exam, click on the 'Back' button.",
+            "handInEarlyNotice": "You are about to hand in your submission before the end of the exam. After finishing the exam you cannot participate any longer.",
+            "attendanceNotVerifiedWarning": "Your attendance has not been checked yet. Please wait for your attendance to be checked or contact your instructors if you believe this is a mistake.",
             "namePlaceholder": "Enter your full name here",
             "numberOfSavedExercises": "Number of saved exercises",
             "submissionSuccessful": {
@@ -785,7 +783,8 @@
         "studentExam": {
             "alreadySubmitted": "You have already submitted.",
             "submissionNotInTime": "You have not submitted your exam on time. It will not be graded!",
-            "handInFailed": "Submission of your exam failed. Please try again!"
+            "handInFailed": "Submission of your exam failed. Please try again!",
+            "deleted": "Deleted test run"
         },
         "examTimeline": {
             "title": "Exam timeline of {{ username }}",

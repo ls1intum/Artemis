@@ -1,29 +1,36 @@
 <div class="col learning-path-student-page">
-    @if (isLoading()) {
+    @if (isLearningPathLoading()) {
         <div class="row justify-content-center align-items-center h-100">
             <div class="spinner-border text-primary" role="status">
                 <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
-    } @else if (learningPathId()) {
-        <jhi-learning-path-student-nav [learningPathId]="learningPathId()!" />
+    } @else if (learningPath() && learningPath()!.startedByStudent) {
+        <jhi-learning-path-student-nav [learningPathId]="learningPath()!.id" />
         <div class="learning-path-student-content">
             @if (currentLearningObject()?.type === LearningObjectType.LECTURE) {
                 <jhi-learning-path-lecture-unit [lectureUnitId]="currentLearningObject()!.id" />
             } @else if (currentLearningObject()?.type === LearningObjectType.EXERCISE) {
                 <jhi-learning-path-exercise [courseId]="courseId()" [exerciseId]="currentLearningObject()!.id" />
+            } @else if (!isLearningPathNavigationLoading()) {
+                <div class="row align-items-center justify-content-center h-100 w-100">
+                    <div class="learning-path-no-content-container">
+                        <h3 class="mb-3" jhiTranslate="artemisApp.learningPath.completion.title"></h3>
+                        <div jhiTranslate="artemisApp.learningPath.completion.description"></div>
+                    </div>
+                </div>
             }
         </div>
     } @else {
-        <div class="row align-items-center justify-content-center h-100">
-            <div class="learning-path-generation-container">
+        <div class="row align-items-center justify-content-center h-100 w-100">
+            <div class="learning-path-no-content-container">
                 <h3 class="mb-3" jhiTranslate="artemisApp.learningPath.generation.title"></h3>
                 <div jhiTranslate="artemisApp.learningPath.generation.description"></div>
                 <button
-                    (click)="generateLearningPath(this.courseId())"
+                    (click)="startLearningPath()"
                     type="button"
                     class="mt-4 btn btn-primary"
-                    id="generate-learning-path-button"
+                    id="start-learning-path-button"
                     jhiTranslate="artemisApp.learningPath.generation.generateButton"
                 ></button>
             </div>

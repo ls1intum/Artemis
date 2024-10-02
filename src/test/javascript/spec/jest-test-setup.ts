@@ -16,7 +16,7 @@ import { MockClipboardItem } from './helpers/mocks/service/mock-clipboard-item';
  * on the document.
  */
 document.queryCommandSupported = () => false;
-import 'monaco-editor/esm/vs/editor/edcore.main';
+import 'monaco-editor/esm/vs/editor/edcore.main'; // Do not move this import.
 
 failOnConsole({
     shouldFailOnWarn: true,
@@ -27,7 +27,8 @@ failOnConsole({
 const noop = () => {};
 
 const mock = () => {
-    let storage = {};
+    let storage: { [key: string]: any } = {};
+
     return {
         getItem: (key: any) => (key in storage ? storage[key] : null),
         setItem: (key: any, value: any) => (storage[key] = value || ''),

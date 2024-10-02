@@ -1,0 +1,29 @@
+<div class="row">
+    <div class="col-12">
+        @if (form) {
+            <form [formGroup]="form" (ngSubmit)="submitForm()">
+                <jhi-common-course-competency-form
+                    [formData]="formData"
+                    [isEditMode]="isEditMode"
+                    [isInConnectMode]="isInConnectMode"
+                    [isInSingleLectureMode]="isInSingleLectureMode"
+                    [lecturesOfCourseWithLectureUnits]="lecturesOfCourseWithLectureUnits"
+                    [averageStudentScore]="averageStudentScore"
+                    [form]="form"
+                    [competencyType]="CourseCompetencyType.COMPETENCY"
+                    (onLectureUnitSelectionChange)="onLectureUnitSelectionChange($event)"
+                />
+                <div>
+                    <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">
+                        <span jhiTranslate="entity.action.submit"></span>
+                    </button>
+                    @if (hasCancelButton) {
+                        <button type="button" (click)="cancelForm()" class="btn btn-default">
+                            <fa-icon [icon]="faTimes" />&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+                        </button>
+                    }
+                </div>
+            </form>
+        }
+    </div>
+</div>

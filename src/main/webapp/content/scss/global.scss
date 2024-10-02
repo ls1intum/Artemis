@@ -7,7 +7,7 @@
 @import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 // Needed for mathematical formulas in markdown editor
 @import 'node_modules/katex/dist/katex.min.css';
-@import 'node_modules/@flaviosantoro92/ngx-datatable/themes/bootstrap';
+@import 'node_modules/@siemens/ngx-datatable/themes/bootstrap';
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 
@@ -50,6 +50,10 @@ a {
 
 .pointer {
     cursor: pointer;
+}
+
+.cursor-default {
+    cursor: default !important;
 }
 
 a:not(.btn):not(.tab-link):hover {

@@ -35,7 +35,7 @@ export class LectureCreationPage {
      * @param description - The description text for the lecture.
      */
     async typeDescription(description: string) {
-        const descriptionField = this.page.locator('.ace_content');
+        const descriptionField = this.page.locator('.monaco-editor');
         await descriptionField.click();
         await descriptionField.pressSequentially(description);
     }
