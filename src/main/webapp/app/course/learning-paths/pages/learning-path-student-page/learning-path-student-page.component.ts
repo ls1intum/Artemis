@@ -1,5 +1,5 @@
 import { Component, effect, inject, signal } from '@angular/core';
-import { LearningObjectType } from 'app/entities/competency/learning-path.model';
+import { LearningObjectType, LearningPathDTO } from 'app/entities/competency/learning-path.model';
 import { map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
@@ -32,45 +32,49 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 export class LearningPathStudentPageComponent {
     protected readonly LearningObjectType = LearningObjectType;
 
-    private readonly learningApiService: LearningPathApiService = inject(LearningPathApiService);
+    private readonly learningApiService = inject(LearningPathApiService);
     private readonly learningPathNavigationService = inject(LearningPathNavigationService);
-    private readonly alertService: AlertService = inject(AlertService);
-    private readonly activatedRoute: ActivatedRoute = inject(ActivatedRoute);
+    private readonly alertService = inject(AlertService);
+    private readonly activatedRoute = inject(ActivatedRoute);
 
-    readonly isLearningPathIdLoading = signal(false);
-    readonly learningPathId = signal<number | undefined>(undefined);
+    readonly isLearningPathLoading = signal(false);
+    readonly learningPath = signal<LearningPathDTO | undefined>(undefined);
     readonly courseId = toSignal(this.activatedRoute.parent!.parent!.params.pipe(map((params) => Number(params.courseId))), { requireSync: true });
     readonly currentLearningObject = this.learningPathNavigationService.currentLearningObject;
     readonly isLearningPathNavigationLoading = this.learningPathNavigationService.isLoading;
 
     constructor() {
-        effect(async () => await this.loadLearningPathId(this.courseId()), { allowSignalWrites: true });
+        effect(() => this.loadLearningPath(this.courseId()), { allowSignalWrites: true });
     }
 
-    private async loadLearningPathId(courseId: number): Promise<void> {
+    private async loadLearningPath(courseId: number): Promise<void> {
         try {
-            this.isLearningPathIdLoading.set(true);
-            const learningPathId = await this.learningApiService.getLearningPathId(courseId);
-            this.learningPathId.set(learningPathId);
+            this.isLearningPathLoading.set(true);
+            const learningPath = await this.learningApiService.getLearningPathForCurrentUser(courseId);
+            this.learningPath.set(learningPath);
         } catch (error) {
             // If learning path does not exist (404) ignore the error
             if (!(error instanceof EntityNotFoundError)) {
                 this.alertService.error(error);
             }
         } finally {
-            this.isLearningPathIdLoading.set(false);
+            this.isLearningPathLoading.set(false);
         }
     }
 
-    async generateLearningPath(courseId: number): Promise<void> {
+    async startLearningPath(): Promise<void> {
         try {
-            this.isLearningPathIdLoading.set(true);
-            const learningPathId = await this.learningApiService.generateLearningPath(courseId);
-            this.learningPathId.set(learningPathId);
+            this.isLearningPathLoading.set(true);
+            if (!this.learningPath()) {
+                const learningPath = await this.learningApiService.generateLearningPathForCurrentUser(this.courseId());
+                this.learningPath.set(learningPath);
+            }
+            await this.learningApiService.startLearningPathForCurrentUser(this.learningPath()!.id);
+            this.learningPath.update((learningPath) => ({ ...learningPath!, startedByStudent: true }));
         } catch (error) {
             this.alertService.error(error);
         } finally {
-            this.isLearningPathIdLoading.set(false);
+            this.isLearningPathLoading.set(false);
         }
     }
 }
