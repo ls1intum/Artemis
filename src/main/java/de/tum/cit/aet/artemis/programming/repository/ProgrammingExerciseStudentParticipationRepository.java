@@ -172,8 +172,8 @@ public interface ProgrammingExerciseStudentParticipationRepository extends Artem
                 LEFT JOIN eg.exam exam
             WHERE participation.repositoryUri IS NOT NULL
                 AND (
-                    (pe.dueDate IS NOT NULL AND :earliestDate <= pe.dueDate AND pe.dueDate <= :latestDate)
-                    OR (eg IS NOT NULL AND exam IS NOT NULL AND :earliestDate <= exam.endDate AND exam.endDate <= :latestDate)
+                    (pe.dueDate IS NOT NULL AND pe.dueDate BETWEEN :earliestDate AND :latestDate)
+                    OR (eg IS NOT NULL AND exam IS NOT NULL AND exam.endDate BETWEEN :earliestDate AND :latestDate)
                 )
             """)
     Page<String> findRepositoryUrisByRecentDueDateOrRecentExamEndDate(@Param("earliestDate") ZonedDateTime earliestDate, @Param("latestDate") ZonedDateTime latestDate,
