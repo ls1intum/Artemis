@@ -59,7 +59,7 @@ describe('ExerciseTitleChannelNameComponent', () => {
         textExercise.course = course;
 
         component.exercise = textExercise;
-        component.course = textExercise.course;
+        fixture.componentRef.setInput('course', textExercise.course);
         component.isExamMode = false;
         component.isImport = true;
         component.ngOnChanges({ course: new SimpleChange(undefined, course, true) });
