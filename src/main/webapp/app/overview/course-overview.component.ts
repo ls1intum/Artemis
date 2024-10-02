@@ -231,7 +231,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.courseActionItems = this.getCourseActionItems();
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
-        this.isSidebarCollapsed = this.activatedComponentReference.isCollapsed;
+        this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
     }
 
     /** Listen window resize event by height */
@@ -565,7 +565,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
         this.changeDetectorRef.detectChanges();
 
-        this.isSidebarCollapsed = this.activatedComponentReference.isCollapsed;
+        this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
     }
 
     toggleSidebar() {
