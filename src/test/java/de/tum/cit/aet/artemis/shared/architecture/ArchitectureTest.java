@@ -81,13 +81,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractArtemisIntegrationTest;
 
 /**
  * This class contains architecture tests that apply for the whole project.
- * <p>
- * For more specific tests please refer to the other architecture test classes:
- * <ul>
- * <li>{@link RepositoryArchitectureTest}</li>
- * <li>{@link ServiceArchitectureTest}</li>
- * <li>{@link ResourceArchitectureTest}</li>
- * </ul>
  */
 class ArchitectureTest extends AbstractArchitectureTest {
 
