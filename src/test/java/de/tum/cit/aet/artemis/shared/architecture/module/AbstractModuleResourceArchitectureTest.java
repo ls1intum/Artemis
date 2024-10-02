@@ -69,7 +69,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     @Test
     void shouldCorrectlyUseRequestMappingAnnotations() {
         // allow empty should since some modules do not have any REST controllers
-        classesOfThisModuleThat().areAnnotatedWith(RequestMapping.class).should(haveCorrectRequestMappingPathForClasses()).check(productionClasses);
+        classesOfThisModuleThat().areAnnotatedWith(RequestMapping.class).should(haveCorrectRequestMappingPathForClasses()).allowEmptyShould(true).check(productionClasses);
         for (var annotation : annotationClasses) {
             methods().that().areAnnotatedWith(annotation).should(haveCorrectRequestMappingPathForMethods(annotation)).allowEmptyShould(true).check(productionClasses);
         }
