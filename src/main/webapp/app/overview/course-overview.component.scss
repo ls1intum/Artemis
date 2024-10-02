@@ -285,7 +285,7 @@ jhi-secured-image {
 .btn-sidebar-collapse::before {
     opacity: 0;
     z-index: -1;
-    background-color: var(--white);
+    background-color: var(--module-bg);
 
     transition: opacity $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
 }
