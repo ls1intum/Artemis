@@ -4,7 +4,8 @@ $breadcrumb-height: 45px; // needed to make the exam fullscreen
 
 // Sidebar Button Transition Variables
 $transition-delay: 0.1s;
-$transition-chevron-opacity-length: 0.2s;
+$transition-in-between-delay: 0.2s;
+$transition-chevron-rotate-length: 0.2s;
 $transition-chevron-max-width-length: 0.2s;
 $transition-color-length: 0.2s;
 
@@ -261,8 +262,8 @@ jhi-secured-image {
     }
 
     transition:
-        background-color $transition-color-length ($transition-chevron-max-width-length + $transition-chevron-opacity-length + $transition-delay * 2) ease-in-out,
-        border-color $transition-color-length ($transition-chevron-max-width-length + $transition-chevron-opacity-length + $transition-delay * 2) ease-in-out;
+        background-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out,
+        border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
 }
 
 .btn-sidebar-collapse.is-collapsed {
@@ -270,28 +271,22 @@ jhi-secured-image {
     border-color: var(--bs-secondary);
 }
 
+.btn-sidebar-collapse-chevron-start {
+    margin-right: -0.7rem;
+}
+
 .btn-sidebar-collapse-chevron {
-    opacity: 0;
-    max-width: 0;
+    transform: rotateZ(-180deg);
     display: inline-block;
     overflow: hidden;
-    padding-left: 0;
+    margin-left: 0.3rem;
 
-    transition:
-        opacity $transition-chevron-opacity-length $transition-delay ease-in-out,
-        max-width $transition-chevron-max-width-length ($transition-chevron-opacity-length + $transition-delay * 2) linear,
-        padding-left $transition-chevron-max-width-length ($transition-chevron-opacity-length + $transition-delay * 2) linear;
+    transition: transform $transition-chevron-rotate-length $transition-delay ease-in-out;
 }
 
 .is-collapsed .btn-sidebar-collapse-chevron {
-    opacity: 1;
-    max-width: 2rem;
-    padding-left: 0.3rem;
-
-    transition:
-        opacity $transition-chevron-opacity-length ($transition-chevron-max-width-length + $transition-delay * 2) ease-in-out,
-        max-width $transition-chevron-max-width-length $transition-delay linear,
-        padding-left $transition-chevron-max-width-length $transition-delay linear;
+    transform: rotateZ(0deg);
+    transition: transform $transition-chevron-rotate-length $transition-delay ease-in-out;
 }
 
 .three-dots {
