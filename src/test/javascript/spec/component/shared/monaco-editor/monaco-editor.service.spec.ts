@@ -53,19 +53,17 @@ describe('MonacoEditorService', () => {
         expect(setThemeSpy).toHaveBeenNthCalledWith(3, MonacoEditorService.LIGHT_THEME_ID);
     });
 
-    it('should inject an editor into the provided DOM element', () => {
-        const element = document.createElement('div');
-        const editor = monacoEditorService.createStandaloneCodeEditor(element);
-        expect(editor.getContainerDomNode()).toBe(element);
-        expect(element.children).toHaveLength(1);
-        expect(element.children.item(0)!.className).toContain('monaco-editor');
-    });
-
-    it('should inject a diff editor into the provided DOM element', () => {
-        const element = document.createElement('div');
-        const diffEditor = monacoEditorService.createStandaloneDiffEditor(element);
-        expect(diffEditor.getContainerDomNode()).toBe(element);
-        expect(element.children).toHaveLength(1);
-        expect(element.children.item(0)!.className).toContain('monaco-diff-editor');
-    });
+    it.each([
+        { className: 'monaco-editor', createFn: (element: HTMLElement) => monacoEditorService.createStandaloneCodeEditor(element) },
+        { className: 'monaco-diff-editor', createFn: (element: HTMLElement) => monacoEditorService.createStandaloneDiffEditor(element) },
+    ])(
+        'should inject an editor ($className) into the provided DOM element',
+        ({ className, createFn }: { className: string; createFn: (element: HTMLElement) => monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor }) => {
+            const element = document.createElement('div');
+            const editor = createFn(element);
+            expect(editor.getContainerDomNode()).toBe(element);
+            expect(element.children).toHaveLength(1);
+            expect(element.children.item(0)!.classList).toContain(className);
+        },
+    );
 });
