@@ -1092,8 +1092,47 @@ body.transparent-background {
     }
 }
 
-.sidebar-collapsed {
+.sidebar-collapsed-course-overview {
     display: none;
+}
+
+$transition-sidebar-content-opacity-length: 0.2s;
+$transition-sidebar-width-length: 0.2s;
+$transition-in-between-delay: 0.1s;
+
+.sidebar-content {
+    opacity: 1;
+
+    transition: opacity $transition-sidebar-content-opacity-length ($transition-sidebar-width-length + $transition-in-between-delay) ease-in-out;
+}
+
+.sidebar-collapsed .sidebar-content {
+    opacity: 0;
+
+    transition: opacity $transition-sidebar-content-opacity-length 0s ease-in-out;
+}
+
+.sidebar-wrap {
+    overflow: hidden;
+    max-width: $sidebar-width;
+    margin-right: $spacer;
+
+    transition:
+        max-width $transition-sidebar-width-length 0s ease-in-out,
+        margin-right $transition-sidebar-width-length 0s ease-in-out;
+}
+
+.sidebar-collapsed .sidebar-wrap {
+    max-width: 0;
+    margin-right: 0;
+
+    transition:
+        max-width $transition-sidebar-width-length $transition-sidebar-content-opacity-length + $transition-in-between-delay ease-in-out,
+        margin-right $transition-sidebar-width-length $transition-sidebar-content-opacity-length + $transition-in-between-delay ease-in-out;
+}
+
+.sidebar-width {
+    width: $sidebar-width !important;
 }
 
 .fs-xx-small {
