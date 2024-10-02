@@ -42,7 +42,6 @@ public interface TextBlockRepository extends ArtemisJpaRepository<TextBlock, Str
 
     /**
      * Deletes {@link TextBlock} entries linked to {@link Feedback} with a {@code null} result.
-     * Returns {@code void}
      */
     @Modifying
     @Transactional
