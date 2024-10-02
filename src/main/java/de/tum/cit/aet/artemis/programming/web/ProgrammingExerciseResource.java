@@ -540,13 +540,10 @@ public class ProgrammingExerciseResource {
     @GetMapping("programming-exercises/project-key/{projectKey}")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExercise> getExerciseByProjectKey(@PathVariable String projectKey) {
-        try {
-            final ProgrammingExercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
-            return ResponseEntity.ok(exercise);
-        }
-        catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+        final ProgrammingExercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
+        authCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.STUDENT, exercise.getId());
+
+        return ResponseEntity.ok(exercise);
     }
 
     /**
