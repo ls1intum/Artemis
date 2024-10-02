@@ -2,6 +2,12 @@ $menu-width-closed: 64px;
 $menu-width-open: 220px;
 $breadcrumb-height: 45px; // needed to make the exam fullscreen
 
+// Sidebar Button Transition Variables
+$transition-delay: 0.1s;
+$transition-chevron-opacity-length: 0.2s;
+$transition-chevron-max-width-length: 0.2s;
+$transition-color-length: 0.2s;
+
 .sidebar-container {
     width: $menu-width-open;
     &.collapsed {
@@ -242,6 +248,9 @@ jhi-secured-image {
 }
 
 .btn-sidebar-collapse {
+    display: inline-flex;
+    align-items: center;
+    justify-content: start;
     background-color: var(--link-item-bg);
     &:hover {
         background-color: var(--sidebar-card-selected-bg);
@@ -250,6 +259,39 @@ jhi-secured-image {
     &:focus {
         border-color: transparent;
     }
+
+    transition:
+        background-color $transition-color-length ($transition-chevron-max-width-length + $transition-chevron-opacity-length + $transition-delay * 2) ease-in-out,
+        border-color $transition-color-length ($transition-chevron-max-width-length + $transition-chevron-opacity-length + $transition-delay * 2) ease-in-out;
+}
+
+.btn-sidebar-collapse.is-collapsed {
+    background-color: var(--body-background-color);
+    border-color: var(--bs-secondary);
+}
+
+.btn-sidebar-collapse-chevron {
+    opacity: 0;
+    max-width: 0;
+    display: inline-block;
+    overflow: hidden;
+    padding-left: 0;
+
+    transition:
+        opacity $transition-chevron-opacity-length $transition-delay ease-in-out,
+        max-width $transition-chevron-max-width-length ($transition-chevron-opacity-length + $transition-delay * 2) linear,
+        padding-left $transition-chevron-max-width-length ($transition-chevron-opacity-length + $transition-delay * 2) linear;
+}
+
+.is-collapsed .btn-sidebar-collapse-chevron {
+    opacity: 1;
+    max-width: 2rem;
+    padding-left: 0.3rem;
+
+    transition:
+        opacity $transition-chevron-opacity-length ($transition-chevron-max-width-length + $transition-delay * 2) ease-in-out,
+        max-width $transition-chevron-max-width-length $transition-delay linear,
+        padding-left $transition-chevron-max-width-length $transition-delay linear;
 }
 
 .three-dots {
