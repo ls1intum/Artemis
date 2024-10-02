@@ -21,8 +21,7 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 @Repository
 public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
 
-    @Query
-    Set<Faq> findAllByCourseId(@Param("courseId") Long courseId);
+    Set<Faq> findAllByCourseId(Long courseId);
 
     @Query("""
             SELECT DISTINCT faq.categories
@@ -33,7 +32,6 @@ public interface FaqRepository extends ArtemisJpaRepository<Faq, Long> {
 
     @Transactional
     @Modifying
-    @Query
-    void deleteAllByCourseId(@Param("courseId") Long courseId);
+    void deleteAllByCourseId(Long courseId);
 
 }
