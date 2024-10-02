@@ -1,13 +1,6 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
-import {
-    MissingResultInformation,
-    ResultTemplateStatus,
-    evaluateTemplateStatus,
-    getResultIconClass,
-    getTextColorClass,
-    isAIResultAndFailed,
-} from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';

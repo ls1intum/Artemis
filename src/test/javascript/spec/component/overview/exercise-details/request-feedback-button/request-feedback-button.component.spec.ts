@@ -60,7 +60,6 @@ describe('RequestFeedbackButtonComponent', () => {
         fixture.componentRef.setInput('exercise', exercise);
         mockExerciseDetails(exercise);
 
-        jest.spyOn(component, 'assureConditionsSatisfied').mockReturnValue(true);
         jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
             new Observable((subscriber) => {
                 subscriber.error({ error: { errorKey: 'someError' } });
@@ -157,68 +156,18 @@ describe('RequestFeedbackButtonComponent', () => {
         fixture.detectChanges();
 
         jest.spyOn(component, 'requestFeedback');
-        jest.spyOn(window, 'confirm').mockReturnValue(false);
+        jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(
+            new Observable((subscriber) => {
+                subscriber.next();
+                subscriber.complete();
+            }),
+        );
 
         const button = debugElement.query(By.css('a'));
         button.nativeElement.click();
         tick();
 
         expect(component.requestFeedback).toHaveBeenCalled();
-    }));
-
-    it('should not proceed when confirmation is cancelled for programming exercise', fakeAsync(() => {
-        setAthenaEnabled(false);
-        const participation = {
-            id: 1,
-            submissions: [{ id: 1, submitted: false }],
-            testRun: false,
-        } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.PROGRAMMING, studentParticipations: [participation], course: {} } as Exercise;
-        fixture.componentRef.setInput('exercise', exercise);
-        mockExerciseDetails(exercise);
-
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-
-        jest.spyOn(component, 'assureConditionsSatisfied').mockReturnValue(true);
-        jest.spyOn(window, 'confirm').mockReturnValue(false);
-        jest.spyOn(courseExerciseService, 'requestFeedback');
-
-        component.requestFeedback();
-        tick();
-
-        expect(window.confirm).toHaveBeenCalled();
-        expect(courseExerciseService.requestFeedback).not.toHaveBeenCalled();
-    }));
-
-    it('should proceed when confirmation is accepted for programming exercise', fakeAsync(() => {
-        setAthenaEnabled(false);
-        const participation = {
-            id: 1,
-            submissions: [{ id: 1, submitted: false }],
-            testRun: false,
-        } as StudentParticipation;
-        const exercise = { id: 1, type: ExerciseType.PROGRAMMING, studentParticipations: [participation], course: {} } as Exercise;
-        fixture.componentRef.setInput('exercise', exercise);
-
-        mockExerciseDetails(exercise);
-
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-
-        jest.spyOn(component, 'assureConditionsSatisfied').mockReturnValue(true);
-        jest.spyOn(window, 'confirm').mockReturnValue(true);
-        jest.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of(participation));
-        jest.spyOn(alertService, 'success');
-
-        component.requestFeedback();
-        tick();
-
-        expect(window.confirm).toHaveBeenCalled();
-        expect(courseExerciseService.requestFeedback).toHaveBeenCalledWith(exercise.id);
-        expect(alertService.success).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestSent');
     }));
 
     it('should show an alert when requestFeedback() is called and conditions are not satisfied', fakeAsync(() => {

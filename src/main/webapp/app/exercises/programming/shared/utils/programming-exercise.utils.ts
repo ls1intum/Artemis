@@ -7,7 +7,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { isPracticeMode } from 'app/entities/participation/student-participation.model';
-import { isAIResultAndProcessed } from 'app/exercises/shared/result/result.utils';
+import { isAIResultAndFailed, isAIResultAndIsBeingProcessed, isAIResultAndProcessed, isAIResultAndTimedOut } from 'app/exercises/shared/result/result.utils';
 
 export const createBuildPlanUrl = (template: string, projectKey: string, buildPlanId: string): string | undefined => {
     if (template && projectKey && buildPlanId) {
@@ -62,6 +62,9 @@ export const isResultPreliminary = (latestResult: Result, programmingExercise?: 
     }
     if (isAIResultAndProcessed(latestResult)) {
         return true;
+    }
+    if (isAIResultAndIsBeingProcessed(latestResult) || isAIResultAndTimedOut(latestResult) || isAIResultAndFailed(latestResult)) {
+        return false;
     }
     if (latestResult.participation?.type === ParticipationType.PROGRAMMING && isPracticeMode(latestResult.participation)) {
         return false;

@@ -13,7 +13,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
-import { isAIResultAndIsBeingProcessed, MissingResultInformation } from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, isAIResultAndIsBeingProcessed } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
 /**
@@ -106,6 +106,8 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 map((result) => ({ ...result, completionDate: convertDateFromServer(result.completionDate), participation: this.participation })),
                 tap((result) => {
                     if ((Result.isAthenaAIResult(result) && isAIResultAndIsBeingProcessed(result)) || result.rated) {
+                        this.result = result;
+                    } else if (result.rated === false && this.showUngradedResults) {
                         this.result = result;
                     } else {
                         this.result = getLatestResultOfStudentParticipation(this.participation, this.showUngradedResults, false);
