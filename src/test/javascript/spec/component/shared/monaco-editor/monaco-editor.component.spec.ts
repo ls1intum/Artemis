@@ -2,8 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ArtemisTestModule } from '../../../test.module';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { BehaviorSubject } from 'rxjs';
 import { MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoCodeEditorElement } from 'app/shared/monaco-editor/model/monaco-code-editor-element.model';
 import { MonacoEditorLineDecorationsHoverButton } from 'app/shared/monaco-editor/model/monaco-editor-line-decorations-hover-button.model';
@@ -13,7 +11,6 @@ import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-
 describe('MonacoEditorComponent', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
-    let mockThemeService: ThemeService;
 
     const singleLineText = 'public class Main { }';
     const multiLineText = ['public class Main {', 'static void main() {', 'foo();', '}', '}'].join('\n');
@@ -26,7 +23,6 @@ describe('MonacoEditorComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                mockThemeService = TestBed.inject(ThemeService);
                 fixture = TestBed.createComponent(MonacoEditorComponent);
                 comp = fixture.componentInstance;
                 global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
@@ -73,28 +69,6 @@ describe('MonacoEditorComponent', () => {
         fixture.componentRef.setInput('readOnly', false);
         fixture.detectChanges();
         expect(comp.isReadOnly()).toBeFalse();
-    });
-
-    it('should adjust its theme to the global theme', () => {
-        const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
-        const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
-        const changeThemeSpy = jest.spyOn(comp, 'changeTheme');
-        fixture.detectChanges();
-        themeSubject.next(Theme.DARK);
-        expect(subscribeStub).toHaveBeenCalledOnce();
-        expect(changeThemeSpy).toHaveBeenCalledTimes(2);
-        expect(changeThemeSpy).toHaveBeenNthCalledWith(1, Theme.LIGHT);
-        expect(changeThemeSpy).toHaveBeenNthCalledWith(2, Theme.DARK);
-    });
-
-    it('should unsubscribe from the global theme when destroyed', () => {
-        const themeSubject = new BehaviorSubject<Theme>(Theme.LIGHT);
-        const subscribeStub = jest.spyOn(mockThemeService, 'getCurrentThemeObservable').mockReturnValue(themeSubject.asObservable());
-        fixture.detectChanges();
-        const unsubscribeStub = jest.spyOn(comp['themeSubscription']!, 'unsubscribe').mockImplementation();
-        comp.ngOnDestroy();
-        expect(subscribeStub).toHaveBeenCalledOnce();
-        expect(unsubscribeStub).toHaveBeenCalledOnce();
     });
 
     it('should display hidden line widgets', () => {
