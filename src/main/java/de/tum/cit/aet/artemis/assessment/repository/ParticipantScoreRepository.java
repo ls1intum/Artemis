@@ -186,7 +186,6 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional
@@ -215,7 +214,6 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional
@@ -245,7 +243,6 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional
@@ -270,7 +267,6 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional

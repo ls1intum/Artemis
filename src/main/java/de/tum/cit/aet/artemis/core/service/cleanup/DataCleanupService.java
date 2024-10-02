@@ -66,6 +66,8 @@ public class DataCleanupService {
     /**
      * Deletes orphaned entities that are no longer associated with valid results or participations.
      * This includes feedback, text blocks, and scores that reference null results, participations, or submissions.
+     *
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteOrphans() {
         this.longFeedbackTextRepository.deleteLongFeedbackTextForEmptyFeedback();
@@ -101,6 +103,7 @@ public class DataCleanupService {
      *
      * @param deleteFrom The start of the date range for deleting non-rated results.
      * @param deleteTo   The end of the date range for deleting non-rated results.
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteNonRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         this.longFeedbackTextRepository.deleteLongFeedbackTextForNonRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
@@ -118,6 +121,7 @@ public class DataCleanupService {
      *
      * @param deleteFrom The start of the date range for deleting rated results.
      * @param deleteTo   The end of the date range for deleting rated results.
+     * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
     public CleanupServiceExecutionRecordDTO deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         this.longFeedbackTextRepository.deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);

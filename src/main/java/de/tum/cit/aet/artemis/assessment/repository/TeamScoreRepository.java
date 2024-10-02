@@ -78,7 +78,6 @@ public interface TeamScoreRepository extends ArtemisJpaRepository<TeamScore, Lon
 
     /**
      * Deletes {@link TeamScore} entries where the associated team is {@code null}.
-     * Returns {@code void}
      */
     @Modifying
     @Transactional

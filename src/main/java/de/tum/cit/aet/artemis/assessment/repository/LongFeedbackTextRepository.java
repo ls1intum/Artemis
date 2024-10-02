@@ -52,7 +52,6 @@ public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFee
     /**
      * Deletes {@link LongFeedbackText} entries linked to {@link Feedback} where the associated
      * {@link Result} has no participation and no submission.
-     * Returns {@code void}
      */
     @Modifying
     @Transactional
@@ -88,7 +87,6 @@ public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFee
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional
@@ -118,7 +116,6 @@ public interface LongFeedbackTextRepository extends ArtemisJpaRepository<LongFee
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional

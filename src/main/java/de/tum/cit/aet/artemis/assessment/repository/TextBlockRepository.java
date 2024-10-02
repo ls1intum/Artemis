@@ -31,7 +31,6 @@ public interface TextBlockRepository extends ArtemisJpaRepository<TextBlock, Str
     /**
      * Deletes {@link TextBlock} entries linked to {@link Feedback} where the associated {@link Result}
      * has no submission and no participation.
-     * Returns {@code void}
      */
     @Modifying
     @Transactional
@@ -61,7 +60,6 @@ public interface TextBlockRepository extends ArtemisJpaRepository<TextBlock, Str
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional
@@ -92,7 +90,6 @@ public interface TextBlockRepository extends ArtemisJpaRepository<TextBlock, Str
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional

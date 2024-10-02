@@ -68,7 +68,6 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
 
     /**
      * Deletes {@link Rating} entries where the associated {@link Result} has no submission and no participation.
-     * Returns {@code void}
      */
     @Modifying
     @Transactional

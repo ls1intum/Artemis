@@ -101,7 +101,6 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
 
     /**
      * Deletes {@link Feedback} entries where the associated {@link Result} has no submission and no participation.
-     * Returns {@code void}
      */
     @Modifying
     @Transactional
@@ -133,7 +132,6 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional
@@ -163,7 +161,6 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
      *
      * @param deleteFrom the start date for selecting courses
      * @param deleteTo   the end date for selecting courses
-     *                       Returns {@code void}
      */
     @Modifying
     @Transactional
