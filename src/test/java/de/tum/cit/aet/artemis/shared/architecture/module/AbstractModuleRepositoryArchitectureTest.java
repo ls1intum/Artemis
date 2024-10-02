@@ -7,7 +7,6 @@ import static com.tngtech.archunit.core.domain.properties.CanBeAnnotated.Predica
 import static com.tngtech.archunit.core.domain.properties.HasType.Predicates.rawType;
 import static com.tngtech.archunit.lang.SimpleConditionEvent.violated;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
-import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
 import java.util.Set;
@@ -45,20 +44,23 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
     void shouldBeNamedRepository() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Repository.class).should().haveSimpleNameEndingWith("Repository")
                 .because("repositories should have a name ending with 'Repository'.");
-        rule.check(allClasses);
+        // allow empty should since some modules do not have repositories
+        rule.allowEmptyShould(true).check(allClasses);
     }
 
     @Test
     void shouldBeInRepositoryPackage() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(Repository.class).should().resideInAPackage("..repository..")
                 .because("repositories should be in the package 'repository'.");
-        rule.check(productionClasses);
+        // allow empty should since some modules do not have repositories
+        rule.allowEmptyShould(true).check(productionClasses);
     }
 
     @Test
     void testJPQLStyle() {
         var queryRule = methodsOfThisModuleThat().areAnnotatedWith(Query.class).should(USE_UPPER_CASE_SQL_STYLE).because("@Query content should follow the style guide");
-        queryRule.check(allClasses);
+        // allow empty should since some modules do not have any @Query methods
+        queryRule.allowEmptyShould(true).check(allClasses);
     }
 
     // See https://openjpa.apache.org/builds/1.2.3/apache-openjpa/docs/jpa_langref.html#jpa_langref_from_identifiers
@@ -101,7 +103,8 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
                         }
                     }
                 }).because("unused methods should be removed from repositories to keep a clean code base.");
-        unusedMethods.check(allClasses);
+        // allow empty should since some modules do not have repositories
+        unusedMethods.allowEmptyShould(true).check(allClasses);
     }
 
     @Test
@@ -109,36 +112,46 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
         ArchRule noEntityGraphsOnQueries = noMethodsOfThisModuleThat().areAnnotatedWith(Query.class).and().areDeclaredInClassesThat().areInterfaces().and()
                 .areDeclaredInClassesThat().areAnnotatedWith(Repository.class).should().beAnnotatedWith(EntityGraph.class)
                 .because("Spring Boot 3 ignores EntityGraphs on JPQL queries. You need to integrate a JOIN FETCH into the query.");
-        noEntityGraphsOnQueries.check(productionClasses);
+        // allow empty should since some modules do not have any @Query methods
+        noEntityGraphsOnQueries.allowEmptyShould(true).check(productionClasses);
     }
 
     @Test
     void testRepositoryParamAnnotation() {
         var useParamInQueries = methodsOfThisModuleThat().areAnnotatedWith(Query.class).should(haveAllParametersAnnotatedWithUnless(rawType(Param.class), type(Pageable.class)));
         var notUseParamOutsideQueries = methodsOfThisModuleThat().areNotAnnotatedWith(Query.class).should(notHaveAnyParameterAnnotatedWith(rawType(Param.class)));
-        useParamInQueries.check(productionClasses);
-        notUseParamOutsideQueries.check(productionClasses);
+        // allow empty should since some modules do not have any @Query methods
+        useParamInQueries.allowEmptyShould(true).check(productionClasses);
+        notUseParamOutsideQueries.allowEmptyShould(true).check(productionClasses);
     }
 
     @Test
     void persistenceShouldNotAccessServices() {
-        noClassesOfThisModuleThat().areAnnotatedWith(Repository.class).should().accessClassesThat().areAnnotatedWith(Service.class).check(allClasses);
+        // allow empty should since some modules do not have repositories
+        noClassesOfThisModuleThat().areAnnotatedWith(Repository.class).should().accessClassesThat().areAnnotatedWith(Service.class).allowEmptyShould(true).check(allClasses);
+    }
+
+    // TODO: This method should be removed once all repositories are tested
+    protected Set<String> testTransactionalExclusions() {
+        return Set.of();
     }
 
     @Test
     void testTransactional() {
         var classesPredicated = and(INTERFACES, annotatedWith(Repository.class));
-        var transactionalRule = methodsOfThisModuleThat().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(classesPredicated);
+        var transactionalRule = methodsOfThisModuleThat().areAnnotatedWith(simpleNameAnnotation("Transactional")).should().beDeclaredInClassesThat(classesPredicated)
+                .orShould(new ArchCondition<>("methods excluded from this rule") {
 
-        // TODO: In the future we should reduce this number and eventually replace it by transactionalRule.check(allClasses)
-        // The following methods currently violate this rule:
-        // Method <de.tum.cit.aet.artemis.service.LectureImportService.importLecture(Lecture, Course)>
-        // Method <de.tum.cit.aet.artemis.service.exam.StudentExamService.generateMissingStudentExams(Exam)>
-        // Method <de.tum.cit.aet.artemis.service.exam.StudentExamService.generateStudentExams(Exam)>
-        // Method <de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseImportBasicService.importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)>
-        // Method <de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupsConfigurationService.onTimeZoneUpdate(Course)>
-        var result = transactionalRule.evaluate(allClasses);
-        assertThat(result.getFailureReport().getDetails()).hasSize(0);
+                    @Override
+                    public void check(JavaMethod javaMethod, ConditionEvents events) {
+                        if (!testTransactionalExclusions().contains(javaMethod.getFullName())) {
+                            events.add(violated(javaMethod, "Method %s should not be annotated with @Transactional".formatted(javaMethod.getFullName())));
+                        }
+                    }
+                });
+
+        // allow empty should since some modules do not have any @Transactional methods
+        transactionalRule.allowEmptyShould(true).check(allClasses);
     }
 
     @Test
@@ -151,20 +164,25 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
 
     @Test
     void repositoriesImplementArtemisJpaRepository() {
+        // allow empty should since some modules do not have repositories
         classesOfThisModuleThat().areAssignableTo(JpaRepository.class).and().doNotBelongToAnyOf(RepositoryImpl.class).should().beAssignableTo(ArtemisJpaRepository.class)
-                .check(allClasses);
+                .allowEmptyShould(true).check(allClasses);
     }
 
     @Test
     void orElseThrowShouldNotBeCalled() {
+        // allow empty should since some modules do not have any repositories
         noClassesOfThisModuleThat().areAssignableTo(ArtemisJpaRepository.class).should().callMethod(Optional.class, "orElseThrow").orShould()
-                .callMethod(Optional.class, "orElseThrow", Supplier.class).because("ArtemisJpaRepository offers the method getValueElseThrow for this use case").check(allClasses);
+                .callMethod(Optional.class, "orElseThrow", Supplier.class).because("ArtemisJpaRepository offers the method getValueElseThrow for this use case")
+                .allowEmptyShould(true).check(allClasses);
 
     }
 
     @Test
     void usedInProductionCode() {
         var excludedMethods = Set.of("de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository.find(java.lang.String, java.time.Instant, java.lang.String)");
+
+        // allow empty should since some modules do not have repositories
         methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(Repository.class).and().areDeclaredInClassesThat(new DescribedPredicate<>("") {
 
             @Override
@@ -185,13 +203,14 @@ public abstract class AbstractModuleRepositoryArchitectureTest extends AbstractA
                     conditionEvents.add(SimpleConditionEvent.violated(javaMethod, "Method " + javaMethod.getFullName() + " is not used in production code"));
                 }
             }
-        }).because("methods that are not used in production code should be moved to test repositories").check(allClasses);
+        }).because("methods that are not used in production code should be moved to test repositories").allowEmptyShould(true).check(allClasses);
     }
 
     @Test
     void enforcePrimaryBeanAnnotationOnTestRepositories() {
+        // allow empty should since some modules do not have repositories
         classesOfThisModuleThat().resideInAPackage("..test_repository..").should().beAnnotatedWith(Primary.class)
-                .because("Test repositories should be annotated with @Primary to override the production repository beans").check(testClasses);
+                .because("Test repositories should be annotated with @Primary to override the production repository beans").allowEmptyShould(true).check(testClasses);
     }
 
     @Test

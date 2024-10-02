@@ -85,6 +85,8 @@ public abstract class AbstractModuleServiceArchitectureTest extends AbstractArch
             }
         }).because("Methods annotated with @Async are meant to be executed in a new thread."
                 + " The thread gets created in a Spring proxy subclass and requires the method to only be called from the outside.");
-        noCallsFromOwnClass.check(productionClasses);
+
+        // allow empty should since some modules do not have any @Async methods
+        noCallsFromOwnClass.allowEmptyShould(true).check(productionClasses);
     }
 }

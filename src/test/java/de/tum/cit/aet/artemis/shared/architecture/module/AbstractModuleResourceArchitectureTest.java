@@ -39,13 +39,16 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     void shouldBeNamedResource() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(RestController.class).should().haveSimpleNameEndingWith("Resource")
                 .because("resources should have a name ending with 'Resource'.");
-        rule.check(productionClasses);
+
+        // allow empty should since some modules do not have any REST controllers
+        rule.allowEmptyShould(true).check(productionClasses);
     }
 
     @Test
     void shouldBeInResourcePackage() {
         ArchRule rule = classesOfThisModuleThat().areAnnotatedWith(RestController.class).should().resideInAPackage("..web..").because("resources should be in the package 'web'.");
-        rule.check(productionClasses);
+        // allow empty should since some modules do not have any REST controllers
+        rule.allowEmptyShould(true).check(productionClasses);
     }
 
     @Test
@@ -56,7 +59,8 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
                 .haveRawReturnType(ResponseEntity.class).orShould().haveRawReturnType(ModelAndView.class);
         // We exclude the LinkPreviewResource from this check, as it is a special case that requires the serialization of the response which is not possible with ResponseEntities
         JavaClasses classes = classesExcept(allClasses, LinkPreviewResource.class);
-        rule.check(classes);
+        // allow empty should since some modules do not have any REST controllers
+        rule.allowEmptyShould(true).check(classes);
     }
 
     private static final Set<Class<? extends Annotation>> annotationClasses = Set.of(GetMapping.class, PatchMapping.class, PostMapping.class, PutMapping.class, DeleteMapping.class,
@@ -64,6 +68,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
 
     @Test
     void shouldCorrectlyUseRequestMappingAnnotations() {
+        // allow empty should since some modules do not have any REST controllers
         classesOfThisModuleThat().areAnnotatedWith(RequestMapping.class).should(haveCorrectRequestMappingPathForClasses()).check(productionClasses);
         for (var annotation : annotationClasses) {
             methods().that().areAnnotatedWith(annotation).should(haveCorrectRequestMappingPathForMethods(annotation)).allowEmptyShould(true).check(productionClasses);
