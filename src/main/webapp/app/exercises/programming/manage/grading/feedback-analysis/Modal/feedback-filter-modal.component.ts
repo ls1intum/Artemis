@@ -30,14 +30,44 @@ export class FeedbackFilterModalComponent {
         private activeModal: NgbActiveModal,
         private fb: FormBuilder,
     ) {
-        // Initialize form without any default values, values are set dynamically
         this.filterForm = this.fb.group({
-            tasks: [[]], // Array to hold selected tasks
-            testCases: [[]], // Array to hold selected test cases
-            occurrence: [[0, 100]], // Default occurrence range
+            tasks: [[]],
+            testCases: [[]],
+            occurrence: [[0, 100]],
         });
     }
 
+    // Handle task checkbox changes
+    onTaskCheckboxChange(event: Event): void {
+        const checkbox = event.target as HTMLInputElement;
+        const tasks = this.filterForm.value.tasks;
+        if (checkbox.checked) {
+            tasks.push(checkbox.value);
+        } else {
+            const index = tasks.indexOf(checkbox.value);
+            if (index >= 0) {
+                tasks.splice(index, 1);
+            }
+        }
+        this.filterForm.patchValue({ tasks });
+    }
+
+    // Handle test case checkbox changes
+    onTestCaseCheckboxChange(event: Event): void {
+        const checkbox = event.target as HTMLInputElement;
+        const testCases = this.filterForm.value.testCases;
+        if (checkbox.checked) {
+            testCases.push(checkbox.value);
+        } else {
+            const index = testCases.indexOf(checkbox.value);
+            if (index >= 0) {
+                testCases.splice(index, 1);
+            }
+        }
+        this.filterForm.patchValue({ testCases });
+    }
+
+    // Method to apply the selected filters
     applyFilter(): void {
         const filters = this.filterForm.value;
 

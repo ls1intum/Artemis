@@ -86,9 +86,18 @@ export class FeedbackAnalysisComponent {
 
     countAppliedFilters(filters: any): number {
         let count = 0;
-        if (filters.tasks && filters.tasks.length > 0) count++;
-        if (filters.testCases && filters.testCases.length > 0) count++;
-        if (filters.occurrence && (filters.occurrence[0] !== 0 || filters.occurrence[1] !== 100)) count++;
+        // Count the number of tasks selected
+        if (filters.tasks && filters.tasks.length > 0) {
+            count += filters.tasks.length; // Add the length of tasks array to the count
+        }
+        // Count the number of test cases selected
+        if (filters.testCases && filters.testCases.length > 0) {
+            count += filters.testCases.length; // Add the length of testCases array to the count
+        }
+        // Add 1 if occurrence filter is applied (range is not [0, 100])
+        if (filters.occurrence && (filters.occurrence[0] !== 0 || filters.occurrence[1] !== 100)) {
+            count++; // Occurrence is still a single filter, so count as 1
+        }
         return count;
     }
 

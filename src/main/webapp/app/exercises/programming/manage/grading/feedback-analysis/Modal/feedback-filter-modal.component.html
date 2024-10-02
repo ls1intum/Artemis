@@ -8,17 +8,33 @@
         <!-- Task Filters -->
         <div class="form-group">
             <label for="tasks">Tasks</label>
-            <select id="tasks" formControlName="tasks" multiple class="form-control">
-                <option *ngFor="let task of generateTaskArray()" [value]="task">{{ task }}</option>
-            </select>
+            <div *ngFor="let task of generateTaskArray()" class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="task-{{ task }}"
+                    [value]="task"
+                    (change)="onTaskCheckboxChange($event)"
+                    [checked]="filterForm.value.tasks.includes(task.toString())"
+                />
+                <label class="form-check-label" for="task-{{ task }}">{{ task }}</label>
+            </div>
         </div>
 
         <!-- Test Case Filters -->
         <div class="form-group">
             <label for="testCases">Test Cases</label>
-            <select id="testCases" formControlName="testCases" multiple class="form-control">
-                <option *ngFor="let testCase of testCaseNames()" [value]="testCase">{{ testCase }}</option>
-            </select>
+            <div *ngFor="let testCase of testCaseNames()" class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="testCase-{{ testCase }}"
+                    [value]="testCase"
+                    (change)="onTestCaseCheckboxChange($event)"
+                    [checked]="filterForm.value.testCases.includes(testCase)"
+                />
+                <label class="form-check-label" for="testCase-{{ testCase }}">{{ testCase }}</label>
+            </div>
         </div>
 
         <!-- Occurrence Range Slider -->
