@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
-import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgModel } from '@angular/forms';
 import { NgbDropdown, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -125,7 +125,6 @@ describe('CodeEditorContainerIntegration', () => {
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
             ],
             providers: [
-                ChangeDetectorRef,
                 CodeEditorConflictStateService,
                 MockProvider(AlertService),
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
