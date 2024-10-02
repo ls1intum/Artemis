@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -28,6 +29,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyNameDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyProgressForLearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathCompetencyGraphDTO;
+import de.tum.cit.aet.artemis.atlas.dto.LearningPathDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathHealthDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathInformationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.LearningPathNavigationDTO;
@@ -301,19 +303,31 @@ public class LearningPathResource {
     }
 
     /**
-     * GET courses/:courseId/learning-path-id : Gets the id of the learning path.
+     * GET courses/:courseId/learning-path/me : Gets the learning path of the current user in the course.
      *
-     * @param courseId the id of the course from which the learning path id should be fetched
-     * @return the ResponseEntity with status 200 (OK) and with body the id of the learning path
+     * @param courseId the id of the course for which the learning path should be fetched
+     * @return the ResponseEntity with status 200 (OK) and with body the learning path
      */
-    @GetMapping("courses/{courseId}/learning-path-id")
+    @GetMapping("courses/{courseId}/learning-path/me")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Long> getLearningPathId(@PathVariable long courseId) {
-        log.debug("REST request to get learning path id for course with id: {}", courseId);
+    public ResponseEntity<LearningPathDTO> getLearningPathForCurrentUser(@PathVariable long courseId) {
+        log.debug("REST request to get learning path of current user for course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
-        User user = userRepository.getUser();
-        final var learningPath = learningPathRepository.findByCourseIdAndUserIdElseThrow(courseId, user.getId());
-        return ResponseEntity.ok(learningPath.getId());
+        return ResponseEntity.ok(learningPathService.getLearningPathForCurrentUser(courseId));
+    }
+
+    /**
+     * PATCH learning-path/:learningPathId/start : Starts the learning path for the current user.
+     *
+     * @param learningPathId the id of the learning path to start
+     * @return the ResponseEntity with status 204 (NO_CONTENT)
+     */
+    @PatchMapping("learning-path/{learningPathId}/start")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Void> startLearningPathForCurrentUser(@PathVariable long learningPathId) {
+        log.debug("REST request to start learning path with id: {}", learningPathId);
+        learningPathService.startLearningPathForCurrentUser(learningPathId);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -324,20 +338,11 @@ public class LearningPathResource {
      */
     @PostMapping("courses/{courseId}/learning-path")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<Long> generateLearningPath(@PathVariable long courseId) throws URISyntaxException {
-        log.debug("REST request to generate learning path for user in course with id: {}", courseId);
+    public ResponseEntity<LearningPathDTO> generateLearningPathForCurrentUser(@PathVariable long courseId) throws URISyntaxException {
+        log.debug("REST request to generate learning path for current user in course with id: {}", courseId);
         courseService.checkLearningPathsEnabledElseThrow(courseId);
-
-        User user = userRepository.getUser();
-        final var learningPathOptional = learningPathRepository.findByCourseIdAndUserId(courseId, user.getId());
-
-        if (learningPathOptional.isPresent()) {
-            throw new BadRequestException("Learning path already exists.");
-        }
-
-        final var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
-        final var learningPath = learningPathService.generateLearningPathForUser(course, user);
-        return ResponseEntity.created(new URI("api/learning-path/" + learningPath.getId())).body(learningPath.getId());
+        final var learningPathDTO = learningPathService.generateLearningPathForCurrentUser(courseId);
+        return ResponseEntity.created(new URI("api/learning-path/" + learningPathDTO.id())).body(learningPathDTO);
     }
 
     /**
