@@ -32,8 +32,7 @@ describe('SettingsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [SettingsComponent],
+            imports: [ArtemisTestModule, SettingsComponent],
             providers: [
                 FormBuilder,
                 { provide: LocalStorageService, useClass: MockSyncStorage },

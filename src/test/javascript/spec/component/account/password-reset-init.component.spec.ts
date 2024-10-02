@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
-import { FormBuilder, NgModel } from '@angular/forms';
+import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { PasswordResetInitComponent } from 'app/account/password-reset/init/password-reset-init.component';
@@ -7,12 +7,13 @@ import { PasswordResetInitService } from 'app/account/password-reset/init/passwo
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { MockDirective, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
+import { FormsModule } from 'app/forms/forms.module';
 
 describe('PasswordResetInitComponent', () => {
     let fixture: ComponentFixture<PasswordResetInitComponent>;
@@ -20,8 +21,8 @@ describe('PasswordResetInitComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [PasswordResetInitComponent, TranslatePipeMock, MockDirective(NgModel)],
+            imports: [ArtemisTestModule, FormsModule, PasswordResetInitComponent],
+            declarations: [TranslatePipeMock],
             providers: [
                 FormBuilder,
                 { provide: ProfileService, useClass: MockProfileService },
