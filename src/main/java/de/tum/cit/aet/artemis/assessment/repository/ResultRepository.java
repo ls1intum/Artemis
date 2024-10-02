@@ -839,9 +839,9 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     void deleteResultWithoutParticipationAndSubmission();
 
     /**
-     * Deletes rated {@link Result} entries where the associated {@link Participation} and {@link Exercise} are not null,
+     * Deletes non-rated {@link Result} entries where the associated {@link Participation} and {@link Exercise} are not null,
      * and the course's start and end dates fall between the specified date range.
-     * This query deletes rated results associated with exercises within courses whose end date is before
+     * This query deletes non-rated results associated with exercises within courses whose end date is before
      * {@code deleteTo} and start date is after {@code deleteFrom}.
      *
      * @param deleteFrom the start date for selecting courses
@@ -852,7 +852,7 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Transactional
     @Query("""
             DELETE FROM Result r
-            WHERE r.rated = TRUE
+            WHERE r.rated = FALSE
                 AND r.participation IS NOT NULL
                 AND r.participation.exercise IS NOT NULL
                 AND EXISTS (SELECT 1
@@ -895,5 +895,5 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
                                      AND r2.rated = TRUE
                                  )
             """)
-    void deleteNonLatestResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    void deleteNonLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }
