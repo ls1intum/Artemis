@@ -70,7 +70,7 @@
         id="test-collapse"
         class="auto-collapse double-arrow mb-2"
         [ngClass]="{ 'menu-closed': isCollapsed }"
-        [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
+        [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Sidebar (Ctrl + M)'"
         (click)="toggleCollapseState()"
     >
         <div [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
