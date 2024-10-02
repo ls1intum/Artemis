@@ -178,77 +178,113 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
         exerciseStatisticsDTO.setAverageScoreInPercent(averageScore != null ? averageScore : 0.0);
     }
 
+    /**
+     * Deletes {@link ParticipantScore} entries where the associated {@link Result} is not the latest rated result
+     * for a {@link Participation}, within courses conducted between the specified date range.
+     * This query removes participant scores linked to results that are not the most recent rated results, for courses
+     * whose end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
             DELETE FROM ParticipantScore ps
-                                                                              WHERE ps.lastResult IN (
-                                                                                  SELECT r
-                                                                                  FROM Result r
-                                                                                  JOIN r.participation p
-                                                                                  LEFT JOIN p.exercise e
-                                                                                  LEFT JOIN e.course c
-                                                                                  WHERE r.id NOT IN (
-                                                                                      SELECT MAX(r2.id)
-                                                                                      FROM Result r2
-                                                                                      WHERE r2.participation.id = p.id AND r2.rated=true
-                                                                                  ) AND c.endDate < :deleteTo
-                                                                                  AND c.startDate > :deleteFrom
-                                                                              )
-                """)
-    void deleteParticipantScoresForNonLatestLastResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+            WHERE ps.lastResult IN (SELECT r
+                                    FROM Result r
+                                    JOIN r.participation p
+                                    LEFT JOIN p.exercise e
+                                    LEFT JOIN e.course c
+                                    WHERE r.id NOT IN (SELECT MAX(r2.id)
+                                                       FROM Result r2
+                                                       WHERE r2.participation.id = p.id AND r2.rated=true
+                                                       )
+                                        AND c.endDate < :deleteTo
+                                        AND c.startDate > :deleteFrom
+                                    )
+            """)
+    void deleteParticipantScoresForNonLatestLastResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
+    /**
+     * Deletes {@link ParticipantScore} entries where the associated last rated {@link Result} is not the latest rated result
+     * for a {@link Participation}, within courses conducted between the specified date range.
+     * This query removes participant scores linked to rated results that are not the most recent rated results, for courses
+     * whose end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
             DELETE FROM ParticipantScore ps
-                                                                              WHERE ps.lastRatedResult IN (
-                                                                                  SELECT r
-                                                                                  FROM Result r
-                                                                                  JOIN r.participation p
-                                                                                  LEFT JOIN p.exercise e
-                                                                                  LEFT JOIN e.course c
-                                                                                  WHERE r.id NOT IN (
-                                                                                      SELECT MAX(r2.id)
-                                                                                      FROM Result r2
-                                                                                      WHERE r2.participation.id = p.id AND r2.rated=true
-                                                                                  ) AND c.endDate < :deleteTo
-                                                                                  AND c.startDate > :deleteFrom
-                                                                              )
-                """)
-    void deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+            WHERE ps.lastRatedResult IN (SELECT r
+                                         FROM Result r
+                                         JOIN r.participation p
+                                         LEFT JOIN p.exercise e
+                                         LEFT JOIN e.course c
+                                         WHERE r.id NOT IN (SELECT MAX(r2.id)
+                                                            FROM Result r2
+                                                            WHERE r2.participation.id = p.id
+                                                                AND r2.rated=true
+                                                            )
+                                             AND c.endDate < :deleteTo
+                                             AND c.startDate > :deleteFrom
+                                         )
+            """)
+    void deleteParticipantScoresForNonLatestLastRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
+    /**
+     * Deletes {@link ParticipantScore} entries where the associated {@link Result} is the latest result and is non-rated,
+     * and the course's start and end dates are between the specified date range.
+     * This query deletes participant scores for non-rated results within courses whose end date is before
+     * {@code deleteTo} and start date is after {@code deleteFrom}.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
             DELETE FROM ParticipantScore ps
-                                                                                   WHERE ps.lastResult IN (
-                                                                                       SELECT r
-                                                                                                       FROM Result r
-                                                                                                           JOIN r.participation p
-                                                                                                           LEFT JOIN p.exercise e
-                                                                                                           LEFT JOIN e.course c
-                                                                                                           WHERE r.rated=false AND c.endDate < :deleteTo
-                                                                                                           AND c.startDate > :deleteFrom
-                                                                                   )
-                """)
-    void deleteParticipantScoresForLatestNonRatedResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+            WHERE ps.lastResult IN (SELECT r
+                                    FROM Result r
+                                    JOIN r.participation p
+                                    LEFT JOIN p.exercise e
+                                    LEFT JOIN e.course c
+                                    WHERE r.rated=false AND c.endDate < :deleteTo
+                                        AND c.startDate > :deleteFrom                                                                       )
+            """)
+    void deleteParticipantScoresForLatestNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
-    // should not happen, as non rated results cannot be rated
-    // just to avoid potential integrity violations
+    /**
+     * Deletes {@link ParticipantScore} entries where the associated {@link Result} is non-rated, even though
+     * it is marked as the last rated result, to prevent potential integrity violations.
+     * The deletion is based on courses whose start and end dates fall within the specified range.
+     * This scenario should not normally occur, as non-rated results cannot be marked as rated, but the
+     * method ensures cleanup in case of any potential integrity issues.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
             DELETE FROM ParticipantScore ps
-                                                                                   WHERE ps.lastRatedResult IN (
-                                                                                       SELECT r
-                                                                                                       FROM Result r
-                                                                                                           JOIN r.participation p
-                                                                                                           LEFT JOIN p.exercise e
-                                                                                                           LEFT JOIN e.course c
-                                                                                                           WHERE r.rated=false AND c.endDate < :deleteTo
-                                                                                                           AND c.startDate > :deleteFrom
-                                                                                   )
-                """)
-    void deleteParticipantScoresForNonRatedResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+            WHERE ps.lastRatedResult IN (SELECT r
+                                         FROM Result r
+                                         JOIN r.participation p
+                                         LEFT JOIN p.exercise e
+                                         LEFT JOIN e.course c
+                                         WHERE r.rated=false
+                                             AND c.endDate < :deleteTo
+                                             AND c.startDate > :deleteFrom
+                                        )
+            """)
+    void deleteParticipantScoresForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

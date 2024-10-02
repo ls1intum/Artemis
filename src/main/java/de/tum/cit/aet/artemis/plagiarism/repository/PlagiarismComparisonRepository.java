@@ -113,9 +113,9 @@ public interface PlagiarismComparisonRepository extends ArtemisJpaRepository<Pla
             JOIN pc.plagiarismResult pr
             JOIN pr.exercise ex
             JOIN ex.course c
-            WHERE pc.status = de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE AND
-                                                                             c.endDate < :deleteTo AND
-                                                                             c.startDate > :deleteFrom
-                """)
+            WHERE pc.status = de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismStatus.NONE
+                AND c.endDate < :deleteTo
+                AND c.startDate > :deleteFrom
+            """)
     List<Long> findPlagiarismComparisonIdWithStatusNoneThatBelongToCourseWithDates(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

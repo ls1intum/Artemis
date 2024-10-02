@@ -70,6 +70,10 @@ public interface StudentScoreRepository extends ArtemisJpaRepository<StudentScor
     @Modifying
     void deleteByExerciseAndUser(Exercise exercise, User user);
 
+    /**
+     * Deletes {@link StudentScore} entries where the associated user is {@code null}.
+     * Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""

@@ -824,6 +824,10 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
         return results;
     }
 
+    /**
+     * Deletes {@link Result} entries that have no participation and no submission.
+     * Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
@@ -832,26 +836,18 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE r.participation IS NULL
                 AND r.submission IS NULL
             """)
-    void deleteResultWithoutParticipationsAndSubmissions();
+    void deleteResultWithoutParticipationAndSubmission();
 
-    @Modifying
-    @Transactional
-    @Query("""
-             DELETE FROM Result r
-             WHERE r.rated = TRUE
-                 AND r.participation IS NOT NULL
-                 AND r.participation.exercise IS NOT NULL
-                 AND EXISTS (
-                     SELECT 1
-                     FROM Course c
-                     JOIN Exercise e ON e.course = c
-                     WHERE e = r.participation.exercise
-                         AND c.endDate < :deleteTo
-                         AND c.startDate > :deleteFrom
-                     )
-            """)
-    void deleteNonRatedResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
-
+    /**
+     * Deletes rated {@link Result} entries where the associated {@link Participation} and {@link Exercise} are not null,
+     * and the course's start and end dates fall between the specified date range.
+     * This query deletes rated results associated with exercises within courses whose end date is before
+     * {@code deleteTo} and start date is after {@code deleteFrom}.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
@@ -859,20 +855,45 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
             WHERE r.rated = TRUE
                 AND r.participation IS NOT NULL
                 AND r.participation.exercise IS NOT NULL
-                AND EXISTS (
-                            SELECT 1
+                AND EXISTS (SELECT 1
+                            FROM Course c
+                            JOIN Exercise e ON e.course = c
+                            WHERE e = r.participation.exercise
+                                AND c.endDate < :deleteTo
+                                AND c.startDate > :deleteFrom
+                           )
+            """)
+    void deleteNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+
+    /**
+     * Deletes rated {@link Result} entries that are not the latest rated result for a {@link Participation}, within courses
+     * conducted between the specified date range.
+     * This query removes rated results that are not the most recent for a participation, for courses whose end date is
+     * before {@code deleteTo} and start date is after {@code deleteFrom}.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
+    @Modifying
+    @Transactional
+    @Query("""
+            DELETE FROM Result r
+            WHERE r.rated = TRUE
+                AND r.participation IS NOT NULL
+                AND r.participation.exercise IS NOT NULL
+                AND EXISTS (SELECT 1
                             FROM Course c
                             JOIN Exercise e ON e.course = c
                             WHERE e = r.participation.exercise
                                 AND c.endDate < :deleteTo
                                 AND c.startDate > :deleteFrom
                             )
-                AND r.id NOT IN (
-                                 SELECT MAX(r2.id)
+                AND r.id NOT IN (SELECT MAX(r2.id)
                                  FROM Result r2
                                  WHERE r2.participation = r.participation
                                      AND r2.rated = TRUE
                                  )
             """)
-    void deleteNonLatestResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+    void deleteNonLatestResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

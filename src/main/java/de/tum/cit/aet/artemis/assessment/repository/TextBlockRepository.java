@@ -28,61 +28,86 @@ public interface TextBlockRepository extends ArtemisJpaRepository<TextBlock, Str
     @Modifying
     void deleteAllBySubmission_Id(Long submissionId);
 
+    /**
+     * Deletes {@link TextBlock} entries linked to {@link Feedback} where the associated {@link Result}
+     * has no submission and no participation.
+     * Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
-
             DELETE FROM TextBlock tb
             WHERE tb.feedback IN (SELECT f FROM Feedback f JOIN f.result r WHERE r.submission IS NULL AND r.participation IS NULL)
-                """)
+            """)
     void deleteTextBlockForOrphanResults();
 
+    /**
+     * Deletes {@link TextBlock} entries linked to {@link Feedback} with a {@code null} result.
+     * Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
             DELETE FROM TextBlock tb
             WHERE tb.feedback IN (SELECT f FROM Feedback f JOIN f.result WHERE f.result IS NULL)
-                """)
+            """)
     void deleteTextBlockForEmptyFeedback();
 
+    /**
+     * Deletes {@link TextBlock} entries associated with rated {@link Result} that are not the latest rated result
+     * for a {@link Participation}, within courses conducted between the specified date range.
+     * This query removes old text blocks that are not part of the latest rated results, for courses whose
+     * end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
     @Modifying
     @Transactional
-    // old text block that is not part of latest rated results
     @Query("""
             DELETE FROM TextBlock tb
-                WHERE tb.feedback IN (
-                    SELECT f
-                                    FROM Feedback f
-                                        JOIN f.result r
-                                        JOIN r.participation p
-                                        LEFT JOIN p.exercise e
-                                        LEFT JOIN e.course c
-                                        WHERE f.result.id NOT IN (
-                                        SELECT MAX(r2.id)
-                FROM Result r2
-                WHERE r2.participation.id = p.id AND r2.rated=true
-                    )
-                AND c.endDate < :deleteTo
-                AND c.startDate > :deleteFrom
-                                )
-                """)
+            WHERE tb.feedback IN (SELECT f
+                                  FROM Feedback f
+                                  JOIN f.result r
+                                  JOIN r.participation p
+                                  LEFT JOIN p.exercise e
+                                  LEFT JOIN e.course c
+                                  WHERE f.result.id NOT IN (SELECT MAX(r2.id)
+                                                            FROM Result r2
+                                                            WHERE r2.participation.id = p.id
+                                                                AND r2.rated=true
+                                                            )
+                                      AND c.endDate < :deleteTo
+                                      AND c.startDate > :deleteFrom
+                                  )
+            """)
     void deleteTextBlockForRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
+    /**
+     * Deletes {@link TextBlock} entries linked to non-rated {@link Result} where the associated course's start and end dates
+     * are between the specified date range.
+     * This query deletes text blocks for feedback associated with results that are not rated, within the courses
+     * whose end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
             DELETE FROM TextBlock tb
-                WHERE tb.feedback IN (
-                    SELECT f
-                                    FROM Feedback f
-                                        JOIN f.result r
-                                        JOIN r.participation p
-                                        LEFT JOIN p.exercise e
-                                        LEFT JOIN e.course c
-                                        WHERE r.rated=false
-                                        AND c.endDate < :deleteTo
-                                        AND c.startDate > :deleteFrom
-                )
-                """)
+            WHERE tb.feedback IN (SELECT f
+                                  FROM Feedback f
+                                  JOIN f.result r
+                                  JOIN r.participation p
+                                  LEFT JOIN p.exercise e
+                                  LEFT JOIN e.course c
+                                  WHERE r.rated=false
+                                      AND c.endDate < :deleteTo
+                                      AND c.startDate > :deleteFrom
+                                  )
+            """)
     void deleteTextBlockForNonRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

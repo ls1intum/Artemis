@@ -99,6 +99,10 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
         return hasFeedbackFromGradingInstructionIds(gradingInstructionsIds);
     }
 
+    /**
+     * Deletes {@link Feedback} entries where the associated {@link Result} has no submission and no participation.
+     * Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
@@ -110,6 +114,10 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
             """)
     void deleteFeedbackForOrphanResults();
 
+    /**
+     * Deletes {@link Feedback} entries with a {@code null} result.
+     * Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
@@ -117,39 +125,59 @@ public interface FeedbackRepository extends ArtemisJpaRepository<Feedback, Long>
             """)
     void deleteOrphanFeedback();
 
+    /**
+     * Deletes {@link Feedback} entries associated with rated {@link Result} that are not the latest rated result
+     * for a {@link Participation}, within courses conducted between the specified date range.
+     * This query removes old feedback entries that are not part of the latest rated results, for courses whose
+     * end date is before {@code deleteTo} and start date is after {@code deleteFrom}.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
             DELETE FROM Feedback f
-                                    WHERE f.result IN (
-                                        SELECT r
-                                        FROM Result r
-                                        JOIN r.participation p
-                                        LEFT JOIN p.exercise e
-                                        LEFT JOIN e.course c
-                                        WHERE r.id NOT IN (
-                                            SELECT MAX(r2.id)
-                                            FROM Result r2
-                                            WHERE r2.participation.id = p.id AND r2.rated=true
-                                        ) AND c.endDate < :deleteTo
-                                        AND c.startDate > :deleteFrom
-                                    )
-                """)
-    void deleteOldFeedbackThatAreNotLatestRatedResults(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+            WHERE f.result IN (SELECT r
+                               FROM Result r
+                               JOIN r.participation p
+                               LEFT JOIN p.exercise e
+                               LEFT JOIN e.course c
+                               WHERE r.id NOT IN (SELECT MAX(r2.id)
+                                                  FROM Result r2
+                                                  WHERE r2.participation.id = p.id
+                                                      AND r2.rated=true
+                                                  )
+                                   AND c.endDate < :deleteTo
+                                   AND c.startDate > :deleteFrom
+                               )
+            """)
+    void deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
+    /**
+     * Deletes non-rated {@link Feedback} entries where the associated course's start and end dates
+     * are between the specified date range.
+     * This query deletes feedback for non-rated results within courses whose end date is before
+     * {@code deleteTo} and start date is after {@code deleteFrom}.
+     *
+     * @param deleteFrom the start date for selecting courses
+     * @param deleteTo   the end date for selecting courses
+     *                       Returns {@code void}
+     */
     @Modifying
     @Transactional
     @Query("""
             DELETE FROM Feedback f
-                                    WHERE f.result IN (
-                                        SELECT r
-                                        FROM Result r
-                                        JOIN r.participation p
-                                        JOIN p.exercise e
-                                        JOIN e.course c
-                                        WHERE r.rated=false AND c.endDate < :deleteTo
-                                        AND c.startDate > :deleteFrom
-                                    )
-                """)
-    void deleteOldNonRatedFeedbackWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+            WHERE f.result IN (SELECT r
+                               FROM Result r
+                               JOIN r.participation p
+                               JOIN p.exercise e
+                               JOIN e.course c
+                               WHERE r.rated=false
+                                   AND c.endDate < :deleteTo
+                                   AND c.startDate > :deleteFrom
+                               )
+            """)
+    void deleteOldNonRatedFeedbackWhereCourseDateBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }
