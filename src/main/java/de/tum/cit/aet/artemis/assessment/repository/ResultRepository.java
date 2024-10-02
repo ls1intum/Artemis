@@ -837,42 +837,42 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     @Modifying
     @Transactional
     @Query("""
-            DELETE FROM Result r
-                                                                WHERE r.rated = true
-                                                                  AND r.participation IS NOT NULL
-                                                                  AND r.participation.exercise IS NOT NULL
-                                                                  AND EXISTS (
-                                                                      SELECT 1
-                                                                      FROM Course c
-                                                                      JOIN Exercise e ON e.course = c
-                                                                      WHERE e = r.participation.exercise
-                                                                        AND c.endDate < :deleteTo
-                                                                        AND c.startDate > :deleteFrom
-                                                                  )
-                                                                  AND r.id NOT IN (
-                                                                      SELECT MAX(r2.id)
-                                                                      FROM Result r2
-                                                                      WHERE r2.participation = r.participation
-                                                                        AND r2.rated = true
-                                                                  )
-                """)
-    void deleteNonLatestResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+             DELETE FROM Result r
+             WHERE r.rated = TRUE
+                 AND r.participation IS NOT NULL
+                 AND r.participation.exercise IS NOT NULL
+                 AND EXISTS (
+                     SELECT 1
+                     FROM Course c
+                     JOIN Exercise e ON e.course = c
+                     WHERE e = r.participation.exercise
+                         AND c.endDate < :deleteTo
+                         AND c.startDate > :deleteFrom
+                     )
+            """)
+    void deleteNonRatedResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 
     @Modifying
     @Transactional
     @Query("""
             DELETE FROM Result r
-                                                                                       WHERE r.rated = false
-                                                                                         AND r.participation IS NOT NULL
-                                                                                         AND r.participation.exercise IS NOT NULL
-                                                                                         AND EXISTS (
-                                                                                             SELECT 1
-                                                                                             FROM Course c
-                                                                                             JOIN Exercise e ON e.course = c
-                                                                                             WHERE e = r.participation.exercise
-                                                                                               AND c.endDate < :deleteTo
-                                                                                               AND c.startDate > :deleteFrom
-                                                                                         )
-                """)
-    void deleteNonRatedResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
+            WHERE r.rated = TRUE
+                AND r.participation IS NOT NULL
+                AND r.participation.exercise IS NOT NULL
+                AND EXISTS (
+                            SELECT 1
+                            FROM Course c
+                            JOIN Exercise e ON e.course = c
+                            WHERE e = r.participation.exercise
+                                AND c.endDate < :deleteTo
+                                AND c.startDate > :deleteFrom
+                            )
+                AND r.id NOT IN (
+                                 SELECT MAX(r2.id)
+                                 FROM Result r2
+                                 WHERE r2.participation = r.participation
+                                     AND r2.rated = TRUE
+                                 )
+            """)
+    void deleteNonLatestResultsWhereCourseBetween(@Param("deleteFrom") ZonedDateTime deleteFrom, @Param("deleteTo") ZonedDateTime deleteTo);
 }

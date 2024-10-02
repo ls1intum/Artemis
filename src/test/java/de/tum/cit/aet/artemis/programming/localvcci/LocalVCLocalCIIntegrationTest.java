@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  * This class contains integration tests for the base repositories (template, solution, tests) and the different types of assignment repositories (student assignment, teaching
  * assistant assignment, instructor assignment).
  */
+
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
