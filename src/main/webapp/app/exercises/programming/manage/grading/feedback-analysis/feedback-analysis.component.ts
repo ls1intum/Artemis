@@ -2,7 +2,7 @@ import { Component, InputSignal, computed, effect, inject, input, signal, untrac
 import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
-import { faFilter, faSort, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faSort, faSortDown, faSortUp, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
@@ -38,10 +38,15 @@ export class FeedbackAnalysisComponent {
     private modalService = inject(NgbModal);
 
     readonly faSort = faSort;
+    readonly faSortUp = faSortUp; // Added for sorting icons
+    readonly faSortDown = faSortDown; // Added for sorting icons
     readonly faFilter = faFilter;
     readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
+
+    // Added sortIcon computed function to dynamically set the sort icon
+    readonly sortIcon = computed(() => (this.sortingOrder() === SortingOrder.ASCENDING ? this.faSortUp : this.faSortDown));
 
     private localStorage = inject(LocalStorageService);
     selectedFiltersCount = 0;
@@ -56,6 +61,20 @@ export class FeedbackAnalysisComponent {
                 await this.loadData();
             });
         });
+    }
+
+    // Set sorted column and toggle sorting order when the column header is clicked
+    setSortedColumn(column: string): void {
+        // NEW FUNCTION
+        if (this.sortedColumn() === column) {
+            // Toggle the sorting order if the same column is clicked
+            this.sortingOrder.set(this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING);
+        } else {
+            // Set a new column and default sorting order to ascending
+            this.sortedColumn.set(column);
+            this.sortingOrder.set(SortingOrder.ASCENDING);
+        }
+        this.loadData(); // Reload data with the new sorting configuration
     }
 
     async openFilterModal(): Promise<void> {

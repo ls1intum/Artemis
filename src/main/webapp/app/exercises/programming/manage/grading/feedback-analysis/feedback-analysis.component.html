@@ -1,6 +1,10 @@
 <ng-template #headerTemplate let-column="column" let-label="label">
     <th scope="col">
         <span [jhiTranslate]="label"></span>
+        @if (sortedColumn() === column) {
+            <!-- Show sorting icon when the column is sorted -->
+            <fa-icon [icon]="sortIcon()"></fa-icon>
+        }
     </th>
 </ng-template>
 
