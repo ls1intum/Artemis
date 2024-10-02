@@ -15,15 +15,11 @@ import org.glassfish.jersey.internal.util.Producer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
-import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
+import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -33,17 +29,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
-import de.tum.cit.aet.artemis.core.util.CourseUtilService;
-import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -52,99 +41,21 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
-class CourseCompetencyIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
+class CourseCompetencyIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "coursecompetencyintegrationtest";
-
-    @Autowired
-    private LectureRepository lectureRepository;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private TextUnitRepository textUnitRepository;
-
-    @Autowired
-    private AttachmentUnitRepository attachmentUnitRepository;
-
-    @Autowired
-    private ExerciseUnitRepository exerciseUnitRepository;
-
-    @Autowired
-    private CompetencyRepository competencyRepository;
-
-    @Autowired
-    private UserUtilService userUtilService;
-
-    @Autowired
-    private CourseUtilService courseUtilService;
-
-    @Autowired
-    private PrerequisiteRepository prerequisiteRepository;
-
-    @Autowired
-    private CompetencyRelationRepository competencyRelationRepository;
-
-    @Autowired
-    private CompetencyUtilService competencyUtilService;
-
-    @Autowired
-    private PageableSearchUtilService pageableSearchUtilService;
-
-    @Autowired
-    private SubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private ParticipationService participationService;
-
-    @Autowired
-    private TeamUtilService teamUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private LectureUnitService lectureUnitService;
-
-    @Autowired
-    private StudentScoreUtilService studentScoreUtilService;
-
-    @Autowired
-    private CourseCompetencyRepository courseCompetencyRepository;
-
-    @Autowired
-    private PrerequisiteUtilService prerequisiteUtilService;
-
-    @Autowired
-    protected CompetencyProgressUtilService competencyProgressUtilService;
-
-    @Autowired
-    protected LectureUtilService lectureUtilService;
 
     private Course course;
 
