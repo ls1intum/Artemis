@@ -4,6 +4,11 @@ import { CUSTOM_MARKDOWN_CONFIG, CUSTOM_MARKDOWN_LANGUAGE, CUSTOM_MARKDOWN_LANGU
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 
+/**
+ * Service providing shared functionality for the Monaco editor.
+ * This service is intended to be used by components that need to create and manage Monaco editors.
+ * It also ensures that the editor's theme matches the current theme of Artemis.
+ */
 @Injectable({ providedIn: 'root' })
 export class MonacoEditorService {
     static readonly LIGHT_THEME_ID = 'vs';

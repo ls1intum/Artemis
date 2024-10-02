@@ -57,7 +57,7 @@ describe('MonacoEditorService', () => {
         { className: 'monaco-editor', createFn: (element: HTMLElement) => monacoEditorService.createStandaloneCodeEditor(element) },
         { className: 'monaco-diff-editor', createFn: (element: HTMLElement) => monacoEditorService.createStandaloneDiffEditor(element) },
     ])(
-        'should inject an editor ($className) into the provided DOM element',
+        'should insert an editor ($className) into the provided DOM element',
         ({ className, createFn }: { className: string; createFn: (element: HTMLElement) => monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor }) => {
             const element = document.createElement('div');
             const editor = createFn(element);
