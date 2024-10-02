@@ -83,9 +83,8 @@ export interface Services {
 export enum HttpMethod {
     Post = 'POST',
     Get = 'GET',
-    Put = 'PUT',
-    Patch = 'PATCH',
     Delete = 'DELETE',
+    Patch = 'PATCH',
 }
 
 export interface ProcessMetrics {
@@ -110,9 +109,9 @@ export interface Thread {
     blockedCount: number;
     waitedTime: number;
     waitedCount: number;
-    lockName: string | null;
+    lockName: string | undefined;
     lockOwnerId: number;
-    lockOwnerName: string | null;
+    lockOwnerName: string | undefined;
     daemon: boolean;
     inNative: boolean;
     suspended: boolean;
@@ -121,7 +120,7 @@ export interface Thread {
     stackTrace: StackTrace[];
     lockedMonitors: LockedMonitor[];
     lockedSynchronizers: string[];
-    lockInfo: LockInfo | null;
+    lockInfo: LockInfo | undefined;
     // custom field for showing-hiding thread dump
     showThreadDump?: boolean;
 }
@@ -139,9 +138,9 @@ export interface LockedMonitor {
 }
 
 export interface StackTrace {
-    classLoaderName: string | null;
-    moduleName: string | null;
-    moduleVersion: string | null;
+    classLoaderName: string | undefined;
+    moduleName: string | undefined;
+    moduleVersion: string | undefined;
     methodName: string;
     fileName: string;
     lineNumber: number;

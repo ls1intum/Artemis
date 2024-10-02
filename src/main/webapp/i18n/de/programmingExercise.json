@@ -663,6 +663,19 @@
                 "template": "Vorlage",
                 "history": "Commit-Historie",
                 "result": "Ergebnis"
+            },
+            "otherLanguageHints": {
+                "title": "Führe folgende Schritte aus, um eine andere Sprache zu benutzen. Siehe die <a href=\"{{documentationLink}}\">Dokumentation</a> für Details.",
+                "setImage": "Lege ein angepasstes Docker Image mit benötigten Abhängigkeiten fest (erstelle möglicherweise ein eigenes und lade es in die <a href=\"{{ghcrLink}}\">GitHub Container Registry</a> oder auf den <a href=\"{{dockerhubLink}}\">Docker Hub</a> hoch).",
+                "buildScript": {
+                    "title": "Passe das Build Skript an:",
+                    "dependencies": "Optional: Installiere aufgabenspezifische Abhängigkeiten.",
+                    "runTests": "Führe alle Tests aus. Sie sollten JUnit XML Dateien generieren.",
+                    "moveResults": "Bewege die XML Dateien in das <code>{{resultsDirectory}}</code> Verzeichnis."
+                },
+                "pushExercise": "Lade den Aufgaben-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt.",
+                "pushSolution": "Lade den Lösungs-Code in das entsprechende Repository. Es wird nicht ausgecheckt.",
+                "pushTest": "Lade den Test-Code in das entsprechende Repository. Es wird in <code>{{checkoutDirectory}}</code> ausgecheckt."
             }
         },
         "error": {

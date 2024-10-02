@@ -188,7 +188,7 @@ public class ResultResource {
         Participation participation = participationRepository.findByIdElseThrow(participationId);
         List<Result> results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participationId);
 
-        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results);
+        Map<Long, String> resultBuildJobMap = resultService.getLogsAvailabilityForResults(results, participation);
 
         participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
 
