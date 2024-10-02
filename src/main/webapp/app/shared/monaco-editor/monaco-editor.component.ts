@@ -1,7 +1,5 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 import * as monaco from 'monaco-editor';
-import { Subscription } from 'rxjs';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { MonacoEditorLineWidget } from 'app/shared/monaco-editor/model/monaco-editor-inline-widget.model';
 import { MonacoEditorBuildAnnotation, MonacoEditorBuildAnnotationType } from 'app/shared/monaco-editor/model/monaco-editor-build-annotation.model';
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
@@ -65,12 +63,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
     private textChangedListener?: Disposable;
     private blurEditorWidgetListener?: Disposable;
     private textChangedEmitTimeout?: NodeJS.Timeout;
-    private themeSubscription?: Subscription;
 
     /*
      * Injected services and elements.
      */
-    private readonly themeService = inject(ThemeService);
     private readonly renderer = inject(Renderer2);
     private readonly translateService = inject(TranslateService);
     private readonly elementRef = inject(ElementRef);
@@ -85,17 +81,7 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.monacoEditorContainerElement = this.renderer.createElement('div');
         this.renderer.addClass(this.monacoEditorContainerElement, 'monaco-editor-container');
         this.renderer.addClass(this.monacoEditorContainerElement, MonacoEditorComponent.SHRINK_TO_FIT_CLASS);
-        this._editor = monaco.editor.create(this.monacoEditorContainerElement, {
-            value: '',
-            glyphMargin: true,
-            minimap: { enabled: false },
-            lineNumbersMinChars: 4,
-            scrollBeyondLastLine: false,
-            scrollbar: {
-                alwaysConsumeMouseWheel: false, // Prevents the editor from consuming the mouse wheel event, allowing the parent element to scroll.
-            },
-        });
-        this._editor.getModel()?.setEOL(monaco.editor.EndOfLineSequence.LF);
+        this._editor = this.monacoEditorService.createStandaloneCodeEditor(this.monacoEditorContainerElement);
         this.textEditorAdapter = new MonacoTextEditorAdapter(this._editor);
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoEditorContainerElement);
 
@@ -111,11 +97,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         effect(() => {
             this._editor.updateOptions({
                 stickyScroll: { enabled: this.stickyScroll() },
-            });
-        });
-
-        effect(() => {
-            this._editor.updateOptions({
                 readOnly: this.readOnly(),
             });
         });
@@ -140,14 +121,11 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
         this.blurEditorWidgetListener = this._editor.onDidBlurEditorWidget(() => {
             this.onBlurEditor.emit();
         });
-
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
     ngOnDestroy() {
         this.reset();
         this._editor.dispose();
-        this.themeSubscription?.unsubscribe();
         this.textChangedListener?.dispose();
         this.contentHeightListener?.dispose();
         this.blurEditorWidgetListener?.dispose();
@@ -295,10 +273,6 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
             a.dispose();
         });
         this.actions = [];
-    }
-
-    changeTheme(artemisTheme: Theme): void {
-        this.monacoEditorService.applyTheme(artemisTheme);
     }
 
     layout(): void {

@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 import * as monaco from 'monaco-editor';
-import { Subscription } from 'rxjs';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { MonacoEditorService } from './monaco-editor.service';
 
@@ -25,14 +23,12 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     /*
      * Subscriptions and listeners that need to be disposed of when this component is destroyed.
      */
-    themeSubscription?: Subscription;
     listeners: Disposable[] = [];
     resizeObserver?: ResizeObserver;
 
     /*
      * Injected services and elements.
      */
-    private readonly themeService = inject(ThemeService);
     private readonly elementRef = inject(ElementRef);
     private readonly renderer = inject(Renderer2);
     private readonly monacoEditorService = inject(MonacoEditorService);
@@ -44,26 +40,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
          * of this component are called.
          */
         this.monacoDiffEditorContainerElement = this.renderer.createElement('div');
-        this._editor = monaco.editor.createDiffEditor(this.monacoDiffEditorContainerElement, {
-            glyphMargin: true,
-            minimap: { enabled: false },
-            readOnly: true,
-            renderSideBySide: true,
-            scrollBeyondLastLine: false,
-            stickyScroll: {
-                enabled: false,
-            },
-            renderOverviewRuler: false,
-            scrollbar: {
-                vertical: 'hidden',
-                handleMouseWheel: true,
-                alwaysConsumeMouseWheel: false,
-            },
-            hideUnchangedRegions: {
-                enabled: true,
-            },
-            fontSize: 12,
-        });
+        this._editor = this.monacoEditorService.createStandaloneDiffEditor(this.monacoDiffEditorContainerElement);
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoDiffEditorContainerElement);
         this.setupDiffListener();
         this.setupContentHeightListeners();
@@ -80,11 +57,9 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
             this.layout();
         });
         this.resizeObserver.observe(this.monacoDiffEditorContainerElement);
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => this.changeTheme(theme));
     }
 
     ngOnDestroy(): void {
-        this.themeSubscription?.unsubscribe();
         this.resizeObserver?.disconnect();
         this.listeners.forEach((listener) => {
             listener.dispose();
@@ -145,15 +120,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         const width = this.monacoDiffEditorContainerElement.clientWidth;
         const height = this.monacoDiffEditorContainerElement.clientHeight;
         this._editor.layout({ width, height });
-    }
-
-    /**
-     * Sets the theme of all Monaco editors according to the Artemis theme.
-     * As of now, it is not possible to have two editors with different themes.
-     * @param artemisTheme The active Artemis theme.
-     */
-    changeTheme(artemisTheme: Theme): void {
-        this.monacoEditorService.applyTheme(artemisTheme);
     }
 
     /**
