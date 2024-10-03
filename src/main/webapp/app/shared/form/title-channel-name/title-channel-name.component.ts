@@ -20,7 +20,6 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     hideChannelName = input<boolean>();
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
     alreadyUsedTitles = input<string[]>([]);
-    alreadyUsedChannelNames = input<string[]>([]);
 
     @ViewChild('field_title') field_title: NgModel;
     field_channel_name = viewChild<NgModel>('field_channel_name');

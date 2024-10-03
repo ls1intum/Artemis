@@ -18,6 +18,7 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     @Input() isImport: boolean;
     @Input() hideTitleLabel: boolean;
     isEditFieldDisplayedRecord = input<Record<ProgrammingExerciseInputField, boolean>>();
+    courseId = input<number>();
 
     @ViewChild(TitleChannelNameComponent) titleChannelNameComponent: TitleChannelNameComponent;
 
@@ -27,22 +28,17 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     private readonly exerciseService: ExerciseService = inject(ExerciseService);
 
     alreadyUsedExerciseNames = signal<string[]>([]);
-    alreadyUsedChannelNames = signal<string[]>([]);
 
     hideChannelNameInput = false;
 
     constructor() {
         effect(() => {
-            if (this.course()?.id) {
-                this.exerciseService.getExistingExerciseDetailsInCourse(this.course()!.id!).subscribe((exerciseDetails) => {
+            const courseId = this.courseId() ?? this.course()?.id;
+            if (courseId) {
+                this.exerciseService.getExistingExerciseDetailsInCourse(courseId).subscribe((exerciseDetails) => {
                     this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles);
-                    this.alreadyUsedChannelNames.set(exerciseDetails.channelNames);
                 });
             }
-        });
-
-        effect(() => {
-            console.log(this.alreadyUsedChannelNames());
         });
     }
 

@@ -19,7 +19,7 @@
                 [disallowedValues]="alreadyUsedTitles()"
             />
             @if (field_title?.control?.errors?.disallowedValue) {
-                <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.form.title.alreadyUsed"></div>
+                <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.form.title.disallowedValue"></div>
             }
         </div>
     }
@@ -41,12 +41,7 @@
                 [ngModel]="channelName"
                 (ngModelChange)="formatChannelName($event)"
                 maxlength="30"
-                notIncludedIn
-                [disallowedValues]="alreadyUsedChannelNames()"
             />
-            @if (field_channel_name?.control?.errors?.disallowedValue) {
-                <div class="alert alert-danger" jhiTranslate="artemisApp.exercise.form.shortName.alreadyUsed"></div>
-            }
         </div>
     }
 </div>

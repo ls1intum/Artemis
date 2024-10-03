@@ -19,6 +19,7 @@
             [isExamMode]="isExamMode()"
             [isImport]="isImport()"
             [isEditFieldDisplayedRecord]="isEditFieldDisplayedRecord()"
+            [courseId]="courseId()"
         />
     </div>
     @if (isEditFieldDisplayedRecord().shortName) {
@@ -38,6 +39,8 @@
                 [(ngModel)]="programmingExercise().shortName"
                 [readOnly]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"
                 [disabled]="!programmingExerciseCreationConfig.isImportFromExistingExercise && !!programmingExercise().id"
+                notIncludedIn
+                [disallowedValues]="alreadyUsedShortNames()"
                 #shortName="ngModel"
             />
             @for (error of shortName.errors! | keyvalue | removekeys: ['required']; track error.key) {

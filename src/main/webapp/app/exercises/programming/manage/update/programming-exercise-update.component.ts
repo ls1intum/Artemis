@@ -922,7 +922,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             });
         } else if (this.exerciseInfoComponent?.titleComponent?.titleChannelNameComponent?.field_title?.control?.errors?.disallowedValue) {
             validationErrorReasons.push({
-                translateKey: 'artemisApp.exercise.form.title.alreadyUsed',
+                translateKey: 'artemisApp.exercise.form.title.disallowedValue',
                 translateValues: {},
             });
         }
@@ -941,6 +941,11 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (this.programmingExercise.shortName === undefined || this.programmingExercise.shortName === '') {
             validationErrorReasons.push({
                 translateKey: 'artemisApp.exercise.form.shortName.undefined',
+                translateValues: {},
+            });
+        } else if (this.exerciseInfoComponent?.shortNameField()?.control?.errors?.disallowedValue) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.exercise.form.title.disallowedValue',
                 translateValues: {},
             });
         } else {

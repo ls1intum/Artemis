@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnDestroy, QueryList, SimpleChanges, ViewChild, ViewChildren, effect, inject, input, signal, viewChild } from '@angular/core';
 import { NgModel } from '@angular/forms';
 import { ProgrammingExercise, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
@@ -9,6 +9,7 @@ import { every } from 'lodash-es';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 import { removeSpecialCharacters } from 'app/shared/util/utils';
+import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-programming-exercise-info',
@@ -26,6 +27,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     importOptions = input.required<ImportOptions>();
     isSimpleMode = input.required<boolean>();
     isEditFieldDisplayedRecord = input.required<Record<ProgrammingExerciseInputField, boolean>>();
+    courseId = input<number>();
 
     exerciseTitleChannelComponent = viewChild<ExerciseTitleChannelNameComponent>('titleChannelNameComponent');
     @ViewChildren(TableEditableFieldComponent) tableEditableFields?: QueryList<TableEditableFieldComponent>;
@@ -36,6 +38,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
     @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
 
+    private readonly exerciseService: ExerciseService = inject(ExerciseService);
+
     isShortNameFieldValid = signal<boolean>(false);
     isShortNameFromAdvancedMode = signal<boolean>(false);
 
@@ -43,6 +47,9 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     formValidChanges = new Subject<boolean>();
 
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
+
+    alreadyUsedExerciseNames = signal<string[]>([]);
+    alreadyUsedShortNames = signal<string[]>([]);
 
     exerciseTitle = signal<string | undefined>(undefined);
     shortNameRandomPart = signal<string>(this.generateRandomShortNameLetters());
@@ -81,6 +88,18 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             } // triggers effect
             this.registerInputFields();
         });
+
+        effect(
+            function fetchAndInitializeTakenTitlesAndShortNames() {
+                const courseId = this.courseId() ?? this.programmingExercise().course?.id;
+                if (courseId) {
+                    this.exerciseService.getExistingExerciseDetailsInCourse(courseId, true).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
+                        this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles);
+                        this.alreadyUsedShortNames.set(exerciseDetails.shortNames);
+                    });
+                }
+            }.bind(this),
+        );
     }
 
     registerInputFields() {
