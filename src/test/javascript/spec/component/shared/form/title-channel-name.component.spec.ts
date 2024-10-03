@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule, NgForm } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
