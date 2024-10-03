@@ -267,7 +267,8 @@
             "goBack": "Zurück",
             "search": "Suchen",
             "select": "Auswählen",
-            "sendToIris": "An Iris schicken"
+            "sendToIris": "An Iris schicken",
+            "faq": "FAQ"
         },
         "detail": {
             "field": "Feld",
@@ -346,7 +347,8 @@
         "tutorialGroups": "Übungsgruppen",
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",
-        "communication": "Kommunikation"
+        "communication": "Kommunikation",
+        "faq": "FAQ"
     },
     "connectionStatus": {
         "connected": "Verbunden",

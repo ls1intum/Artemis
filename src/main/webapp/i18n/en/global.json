@@ -269,7 +269,8 @@
             "goBack": "Go back",
             "search": "Search",
             "select": "Select",
-            "sendToIris": "Send To Iris"
+            "sendToIris": "Send To Iris",
+            "faq": "FAQ"
         },
         "detail": {
             "field": "Field",
@@ -348,7 +349,8 @@
         "exercises": "Exercises",
         "statistics": "Course statistics",
         "exams": "Exams",
-        "communication": "Communication"
+        "communication": "Communication",
+        "faq": "FAQ"
     },
     "connectionStatus": {
         "connected": "Connected",

@@ -41,6 +41,9 @@ export class CourseManagementService {
 
     private fetchingCoursesForNotifications = false;
 
+    private courseOverviewSubject = new BehaviorSubject<boolean>(false);
+    isCourseOverview$ = this.courseOverviewSubject.asObservable();
+
     constructor(
         private http: HttpClient,
         private courseStorageService: CourseStorageService,
@@ -691,5 +694,13 @@ export class CourseManagementService {
     getNumberOfAllowedComplaintsInCourse(courseId: number, teamMode = false): Observable<number> {
         // Note: 0 is the default value in case the server returns something that does not make sense
         return this.http.get<number>(`${this.resourceUrl}/${courseId}/allowed-complaints?teamMode=${teamMode}`) ?? 0;
+    }
+
+    enableCourseOverviewBackground() {
+        this.courseOverviewSubject.next(true);
+    }
+
+    disableCourseOverviewBackground() {
+        this.courseOverviewSubject.next(false);
     }
 }
