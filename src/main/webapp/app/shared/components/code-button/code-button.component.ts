@@ -358,7 +358,6 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     }
 
     initTheia(profileInfo: ProfileInfo) {
-        this.theiaEnabled = false;
         if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
@@ -367,17 +366,11 @@ export class CodeButtonComponent implements OnInit, OnChanges {
                     // Set variables now, sanitize later on
                     this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
                     // Verify that all conditions are met
-                    if (
-                        this.theiaPortalURL !== '' &&
-                        this.exercise.allowOnlineIde &&
-                        this.exercise.buildConfig?.theiaImage
-                    ) {
+                    if (this.theiaPortalURL !== '' && this.exercise.allowOnlineIde && this.exercise.buildConfig?.theiaImage) {
                         this.theiaEnabled = true;
                     }
                 }
             });
-        }
-    }
         }
     }
 
