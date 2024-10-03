@@ -5,6 +5,8 @@ import { By } from '@angular/platform-browser';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
+import { MockDirective } from 'ng-mocks';
 
 describe('TitleChannelNameComponent', () => {
     let component: TitleChannelNameComponent;
@@ -13,7 +15,7 @@ describe('TitleChannelNameComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, ArtemisSharedComponentModule],
-            declarations: [TitleChannelNameComponent],
+            declarations: [TitleChannelNameComponent, MockDirective(CustomNotIncludedInValidatorDirective)],
             providers: [NgForm],
         }).compileComponents();
 
