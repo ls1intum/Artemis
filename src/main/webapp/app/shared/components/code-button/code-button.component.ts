@@ -358,35 +358,26 @@ export class CodeButtonComponent implements OnInit, OnChanges {
     }
 
     initTheia(profileInfo: ProfileInfo) {
-        // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
+        this.theiaEnabled = false;
         if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
             // Theia requires the Build Config of the programming exercise to be set
             this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
                 if (this.exercise) {
                     this.exercise.buildConfig = buildConfig;
-                    this.theiaEnabled = true;
-
                     // Set variables now, sanitize later on
                     this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
-
-                    // Verify that Theia's portal URL is set
-                    if (this.theiaPortalURL === '') {
-                        this.theiaEnabled = false;
+                    // Verify that all conditions are met
+                    if (
+                        this.theiaPortalURL !== '' &&
+                        this.exercise.allowOnlineIde &&
+                        this.exercise.buildConfig?.theiaImage
+                    ) {
+                        this.theiaEnabled = true;
                     }
-
-                    // Verify that the exercise allows the online IDE
-                    if (!this.exercise.allowOnlineIde) {
-                        this.theiaEnabled = false;
-                    }
-
-                    // Verify that the exercise has a theia blueprint configured
-                    if (!this.exercise.buildConfig?.theiaImage) {
-                        this.theiaEnabled = false;
-                    }
-                } else {
-                    this.theiaEnabled = false;
                 }
             });
+        }
+    }
         }
     }
 
