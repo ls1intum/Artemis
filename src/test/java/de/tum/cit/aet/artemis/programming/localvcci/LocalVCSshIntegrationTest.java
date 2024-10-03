@@ -155,8 +155,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     /**
      * Note: Don't count unattached sessions as a potential result from previous tests.
-     * See {@link org.apache.sshd.server.SshServer#getActiveSessions
-     * and {@link org.apache.sshd.common.session.helpers.AbstractSession#getSession(IoSession, boolean)}.
+     * See {@link org.apache.sshd.server.SshServer#getActiveSessions}
+     * and {@link org.apache.sshd.common.session.helpers.AbstractSession#getSession}.
      */
     private SshClient clientConnectToArtemisSshServer() throws GeneralSecurityException, IOException {
         var serverSessions = sshServer.getActiveSessions();
