@@ -11,6 +11,8 @@ import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/
 import { removeSpecialCharacters } from 'app/shared/util/utils';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
+const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
+
 @Component({
     selector: 'jhi-programming-exercise-info',
     templateUrl: './programming-exercise-information.component.html',
@@ -52,7 +54,6 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     alreadyUsedShortNames = signal<string[]>([]);
 
     exerciseTitle = signal<string | undefined>(undefined);
-    shortNameRandomPart = signal<string>(this.generateRandomShortNameLetters());
 
     constructor() {
         effect(
@@ -72,10 +73,10 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                     newShortName = this.programmingExercise().shortName;
                 }
                 if (newShortName && newShortName.length > 3) {
-                    const sanitizedShortName = removeSpecialCharacters(newShortName ?? '').substring(0, 6);
+                    const sanitizedShortName = removeSpecialCharacters(newShortName ?? '');
                     // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-                    const shortnameWithRandomness = sanitizedShortName + this.shortNameRandomPart();
-                    this.programmingExercise().shortName = shortnameWithRandomness;
+                    const uniqueShortName = this.ensureShortNameIsUnique(sanitizedShortName);
+                    this.programmingExercise().shortName = uniqueShortName;
                 }
 
                 this.updateIsShortNameValid();
@@ -203,11 +204,16 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         return this.shortNameField() === undefined || this.shortNameField()?.control?.status === 'VALID';
     }
 
-    private generateRandomShortNameLetters(): string {
-        const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-        const LENGTH_OF_RANDOM_STRING = 3;
-        // noinspection UnnecessaryLocalVariableJS: not inlined because the variable name improves readability
-        const randomLetters = Array.from({ length: LENGTH_OF_RANDOM_STRING }, () => alphabet.charAt(Math.floor(Math.random() * alphabet.length))).join('');
-        return randomLetters;
+    private ensureShortNameIsUnique(shortName: string): string {
+        let newShortName = shortName;
+        let counter = 1;
+        while (this.alreadyUsedShortNames().includes(newShortName)) {
+            if (counter > MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME) {
+                break;
+            }
+            newShortName = `${shortName}${counter}`;
+            counter++;
+        }
+        return newShortName;
     }
 }
