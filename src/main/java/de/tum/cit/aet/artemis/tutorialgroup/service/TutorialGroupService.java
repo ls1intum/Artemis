@@ -114,10 +114,14 @@ public class TutorialGroupService {
 
         if (getPersistenceUtil().isLoaded(tutorialGroup, "teachingAssistant") && tutorialGroup.getTeachingAssistant() != null) {
             tutorialGroup.setTeachingAssistantName(tutorialGroup.getTeachingAssistant().getName());
+            tutorialGroup.setTeachingAssistantId(tutorialGroup.getTeachingAssistant().getId());
+            tutorialGroup.setTeachingAssistantImageUrl(tutorialGroup.getTeachingAssistant().getImageUrl());
             tutorialGroup.setIsUserTutor(tutorialGroup.getTeachingAssistant().equals(user));
         }
         else {
             tutorialGroup.setTeachingAssistantName(null);
+            tutorialGroup.setTeachingAssistantId(null);
+            tutorialGroup.setTeachingAssistantImageUrl(null);
         }
 
         if (tutorialGroup.getTutorialGroupChannel() != null) {

@@ -48,6 +48,10 @@ export class ExamStartEndPage {
         }
     }
 
+    async onlyClickConfirmationCheckmark() {
+        await this.setConfirmCheckmark();
+    }
+
     async finishExam(timeout?: number) {
         await this.setConfirmCheckmark(timeout);
         await this.enterFirstnameLastname();
