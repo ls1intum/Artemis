@@ -168,12 +168,11 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         client.start();
 
         ClientSession clientSession;
-        int numberOfSessions;
+        int numberOfSessions = serverSessions.size();
         try {
             ConnectFuture connectFuture = client.connect(user.getName(), hostname, port);
             connectFuture.await(10, TimeUnit.SECONDS);
 
-            numberOfSessions = serverSessions.size();
             clientSession = connectFuture.getSession();
             clientSession.addPublicKeyIdentity(keyPair);
 
