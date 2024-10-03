@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -32,6 +33,12 @@ public class ZipFileService {
     private static final Logger log = LoggerFactory.getLogger(ZipFileService.class);
 
     private final FileService fileService;
+
+    /**
+     * Set of file names that should be ignored when zipping.
+     * This currently only includes the gc.log.lock (garbage collector) file created by JGit in programming repositories.
+     */
+    private static final Set<Path> IGNORED_ZIP_FILE_NAMES = Set.of(Path.of("gc.log.lock"));
 
     public ZipFileService(FileService fileService) {
         this.fileService = fileService;
@@ -113,7 +120,7 @@ public class ZipFileService {
             if (extraFilter != null) {
                 filteredPaths = filteredPaths.filter(extraFilter);
             }
-            filteredPaths.forEach(path -> {
+            filteredPaths.filter(path -> !IGNORED_ZIP_FILE_NAMES.contains(path)).forEach(path -> {
                 ZipEntry zipEntry = new ZipEntry(pathsRoot.relativize(path).toString());
                 copyToZipFile(zipOutputStream, path, zipEntry);
             });

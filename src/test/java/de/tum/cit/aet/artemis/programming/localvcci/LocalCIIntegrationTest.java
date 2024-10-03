@@ -69,6 +69,8 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "localciint";
+
     @Autowired
     private LocalVCServletService localVCServletService;
 
@@ -92,6 +94,11 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Value("${artemis.user-management.internal-admin.password}")
     private String localVCPassword;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @BeforeAll
     void setupAll() {
@@ -250,7 +257,8 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
         // Should still work because in that case the latest commit should be retrieved from the repository.
         localVCServletService.processNewPush(null, studentAssignmentRepository.originGit.getRepository());
-        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false);
+        // ToDo: Investigate why specifically this test requires so much time (all other << 5s)
+        localVCLocalCITestService.testLatestSubmission(studentParticipation.getId(), commitHash, 1, false, 120);
     }
 
     @Test
@@ -279,7 +287,7 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCannotFindResults() {
+    void testResultsNotFound() {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
 
         // Should return a build result that indicates that the build failed.

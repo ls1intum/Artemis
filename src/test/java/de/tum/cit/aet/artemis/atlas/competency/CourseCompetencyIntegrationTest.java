@@ -75,8 +75,6 @@ class CourseCompetencyIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @BeforeEach
     void setupTestScenario() {
-        participantScoreScheduleService.activate();
-
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
 

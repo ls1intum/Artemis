@@ -53,6 +53,11 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractLocalCILoc
         exercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
     }
 
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @AfterEach
     void cleanup() throws Exception {
         solutionRepo.resetLocalRepo();

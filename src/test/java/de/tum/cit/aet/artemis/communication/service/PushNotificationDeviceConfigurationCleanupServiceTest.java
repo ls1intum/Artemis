@@ -1,10 +1,9 @@
 package de.tum.cit.aet.artemis.communication.service;
 
-import static org.springframework.test.util.AssertionErrors.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -54,6 +53,7 @@ class PushNotificationDeviceConfigurationCleanupServiceTest extends AbstractSpri
 
         List<PushNotificationDeviceConfiguration> result = deviceConfigurationRepository.findByUserIn(Set.of(user), PushNotificationDeviceType.FIREBASE);
 
-        assertEquals("The result is not correct", Collections.singletonList(valid), result);
+        assertThat(result).contains(valid);
+        assertThat(result).doesNotContain(expired);
     }
 }

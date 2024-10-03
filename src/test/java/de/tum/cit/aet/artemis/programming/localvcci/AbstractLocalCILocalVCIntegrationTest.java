@@ -30,9 +30,7 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
-public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
-
-    protected static final String TEST_PREFIX = "localvclocalciintegration";
+public abstract class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     protected TeamRepository teamRepository;
@@ -112,20 +110,23 @@ public class AbstractLocalCILocalVCIntegrationTest extends AbstractSpringIntegra
 
     protected String auxiliaryRepositorySlug;
 
+    protected abstract String getTestPrefix();
+
     @BeforeEach
     void initUsersAndExercise() throws JsonProcessingException {
         // The port cannot be injected into the LocalVCLocalCITestService because {local.server.port} is not available when the class is instantiated.
         // Thus, "inject" the port from here.
         localVCLocalCITestService.setPort(port);
 
-        List<User> users = userUtilService.addUsers(TEST_PREFIX, 2, 1, 0, 2);
-        student1Login = TEST_PREFIX + "student1";
+        String testPrefix = getTestPrefix();
+        List<User> users = userUtilService.addUsers(testPrefix, 2, 1, 0, 2);
+        student1Login = testPrefix + "student1";
         student1 = users.stream().filter(user -> student1Login.equals(user.getLogin())).findFirst().orElseThrow();
-        student2Login = TEST_PREFIX + "student2";
-        tutor1Login = TEST_PREFIX + "tutor1";
-        instructor1Login = TEST_PREFIX + "instructor1";
+        student2Login = testPrefix + "student2";
+        tutor1Login = testPrefix + "tutor1";
+        instructor1Login = testPrefix + "instructor1";
         instructor1 = users.stream().filter(user -> instructor1Login.equals(user.getLogin())).findFirst().orElseThrow();
-        instructor2Login = TEST_PREFIX + "instructor2";
+        instructor2Login = testPrefix + "instructor2";
         instructor2 = users.stream().filter(user -> instructor2Login.equals(user.getLogin())).findFirst().orElseThrow();
         // Remove instructor2 from the instructor group of the course.
         instructor2.setGroups(Set.of());

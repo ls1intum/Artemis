@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -95,7 +94,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
 
     private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
-        when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
+        doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
         new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId())).getFirst().weight(50.0);
 

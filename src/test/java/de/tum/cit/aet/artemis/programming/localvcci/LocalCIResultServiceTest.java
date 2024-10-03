@@ -14,8 +14,15 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
 class LocalCIResultServiceTest extends AbstractLocalCILocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "localciresultservice";
+
     @Autowired
     private LocalCIResultService localCIResultService;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @Test
     void testThrowsExceptionWhenResultIsNotLocalCIBuildResult() {

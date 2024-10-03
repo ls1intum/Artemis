@@ -236,4 +236,6 @@ public abstract class CourseCompetency extends BaseCompetency {
     public void prePersistOrUpdate() {
         this.lectureUnits.removeIf(lectureUnit -> lectureUnit instanceof ExerciseUnit);
     }
+
+    // ToDo: Implement equals to ensure that mockito verify works correctly
 }

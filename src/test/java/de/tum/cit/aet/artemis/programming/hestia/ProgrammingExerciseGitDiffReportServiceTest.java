@@ -58,6 +58,11 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractLocalCILocalVC
     @Autowired
     private ProgrammingExerciseGitDiffReportRepository reportRepository;
 
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 1, 1, 1, 1);

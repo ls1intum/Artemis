@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -122,8 +121,6 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         exerciseRepository.saveAll(allTestExercises);
         weeklyEmailSummaryService.setScheduleInterval(Duration.ofDays(7));
-
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     /**

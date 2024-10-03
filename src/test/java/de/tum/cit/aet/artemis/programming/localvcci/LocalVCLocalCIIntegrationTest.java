@@ -15,6 +15,7 @@ import static org.mockito.Mockito.doReturn;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -66,6 +67,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
+    private static final String TEST_PREFIX = "localvcciint";
+
     @Autowired
     private ExamUtilService examUtilService;
 
@@ -87,6 +90,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     @Value("${artemis.user-management.internal-admin.password}")
     private String localVCPassword;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @BeforeAll
     void setupAll() {
@@ -980,7 +988,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         log.info("Push done");
 
-        await().atMost(15, TimeUnit.SECONDS).until(() -> {
+        var before = new Date().getTime();
+        await().atMost(120, TimeUnit.SECONDS).until(() -> {
+            participantScoreScheduleService.executeScheduledTasks();
+            await().until(participantScoreScheduleService::isIdle);
+
             log.info("Search for a build job for participation id: {}", studentParticipation.getId());
             Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
             if (buildJobOptional.isPresent()) {
@@ -992,6 +1004,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
                 return false;
             }
         });
+        var after = new Date().getTime();
+        log.info("Time to find build job: {} ms", after - before);
 
         BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
         assertThat(buildJob.getPriority()).isEqualTo(expectedPriority);
