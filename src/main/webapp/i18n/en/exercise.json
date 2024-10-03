@@ -220,7 +220,7 @@
                 "title": {
                     "undefined": "There has to be a title set!",
                     "pattern": "The title must only consist of alphanumeric characters and '_', '-' or whitespaces!",
-                    "disallowedValue": "The title is already used for another exercise"
+                    "disallowedValue": "The title is already used for another exercise!"
                 },
                 "channelName": {
                     "empty": "There has to be a channel name set!"
@@ -229,7 +229,7 @@
                     "undefined": "There has to be a short name set!",
                     "pattern": "The short name must begin with a letter and must not contain any special characters!",
                     "minlength": "The short name must be at least 3 characters long!",
-                    "disallowedValue": "The short name is already used for another exercise"
+                    "disallowedValue": "The short name is already used for another exercise!"
                 },
                 "packageName": {
                     "undefined": "There has to be a package name set!",
