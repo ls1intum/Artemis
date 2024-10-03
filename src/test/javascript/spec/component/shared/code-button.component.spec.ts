@@ -50,6 +50,7 @@ describe('CodeButtonComponent', () => {
     let createVcsAccessTokenSpy: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
     let getBuildConfigSub: jest.SpyInstance;
+    let getTheiaTokenSpy: jest.SpyInstance;
 
     const vcsToken: string = 'vcpat-xlhBs26D4F2CGlkCM59KVU8aaV9bYdX5Mg4IK6T8W3aT';
 
@@ -145,6 +146,7 @@ describe('CodeButtonComponent', () => {
         localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
         getVcsAccessTokenSpy = jest.spyOn(accountService, 'getVcsAccessToken');
         createVcsAccessTokenSpy = jest.spyOn(accountService, 'createVcsAccessToken');
+        getTheiaTokenSpy = jest.spyOn(accountService, 'rekeyCookieToBearerToken');
 
         localStorageUseSshObserveStubSubject = new Subject();
         localStorageUseSshObserveStub.mockReturnValue(localStorageUseSshObserveStubSubject);
@@ -556,5 +558,52 @@ describe('CodeButtonComponent', () => {
         fixture.detectChanges();
 
         expect(component.theiaEnabled).toBe(expectedVisibility);
+    });
+
+    it('should include the correct data in the form submission when startOnlineIDE is called', async () => {
+        const windowOpenSpy = jest.spyOn(window, 'open').mockReturnValue({ name: '' } as any);
+        const documentAppendChildSpy = jest.spyOn(document.body, 'appendChild');
+        const documentRemoveChildSpy = jest.spyOn(document.body, 'removeChild');
+        const formSubmitSpy = jest.spyOn(HTMLFormElement.prototype, 'submit').mockImplementation(() => {});
+
+        component.exercise = { buildConfig: { theiaImage: 'theia-image' } } as any;
+        component.activeParticipation = { repositoryUri: 'https://repo.uri', vcsAccessToken: 'token' } as any;
+        component.theiaPortalURL = 'https://theia.portal.url';
+
+        fixture.detectChanges();
+
+        await component.startOnlineIDE();
+        expect(getTheiaTokenSpy).toHaveBeenCalled();
+        expect(windowOpenSpy).toHaveBeenCalledWith('', '_blank');
+        expect(documentAppendChildSpy).toHaveBeenCalled();
+        expect(formSubmitSpy).toHaveBeenCalled();
+
+        const form = documentAppendChildSpy.mock.calls[0]?.[0] as HTMLFormElement;
+        if (!form) {
+            throw new Error('Form element is undefined');
+        }
+        expect(form.method.toUpperCase()).toBe('GET');
+        expect(form.action).toBe('https://theia.portal.url/');
+        expect(form.target).toBe('Theia-IDE');
+
+        const inputs = form.getElementsByTagName('input');
+        const data = {
+            appDef: 'theia-image',
+            gitUri: 'https://admin@repo.uri',
+            gitToken: 'token',
+        };
+
+        for (const key in data) {
+            if (Object.hasOwn(data, key)) {
+                const input = Array.from(inputs).find((input) => input.name === key);
+                expect(input).toBeDefined();
+                expect(input!.value).toBe(data[key]);
+            }
+        }
+
+        windowOpenSpy.mockRestore();
+        documentAppendChildSpy.mockRestore();
+        documentRemoveChildSpy.mockRestore();
+        formSubmitSpy.mockRestore();
     });
 });

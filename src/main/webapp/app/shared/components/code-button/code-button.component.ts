@@ -17,6 +17,7 @@ import { faCode, faDesktop, faExternalLink } from '@fortawesome/free-solid-svg-i
 import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide-settings.service';
 import { Ide } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 @Component({
     selector: 'jhi-code-button',
@@ -138,36 +139,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
             }
             this.sshKeyMissingTip = this.formatTip('artemisApp.exerciseActions.sshKeyTip', this.sshSettingsUrl);
 
-            // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
-            if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
-                // Theia requires the Build Config of the programming exercise to be set
-                this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
-                    if (this.exercise) {
-                        this.exercise.buildConfig = buildConfig;
-                        this.theiaEnabled = true;
-
-                        // Set variables now, sanitize later on
-                        this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
-
-                        // Verify that Theia's portal URL is set
-                        if (this.theiaPortalURL === '') {
-                            this.theiaEnabled = false;
-                        }
-
-                        // Verify that the exercise allows the online IDE
-                        if (!this.exercise.allowOnlineIde) {
-                            this.theiaEnabled = false;
-                        }
-
-                        // Verify that the exercise has a theia blueprint configured
-                        if (!this.exercise.buildConfig?.theiaImage) {
-                            this.theiaEnabled = false;
-                        }
-                    } else {
-                        this.theiaEnabled = false;
-                    }
-                });
-            }
+            this.initTheia(profileInfo);
         });
 
         this.ideSettingsService.loadIdePreferences().subscribe((programmingLanguageToIde) => {
@@ -385,11 +357,47 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         }
     }
 
-    startOnlineIDE() {
+    initTheia(profileInfo: ProfileInfo) {
+        // The online IDE is only available with correct SpringProfile and if it's enabled for this exercise
+        if (profileInfo.activeProfiles?.includes(PROFILE_THEIA) && this.exercise) {
+            // Theia requires the Build Config of the programming exercise to be set
+            this.programmingExerciseService.getBuildConfig(this.exercise.id!).subscribe((buildConfig) => {
+                if (this.exercise) {
+                    this.exercise.buildConfig = buildConfig;
+                    this.theiaEnabled = true;
+
+                    // Set variables now, sanitize later on
+                    this.theiaPortalURL = profileInfo.theiaPortalURL ?? '';
+
+                    // Verify that Theia's portal URL is set
+                    if (this.theiaPortalURL === '') {
+                        this.theiaEnabled = false;
+                    }
+
+                    // Verify that the exercise allows the online IDE
+                    if (!this.exercise.allowOnlineIde) {
+                        this.theiaEnabled = false;
+                    }
+
+                    // Verify that the exercise has a theia blueprint configured
+                    if (!this.exercise.buildConfig?.theiaImage) {
+                        this.theiaEnabled = false;
+                    }
+                } else {
+                    this.theiaEnabled = false;
+                }
+            });
+        }
+    }
+
+    async startOnlineIDE() {
+        const artemisToken: string = (await this.accountService.rekeyCookieToBearerToken().toPromise()) ?? '';
+
         const data = {
             appDef: this.exercise?.buildConfig?.theiaImage ?? '',
-            gitUri: this.activeParticipation?.repositoryUri ?? '',
+            gitUri: this.addCredentialsToHttpUrl(this.activeParticipation?.repositoryUri ?? '', false),
             gitToken: this.activeParticipation?.vcsAccessToken ?? '',
+            artemisToken: artemisToken,
         };
 
         const newWindow = window.open('', '_blank');
@@ -416,11 +424,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
         }
 
         document.body.appendChild(form);
-
-        // Submit the form
         form.submit();
-
-        // Remove the form
         document.body.removeChild(form);
     }
 }
