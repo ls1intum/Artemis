@@ -18,8 +18,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.assessment.util.StudentScoreUtilService;
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -32,7 +30,6 @@ import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
-import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -40,11 +37,6 @@ import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
-import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
-import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
-import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
-import de.tum.cit.aet.artemis.lecture.service.LectureUnitService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
@@ -54,30 +46,6 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
 
     private static final String TEST_PREFIX = "coursecompetencyintegrationtest";
-
-    @Autowired
-    private CompetencyUtilService competencyUtilService;
-
-    @Autowired
-    private PageableSearchUtilService pageableSearchUtilService;
-
-    @Autowired
-    private SubmissionTestRepository submissionRepository;
-
-    @Autowired
-    private ParticipationService participationService;
-
-    @Autowired
-    private TeamUtilService teamUtilService;
-
-    @Autowired
-    private ParticipationUtilService participationUtilService;
-
-    @Autowired
-    private LectureUnitService lectureUnitService;
-
-    @Autowired
-    private StudentScoreUtilService studentScoreUtilService;
 
     @BeforeEach
     void setupTestScenario() {

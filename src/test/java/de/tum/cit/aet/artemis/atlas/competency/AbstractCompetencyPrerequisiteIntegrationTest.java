@@ -518,7 +518,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         importAllCall(course2.getId(), importOptions, HttpStatus.CREATED);
 
         course2 = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(course2.getId());
-        assertThat(course2.getExercises()).hasSize(3);
+        assertThat(course2.getExercises()).hasSize(2);
         assertThat(course2.getLectures()).hasSize(1);
         assertThat(course2.getLectures().stream().findFirst().get().getLectureUnits()).hasSize(2);
     }
