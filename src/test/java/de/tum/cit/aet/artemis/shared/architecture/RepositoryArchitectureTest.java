@@ -138,12 +138,10 @@ class RepositoryArchitectureTest extends AbstractArchitectureTest {
         // TODO: In the future we should reduce this number and eventually replace it by transactionalRule.check(allClasses)
         // The following methods currently violate this rule:
         // Method <de.tum.cit.aet.artemis.service.LectureImportService.importLecture(Lecture, Course)>
-        // Method <de.tum.cit.aet.artemis.service.exam.StudentExamService.generateMissingStudentExams(Exam)>
-        // Method <de.tum.cit.aet.artemis.service.exam.StudentExamService.generateStudentExams(Exam)>
         // Method <de.tum.cit.aet.artemis.service.programming.ProgrammingExerciseImportBasicService.importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)>
         // Method <de.tum.cit.aet.artemis.service.tutorialgroups.TutorialGroupsConfigurationService.onTimeZoneUpdate(Course)>
         var result = transactionalRule.evaluate(allClasses);
-        assertThat(result.getFailureReport().getDetails()).hasSize(5);
+        assertThat(result.getFailureReport().getDetails()).hasSize(3);
     }
 
     @Test

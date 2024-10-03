@@ -118,6 +118,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     Optional<StudentParticipation> findByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
+    Optional<StudentParticipation> findFirstByExerciseIdAndStudentLoginOrderByIdDesc(long exerciseId, String username);
+
     @Query("""
             SELECT DISTINCT p
             FROM StudentParticipation p
@@ -127,6 +129,21 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
+
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.id = (
+                SELECT MAX(p2.id)
+                FROM StudentParticipation p2
+                    LEFT JOIN p2.submissions s2
+                WHERE p2.exercise.id = :exerciseId
+                    AND p2.student.login = :username
+                    AND (s2.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s2.type IS NULL)
+            )
+            """)
+    Optional<StudentParticipation> findLatestWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") long exerciseId, @Param("username") String username);
 
     @Query("""
             SELECT DISTINCT p
@@ -417,7 +434,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.submissions
             WHERE p.exercise.id = :exerciseId
                 AND p.student.id = :studentId
-             """)
+            """)
     List<StudentParticipation> findByExerciseIdAndStudentIdWithEagerResultsAndSubmissions(@Param("exerciseId") long exerciseId, @Param("studentId") long studentId);
 
     @Query("""
@@ -755,6 +772,34 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     @Query("""
             SELECT DISTINCT p
+            FROM StudentExam se
+                JOIN se.exam e
+                JOIN se.studentParticipations p
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.assessor
+            WHERE p.testRun = FALSE
+                AND se.id IN :studentExamId
+                AND e.testExam = TRUE
+            """)
+    List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(
+            @Param("studentExamId") long studentExamId);
+
+    @Query("""
+            SELECT DISTINCT p
+                FROM StudentExam se
+                    JOIN se.exam e
+                    JOIN se.studentParticipations p
+                    LEFT JOIN FETCH p.submissions s
+                    LEFT JOIN FETCH s.results r
+                WHERE p.testRun = FALSE
+                    AND se.id IN :studentExamId
+                    AND e.testExam = TRUE
+            """)
+    List<StudentParticipation> findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentExamId") long studentExamId);
+
+    @Query("""
+            SELECT DISTINCT p
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
@@ -963,7 +1008,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     /**
      * Get all participations for the given studentExam and exercises combined with their submissions with a result.
-     * Distinguishes between student exams and test runs and only loads the respective participations
+     * Distinguishes between real exams, test exams and test runs and only loads the respective participations
      *
      * @param studentExam  studentExam with exercises loaded
      * @param withAssessor (only for non-test runs) if assessor should be loaded with the result
@@ -972,6 +1017,15 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     default List<StudentParticipation> findByStudentExamWithEagerSubmissionsResult(StudentExam studentExam, boolean withAssessor) {
         if (studentExam.isTestRun()) {
             return findTestRunParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResult(studentExam.getUser().getId(), studentExam.getExercises());
+        }
+
+        if (studentExam.isTestExam()) {
+            if (withAssessor) {
+                return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultAndAssessorIgnoreTestRuns(studentExam.getId());
+            }
+            else {
+                return findTestExamParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getId());
+            }
         }
         else {
             if (withAssessor) {
