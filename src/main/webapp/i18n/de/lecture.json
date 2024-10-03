@@ -102,12 +102,13 @@
                 "attachmentIDError": "Ungültiger Anhang oder ungültige Anhangs-ID.",
                 "attachmentUnitIDError": "Ungültige Dateieinheit oder ungültige Dateieinheits-ID.",
                 "removePageButton": "Entferne Seiten",
-                "appendFileButton": "Anhänge Datei",
+                "appendFileButton": "Datei anhängen",
                 "attachmentUpdateSuccess": "Anhang erfolgreich aktualisiert.",
                 "attachmentUpdateError": "Fehler beim Aktualisieren des Anhangs: {{error}}",
                 "mergeFailedError": "Fehler beim Zusammenführen der Dateien: {{error}}",
                 "pageDeleteError": "Fehler beim Löschen der Seiten: {{error}}",
-                "fileSizeError": "Die Datei ist zu groß. Die maximale Dateigröße beträgt 20MB."
+                "fileSizeError": "Die Datei ist zu groß. Die maximale Dateigröße beträgt 20MB.",
+                "deletePagesQuestion": "Möchten Sie die ausgewählten Seiten wirklich löschen?"
             }
         }
     }

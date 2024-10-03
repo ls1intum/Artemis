@@ -107,7 +107,8 @@
                 "attachmentUpdateError": "Failed to update attachment: {{error}}",
                 "mergeFailedError": "Failed to merge files: {{error}}",
                 "pageDeleteError": "Failed to delete pages: {{error}}",
-                "fileSizeError": "The file size exceeds the limit of 20MB."
+                "fileSizeError": "The file size exceeds the limit of 20MB.",
+                "deletePagesQuestion": "Are you sure you want to delete the selected pages?"
             }
         }
     }
