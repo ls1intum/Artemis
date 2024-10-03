@@ -240,19 +240,35 @@ describe('ProgrammingExerciseGradingComponent', () => {
             {
                 name: 'jhi-included-in-overall-score-picker',
                 selector: 'jhi-included-in-overall-score-picker',
-                field: 'includeExerciseInCourseScoreCalculation',
+                field: ProgrammingExerciseInputField.INCLUDE_EXERCISE_IN_COURSE_SCORE_CALCULATION,
             },
-            { name: 'points field', selector: '#field_points', field: 'points' },
-            { name: 'bonusPoints field', selector: '#field_bonusPoints', field: 'bonusPoints' },
-            { name: 'submission policy field', selector: 'jhi-submission-policy-update', field: 'submissionPolicy' },
-            { name: 'timeline', selector: 'jhi-programming-exercise-lifecycle', field: 'timeline' },
+            { name: 'points field', selector: '#field_points', field: ProgrammingExerciseInputField.POINTS },
+            {
+                name: 'bonusPoints field',
+                selector: '#field_bonusPoints',
+                field: ProgrammingExerciseInputField.BONUS_POINTS,
+            },
+            {
+                name: 'submission policy field',
+                selector: 'jhi-submission-policy-update',
+                field: ProgrammingExerciseInputField.SUBMISSION_POLICY,
+            },
+            {
+                name: 'timeline',
+                selector: 'jhi-programming-exercise-lifecycle',
+                field: ProgrammingExerciseInputField.TIMELINE,
+            },
             {
                 name: 'assessment instructions',
                 selector: 'jhi-grading-instructions-details',
-                field: 'assessmentInstructions',
+                field: ProgrammingExerciseInputField.ASSESSMENT_INSTRUCTIONS,
                 extraCondition: () => (comp.programmingExercise.assessmentType = AssessmentType.SEMI_AUTOMATIC),
             },
-            { name: 'presentation score', selector: 'jhi-presentation-score-checkbox', field: 'presentationScore' },
+            {
+                name: 'presentation score',
+                selector: 'jhi-presentation-score-checkbox',
+                field: ProgrammingExerciseInputField.PRESENTATION_SCORE,
+            },
         ];
 
         generateFieldVisibilityTests(testCases);
