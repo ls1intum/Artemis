@@ -22,6 +22,8 @@ export type ShownDetail =
     | TextDetail
     | DateDetail
     | LinkDetail
+    | ImageDetail
+    | DefaultProfilePicture
     | BooleanDetail
     | MarkdownDetail
     | GradingCriteriaDetail
@@ -56,6 +58,16 @@ export interface DateDetail extends DetailBase {
 export interface LinkDetail extends DetailBase {
     type: DetailType.Link;
     data: { text?: string | number; href?: string | false; routerLink?: (string | number | undefined)[]; queryParams?: Record<string, string | number | undefined> };
+}
+
+export interface ImageDetail extends DetailBase {
+    type: DetailType.Image;
+    data: { altText?: string; imageUrl?: string };
+}
+
+export interface DefaultProfilePicture extends DetailBase {
+    type: DetailType.DefaultProfilePicture;
+    data: { color: string; initials: string };
 }
 
 export interface BooleanDetail extends DetailBase {

@@ -9,11 +9,9 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
@@ -23,9 +21,6 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
 
     private static final String TEST_PREFIX = "competencyintegrationtest";
-
-    @Autowired
-    private CompetencyUtilService competencyUtilService;
 
     @BeforeEach
     void setupTestScenario() {
@@ -108,7 +103,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnCompetenciesForStudentOfCourse() throws Exception {
-        super.shouldReturnCompetenciesForStudentOfCourse(new Competency());
+        super.shouldReturnCompetenciesForCourse(new Competency());
     }
 
     @Test
