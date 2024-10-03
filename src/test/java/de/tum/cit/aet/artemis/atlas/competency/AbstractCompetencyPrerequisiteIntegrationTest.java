@@ -181,7 +181,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
     abstract List<? extends CourseCompetency> getAllCall(long courseId, HttpStatus expectedStatus) throws Exception;
 
     // Test
-    void shouldReturnCompetenciesForStudentOfCourse(CourseCompetency newCompetency) throws Exception {
+    void shouldReturnCompetenciesForCourse(CourseCompetency newCompetency) throws Exception {
         TextUnit unreleasedLectureUnit = new TextUnit();
         unreleasedLectureUnit.setName("TextUnitOfLectureOne");
         unreleasedLectureUnit.setReleaseDate(ZonedDateTime.now().plusDays(5));
