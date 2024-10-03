@@ -58,8 +58,11 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
+import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
 import de.tum.cit.aet.artemis.communication.repository.GroupNotificationRepository;
+import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
 import de.tum.cit.aet.artemis.core.config.Constants;
@@ -67,6 +70,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
@@ -103,6 +107,7 @@ import de.tum.cit.aet.artemis.lecture.service.LectureService;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
 import de.tum.cit.aet.artemis.plagiarism.repository.PlagiarismCaseRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
@@ -198,6 +203,12 @@ public class CourseService {
 
     private final TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
 
+    private final PostRepository postRepository;
+
+    private final AnswerPostRepository answerPostRepository;
+
+    private final BuildJobRepository buildJobRepository;
+
     public CourseService(CourseRepository courseRepository, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService, GroupNotificationRepository groupNotificationRepository,
             ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository, UserService userService, ExamDeletionService examDeletionService,
@@ -210,7 +221,8 @@ public class CourseService {
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
             LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            PrerequisiteRepository prerequisiteRepository, CompetencyRelationRepository competencyRelationRepository) {
+            PrerequisiteRepository prerequisiteRepository, CompetencyRelationRepository competencyRelationRepository, PostRepository postRepository,
+            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -250,6 +262,9 @@ public class CourseService {
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.prerequisiteRepository = prerequisiteRepository;
         this.competencyRelationRepository = competencyRelationRepository;
+        this.buildJobRepository = buildJobRepository;
+        this.postRepository = postRepository;
+        this.answerPostRepository = answerPostRepository;
     }
 
     /**
@@ -438,6 +453,22 @@ public class CourseService {
     public Set<Course> findAllOnlineCoursesForPlatformForUser(String registrationId, User user) {
         return courseRepository.findOnlineCoursesWithRegistrationIdEager(registrationId).stream().filter(course -> authCheckService.isInstructorInCourse(course, user))
                 .collect(Collectors.toSet());
+    }
+
+    /**
+     * Get the course deletion summary for the given course.
+     *
+     * @param course the course for which to get the deletion summary
+     * @return the course deletion summary
+     */
+    public CourseDeletionSummaryDTO getDeletionSummary(Course course) {
+        List<Long> programmingExerciseIds = course.getExercises().stream().map(Exercise::getId).toList();
+        long numberOfBuilds = buildJobRepository.countBuildJobsByExerciseIds(programmingExerciseIds);
+
+        List<Post> posts = postRepository.findAllByCourseId(course.getId());
+        long numberOfCommunicationPosts = posts.size();
+        long numberOfAnswerPosts = answerPostRepository.countAnswerPostsByPostIdIn(posts.stream().map(Post::getId).toList());
+        return new CourseDeletionSummaryDTO(numberOfBuilds, numberOfCommunicationPosts, numberOfAnswerPosts);
     }
 
     /**

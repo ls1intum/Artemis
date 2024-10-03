@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
@@ -29,11 +30,19 @@ import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.CourseService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.course.CourseUtilService;
+import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.programming.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
+import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
+import de.tum.cit.aet.artemis.post.ConversationUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.user.UserUtilService;
 
@@ -54,6 +63,9 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private StudentParticipationRepository studentParticipationRepo;
 
     @Autowired
+    private BuildJobRepository buildJobRepo;
+
+    @Autowired
     private ExerciseRepository exerciseRepo;
 
     @Autowired
@@ -61,6 +73,12 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private CourseUtilService courseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
 
     @BeforeEach
     void initTestCase() {
@@ -310,9 +328,43 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         assertThat(registrationFailures).containsExactly(dto2);
     }
 
+    @Test
+    void testDeletionSummary() {
+        SecurityUtils.setAuthorizationObject();
+        Course course = courseUtilService.addEmptyCourse();
+
+        var programmingExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(7), course);
+        programmingExercise.setBuildConfig(programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig()));
+        programmingExerciseRepository.save(programmingExercise);
+
+        var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+
+        conversationUtilService.addMessageInChannelOfCourseForUser(student1.getLogin(), course, TEST_PREFIX + "message");
+
+        ProgrammingExerciseStudentParticipation participation = participationUtilService.addStudentParticipationForProgrammingExercise(programmingExercise, student1.getLogin());
+        Result result = participationUtilService.createSubmissionAndResult(participation, 1L, true);
+        createBuildJob(programmingExercise, course, participation, result);
+
+        course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
+        var summary = courseService.getDeletionSummary(course);
+        assertThat(summary.numberOfCommunicationPosts()).isEqualTo(1L);
+        assertThat(summary.numberOfAnswerPosts()).isEqualTo(1L);
+        assertThat(summary.numberOfBuilds()).isEqualTo(1L);
+    }
+
     private void setEnrollmentConfiguration(Course course, ZonedDateTime start, ZonedDateTime end) {
         course.setEnrollmentEnabled(true);
         course.setEnrollmentStartDate(start);
         course.setEnrollmentEndDate(end);
+    }
+
+    private void createBuildJob(ProgrammingExercise programmingExercise, Course course, Participation participation, Result result) {
+        var buildJob = new BuildJob();
+        buildJob.setExerciseId(programmingExercise.getId());
+        buildJob.setCourseId(course.getId());
+        buildJob.setParticipationId(participation.getId());
+        buildJob.setResult(result);
+
+        buildJobRepo.save(buildJob);
     }
 }
