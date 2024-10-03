@@ -20,7 +20,6 @@ import javax.crypto.SecretKey;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -31,16 +30,11 @@ import com.nimbusds.jose.jwk.RSAKey;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.lti.config.CustomLti13Configurer;
 import de.tum.cit.aet.artemis.lti.dto.Claims;
-import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import io.jsonwebtoken.Jwts;
 
-class LtiDeepLinkingIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class LtiDeepLinkingIntegrationTest extends AbstractLtiIntegrationTest {
 
     private static final String TEST_PREFIX = "ltideeplinkingintegrationtest";
-
-    @Autowired
-    private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
     private Course course;
 

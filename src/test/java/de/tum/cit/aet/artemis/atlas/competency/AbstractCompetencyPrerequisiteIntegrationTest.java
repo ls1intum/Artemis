@@ -15,12 +15,9 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
-import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
-import de.tum.cit.aet.artemis.atlas.competency.util.StandardizedCompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
@@ -29,9 +26,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -43,56 +37,13 @@ import de.tum.cit.aet.artemis.lecture.domain.ExerciseUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.domain.TextUnit;
-import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.ExerciseUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
-import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.TextUnitRepository;
-import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
-abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
-
-    @Autowired
-    protected LectureRepository lectureRepository;
-
-    @Autowired
-    protected TextUnitRepository textUnitRepository;
-
-    @Autowired
-    protected AttachmentUnitRepository attachmentUnitRepository;
-
-    @Autowired
-    protected ExerciseUnitRepository exerciseUnitRepository;
-
-    @Autowired
-    protected CompetencyRelationRepository competencyRelationRepository;
-
-    @Autowired
-    protected PrerequisiteRepository prerequisiteRepository;
-
-    @Autowired
-    protected LectureUnitRepository lectureUnitRepository;
-
-    @Autowired
-    protected PrerequisiteUtilService prerequisiteUtilService;
-
-    @Autowired
-    protected CompetencyProgressUtilService competencyProgressUtilService;
-
-    @Autowired
-    protected LectureUtilService lectureUtilService;
-
-    @Autowired
-    protected StandardizedCompetencyUtilService standardizedCompetencyUtilService;
-
-    @Autowired
-    protected CourseCompetencyRepository courseCompetencyRepository;
+abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtlasIntegrationTest {
 
     protected Course course;
 

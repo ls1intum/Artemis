@@ -13,6 +13,7 @@ import { LearningPathApiService } from 'app/course/learning-paths/services/learn
 import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { EntityNotFoundError } from 'app/course/learning-paths/exceptions/entity-not-found.error';
+import { LearningPathDTO } from 'app/entities/competency/learning-path.model';
 
 describe('LearningPathStudentPageComponent', () => {
     let component: LearningPathStudentPageComponent;
@@ -20,7 +21,11 @@ describe('LearningPathStudentPageComponent', () => {
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;
 
-    const learningPathId = 1;
+    const learningPath: LearningPathDTO = {
+        id: 1,
+        progress: 0,
+        startedByStudent: false,
+    };
     const courseId = 2;
 
     beforeEach(async () => {
@@ -42,6 +47,14 @@ describe('LearningPathStudentPageComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: AlertService, useClass: MockAlertService },
+                {
+                    provide: LearningPathApiService,
+                    useValue: {
+                        getLearningPathForCurrentUser: jest.fn().mockResolvedValue(learningPath),
+                        generateLearningPathForCurrentUser: jest.fn().mockResolvedValue(learningPath),
+                        startLearningPathForCurrentUser: jest.fn().mockReturnValue(() => Promise.resolve()),
+                    },
+                },
             ],
         })
             .overrideComponent(LearningPathStudentPageComponent, {
@@ -70,18 +83,23 @@ describe('LearningPathStudentPageComponent', () => {
         expect(component.courseId()).toBe(courseId);
     });
 
-    it('should get learning path id', async () => {
-        const getLearningPathIdSpy = jest.spyOn(learningPathApiService, 'getLearningPathId').mockResolvedValue(learningPathId);
+    it('should get learning path', async () => {
+        const getLearningPathIdSpy = jest.spyOn(learningPathApiService, 'getLearningPathForCurrentUser').mockResolvedValue(learningPath);
 
         fixture.detectChanges();
         await fixture.whenStable();
 
         expect(getLearningPathIdSpy).toHaveBeenCalledWith(courseId);
-        expect(component.learningPathId()).toEqual(learningPathId);
+        expect(component.learningPath()).toEqual(learningPath);
     });
 
-    it('should show navigation on successful load', async () => {
-        jest.spyOn(learningPathApiService, 'getLearningPathId').mockResolvedValue(learningPathId);
+    it('should show navigation when learning path has been started', async () => {
+        const learningPath: LearningPathDTO = {
+            id: 1,
+            progress: 0,
+            startedByStudent: true,
+        };
+        jest.spyOn(learningPathApiService, 'getLearningPathForCurrentUser').mockResolvedValueOnce(learningPath);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -91,8 +109,8 @@ describe('LearningPathStudentPageComponent', () => {
         expect(navComponent).toBeTruthy();
     });
 
-    it('should show error when learning path id could not be loaded', async () => {
-        const getLearningPathIdSpy = jest.spyOn(learningPathApiService, 'getLearningPathId').mockRejectedValue(new Error());
+    it('should show error when learning path could not be loaded', async () => {
+        const getLearningPathIdSpy = jest.spyOn(learningPathApiService, 'getLearningPathForCurrentUser').mockRejectedValue(new Error());
         const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
 
         fixture.detectChanges();
@@ -103,8 +121,8 @@ describe('LearningPathStudentPageComponent', () => {
     });
 
     it('should set isLoading correctly during learning path load', async () => {
-        jest.spyOn(learningPathApiService, 'getLearningPathId').mockResolvedValue(learningPathId);
-        const loadingSpy = jest.spyOn(component.isLearningPathIdLoading, 'set');
+        jest.spyOn(learningPathApiService, 'getLearningPathForCurrentUser').mockResolvedValue(learningPath);
+        const loadingSpy = jest.spyOn(component.isLearningPathLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -113,28 +131,34 @@ describe('LearningPathStudentPageComponent', () => {
         expect(loadingSpy).toHaveBeenNthCalledWith(2, false);
     });
 
-    it('should generate learning path on click', async () => {
-        jest.spyOn(learningPathApiService, 'getLearningPathId').mockRejectedValue(new EntityNotFoundError());
-        const generateLearningPathSpy = jest.spyOn(learningPathApiService, 'generateLearningPath').mockResolvedValue(learningPathId);
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        const generateLearningPathButton = fixture.debugElement.query(By.css('#generate-learning-path-button'));
-        generateLearningPathButton.nativeElement.click();
+    it('should generate learning path on start when not found', async () => {
+        jest.spyOn(learningPathApiService, 'getLearningPathForCurrentUser').mockReturnValueOnce(Promise.reject(new EntityNotFoundError()));
+        const generateLearningPathSpy = jest.spyOn(learningPathApiService, 'generateLearningPathForCurrentUser').mockResolvedValue(learningPath);
+        const startSpy = jest.spyOn(learningPathApiService, 'startLearningPathForCurrentUser');
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(component.learningPathId()).toEqual(learningPathId);
-        expect(generateLearningPathSpy).toHaveBeenCalledWith(courseId);
+        await component.startLearningPath();
+
+        expect(component.learningPath()).toEqual({ ...learningPath, startedByStudent: true });
+        expect(generateLearningPathSpy).toHaveBeenCalledExactlyOnceWith(courseId);
+        expect(startSpy).toHaveBeenCalledExactlyOnceWith(learningPath.id);
     });
 
-    it('should set isLoading correctly during learning path generation', async () => {
-        jest.spyOn(learningPathApiService, 'getLearningPathId').mockRejectedValue(new EntityNotFoundError());
-        jest.spyOn(learningPathApiService, 'generateLearningPath').mockResolvedValue(learningPathId);
-        const loadingSpy = jest.spyOn(component.isLearningPathIdLoading, 'set');
+    it('should set learning path to started', async () => {
+        const startedSpy = jest.spyOn(learningPathApiService, 'startLearningPathForCurrentUser');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        await component.startLearningPath();
+
+        expect(component.learningPath()).toEqual({ ...learningPath, startedByStudent: true });
+        expect(startedSpy).toHaveBeenCalledExactlyOnceWith(learningPath.id);
+    });
+
+    it('should set isLoading correctly during learning path start', async () => {
+        const loadingSpy = jest.spyOn(component.isLearningPathLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();
