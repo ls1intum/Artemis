@@ -3,21 +3,7 @@ package de.tum.cit.aet.artemis.communication.domain.conversation;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.data.annotation.CreatedDate;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIncludeProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
-import de.tum.cit.aet.artemis.communication.domain.Post;
-import de.tum.cit.aet.artemis.core.domain.Course;
-import de.tum.cit.aet.artemis.core.domain.DomainObject;
-import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
@@ -31,6 +17,23 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.data.annotation.CreatedDate;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.core.domain.User;
 
 @Entity
 @Table(name = "conversation")
@@ -51,7 +54,7 @@ public abstract class Conversation extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "creator_id")
-    @JsonIncludeProperties({"id", "name"})
+    @JsonIncludeProperties({ "id", "name" })
     private User creator;
 
     @JsonIgnoreProperties("conversation")
@@ -66,10 +69,6 @@ public abstract class Conversation extends DomainObject {
     @JsonIgnore
     private Course course;
 
-    @ManyToOne
-    @JsonIgnore
-    private Exercise exercise;
-
     @CreatedDate
     @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
@@ -77,11 +76,8 @@ public abstract class Conversation extends DomainObject {
     @Column(name = "last_message_date")
     private ZonedDateTime lastMessageDate;
 
-    @Column(name = "name")
-    private String name;
-
     public Conversation(Long id, User creator, Set<ConversationParticipant> conversationParticipants, Set<Post> posts, Course course, ZonedDateTime creationDate,
-                        ZonedDateTime lastMessageDate) {
+            ZonedDateTime lastMessageDate) {
         this.setId(id);
         this.creator = creator;
         this.conversationParticipants = conversationParticipants;
@@ -108,22 +104,6 @@ public abstract class Conversation extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public ZonedDateTime getCreationDate() {
