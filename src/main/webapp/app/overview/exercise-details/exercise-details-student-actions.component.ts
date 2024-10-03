@@ -340,7 +340,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
      * 3. There is no already pending feedback request.
      * @returns {boolean} `true` if all conditions are satisfied, otherwise `false`.
      */
-    // this method will be removed once text and modeling support new component
+    // TODO remove this method once support of the button component is implemented for text and modeling exercises
     assureConditionsSatisfied(): boolean {
         this.updateParticipations();
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -378,7 +378,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             }
         }
 
-        if (this.hasAthenaResultForlatestSubmission()) {
+        if (this.hasAthenaResultForLatestSubmission()) {
             const submitFirstWarning = this.translateService.instant('artemisApp.exercise.submissionAlreadyHasAthenaResult');
             this.alertService.warning(submitFirstWarning);
             return false;
@@ -386,9 +386,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return true;
     }
 
-    hasAthenaResultForlatestSubmission(): boolean {
+    hasAthenaResultForLatestSubmission(): boolean {
         if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
-            // submissions.results is always undefined so this is neccessary
+            // submissions.results is always undefined so this is necessary
             return (
                 this.gradedParticipation.submissions.last()?.id ===
                 this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA).first()?.submission?.id

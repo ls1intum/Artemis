@@ -116,9 +116,10 @@ export function getLatestResultOfStudentParticipation(
     if (participation.results) {
         participation.results = _orderBy(participation.results, 'completionDate', 'desc');
     }
+
     // The latest result is the first rated result in the sorted array (=newest) or any result if the option is active to show ungraded results.
     const latestResult = participation.results?.find(
-        (result) => showUngradedResults || result.rated === true || (showAthenaPreliminaryFeedback && !!isAIResultAndIsBeingProcessed(result)),
+        (result) => showUngradedResults || result.rated === true || (showAthenaPreliminaryFeedback && isAIResultAndIsBeingProcessed(result)),
     );
     // Make sure that the participation result is connected to the newest result.
     return latestResult ? { ...latestResult, participation: participation } : undefined;

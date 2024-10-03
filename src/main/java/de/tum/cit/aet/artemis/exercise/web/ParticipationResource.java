@@ -392,7 +392,7 @@ public class ParticipationResource {
         StudentParticipation participation = (exercise instanceof ProgrammingExercise)
                 ? programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, principal.getName())
                 : studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), principal.getName())
-                        .orElseThrow(() -> new BadRequestAlertException("Participation not found", "participation", "noSubmissionExists", true));
+                        .orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
 
         checkAccessPermissionOwner(participation, user);
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
@@ -410,9 +410,8 @@ public class ParticipationResource {
         }
 
         // Check if feedback has already been requested
-        var currentDate = now();
         var latestResult = participation.findLatestResult();
-        if (latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate().isAfter(now())) {
+        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate().isAfter(now())) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "feedbackRequestAlreadySent", true);
         }
 

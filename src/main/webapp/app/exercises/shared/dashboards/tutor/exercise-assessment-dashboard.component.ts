@@ -48,6 +48,7 @@ import { faCheckCircle, faExclamationTriangle, faFolderOpen, faListAlt, faQuesti
 import { GraphColors } from 'app/entities/statistics.model';
 import { PROFILE_LOCALVC } from 'app/app.constants';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { isManualResult } from 'app/exercises/shared/result/result.utils';
 
 export interface ExampleSubmissionQueryParams {
     readOnly?: boolean;
@@ -640,7 +641,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     calculateSubmissionStatusIsDraft(submission: Submission, correctionRound = 0): boolean {
         const tmpResult = submission.results?.[correctionRound];
-        return !(tmpResult?.completionDate && Result.isManualResult(tmpResult));
+        return !(tmpResult?.completionDate && isManualResult(tmpResult));
     }
 
     /**

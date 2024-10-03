@@ -24,6 +24,7 @@ import {
     isAIResultAndIsBeingProcessed,
     isAIResultAndProcessed,
     isAIResultAndTimedOut,
+    isAthenaAIResult,
     isStudentParticipation,
 } from 'app/exercises/shared/result/result.utils';
 import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
@@ -94,7 +95,7 @@ export class ResultService implements IResultService {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {
-            if (Result.isAthenaAIResult(result)) {
+            if (isAthenaAIResult(result)) {
                 return this.getResultStringNonProgrammingExerciseWithAIFeedback(result, relativeScore, points, short);
             }
             return this.getResultStringNonProgrammingExercise(relativeScore, points, short);
@@ -112,7 +113,7 @@ export class ResultService implements IResultService {
      */
     private getResultStringNonProgrammingExerciseWithAIFeedback(result: Result, relativeScore: number, points: number, short: boolean | undefined): string {
         let aiFeedbackMessage: string = '';
-        if (result && Result.isAthenaAIResult(result) && result.successful === undefined) {
+        if (result && isAthenaAIResult(result) && result.successful === undefined) {
             return this.translateService.instant('artemisApp.result.resultString.automaticAIFeedbackInProgress');
         }
         aiFeedbackMessage = this.getResultStringNonProgrammingExercise(relativeScore, points, short);
@@ -187,7 +188,7 @@ export class ResultService implements IResultService {
      * @param short flag that indicates if the resultString should use the short format
      */
     private getBaseResultStringProgrammingExercise(result: Result, relativeScore: number, points: number, buildAndTestMessage: string, short: boolean | undefined): string {
-        if (Result.isAthenaAIResult(result)) {
+        if (isAthenaAIResult(result)) {
             return buildAndTestMessage;
         }
         if (short) {

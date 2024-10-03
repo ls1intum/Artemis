@@ -116,14 +116,14 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
         var submissionOptional = programmingExerciseParticipationService.findProgrammingExerciseParticipationWithLatestSubmissionAndResult(participation.getId())
                 .findLatestSubmission();
         if (submissionOptional.isEmpty()) {
-            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionÊxists");
+            throw new BadRequestAlertException("No legal submissions found", "submission", "noSubmissionExists");
         }
         var submission = submissionOptional.get();
 
         // save result and transmit it over websockets to notify the client about the status
         var automaticResult = this.submissionService.saveNewEmptyResult(submission);
         automaticResult.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
-        automaticResult.setRated(true);
+        automaticResult.setRated(true); // we want to use this feedback to give the grade in the future
         automaticResult.setScore(100.0);
         automaticResult.setSuccessful(null);
         automaticResult.setCompletionDate(ZonedDateTime.now().plusMinutes(5)); // we do not want to show dates without a completion date, but we want the students to know their
@@ -164,7 +164,8 @@ public class ProgrammingExerciseCodeReviewFeedbackService {
                         feedback.setType(FeedbackType.AUTOMATIC);
                         feedback.setCredits(individualFeedbackItem.credits());
                         return feedback;
-                    }).sorted(Comparator.comparing(Feedback::getCredits)).toList();
+                    }).sorted(Comparator.comparing(Feedback::getCredits, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
+            ;
 
             automaticResult.setSuccessful(true);
             automaticResult.setCompletionDate(ZonedDateTime.now());

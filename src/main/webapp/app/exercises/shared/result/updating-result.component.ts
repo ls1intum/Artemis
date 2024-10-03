@@ -13,7 +13,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Result } from 'app/entities/result.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { getLatestResultOfStudentParticipation, hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
-import { MissingResultInformation, isAIResultAndIsBeingProcessed } from 'app/exercises/shared/result/result.utils';
+import { MissingResultInformation, isAIResultAndIsBeingProcessed, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
 /**
@@ -102,10 +102,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
                 filter((result) => !!result),
                 // Ignore ungraded results if ungraded results are supposed to be ignored.
                 // If the result is a preliminary feedback(being generated), show it
-                filter((result: Result) => this.showUngradedResults || result.rated === true || Result.isAthenaAIResult(result)),
+                filter((result: Result) => this.showUngradedResults || result.rated === true || isAthenaAIResult(result)),
                 map((result) => ({ ...result, completionDate: convertDateFromServer(result.completionDate), participation: this.participation })),
                 tap((result) => {
-                    if ((Result.isAthenaAIResult(result) && isAIResultAndIsBeingProcessed(result)) || result.rated) {
+                    if ((isAthenaAIResult(result) && isAIResultAndIsBeingProcessed(result)) || result.rated) {
                         this.result = result;
                     } else if (result.rated === false && this.showUngradedResults) {
                         this.result = result;
