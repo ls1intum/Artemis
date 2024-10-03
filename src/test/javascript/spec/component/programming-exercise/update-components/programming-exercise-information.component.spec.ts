@@ -96,7 +96,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
     describe('shortName generation effect', () => {
         it('should use name from import', () => {
             comp.programmingExercise().shortName = 'l01e01';
-            fixture.componentRef.setInput('isSimpleMode', true);
+            fixture.componentRef.setInput('isSimpleMode', false);
             fixture.componentRef.setInput('isImport', true);
 
             comp.programmingExercise().title = 'Test Exercise';
