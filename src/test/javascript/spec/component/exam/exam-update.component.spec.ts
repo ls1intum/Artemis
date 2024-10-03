@@ -635,6 +635,7 @@ describe('ExamUpdateComponent', () => {
                     MockComponent(DifficultyBadgeComponent),
                     MockComponent(DocumentationButtonComponent),
                     MockDirective(FeatureToggleDirective),
+                    MockDirective(CustomNotIncludedInValidatorDirective),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
