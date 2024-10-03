@@ -12,6 +12,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -152,6 +153,11 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         return command;
     }
 
+    /**
+     * Note: Don't count unattached sessions as a potential result from previous tests.
+     * See {@link org.apache.sshd.server.SshServer#getActiveSessions
+     * and {@link org.apache.sshd.common.session.helpers.AbstractSession#getSession(IoSession, boolean)}.
+     */
     private SshClient clientConnectToArtemisSshServer() throws GeneralSecurityException, IOException {
         var serverSessions = sshServer.getActiveSessions();
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -178,8 +184,9 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         }
 
         serverSessions = sshServer.getActiveSessions();
+        var attachedServerSessions = serverSessions.stream().filter(Objects::nonNull).count();
         assertThat(clientSession.isAuthenticated()).isTrue();
-        assertThat(serverSessions.size()).as("There are more server sessions activated than expected.").isEqualTo(numberOfSessions + 1);
+        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(numberOfSessions + 1);
         return client;
     }
 
