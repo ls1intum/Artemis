@@ -1,9 +1,5 @@
 package de.tum.cit.aet.artemis.core.web;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
-import static java.time.ZonedDateTime.now;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -22,9 +18,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import jakarta.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -54,9 +47,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
 import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
@@ -72,12 +63,12 @@ import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetails;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.cit.aet.artemis.core.dto.CoursesForDashboardDTO;
+import de.tum.cit.aet.artemis.core.dto.ExistingCourseExerciseDetails;
 import de.tum.cit.aet.artemis.core.dto.OnlineCourseDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.StatsForDashboardDTO;
@@ -120,7 +111,11 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
 import de.tum.cit.aet.artemis.programming.service.ci.CIUserManagementService;
 import de.tum.cit.aet.artemis.programming.service.vcs.VcsUserManagementService;
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupsConfigurationService;
+import jakarta.validation.constraints.NotNull;
 import tech.jhipster.web.util.PaginationUtil;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LTI;
+import static java.time.ZonedDateTime.now;
 
 /**
  * REST controller for managing Course.
@@ -188,13 +183,13 @@ public class CourseResource {
     private final TeamRepository teamRepository;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
-            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
-            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
-            ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
-            TeamRepository teamRepository) {
+                          Optional<OnlineCourseConfigurationService> onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+                          TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+                          AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+                          FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
+                          CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
+                          ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
+                          TeamRepository teamRepository) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -231,7 +226,7 @@ public class CourseResource {
     @PutMapping(value = "courses/{courseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastInstructor
     public ResponseEntity<Course> updateCourse(@PathVariable Long courseId, @RequestPart("course") Course courseUpdate, @RequestPart(required = false) MultipartFile file)
-            throws URISyntaxException {
+        throws URISyntaxException {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
@@ -254,9 +249,9 @@ public class CourseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
         Set<String> existingGroupNames = new HashSet<>(List.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(),
-                existingCourse.getEditorGroupName(), existingCourse.getInstructorGroupName()));
+            existingCourse.getEditorGroupName(), existingCourse.getInstructorGroupName()));
         Set<String> newGroupNames = new HashSet<>(List.of(courseUpdate.getStudentGroupName(), courseUpdate.getTeachingAssistantGroupName(), courseUpdate.getEditorGroupName(),
-                courseUpdate.getInstructorGroupName()));
+            courseUpdate.getInstructorGroupName()));
         Set<String> changedGroupNames = new HashSet<>(newGroupNames);
         changedGroupNames.removeAll(existingGroupNames);
 
@@ -269,7 +264,7 @@ public class CourseResource {
             // instructors are not allowed to change the access to restricted Athena modules
             if (athenaModuleAccessChanged) {
                 throw new BadRequestAlertException("You are not allowed to change the access to restricted Athena modules of a course", Course.ENTITY_NAME,
-                        "restrictedAthenaModulesAccessCannotChange", true);
+                    "restrictedAthenaModulesAccessCannotChange", true);
             }
             // instructors are not allowed to change the dashboard settings
             if (existingCourse.getStudentCourseAnalyticsDashboardEnabled() != courseUpdate.getStudentCourseAnalyticsDashboardEnabled()) {
@@ -281,7 +276,7 @@ public class CourseResource {
             Optional<GradingScale> gradingScale = gradingScaleService.findGradingScaleByCourseId(courseUpdate.getId());
             if (gradingScale.isPresent() && gradingScale.get().getPresentationsNumber() != null) {
                 throw new BadRequestAlertException("You cannot set a presentation score if the grading scale is already set up for graded presentations", Course.ENTITY_NAME,
-                        "gradedPresentationAlreadySet", true);
+                    "gradedPresentationAlreadySet", true);
             }
             if (courseUpdate.getPresentationScore() < 0) {
                 throw new BadRequestAlertException("The presentation score cannot be negative", Course.ENTITY_NAME, "negativePresentationScore", true);
@@ -315,8 +310,7 @@ public class CourseResource {
                 // delete old course icon
                 fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
             }
-        }
-        else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
+        } else if (courseUpdate.getCourseIcon() == null && existingCourse.getCourseIcon() != null) {
             // delete old course icon
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(new URI(existingCourse.getCourseIcon())), 0);
         }
@@ -324,8 +318,7 @@ public class CourseResource {
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
             if (courseUpdate.isOnlineCourse() && onlineCourseConfigurationService.isPresent()) {
                 onlineCourseConfigurationService.get().createOnlineCourseConfiguration(courseUpdate);
-            }
-            else {
+            } else {
                 courseUpdate.setOnlineCourseConfiguration(null);
             }
         }
@@ -356,9 +349,9 @@ public class CourseResource {
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
 
         optionalVcsUserManagementService
-                .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+            .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
-                .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+            .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         if (timeZoneChanged) {
             tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
         }
@@ -377,7 +370,7 @@ public class CourseResource {
     @EnforceAtLeastInstructor
     @Profile(PROFILE_LTI)
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
-            @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
+                                                                                     @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
         log.debug("REST request to update the online course configuration for Course : {}", courseId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
@@ -389,7 +382,7 @@ public class CourseResource {
 
         if (!course.getOnlineCourseConfiguration().getId().equals(onlineCourseConfiguration.getId())) {
             throw new BadRequestAlertException("The onlineCourseConfigurationId does not match the id of the course's onlineCourseConfiguration",
-                    OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
+                OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
         }
 
         if (onlineCourseConfigurationService.isPresent()) {
@@ -397,8 +390,7 @@ public class CourseResource {
             course.setOnlineCourseConfiguration(onlineCourseConfiguration);
             try {
                 onlineCourseConfigurationService.get().addOnlineCourseConfigurationToLtiConfigurations(onlineCourseConfiguration);
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 log.error("Failed to add online course configuration to LTI configurations", ex);
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when adding online course configuration to LTI configurations", ex);
             }
@@ -425,8 +417,8 @@ public class CourseResource {
         Set<Course> courses = courseService.findAllOnlineCoursesForPlatformForUser(clientId, user);
 
         List<OnlineCourseDTO> onlineCourseDTOS = courses.stream()
-                .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
-                .toList();
+            .map(c -> new OnlineCourseDTO(c.getId(), c.getTitle(), c.getShortName(), c.getOnlineCourseConfiguration().getLtiPlatformConfiguration().getRegistrationId()))
+            .toList();
 
         return ResponseEntity.ok(onlineCourseDTOS);
     }
@@ -482,7 +474,7 @@ public class CourseResource {
         // TODO: we should avoid findAll() and instead try to filter this directly in the database, in case of admins, we should load batches of courses, e.g. per semester
         List<Course> courses = courseRepository.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin(user));
+            || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin(user));
         if (onlyActive) {
             // only include courses that have NOT been finished
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
@@ -517,8 +509,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
             return ResponseEntity.ok(courseRepository.findAllWithQuizExercisesWithEagerExercises());
-        }
-        else {
+        } else {
             var userGroups = new ArrayList<>(user.getGroups());
             return ResponseEntity.ok(courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups));
         }
@@ -595,7 +586,7 @@ public class CourseResource {
      *
      * @param courseId the courseId for which exercises, lectures, exams and competencies should be fetched
      * @return a DTO containing a course with all exercises, lectures, exams, competencies, etc. visible to the user as well as the total scores for the course, the scores per
-     *         exercise type for each exercise, and the participation result for each participation.
+     * exercise type for each exercise, and the participation result for each participation.
      */
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
@@ -614,9 +605,8 @@ public class CourseResource {
             if (authCheckService.isUserAllowedToSelfEnrollInCourse(user, course)) {
                 // suppress error alert with skipAlert: true so that the client can redirect to the enrollment page
                 throw new AccessForbiddenAlertException(ErrorConstants.DEFAULT_TYPE, "You don't have access to this course, but you could enroll in it.", ENTITY_NAME,
-                        "noAccessButCouldEnroll", true);
-            }
-            else {
+                    "noAccessButCouldEnroll", true);
+            } else {
                 // user is not even allowed to self-enroll
                 // just normally throw the access forbidden exception
                 throw new AccessForbiddenException(ENTITY_NAME, courseId);
@@ -658,9 +648,9 @@ public class CourseResource {
      * GET /courses/for-dashboard
      *
      * @return the ResponseEntity with status 200 (OK) and with body a DTO containing a list of courses (the user has access to) including all exercises with participation,
-     *         submission and result, etc. for the user. In addition, the
-     *         DTO contains the total scores for the course, the scores per exercise
-     *         type for each exercise, and the participation result for each participation.
+     * submission and result, etc. for the user. In addition, the
+     * DTO contains the total scores for the course, the scores per exercise
+     * type for each exercise, and the participation result for each participation.
      */
     @GetMapping("courses/for-dashboard")
     @EnforceAtLeastStudent
@@ -682,7 +672,7 @@ public class CourseResource {
         var gradingScales = gradingScaleRepository.findAllByCourseIds(courses.stream().map(Course::getId).collect(Collectors.toSet()));
         // we explicitly add 1 hour here to compensate for potential write extensions. Calculating it exactly is not feasible here
         var activeExams = examRepository.findActiveExams(courses.stream().map(Course::getId).collect(Collectors.toSet()), user.getId(), ZonedDateTime.now(),
-                ZonedDateTime.now().plusHours(1));
+            ZonedDateTime.now().plusHours(1));
 
         log.debug("gradingScaleRepository.findAllByCourseIds done");
         Set<CourseForDashboardDTO> coursesForDashboard = new HashSet<>();
@@ -703,7 +693,7 @@ public class CourseResource {
             int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
             int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
             log.info("{} finished in {} for {} courses with {} individual exercise(s) and {} team exercise(s) for user {}", path, TimeLogUtil.formatDurationFrom(timeNanoStart),
-                    courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
+                courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
         }
     }
 
@@ -777,8 +767,7 @@ public class CourseResource {
 
         if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
             course = courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId);
-        }
-        else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        } else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
         }
 
@@ -953,7 +942,7 @@ public class CourseResource {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentDisposition(contentDisposition);
         return ResponseEntity.ok().headers(headers).contentLength(zipFile.length()).contentType(MediaType.APPLICATION_OCTET_STREAM).header("filename", zipFile.getName())
-                .body(resource);
+            .body(resource);
     }
 
     /**
@@ -1039,7 +1028,7 @@ public class CourseResource {
     @GetMapping("courses/{courseId}/users/search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
-            @RequestParam("roles") List<String> roles) {
+                                                                       @RequestParam("roles") List<String> roles) {
         log.debug("REST request to search users in course : {} with login or name : {}", courseId, loginOrName);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
@@ -1156,7 +1145,7 @@ public class CourseResource {
 
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
         List<UserNameAndLoginDTO> searchResults = userRepository.searchAllWithGroupsByLoginOrNameInCourseAndReturnList(Pageable.ofSize(10), searchTerm, course.getId()).stream()
-                .map(UserNameAndLoginDTO::of).toList();
+            .map(UserNameAndLoginDTO::of).toList();
 
         return ResponseEntity.ok().body(searchResults);
     }
@@ -1259,8 +1248,7 @@ public class CourseResource {
                 learningPathService.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());
             }
             return ResponseEntity.ok().body(null);
-        }
-        else {
+        } else {
             throw new AccessForbiddenException();
         }
     }
@@ -1375,7 +1363,7 @@ public class CourseResource {
     @GetMapping("courses/{courseId}/statistics")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Integer>> getActiveStudentsForCourseDetailView(@PathVariable Long courseId, @RequestParam Long periodIndex,
-            @RequestParam Optional<Integer> periodSize) {
+                                                                              @RequestParam Optional<Integer> periodSize) {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
@@ -1458,23 +1446,9 @@ public class CourseResource {
 
     @GetMapping("courses/{courseId}/existing-exercise-details")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean includeShortNames) {
+    public ResponseEntity<ExistingCourseExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean includeShortNames) {
         log.debug("REST request to get details of existing exercises in course : {}", courseId);
-        Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
-
-        Set<String> alreadyTakenExerciseNames = new HashSet<>();
-        Set<String> alreadyTakenShortNames = new HashSet<>();
-        Set<String> alreadyTakenChannelNames = new HashSet<>();
-
-        course.getExercises().forEach((exercise -> {
-            alreadyTakenExerciseNames.add(exercise.getTitle());
-            if (includeShortNames && exercise.getShortName() != null) {
-                alreadyTakenShortNames.add(exercise.getShortName());
-            }
-            alreadyTakenChannelNames.add(exercise.getChannelName());
-        }));
-
-        return ResponseEntity.ok(new CourseExistingExerciseDetails(alreadyTakenExerciseNames.toArray(String[]::new), alreadyTakenShortNames.toArray(String[]::new),
-                alreadyTakenChannelNames.toArray(String[]::new)));
+        ExistingCourseExerciseDetails existingCourseExerciseDetails = courseRepository.findExistingCourseExerciseDetails(courseId);
+        return ResponseEntity.ok(existingCourseExerciseDetails);
     }
 }
