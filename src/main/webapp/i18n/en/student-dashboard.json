@@ -88,7 +88,8 @@
                 "testExam": "Test Exam",
                 "communication": "Communication",
                 "plagiarismCases": "Plagiarism Cases",
-                "gradingSystem": "Grading System"
+                "gradingSystem": "Grading System",
+                "faq": "FAQ"
             },
             "exerciseFilter": {
                 "filter": "Filter",
