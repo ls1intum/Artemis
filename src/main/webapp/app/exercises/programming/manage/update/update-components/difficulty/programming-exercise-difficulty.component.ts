@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ArtemisDifficultyPickerModule } from 'app/exercises/shared/difficulty-picker/difficulty-picker.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -11,5 +11,5 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [ArtemisDifficultyPickerModule, TranslateDirective],
 })
 export class ProgrammingExerciseDifficultyComponent {
-    @Input({ required: true }) programmingExercise: ProgrammingExercise;
+    programmingExercise = input.required<ProgrammingExercise>();
 }
