@@ -18,6 +18,7 @@ import {
     IconDefinition,
     faChalkboardUser,
     faChartBar,
+    faChevronLeft,
     faChevronRight,
     faCircleNotch,
     faClipboard,
@@ -117,6 +118,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNotManagementView: boolean;
     canUnenroll: boolean;
     isNavbarCollapsed = false;
+    isSidebarCollapsed = false;
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
     isExamStarted = false;
@@ -170,6 +172,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faSync = faSync;
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
     faQuestion = faQuestion;
@@ -230,6 +233,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.courseActionItems = this.getCourseActionItems();
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
+        this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
     }
 
     /** Listen window resize event by height */
@@ -581,6 +585,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
         this.changeDetectorRef.detectChanges();
+
+        this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
     }
 
     toggleSidebar() {
@@ -589,6 +595,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         const childRouteComponent = this.activatedComponentReference;
         childRouteComponent.toggleSidebar();
+        this.isSidebarCollapsed = childRouteComponent.isCollapsed;
     }
 
     @HostListener('window:keydown.Control.Shift.b', ['$event'])
