@@ -1,6 +1,6 @@
 version: 2
 updates:
-
+  # Check for version updates for GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -9,8 +9,74 @@ updates:
       time: "08:30"
     reviewers:
       - "bassner"
-      - "Mtze"
-    open-pull-requests-limit: 2
+      - "krusche"
+    open-pull-requests-limit: 5
+    labels:
+      - "ready for review"
+      - "dependencies"
+
+  # Check for version updates for npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - "bassner"
+      - "krusche"
+    # Enable security updates
+    open-pull-requests-limit: 5
+    labels:
+      - "ready for review"
+      - "dependencies"
+
+  # Check for Gradle updates
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    reviewers:
+      - "bassner"
+      - "krusche"
+    open-pull-requests-limit: 5
+    labels:
+      - "ready for review"
+      - "dependencies"
+
+  # Check for version updates for Python dependencies (docs)
+  - package-ecosystem: "pip"
+    directory: "/docs"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "bassner"
+      - "krusche"
+    open-pull-requests-limit: 5
+    labels:
+      - "ready for review"
+      - "dependencies"
+
+  # Check for version updates for Python dependencies (coverage)
+  - package-ecosystem: "pip"
+    directory: "/supporting_scripts/generate_code_cov_table"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "bassner"
+      - "krusche"
+    open-pull-requests-limit: 5
+    labels:
+      - "ready for review"
+      - "dependencies"
+
+  # Check for version updates for Python dependencies (course setup)
+  - package-ecosystem: "pip"
+    directory: "/supporting_scripts/course-scripts/quick-course-setup"
+    schedule:
+      interval: "weekly"
+    reviewers:
+      - "bassner"
+      - "krusche"
+    open-pull-requests-limit: 5
     labels:
       - "ready for review"
       - "dependencies"

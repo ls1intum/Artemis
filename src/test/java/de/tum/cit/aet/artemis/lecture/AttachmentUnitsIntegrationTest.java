@@ -28,14 +28,15 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.ResourceUtils;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitDTO;
 import de.tum.cit.aet.artemis.lecture.dto.LectureUnitSplitInformationDTO;
 import de.tum.cit.aet.artemis.lecture.repository.AttachmentUnitRepository;
-import de.tum.cit.aet.artemis.lecture.repository.SlideRepository;
 import de.tum.cit.aet.artemis.lecture.service.LectureUnitProcessingService;
+import de.tum.cit.aet.artemis.lecture.test_repository.SlideTestRepository;
+import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -45,7 +46,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationIndependen
     private AttachmentUnitRepository attachmentUnitRepository;
 
     @Autowired
-    private SlideRepository slideRepository;
+    private SlideTestRepository slideRepository;
 
     @Autowired
     private LectureUtilService lectureUtilService;
