@@ -3,15 +3,14 @@ package de.tum.cit.aet.artemis.programming.localvcci;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
+import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 
@@ -21,13 +20,15 @@ class SharedQueueManagementServiceTest extends AbstractSpringIntegrationLocalCIL
     private SharedQueueManagementService sharedQueueManagementService;
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+    private BuildJobRepository buildJobRepository;
+
+    @Autowired
+    private RedissonClient redissonClient;
 
     @Test
     void testPushDockerImageCleanupInfo() {
 
-        IMap<String, ZonedDateTime> dockerImageCleanupInfo = hazelcastInstance.getMap("dockerImageCleanupInfo");
+        Map<String, ZonedDateTime> dockerImageCleanupInfo = redissonClient.getMap("dockerImageCleanupInfo");
         dockerImageCleanupInfo.clear();
 
         ZonedDateTime now = ZonedDateTime.now();

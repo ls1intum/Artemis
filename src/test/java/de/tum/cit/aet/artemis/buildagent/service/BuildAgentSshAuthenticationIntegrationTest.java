@@ -4,13 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -18,8 +16,7 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalV
 class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+    private RedissonClient redissonClient;
 
     @Autowired
     private BuildAgentSshKeyService buildAgentSSHKeyService;
@@ -36,7 +33,7 @@ class BuildAgentSshAuthenticationIntegrationTest extends AbstractSpringIntegrati
     @Test
     void testSSHInHazelcast() {
         sharedQueueProcessingService.updateBuildAgentInformation();
-        IMap<String, BuildAgentInformation> buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
+        Map<String, BuildAgentInformation> buildAgentInformation = redissonClient.getMap("buildAgentInformation");
         assertThat(buildAgentInformation.values()).as("SSH public key available in hazelcast.")
                 .anyMatch(agent -> agent.publicSshKey().equals(buildAgentSSHKeyService.getPublicKeyAsString()));
     }

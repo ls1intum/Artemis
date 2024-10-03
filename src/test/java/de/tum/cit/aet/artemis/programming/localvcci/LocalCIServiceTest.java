@@ -4,24 +4,23 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildConfig;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -67,17 +66,16 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private SharedQueueProcessingService sharedQueueProcessingService;
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+    private RedissonClient redissonClient;
 
-    protected IQueue<BuildJobQueueItem> queuedJobs;
+    protected Queue<BuildJobQueueItem> queuedJobs;
 
-    protected IMap<Long, BuildJobQueueItem> processingJobs;
+    protected Map<Long, BuildJobQueueItem> processingJobs;
 
     @BeforeEach
     void setUp() {
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
-        processingJobs = hazelcastInstance.getMap("processingJobs");
+        queuedJobs = redissonClient.getPriorityQueue("buildJobQueue");
+        processingJobs = redissonClient.getMap("processingJobs");
 
         // remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListener();
@@ -109,8 +107,8 @@ class LocalCIServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         BuildJobQueueItem job2 = new BuildJobQueueItem("2", "job2", "address1", participation.getId(), course.getId(), 1, 1, 1,
                 de.tum.cit.aet.artemis.programming.domain.build.BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo, buildConfig, null);
 
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
-        processingJobs = hazelcastInstance.getMap("processingJobs");
+        queuedJobs = redissonClient.getPriorityQueue("buildJobQueue");
+        processingJobs = redissonClient.getMap("processingJobs");
 
         // No build jobs for the participation are queued or building
         assertThat(continuousIntegrationService.getBuildStatus(participation)).isEqualTo(BuildStatus.INACTIVE);

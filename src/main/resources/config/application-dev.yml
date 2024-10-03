@@ -19,6 +19,8 @@ logging:
         de.tum.cit.aet.artemis: DEBUG
         tech.jhipster: DEBUG
         liquibase: ERROR
+        org.redisson.command.RedisExecutor: INFO
+        org.redisson.connection.DNSMonitor: INFO
 
 spring:
     devtools:
@@ -55,8 +57,6 @@ spring:
         cache-duration: PT1S # 1 second, see the ISO 8601 standard
     thymeleaf:
         cache: false
-    hazelcast:
-        localInstances: true
 
 server:
     port: 8080

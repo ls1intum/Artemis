@@ -7,19 +7,17 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
-
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -57,8 +55,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     protected BuildJob finishedJobForLogs;
 
     @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
+    private RedissonClient redissonClient;
 
     @Autowired
     private SharedQueueProcessingService sharedQueueProcessingService;
@@ -66,11 +63,11 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
-    protected IQueue<BuildJobQueueItem> queuedJobs;
+    protected Queue<BuildJobQueueItem> queuedJobs;
 
-    protected IMap<String, BuildJobQueueItem> processingJobs;
+    protected Map<String, BuildJobQueueItem> processingJobs;
 
-    protected IMap<String, BuildAgentInformation> buildAgentInformation;
+    protected Map<String, BuildAgentInformation> buildAgentInformation;
 
     @Autowired
     private PageableSearchUtilService pageableSearchUtilService;
@@ -89,7 +86,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
         job1 = new BuildJobQueueItem("1", "job1", "address1", 1, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1, buildConfig, null);
         job2 = new BuildJobQueueItem("2", "job2", "address1", 2, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo2, buildConfig, null);
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        String memberAddress = "build-agent-1";
         agent1 = new BuildAgentInformation(memberAddress, 1, 0, new ArrayList<>(List.of(job1)), false, new ArrayList<>(List.of(job2)), null);
         BuildJobQueueItem finishedJobQueueItem1 = new BuildJobQueueItem("3", "job3", "address1", 3, course.getId(), 1, 1, 1, BuildStatus.SUCCESSFUL, repositoryInfo, jobTimingInfo1,
                 buildConfig, null);
@@ -114,9 +111,9 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
         finishedJob3 = new BuildJob(finishedJobQueueItem3, BuildStatus.FAILED, result3);
         finishedJobForLogs = new BuildJob(finishedJobQueueItemForLogs, BuildStatus.FAILED, resultForLogs);
 
-        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
-        processingJobs = hazelcastInstance.getMap("processingJobs");
-        buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
+        queuedJobs = redissonClient.getPriorityQueue("buildJobQueue");
+        processingJobs = redissonClient.getMap("processingJobs");
+        buildAgentInformation = redissonClient.getMap("buildAgentInformation");
 
         processingJobs.put(job1.id(), job1);
         processingJobs.put(job2.id(), job2);
@@ -210,7 +207,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testCancelQueuedBuildJob() throws Exception {
-        queuedJobs.put(job1);
+        queuedJobs.add(job1);
         request.delete("/api/admin/cancel-job/" + job1.id(), HttpStatus.NO_CONTENT);
     }
 
@@ -236,8 +233,8 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCancelAllQueuedBuildJobsForCourse() throws Exception {
-        queuedJobs.put(job1);
-        queuedJobs.put(job2);
+        queuedJobs.add(job1);
+        queuedJobs.add(job2);
         request.delete("/api/courses/" + course.getId() + "/cancel-all-queued-jobs", HttpStatus.NO_CONTENT);
     }
 

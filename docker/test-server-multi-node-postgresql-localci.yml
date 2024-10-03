@@ -20,6 +20,8 @@ services:
                 condition: service_healthy
             activemq-broker:
                 condition: service_healthy
+            redis:
+                condition: service_healthy
         pull_policy: always
         restart: always
         group_add:
@@ -83,6 +85,11 @@ services:
       volumes:
         - ${DATABASE_VOLUME_MOUNT:-./.docker-data/artemis-postgres-data}:/var/lib/postgresql/data
 
+    redis:
+      extends:
+        file: ./redis.yml
+        service: redis
+      restart: always
 
     nginx:
         extends:

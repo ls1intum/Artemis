@@ -4,10 +4,10 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -15,24 +15,22 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import org.redisson.api.RMap;
+import org.redisson.api.RPriorityQueue;
+import org.redisson.api.RQueue;
+import org.redisson.api.RedissonClient;
+import org.redisson.api.listener.ListAddListener;
+import org.redisson.api.listener.ListRemoveListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
-import com.hazelcast.cluster.Member;
-import com.hazelcast.collection.IQueue;
-import com.hazelcast.collection.ItemEvent;
-import com.hazelcast.collection.ItemListener;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
@@ -40,6 +38,7 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
 import de.tum.cit.aet.artemis.buildagent.dto.JobTimingInfo;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.connectors.redis.RedisClientListResolver;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 
@@ -52,7 +51,7 @@ public class SharedQueueProcessingService {
 
     private static final Logger log = LoggerFactory.getLogger(SharedQueueProcessingService.class);
 
-    private final HazelcastInstance hazelcastInstance;
+    private final RedissonClient redissonClient;
 
     private final ThreadPoolExecutor localCIBuildExecutorService;
 
@@ -64,67 +63,82 @@ public class SharedQueueProcessingService {
 
     private final BuildAgentSshKeyService buildAgentSSHKeyService;
 
-    private IQueue<BuildJobQueueItem> queue;
+    private RPriorityQueue<BuildJobQueueItem> buildJobQueue;
 
-    private IQueue<ResultQueueItem> resultQueue;
+    private RQueue<ResultQueueItem> resultQueue;
 
     /**
      * Map of build jobs currently being processed across all nodes
      */
-    private IMap<String, BuildJobQueueItem> processingJobs;
+    private RMap<String, BuildJobQueueItem> processingJobs;
 
-    private IMap<String, BuildAgentInformation> buildAgentInformation;
+    private RMap<String, BuildAgentInformation> buildAgentInformation;
 
     /**
      * Lock for operations on single instance.
      */
     private final ReentrantLock instanceLock = new ReentrantLock();
 
-    private UUID listenerId;
+    private int listenerIdAdd;
 
-    public SharedQueueProcessingService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance, ExecutorService localCIBuildExecutorService,
-            BuildJobManagementService buildJobManagementService, BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService) {
-        this.hazelcastInstance = hazelcastInstance;
+    private int listenerIdRemove;
+
+    @Value("${spring.data.redis.client-name}")
+    private String redisClientName;     // this is used as build agent name
+
+    private final RedisClientListResolver redisClientListResolver;
+
+    public SharedQueueProcessingService(RedissonClient redissonClient, ExecutorService localCIBuildExecutorService, BuildJobManagementService buildJobManagementService,
+            BuildLogsMap buildLogsMap, BuildAgentSshKeyService buildAgentSSHKeyService, RedisClientListResolver redisClientListResolver) {
+        this.redissonClient = redissonClient;
         this.localCIBuildExecutorService = (ThreadPoolExecutor) localCIBuildExecutorService;
         this.buildJobManagementService = buildJobManagementService;
         this.buildLogsMap = buildLogsMap;
         this.buildAgentSSHKeyService = buildAgentSSHKeyService;
+        this.redisClientListResolver = redisClientListResolver;
     }
 
     /**
-     * Initialize relevant data from hazelcast
+     * Initialize relevant data for cluster communication.
      */
     @PostConstruct
     public void init() {
-        this.buildAgentInformation = this.hazelcastInstance.getMap("buildAgentInformation");
-        this.processingJobs = this.hazelcastInstance.getMap("processingJobs");
-        this.queue = this.hazelcastInstance.getQueue("buildJobQueue");
-        this.resultQueue = this.hazelcastInstance.getQueue("buildResultQueue");
-        this.listenerId = this.queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        this.buildAgentInformation = this.redissonClient.getMap("buildAgentInformation");
+        this.processingJobs = this.redissonClient.getMap("processingJobs");
+        this.buildJobQueue = this.redissonClient.getPriorityQueue("buildJobQueue");
+        this.resultQueue = this.redissonClient.getQueue("buildResultQueue");
+        this.listenerIdAdd = this.buildJobQueue.addListener((ListAddListener) name -> {
+            log.info("CIBuildJobQueueItem added to queue: {}", name);
+            checkAvailabilityAndProcessNextBuild();
+        });
+        this.listenerIdRemove = this.buildJobQueue.addListener((ListRemoveListener) name -> log.info("CIBuildJobQueueItem removed from queue: {}", name));
     }
 
     @PreDestroy
     public void removeListener() {
-        this.queue.removeItemListener(this.listenerId);
+        // Remove the build agent from the map to avoid issues
+        this.buildAgentInformation.remove(getBuildAgentName());
+        this.buildJobQueue.removeListener(this.listenerIdAdd);
+        this.buildJobQueue.removeListener(this.listenerIdRemove);
     }
 
     /**
-     * Wait 1 minute after startup and then every 1 minute update the build agent information of the local hazelcast member.
+     * Wait 1 minute after startup and then every 1 minute update the build agent information of the local cluster member.
      * This is necessary because the build agent information is not updated automatically when a node joins the cluster.
      */
-    @Scheduled(initialDelay = 60000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
+    @Scheduled(initialDelay = 600000, fixedRate = 60000) // 1 minute initial delay, 1 minute fixed rate
     public void updateBuildAgentInformation() {
-        if (noDataMemberInClusterAvailable(hazelcastInstance)) {
-            log.debug("There are only lite member in the cluster. Not updating build agent information.");
-            return;
-        }
         // Remove build agent information of offline nodes
         removeOfflineNodes();
 
-        // Add build agent information of local hazelcast member to map if not already present
-        if (!buildAgentInformation.containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+        // Add build agent information of local cluster member to map if not already present
+        if (!buildAgentInformation.containsKey(getBuildAgentName())) {
             updateLocalBuildAgentInformation();
         }
+    }
+
+    private String getBuildAgentName() {
+        return redisClientName;
     }
 
     /**
@@ -143,14 +157,10 @@ public class SharedQueueProcessingService {
      * If so, process the next build job.
      */
     private void checkAvailabilityAndProcessNextBuild() {
-        if (noDataMemberInClusterAvailable(hazelcastInstance)) {
-            log.debug("There are only lite member in the cluster. Not processing build jobs.");
-            return;
-        }
         // Check conditions before acquiring the lock to avoid unnecessary locking
         if (!nodeIsAvailable()) {
-            // Add build agent information of local hazelcast member to map if not already present
-            if (!buildAgentInformation.containsKey(hazelcastInstance.getCluster().getLocalMember().getAddress().toString())) {
+            // Add build agent information of local member to map if not already present
+            if (!buildAgentInformation.containsKey(getBuildAgentName())) {
                 updateLocalBuildAgentInformation();
             }
 
@@ -158,19 +168,17 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        if (queue.isEmpty()) {
+        if (buildJobQueue.isEmpty()) {
             return;
         }
         BuildJobQueueItem buildJob = null;
         instanceLock.lock();
         try {
             // Recheck conditions after acquiring the lock to ensure they are still valid
-            if (!nodeIsAvailable() || queue.isEmpty()) {
+            if (!nodeIsAvailable() || buildJobQueue.isEmpty()) {
                 return;
             }
-
             buildJob = addToProcessingJobs();
-
             processBuild(buildJob);
         }
         catch (RejectedExecutionException e) {
@@ -183,7 +191,7 @@ public class SharedQueueProcessingService {
 
                 buildJob = new BuildJobQueueItem(buildJob, "");
                 log.info("Adding build job back to the queue: {}", buildJob);
-                queue.add(buildJob);
+                buildJobQueue.add(buildJob);
                 localProcessingJobs.decrementAndGet();
             }
 
@@ -194,16 +202,12 @@ public class SharedQueueProcessingService {
         }
     }
 
-    private static boolean noDataMemberInClusterAvailable(HazelcastInstance hazelcastInstance) {
-        return hazelcastInstance.getCluster().getMembers().stream().allMatch(Member::isLiteMember);
-    }
-
     private BuildJobQueueItem addToProcessingJobs() {
-        BuildJobQueueItem buildJob = queue.poll();
+        BuildJobQueueItem buildJob = buildJobQueue.poll();
         if (buildJob != null) {
-            String hazelcastMemberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+            String memberAddress = getBuildAgentName();
 
-            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, hazelcastMemberAddress);
+            BuildJobQueueItem processingJob = new BuildJobQueueItem(buildJob, memberAddress);
 
             processingJobs.put(processingJob.id(), processingJob);
             localProcessingJobs.incrementAndGet();
@@ -219,25 +223,18 @@ public class SharedQueueProcessingService {
     }
 
     private void updateLocalBuildAgentInformationWithRecentJob(BuildJobQueueItem recentBuildJob) {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        // Add/update
+        BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob);
         try {
-            buildAgentInformation.lock(memberAddress);
-            // Add/update
-            BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob);
-            try {
-                buildAgentInformation.put(info.name(), info);
-            }
-            catch (Exception e) {
-                log.error("Error while updating build agent information for agent {}", info.name(), e);
-            }
+            buildAgentInformation.put(info.name(), info);
         }
-        finally {
-            buildAgentInformation.unlock(memberAddress);
+        catch (Exception e) {
+            log.error("Error while updating build agent information for agent {}", info.name(), e);
         }
     }
 
     private BuildAgentInformation getUpdatedLocalBuildAgentInformation(BuildJobQueueItem recentBuildJob) {
-        String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
+        String memberAddress = getBuildAgentName();
         List<BuildJobQueueItem> processingJobsOfMember = getProcessingJobsOfNode(memberAddress);
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
@@ -268,10 +265,15 @@ public class SharedQueueProcessingService {
     }
 
     private void removeOfflineNodes() {
-        Set<String> memberAddresses = hazelcastInstance.getCluster().getMembers().stream().map(member -> member.getAddress().toString()).collect(Collectors.toSet());
-        for (String key : buildAgentInformation.keySet()) {
-            if (!memberAddresses.contains(key)) {
+        Set<String> uniqueClients = redisClientListResolver.getUniqueClients();
+
+        log.debug("Redis client list based on names: {}", uniqueClients);
+
+        // Compare the client names with the build agent information
+        for (String key : new HashSet<>(buildAgentInformation.keySet())) {
+            if (!uniqueClients.contains(key)) {
                 buildAgentInformation.remove(key);
+                log.info("Removed offline build agent: {}", key);
             }
         }
     }
@@ -304,6 +306,7 @@ public class SharedQueueProcessingService {
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
+            log.info("Adding build result to result queue: {}", resultQueueItem);
             resultQueue.add(resultQueueItem);
 
             // after processing a build job, remove it from the processing jobs
@@ -339,6 +342,7 @@ public class SharedQueueProcessingService {
             failedResult.setBuildLogEntries(buildLogs);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
+            log.info("Adding build result to result queue: {}", resultQueueItem);
             resultQueue.add(resultQueueItem);
 
             processingJobs.remove(buildJob.id());
@@ -357,19 +361,5 @@ public class SharedQueueProcessingService {
         log.debug("Currently processing jobs on this node: {}, active threads in Pool: {}, maximum pool size of thread executor : {}", localProcessingJobs.get(),
                 localCIBuildExecutorService.getActiveCount(), localCIBuildExecutorService.getMaximumPoolSize());
         return localProcessingJobs.get() < localCIBuildExecutorService.getMaximumPoolSize();
-    }
-
-    public class QueuedBuildJobItemListener implements ItemListener<BuildJobQueueItem> {
-
-        @Override
-        public void itemAdded(ItemEvent<BuildJobQueueItem> event) {
-            log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
-            checkAvailabilityAndProcessNextBuild();
-        }
-
-        @Override
-        public void itemRemoved(ItemEvent<BuildJobQueueItem> event) {
-            log.debug("CIBuildJobQueueItem removed from queue: {}", event.getItem());
-        }
     }
 }
