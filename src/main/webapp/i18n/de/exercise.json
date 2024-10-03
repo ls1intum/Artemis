@@ -219,7 +219,8 @@
             "form": {
                 "title": {
                     "undefined": "Der Titel wurde nicht ausgefüllt!",
-                    "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!"
+                    "pattern": "Der Titel darf nur aus Buchstaben, Zahlen und '_', '-' oder Leerzeichen bestehen!",
+                    "alreadyUsed": "Der Titel wird bereits für eine andere Aufgabe genutzt!"
                 },
                 "channelName": {
                     "empty": "Der Kanalname wurde nicht ausgefüllt!"
@@ -227,7 +228,8 @@
                 "shortName": {
                     "undefined": "Der Kurzname wurde nicht ausgefüllt!",
                     "pattern": "Der Kurzname muss mit einem Buchstaben beginnen und darf keine speziellen Zeichen enthalten!",
-                    "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!"
+                    "minlength": "Der Kurzname muss mindestens 3 Zeichen lang sein!",
+                    "alreadyUsed": "Der Kurzname wird bereits für eine andere Aufgabe genutzt!"
                 },
                 "packageName": {
                     "undefined": "Der Package-Name wurde nicht ausgefüllt!",
