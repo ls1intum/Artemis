@@ -102,7 +102,7 @@
                 "attachmentIDError": "Invalid Attachment or Attachment ID.",
                 "attachmentUnitIDError": "Invalid Attachment Unit or Attachment Unit ID.",
                 "removePageButton": "Remove Page(s)",
-                "appendFileButton": "Append File",
+                "appendPDFButton": "Append PDF",
                 "attachmentUpdateSuccess": "Attachment updated successfully.",
                 "attachmentUpdateError": "Failed to update attachment: {{error}}",
                 "mergeFailedError": "Failed to merge files: {{error}}",

@@ -34,7 +34,7 @@
                 <input type="file" #fileInput style="display: none" (change)="mergePDF($event)" [disabled]="isPdfLoading" />
                 <button (click)="triggerFileInput()" class="btn btn-primary text-truncate">
                     <fa-icon [icon]="faFileImport" />
-                    <span jhiTranslate="artemisApp.attachment.pdfPreview.appendFileButton"></span>
+                    <span jhiTranslate="artemisApp.attachment.pdfPreview.appendPDFButton"></span>
                 </button>
             </div>
         </div>
@@ -44,10 +44,10 @@
                     <canvas #enlargedCanvas></canvas>
                     <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
                     @if (currentPage !== 1) {
-                        <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)">←</button>
+                        <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)" aria-label="Previous page">←</button>
                     }
                     @if (currentPage !== totalPages) {
-                        <button class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)">→</button>
+                        <button class="btn btn-secondary nav-button right" (click)="handleNavigation('next', $event)" aria-label="Next page">→</button>
                     }
                     <div class="page-number-display">{{ currentPage }}</div>
                 </div>
