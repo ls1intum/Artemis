@@ -13,7 +13,6 @@ import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
