@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci;
+package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -26,21 +26,16 @@ import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
-import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
  * This class contains integration tests for edge cases pertaining to the local VC system.
  */
 class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
-
-    @Autowired
-    ProgrammingSubmissionTestRepository programmingSubmissionRepository;
 
     private LocalRepository assignmentRepository;
 

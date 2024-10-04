@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci.util;
+package de.tum.cit.aet.artemis.programming.icl;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;

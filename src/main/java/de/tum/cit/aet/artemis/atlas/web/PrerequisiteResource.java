@@ -22,11 +22,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
@@ -177,25 +177,31 @@ public class PrerequisiteResource {
     /**
      * POST courses/:courseId/prerequisites/import : imports a new prerequisite.
      *
-     * @param courseId       the id of the course to which the prerequisite should be imported to
-     * @param prerequisiteId the id of the prerequisite that should be imported
+     * @param courseId      the id of the course to which the prerequisite should be imported to
+     * @param importOptions the options for the import
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported prerequisite
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites/import")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Prerequisite> importPrerequisite(@PathVariable long courseId, @RequestBody long prerequisiteId) throws URISyntaxException {
-        log.info("REST request to import a prerequisite: {}", prerequisiteId);
+    public ResponseEntity<Prerequisite> importPrerequisite(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions) throws URISyntaxException {
+        log.info("REST request to import a prerequisite: {}", importOptions.competencyIds());
+
+        if (importOptions.competencyIds() == null || importOptions.competencyIds().size() != 1) {
+            throw new BadRequestAlertException("Exactly one prerequisite must be imported", ENTITY_NAME, "noPrerequisite");
+        }
+        long prerequisiteId = importOptions.competencyIds().iterator().next();
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
-        var prerequisiteToImport = courseCompetencyRepository.findByIdElseThrow(prerequisiteId);
+        var prerequisiteToImport = courseCompetencyRepository.findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(prerequisiteId);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, prerequisiteToImport.getCourse(), null);
         if (prerequisiteToImport.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The prerequisite is already added to this course", ENTITY_NAME, "prerequisiteCycle");
         }
 
-        Prerequisite createdPrerequisite = prerequisiteService.createPrerequisite(prerequisiteToImport, course);
+        Set<CompetencyWithTailRelationDTO> createdPrerequisites = prerequisiteService.importPrerequisites(course, Set.of(prerequisiteToImport), importOptions);
+        Prerequisite createdPrerequisite = (Prerequisite) createdPrerequisites.iterator().next().competency();
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/" + createdPrerequisite.getId())).body(createdPrerequisite);
     }
@@ -203,21 +209,24 @@ public class PrerequisiteResource {
     /**
      * POST courses/:courseId/prerequisites/import/bulk : imports a number of prerequisites (and optionally their relations) into a course.
      *
-     * @param courseId        the id of the course to which the prerequisites should be imported to
-     * @param prerequisiteIds the ids of the prerequisites that should be imported
-     * @param importRelations if relations should be imported as well
+     * @param courseId      the id of the course to which the prerequisites should be imported to
+     * @param importOptions the options for the import
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported prerequisites
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/prerequisites/import/bulk")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importPrerequisites(@PathVariable long courseId, @RequestBody Set<Long> prerequisiteIds,
-            @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
-        log.info("REST request to import prerequisites: {}", prerequisiteIds);
+    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importPrerequisites(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
+        log.info("REST request to import prerequisites: {}", importOptions.competencyIds());
+
+        if (importOptions.competencyIds() == null || importOptions.competencyIds().isEmpty()) {
+            throw new BadRequestAlertException("No prerequisites to import", ENTITY_NAME, "noPrerequisites");
+        }
 
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
-        List<CourseCompetency> prerequisitesToImport = courseCompetencyRepository.findAllById(prerequisiteIds);
+        Set<CourseCompetency> prerequisitesToImport = courseCompetencyRepository.findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(importOptions.competencyIds());
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
         prerequisitesToImport.forEach(prerequisiteToImport -> {
@@ -227,48 +236,37 @@ public class PrerequisiteResource {
             }
         });
 
-        Set<CompetencyWithTailRelationDTO> importedPrerequisites;
-        if (importRelations) {
-            importedPrerequisites = prerequisiteService.importPrerequisitesAndRelations(course, prerequisitesToImport);
-        }
-        else {
-            importedPrerequisites = prerequisiteService.importPrerequisites(course, prerequisitesToImport);
-        }
+        Set<CompetencyWithTailRelationDTO> importedPrerequisites = prerequisiteService.importPrerequisites(course, prerequisitesToImport, importOptions);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites);
     }
 
     /**
-     * POST courses/{courseId}/prerequisites/import-all/{sourceCourseId} : Imports all prerequisites of the source course (and optionally their relations) into another.
+     * POST courses/{courseId}/prerequisites/import-all : Imports all prerequisites of the source course (and optionally their relations) into another.
      *
-     * @param courseId        the id of the course to import into
-     * @param sourceCourseId  the id of the course to import from
-     * @param importRelations if relations should be imported as well
+     * @param courseId      the id of the course to import into
+     * @param importOptions the options for the import
      * @return the ResponseEntity with status 201 (Created) and with body containing the imported prerequisites (and relations)
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("courses/{courseId}/prerequisites/import-all/{sourceCourseId}")
+    @PostMapping("courses/{courseId}/prerequisites/import-all")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllPrerequisitesFromCourse(@PathVariable long courseId, @PathVariable long sourceCourseId,
-            @RequestParam(defaultValue = "false") boolean importRelations) throws URISyntaxException {
-        log.info("REST request to all prerequisites from course {} into course {}", sourceCourseId, courseId);
+    public ResponseEntity<Set<CompetencyWithTailRelationDTO>> importAllPrerequisitesFromCourse(@PathVariable long courseId, @RequestBody CompetencyImportOptionsDTO importOptions)
+            throws URISyntaxException {
+        log.info("REST request to all prerequisites from course {} into course {}", importOptions.sourceCourseId(), courseId);
 
-        if (courseId == sourceCourseId) {
-            throw new BadRequestAlertException("Cannot import from a course into itself", "Course", "courseCycle");
+        if (importOptions.sourceCourseId().isEmpty()) {
+            throw new BadRequestAlertException("No source course specified", ENTITY_NAME, "noSourceCourse");
+        }
+        else if (courseId == importOptions.sourceCourseId().get()) {
+            throw new BadRequestAlertException("Cannot import from a course into itself", ENTITY_NAME, "courseCycle");
         }
         var targetCourse = courseRepository.findByIdElseThrow(courseId);
-        var sourceCourse = courseRepository.findByIdElseThrow(sourceCourseId);
+        var sourceCourse = courseRepository.findByIdElseThrow(importOptions.sourceCourseId().get());
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, sourceCourse, null);
 
-        var prerequisites = prerequisiteRepository.findAllForCourse(sourceCourse.getId());
-        Set<CompetencyWithTailRelationDTO> importedPrerequisites;
-
-        if (importRelations) {
-            importedPrerequisites = prerequisiteService.importPrerequisitesAndRelations(targetCourse, prerequisites);
-        }
-        else {
-            importedPrerequisites = prerequisiteService.importPrerequisites(targetCourse, prerequisites);
-        }
+        var prerequisites = prerequisiteRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(sourceCourse.getId());
+        Set<CompetencyWithTailRelationDTO> importedPrerequisites = prerequisiteService.importPrerequisites(targetCourse, prerequisites, importOptions);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/prerequisites/")).body(importedPrerequisites);
     }

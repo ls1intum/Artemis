@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci;
+package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_RESULTS_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCALCI_WORKING_DIRECTORY;
@@ -69,6 +69,12 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @Autowired
     private ExamUtilService examUtilService;
 
+    @Value("${artemis.user-management.internal-admin.username}")
+    private String localVCUsername;
+
+    @Value("${artemis.user-management.internal-admin.password}")
+    private String localVCPassword;
+
     // ---- Repository handles ----
     private LocalRepository templateRepository;
 
@@ -81,12 +87,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private String teamShortName;
 
     private String teamRepositorySlug;
-
-    @Value("${artemis.user-management.internal-admin.username}")
-    private String localVCUsername;
-
-    @Value("${artemis.user-management.internal-admin.password}")
-    private String localVCPassword;
 
     @BeforeAll
     void setupAll() {

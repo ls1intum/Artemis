@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci;
+package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -576,9 +576,9 @@ public class LocalVCLocalCITestService {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
-        log.info("Expected commit hash: " + expectedCommitHash);
+        log.info("Expected commit hash: {}", expectedCommitHash);
         for (ProgrammingSubmission submission : submissions) {
-            log.info("Submission with commit hash: " + submission.getCommitHash());
+            log.info("Submission with commit hash: {}", submission.getCommitHash());
         }
         await().until(() -> {
             // get the latest valid submission (!ILLEGAL and with results) of the participation
