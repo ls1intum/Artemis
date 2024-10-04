@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci;
+package de.tum.cit.aet.artemis.programming.icl;
 
 import java.time.ZonedDateTime;
 import java.util.List;

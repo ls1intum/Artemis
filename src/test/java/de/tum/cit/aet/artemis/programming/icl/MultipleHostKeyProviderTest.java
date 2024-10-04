@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci;
+package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
