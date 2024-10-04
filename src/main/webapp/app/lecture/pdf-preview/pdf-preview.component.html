@@ -70,7 +70,7 @@
                 </a>
             </div>
             <div>
-                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading || totalPages === 0">
+                <button type="submit" (click)="updateAttachmentWithFile()" class="btn btn-primary" [disabled]="isPdfLoading || totalPages === 0 || !isFileChanged">
                     <fa-icon [icon]="faSave"></fa-icon>
                     <span jhiTranslate="entity.action.save"></span>
                 </button>

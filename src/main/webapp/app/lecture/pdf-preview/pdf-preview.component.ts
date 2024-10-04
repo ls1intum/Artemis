@@ -38,6 +38,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachment?: Attachment;
     attachmentUnit?: AttachmentUnit;
     isEnlargedView = false;
+    isFileChanged = false;
     currentPage = 1;
     totalPages = 0;
     attachmentSub: Subscription;
@@ -460,6 +461,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
                 pdfDoc.removePage(pageIndex);
             });
 
+            this.isFileChanged = true;
             const pdfBytes = await pdfDoc.save();
             this.currentPdfBlob = new Blob([pdfBytes], { type: 'application/pdf' });
             this.selectedPages.clear();
@@ -500,6 +502,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             const copiedPages = await existingPdfDoc.copyPages(newPdfDoc, newPdfDoc.getPageIndices());
             copiedPages.forEach((page) => existingPdfDoc.addPage(page));
 
+            this.isFileChanged = true;
             const mergedPdfBytes = await existingPdfDoc.save();
             this.currentPdfBlob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
 
