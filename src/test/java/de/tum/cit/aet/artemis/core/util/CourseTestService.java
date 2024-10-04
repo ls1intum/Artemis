@@ -1954,7 +1954,7 @@ public class CourseTestService {
         Course course = modelingExerciseUtilService.addCourseWithDifferentModelingExercises();
         ModelingExercise classExercise = exerciseUtilService.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
 
-        List<Submission> lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, Submission.class);
+        List<Submission> lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/locked-submissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 0").isEmpty();
 
@@ -1969,14 +1969,14 @@ public class CourseTestService {
         submission = ParticipationFactory.generateModelingSubmission(validModel, true);
         modelingExerciseUtilService.addModelingSubmissionWithResultAndAssessor(classExercise, submission, userPrefix + "student3", userPrefix + "tutor1");
 
-        lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/lockedSubmissions", HttpStatus.OK, Submission.class);
+        lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/locked-submissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).as("Locked Submissions is not null").isNotNull();
         assertThat(lockedSubmissions).as("Locked Submissions length is 3").hasSize(3);
     }
 
     // Test
     public void testGetLockedSubmissionsForCourseAsStudent() throws Exception {
-        List<Submission> lockedSubmissions = request.getList("/api/courses/1/lockedSubmissions", HttpStatus.FORBIDDEN, Submission.class);
+        List<Submission> lockedSubmissions = request.getList("/api/courses/1/locked-submissions", HttpStatus.FORBIDDEN, Submission.class);
         assertThat(lockedSubmissions).as("Locked Submissions is null").isNull();
     }
 
@@ -3338,7 +3338,7 @@ public class CourseTestService {
     }
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
-        return "/api/courses/" + courseId + "/onlineCourseConfiguration";
+        return "/api/courses/" + courseId + "/online-course-configuration";
     }
 
     // Test

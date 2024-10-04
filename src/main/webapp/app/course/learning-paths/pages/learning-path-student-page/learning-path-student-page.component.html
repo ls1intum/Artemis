@@ -1,12 +1,12 @@
 <div class="col learning-path-student-page">
-    @if (isLearningPathIdLoading()) {
+    @if (isLearningPathLoading()) {
         <div class="row justify-content-center align-items-center h-100">
             <div class="spinner-border text-primary" role="status">
                 <span class="sr-only" jhiTranslate="loading"></span>
             </div>
         </div>
-    } @else if (learningPathId()) {
-        <jhi-learning-path-student-nav [learningPathId]="learningPathId()!" />
+    } @else if (learningPath() && learningPath()!.startedByStudent) {
+        <jhi-learning-path-student-nav [learningPathId]="learningPath()!.id" />
         <div class="learning-path-student-content">
             @if (currentLearningObject()?.type === LearningObjectType.LECTURE) {
                 <jhi-learning-path-lecture-unit [lectureUnitId]="currentLearningObject()!.id" />
@@ -27,10 +27,10 @@
                 <h3 class="mb-3" jhiTranslate="artemisApp.learningPath.generation.title"></h3>
                 <div jhiTranslate="artemisApp.learningPath.generation.description"></div>
                 <button
-                    (click)="generateLearningPath(this.courseId())"
+                    (click)="startLearningPath()"
                     type="button"
                     class="mt-4 btn btn-primary"
-                    id="generate-learning-path-button"
+                    id="start-learning-path-button"
                     jhiTranslate="artemisApp.learningPath.generation.generateButton"
                 ></button>
             </div>

@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
+import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.GroupNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationService;
@@ -116,6 +117,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManageme
 public class CourseService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseService.class);
+
+    private final FaqRepository faqRepository;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -210,7 +213,7 @@ public class CourseService {
             TutorialGroupRepository tutorialGroupRepository, PlagiarismCaseRepository plagiarismCaseRepository, ConversationRepository conversationRepository,
             LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
-            PrerequisiteRepository prerequisiteRepository, CompetencyRelationRepository competencyRelationRepository) {
+            PrerequisiteRepository prerequisiteRepository, CompetencyRelationRepository competencyRelationRepository, FaqRepository faqRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -250,6 +253,7 @@ public class CourseService {
         this.tutorialGroupChannelManagementService = tutorialGroupChannelManagementService;
         this.prerequisiteRepository = prerequisiteRepository;
         this.competencyRelationRepository = competencyRelationRepository;
+        this.faqRepository = faqRepository;
     }
 
     /**
@@ -467,6 +471,7 @@ public class CourseService {
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
+        deleteFaqsOfCourse(course);
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
@@ -540,6 +545,10 @@ public class CourseService {
         competencyRelationRepository.deleteAllByCourseId(course.getId());
         prerequisiteRepository.deleteAll(course.getPrerequisites());
         competencyRepository.deleteAll(course.getCompetencies());
+    }
+
+    private void deleteFaqsOfCourse(Course course) {
+        faqRepository.deleteAllByCourseId(course.getId());
     }
 
     /**

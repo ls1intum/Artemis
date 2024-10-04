@@ -12,6 +12,9 @@
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
             "cardExerciseLabel": "Nächste Übung:",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Punkte",
+            "cardScore": "Punktzahl",
+            "cardManageCourse": "Kurs Verwalten",
             "archive": {
                 "oldCourses": "Suchst du nach alten Kursen? Klicke",
                 "here": "hier"
@@ -92,7 +95,8 @@
                 "testExam": "Testklausur",
                 "communication": "Kommunikation",
                 "plagiarismCases": "Plagiatsfälle",
-                "gradingSystem": "Notenschlüssel"
+                "gradingSystem": "Notenschlüssel",
+                "faq": "FAQ"
             },
             "exerciseFilter": {
                 "filter": "Filter",

@@ -18,6 +18,7 @@ import {
     IconDefinition,
     faChalkboardUser,
     faChartBar,
+    faChevronLeft,
     faChevronRight,
     faCircleNotch,
     faClipboard,
@@ -31,6 +32,7 @@ import {
     faListCheck,
     faNetworkWired,
     faPersonChalkboard,
+    faQuestion,
     faSync,
     faTable,
     faTimes,
@@ -116,6 +118,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isNotManagementView: boolean;
     canUnenroll: boolean;
     isNavbarCollapsed = false;
+    isSidebarCollapsed = false;
     profileSubscription?: Subscription;
     showRefreshButton: boolean = false;
     isExamStarted = false;
@@ -169,8 +172,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     faSync = faSync;
     faCircleNotch = faCircleNotch;
     faChevronRight = faChevronRight;
+    faChevronLeft = faChevronLeft;
     facSidebar = facSidebar;
     faEllipsis = faEllipsis;
+    faQuestion = faQuestion;
 
     FeatureToggle = FeatureToggle;
     CachingStrategy = CachingStrategy;
@@ -232,6 +237,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.courseActionItems = this.getCourseActionItems();
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
+        this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
     }
 
     /** Listen window resize event by height */
@@ -333,6 +339,12 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
                 sidebarItems.push(learningPathItem);
             }
         }
+
+        if (this.course?.faqEnabled) {
+            const faqItem: SidebarItem = this.getFaqItem();
+            sidebarItems.push(faqItem);
+        }
+
         return sidebarItems;
     }
 
@@ -439,6 +451,19 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             hidden: false,
         };
         return dashboardItem;
+    }
+
+    getFaqItem() {
+        const faqItem: SidebarItem = {
+            routerLink: 'faq',
+            icon: faQuestion,
+            title: 'FAQs',
+            translation: 'artemisApp.courseOverview.menu.faq',
+            hasInOrionProperty: false,
+            showInOrionWindow: false,
+            hidden: false,
+        };
+        return faqItem;
     }
 
     getDefaultItems() {
@@ -564,6 +589,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         // Since we change the pageTitle + might be pulling data upwards during a render cycle, we need to re-run change detection
         this.changeDetectorRef.detectChanges();
+
+        this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
     }
 
     toggleSidebar() {
@@ -572,6 +599,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
         const childRouteComponent = this.activatedComponentReference;
         childRouteComponent.toggleSidebar();
+        this.isSidebarCollapsed = childRouteComponent.isCollapsed;
     }
 
     @HostListener('window:keydown.Control.Shift.b', ['$event'])

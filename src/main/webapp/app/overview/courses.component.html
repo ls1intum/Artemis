@@ -1,8 +1,8 @@
 @if (nextRelevantExam && nextRelevantCourseForExam) {
-    <div class="row">
+    <div class="module-bg p-3 rounded-3 mb-3">
         <h3 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.examTitle" [translateValues]="{ course: nextRelevantCourseForExam.title }"></h3>
-        <div class="col-12 mb-5">
-            <div class="row justify-content-between align-items-center exam-container ps-3 pe-3" (click)="openExam()">
+        <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center exam-container px-3" (click)="openExam()">
                 <div class="mb-4 mt-4 d-flex" style="width: unset">
                     <fa-icon [icon]="faPenAlt" size="2x" />
                     <h4 class="ms-2 fw-medium">{{ nextRelevantExam.title }}</h4>
@@ -19,46 +19,54 @@
         </div>
     </div>
 }
-<div class="row mb-3 justify-content-between">
-    <div class="col-sm-8">
-        <h3 class="fw-medium" jhiTranslate="artemisApp.studentDashboard.title"></h3>
+<div class="module-bg rounded-3">
+    <div class="d-flex justify-content-between module-bg p-3 rounded-3 align-items-center">
+        <h3 class="fw-medium mb-0" jhiTranslate="artemisApp.studentDashboard.title"></h3>
+        @if (regularCourses.length) {
+            <div class="col-sm-auto d-flex">
+                <a class="btn btn-primary" [routerLink]="['/courses/enroll']" jhiTranslate="artemisApp.studentDashboard.enroll.title"></a>
+            </div>
+        }
     </div>
-
-    @if (regularCourses.length) {
-        <div class="col-sm-auto d-flex">
-            <a class="btn btn-primary" [routerLink]="['/courses/enroll']" jhiTranslate="artemisApp.studentDashboard.enroll.title"></a>
+    @if (recentlyAccessedCourses.length) {
+        <div class="row">
+            <h4 class="col m-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed"></h4>
+        </div>
+        <div class="container-fluid">
+            <div class="course-grid justify-content-center align-items-center">
+                @for (course of recentlyAccessedCourses; track course) {
+                    <div class="course-card-wrapper">
+                        <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: course }" />
+                    </div>
+                }
+            </div>
+        </div>
+        @if (regularCourses.length) {
+            <div class="row">
+                <h4 class="col m-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.otherCourses"></h4>
+            </div>
+        }
+    }
+    @if (coursesLoaded && !regularCourses.length && !recentlyAccessedCourses.length) {
+        <div class="mt-5 mb-5 d-flex flex-column gap-3">
+            <h4 class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
+            <div class="col-sm-auto d-flex justify-content-center">
+                <a class="btn btn-primary" [routerLink]="['/courses/enroll']" jhiTranslate="artemisApp.studentDashboard.enroll.title"></a>
+            </div>
+        </div>
+    } @else {
+        <div class="container-fluid">
+            <div class="course-grid pb-3 justify-content-center align-items-center">
+                @for (course of regularCourses; track course) {
+                    <div class="course-card-wrapper">
+                        <ng-template *ngTemplateOutlet="courseCardTemplate; context: { $implicit: course }" />
+                    </div>
+                }
+            </div>
         </div>
     }
 </div>
-@if (recentlyAccessedCourses.length > 0) {
-    <div class="row">
-        <h4 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.recentlyAccessed"></h4>
-    </div>
-    <div class="row">
-        @for (course of recentlyAccessedCourses; track course) {
-            <jhi-overview-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
-        }
-    </div>
-    @if (regularCourses.length > 0) {
-        <div class="row">
-            <h4 class="col mb-3 fw-medium" jhiTranslate="artemisApp.studentDashboard.otherCourses"></h4>
-        </div>
-    }
-}
-@if (coursesLoaded && !regularCourses.length && !recentlyAccessedCourses.length) {
-    <div class="mt-5 mb-5 d-flex flex-column gap-3">
-        <h4 class="text-secondary text-center" jhiTranslate="artemisApp.studentDashboard.noCourses"></h4>
-        <div class="col-sm-auto d-flex justify-content-center">
-            <a class="btn btn-primary" [routerLink]="['/courses/enroll']" jhiTranslate="artemisApp.studentDashboard.enroll.title"></a>
-        </div>
-    </div>
-} @else {
-    <div class="row">
-        @for (course of regularCourses; track course) {
-            <jhi-overview-course-card class="col-12 col-lg-6 col-xl-4 pe-2 ps-2 mb-3" [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
-        }
-    </div>
-}
+
 @if (coursesLoaded) {
     <div class="d-flex justify-content-center mt-3">
         <div jhiTranslate="artemisApp.studentDashboard.archive.oldCourses"></div>
@@ -66,3 +74,7 @@
         <a [routerLink]="['/courses/archive']" jhiTranslate="artemisApp.studentDashboard.archive.here"></a>
     </div>
 }
+
+<ng-template #courseCardTemplate let-course>
+    <jhi-overview-course-card [course]="course" [hasGuidedTour]="course === courseForGuidedTour" />
+</ng-template>

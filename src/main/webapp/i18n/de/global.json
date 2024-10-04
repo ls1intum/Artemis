@@ -15,6 +15,9 @@
             "copied": "Kopiert",
             "new": "Neu"
         },
+        "importTable": {
+            "searchPlaceholder": "Suchen"
+        },
         "menu": {
             "home": "Startseite",
             "overview": "Kursübersicht",
@@ -266,7 +269,8 @@
             "goBack": "Zurück",
             "search": "Suchen",
             "select": "Auswählen",
-            "sendToIris": "An Iris schicken"
+            "sendToIris": "An Iris schicken",
+            "faq": "FAQ"
         },
         "detail": {
             "field": "Feld",
@@ -346,7 +350,8 @@
         "statistics": "Kursstatistiken",
         "exams": "Klausuren",
         "communication": "Kommunikation",
-        "archive": "Kursarchiv"
+        "archive": "Kursarchiv",
+        "faq": "FAQ"
     },
     "connectionStatus": {
         "connected": "Verbunden",

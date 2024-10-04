@@ -266,6 +266,16 @@ const routes: Routes = [
                 },
             },
             {
+                path: 'faq',
+                loadComponent: () => import('../overview/course-faq/course-faq.component').then((m) => m.CourseFaqComponent),
+                data: {
+                    authorities: [Authority.USER],
+                    pageTitle: 'overview.faq',
+                    hasSidebar: false,
+                    showRefreshButton: true,
+                },
+            },
+            {
                 path: '',
                 redirectTo: 'dashboard', // dashboard will redirect to exercises if not enabled
                 pathMatch: 'full',

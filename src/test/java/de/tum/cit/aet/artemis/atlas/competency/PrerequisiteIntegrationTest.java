@@ -2,20 +2,18 @@ package de.tum.cit.aet.artemis.atlas.competency;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.atlas.competency.util.PrerequisiteUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -23,9 +21,6 @@ import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrationTest {
 
     private static final String TEST_PREFIX = "prerequisiteintegrationtest";
-
-    @Autowired
-    private PrerequisiteUtilService prerequisiteUtilService;
 
     @BeforeEach
     void setupTestScenario() {
@@ -36,18 +31,21 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     class PreAuthorize {
 
         private void testAllPreAuthorizeEditor() throws Exception {
-            request.post("/api/courses/" + course.getId() + "/prerequisites/import/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/courses/" + course.getId() + "/prerequisites/import/bulk", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/prerequisites/import-standardized", Collections.emptyList(), HttpStatus.FORBIDDEN);
         }
 
         private void testAllPreAuthorizeInstructor() throws Exception {
             request.put("/api/courses/" + course.getId() + "/prerequisites", new Prerequisite(), HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/prerequisites", new Prerequisite(), HttpStatus.FORBIDDEN);
-            request.delete("/api/courses/" + course.getId() + "/prerequisites/" + competency.getId(), HttpStatus.FORBIDDEN);
+            request.delete("/api/courses/" + course.getId() + "/prerequisites/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/prerequisites/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
             // import
-            request.post("/api/courses/" + course.getId() + "/prerequisites/import-all/1", null, HttpStatus.FORBIDDEN);
-            request.post("/api/courses/" + course.getId() + "/prerequisites/import", competency.getId(), HttpStatus.FORBIDDEN);
+            request.post("/api/courses/" + course.getId() + "/prerequisites/import-all", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
+            request.post("/api/courses/" + course.getId() + "/prerequisites/import", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -108,13 +106,13 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnCompetenciesForStudentOfCourse() throws Exception {
-        super.shouldReturnCompetenciesForStudentOfCourse(new Prerequisite());
+        super.shouldReturnCompetenciesForCourse(new Prerequisite());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
-    void testShouldReturnForbiddenForStudentNotInCourse() throws Exception {
-        super.testShouldReturnForbiddenForStudentNotInCourse();
+    void shouldReturnCompetenciesForStudentNotInCourse() throws Exception {
+        super.shouldReturnCompetenciesForCourse(new Prerequisite());
     }
 
     void deleteCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception {
@@ -214,14 +212,20 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreate(new Prerequisite());
     }
 
-    CourseCompetency importCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception {
-        return request.postWithResponseBody("/api/courses/" + courseId + "/prerequisites/import", competencyId, Prerequisite.class, expectedStatus);
+    CourseCompetency importCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+        return request.postWithResponseBody("/api/courses/" + courseId + "/prerequisites/import", importOptions, Prerequisite.class, expectedStatus);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportCompetency() throws Exception {
         super.shouldImportCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportExerciseAndLectureWithCompetency();
     }
 
     @Test
@@ -264,15 +268,26 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk();
     }
 
-    List<CompetencyWithTailRelationDTO> importAllCall(long courseId, long sourceCourseId, boolean importRelations, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/courses/" + courseId + "/prerequisites/import-all/" + sourceCourseId + (importRelations ? "?importRelations=true" : ""), null,
-                CompetencyWithTailRelationDTO.class, expectedStatus);
+    List<CompetencyWithTailRelationDTO> importAllCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+        return request.postListWithResponseBody("/api/courses/" + courseId + "/prerequisites/import-all", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportAllCompetencies() throws Exception {
         super.shouldImportAllCompetencies(prerequisiteUtilService::createPrerequisite);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportAllExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates();
     }
 
     @Test
@@ -303,9 +318,8 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
         super.shouldReturnNotFoundForNotExistingIds();
     }
 
-    List<CompetencyWithTailRelationDTO> importBulkCall(long courseId, Set<Long> competencyIds, boolean importRelations, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/courses/" + courseId + "/prerequisites/import/bulk" + (importRelations ? "?importRelations=true" : ""), competencyIds,
-                CompetencyWithTailRelationDTO.class, expectedStatus);
+    List<CompetencyWithTailRelationDTO> importBulkCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+        return request.postListWithResponseBody("/api/courses/" + courseId + "/prerequisites/import/bulk", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus);
     }
 
     @Test
@@ -318,5 +332,17 @@ class PrerequisiteIntegrationTest extends AbstractCompetencyPrerequisiteIntegrat
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportCompetencies() throws Exception {
         super.shouldImportCompetencies(prerequisiteUtilService::createPrerequisite);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates();
     }
 }
