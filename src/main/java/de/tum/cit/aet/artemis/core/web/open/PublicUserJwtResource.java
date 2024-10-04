@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.web.open;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
 
@@ -123,7 +122,7 @@ public class PublicUserJwtResource {
         long tokenRemainingTime = tokenProvider.getExpirationDate(jwtToken).getTime() - new Date().getTime();
 
         // 1 day validity
-        long maxDuration = Duration.ofDays(1).get(ChronoUnit.MILLIS);
+        long maxDuration = Duration.ofDays(1).toMillis();
         ResponseCookie responseCookie = jwtCookieService.buildTheiaCookie(Math.min(tokenRemainingTime, maxDuration));
 
         response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
