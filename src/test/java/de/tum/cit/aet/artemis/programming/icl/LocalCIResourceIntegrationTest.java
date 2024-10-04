@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci;
+package de.tum.cit.aet.artemis.programming.icl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,6 +42,19 @@ import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 
 class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
+    @Autowired
+    @Qualifier("hazelcastInstance")
+    private HazelcastInstance hazelcastInstance;
+
+    @Autowired
+    private SharedQueueProcessingService sharedQueueProcessingService;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    private PageableSearchUtilService pageableSearchUtilService;
+
     protected BuildJobQueueItem job1;
 
     protected BuildJobQueueItem job2;
@@ -56,24 +69,11 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
 
     protected BuildJob finishedJobForLogs;
 
-    @Autowired
-    @Qualifier("hazelcastInstance")
-    private HazelcastInstance hazelcastInstance;
-
-    @Autowired
-    private SharedQueueProcessingService sharedQueueProcessingService;
-
-    @Autowired
-    private BuildLogEntryService buildLogEntryService;
-
     protected IQueue<BuildJobQueueItem> queuedJobs;
 
     protected IMap<String, BuildJobQueueItem> processingJobs;
 
     protected IMap<String, BuildAgentInformation> buildAgentInformation;
-
-    @Autowired
-    private PageableSearchUtilService pageableSearchUtilService;
 
     @BeforeEach
     void createJobs() {
