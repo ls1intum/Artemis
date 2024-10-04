@@ -66,7 +66,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.ParticipationVcsAccessTokenService;
-import de.tum.cit.aet.artemis.programming.service.localci.LocalCIQueueWebsocketService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -89,9 +88,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @Autowired
     private BuildLogEntryService buildLogEntryService;
 
-    @Autowired
-    private LocalCIQueueWebsocketService localCIQueueWebsocketService;
-
     @Value("${artemis.user-management.internal-admin.username}")
     private String localVCUsername;
 
@@ -106,14 +102,12 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @BeforeAll
     void setupAll() {
-        localCIQueueWebsocketService.removeListeners();
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
     }
 
     @AfterAll
     void cleanupAll() {
         this.gitService.init();
-        localCIQueueWebsocketService.init();
     }
 
     @BeforeEach
