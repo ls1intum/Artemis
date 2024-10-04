@@ -3,7 +3,6 @@ import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -20,15 +19,16 @@ import { CourseArchiveComponent } from 'app/overview/course-archive/course-archi
 import { CourseCardHeaderComponent } from 'app/overview/course-card-header/course-card-header.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { CourseForArchiveDTO } from 'app/course/manage/course-for-archive-dto';
 
-const course1: Course = { id: 1, semester: 'WS21/22', title: 'iPraktikum' };
-const course2: Course = { id: 2, semester: 'WS21/22' };
-const course3: Course = { id: 3, semester: 'SS22' };
-const course4: Course = { id: 4, semester: 'SS22' };
-const course5: Course = { id: 5, semester: 'WS23/24' };
-const course6: Course = { id: 6, semester: 'SS19' };
-const course7: Course = { id: 7, semester: 'WS22/23' };
-const courses: Course[] = [course1, course2, course3, course4, course5, course6, course7];
+const course1 = { id: 1, semester: 'WS21/22', title: 'iPraktikum' } as CourseForArchiveDTO;
+const course2 = { id: 2, semester: 'WS21/22' } as CourseForArchiveDTO;
+const course3 = { id: 3, semester: 'SS22' } as CourseForArchiveDTO;
+const course4 = { id: 4, semester: 'SS22' } as CourseForArchiveDTO;
+const course5 = { id: 5, semester: 'WS23/24' } as CourseForArchiveDTO;
+const course6 = { id: 6, semester: 'SS19' } as CourseForArchiveDTO;
+const course7 = { id: 7, semester: 'WS22/23' } as CourseForArchiveDTO;
+const courses: CourseForArchiveDTO[] = [course1, course2, course3, course4, course5, course6, course7];
 
 describe('CourseArchiveComponent', () => {
     let component: CourseArchiveComponent;
@@ -86,20 +86,20 @@ describe('CourseArchiveComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.courses).toEqual(courses);
-            expect(component.courses).toHaveLength(7);
+            expect(component.coursesDTO).toEqual(courses);
+            expect(component.coursesDTO).toHaveLength(7);
         });
 
         it('should handle an empty response body correctly when fetching all courses for archive', () => {
-            const emptyCourses: Course[] = [];
+            const emptyCourses: CourseForArchiveDTO[] = [];
             const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
 
-            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/archive` });
+            const req = httpMock.expectOne({ method: 'GET', url: `api/courses/for-archive` });
             component.ngOnInit();
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             req.flush(null);
-            expect(component.courses).toStrictEqual(emptyCourses);
+            expect(component.coursesDTO).toStrictEqual(emptyCourses);
         });
 
         it('should sort the name of the semesters uniquely', () => {
@@ -144,13 +144,13 @@ describe('CourseArchiveComponent', () => {
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
 
-            // we expand the newest semester at first, others are collapsed
+            // we expand all semesters at first
             expect(component.semesterCollapsed).toStrictEqual({
                 'WS23/24': false,
-                'WS22/23': true,
-                SS22: true,
-                'WS21/22': true,
-                SS19: true,
+                'WS22/23': false,
+                SS22: false,
+                'WS21/22': false,
+                SS19: false,
             });
         });
 
@@ -205,8 +205,8 @@ describe('CourseArchiveComponent', () => {
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
-            expect(component.courses).toBeDefined();
-            expect(component.courses).toHaveLength(7);
+            expect(component.coursesDTO).toBeDefined();
+            expect(component.coursesDTO).toHaveLength(7);
 
             const onSortSpy = jest.spyOn(component, 'onSort');
             const button = fixture.debugElement.nativeElement.querySelector('#sort-test');
@@ -226,7 +226,7 @@ describe('CourseArchiveComponent', () => {
             const iconComponent = fixture.debugElement.query(By.css('#icon-test-up')).componentInstance;
 
             expect(iconComponent).not.toBeNull();
-            expect(iconComponent.icon).toBe(component.faArrowUpAZ);
+            expect(iconComponent.icon).toBe(component.faArrowUp19);
         }));
     });
 });

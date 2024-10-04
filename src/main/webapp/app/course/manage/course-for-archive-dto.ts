@@ -4,6 +4,4 @@ export class CourseForArchiveDTO {
     semester: string;
     color: string;
     icon: string;
-
-    constructor() {}
 }

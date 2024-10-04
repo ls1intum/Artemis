@@ -5,7 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { Subscription } from 'rxjs';
-import { faAngleDown, faAngleUp, faArrowDown91, faArrowUp91, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faArrowDown19, faArrowUp19, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
@@ -35,8 +35,8 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     //Icons
     readonly faAngleDown = faAngleDown;
     readonly faAngleUp = faAngleUp;
-    readonly faArrowDown91 = faArrowDown91;
-    readonly faArrowUp91 = faArrowUp91;
+    readonly faArrowDown19 = faArrowDown19;
+    readonly faArrowUp19 = faArrowUp19;
     readonly faQuestionCircle = faQuestionCircle;
 
     ngOnInit(): void {
