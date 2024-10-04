@@ -558,6 +558,6 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             AND c.endDate IS NOT NULL
             AND c.endDate < :now
             """)
-    List<Course> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("userId") long userId, @Param("isAdmin") boolean isAdmin, @Param("now") ZonedDateTime now);
+    Set<Course> findInactiveCoursesForUserRolesWithNonNullSemester(@Param("userId") long userId, @Param("isAdmin") boolean isAdmin, @Param("now") ZonedDateTime now);
 
 }

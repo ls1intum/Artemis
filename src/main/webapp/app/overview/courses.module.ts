@@ -36,15 +36,8 @@ import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
         NgxChartsModule,
         PieChartModule,
         ArtemisSidebarModule,
-    ],
-    declarations: [
-        CoursesComponent,
-        CourseOverviewComponent,
         CourseCardComponent,
-        CourseExercisesComponent,
-        CourseLecturesComponent,
-        CourseLectureRowComponent,
-        CourseUnenrollmentModalComponent,
     ],
+    declarations: [CoursesComponent, CourseOverviewComponent, CourseExercisesComponent, CourseLecturesComponent, CourseLectureRowComponent, CourseUnenrollmentModalComponent],
 })
 export class ArtemisCoursesModule {}

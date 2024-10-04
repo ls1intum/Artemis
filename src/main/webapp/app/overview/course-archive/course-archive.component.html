@@ -1,4 +1,4 @@
-@if (courses) {
+@if (coursesDTO) {
     <div class="module-bg p-3 rounded-3 mb-3">
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex justify-content-start gap-1">
@@ -10,14 +10,14 @@
                     ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}"
                 />
             </div>
-            @if (courses.length) {
+            @if (coursesDTO.length) {
                 <div class="d-flex justify-content-between gap-3 align-items-center ms-1">
                     <div class="text-primary d-inline-flex">
                         <a id="sort-test" (click)="onSort()" class="d-inline-flex align-items-center">
                             @if (isSortAscending) {
-                                <fa-icon id="icon-test-down" [icon]="faArrowDownAZ" />
+                                <fa-icon id="icon-test-down" [icon]="faArrowDown91" />
                             } @else {
-                                <fa-icon id="icon-test-up" [icon]="faArrowUpAZ" />
+                                <fa-icon id="icon-test-up" [icon]="faArrowUp91" />
                             }
                             <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
                         </a>
@@ -28,7 +28,7 @@
         </div>
     </div>
     <div class="module-bg py-3 rounded-3">
-        @if (courses.length) {
+        @if (coursesDTO.length) {
             <div class="mb-0">
                 @for (semester of semesters; track semester; let last = $last) {
                     <div
@@ -46,7 +46,14 @@
                             <div class="course-grid justify-content-center align-items-center">
                                 @for (course of coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText; track course) {
                                     <div class="course-card-wrapper p-0">
-                                        <jhi-course-card-header class="col-2" [course]="course" [archiveMode]="true" />
+                                        <jhi-course-card-header
+                                            class="col-2"
+                                            [courseId]="course.id"
+                                            [courseTitle]="course.title"
+                                            [courseIcon]="course.icon"
+                                            [courseColor]="course.color"
+                                            [archiveMode]="true"
+                                        />
                                     </div>
                                 }
                             </div>

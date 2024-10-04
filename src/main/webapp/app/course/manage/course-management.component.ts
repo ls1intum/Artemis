@@ -83,7 +83,7 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
                 this.courses = res.body!.sort((a, b) => (a.title ?? '').localeCompare(b.title ?? ''));
                 this.courseForGuidedTour = this.guidedTourService.enableTourForCourseOverview(this.courses, tutorAssessmentTour, true);
 
-                this.courseSemesters = this.courseManagementService.getUniqueSemesterNamesSorted(this.courses);
+                this.courseSemesters = this.getUniqueSemesterNamesSorted(this.courses);
                 this.sortCoursesIntoSemesters();
 
                 // First fetch important data like title for each exercise
@@ -97,6 +97,42 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
+    }
+
+    /**
+     * Sorts and returns the semesters by year descending
+     * WS is sorted above SS
+     *
+     * @param coursesWithSemesters the courses to sort the semesters of
+     * @return An array of sorted semester names
+     */
+    private getUniqueSemesterNamesSorted(coursesWithSemesters: Course[]): string[] {
+        return (
+            coursesWithSemesters
+                // Test courses get their own section later
+                .filter((course) => !course.testCourse)
+                .map((course) => course.semester ?? '')
+                // Filter down to unique values
+                .filter((course, index, courses) => courses.indexOf(course) === index)
+                .sort((semesterA, semesterB) => {
+                    // Sort last if the semester is unset
+                    if (semesterA === '') {
+                        return 1;
+                    }
+                    if (semesterB === '') {
+                        return -1;
+                    }
+
+                    // Parse years in base 10 by extracting the two digits after the WS or SS prefix
+                    const yearsCompared = parseInt(semesterB.slice(2, 4), 10) - parseInt(semesterA.slice(2, 4), 10);
+                    if (yearsCompared !== 0) {
+                        return yearsCompared;
+                    }
+
+                    // If years are the same, sort WS over SS
+                    return semesterA.slice(0, 2) === 'WS' ? -1 : 1;
+                })
+        );
     }
 
     /**

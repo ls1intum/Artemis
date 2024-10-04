@@ -27,6 +27,7 @@ import { ScoresStorageService } from 'app/course/course-scores/scores-storage.se
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ExerciseType, ScoresPerExerciseType } from 'app/entities/exercise.model';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
+import { CourseForArchiveDTO } from './course-for-archive-dto';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -344,10 +345,10 @@ export class CourseManagementService {
     }
 
     /**
-     * find all courses for the archive using a GET request
+     * Find all courses for the archive using a GET request
      */
-    getCoursesForArchive(): Observable<HttpResponse<Course[]>> {
-        return this.http.get<Course[]>(`${this.resourceUrl}/archive`, { observe: 'response' });
+    getCoursesForArchive(): Observable<HttpResponse<CourseForArchiveDTO[]>> {
+        return this.http.get<CourseForArchiveDTO[]>(`${this.resourceUrl}/for-archive`, { observe: 'response' });
     }
 
     /**

@@ -72,6 +72,7 @@ import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -556,14 +557,26 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/archive : get all courses for course archive
+     * GET /courses/for-archive : get all courses for course archive
      *
-     * @return the ResponseEntity with status 200 (OK) and with body a list of courses (the user has access to)
+     * @return the ResponseEntity with status 200 (OK) and with body containing
+     *         a set of DTOs, which contain the courses with id, title, semester, color, icon
      */
-    @GetMapping("courses/archive")
+    @GetMapping("courses/for-archive")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<Course>> getCoursesForArchive() {
-        return ResponseEntity.ok(courseService.getAllCoursesForCourseArchive());
+    public ResponseEntity<Set<CourseForArchiveDTO>> getCoursesForArchive() {
+        long start = System.nanoTime();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get all inactive courses from previous semesters user {} has access to", user.getLogin());
+        Set<Course> courses = courseService.getAllCoursesForCourseArchive();
+        log.debug("courseService.getAllCoursesForCourseArchive done");
+
+        final Set<CourseForArchiveDTO> dto = courses.stream()
+                .map(course -> new CourseForArchiveDTO(course.getId(), course.getTitle(), course.getSemester(), course.getColor(), course.getCourseIcon()))
+                .collect(Collectors.toSet());
+
+        log.info("GET /courses/for-archive took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        return ResponseEntity.ok(dto);
     }
 
     /**
