@@ -1,5 +1,5 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import * as PDFJS from 'pdfjs-dist';
 import 'pdfjs-dist/build/pdf.worker';
@@ -60,6 +60,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         private attachmentService: AttachmentService,
         private attachmentUnitService: AttachmentUnitService,
         private alertService: AlertService,
+        private router: Router,
     ) {}
 
     ngOnInit() {
@@ -508,6 +509,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentService.update(this.attachmentToBeEdited!.id!, this.attachmentToBeEdited, pdfFile).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+                    this.router.navigate(['course-management', this.course?.id, 'lectures', this.attachment!.lecture!.id, 'attachments']);
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
@@ -526,6 +528,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentUnitService.update(this.attachmentUnit!.lecture!.id!, this.attachmentUnit!.id!, formData).subscribe({
                 next: () => {
                     this.alertService.success('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+                    this.router.navigate(['course-management', this.course?.id, 'lectures', this.attachmentUnit!.lecture!.id, 'unit-management']);
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
