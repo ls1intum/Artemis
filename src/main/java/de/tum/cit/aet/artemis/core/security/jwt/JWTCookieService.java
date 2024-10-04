@@ -42,6 +42,17 @@ public class JWTCookieService {
     }
 
     /**
+     * Builds the cookie with Theia flag
+     *
+     * @param duration the duration of the cookie and the jwt
+     * @return the login ResponseCookie containing the JWT
+     */
+    public ResponseCookie buildTheiaCookie(long duration) {
+        String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), duration, "THEIA");
+        return buildJWTCookie(jwt, Duration.of(duration, ChronoUnit.MILLIS));
+    }
+
+    /**
      * Builds the cookie containing the jwt for a logout and sets it in the response
      *
      * @return the logout ResponseCookie
