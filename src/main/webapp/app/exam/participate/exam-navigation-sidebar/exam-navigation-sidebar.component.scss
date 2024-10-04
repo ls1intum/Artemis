@@ -94,17 +94,27 @@ $exam-test-run-offset: 38px;
 }
 
 .double-arrow.menu-closed {
-    transform: translate(40px) rotate(0deg);
+    transform: translate(40px);
 }
 
 .double-arrow {
-    transform: translate(235px) rotate(180deg);
-    transition: all ease 0.3s;
+    transform: translate(235px);
+    transition: transform ease 0.3s;
     cursor: pointer;
     width: 30px;
     align-items: center;
     justify-content: center;
     display: flex;
+}
+
+.menu-closed .double-arrow-icon {
+    transform: rotate(0deg);
+}
+
+.double-arrow-icon {
+    transform: rotate(180deg);
+
+    transition: transform ease 0.3s 0.3s;
 }
 
 .me-negative {

@@ -73,7 +73,7 @@
         [ngbTooltip]="(isCollapsed ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
         (click)="toggleCollapseState()"
     >
-        <div [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
+        <div class="double-arrow-icon" [attr.aria-expanded]="!isCollapsed" aria-controls="collapseBasic">
             <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
             <fa-icon class="fa-xs" [icon]="faChevronRight" />
         </div>
