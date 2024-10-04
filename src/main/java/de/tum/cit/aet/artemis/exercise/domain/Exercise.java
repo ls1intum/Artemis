@@ -563,7 +563,7 @@ public abstract class Exercise extends BaseExercise implements LearningObject {
             boolean noProgrammingAndAssessmentOver = !isProgrammingExercise && isAssessmentOver;
             // For programming exercises we check that the assessment due date has passed (if set) for manual results otherwise we always show the automatic result
             boolean programmingAfterAssessmentOrAutomaticOrAthena = isProgrammingExercise
-                    && ((result.isManual() && isAssessmentOver) || result.isAutomatic() || result.isAthenaAutomatic());
+                    && ((result.isManual() && isAssessmentOver) || result.isAutomatic() || result.isAthenaBased());
             if (ratedOrPractice && (noProgrammingAndAssessmentOver || programmingAfterAssessmentOrAutomaticOrAthena)) {
                 // take the first found result that fulfills the above requirements
                 // or

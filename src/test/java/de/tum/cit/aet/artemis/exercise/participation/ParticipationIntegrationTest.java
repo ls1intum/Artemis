@@ -573,7 +573,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();
-        assertThat(invokedResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
 
         localRepo.resetLocalRepo();
@@ -617,7 +617,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isTrue();
-        assertThat(invokedResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
 
         localRepo.resetLocalRepo();
@@ -654,7 +654,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Result invokedTextResult = resultCaptor.getAllValues().get(1);
         assertThat(invokedTextResult).isNotNull();
         assertThat(invokedTextResult.getId()).isNotNull();
-        assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedTextResult.isAthenaBased()).isTrue();
         assertThat(invokedTextResult.getFeedbacks()).hasSize(1);
     }
 
@@ -689,7 +689,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         Result invokedModelingResult = resultCaptor.getAllValues().get(1);
         assertThat(invokedModelingResult).isNotNull();
         assertThat(invokedModelingResult.getId()).isNotNull();
-        assertThat(invokedModelingResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedModelingResult.isAthenaBased()).isTrue();
         assertThat(invokedModelingResult.getFeedbacks()).hasSize(1);
     }
 
@@ -730,7 +730,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult).isNotNull();
         assertThat(invokedResult.getId()).isNotNull();
         assertThat(invokedResult.isSuccessful()).isFalse();
-        assertThat(invokedResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(0);
 
         localRepo.resetLocalRepo();
@@ -766,7 +766,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         Result invokedTextResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedTextResult).isNotNull();
-        assertThat(invokedTextResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedTextResult.isAthenaBased()).isTrue();
         assertThat(invokedTextResult.getFeedbacks()).hasSize(0);
     }
 
@@ -800,7 +800,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         Result invokedModelingResult = resultCaptor.getAllValues().getFirst();
         assertThat(invokedModelingResult).isNotNull();
-        assertThat(invokedModelingResult.isAthenaAutomatic()).isTrue();
+        assertThat(invokedModelingResult.isAthenaBased()).isTrue();
         assertThat(invokedModelingResult.getFeedbacks()).hasSize(0);
     }
 

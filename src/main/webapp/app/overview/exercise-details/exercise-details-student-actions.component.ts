@@ -255,7 +255,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             });
     }
 
-    // this method will be removed once text and modeling support new component
+    // TODO remove this method once support of the button component is implemented for text and modeling exercises
     requestFeedback() {
         if (!this.assureConditionsSatisfied()) return;
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
