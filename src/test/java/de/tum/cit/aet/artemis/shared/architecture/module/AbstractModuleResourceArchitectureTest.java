@@ -156,7 +156,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
     @Test
     void testClassWithEnforceAdminInCorrectlyNamed() {
         ArchRule annotationToNameRule = classesOfThisModuleThat().areAnnotatedWith(EnforceAdmin.class).should().haveSimpleNameStartingWith("Admin")
-                .andShould(new ArchCondition<>("Have " + "package name ending with .admin") {
+                .andShould(new ArchCondition<>("Have package name ending with .admin") {
 
                     @Override
                     public void check(JavaClass item, ConditionEvents events) {
