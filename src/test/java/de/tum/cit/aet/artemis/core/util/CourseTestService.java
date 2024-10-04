@@ -90,6 +90,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseForArchiveDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -3404,13 +3405,14 @@ public class CourseTestService {
             courseRepo.save(oldCourse);
         }
 
-        final var actualOldCourses = request.getList("/api/courses/archive", HttpStatus.OK, Course.class);
+        final Set<CourseForArchiveDTO> actualOldCourses = request.getSet("/api/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
         assertThat(actualOldCourses).as("Course archive has 3 courses").hasSize(3);
         assertThat(actualOldCourses).as("Course archive has the correct semesters").extracting("semester").containsExactlyInAnyOrder(expectedOldCourses.get(0).getSemester(),
                 expectedOldCourses.get(1).getSemester(), expectedOldCourses.get(2).getSemester());
         assertThat(actualOldCourses).as("Course archive got the correct courses").extracting("id").containsExactlyInAnyOrder(expectedOldCourses.get(0).getId(),
                 expectedOldCourses.get(1).getId(), expectedOldCourses.get(2).getId());
-        assertThat(actualOldCourses).as("Course archive does not contain a null semester").doesNotContain(expectedOldCourses.get(3));
+        Optional<CourseForArchiveDTO> notFound = actualOldCourses.stream().filter(c -> Objects.equals(c.id(), expectedOldCourses.get(3).getId())).findFirst();
+        assertThat(notFound).as("Course archive did not fetch the last course").isNotPresent();
     }
 
     // Test
@@ -3433,7 +3435,7 @@ public class CourseTestService {
         // remove student from all courses
         removeAllGroupsFromStudent1();
 
-        var actualCoursesForStudent = request.getList("/api/courses/archive", HttpStatus.OK, Course.class);
+        final Set<CourseForArchiveDTO> actualCoursesForStudent = request.getSet("/api/courses/for-archive", HttpStatus.OK, CourseForArchiveDTO.class);
         assertThat(actualCoursesForStudent).as("Course archive does not show any courses to the user removed from these courses").hasSize(0);
     }
 
