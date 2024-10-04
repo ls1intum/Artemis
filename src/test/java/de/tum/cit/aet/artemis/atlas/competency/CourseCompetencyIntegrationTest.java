@@ -146,7 +146,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnCompetenciesForStudentOfCourse() throws Exception {
-        super.shouldReturnCompetenciesForStudentOfCourse(new Competency());
+        super.shouldReturnCompetenciesForCourse(new Competency());
     }
 
     @Test

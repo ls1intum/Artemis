@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,9 +139,8 @@ public class PrerequisiteResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Prerequisite> createPrerequisite(@PathVariable long courseId, @RequestBody Prerequisite prerequisite) throws URISyntaxException {
         log.debug("REST request to create Prerequisite : {}", prerequisite);
-        if (prerequisite.getId() != null || prerequisite.getTitle() == null || prerequisite.getTitle().trim().isEmpty()) {
-            throw new BadRequestException();
-        }
+        checkPrerequisitesAttributesForCreation(prerequisite);
+
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
         final var persistedPrerequisite = prerequisiteService.createCourseCompetency(prerequisite, course);
@@ -163,9 +161,7 @@ public class PrerequisiteResource {
     public ResponseEntity<List<Prerequisite>> createPrerequisite(@PathVariable Long courseId, @RequestBody List<Prerequisite> prerequisites) throws URISyntaxException {
         log.debug("REST request to create Prerequisites : {}", prerequisites);
         for (Prerequisite prerequisite : prerequisites) {
-            if (prerequisite.getId() != null || prerequisite.getTitle() == null || prerequisite.getTitle().trim().isEmpty()) {
-                throw new BadRequestException();
-            }
+            checkPrerequisitesAttributesForCreation(prerequisite);
         }
         var course = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(courseId);
 
@@ -302,9 +298,8 @@ public class PrerequisiteResource {
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Prerequisite> updatePrerequisite(@PathVariable long courseId, @RequestBody Prerequisite prerequisite) {
         log.debug("REST request to update Prerequisite : {}", prerequisite);
-        if (prerequisite.getId() == null) {
-            throw new BadRequestException();
-        }
+        checkPrerequisitesAttributesForUpdate(prerequisite);
+
         var course = courseRepository.findByIdElseThrow(courseId);
         var existingPrerequisite = prerequisiteRepository.findByIdWithLectureUnitsElseThrow(prerequisite.getId());
         checkCourseForPrerequisite(course, existingPrerequisite);
@@ -334,6 +329,26 @@ public class PrerequisiteResource {
         courseCompetencyService.deleteCourseCompetency(prerequisite, course);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, prerequisite.getTitle())).build();
+    }
+
+    private void checkPrerequisitesAttributesForCreation(Prerequisite prerequisite) {
+        if (prerequisite.getId() != null) {
+            throw new BadRequestAlertException("A new prerequiste should not have an id", ENTITY_NAME, "existingPrerequisiteId");
+        }
+        checkPrerequisitesAttributes(prerequisite);
+    }
+
+    private void checkPrerequisitesAttributesForUpdate(Prerequisite prerequisite) {
+        if (prerequisite.getId() == null) {
+            throw new BadRequestAlertException("An updated prerequiste should have an id", ENTITY_NAME, "missingPrerequisiteId");
+        }
+        checkPrerequisitesAttributes(prerequisite);
+    }
+
+    private void checkPrerequisitesAttributes(Prerequisite prerequisite) {
+        if (prerequisite.getTitle() == null || prerequisite.getTitle().trim().isEmpty() || prerequisite.getMasteryThreshold() < 1 || prerequisite.getMasteryThreshold() > 100) {
+            throw new BadRequestAlertException("The attributes of the competency are invalid!", ENTITY_NAME, "invalidPrerequisiteAttributes");
+        }
     }
 
     /**
