@@ -10,6 +10,7 @@ import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
@@ -43,6 +44,11 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         catch (LocalVCAuthException | LocalVCForbiddenException | LocalVCInternalException e) {
             servletResponse.setStatus(localVCServletService.getHttpStatusForException(e, servletRequest.getRequestURI()));
             return;
+        }
+        catch (AuthenticationException e) {
+            // intercept failed authentication to log it in the VCS access log
+            localVCServletService.logFailedAttempt(servletRequest);
+            throw e;
         }
 
         filterChain.doFilter(servletRequest, servletResponse);

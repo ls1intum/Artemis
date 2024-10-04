@@ -7,6 +7,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -44,7 +45,7 @@ public class VcsAccessLogService {
      * @param commitHash              The latest commit hash
      * @param ipAddress               The ip address of the user accessing the repository
      */
-    // TODO: this should be ASYNC to avoid long waiting times during permission check
+    @Async
     public void storeAccessLog(User user, ProgrammingExerciseParticipation participation, RepositoryActionType actionType, AuthenticationMechanism authenticationMechanism,
             String commitHash, String ipAddress) {
         log.debug("Storing access operation for user {}", user);
@@ -55,15 +56,29 @@ public class VcsAccessLogService {
     }
 
     /**
-     * Updates the commit hash after a successful push
+     * Updates the commit hash of the newest log entry
      *
      * @param participation The participation to which the repository belongs to
      * @param commitHash    The newest commit hash which should get set for the access log entry
      */
-    // TODO: this should be ASYNC to avoid long waiting times during permission check
+    @Async
     public void updateCommitHash(ProgrammingExerciseParticipation participation, String commitHash) {
-        vcsAccessLogRepository.findNewestByParticipationIdWhereCommitHashIsNull(participation.getId()).ifPresent(entry -> {
+        vcsAccessLogRepository.findNewestByParticipationId(participation.getId()).ifPresent(entry -> {
             entry.setCommitHash(commitHash);
+            vcsAccessLogRepository.save(entry);
+        });
+    }
+
+    /**
+     * Updates the repository action type of the newest log entry
+     *
+     * @param participation        The participation to which the repository belongs to
+     * @param repositoryActionType The repositoryActionType which should get set for the newest access log entry
+     */
+    @Async
+    public void updateRepositoryActionType(ProgrammingExerciseParticipation participation, RepositoryActionType repositoryActionType) {
+        vcsAccessLogRepository.findNewestByParticipationId(participation.getId()).ifPresent(entry -> {
+            entry.setRepositoryActionType(repositoryActionType);
             vcsAccessLogRepository.save(entry);
         });
     }
