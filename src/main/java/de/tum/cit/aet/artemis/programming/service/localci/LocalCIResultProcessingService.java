@@ -113,7 +113,7 @@ public class LocalCIResultProcessingService {
         if (resultQueueItem == null) {
             return;
         }
-        log.info("Processing build job result");
+        log.info("Processing build job result with id {}", resultQueueItem.buildJobQueueItem().id());
 
         BuildJobQueueItem buildJob = resultQueueItem.buildJobQueueItem();
         BuildResult buildResult = resultQueueItem.buildResult();
