@@ -573,8 +573,8 @@ public class LocalVCLocalCITestService {
         // wait for result to be persisted
         Duration timeoutDuration = timeoutInSeconds != null ? Duration.ofSeconds(timeoutInSeconds) : Duration.ofSeconds(DEFAULT_AWAITILITY_TIMEOUT_IN_SECONDS);
         await().atMost(timeoutDuration).until(() -> {
-            log.info("Checking if result is present for participation with id {} and commit hash {}", participationId, expectedCommitHash);
-            log.info("Current data in database: {}", resultRepository.findAll());
+            log.debug("Checking if result is present for participation with id {} and commit hash {}", participationId, expectedCommitHash);
+            log.debug("Current data in database: {}", resultRepository.findAll());
             return resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participationId).isPresent();
         });
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
