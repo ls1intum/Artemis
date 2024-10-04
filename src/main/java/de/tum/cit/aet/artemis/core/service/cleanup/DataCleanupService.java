@@ -123,7 +123,7 @@ public class DataCleanupService {
      * @param deleteTo   The end of the date range for deleting rated results.
      * @return a {@link CleanupServiceExecutionRecordDTO} representing the execution record of the cleanup job
      */
-    public CleanupServiceExecutionRecordDTO deleteRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
+    public CleanupServiceExecutionRecordDTO deleteNonLatestRatedResults(ZonedDateTime deleteFrom, ZonedDateTime deleteTo) {
         this.longFeedbackTextRepository.deleteLongFeedbackTextForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         this.textBlockRepository.deleteTextBlockForRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
         this.feedbackRepository.deleteOldFeedbackThatAreNotLatestRatedResultsWhereCourseDateBetween(deleteFrom, deleteTo);
@@ -133,6 +133,17 @@ public class DataCleanupService {
         return CleanupServiceExecutionRecordDTO.of(this.createCleanupJobExecution(CleanupJobType.RATED_RESULTS, deleteFrom, deleteTo));
     }
 
+    /**
+     * Retrieves the last execution record for each cleanup job type.
+     * This method returns the most recent execution of each cleanup job type by querying
+     * the {@link CleanupJobExecutionRepository} for the latest execution based on the
+     * deletion timestamp. If no execution is found for a job type, a default
+     * {@link CleanupServiceExecutionRecordDTO} with a {@code null} execution and the job
+     * type's label is returned.
+     *
+     * @return a list of {@link CleanupServiceExecutionRecordDTO} objects representing
+     *         the last execution record for each cleanup job type
+     */
     public List<CleanupServiceExecutionRecordDTO> getLastExecutions() {
         return Arrays.stream(CleanupJobType.values()).map(jobType -> {
             CleanupJobExecution lastExecution = cleanupJobExecutionRepository.findTopByCleanupJobTypeOrderByDeletionTimestampDesc(jobType);

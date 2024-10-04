@@ -53,7 +53,7 @@
                             }
                         </td>
                         <td>
-                            @if (operation.lastExecuted === undefined) {
+                            @if (!operation.lastExecuted) {
                                 {{ 'cleanupService.notRunYet' | artemisTranslate }}
                             } @else {
                                 {{ operation.lastExecuted | artemisDate }}
