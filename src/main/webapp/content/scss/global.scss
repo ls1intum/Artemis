@@ -139,7 +139,6 @@ a.btn {
 .form-control-sm,
 .form-select,
 .form-check-input,
-.form-control:not(.ace_editor):hover,
 .form-control:focus,
 .form-control:focus-visible,
 textarea {
@@ -827,14 +826,12 @@ Course Info Bar
     }
 }
 
-.warning-modal-window .modal-dialog {
-    width: 50%;
+.diff-view-modal .modal-dialog {
+    max-width: 80vw;
 }
 
-/* additional style to overwrite form-control style from parent components */
-.form-control.ace_editor {
-    font-size: 12px;
-    line-height: normal;
+.warning-modal-window .modal-dialog {
+    width: 50%;
 }
 
 .connection-status {
