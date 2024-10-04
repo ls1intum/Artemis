@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "exercise-scores-chart": {
-            "title": "Leistung in Aufgaben",
+            "title": "Leistung in Aufgaben DUMMY CHANGE TO TRIGGER CI ACTION, REVERT BEFORE MERGE",
             "yourScoreLabel": "Dein Ergebnis",
             "averageScoreLabel": "Durchschnittliches Ergebnis",
             "maximumScoreLabel": "Bestes Ergebnis",
