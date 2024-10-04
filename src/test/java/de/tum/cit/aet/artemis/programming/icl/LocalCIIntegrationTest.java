@@ -36,6 +36,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
@@ -70,6 +72,7 @@ import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionT
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(LocalCIIntegrationTest.class);
