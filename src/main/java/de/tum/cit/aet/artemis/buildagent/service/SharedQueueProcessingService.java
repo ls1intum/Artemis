@@ -364,7 +364,7 @@ public class SharedQueueProcessingService {
         @Override
         public void itemAdded(ItemEvent<BuildJobQueueItem> event) {
             log.debug("CIBuildJobQueueItem added to queue: {}", event.getItem());
-            log.debug("Current queued items: {}", new ArrayList<>(queue));
+            log.debug("Current queued items: {}", queue.size());
             checkAvailabilityAndProcessNextBuild();
         }
 
