@@ -33,7 +33,7 @@ class AbstractTest(ABC):
     suite: Optional[TestSuite]
     additionalSuites: List[Et.Element]
 
-    def __init__(self, name: str, requirements: List[str] = None, timeoutSec: int = -1):
+    def __init__(self, name: str, requirements: Optional[List[str]] = None, timeoutSec: int = -1) -> None:
         """
         name: str
             An unique test case name.

@@ -7,7 +7,7 @@ from tests.TestClangFormat import TestClangFormat
 from testUtils.Tester import Tester
 
 
-def main():
+def main() -> None:
     # Create a new instance of the tester:
     tester: Tester = Tester()
 

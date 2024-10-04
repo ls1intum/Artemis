@@ -17,11 +17,11 @@ class TestClangFormat(AbstractProgramTest):
         self,
         projectRoot: str,
         filePath: str,
-        requirements: List[str] = None,
+        requirements: Optional[List[str]] = None,
         name: str = "TestClangFormat",
-    ):
+    ) -> None:
         super(TestClangFormat, self).__init__(
-            name, projectRoot, "clang-format", requirements, timeoutSec=5
+            name, projectRoot, "clang-format", requirements, timeoutSec=5,
         )
         self.projectRoot = projectRoot
         self.filePath = filePath

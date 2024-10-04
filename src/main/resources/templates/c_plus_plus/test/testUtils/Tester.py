@@ -14,13 +14,13 @@ class Tester:
     additionalSuites: List[Et.Element]
     tests: Dict[str, AbstractTest]
 
-    def __init__(self, name: str = "GBS-Tester-1.36"):
+    def __init__(self, name: str = "GBS-Tester-1.36") -> None:
         self.name = name
         self.suite = TestSuite(name)
         self.additionalSuites = []
         self.tests = dict()
 
-    def run(self):
+    def run(self) -> None:
         """
         Starts the tester and runs all tests added via "addTest(test: AbstractTest)".
         """
@@ -54,7 +54,7 @@ class Tester:
             testResults[name] = test.case.result
         self.__printResult()
 
-    def addTest(self, test: AbstractTest):
+    def addTest(self, test: AbstractTest) -> None:
         """
         Adds a new test that will be run once "run()" is invoked.
         """
@@ -63,7 +63,7 @@ class Tester:
             raise NameError(f"Test '{test.name}' already registered. Test names should be unique!")
         self.tests[test.name] = test
 
-    def __printResult(self):
+    def __printResult(self) -> None:
         print("Result".center(50, "="))
         print(f"{self.name} finished {len(self.tests)} test cases in {self.suite.time.total_seconds()} seconds.")
         print(f"SUCCESS: {self.suite.successful}")
@@ -72,7 +72,7 @@ class Tester:
         print(f"SKIPPED: {self.suite.skipped}")
         print("".center(50, "="))
 
-    def exportResult(self, outputPath: str):
+    def exportResult(self, outputPath: str) -> None:
         """
         Exports the test results into a JUnit format and stores it at the given outputPath.
         """

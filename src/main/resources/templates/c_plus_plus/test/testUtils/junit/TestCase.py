@@ -32,7 +32,7 @@ class TestCase:
         self.result: Result = Result.SUCCESS
         self.message: str = ""
 
-    def toXml(self, suite: Et.Element, maxCharsPerOutput=2500):
+    def toXml(self, suite: Et.Element, maxCharsPerOutput: int = 2500) -> None:
         case: Et.Element = Et.SubElement(suite, "testcase")
         case.set("name", self.name)
         case.set("time", str(self.time.total_seconds()))
@@ -49,7 +49,7 @@ class TestCase:
             stderr: Et.Element = Et.SubElement(case, "system-err")
             stderr.text = shortenText(self.stderr, maxCharsPerOutput) + "\n"
 
-    def genErrFailureMessage(self, maxChars=5000):
+    def genErrFailureMessage(self, maxChars: int = 5000) -> str:
         oneThird: int = int(maxChars / 3)
 
         # Limit the stderr output to one third of the available chars:
