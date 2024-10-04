@@ -9,7 +9,7 @@
              sidebar-card implementations.
               -->
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
-                <div class="scrollable-item-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'sidebar-height-testRun': isTestRun }">
+                <div class="scrollable-item-content scrollable-column" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'sidebar-height-testRun': isTestRun }">
                     <div
                         class="pointer rounded-3 col-12 px-2 pt-2 pb-1 mb-2 border-5 highlight-card bg-module"
                         [ngClass]="{ 'bg-selected border-selected': exerciseIndex === -1 }"

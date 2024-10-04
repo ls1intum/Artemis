@@ -1,6 +1,6 @@
 $collapse-container-height: 35px;
 $sidebar-width-open: 235px;
-$sidebar-width-closed: 86px;
+$sidebar-width-closed: 80px;
 $management-header-height: 230px;
 $exam-test-run-offset: 38px;
 
@@ -28,11 +28,13 @@ $exam-test-run-offset: 38px;
     transition:
         width 0.2s ease-in-out,
         padding 0.2s ease-in-out !important;
-    padding: 0 1rem;
 
     &.collapsed {
         width: $sidebar-width-closed !important;
-        padding: 0 0.5rem;
+
+        .scrollable-column {
+            padding: 0 0.25rem;
+        }
     }
 
     &.sidebar-height-testRun {
@@ -64,9 +66,16 @@ $exam-test-run-offset: 38px;
     .sidebar {
         width: $sidebar-width-closed !important;
     }
+    .scrollable-column {
+        padding: 0 0.25rem !important;
+    }
     .auto-collapse {
         display: none !important;
     }
+}
+
+.scrollable-column {
+    padding: 0 1rem;
 }
 
 .notSynced {
@@ -98,11 +107,11 @@ $exam-test-run-offset: 38px;
 }
 
 .double-arrow.menu-closed {
-    transform: translate(20px) rotate(0deg);
+    transform: translate(24px) rotate(0deg);
 }
 
 .double-arrow {
-    transform: translate(171px) rotate(180deg);
+    transform: translate(187px) rotate(180deg);
     transition: all ease 0.2s;
     cursor: pointer;
     width: 30px;
