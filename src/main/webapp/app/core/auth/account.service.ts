@@ -386,6 +386,6 @@ export class AccountService implements IAccountService {
      * The Cookie stays valid, a new bearer token is generated on every call.
      */
     rekeyCookieToBearerToken() {
-        return this.http.post<string>('api/public/rekey?as-bearer=true', null);
+        return this.http.post<string>('api/public/re-key?as-bearer=true', null, { responseType: 'text' as 'json' });
     }
 }
