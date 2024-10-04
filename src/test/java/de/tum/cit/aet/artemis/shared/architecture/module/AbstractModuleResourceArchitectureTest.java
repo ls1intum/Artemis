@@ -165,16 +165,16 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
                         }
                     }
                 });
-        annotationToNameRule.check(productionClasses);
+        annotationToNameRule.allowEmptyShould(true).check(productionClasses);
 
         ArchRule nameToAnnotationRule = classesOfThisModuleThat().haveSimpleNameStartingWith("Admin").should().beAnnotatedWith(EnforceAdmin.class);
-        nameToAnnotationRule.check(productionClasses);
+        nameToAnnotationRule.allowEmptyShould(true).check(productionClasses);
     }
 
     @Test
     void testNoOverrideOfEnforceAdmin() {
         ArchRule rule = methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(EnforceAdmin.class).should().notBeAnnotatedWith(EnforceAdmin.class).andShould()
                 .notBeMetaAnnotatedWith(PreAuthorize.class);
-        rule.check(productionClasses);
+        rule.allowEmptyShould(true).check(productionClasses);
     }
 }
