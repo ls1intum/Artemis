@@ -1,0 +1,19 @@
+<form [formGroup]="filterForm">
+    <div class="input-group rounded-3">
+        <input
+            id="search"
+            type="text"
+            class="form-control rounded-3 border"
+            formControlName="searchFilter"
+            placeholder="{{ 'artemisApp.course.exercise.search.searchPlaceholder' | artemisTranslate }}"
+            aria-label="Search Field"
+            aria-describedby="search-field"
+            (keyup)="setSearchValue(filterForm.value.searchFilter)"
+        />
+        <div class="position-relative my-auto mn-icon-field">
+            <button class="btn btn-primary btn-md ms-3" (click)="applySearch(this.searchValue)">
+                <fa-icon [icon]="faMagnifyingGlass" />
+            </button>
+        </div>
+    </div>
+</form>
