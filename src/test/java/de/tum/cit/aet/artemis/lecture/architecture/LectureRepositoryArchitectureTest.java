@@ -14,6 +14,6 @@ class LectureRepositoryArchitectureTest extends AbstractModuleRepositoryArchitec
     @Override
     protected Set<String> testTransactionalExclusions() {
         return Set.of(
-                "de.tum.cit.aet.artemis.lecture.service.LectureImportService.importLecture(de.tum.cit.aet.artemis.lecture.domain.Lecture, de.tum.cit.aet.artemis.core.domain.Course)");
+                "de.tum.cit.aet.artemis.lecture.service.LectureImportService.importLecture(de.tum.cit.aet.artemis.lecture.domain.Lecture, de.tum.cit.aet.artemis.core.domain.Course, boolean)");
     }
 }
