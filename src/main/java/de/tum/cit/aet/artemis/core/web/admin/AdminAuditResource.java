@@ -33,11 +33,11 @@ import tech.jhipster.web.util.ResponseUtil;
 @EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
-public class AuditResource {
+public class AdminAuditResource {
 
     private final AuditEventService auditEventService;
 
-    public AuditResource(AuditEventService auditEventService) {
+    public AdminAuditResource(AuditEventService auditEventService) {
         this.auditEventService = auditEventService;
     }
 

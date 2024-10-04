@@ -21,11 +21,11 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 @EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
-public class FeatureToggleResource {
+public class AdminFeatureToggleResource {
 
     private final FeatureToggleService featureToggleService;
 
-    public FeatureToggleResource(FeatureToggleService featureToggleService) {
+    public AdminFeatureToggleResource(FeatureToggleService featureToggleService) {
         this.featureToggleService = featureToggleService;
     }
 

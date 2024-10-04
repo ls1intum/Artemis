@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 @EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
-public class LogResource {
+public class AdminLogResource {
 
     /**
      * GET logs -- Gets the current log levels.

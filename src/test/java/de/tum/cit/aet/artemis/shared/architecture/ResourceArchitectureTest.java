@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -147,16 +148,27 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
     }
 
     @Test
-    void foo() {
-        var rule = classes().that().areAnnotatedWith(EnforceAdmin.class).should().haveSimpleNameStartingWith("Admin").andShould(new ArchCondition<JavaClass>("Bar") {
+    void testClassWithEnforceAdminInCorrectlyNamed() {
+        ArchRule annotationToNameRule = classes().that().areAnnotatedWith(EnforceAdmin.class).should().haveSimpleNameStartingWith("Admin")
+                .andShould(new ArchCondition<>("Have " + "package name ending with .admin") {
 
-            @Override
-            public void check(JavaClass item, ConditionEvents events) {
-                if (!item.getPackage().getName().endsWith(".admin")) {
-                    events.add(violated(item, "Classes annotated with @EnforceAdmin should be in an admin subpackage."));
-                }
-            }
-        });
+                    @Override
+                    public void check(JavaClass item, ConditionEvents events) {
+                        if (!item.getPackage().getName().endsWith(".admin")) {
+                            events.add(violated(item, "Classes annotated with @EnforceAdmin should be in an admin subpackage."));
+                        }
+                    }
+                });
+        annotationToNameRule.check(productionClasses);
+
+        ArchRule nameToAnnotationRule = classes().that().haveSimpleNameStartingWith("Admin").should().beAnnotatedWith(EnforceAdmin.class);
+        nameToAnnotationRule.check(productionClasses);
+    }
+
+    @Test
+    void testNoOverrideOfEnforceAdmin() {
+        ArchRule rule = methods().that().areDeclaredInClassesThat().areAnnotatedWith(EnforceAdmin.class).should().notBeAnnotatedWith(EnforceAdmin.class).andShould()
+                .notBeMetaAnnotatedWith(PreAuthorize.class);
         rule.check(productionClasses);
     }
 }
