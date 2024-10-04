@@ -155,7 +155,7 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
 
     @Test
     void testClassWithEnforceAdminInCorrectlyNamed() {
-        ArchRule annotationToNameRule = classes().that().areAnnotatedWith(EnforceAdmin.class).should().haveSimpleNameStartingWith("Admin")
+        ArchRule annotationToNameRule = classesOfThisModuleThat().areAnnotatedWith(EnforceAdmin.class).should().haveSimpleNameStartingWith("Admin")
                 .andShould(new ArchCondition<>("Have " + "package name ending with .admin") {
 
                     @Override
@@ -167,13 +167,13 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
                 });
         annotationToNameRule.check(productionClasses);
 
-        ArchRule nameToAnnotationRule = classes().that().haveSimpleNameStartingWith("Admin").should().beAnnotatedWith(EnforceAdmin.class);
+        ArchRule nameToAnnotationRule = classesOfThisModuleThat().haveSimpleNameStartingWith("Admin").should().beAnnotatedWith(EnforceAdmin.class);
         nameToAnnotationRule.check(productionClasses);
     }
 
     @Test
     void testNoOverrideOfEnforceAdmin() {
-        ArchRule rule = methods().that().areDeclaredInClassesThat().areAnnotatedWith(EnforceAdmin.class).should().notBeAnnotatedWith(EnforceAdmin.class).andShould()
+        ArchRule rule = methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(EnforceAdmin.class).should().notBeAnnotatedWith(EnforceAdmin.class).andShould()
                 .notBeMetaAnnotatedWith(PreAuthorize.class);
         rule.check(productionClasses);
     }
