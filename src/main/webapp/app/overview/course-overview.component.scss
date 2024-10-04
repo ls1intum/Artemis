@@ -3,7 +3,7 @@ $menu-width-open: 220px;
 $breadcrumb-height: 45px; // needed to make the exam fullscreen
 
 // Sidebar Button Transition Variables
-$transition-delay: 0.1s;
+$transition-delay: 0.3s;
 $transition-in-between-delay: 0.2s;
 $transition-chevron-rotate-length: 0.2s;
 $transition-chevron-max-width-length: 0.2s;
@@ -290,9 +290,12 @@ jhi-secured-image {
     transition: opacity $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
 }
 
-.btn-sidebar-collapse:hover::after,
-.btn-sidebar-collapse:hover::before {
+.btn-sidebar-collapse:hover::after {
     background-color: var(--sidebar-card-selected-bg);
+}
+
+.btn-sidebar-collapse:hover::before {
+    background-color: var(--link-item-bg);
 }
 
 .btn-sidebar-collapse.is-collapsed {
