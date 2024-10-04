@@ -712,49 +712,6 @@ export class CourseManagementService {
         this.courseOverviewSubject.next(false);
     }
 
-    /**
-     * Sorts and returns the semesters by year descending
-     * WS is sorted above SS
-     *
-     * @param coursesWithSemesters the courses to sort the semesters of
-     * @return An array of sorted semester names
-     */
-    getUniqueSemesterNamesSorted(coursesWithSemesters: Course[]): string[] {
-        return (
-            coursesWithSemesters
-                // Test courses get their own section later
-                .filter((course) => !course.testCourse)
-                .map((course) => course.semester ?? '')
-                // Filter down to unique values
-                .filter((course, index, courses) => courses.indexOf(course) === index)
-                .sort((semesterA, semesterB) => {
-                    // Sort last if the semester is unset
-                    if (semesterA === '') {
-                        return 1;
-                    }
-                    if (semesterB === '') {
-                        return -1;
-                    }
-
-                    // Parse years in base 10 by extracting the two digits after the WS or SS prefix
-                    const yearsCompared = parseInt(semesterB.slice(2, 4), 10) - parseInt(semesterA.slice(2, 4), 10);
-                    if (yearsCompared !== 0) {
-                        return yearsCompared;
-                    }
-
-                    // If years are the same, sort WS over SS
-                    const prefixA = semesterA.slice(0, 2);
-                    const prefixB = semesterB.slice(0, 2);
-
-                    if (prefixA === prefixB) {
-                        return 0; // Both semesters are the same (either both WS or both SS)
-                    }
-
-                    return prefixA === 'WS' ? -1 : 1; // WS should be placed above SS
-                })
-        );
-    }
-
     getSemesterCollapseStateFromStorage(storageId: string): boolean {
         const storedCollapseState: string | null = localStorage.getItem('semester.collapseState.' + storageId);
         return storedCollapseState ? JSON.parse(storedCollapseState) : false;
