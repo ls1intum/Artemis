@@ -148,7 +148,7 @@ describe('CourseManagementComponent', () => {
         const course5 = { id: 5, semester: '' } as Course; // course with no semester
 
         component.courses = [course1, course2, course3, course4, course5];
-        const sortedSemesters = service.getUniqueSemesterNamesSorted(component.courses);
+        const sortedSemesters = component.getUniqueSemesterNamesSorted(component.courses);
 
         expect(sortedSemesters).toEqual(['WS20', 'SS20', 'WS19', 'SS19', '']);
     });
