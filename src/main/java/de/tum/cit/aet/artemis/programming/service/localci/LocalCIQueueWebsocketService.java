@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
 import java.util.List;
+import java.util.UUID;
 
 import jakarta.annotation.PostConstruct;
 
@@ -40,6 +41,12 @@ public class LocalCIQueueWebsocketService {
 
     private final HazelcastInstance hazelcastInstance;
 
+    private UUID buildJobQueueItemListenerId;
+
+    private UUID processingBuildJobItemListenerId;
+
+    private UUID buildAgentListenerId;
+
     /**
      * Instantiates a new Local ci queue websocket service.
      *
@@ -62,9 +69,18 @@ public class LocalCIQueueWebsocketService {
         IQueue<BuildJobQueueItem> queue = hazelcastInstance.getQueue("buildJobQueue");
         IMap<Long, BuildJobQueueItem> processingJobs = hazelcastInstance.getMap("processingJobs");
         IMap<String, BuildAgentInformation> buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
-        queue.addItemListener(new QueuedBuildJobItemListener(), true);
-        processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
-        buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
+        buildJobQueueItemListenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
+        processingBuildJobItemListenerId = processingJobs.addEntryListener(new ProcessingBuildJobItemListener(), true);
+        buildAgentListenerId = buildAgentInformation.addEntryListener(new BuildAgentListener(), true);
+    }
+
+    public void removeListeners() {
+        IQueue<BuildJobQueueItem> queue = hazelcastInstance.getQueue("buildJobQueue");
+        IMap<Long, BuildJobQueueItem> processingJobs = hazelcastInstance.getMap("processingJobs");
+        IMap<String, BuildAgentInformation> buildAgentInformation = hazelcastInstance.getMap("buildAgentInformation");
+        queue.removeItemListener(buildJobQueueItemListenerId);
+        processingJobs.removeEntryListener(processingBuildJobItemListenerId);
+        buildAgentInformation.removeEntryListener(buildAgentListenerId);
     }
 
     private void sendQueuedJobsOverWebsocket(long courseId) {
