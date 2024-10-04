@@ -5,6 +5,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -15,6 +16,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
@@ -43,6 +45,20 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     Optional<TextExercise> findWithEagerTeamAssignmentConfigAndCategoriesAndCompetenciesAndPlagiarismDetectionConfigById(long exerciseId);
 
     @Query("""
+            SELECT t
+            FROM TextExercise t
+                LEFT JOIN FETCH t.exampleSubmissions e
+                LEFT JOIN FETCH e.submission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH s.blocks
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH t.teamAssignmentConfig
+            WHERE t.id = :exerciseId
+            """)
+    Optional<TextExercise> findWithExampleSubmissionsAndResultsById(@Param("exerciseId") long exerciseId);
+
+    @Query("""
             SELECT textExercise
             FROM TextExercise textExercise
                 LEFT JOIN FETCH textExercise.exampleSubmissions exampleSubmissions
@@ -52,15 +68,41 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
                 LEFT JOIN FETCH submission.blocks
                 LEFT JOIN FETCH result.assessor
                 LEFT JOIN FETCH textExercise.teamAssignmentConfig
+                LEFT JOIN FETCH textExercise.gradingCriteria
             WHERE textExercise.id = :exerciseId
             """)
-    Optional<TextExercise> findWithExampleSubmissionsAndResultsById(@Param("exerciseId") long exerciseId);
+    Optional<TextExercise> findWithExampleSubmissionsAndResultsAndGradingCriteriaById(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<TextExercise> findWithStudentParticipationsAndSubmissionsById(long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "gradingCriteria" })
     Optional<TextExercise> findWithGradingCriteriaById(long exerciseId);
+
+    @Query("""
+            SELECT t
+            FROM TextExercise t
+                LEFT JOIN FETCH t.competencies
+            WHERE t.title = :title
+                AND t.course.id = :courseId
+            """)
+    Set<TextExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    /**
+     * Finds a text exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course
+     * @return the exercise with the given title and course id
+     * @throws NoUniqueQueryException if multiple exercises are found with the same title
+     */
+    default Optional<TextExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
+        Set<TextExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
+        if (allExercises.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple exercises with title " + title + " in course with id " + courseId);
+        }
+        return allExercises.stream().findFirst();
+    }
 
     @NotNull
     default TextExercise findWithGradingCriteriaByIdElseThrow(long exerciseId) {
@@ -75,6 +117,11 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
     @NotNull
     default TextExercise findByIdWithExampleSubmissionsAndResultsElseThrow(long exerciseId) {
         return getValueElseThrow(findWithExampleSubmissionsAndResultsById(exerciseId), exerciseId);
+    }
+
+    @NotNull
+    default TextExercise findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(long exerciseId) {
+        return getValueElseThrow(findWithExampleSubmissionsAndResultsAndGradingCriteriaById(exerciseId), exerciseId);
     }
 
     @NotNull
