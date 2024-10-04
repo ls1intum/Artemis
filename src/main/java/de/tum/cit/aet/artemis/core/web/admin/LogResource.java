@@ -23,6 +23,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
  * Controller for view and managing Log Level at runtime.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class LogResource {
@@ -33,7 +34,6 @@ public class LogResource {
      * @return A list of all loggers with their log level
      */
     @GetMapping("logs")
-    @EnforceAdmin
     public ResponseEntity<List<LoggerVM>> getList() {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         return ResponseEntity.ok(context.getLoggerList().stream().map(LoggerVM::new).toList());
@@ -46,7 +46,6 @@ public class LogResource {
      * @return The updated logger
      */
     @PutMapping("logs")
-    @EnforceAdmin
     public ResponseEntity<LoggerVM> changeLevel(@RequestBody LoggerVM jsonLogger) {
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         Logger logger = context.getLogger(jsonLogger.getName());

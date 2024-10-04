@@ -32,6 +32,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 
 import de.tum.cit.aet.artemis.communication.web.LinkPreviewResource;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 
 class ResourceArchitectureTest extends AbstractArchitectureTest {
 
@@ -143,5 +144,19 @@ class ResourceArchitectureTest extends AbstractArchitectureTest {
         for (String value : values) {
             tester.accept(value);
         }
+    }
+
+    @Test
+    void foo() {
+        var rule = classes().that().areAnnotatedWith(EnforceAdmin.class).should().haveSimpleNameStartingWith("Admin").andShould(new ArchCondition<JavaClass>("Bar") {
+
+            @Override
+            public void check(JavaClass item, ConditionEvents events) {
+                if (!item.getPackage().getName().endsWith(".admin")) {
+                    events.add(violated(item, "Classes annotated with @EnforceAdmin should be in an admin subpackage."));
+                }
+            }
+        });
+        rule.check(productionClasses);
     }
 }

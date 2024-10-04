@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.util.HeaderUtil;
  * REST controller for administrating the Organization entities
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminOrganizationResource {
@@ -72,7 +73,6 @@ public class AdminOrganizationResource {
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PostMapping("organizations/{organizationId}/courses/{courseId}")
-    @EnforceAdmin
     public ResponseEntity<Void> addCourseToOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         log.debug("REST request to add course to organization : {}", organizationId);
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
@@ -90,7 +90,6 @@ public class AdminOrganizationResource {
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
     @DeleteMapping("organizations/{organizationId}/courses/{courseId}")
-    @EnforceAdmin
     public ResponseEntity<Void> removeCourseFromOrganization(@PathVariable Long courseId, @PathVariable Long organizationId) {
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
         courseRepository.removeOrganizationFromCourse(courseId, organization);
@@ -107,7 +106,6 @@ public class AdminOrganizationResource {
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PostMapping("organizations/{organizationId}/users/{userLogin}")
-    @EnforceAdmin
     public ResponseEntity<Void> addUserToOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         User user = userRepository.getUserByLoginElseThrow(userLogin);
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
@@ -128,7 +126,6 @@ public class AdminOrganizationResource {
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
     @DeleteMapping("organizations/{organizationId}/users/{userLogin}")
-    @EnforceAdmin
     public ResponseEntity<Void> removeUserFromOrganization(@PathVariable String userLogin, @PathVariable Long organizationId) {
         log.debug("REST request to remove course to organization : {}", organizationId);
         User user = userRepository.getUserByLoginElseThrow(userLogin);
@@ -145,7 +142,6 @@ public class AdminOrganizationResource {
      * @return the ResponseEntity containing the added organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PostMapping("organizations")
-    @EnforceAdmin
     public ResponseEntity<Organization> addOrganization(@RequestBody Organization organization) {
         log.debug("REST request to add new organization : {}", organization);
         Organization created = organizationService.add(organization);
@@ -161,7 +157,6 @@ public class AdminOrganizationResource {
      * @return the ResponseEntity containing the updated organization with status 200 (OK), or 404 (Not Found) otherwise
      */
     @PutMapping("organizations/{organizationId}")
-    @EnforceAdmin
     public ResponseEntity<Organization> updateOrganization(@PathVariable Long organizationId, @RequestBody Organization organization) {
         log.debug("REST request to update organization : {}", organization);
         if (organization.getId() == null) {
@@ -182,7 +177,6 @@ public class AdminOrganizationResource {
      * @return empty ResponseEntity with status 200 (OK), or 404 (Not Found) otherwise
      */
     @DeleteMapping("organizations/{organizationId}")
-    @EnforceAdmin
     public ResponseEntity<Void> deleteOrganization(@PathVariable Long organizationId) {
         log.debug("REST request to delete organization : {}", organizationId);
         organizationService.deleteOrganization(organizationId);
@@ -195,7 +189,6 @@ public class AdminOrganizationResource {
      * @return ResponseEntity containing a list of all organizations with status 200 (OK)
      */
     @GetMapping("organizations")
-    @EnforceAdmin
     public ResponseEntity<List<Organization>> getAllOrganizations() {
         log.debug("REST request to get all organizations");
         // TODO: we should avoid findAll() and instead load batches of organizations
@@ -210,7 +203,6 @@ public class AdminOrganizationResource {
      * @return ResponseEntity containing a map containing the numbers of users and courses
      */
     @GetMapping("organizations/{organizationId}/count")
-    @EnforceAdmin
     public ResponseEntity<OrganizationCountDTO> getNumberOfUsersAndCoursesByOrganization(@PathVariable long organizationId) {
         log.debug("REST request to get number of users and courses of organization : {}", organizationId);
 
@@ -227,7 +219,6 @@ public class AdminOrganizationResource {
      *         containing their relative numbers of users and courses
      */
     @GetMapping("organizations/count-all")
-    @EnforceAdmin
     public ResponseEntity<List<OrganizationCountDTO>> getNumberOfUsersAndCoursesOfAllOrganizations() {
         log.debug("REST request to get number of users and courses of all organizations");
 
@@ -250,7 +241,6 @@ public class AdminOrganizationResource {
      *         if exists, else with status 404 (Not Found)
      */
     @GetMapping("organizations/{organizationId}")
-    @EnforceAdmin
     public ResponseEntity<Organization> getOrganizationById(@PathVariable long organizationId) {
         log.debug("REST request to get organization : {}", organizationId);
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
@@ -265,7 +255,6 @@ public class AdminOrganizationResource {
      *         if exists, else with status 404 (Not Found)
      */
     @GetMapping("organizations/{organizationId}/full")
-    @EnforceAdmin
     public ResponseEntity<Organization> getOrganizationByIdWithUsersAndCourses(@PathVariable long organizationId) {
         log.debug("REST request to get organization with users and courses : {}", organizationId);
         Organization organization = organizationRepository.findByIdWithEagerUsersAndCoursesElseThrow(organizationId);
@@ -279,7 +268,6 @@ public class AdminOrganizationResource {
      * @return ResponseEntity containing a set of organizations containing the given user
      */
     @GetMapping("organizations/users/{userId}")
-    @EnforceAdmin
     public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {
         log.debug("REST request to get all organizations of user : {}", userId);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByUserId(userId);
@@ -293,7 +281,6 @@ public class AdminOrganizationResource {
      * @return the title of the organization wrapped in an ResponseEntity or 404 Not Found if no organization with that id exists
      */
     @GetMapping("organizations/{organizationId}/title")
-    @EnforceAdmin
     public ResponseEntity<String> getOrganizationTitle(@PathVariable Long organizationId) {
         final var title = organizationRepository.getOrganizationTitle(organizationId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);

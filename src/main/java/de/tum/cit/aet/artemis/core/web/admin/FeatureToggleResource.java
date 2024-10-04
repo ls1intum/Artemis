@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
 
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class FeatureToggleResource {
@@ -36,7 +37,6 @@ public class FeatureToggleResource {
      * @see FeatureToggleService
      */
     @PutMapping("feature-toggle")
-    @EnforceAdmin
     public ResponseEntity<List<Feature>> toggleFeatures(@RequestBody Map<Feature, Boolean> features) {
         featureToggleService.updateFeatureToggles(features);
 
