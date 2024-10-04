@@ -26,6 +26,8 @@ export class TutorialGroup implements BaseEntity {
     public isUserTutor?: boolean;
     public numberOfRegisteredUsers?: number;
     public teachingAssistantName?: string;
+    public teachingAssistantId?: number;
+    public teachingAssistantImageUrl?: string;
     public courseTitle?: string;
     public nextSession?: TutorialGroupSession;
     public averageAttendance?: number;

@@ -106,7 +106,7 @@ test.describe('Programming Exercise Management', () => {
         });
 
         test('Create an exercise team', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
-            await login(instructor, '/');
+            await login(instructor);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseTeams(exercise.id!);
