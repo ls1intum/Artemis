@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
@@ -97,7 +98,7 @@ public class PrerequisiteResource {
      * @return the ResponseEntity with status 200 (OK) and with body the found prerequisites
      */
     @GetMapping("courses/{courseId}/prerequisites")
-    @EnforceAtLeastStudentInCourse
+    @EnforceAtLeastStudent
     public ResponseEntity<List<Prerequisite>> getPrerequisitesWithProgress(@PathVariable long courseId) {
         log.debug("REST request to get prerequisites for course with id: {}", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
