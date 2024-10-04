@@ -587,7 +587,7 @@ describe('CodeButtonComponent', () => {
         expect(form.target).toBe('Theia-IDE');
 
         const inputs = form.getElementsByTagName('input');
-        const data = {
+        const data: { [key: string]: string } = {
             appDef: 'theia-image',
             gitUri: 'https://admin@repo.uri',
             gitToken: 'token',
