@@ -23,8 +23,8 @@
                     jhiDeleteButton
                     [renderButtonStyle]="false"
                     [renderButtonText]="false"
-                    [deleteQuestion]="'artemisApp.attachment.pdfPreview.deletePagesQuestion'"
-                    (delete)="deleteSelectedSlides()"
+                    [deleteQuestion]="allPagesSelected() ? 'artemisApp.attachment.pdfPreview.deleteAllPagesQuestion' : 'artemisApp.attachment.pdfPreview.deletePagesQuestion'"
+                    (delete)="allPagesSelected() ? deleteAttachmentFile() : deleteSelectedSlides()"
                     [dialogError]="dialogError$"
                     [disabled]="isPdfLoading || selectedPages.size === 0"
                 >

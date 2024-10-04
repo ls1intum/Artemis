@@ -108,7 +108,8 @@
                 "mergeFailedError": "Fehler beim Zusammenführen der Dateien: {{error}}",
                 "pageDeleteError": "Fehler beim Löschen der Seiten: {{error}}",
                 "fileSizeError": "Die Datei ist zu groß. Die maximale Dateigröße beträgt 20MB.",
-                "deletePagesQuestion": "Möchtest du die ausgewählten Seiten wirklich löschen?"
+                "deletePagesQuestion": "Möchtest du die ausgewählten Seiten wirklich löschen?",
+                "deleteAllPagesQuestion": "Möchtest du wirklich alle Seiten löschen? Dies führt zur Löschung des Anhangs."
             }
         }
     }

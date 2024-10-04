@@ -108,7 +108,8 @@
                 "mergeFailedError": "Failed to merge files: {{error}}",
                 "pageDeleteError": "Failed to delete pages: {{error}}",
                 "fileSizeError": "The file size exceeds the limit of 20MB.",
-                "deletePagesQuestion": "Are you sure you want to delete the selected pages?"
+                "deletePagesQuestion": "Are you sure you want to delete the selected pages?",
+                "deleteAllPagesQuestion": "Are you sure you want to delete all pages? This will result in the deletion of the attachment."
             }
         }
     }

@@ -17,6 +17,7 @@ import { PDFDocument } from 'pdf-lib';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 type NavigationDirection = 'next' | 'prev';
 
@@ -59,6 +60,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         public route: ActivatedRoute,
         private attachmentService: AttachmentService,
         private attachmentUnitService: AttachmentUnitService,
+        private lectureUnitService: LectureUnitService,
         private alertService: AlertService,
         private router: Router,
     ) {}
@@ -92,6 +94,14 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.attachmentSub?.unsubscribe();
         this.attachmentUnitSub?.unsubscribe();
+    }
+
+    /**
+     * Checks if all pages are selected.
+     * @returns True if the number of selected pages equals the total number of pages, otherwise false.
+     */
+    allPagesSelected() {
+        return this.selectedPages.size === this.totalPages;
     }
 
     /**
@@ -403,6 +413,34 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.currentPage = nextPageIndex;
             const canvas = this.pdfContainer.nativeElement.querySelectorAll('.pdf-canvas-container canvas')[this.currentPage - 1] as HTMLCanvasElement;
             this.updateEnlargedCanvas(canvas);
+        }
+    }
+
+    /**
+     * Deletes the attachment file if it exists, or deletes the attachment unit if it exists.
+     * @returns A Promise that resolves when the deletion process is completed.
+     */
+    async deleteAttachmentFile() {
+        if (this.attachment) {
+            this.attachmentService.delete(this.attachment.id!).subscribe({
+                next: () => {
+                    this.router.navigate(['course-management', this.course?.id, 'lectures', this.attachment!.lecture!.id, 'attachments']);
+                    this.dialogErrorSource.next('');
+                },
+                error: (error) => {
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                },
+            });
+        } else if (this.attachmentUnit && this.attachmentUnit.id && this.attachmentUnit.lecture?.id) {
+            this.lectureUnitService.delete(this.attachmentUnit.id, this.attachmentUnit.lecture.id).subscribe({
+                next: () => {
+                    this.router.navigate(['course-management', this.course?.id, 'lectures', this.attachmentUnit!.lecture!.id, 'unit-management']);
+                    this.dialogErrorSource.next('');
+                },
+                error: (error) => {
+                    this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
+                },
+            });
         }
     }
 
