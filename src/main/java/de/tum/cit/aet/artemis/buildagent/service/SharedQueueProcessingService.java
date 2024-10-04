@@ -294,6 +294,7 @@ public class SharedQueueProcessingService {
         CompletableFuture<BuildResult> futureResult = buildJobManagementService.executeBuildJob(buildJob);
         futureResult.thenAccept(buildResult -> {
 
+            log.debug("Build job completed: {}", buildJob);
             JobTimingInfo jobTimingInfo = new JobTimingInfo(buildJob.jobTimingInfo().submissionDate(), buildJob.jobTimingInfo().buildStartDate(), ZonedDateTime.now());
 
             BuildJobQueueItem finishedJob = new BuildJobQueueItem(buildJob.id(), buildJob.name(), buildJob.buildAgentAddress(), buildJob.participationId(), buildJob.courseId(),
@@ -316,6 +317,8 @@ public class SharedQueueProcessingService {
         });
 
         futureResult.exceptionally(ex -> {
+            log.debug("Build job completed with exception: {}", buildJob, ex);
+
             ZonedDateTime completionDate = ZonedDateTime.now();
 
             BuildJobQueueItem job;
