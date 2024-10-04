@@ -11,7 +11,6 @@ import java.util.Set;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -19,7 +18,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobResultCountDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.DockerImageBuild;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob;
@@ -30,10 +28,6 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 @Profile(PROFILE_CORE)
 @Repository
 public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>, JpaSpecificationExecutor<BuildJob> {
-
-    Optional<BuildJob> findFirstByParticipationIdOrderByBuildStartDateDesc(Long participationId);
-
-    Optional<BuildJob> findBuildJobByResult(Result result);
 
     @EntityGraph(type = LOAD, attributePaths = { "result", "result.participation", "result.participation.exercise", "result.submission" })
     List<BuildJob> findWithDataByIdIn(List<Long> ids);
@@ -68,31 +62,6 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
     Set<DockerImageBuild> findAllLastBuildDatesForDockerImages();
 
     @Query("""
-            SELECT b.id
-            FROM BuildJob b
-            WHERE b.courseId = :courseId
-            """)
-    List<Long> findIdsByCourseId(@Param("courseId") long courseId, Pageable pageable);
-
-    long countBuildJobByCourseId(long courseId);
-
-    /**
-     * Retrieves a paginated list of all {@link BuildJob} entities that have a given course id.
-     *
-     * @param courseId the course id.
-     * @param pageable the pagination information.
-     * @return a paginated list of {@link BuildJob} entities. If no entities are found, returns an empty page.
-     */
-    default Page<BuildJob> findAllWithDataByCourseId(long courseId, Pageable pageable) {
-        List<Long> ids = findIdsByCourseId(courseId, pageable);
-        if (ids.isEmpty()) {
-            return Page.empty(pageable);
-        }
-        List<BuildJob> result = findWithDataByIdIn(ids);
-        return new PageImpl<>(result, pageable, countBuildJobByCourseId(courseId));
-    }
-
-    @Query("""
              SELECT new de.tum.cit.aet.artemis.buildagent.dto.ResultBuildJob(
                  b.result.id,
                  b.buildJobId
@@ -113,5 +82,11 @@ public interface BuildJobRepository extends ArtemisJpaRepository<BuildJob, Long>
             GROUP BY b.buildStatus
             """)
     List<BuildJobResultCountDTO> getBuildJobsResultsStatistics(@Param("fromDateTime") ZonedDateTime fromDateTime, @Param("courseId") Long courseId);
+
+    Optional<BuildJob> findByBuildJobId(String buildJobId);
+
+    default BuildJob findByBuildJobIdElseThrow(String buildJobId) {
+        return getValueElseThrow(findByBuildJobId(buildJobId));
+    }
 
 }

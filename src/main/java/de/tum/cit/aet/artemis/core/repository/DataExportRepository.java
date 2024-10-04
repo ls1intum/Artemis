@@ -67,11 +67,4 @@ public interface DataExportRepository extends ArtemisJpaRepository<DataExport, L
             ORDER BY dataExport.createdDate DESC
             """)
     List<DataExport> findAllDataExportsByUserIdOrderByRequestDateDesc(@Param("userId") long userId);
-
-    @Query("""
-            SELECT dataExport
-            FROM DataExport dataExport
-            WHERE dataExport.dataExportState = 2
-            """)
-    Set<DataExport> findAllSuccessfullyCreatedDataExports();
 }

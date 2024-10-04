@@ -112,7 +112,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -513,7 +512,7 @@ public class ExamResource {
      */
     @GetMapping("exams/active")
     @EnforceAtLeastInstructor
-    public ResponseEntity<List<Exam>> getAllActiveExams(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Exam>> getAllActiveExams(Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         Page<Exam> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
@@ -1171,13 +1170,13 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/:courseId/exams/:examId/lockedSubmissions Get locked submissions for exam for user
+     * GET /courses/:courseId/exams/:examId/locked-submissions Get locked submissions for exam for user
      *
      * @param courseId - the id of the course
      * @param examId   - the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/lockedSubmissions")
+    @GetMapping("courses/{courseId}/exams/{examId}/locked-submissions")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);

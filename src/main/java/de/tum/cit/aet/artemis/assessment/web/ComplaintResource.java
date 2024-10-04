@@ -331,21 +331,7 @@ public class ComplaintResource {
 
         StudentParticipation originalParticipation = (StudentParticipation) complaint.getResult().getParticipation();
         if (originalParticipation != null && originalParticipation.getExercise() != null) {
-            Exercise exerciseWithOnlyTitle = originalParticipation.getExercise();
-            if (exerciseWithOnlyTitle instanceof TextExercise) {
-                exerciseWithOnlyTitle = new TextExercise();
-            }
-            else if (exerciseWithOnlyTitle instanceof ModelingExercise) {
-                exerciseWithOnlyTitle = new ModelingExercise();
-            }
-            else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
-                exerciseWithOnlyTitle = new FileUploadExercise();
-            }
-            else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
-                exerciseWithOnlyTitle = new ProgrammingExercise();
-            }
-            exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
-            exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
+            final var exerciseWithOnlyTitle = getExercise(originalParticipation);
 
             originalParticipation.setExercise(exerciseWithOnlyTitle);
         }
@@ -353,24 +339,37 @@ public class ComplaintResource {
         Submission originalSubmission = complaint.getResult().getSubmission();
         if (originalSubmission != null) {
             Submission submissionWithOnlyId;
-            if (originalSubmission instanceof TextSubmission) {
-                submissionWithOnlyId = new TextSubmission();
-            }
-            else if (originalSubmission instanceof ModelingSubmission) {
-                submissionWithOnlyId = new ModelingSubmission();
-            }
-            else if (originalSubmission instanceof FileUploadSubmission) {
-                submissionWithOnlyId = new FileUploadSubmission();
-            }
-            else if (originalSubmission instanceof ProgrammingSubmission) {
-                submissionWithOnlyId = new ProgrammingSubmission();
-            }
-            else {
-                return;
+            switch (originalSubmission) {
+                case TextSubmission ignored -> submissionWithOnlyId = new TextSubmission();
+                case ModelingSubmission ignored -> submissionWithOnlyId = new ModelingSubmission();
+                case FileUploadSubmission ignored -> submissionWithOnlyId = new FileUploadSubmission();
+                case ProgrammingSubmission ignored -> submissionWithOnlyId = new ProgrammingSubmission();
+                default -> {
+                    return;
+                }
             }
             submissionWithOnlyId.setId(originalSubmission.getId());
             complaint.getResult().setSubmission(submissionWithOnlyId);
         }
+    }
+
+    private static Exercise getExercise(StudentParticipation originalParticipation) {
+        Exercise exerciseWithOnlyTitle = originalParticipation.getExercise();
+        if (exerciseWithOnlyTitle instanceof TextExercise) {
+            exerciseWithOnlyTitle = new TextExercise();
+        }
+        else if (exerciseWithOnlyTitle instanceof ModelingExercise) {
+            exerciseWithOnlyTitle = new ModelingExercise();
+        }
+        else if (exerciseWithOnlyTitle instanceof FileUploadExercise) {
+            exerciseWithOnlyTitle = new FileUploadExercise();
+        }
+        else if (exerciseWithOnlyTitle instanceof ProgrammingExercise) {
+            exerciseWithOnlyTitle = new ProgrammingExercise();
+        }
+        exerciseWithOnlyTitle.setTitle(originalParticipation.getExercise().getTitle());
+        exerciseWithOnlyTitle.setId(originalParticipation.getExercise().getId());
+        return exerciseWithOnlyTitle;
     }
 
     private void filterOutUselessDataFromComplaints(List<Complaint> complaints, boolean filterOutStudentFromComplaints) {

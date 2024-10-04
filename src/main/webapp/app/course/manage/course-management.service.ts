@@ -80,7 +80,7 @@ export class CourseManagementService {
      * @param onlineCourseConfiguration - the updates to the online course configuration
      */
     updateOnlineCourseConfiguration(courseId: number, onlineCourseConfiguration: OnlineCourseConfiguration): Observable<EntityResponseType> {
-        return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/onlineCourseConfiguration`, onlineCourseConfiguration, { observe: 'response' });
+        return this.http.put<OnlineCourseConfiguration>(`${this.resourceUrl}/${courseId}/online-course-configuration`, onlineCourseConfiguration, { observe: 'response' });
     }
 
     findAllOnlineCoursesWithRegistrationId(clientId: string): Observable<OnlineCourseDtoModel[]> {
@@ -445,7 +445,7 @@ export class CourseManagementService {
      * @param {number} courseId - The id of the course to be searched for
      */
     findAllLockedSubmissionsOfCourse(courseId: number): Observable<HttpResponse<Submission[]>> {
-        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/lockedSubmissions`, { observe: 'response' }).pipe(
+        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/locked-submissions`, { observe: 'response' }).pipe(
             filter((res) => !!res.body),
             tap((res) => reconnectSubmissions(res.body!)),
         );

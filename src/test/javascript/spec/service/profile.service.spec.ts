@@ -174,6 +174,7 @@ describe('ProfileService', () => {
             },
         },
         inProduction: true,
+        inDevelopment: false,
         openApiEnabled: true,
         sentry: { dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2' },
         features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],

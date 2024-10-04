@@ -93,7 +93,8 @@
                 "testExam": "Testklausur",
                 "communication": "Kommunikation",
                 "plagiarismCases": "Plagiatsfälle",
-                "gradingSystem": "Notenschlüssel"
+                "gradingSystem": "Notenschlüssel",
+                "faq": "FAQ"
             },
             "exerciseFilter": {
                 "filter": "Filter",
