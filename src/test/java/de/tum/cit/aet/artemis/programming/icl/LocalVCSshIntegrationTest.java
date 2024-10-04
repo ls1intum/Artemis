@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.programming.localvcci;
+package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,12 +35,12 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 @Profile(PROFILE_LOCALVC)
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
+    @Autowired
+    private SshServer sshServer;
+
     private final String hostname = "localhost";
 
     private final int port = 7921;
-
-    @Autowired
-    private SshServer sshServer;
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
