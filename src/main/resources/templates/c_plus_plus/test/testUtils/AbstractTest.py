@@ -40,7 +40,7 @@ class AbstractTest(ABC):
 
         requirements: List[str]
             A list of test cases names that have to finish successfully for this test to run.
-            Usually an execution test should have the compile test as it's requirement.
+            Usually an execution test should have the compile test as its requirement.
 
         timeoutSec: int
             The test case timeout in seconds,
@@ -48,12 +48,12 @@ class AbstractTest(ABC):
 
         self.name = name
         self.timeoutSec = timeoutSec
-        self.requirements = list() if requirements is None else requirements
+        self.requirements = [] if requirements is None else requirements
 
         self.case: Optional[TestCase] = None
         self.suite: Optional[TestSuite] = None
 
-    def start(self, testResults: Dict[str, Result], suite: TestSuite, additionalSuites: List[TestSuite]):
+    def start(self, testResults: Dict[str, Result], suite: TestSuite, additionalSuites: List[TestSuite]) -> None:
         """
         Starts the test run.
 
@@ -72,8 +72,8 @@ class AbstractTest(ABC):
 
         # Check if all test requirements (other tests) are fulfilled:
         if not self.__checkTestRequirements(testResults):
-            printTester(f"Skipping test case '{self.name}' not all requirements ({str(self.requirements)}) are fulfilled")
-            self.case.message = f"Test requires other test cases to succeed first ({str(self.requirements)})"
+            printTester(f"Skipping test case '{self.name}' not all requirements ({self.requirements!s}) are fulfilled")
+            self.case.message = f"Test requires other test cases to succeed first ({self.requirements!s})"
             self.case.result = Result.SKIPPED
             self.case.stdout = ""
             self.case.stderr = ""
@@ -95,7 +95,7 @@ class AbstractTest(ABC):
                 except TimeoutError:
                     self._timeout()
                 except Exception as e:
-                    self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this to an instructor!")
+                    self.__markAsFailed(f"'{self.name}' had an internal error. {e}.\nPlease report this to an instructor!")
                     print_exc()
                     self._onFailed()
         else:
@@ -105,7 +105,7 @@ class AbstractTest(ABC):
             except TestFailedError:
                 printTester(f"'{self.name}' failed.")
             except Exception as e:
-                self.__markAsFailed(f"'{self.name}' had an internal error. {str(e)}.\nPlease report this to an instructor!")
+                self.__markAsFailed(f"'{self.name}' had an internal error. {e}.\nPlease report this to an instructor!")
                 print_exc()
                 self._onFailed()
 
@@ -114,10 +114,10 @@ class AbstractTest(ABC):
 
     def __checkTestRequirements(self, testResults: Dict[str, Result]):
         """
-        Checks if all requirements (i.e. other test cases were successfull) are fulfilled.
+        Checks if all requirements (i.e. other test cases were successful) are fulfilled.
         """
 
-        return all(req in testResults or testResults[req] != Result.SUCCESS for req in self.requirements)
+        return all(testResults.get(req) == Result.SUCCESS for req in self.requirements)
 
     @contextmanager
     def __timeout(self, timeoutSec: int):
@@ -174,9 +174,8 @@ class AbstractTest(ABC):
         Returns the content of a file specified by filePath as string.
         """
         if path.exists(filePath) and path.isfile(filePath):
-            file: TextIOWrapper = open(filePath, "r")
-            content: str = file.read()
-            file.close()
+            with open(filePath, "r") as file:
+                content: str = file.read()
             return content
         return ""
 
@@ -255,7 +254,6 @@ class AbstractTest(ABC):
         """
         Implement your test run here.
         """
-        pass
 
     @abstractmethod
     def _onTimeout(self):
@@ -263,7 +261,6 @@ class AbstractTest(ABC):
         Called once a timeout occurres.
         Should cancel all outstanding actions and free all resources.
         """
-        pass
 
     @abstractmethod
     def _onFailed(self):
@@ -271,4 +268,3 @@ class AbstractTest(ABC):
         Called once the test failed via "_failWith(msg: str)".
         Should cancel all outstanding actions and free all allocated resources.
         """
-        pass

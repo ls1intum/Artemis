@@ -18,7 +18,7 @@ class Tester:
         self.name = name
         self.suite = TestSuite(name)
         self.additionalSuites = []
-        self.tests = dict()
+        self.tests = {}
 
     def run(self) -> None:
         """
@@ -60,7 +60,7 @@ class Tester:
         """
 
         if test.name in self.tests:
-            raise NameError(f"Test '{test.name}' already registered. Test names should be unique!")
+            raise ValueError(f"Test '{test.name}' already registered. Test names should be unique!")
         self.tests[test.name] = test
 
     def __printResult(self) -> None:

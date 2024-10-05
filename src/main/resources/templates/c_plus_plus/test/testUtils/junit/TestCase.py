@@ -50,7 +50,7 @@ class TestCase:
             stderr.text = shortenText(self.stderr, maxCharsPerOutput) + "\n"
 
     def genErrFailureMessage(self, maxChars: int = 5000) -> str:
-        oneThird: int = int(maxChars / 3)
+        oneThird: int = maxChars // 3
 
         # Limit the stderr output to one third of the available chars:
         stderrMsg: str = "\n" + "stderr".center(50, "=") + "\n"

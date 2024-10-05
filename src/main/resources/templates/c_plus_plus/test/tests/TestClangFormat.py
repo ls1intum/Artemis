@@ -20,7 +20,7 @@ class TestClangFormat(AbstractProgramTest):
         requirements: List[str] | None = None,
         name: str = "TestClangFormat",
     ) -> None:
-        super(TestClangFormat, self).__init__(
+        super().__init__(
             name, projectRoot, "clang-format", requirements, timeoutSec=5,
         )
         self.projectRoot = projectRoot
