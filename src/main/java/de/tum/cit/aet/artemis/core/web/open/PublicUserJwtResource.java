@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Duration;
+import java.util.Date;
 import java.util.Optional;
 
 import jakarta.servlet.ServletException;
@@ -27,14 +29,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 
 /**
@@ -49,12 +55,15 @@ public class PublicUserJwtResource {
 
     private final JWTCookieService jwtCookieService;
 
+    private final TokenProvider tokenProvider;
+
     private final AuthenticationManager authenticationManager;
 
     private final Optional<SAML2Service> saml2Service;
 
-    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
+    public PublicUserJwtResource(JWTCookieService jwtCookieService, TokenProvider tokenProvider, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
         this.jwtCookieService = jwtCookieService;
+        this.tokenProvider = tokenProvider;
         this.authenticationManager = authenticationManager;
         this.saml2Service = saml2Service;
     }
@@ -92,6 +101,36 @@ public class PublicUserJwtResource {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    /**
+     * Sends a theia token back as cookie and bearer token
+     *
+     * @param request  HTTP request
+     * @param response HTTP response
+     * @return the ResponseEntity with status 200 (ok), 401 (unauthorized)
+     */
+    @PostMapping("theia-token")
+    @EnforceAtLeastStudent
+    public ResponseEntity<String> getTheiaToken(@RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request,
+            HttpServletResponse response) {
+        // remaining time in milliseconds
+        var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
+        if (jwtToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+
+        // get validity of the token
+        long tokenRemainingTime = tokenProvider.getExpirationDate(jwtToken).getTime() - new Date().getTime();
+
+        // 1 day validity
+        long maxDuration = Duration.ofDays(1).toMillis();
+        ResponseCookie responseCookie = jwtCookieService.buildTheiaCookie(Math.min(tokenRemainingTime, maxDuration));
+
+        if (asCookie) {
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        }
+        return ResponseEntity.ok(responseCookie.getValue());
     }
 
     /**
