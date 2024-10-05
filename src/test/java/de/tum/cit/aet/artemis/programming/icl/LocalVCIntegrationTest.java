@@ -30,6 +30,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
+import de.tum.cit.aet.artemis.programming.service.localvc.ssh.MultipleHostKeyProvider;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
@@ -324,5 +325,13 @@ class LocalVCIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
         // assert that the folder names are correct
         assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
         assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo("/" + projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
+    }
+
+    @Test
+    void testMultipleHostKeyProvider() {
+        MultipleHostKeyProvider multipleHostKeyProvider = new MultipleHostKeyProvider(Path.of("./"));
+
+        multipleHostKeyProvider.loadKeys(null);
+        assertThat(multipleHostKeyProvider.getKeySize()).isEqualTo(0);
     }
 }
