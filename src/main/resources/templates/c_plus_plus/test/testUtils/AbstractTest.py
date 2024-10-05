@@ -16,7 +16,7 @@ from testUtils.Utils import printTester, PWrap
 # Timeout handler based on: https://www.jujens.eu/posts/en/2018/Jun/02/python-timeout-function/
 class AbstractTest(ABC):
     """
-    A abstract test that every test has to inherit from.
+    An abstract test that every test has to inherit from.
     How to:
     1. Inherit from AbstractTest
     2. Override the "_run()" method.
@@ -233,7 +233,7 @@ class AbstractTest(ABC):
     def _startPWrap(self, pWrap: PWrap) -> None:
         """
         Starts the PWrap execution.
-        Handels FileNotFoundError if for example the executable was not found or does not exist.
+        Handles FileNotFoundError if, for example, the executable was not found or does not exist.
         """
 
         try:
