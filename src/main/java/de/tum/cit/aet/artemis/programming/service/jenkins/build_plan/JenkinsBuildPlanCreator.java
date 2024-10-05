@@ -46,8 +46,6 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_SOLUTION_CHECKOUT_PATH = "#solutionCheckoutPath";
 
-    private static final String REPLACE_PUSH_TOKEN = "#secretPushToken";
-
     private static final String REPLACE_ARTEMIS_NOTIFICATION_URL = "#notificationsUrl";
 
     private static final String REPLACE_NOTIFICATIONS_TOKEN = "#jenkinsNotificationToken";
@@ -61,9 +59,6 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     private static final String REPLACE_BUILD_PLAN_URL = "#buildPlanUrl";
 
     private String artemisNotificationUrl;
-
-    @Value("${artemis.continuous-integration.secret-push-token}")
-    private String pushToken;
 
     @Value("${artemis.continuous-integration.vcs-credentials}")
     private String gitCredentialsKey;
@@ -97,7 +92,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         final String jenkinsfile = getJenkinsfile(internalVcsRepositoryURLs, programmingLanguage, checkoutSolution, buildPlanUrl);
 
         final Path configFilePath = Path.of("templates", "jenkins", "config.xml");
-        final var configFileReplacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsfile, REPLACE_PUSH_TOKEN, pushToken);
+        final var configFileReplacements = Map.of(REPLACE_PIPELINE_SCRIPT, jenkinsfile);
         final var xmlResource = resourceLoaderService.getResource(configFilePath);
         return JenkinsXmlFileUtils.readXmlFile(xmlResource, configFileReplacements);
     }

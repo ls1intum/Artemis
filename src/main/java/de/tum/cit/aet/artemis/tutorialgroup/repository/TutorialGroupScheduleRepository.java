@@ -28,8 +28,6 @@ public interface TutorialGroupScheduleRepository extends ArtemisJpaRepository<Tu
 
     Set<TutorialGroupSchedule> getAllByTutorialGroupCourse(Course course);
 
-    Optional<TutorialGroupSchedule> findByTutorialGroupId(Long tutorialGroupId);
-
     default TutorialGroupSchedule findByIdWithSessionsElseThrow(long tutorialGroupScheduleId) {
         return getValueElseThrow(findByIdWithSessions(tutorialGroupScheduleId), tutorialGroupScheduleId);
     }
