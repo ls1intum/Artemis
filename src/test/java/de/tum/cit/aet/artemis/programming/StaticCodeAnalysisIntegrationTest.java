@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,6 +28,7 @@ import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.config.StaticCodeAnalysisConfigurer;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -61,6 +63,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
     @Autowired
     private ProgrammingExerciseUtilService programmingExerciseUtilService;
 
+    @Autowired
+    private SharedQueueProcessingService sharedQueueProcessingService;
+
     private ProgrammingExercise programmingExerciseSCAEnabled;
 
     private ProgrammingExercise programmingExercise;
@@ -69,6 +74,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @BeforeEach
     void initTestCase() {
+        sharedQueueProcessingService.removeListener();
+
         userUtilService.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         programmingExerciseSCAEnabled = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         course = courseRepository.findWithEagerExercisesById(programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember().getId());
@@ -76,6 +83,11 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
                 programmingExerciseSCAEnabled.getCourseViaExerciseGroupOrCourseMember());
         tempProgrammingEx.setBuildConfig(programmingExerciseBuildConfigRepository.save(tempProgrammingEx.getBuildConfig()));
         programmingExercise = programmingExerciseRepository.save(tempProgrammingEx);
+    }
+
+    @AfterEach
+    void tearDown() {
+        sharedQueueProcessingService.init();
     }
 
     private String parameterizeEndpoint(String endpoint, ProgrammingExercise exercise) {

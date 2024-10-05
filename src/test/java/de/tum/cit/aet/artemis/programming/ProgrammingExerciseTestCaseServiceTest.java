@@ -14,6 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.eclipse.jgit.lib.ObjectId;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,6 +24,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
+import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -67,10 +69,15 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
     @Autowired
     private ParticipationUtilService participationUtilService;
 
+    @Autowired
+    private SharedQueueProcessingService sharedQueueProcessingService;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
     void setUp() {
+        sharedQueueProcessingService.removeListener();
+
         userUtilService.addUsers(TEST_PREFIX, 5, 1, 0, 1);
         var course = programmingExerciseUtilService.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = exerciseUtilService.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -78,6 +85,11 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
         programmingExercise = programmingExerciseRepository
                 .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(programmingExercise.getId())
                 .orElseThrow();
+    }
+
+    @AfterEach
+    void tearDown() {
+        sharedQueueProcessingService.init();
     }
 
     @Test
