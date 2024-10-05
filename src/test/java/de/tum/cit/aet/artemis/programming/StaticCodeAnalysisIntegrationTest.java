@@ -23,6 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.cit.aet.artemis.assessment.domain.CategoryState;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
@@ -70,6 +71,9 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     private ProgrammingExercise programmingExercise;
 
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
+
     private Course course;
 
     @BeforeEach
@@ -87,6 +91,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationLocalCI
 
     @AfterEach
     void tearDown() {
+        hazelcastInstance.getQueue("buildJobQueue").clear();
         sharedQueueProcessingService.init();
     }
 

@@ -22,6 +22,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.hazelcast.core.HazelcastInstance;
+
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Visibility;
 import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
@@ -72,6 +74,9 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
     @Autowired
     private SharedQueueProcessingService sharedQueueProcessingService;
 
+    @Autowired
+    private HazelcastInstance hazelcastInstance;
+
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
@@ -89,6 +94,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
 
     @AfterEach
     void tearDown() {
+        hazelcastInstance.getQueue("buildJobQueue").clear();
         sharedQueueProcessingService.init();
     }
 
