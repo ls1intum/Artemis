@@ -49,19 +49,6 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
             FROM Participation p
                 LEFT JOIN FETCH p.submissions s
             WHERE p.id = :participationId
-                AND (s.id = (SELECT MAX(s2.id) FROM p.submissions s2) OR s.id IS NULL)
-            """)
-    Optional<Participation> findByIdWithLatestSubmission(@Param("participationId") long participationId);
-
-    default Participation findByIdWithLatestSubmissionElseThrow(Long participationId) {
-        return getValueElseThrow(findByIdWithLatestSubmission(participationId), participationId);
-    }
-
-    @Query("""
-            SELECT p
-            FROM Participation p
-                LEFT JOIN FETCH p.submissions s
-            WHERE p.id = :participationId
                 AND (s.type <> de.tum.cit.aet.artemis.exercise.domain.SubmissionType.ILLEGAL OR s.type IS NULL)
             """)
     Optional<Participation> findWithEagerLegalSubmissionsById(@Param("participationId") long participationId);
@@ -118,8 +105,6 @@ public interface ParticipationRepository extends ArtemisJpaRepository<Participat
                 WHERE p.id = :participationId
             """)
     Optional<Participation> findWithProgrammingExerciseWithBuildConfigById(@Param("participationId") long participationId);
-
-    Set<Participation> findByExerciseId(long exerciseId);
 
     /**
      * Removes all individual due dates of participations for which the individual due date is before the updated due date of the exercise.

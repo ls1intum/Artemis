@@ -14,21 +14,19 @@ describe('JvmThreadsComponent', () => {
     let fixture: ComponentFixture<JvmThreadsComponent>;
     let modalService: NgbModal;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockComponent(NgbProgressbar)],
             declarations: [JvmThreadsComponent],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(JvmThreadsComponent);
-                comp = fixture.componentInstance;
-                modalService = TestBed.inject(NgbModal);
-            });
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(JvmThreadsComponent);
+        comp = fixture.componentInstance;
+        modalService = TestBed.inject(NgbModal);
     });
 
-    it('should store threads and create statistic counts', () => {
+    it('should store threads and create statistic counts', async () => {
         const threads = [
             { threadState: ThreadState.Blocked },
             { threadState: ThreadState.TimedWaiting },
@@ -39,15 +37,17 @@ describe('JvmThreadsComponent', () => {
             { threadState: ThreadState.Waiting },
         ] as Thread[];
 
-        comp.threads = threads;
+        fixture.componentRef.setInput('threads', threads);
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        expect(comp.threads).toEqual(threads);
-        expect(comp.threadStats).toEqual({
-            threadDumpAll: 7,
-            threadDumpRunnable: 1,
-            threadDumpTimedWaiting: 2,
-            threadDumpWaiting: 3,
-            threadDumpBlocked: 1,
+        expect(comp.threads()).toEqual(threads);
+        expect(comp.threadStats()).toEqual({
+            all: 7,
+            runnable: 1,
+            timedWaiting: 2,
+            waiting: 3,
+            blocked: 1,
         });
     });
 
@@ -56,7 +56,7 @@ describe('JvmThreadsComponent', () => {
         const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
         const threads = [{ threadState: ThreadState.Blocked }] as Thread[];
-        comp.threads = threads;
+        fixture.componentRef.setInput('threads', threads);
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('button.hand.btn.btn-primary.btn-sm'));

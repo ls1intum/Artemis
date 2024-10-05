@@ -1170,13 +1170,13 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/:courseId/exams/:examId/lockedSubmissions Get locked submissions for exam for user
+     * GET /courses/:courseId/exams/:examId/locked-submissions Get locked submissions for exam for user
      *
      * @param courseId - the id of the course
      * @param examId   - the id of the exam
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/lockedSubmissions")
+    @GetMapping("courses/{courseId}/exams/{examId}/locked-submissions")
     @EnforceAtLeastInstructor
     public ResponseEntity<List<Submission>> getLockedSubmissionsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);

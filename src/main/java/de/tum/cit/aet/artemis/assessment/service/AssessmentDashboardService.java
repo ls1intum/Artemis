@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
 import de.tum.cit.aet.artemis.assessment.domain.TutorParticipation;
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.dto.DueDateStat;
@@ -155,9 +155,9 @@ public class AssessmentDashboardService {
      * @param examMode                - if the exercises are part of an exam
      */
     private void calculateNumberOfSubmissions(Set<Exercise> programmingExercises, Set<Exercise> nonProgrammingExercises, boolean examMode) {
-        final List<ExerciseMapEntry> programmingSubmissionsCounts;
-        final List<ExerciseMapEntry> submissionCounts;
-        final List<ExerciseMapEntry> lateSubmissionCounts;
+        final List<ExerciseMapEntryDTO> programmingSubmissionsCounts;
+        final List<ExerciseMapEntryDTO> submissionCounts;
+        final List<ExerciseMapEntryDTO> lateSubmissionCounts;
         Set<Long> programmingExerciseIds = programmingExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
         Set<Long> nonProgrammingExerciseIds = nonProgrammingExercises.stream().map(Exercise::getId).collect(Collectors.toSet());
 
@@ -172,9 +172,9 @@ public class AssessmentDashboardService {
             lateSubmissionCounts = submissionRepository.countByExerciseIdsSubmittedAfterDueDate(nonProgrammingExerciseIds);
         }
         // convert the data from the queries
-        var programmingSubmissionMap = programmingSubmissionsCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
-        var submissionMap = submissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
-        var lateSubmissionMap = lateSubmissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntry::exerciseId, ExerciseMapEntry::value));
+        var programmingSubmissionMap = programmingSubmissionsCounts.stream().collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
+        var submissionMap = submissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
+        var lateSubmissionMap = lateSubmissionCounts.stream().collect(Collectors.toMap(ExerciseMapEntryDTO::exerciseId, ExerciseMapEntryDTO::value));
 
         // set the number of submissions for the exercises
         programmingExercises.forEach(exercise -> exercise.setNumberOfSubmissions(new DueDateStat(programmingSubmissionMap.getOrDefault(exercise.getId(), 0L), 0L)));
