@@ -434,7 +434,7 @@ public class SingleUserNotificationFactory {
     }
 
     @NotificationPlaceholderCreator(values = { CONVERSATION_ADD_USER_CHANNEL, CONVERSATION_REMOVE_USER_CHANNEL, CONVERSATION_DELETE_CHANNEL })
-    public static String[] createPlaceholdersForUserChannel(String courseTitle, String channelName, String responsibleForUserName) {
-        return new String[] { courseTitle, channelName, responsibleForUserName };
+    public static String[] createPlaceholdersForUserChannel(String courseTitle, String conversationName, String responsibleForUserName) {
+        return new String[] { courseTitle, conversationName, responsibleForUserName };
     }
 }
