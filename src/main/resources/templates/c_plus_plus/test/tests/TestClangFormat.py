@@ -43,9 +43,9 @@ class TestClangFormat(AbstractProgramTest):
         formatted = self._loadFullStdout().splitlines()
         with open(join(self.projectRoot, self.filePath)) as file:
             original = file.read().splitlines()
-        if original[-1] != "":
+        if original and original[-1] != "":
             original.append("")
-        if formatted[-1] != "":
+        if formatted and formatted[-1] != "":
             formatted.append("")
         if "\n".join(formatted) != "\n".join(original):
             diffstr = "\n".join(difflib.unified_diff(original, formatted))
