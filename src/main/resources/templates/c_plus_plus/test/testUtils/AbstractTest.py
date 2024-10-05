@@ -180,7 +180,7 @@ class AbstractTest(ABC):
 
     def _loadFullStdout(self):
         """
-        Returns the stout output of the executable.
+        Returns the stdout output of the executable.
         """
         filePath: str = self._getStdoutFilePath()
         return self.__loadFileContent(filePath)
@@ -225,7 +225,7 @@ class AbstractTest(ABC):
 
     def _createPWrap(self, cmd: List[str], cwd: Optional[str] = None):
         """
-        Crates a new PWrap instance from the given command.
+        Creates a new PWrap instance from the given command.
         """
 
         return PWrap(cmd, self._getStdoutFilePath(), self._getStderrFilePath(), cwd=cwd)
@@ -257,7 +257,7 @@ class AbstractTest(ABC):
     @abstractmethod
     def _onTimeout(self):
         """
-        Called once a timeout occurres.
+        Called once a timeout occurs.
         Should cancel all outstanding actions and free all resources.
         """
 
