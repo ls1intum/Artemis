@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.atlas.competency;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -14,6 +13,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -31,18 +31,21 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     class PreAuthorize {
 
         private void testAllPreAuthorizeEditor() throws Exception {
-            request.post("/api/courses/" + course.getId() + "/competencies/import/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
+            request.post("/api/courses/" + course.getId() + "/competencies/import/bulk", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/competencies/import-standardized", Collections.emptyList(), HttpStatus.FORBIDDEN);
         }
 
         private void testAllPreAuthorizeInstructor() throws Exception {
             request.put("/api/courses/" + course.getId() + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
-            request.delete("/api/courses/" + course.getId() + "/competencies/" + competency.getId(), HttpStatus.FORBIDDEN);
+            request.delete("/api/courses/" + course.getId() + "/competencies/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
             request.post("/api/courses/" + course.getId() + "/competencies/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
             // import
-            request.post("/api/courses/" + course.getId() + "/competencies/import-all/1", null, HttpStatus.FORBIDDEN);
-            request.post("/api/courses/" + course.getId() + "/competencies/import", competency.getId(), HttpStatus.FORBIDDEN);
+            request.post("/api/courses/" + course.getId() + "/competencies/import-all", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
+            request.post("/api/courses/" + course.getId() + "/competencies/import", new CompetencyImportOptionsDTO(null, null, false, false, false, null, false),
+                    HttpStatus.FORBIDDEN);
         }
 
         @Test
@@ -103,7 +106,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnCompetenciesForStudentOfCourse() throws Exception {
-        super.shouldReturnCompetenciesForStudentOfCourse(new Competency());
+        super.shouldReturnCompetenciesForCourse(new Competency());
     }
 
     @Test
@@ -209,14 +212,26 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreate(new Competency());
     }
 
-    CourseCompetency importCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception {
-        return request.postWithResponseBody("/api/courses/" + courseId + "/competencies/import", competencyId, Competency.class, expectedStatus);
+    CourseCompetency importCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+        return request.postWithResponseBody("/api/courses/" + courseId + "/competencies/import", importOptions, Competency.class, expectedStatus);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportCompetency() throws Exception {
         super.shouldImportCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportExerciseAndLectureWithCompetencyAndChangeDates();
     }
 
     @Test
@@ -259,15 +274,26 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         super.shouldReturnForbiddenForInstructorOfOtherCourseForCreateBulk();
     }
 
-    List<CompetencyWithTailRelationDTO> importAllCall(long courseId, long sourceCourseId, boolean importRelations, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/courses/" + courseId + "/competencies/import-all/" + sourceCourseId + (importRelations ? "?importRelations=true" : ""), null,
-                CompetencyWithTailRelationDTO.class, expectedStatus);
+    List<CompetencyWithTailRelationDTO> importAllCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+        return request.postListWithResponseBody("/api/courses/" + courseId + "/competencies/import-all", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportAllCompetencies() throws Exception {
         super.shouldImportAllCompetencies(competencyUtilService::createCompetency);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportAllExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportAllExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportAllExerciseAndLectureWithCompetencyAndChangeDates();
     }
 
     @Test
@@ -298,9 +324,8 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
         super.shouldReturnNotFoundForNotExistingIds();
     }
 
-    List<CompetencyWithTailRelationDTO> importBulkCall(long courseId, Set<Long> competencyIds, boolean importRelations, HttpStatus expectedStatus) throws Exception {
-        return request.postListWithResponseBody("/api/courses/" + courseId + "/competencies/import/bulk" + (importRelations ? "?importRelations=true" : ""), competencyIds,
-                CompetencyWithTailRelationDTO.class, expectedStatus);
+    List<CompetencyWithTailRelationDTO> importBulkCall(long courseId, CompetencyImportOptionsDTO importOptions, HttpStatus expectedStatus) throws Exception {
+        return request.postListWithResponseBody("/api/courses/" + courseId + "/competencies/import/bulk", importOptions, CompetencyWithTailRelationDTO.class, expectedStatus);
     }
 
     @Test
@@ -313,5 +338,17 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldImportCompetencies() throws Exception {
         super.shouldImportCompetencies(competencyUtilService::createCompetency);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetency() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetency();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates() throws Exception {
+        super.shouldImportCompetenciesExerciseAndLectureWithCompetencyAndChangeDates();
     }
 }
