@@ -70,9 +70,9 @@
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
                 "createChat": "Chat erstellen",
-                "createGroupChat": "Gruppen-Chat erstellen",
+                "createGroupChat": "Gruppenchat erstellen",
                 "createDirectChat": "Direkt-Chat erstellen",
-                "groupChats": "Gruppen-Chats",
+                "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern"
             },
