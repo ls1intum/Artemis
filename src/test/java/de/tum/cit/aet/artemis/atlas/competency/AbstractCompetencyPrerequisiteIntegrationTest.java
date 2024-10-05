@@ -300,6 +300,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         newCompetency.setTitle("Title");
         newCompetency.setDescription("Description");
         newCompetency.setCourse(course);
+        newCompetency.setMasteryThreshold(42);
         newCompetency = courseCompetencyRepository.save(newCompetency);
 
         TextExercise exercise = TextExerciseFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), course);
@@ -322,6 +323,7 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         newCompetency.setTitle("FreshlyCreatedCompetency");
         newCompetency.setDescription("This is an example of a freshly created competency");
         newCompetency.setCourse(course);
+        newCompetency.setMasteryThreshold(42);
         List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
         Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
         newCompetency.setLectureUnits(connectedLectureUnits);
@@ -440,10 +442,12 @@ abstract class AbstractCompetencyPrerequisiteIntegrationTest extends AbstractAtl
         competency1.setDescription("This is an example competency");
         competency1.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
         competency1.setCourse(course);
+        competency1.setMasteryThreshold(42);
         competency2.setTitle("Competency2");
         competency2.setDescription("This is another example competency");
         competency2.setTaxonomy(CompetencyTaxonomy.REMEMBER);
         competency2.setCourse(course);
+        competency2.setMasteryThreshold(84);
 
         var competenciesToCreate = List.of(competency1, competency2);
 
