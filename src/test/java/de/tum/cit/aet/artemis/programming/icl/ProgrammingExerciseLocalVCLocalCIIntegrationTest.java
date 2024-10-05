@@ -279,8 +279,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
                 .orElseThrow();
         SolutionProgrammingExerciseParticipation solutionParticipation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(importedExercise.getId())
                 .orElseThrow();
-        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false);
-        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false);
+        localVCLocalCITestService.testLatestSubmission(templateParticipation.getId(), null, 0, false, false, 0, 15);
+        localVCLocalCITestService.testLatestSubmission(solutionParticipation.getId(), null, 13, false, false, 0, 15);
         verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(importedExercise));
     }
 
