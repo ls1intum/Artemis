@@ -58,7 +58,7 @@ public class BuildJobManagementService {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    @Value("${artemis.continuous-integration.timeout-seconds:240}")
+    @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")

@@ -10,7 +10,7 @@
                 <jhi-programming-exercise-build-configuration
                     [dockerImage]="programmingExercise.buildConfig!.windfile!.metadata.docker.image"
                     (dockerImageChange)="setDockerImage($event)"
-                    [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 240 : programmingExercise.buildConfig!.timeoutSeconds!"
+                    [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
                     (timeoutChange)="setTimeout($event)"
                     [isAeolus]="false"
                 />
