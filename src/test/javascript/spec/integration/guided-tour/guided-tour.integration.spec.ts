@@ -21,6 +21,7 @@ import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { User } from 'app/core/user/user.model';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { CourseCardComponent } from 'app/overview/course-card.component';
+import { CourseCardHeaderComponent } from 'app/overview/course-card-header/course-card-header.component';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -79,6 +80,7 @@ describe('Guided tour integration', () => {
                 FooterComponent,
                 NotificationSidebarComponent,
                 MockHasAnyAuthorityDirective,
+                MockComponent(CourseCardHeaderComponent),
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(LoadingNotificationComponent),
