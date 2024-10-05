@@ -177,7 +177,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
                 if (this.alreadyConnectedOnce) {
                     // (re)connect to all existing channels
                     if (this.observables.size !== 0) {
-                        this.observables.forEach((observable, channel) => this.addSubscription(channel));
+                        this.observables.forEach((_observable, channel) => this.addSubscription(channel));
                     }
                 } else {
                     this.alreadyConnectedOnce = true;
@@ -216,7 +216,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * Close the connection to the websocket (e.g. due to logout), unsubscribe all observables and set alreadyConnectedOnce to false
      */
     disconnect() {
-        this.observables.forEach((observable, channel) => this.unsubscribe(channel));
+        this.observables.forEach((_observable, channel) => this.unsubscribe(channel));
         this.waitUntilConnectionSubscriptions.forEach((subscription) => subscription.unsubscribe());
         if (this.stompClient) {
             this.stompClient.disconnect();

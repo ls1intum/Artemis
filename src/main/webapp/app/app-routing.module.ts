@@ -26,15 +26,42 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'privacy',
-                    loadChildren: () => import('./core/legal/privacy.module').then((m) => m.ArtemisPrivacyModule),
+                    loadComponent: () => import('./core/legal/privacy.component').then((m) => m.PrivacyComponent),
+                    data: {
+                        pageTitle: 'artemisApp.legal.privacyStatement.title',
+                    },
+                },
+                {
+                    path: 'privacy/data-exports/:id',
+                    loadComponent: () => import('./core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
+                    data: {
+                        authorities: [Authority.USER],
+                        pageTitle: 'artemisApp.dataExport.title',
+                    },
+                    canActivate: [UserRouteAccessService],
+                },
+                {
+                    path: 'privacy/data-exports',
+                    loadComponent: () => import('./core/legal/data-export/data-export.component').then((m) => m.DataExportComponent),
+                    data: {
+                        authorities: [Authority.USER],
+                        pageTitle: 'artemisApp.dataExport.title',
+                    },
+                    canActivate: [UserRouteAccessService],
                 },
                 {
                     path: 'imprint',
-                    loadChildren: () => import('./core/legal/imprint.module').then((m) => m.ArtemisImprintModule),
+                    loadComponent: () => import('./core/legal/imprint.component').then((m) => m.ImprintComponent),
+                    data: {
+                        pageTitle: 'artemisApp.legal.imprint.title',
+                    },
                 },
                 {
                     path: 'about',
-                    loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
+                    loadComponent: () => import('./core/about-us/about-us.component').then((m) => m.AboutUsComponent),
+                    data: {
+                        pageTitle: 'overview.aboutUs',
+                    },
                 },
                 // ===== TEAM ====
                 {
@@ -186,5 +213,5 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
 })
 export class ArtemisAppRoutingModule {
     // Ensure the service is initialized before any routing happens
-    constructor(private _: ArtemisNavigationUtilService) {}
+    constructor(private _service: ArtemisNavigationUtilService) {}
 }

@@ -1,4 +1,4 @@
-import { ApplicationRef, Inject, Injectable, InjectionToken } from '@angular/core';
+import { ApplicationRef, Injectable, InjectionToken, inject } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest, HttpResponse } from '@angular/common/http';
 import { Observable, concat, interval, of } from 'rxjs';
 import { catchError, first, tap, timeout } from 'rxjs/operators';
@@ -11,18 +11,20 @@ export const WINDOW_INJECTOR_TOKEN = new InjectionToken<Window>('Window');
 
 @Injectable()
 export class ArtemisVersionInterceptor implements HttpInterceptor {
+    private appRef = inject(ApplicationRef);
+    private updates = inject(SwUpdate);
+    private serverDateService = inject(ArtemisServerDateService);
+    private alertService = inject(AlertService);
+    private injectedWindow = inject<Window>(WINDOW_INJECTOR_TOKEN);
+
     // The currently displayed alert
     private alert: Alert;
     // Indicates whether we ever saw an outdated state since last reload
     private hasSeenOutdatedInThisSession = false;
 
-    constructor(
-        private appRef: ApplicationRef,
-        private updates: SwUpdate,
-        private serverDateService: ArtemisServerDateService,
-        private alertService: AlertService,
-        @Inject(WINDOW_INJECTOR_TOKEN) private injectedWindow: Window,
-    ) {
+    constructor() {
+        const appRef = this.appRef;
+
         // Allow the app to stabilize first, before starting
         // polling for updates with `interval()`.
         const appIsStableOrTimeout = appRef.isStable.pipe(

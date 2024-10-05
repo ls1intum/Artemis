@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { from } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
@@ -7,12 +7,10 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
 
 @Injectable({ providedIn: 'root' })
 export class DataExportConfirmationDialogService {
-    modalRef: NgbModalRef | null;
+    private modalService = inject(NgbModal);
+    private alertService = inject(AlertService);
 
-    constructor(
-        private modalService: NgbModal,
-        public alertService: AlertService,
-    ) {}
+    private modalRef: NgbModalRef | undefined;
 
     /**
      * Opens data export confirmation dialog
@@ -27,6 +25,6 @@ export class DataExportConfirmationDialogService {
         this.modalRef.componentInstance.dataExportRequestForAnotherUser = dataExportConfirmationDialogData.dataExportRequestForAnotherUser;
         this.modalRef.componentInstance.dialogError = dataExportConfirmationDialogData.dialogError;
 
-        from(this.modalRef.result).subscribe(() => (this.modalRef = null));
+        from(this.modalRef.result).subscribe(() => (this.modalRef = undefined));
     }
 }

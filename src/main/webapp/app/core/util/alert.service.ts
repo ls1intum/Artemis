@@ -1,4 +1,4 @@
-import { Injectable, NgZone, SecurityContext } from '@angular/core';
+import { Injectable, NgZone, SecurityContext, inject } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
@@ -57,6 +57,11 @@ const DEFAULT_DISMISSIBLE = true;
     providedIn: 'root',
 })
 export class AlertService {
+    private sanitizer = inject(DomSanitizer);
+    private ngZone = inject(NgZone);
+    private translateService = inject(TranslateService);
+    private eventManager = inject(EventManager);
+
     private alerts: AlertInternal[] = [];
 
     errorListener: Subscription;
@@ -64,18 +69,13 @@ export class AlertService {
 
     readonly conflictErrorKeysToSkip: string[] = ['cannotRegisterInstructor'];
 
-    constructor(
-        private sanitizer: DomSanitizer,
-        private ngZone: NgZone,
-        private translateService: TranslateService,
-        eventManager: EventManager,
-    ) {
-        this.errorListener = eventManager.subscribe('artemisApp.error', (response: EventWithContent<unknown> | string) => {
+    constructor() {
+        this.errorListener = this.eventManager.subscribe('artemisApp.error', (response: EventWithContent<unknown> | string) => {
             const errorResponse = (response as EventWithContent<AlertError>).content;
             this.addErrorAlert(errorResponse.message, errorResponse.translationKey, errorResponse.translationParams);
         });
 
-        this.httpErrorListener = eventManager.subscribe('artemisApp.httpError', (response: any) => {
+        this.httpErrorListener = this.eventManager.subscribe('artemisApp.httpError', (response: any) => {
             const httpErrorResponse: HttpErrorResponse = response.content;
             if (httpErrorResponse.error?.skipAlert) {
                 return;
@@ -97,8 +97,8 @@ export class AlertService {
                             entityKey = httpErrorResponse.headers.get(entry);
                         }
                     });
-                    if (errorHeader && !translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
-                        const entityName = translateService.instant('global.menu.entities.' + entityKey);
+                    if (errorHeader && !this.translateService.instant(errorHeader).startsWith(translationNotFoundMessage)) {
+                        const entityName = this.translateService.instant('global.menu.entities.' + entityKey);
                         this.addErrorAlert(errorHeader, errorHeader, { entityName, ...httpErrorResponse.error?.params });
                     } else if (httpErrorResponse.error && httpErrorResponse.error.fieldErrors) {
                         const fieldErrors = httpErrorResponse.error.fieldErrors;
@@ -109,8 +109,8 @@ export class AlertService {
                                 fieldError.message = 'size';
                             }
                             // convert 'something[14].other[4].id' to 'something[].other[].id' so translations can be written to it
-                            const convertedField = fieldError.field.replace(/\[\d*\]/g, '[]');
-                            const fieldName = translateService.instant('artemisApp.' + fieldError.objectName + '.' + convertedField);
+                            const convertedField = fieldError.field.replace(/\[\d*]/g, '[]');
+                            const fieldName = this.translateService.instant('artemisApp.' + fieldError.objectName + '.' + convertedField);
                             this.addErrorAlert('Error on field "' + fieldName + '"', 'error.' + fieldError.message, { fieldName });
                         }
                     } else if (httpErrorResponse.error && httpErrorResponse.error.title) {

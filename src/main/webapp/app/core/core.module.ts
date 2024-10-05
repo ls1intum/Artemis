@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
+import { APP_INITIALIZER, ErrorHandler, LOCALE_ID, NgModule, inject } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
@@ -96,13 +96,13 @@ import { Router } from '@angular/router';
     ],
 })
 export class ArtemisCoreModule {
-    constructor(
-        dpConfig: NgbDatepickerConfig,
-        tooltipConfig: NgbTooltipConfig,
-        translateService: TranslateService,
-        languageHelper: JhiLanguageHelper,
-        sessionStorageService: SessionStorageService,
-    ) {
+    constructor() {
+        const dpConfig = inject(NgbDatepickerConfig);
+        const tooltipConfig = inject(NgbTooltipConfig);
+        const translateService = inject(TranslateService);
+        const languageHelper = inject(JhiLanguageHelper);
+        const sessionStorageService = inject(SessionStorageService);
+
         registerLocaleData(locale);
         dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
         translateService.setDefaultLang('en');

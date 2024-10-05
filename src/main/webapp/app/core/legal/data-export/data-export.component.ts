@@ -1,5 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
@@ -9,12 +11,32 @@ import { AlertService } from 'app/core/util/alert.service';
 import { DataExport, DataExportState } from 'app/entities/data-export.model';
 import { ActivatedRoute } from '@angular/router';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { DataExportRequestButtonDirective } from './confirmation/data-export-request-button.directive';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-data-export',
     templateUrl: './data-export.component.html',
+    standalone: true,
+    imports: [
+        ArtemisMarkdownModule,
+        ArtemisSharedComponentModule,
+        ArtemisSharedCommonModule,
+        ArtemisSharedModule,
+        CommonModule,
+        DataExportRequestButtonDirective,
+        TranslateDirective,
+    ],
 })
 export class DataExportComponent implements OnInit {
+    private dataExportService = inject(DataExportService);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+
     readonly ActionType = ActionType;
     readonly ButtonSize = ButtonSize;
     readonly ButtonType = ButtonType;
@@ -33,13 +55,6 @@ export class DataExportComponent implements OnInit {
     state?: DataExportState;
     dataExport: DataExport = new DataExport();
     isAdmin = false;
-
-    constructor(
-        private dataExportService: DataExportService,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnInit() {
         this.currentLogin = this.accountService.userIdentity?.login;

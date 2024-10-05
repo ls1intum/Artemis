@@ -1,17 +1,15 @@
-import { Directive, ElementRef, Input, OnInit, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, Input, OnInit, Renderer2, inject } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 
 @Directive({
     selector: '[jhiActiveMenu]',
 })
 export class ActiveMenuDirective implements OnInit {
-    @Input() jhiActiveMenu: string;
+    private element = inject(ElementRef);
+    private renderer = inject(Renderer2);
+    private translateService = inject(TranslateService);
 
-    constructor(
-        private element: ElementRef,
-        private renderer: Renderer2,
-        private translateService: TranslateService,
-    ) {}
+    @Input() jhiActiveMenu: string;
 
     ngOnInit() {
         this.translateService.onLangChange.subscribe((event: LangChangeEvent) => {

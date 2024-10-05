@@ -1,24 +1,26 @@
-import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Renderer2, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Observable } from 'rxjs';
 import { DataExportConfirmationDialogData } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.model';
 import { DataExportConfirmationDialogService } from 'app/core/legal/data-export/confirmation/data-export-confirmation-dialog.service';
 
-@Directive({ selector: '[jhiDataExportRequestButton]' })
+@Directive({
+    selector: '[jhiDataExportRequestButton]',
+    standalone: true,
+})
 export class DataExportRequestButtonDirective implements OnInit {
+    private dataExportConfirmationDialogService = inject(DataExportConfirmationDialogService);
+    private renderer = inject(Renderer2);
+    private elementRef = inject(ElementRef);
+    private translateService = inject(TranslateService);
+
     @Input() expectedLogin: string;
     @Input() dialogError: Observable<string>;
     @Input() adminDialog = false;
     @Output() dataExportRequest = new EventEmitter<void>();
     @Output() dataExportRequestForAnotherUser = new EventEmitter<string>();
-    private buttonText: HTMLElement;
 
-    constructor(
-        private dataExportConfirmationDialogService: DataExportConfirmationDialogService,
-        private renderer: Renderer2,
-        private elementRef: ElementRef,
-        private translateService: TranslateService,
-    ) {}
+    private buttonText: HTMLElement;
 
     /**
      * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.

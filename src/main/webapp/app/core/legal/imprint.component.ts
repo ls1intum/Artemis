@@ -1,23 +1,22 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @Component({
     selector: 'jhi-imprint',
     template: ` <div [innerHTML]="imprint | htmlForMarkdown"></div> `,
+    standalone: true,
+    imports: [ArtemisMarkdownModule],
 })
-export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
+export class ImprintComponent implements OnInit, OnDestroy {
+    private legalDocumentService = inject(LegalDocumentService);
+    private languageHelper = inject(JhiLanguageHelper);
+
     imprint?: string;
     private languageChangeSubscription?: Subscription;
-
-    constructor(
-        private route: ActivatedRoute,
-        private legalDocumentService: LegalDocumentService,
-        private languageHelper: JhiLanguageHelper,
-    ) {}
 
     /**
      * On init get the Imprint statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
@@ -33,21 +32,5 @@ export class ImprintComponent implements AfterViewInit, OnInit, OnDestroy {
 
     ngOnDestroy() {
         this.languageChangeSubscription?.unsubscribe();
-    }
-
-    /**
-     * After view initialization scroll the fragment of the current route into view.
-     */
-    ngAfterViewInit(): void {
-        this.route.params.subscribe((params) => {
-            try {
-                const fragment = document.querySelector('#' + params['fragment']);
-                if (fragment !== null) {
-                    fragment.scrollIntoView();
-                }
-            } catch (e) {
-                /* empty */
-            }
-        });
     }
 }

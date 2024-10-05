@@ -3,7 +3,6 @@ import { BrowserModule } from '@angular/platform-browser';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ArtemisSystemNotificationModule } from 'app/shared/notification/system-notification/system-notification.module';
-import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
@@ -21,7 +20,6 @@ import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
-import { ThemeModule } from 'app/core/theme/theme.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
 import { artemisIconPack } from 'src/main/webapp/content/icons/icons';
@@ -42,13 +40,11 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         UserSettingsModule,
-        ThemeModule,
         ArtemisSharedComponentModule,
         ScrollingModule,
     ],
     declarations: [
         JhiMainComponent,
-        NavbarComponent,
         ErrorComponent,
         OrionOutdatedComponent,
         PageRibbonComponent,

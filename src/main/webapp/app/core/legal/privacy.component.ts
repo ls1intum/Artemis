@@ -1,10 +1,14 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { CommonModule } from '@angular/common';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-privacy',
@@ -14,18 +18,17 @@ import { LegalDocumentLanguage } from 'app/entities/legal-document.model';
             <a jhiTranslate="artemisApp.dataExport.title" [routerLink]="['/privacy/data-exports']"> </a>
         }
     `,
+    standalone: true,
+    imports: [TranslateDirective, ArtemisMarkdownModule, CommonModule, ArtemisSharedComponentModule, ArtemisSharedModule, ArtemisMarkdownModule],
 })
-export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
-    privacyStatement?: string;
-    private languageChangeSubscription?: Subscription;
-    isAuthenticated: boolean;
+export class PrivacyComponent implements OnInit, OnDestroy {
+    private legalDocumentService = inject(LegalDocumentService);
+    private languageHelper = inject(JhiLanguageHelper);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private route: ActivatedRoute,
-        private legalDocumentService: LegalDocumentService,
-        private languageHelper: JhiLanguageHelper,
-        private accountService: AccountService,
-    ) {}
+    private languageChangeSubscription?: Subscription;
+    privacyStatement?: string;
+    isAuthenticated: boolean;
 
     /**
      * On init get the privacy statement file from the Artemis server and set up a subscription to fetch the file again if the language was changed.
@@ -42,21 +45,5 @@ export class PrivacyComponent implements AfterViewInit, OnInit, OnDestroy {
         if (this.languageChangeSubscription) {
             this.languageChangeSubscription.unsubscribe();
         }
-    }
-
-    /**
-     * After view initialization scroll the fragment of the current route into view.
-     */
-    ngAfterViewInit(): void {
-        this.route.params.subscribe((params) => {
-            try {
-                const fragment = document.querySelector('#' + params['fragment']);
-                if (fragment !== null) {
-                    fragment.scrollIntoView();
-                }
-            } catch (e) {
-                /* empty */
-            }
-        });
     }
 }

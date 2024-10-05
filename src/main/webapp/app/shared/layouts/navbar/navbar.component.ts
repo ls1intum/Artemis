@@ -1,5 +1,6 @@
-import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -56,8 +57,26 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
     styleUrls: ['navbar.scss'],
+    imports: [ThemeSwitchComponent],
+    standalone: true,
 })
 export class NavbarComponent implements OnInit, OnDestroy {
+    guidedTourService = inject(GuidedTourService);
+    private accountService = inject(AccountService);
+    private loginService = inject(LoginService);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private examParticipationService = inject(ExamParticipationService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private alertService = inject(AlertService);
+    private exerciseService = inject(ExerciseService);
+    private entityTitleService = inject(EntityTitleService);
+    private titleService = inject(Title);
+    private featureToggleService = inject(FeatureToggleService);
+
     inProduction: boolean;
     testServer: boolean;
     isNavbarCollapsed: boolean;
@@ -130,23 +149,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     private routeExamId = 0;
     private lastRouteUrlSegment?: string;
 
-    constructor(
-        public guidedTourService: GuidedTourService,
-        private accountService: AccountService,
-        private loginService: LoginService,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private router: Router,
-        private route: ActivatedRoute,
-        private examParticipationService: ExamParticipationService,
-        private serverDateService: ArtemisServerDateService,
-        private alertService: AlertService,
-        private exerciseService: ExerciseService,
-        private entityTitleService: EntityTitleService,
-        private titleService: Title,
-        private featureToggleService: FeatureToggleService,
-    ) {
+    constructor() {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
         this.subscribeToNavigationEventsForExamId();
