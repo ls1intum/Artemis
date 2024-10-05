@@ -17,7 +17,7 @@ class TestClangFormat(AbstractProgramTest):
         self,
         projectRoot: str,
         filePath: str,
-        requirements: Optional[List[str]] = None,
+        requirements: List[str] | None = None,
         name: str = "TestClangFormat",
     ) -> None:
         super(TestClangFormat, self).__init__(
@@ -26,7 +26,7 @@ class TestClangFormat(AbstractProgramTest):
         self.projectRoot = projectRoot
         self.filePath = filePath
 
-    def _run(self):
+    def _run(self) -> None:
         self.pWrap = self._createPWrap(
             [self.executable, self.filePath], self.executionDirectory
         )
@@ -41,7 +41,8 @@ class TestClangFormat(AbstractProgramTest):
             )
 
         formatted = self._loadFullStdout().splitlines()
-        original = open(join(self.projectRoot, self.filePath)).read().splitlines()
+        with open(join(self.projectRoot, self.filePath)) as file:
+            original = file.read().splitlines()
         if original[-1] != "":
             original.append("")
         if formatted[-1] != "":

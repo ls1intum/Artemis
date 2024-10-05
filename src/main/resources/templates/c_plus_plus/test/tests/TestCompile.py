@@ -15,15 +15,15 @@ class TestCompile(AbstractProgramTest):
         self,
         buildDir: str,
         target: str = "all",
-        requirements: List[str] = None,
+        requirements: List[str] | None = None,
         name: str = "TestCompile",
-    ):
-        super(TestCompile, self).__init__(
+    ) -> None:
+        super().__init__(
             name, buildDir, "cmake", requirements, timeoutSec=10
         )
         self.target = target
 
-    def _run(self):
+    def _run(self) -> None:
         # Build all targets:
         self.pWrap = self._createPWrap([self.executable, "--build", self.executionDirectory, "--target", self.target])
         self._startPWrap(self.pWrap)

@@ -10,11 +10,11 @@ class Junit:
     suite: TestSuite
     additionalSuites: List[Et.Element]
 
-    def __init__(self, suite: TestSuite, additionalSuites: List[Et.Element]):
+    def __init__(self, suite: TestSuite, additionalSuites: List[Et.Element]) -> None:
         self.suite = suite
         self.additionalSuites = additionalSuites
 
-    def toXml(self, outputPath: str):
+    def toXml(self, outputPath: str) -> None:
         suiteXml: Et.Element = self.suite.toXml()
         root: Et.Element = Et.Element("testsuites")
         root.append(suiteXml)
@@ -26,7 +26,7 @@ class Junit:
         chmod(outputPath, 0o744)
 
     @staticmethod
-    def createOutputPath(outputPath: str):
+    def createOutputPath(outputPath: str) -> None:
         paths: Tuple[str, str] = path.split(outputPath)
         if paths[0] and not path.exists(paths[0]):
             # Prevent others from writing in this folder:

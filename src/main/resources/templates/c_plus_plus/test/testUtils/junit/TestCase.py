@@ -22,7 +22,7 @@ class TestCase:
     result: Result
     message: str
 
-    def __init__(self, name: str):
+    def __init__(self, name: str) -> None:
         self.name = name
 
         self.stdout: str = ""
