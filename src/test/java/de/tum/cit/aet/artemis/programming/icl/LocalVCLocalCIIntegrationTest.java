@@ -114,8 +114,9 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     protected IQueue<BuildJobQueueItem> queuedJobs;
 
     @BeforeAll
-    void setupAll() {
+    void setupAll() throws InterruptedException {
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
+        Thread.sleep(120000);
     }
 
     @AfterAll
@@ -837,7 +838,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     // ---- Tests for practice repositories ----
 
     @Test
-    @Order(14)
+    @Order(15)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_studentPracticeRepository() throws Exception {
         // Practice repositories can be created after the due date of an exercise.
@@ -890,7 +891,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
-    @Order(15)
+    @Order(14)
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFetchPush_teachingAssistantPracticeRepository() throws Exception {
 
