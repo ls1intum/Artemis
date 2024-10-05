@@ -50,12 +50,13 @@ public class CompetencyUtilService {
      * @param suffix The suffix that will be added to the title of the Competency
      * @return The created Competency
      */
-    private Competency createCompetency(Course course, String suffix) {
+    public Competency createCompetency(Course course, String suffix) {
         Competency competency = new Competency();
         competency.setTitle("Example Competency" + suffix);
         competency.setDescription("Magna pars studiorum, prodita quaerimus.");
         competency.setTaxonomy(CompetencyTaxonomy.UNDERSTAND);
         competency.setCourse(course);
+        competency.setMasteryThreshold(42);
 
         return competencyRepo.save(competency);
     }
