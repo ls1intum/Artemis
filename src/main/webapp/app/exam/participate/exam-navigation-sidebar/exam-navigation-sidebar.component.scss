@@ -1,6 +1,6 @@
 $collapse-container-height: 35px;
-$sidebar-width-open: 275px;
-$sidebar-width-closed: 110px;
+$sidebar-width-open: 235px;
+$sidebar-width-closed: 80px;
 $management-header-height: 230px;
 $exam-test-run-offset: 38px;
 
@@ -25,10 +25,16 @@ $exam-test-run-offset: 38px;
     background-color: var(--module-bg);
     height: calc(100vh - var(--exam-height-offset));
     width: $sidebar-width-open;
-    transition: width 0.2s ease-in-out !important;
+    transition:
+        width 0.2s ease-in-out,
+        padding 0.2s ease-in-out !important;
 
     &.collapsed {
         width: $sidebar-width-closed !important;
+
+        .scrollable-column {
+            padding: 0 0.25rem;
+        }
     }
 
     &.sidebar-height-testRun {
@@ -60,9 +66,16 @@ $exam-test-run-offset: 38px;
     .sidebar {
         width: $sidebar-width-closed !important;
     }
+    .scrollable-column {
+        padding: 0 0.25rem !important;
+    }
     .auto-collapse {
         display: none !important;
     }
+}
+
+.scrollable-column {
+    padding: 0 1rem;
 }
 
 .notSynced {
@@ -94,12 +107,12 @@ $exam-test-run-offset: 38px;
 }
 
 .double-arrow.menu-closed {
-    transform: translate(40px) rotate(0deg);
+    transform: translate(24px) rotate(0deg);
 }
 
 .double-arrow {
-    transform: translate(235px) rotate(180deg);
-    transition: all ease 0.3s;
+    transform: translate(187px) rotate(180deg);
+    transition: all ease 0.2s;
     cursor: pointer;
     width: 30px;
     align-items: center;
@@ -109,4 +122,8 @@ $exam-test-run-offset: 38px;
 
 .me-negative {
     margin-right: -5px;
+}
+
+.highlight-card:hover {
+    background-color: var(--sidebar-card-selected-bg);
 }

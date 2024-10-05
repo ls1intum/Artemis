@@ -2,16 +2,16 @@
     class="d-flex sidebar justify-content-between flex-column rounded-3"
     [ngClass]="{ 'content-height-dev sidebar-height-testRun-dev': !isProduction || isTestServer, collapsed: isCollapsed, 'sidebar-height-testRun': isTestRun }"
 >
-    <div class="px-3 py-3">
+    <div class="py-3">
         <div class="w-100 bg-module">
             <!-- Since the exam navigation includes lots of functionalities and in-line adjustments, 
              we use duplicated code here in order to keep the functionality of exam navigation apart from 
              sidebar-card implementations.
               -->
             <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
-                <div class="scrollable-item-content py-2 px-2 bg-body" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'sidebar-height-testRun': isTestRun }">
+                <div class="scrollable-item-content scrollable-column" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer, 'sidebar-height-testRun': isTestRun }">
                     <div
-                        class="pointer rounded-3 col-12 px-1 pt-2 pb-1 mb-2 border-5 highlight-card bg-module"
+                        class="pointer rounded-3 col-12 px-2 pt-2 pb-1 mb-2 border-5 highlight-card bg-module"
                         [ngClass]="{ 'bg-selected border-selected': exerciseIndex === -1 }"
                         (click)="changePage(true, -1)"
                     >
@@ -30,7 +30,7 @@
                     @for (sidebarItem of sidebarData?.ungroupedData; track sidebarItem; let last = $last; let i = $index) {
                         <div [ngClass]="{ 'mb-2': !last }">
                             <div
-                                class="pointer rounded-3 col-12 px-1 pt-2 pb-1 border-5 highlight-card bg-module"
+                                class="pointer rounded-3 col-12 px-2 pt-2 pb-1 border-5 highlight-card bg-module"
                                 [ngClass]="{ 'bg-selected border-selected': i === exerciseIndex }"
                                 (click)="changePage(false, i, false)"
                             >
