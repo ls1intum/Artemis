@@ -183,8 +183,8 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
         localVCLocalCITestService.verifyRepositoryFoldersExist(createdExercise, localVCBasePath);
 
         // Also check that the template and solution repositories were built successfully.
-        localVCLocalCITestService.testLatestSubmission(createdExercise.getTemplateParticipation().getId(), null, 0, false);
-        localVCLocalCITestService.testLatestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false);
+        localVCLocalCITestService.testLatestSubmission(createdExercise.getTemplateParticipation().getId(), null, 0, false, false, 0, 15);
+        localVCLocalCITestService.testLatestSubmission(createdExercise.getSolutionParticipation().getId(), null, 13, false, false, 0, 15);
 
         verify(competencyProgressService).updateProgressByLearningObjectAsync(eq(createdExercise));
     }
