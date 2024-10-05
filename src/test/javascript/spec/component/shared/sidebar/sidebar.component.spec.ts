@@ -173,74 +173,8 @@ describe('SidebarComponent', () => {
         });
     });
 
-    describe('Dropdown Toggle Methods', () => {
-        beforeEach(() => {
-            component.showChatDropdown = false;
-            component.showChannelDropdown = false;
-            fixture.detectChanges();
-        });
-
-        it('should toggle showChatDropdown and hide showChannelDropdown when toggleChatDropdown is called', () => {
-            expect(component.showChatDropdown).toBeFalse();
-            expect(component.showChannelDropdown).toBeFalse();
-
-            component.toggleChatDropdown();
-            fixture.detectChanges();
-
-            expect(component.showChatDropdown).toBeTrue();
-            expect(component.showChannelDropdown).toBeFalse();
-
-            component.toggleChatDropdown();
-            fixture.detectChanges();
-
-            expect(component.showChatDropdown).toBeFalse();
-            expect(component.showChannelDropdown).toBeFalse();
-        });
-
-        it('should toggle showChannelDropdown and hide showChatDropdown when toggleChannelDropdown is called', () => {
-            expect(component.showChannelDropdown).toBeFalse();
-            expect(component.showChatDropdown).toBeFalse();
-
-            component.toggleChannelDropdown();
-            fixture.detectChanges();
-
-            expect(component.showChannelDropdown).toBeTrue();
-            expect(component.showChatDropdown).toBeFalse();
-
-            component.toggleChannelDropdown();
-            fixture.detectChanges();
-
-            expect(component.showChannelDropdown).toBeFalse();
-            expect(component.showChatDropdown).toBeFalse();
-        });
-
-        it('should hide showChannelDropdown when toggleChatDropdown is called and showChatDropdown becomes true', () => {
-            component.showChannelDropdown = true;
-            fixture.detectChanges();
-
-            component.toggleChatDropdown();
-            fixture.detectChanges();
-
-            expect(component.showChatDropdown).toBeTrue();
-            expect(component.showChannelDropdown).toBeFalse();
-        });
-
-        it('should hide showChatDropdown when toggleChannelDropdown is called and showChannelDropdown becomes true', () => {
-            component.showChatDropdown = true;
-            fixture.detectChanges();
-
-            component.toggleChannelDropdown();
-            fixture.detectChanges();
-
-            expect(component.showChannelDropdown).toBeTrue();
-            expect(component.showChatDropdown).toBeFalse();
-        });
-    });
-
     describe('Chat and Channel Creation Methods', () => {
         beforeEach(() => {
-            component.showChatDropdown = true;
-            component.showChannelDropdown = true;
             fixture.detectChanges();
         });
 
@@ -250,7 +184,6 @@ describe('SidebarComponent', () => {
             component.createDirectChat();
 
             expect(component.onDirectChatPressed.emit).toHaveBeenCalledOnce();
-            expect(component.showChatDropdown).toBeFalse();
         });
 
         it('should emit onGroupChatPressed and set showChatDropdown to false when createGroupChat is called', () => {
@@ -259,7 +192,6 @@ describe('SidebarComponent', () => {
             component.createGroupChat();
 
             expect(component.onGroupChatPressed.emit).toHaveBeenCalledOnce();
-            expect(component.showChatDropdown).toBeFalse();
         });
 
         it('should emit onBrowsePressed and set showChannelDropdown to false when browseChannels is called', () => {
@@ -268,7 +200,6 @@ describe('SidebarComponent', () => {
             component.browseChannels();
 
             expect(component.onBrowsePressed.emit).toHaveBeenCalledOnce();
-            expect(component.showChannelDropdown).toBeFalse();
         });
 
         it('should emit onCreateChannelPressed and set showChannelDropdown to false when createNewChannel is called', () => {
@@ -277,7 +208,6 @@ describe('SidebarComponent', () => {
             component.createNewChannel();
 
             expect(component.onCreateChannelPressed.emit).toHaveBeenCalledOnce();
-            expect(component.showChannelDropdown).toBeFalse();
         });
     });
 

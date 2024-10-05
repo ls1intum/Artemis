@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output } from '@angular/core';
-import { faFilter, faFilterCircleXmark, faPlusCircle, faSearch, faUser, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faFilter, faFilterCircleXmark, faHashtag, faPlusCircle, faSearch, faUser, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
 import { ProfileService } from '../layouts/profiles/profile.service';
@@ -58,6 +58,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     readonly faUsers = faUsers;
     readonly faPlusCircle = faPlusCircle;
     readonly faSearch = faSearch;
+    readonly faHashtag = faHashtag;
 
     sidebarDataBeforeFiltering: SidebarData;
 
@@ -71,41 +72,20 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
         private modalService: NgbModal,
     ) {}
 
-    showChatDropdown = false;
-    showChannelDropdown = false;
-
-    toggleChatDropdown() {
-        this.showChatDropdown = !this.showChatDropdown;
-        if (this.showChatDropdown) {
-            this.showChannelDropdown = false;
-        }
-    }
-
-    toggleChannelDropdown() {
-        this.showChannelDropdown = !this.showChannelDropdown;
-        if (this.showChannelDropdown) {
-            this.showChatDropdown = false;
-        }
-    }
-
     createNewChannel() {
         this.onCreateChannelPressed.emit();
-        this.showChannelDropdown = false;
     }
 
     browseChannels() {
         this.onBrowsePressed.emit();
-        this.showChannelDropdown = false;
     }
 
     createDirectChat() {
         this.onDirectChatPressed.emit();
-        this.showChatDropdown = false;
     }
 
     createGroupChat() {
         this.onGroupChatPressed.emit();
-        this.showChatDropdown = false;
     }
 
     ngOnInit(): void {
