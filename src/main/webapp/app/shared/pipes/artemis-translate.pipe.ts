@@ -10,10 +10,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
  */
 export class ArtemisTranslatePipe implements PipeTransform, OnDestroy {
     private translatePipe: TranslatePipe;
-    constructor(
-        private translateService: TranslateService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {
+    constructor(translateService: TranslateService, changeDetectorRef: ChangeDetectorRef) {
         this.translatePipe = new TranslatePipe(translateService, changeDetectorRef);
     }
 

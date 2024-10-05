@@ -3,7 +3,6 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
 import { Lti13ExerciseLaunchComponent } from 'app/lti/lti13-exercise-launch.component';
 import { Lti13DynamicRegistrationComponent } from 'app/lti/lti13-dynamic-registration.component';
-import { ArtemisCoreModule } from 'app/core/core.module';
 import { ltiLaunchState } from './lti.route';
 import { Lti13DeepLinkingComponent } from 'app/lti/lti13-deep-linking.component';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +15,7 @@ import { LtiCourseCardComponent } from 'app/lti/lti-course-card.component';
 const LTI_LAUNCH_ROUTES = [...ltiLaunchState];
 
 @NgModule({
-    imports: [RouterModule.forChild(LTI_LAUNCH_ROUTES), ArtemisCoreModule, ArtemisSharedModule, FormsModule, ArtemisSharedComponentModule, ArtemisSharedLibsModule],
+    imports: [RouterModule.forChild(LTI_LAUNCH_ROUTES), ArtemisSharedModule, FormsModule, ArtemisSharedComponentModule, ArtemisSharedLibsModule],
     declarations: [
         Lti13ExerciseLaunchComponent,
         Lti13DynamicRegistrationComponent,

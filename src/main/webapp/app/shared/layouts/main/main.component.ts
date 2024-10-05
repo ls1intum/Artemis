@@ -10,16 +10,29 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
     styleUrls: ['./main.component.scss'],
-    imports: [NotificationPopupComponent, ArtemisSharedModule, ArtemisSharedComponentModule, FooterComponent, PageRibbonComponent],
+    providers: [TranslateService],
+    imports: [
+        NotificationPopupComponent,
+        ArtemisSharedModule,
+        ArtemisSharedComponentModule,
+        ArtemisSharedCommonModule,
+        ArtemisSharedLibsModule,
+        FooterComponent,
+        PageRibbonComponent,
+        TranslateModule,
+    ],
     standalone: true,
 })
 export class JhiMainComponent implements OnInit, OnDestroy {

@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-orion-outdated',
@@ -14,6 +15,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
             {{ 'artemisApp.orion.version.allowedVersion' | artemisTranslate }}<span class="badge bg-pill bg-info">{{ allowedMinimumVersion }}</span>
         </div>
     `,
+    imports: [ArtemisSharedModule],
+    standalone: true,
 })
 export class OrionOutdatedComponent implements OnInit {
     versionString: string;

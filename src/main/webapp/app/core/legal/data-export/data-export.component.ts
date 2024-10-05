@@ -14,22 +14,13 @@ import { convertDateFromServer } from 'app/utils/date.utils';
 import { DataExportRequestButtonDirective } from './confirmation/data-export-request-button.directive';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-data-export',
     templateUrl: './data-export.component.html',
     standalone: true,
-    imports: [
-        ArtemisMarkdownModule,
-        ArtemisSharedComponentModule,
-        ArtemisSharedCommonModule,
-        ArtemisSharedModule,
-        CommonModule,
-        DataExportRequestButtonDirective,
-        TranslateDirective,
-    ],
+    imports: [ArtemisMarkdownModule, ArtemisSharedComponentModule, ArtemisSharedModule, CommonModule, DataExportRequestButtonDirective, TranslateDirective],
 })
 export class DataExportComponent implements OnInit {
     private dataExportService = inject(DataExportService);
