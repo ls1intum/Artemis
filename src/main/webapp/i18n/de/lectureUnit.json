@@ -67,7 +67,7 @@
                 "sourceRequiredValidationError": "Video URL ist ein Pflichtfeld",
                 "sourceURLValidationError": "Keine valide URL",
                 "urlVideoHelper": "Umwandlung in einbettbares Format ",
-                "urlHelperPlaceholder": "Du kannst hier eine Video URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
+                "urlHelperPlaceholder": "Du kannst hier eine Video-URL eingeben und den Pfeil benutzen, um sie in die korrekte einbettbare URL umzuwandeln",
                 "urlHelperValidationError": "Automatische Formatumwandlung ist nicht möglich für diese URL"
             },
             "editVideoUnit": {
@@ -154,7 +154,7 @@
                     "startPage": "Startseite",
                     "endPage": "Letzte Seite"
                 },
-                "lectureFileToolTip": "Bitte auswählen, um die automatischen Trennung von Vorlesungseinheiten zu aktivieren.",
+                "lectureFileToolTip": "Bitte auswählen, um die automatische Trennung von Vorlesungseinheiten zu aktivieren.",
                 "processTimeInfo": "Die Verarbeitung der Vortragseinheiten kann einige Sekunden dauern. Habe bitte etwas Geduld."
             },
             "createAttachmentUnit": {
@@ -171,7 +171,7 @@
                 "descriptionMaxLengthValidationError": "Die Beschreibung kann maximal 1000 Zeichen lang sein.",
                 "file": "Datei",
                 "version": "Version",
-                "fileRequiredValidationError": "Du musst eine Datei zum uploaden auswählen.",
+                "fileRequiredValidationError": "Du musst eine Datei zum Uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
                 "fileTooBig": "Die Datei ist zu groß! Die maximale Dateigröße beträgt 20 MB.",
                 "fileLimitation": "(max. Größe 20 MB)",

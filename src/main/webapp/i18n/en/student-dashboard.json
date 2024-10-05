@@ -305,7 +305,7 @@
                 "assessmentDue": "Assessment due:",
                 "assessmentDueTooltip": "The assessment is due by {{date}}.",
                 "complaintDue": "Complaint due:",
-                "complaintDueTooltip": "You can write a complain until {{date}}.",
+                "complaintDueTooltip": "You can write a complaint until {{date}}.",
                 "complaintPossible": "Complaint possible:",
                 "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
                 "presented": "Presented:",

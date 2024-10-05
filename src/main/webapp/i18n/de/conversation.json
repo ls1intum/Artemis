@@ -45,7 +45,7 @@
                 "examChannels": "Klausuren",
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
-                "groupChats": "Gruppen-Chats",
+                "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern",
                 "sideBarSection": {
@@ -71,7 +71,7 @@
             "unArchiveChannel": {
                 "title": "Archivierung des Kanals {{ channelName }} rückgängig machen?",
                 "question": "Möchtest du die Archivierung des Kanals {{ channelName }} wirklich rückgängig machen?",
-                "description": "Mitglieder:innen können wieder Nachrichten senden. Du kannst den Kanal jederzeit wieder archivieren.",
+                "description": "Mitglieder können wieder Nachrichten senden. Du kannst den Kanal jederzeit wieder archivieren.",
                 "confirmButton": "Archivierung rückgängig machen"
             },
             "deleteChannel": {
@@ -81,7 +81,7 @@
             "grantChannelModerator": {
                 "title": "{{ userName }} zu einem/einer Moderator:in von {{ channelName }} machen?",
                 "question": "Möchtest du wirklich {{ userName }} zu einem/einer Moderator:in von {{ channelName }} machen?",
-                "description": "Dies ermöglicht es {{ userName }}, den Kanal und seine Mitglieder:innen zu verwalten. Er oder sie kann auch Nachrichten bearbeiten oder löschen.",
+                "description": "Dies ermöglicht es {{ userName }}, den Kanal und seine Mitglieder zu verwalten. Er oder sie kann auch Nachrichten bearbeiten oder löschen.",
                 "confirmButton": "Zum/Zur Moderator:in machen"
             },
             "revokeChannelModerator": {
@@ -118,23 +118,23 @@
             },
             "conversationDetail": {
                 "tabs": {
-                    "members": "Mitglieder:innen",
+                    "members": "Mitglieder",
                     "info": "Informationen",
                     "settings": "Einstellungen"
                 },
                 "memberTab": {
-                    "findMembers": "Mitglieder:innen finden",
+                    "findMembers": "Mitglieder finden",
                     "searching": "Suche ...",
                     "addUsers": "Nutzer:innen hinzufügen",
                     "filter": "Filter",
-                    "allFilter": "Alle Mitglieder:innen",
+                    "allFilter": "Alle Mitglieder",
                     "instructorFilter": "Lehrende",
                     "editorFilter": "Editor:innen",
                     "tutorFilter": "Tutor:innen",
                     "studentFilter": "Studierende",
                     "channelModeratorFilter": "Kanalmoderator:innen",
                     "memberRow": {
-                        "channelModeratorTooltip": "Moderator:in, der/die den Kanal und seine Mitglieder:innen verwalten kann",
+                        "channelModeratorTooltip": "Moderator:in, der/die den Kanal und seine Mitglieder verwalten kann",
                         "removeUser": "Nutzer:in entfernen",
                         "grantModeratorRole": "Zum/Zur Moderator:in machen",
                         "revokeModeratorRole": "Als Moderator:in entfernen"
@@ -197,7 +197,7 @@
                 "createChannelButton": "Erstelle einen neuen Kanal",
                 "channelItem": {
                     "joined:": "Beigetreten",
-                    "members": "Mitglieder:innen"
+                    "members": "Mitglieder"
                 },
                 "actions": {
                     "view": "Ansehen",

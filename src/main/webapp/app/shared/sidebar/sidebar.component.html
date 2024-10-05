@@ -1,100 +1,103 @@
-<div class="d-flex sidebar rounded-3 px-3 sidebar-width hide-on_print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
-    <div class="w-100 bg-module">
-        <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
-            @if (searchFieldEnabled) {
-                <div class="mt-2 mb-2">
-                    <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
-                    @if (showFilter) {
-                        <div class="ms-2 mt-1 text-primary">
-                            <a (click)="openFilterExercisesDialog()">
-                                @if (isFilterActive) {
-                                    <fa-icon [icon]="faFilterCurrentlyApplied" />
-                                } @else {
-                                    <fa-icon [icon]="faFilter" />
-                                }
-                                <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.filter"></span>
-                            </a>
-                        </div>
-                    }
-                </div>
-            }
-            @if (inCommunication()) {
-                <div class="row g-1 col-12" ngbDropdown>
-                    <button type="button" class="btn btn-primary w-100" ngbDropdownToggle>
-                        <fa-icon [icon]="faPlusCircle" class="item-icon"></fa-icon>
-                        <span jhiTranslate="artemisApp.courseOverview.sidebar.addChannelChat"></span>
-                    </button>
-
-                    <div ngbDropdownMenu>
-                        <button (click)="createDirectChat()" class="p-2" ngbDropdownItem>
-                            <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true"></fa-icon>
-                            <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
-                        </button>
-                        <button (click)="createGroupChat()" class="p-2" ngbDropdownItem>
-                            <fa-icon [icon]="faUsers" class="item-icon" [fixedWidth]="true"></fa-icon>
-                            <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
-                        </button>
-                        <button (click)="createNewChannel()" class="p-2" ngbDropdownItem>
-                            <fa-icon [icon]="faHashtag" class="item-icon"></fa-icon>
-                            <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
-                        </button>
-                        <button (click)="browseChannels()" class="p-2" ngbDropdownItem>
-                            <fa-icon [icon]="faSearch" class="item-icon"></fa-icon>
-                            <span jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></span>
-                        </button>
-                    </div>
-                </div>
-            }
-
-            @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
-                <div
-                    [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
-                    [jhiTranslate]="
-                        (sidebarDataBeforeFiltering?.ungroupedData?.length ?? 0) > 0 && sidebarData.ungroupedData?.length === 0
-                            ? 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter'
-                            : 'artemisApp.courseOverview.general.noDataFound'
-                    "
-                    class="mt-2 text-center scrollable-item-content"
-                ></div>
-            } @else {
-                <div
-                    class="scrollable-item-content my-2"
-                    [ngClass]="{
-                        'content-height-dev': !isProduction || isTestServer,
-                        'search-height-conversations': sidebarData?.sidebarType === 'conversation',
-                        'search-height-normal': sidebarData?.sidebarType !== 'conversation',
-                    }"
-                >
-                    @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
-                        <jhi-sidebar-accordion
-                            [searchValue]="searchValue"
-                            [groupedData]="sidebarData.groupedData"
-                            [sidebarType]="sidebarData.sidebarType"
-                            [storageId]="sidebarData.storageId"
-                            [routeParams]="routeParams"
-                            [courseId]="courseId"
-                            [itemSelected]="itemSelected"
-                            [showLeadingIcon]="sidebarData.showAccordionLeadingIcon ?? false"
-                            [channelTypeIcon]="channelTypeIcon"
-                            [collapseState]="collapseState"
-                            (onUpdateSidebar)="onUpdateSidebar.emit()"
-                            [isFilterActive]="isFilterActive"
-                        />
-                    } @else {
-                        @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {
-                            <div [ngClass]="{ 'mb-2': !last }">
-                                <div
-                                    jhiSidebarCard
-                                    [size]="sidebarItem.size"
-                                    [itemSelected]="itemSelected"
-                                    [sidebarType]="sidebarData.sidebarType"
-                                    [sidebarItem]="sidebarItem"
-                                ></div>
+<div class="sidebar-wrap">
+    <div class="d-flex sidebar rounded-3 px-3 sidebar-width hide-on_print" [ngClass]="{ 'sidebar-height-dev': !isProduction || isTestServer, collapsed: isCollapsed }">
+        <div class="w-100 bg-module">
+            <div class="sidebar-content" [ngClass]="{ collapsed: isCollapsed }">
+                @if (searchFieldEnabled) {
+                    <div class="mt-2 mb-2">
+                        <jhi-search-filter (newSearchEvent)="setSearchValue($event)" class="mb-2" />
+                        @if (showFilter) {
+                            <div class="ms-2 mt-1 text-primary">
+                                <a (click)="openFilterExercisesDialog()">
+                                    @if (isFilterActive) {
+                                        <fa-icon [icon]="faFilterCurrentlyApplied" />
+                                    } @else {
+                                        <fa-icon [icon]="faFilter" />
+                                    }
+                                    <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.filter"></span>
+                                </a>
                             </div>
                         }
-                    }
-                </div>
-            }
+                    </div>
+                }
+                @if (inCommunication()) {
+                    <div class="row g-1 col-12" ngbDropdown>
+                        <button type="button" class="btn btn-primary w-100" ngbDropdownToggle>
+                            <fa-icon [icon]="faPlusCircle" class="item-icon"></fa-icon>
+                            <span jhiTranslate="artemisApp.courseOverview.sidebar.addChannelChat"></span>
+                        </button>
+
+                        <div ngbDropdownMenu>
+                            <button (click)="createDirectChat()" class="p-2" ngbDropdownItem>
+                                <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true"></fa-icon>
+                                <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
+                            </button>
+                            <button (click)="createGroupChat()" class="p-2" ngbDropdownItem>
+                                <fa-icon [icon]="faUsers" class="item-icon" [fixedWidth]="true"></fa-icon>
+                                <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
+                            </button>
+                            <button (click)="createNewChannel()" class="p-2" ngbDropdownItem>
+                                <fa-icon [icon]="faHashtag" class="item-icon"></fa-icon>
+                                <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
+                            </button>
+                            <button (click)="browseChannels()" class="p-2" ngbDropdownItem>
+                                <fa-icon [icon]="faSearch" class="item-icon"></fa-icon>
+                                <span jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></span>
+                            </button>
+                        </div>
+                    </div>
+                }
+                @if (!sidebarData?.ungroupedData || !(sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue)?.length) {
+                    <div
+                        [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }"
+                        [jhiTranslate]="
+                            (sidebarDataBeforeFiltering?.ungroupedData?.length ?? 0) > 0 && sidebarData.ungroupedData?.length === 0
+                                ? 'artemisApp.courseOverview.general.noElementFoundWithAppliedFilter'
+                                : 'artemisApp.courseOverview.general.noDataFound'
+                        "
+                        class="mt-2 text-center scrollable-item-content"
+                    ></div>
+                } @else {
+                    <div
+                        class="scrollable-item-content my-2"
+                        [ngClass]="{
+                            'content-height-dev': !isProduction || isTestServer,
+                            'search-height-conversations': sidebarData?.sidebarType === 'conversation',
+                            'search-height-normal': sidebarData?.sidebarType !== 'conversation',
+                        }"
+                    >
+                        @if (sidebarData?.groupByCategory && sidebarData.groupedData) {
+                            <jhi-sidebar-accordion
+                                [searchValue]="searchValue"
+                                [groupedData]="sidebarData.groupedData"
+                                [sidebarType]="sidebarData.sidebarType"
+                                [storageId]="sidebarData.storageId"
+                                [routeParams]="routeParams"
+                                [courseId]="courseId"
+                                [itemSelected]="itemSelected"
+                                [showAddOptions]="sidebarData.showAccordionAddOption ?? false"
+                                [showLeadingIcon]="sidebarData.showAccordionLeadingIcon ?? false"
+                                [showAddOption]="showAddOption"
+                                [channelTypeIcon]="channelTypeIcon"
+                                [collapseState]="collapseState"
+                                (onUpdateSidebar)="onUpdateSidebar.emit()"
+                                [isFilterActive]="isFilterActive"
+                            />
+                        } @else {
+                            @for (sidebarItem of sidebarData?.ungroupedData | searchFilter: ['title', 'type'] : searchValue; track sidebarItem; let last = $last) {
+                                <div [ngClass]="{ 'mb-2': !last }">
+                                    <div
+                                        jhiSidebarCard
+                                        [size]="sidebarItem.size"
+                                        [itemSelected]="itemSelected"
+                                        [sidebarType]="sidebarData.sidebarType"
+                                        [sidebarItem]="sidebarItem"
+                                    ></div>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+            </div>
         </div>
     </div>
 </div>
