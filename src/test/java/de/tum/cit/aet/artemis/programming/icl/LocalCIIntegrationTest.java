@@ -40,8 +40,6 @@ import org.junit.jupiter.api.parallel.Execution;
 import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -73,8 +71,6 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @Execution(ExecutionMode.SAME_THREAD)
 class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
-
-    private static final Logger log = LoggerFactory.getLogger(LocalCIIntegrationTest.class);
 
     @Autowired
     private LocalVCServletService localVCServletService;
@@ -288,7 +284,6 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCannotFindResults() {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
-        log.info("Created participation with id {} for programming exercise with shortname {}", studentParticipation.getId(), programmingExercise.getShortName());
 
         // Should return a build result that indicates that the build failed.
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = mock(CopyArchiveFromContainerCmd.class);
