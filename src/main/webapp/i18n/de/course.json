@@ -106,6 +106,10 @@
                     "label": "Direktnachrichten / Gruppenchats aktiviert",
                     "tooltip": "Ermöglicht den Nachrichtenaustausch in Gruppenchats oder Direktnachrichten. Alle Nutzer:innen können Direktnachrichten oder einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder begrenzt. Die Chats finden im Kommunikationbereich des Kurses statt.",
                     "codeOfConduct": "Nachrichten: Code of Conduct"
+                },
+                "faqEnabled": {
+                    "label": "FAQs aktivieren",
+                    "tooltip": "Ermöglicht das Anlegen von FAQ-Einträgen, in denen Lehrende häufig gestellte Fragen übersichtlich sammeln. Studierende können auf diese Wissensbasis zugreifen, um selbstständig Themen nachzuarbeiten und offene Fragen eigenständig zu klären."
                 }
             },
             "enrollmentEnabled": {

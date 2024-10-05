@@ -12,11 +12,11 @@ import jakarta.validation.constraints.NotNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests;
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessments;
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses;
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints;
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequests;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAssessmentsDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponsesDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequestsDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -52,16 +52,16 @@ public class TutorLeaderboardService {
     public List<TutorLeaderboardDTO> getCourseLeaderboard(Course course, Set<Long> exerciseIdsOfCourse) {
         var tutors = userRepository.getTutors(course);
 
-        List<TutorLeaderboardAssessments> tutorLeaderboardAssessments = List.of();
+        List<TutorLeaderboardAssessmentsDTO> tutorLeaderboardAssessmentDTOS = List.of();
         // only invoke the query for non empty exercise sets to avoid performance issues
         if (!exerciseIdsOfCourse.isEmpty()) {
-            tutorLeaderboardAssessments = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
+            tutorLeaderboardAssessmentDTOS = resultRepository.findTutorLeaderboardAssessmentByCourseId(exerciseIdsOfCourse);
         }
         var tutorLeaderboardComplaints = complaintRepository.findTutorLeaderboardComplaintsByCourseId(course.getId());
         var tutorLeaderboardComplaintResponses = complaintRepository.findTutorLeaderboardComplaintResponsesByCourseId(course.getId());
         var tutorLeaderboardMoreFeedbackRequests = complaintRepository.findTutorLeaderboardMoreFeedbackRequestsByCourseId(course.getId());
         var tutorLeaderboardAnsweredMoreFeedbackRequests = complaintRepository.findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(course.getId());
-        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessments, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
+        return aggregateTutorLeaderboardData(tutors, tutorLeaderboardAssessmentDTOS, tutorLeaderboardComplaints, tutorLeaderboardMoreFeedbackRequests,
                 tutorLeaderboardComplaintResponses, tutorLeaderboardAnsweredMoreFeedbackRequests, false);
     }
 
@@ -99,15 +99,15 @@ public class TutorLeaderboardService {
     }
 
     @NotNull
-    private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(Set<User> tutors, List<TutorLeaderboardAssessments> assessments, List<TutorLeaderboardComplaints> complaints,
-            List<TutorLeaderboardMoreFeedbackRequests> feedbackRequests, List<TutorLeaderboardComplaintResponses> complaintResponses,
-            List<TutorLeaderboardAnsweredMoreFeedbackRequests> answeredFeedbackRequests, boolean isExam) {
+    private List<TutorLeaderboardDTO> aggregateTutorLeaderboardData(Set<User> tutors, List<TutorLeaderboardAssessmentsDTO> assessments,
+            List<TutorLeaderboardComplaintsDTO> complaints, List<TutorLeaderboardMoreFeedbackRequestsDTO> feedbackRequests,
+            List<TutorLeaderboardComplaintResponsesDTO> complaintResponses, List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> answeredFeedbackRequests, boolean isExam) {
 
-        var assessmentsMap = assessments.stream().collect(Collectors.toMap(TutorLeaderboardAssessments::userId, value -> value));
-        var complaintsMap = complaints.stream().collect(Collectors.toMap(TutorLeaderboardComplaints::userId, value -> value));
-        var feedbackRequestsMap = feedbackRequests.stream().collect(Collectors.toMap(TutorLeaderboardMoreFeedbackRequests::userId, value -> value));
-        var complaintResponsesMap = complaintResponses.stream().collect(Collectors.toMap(TutorLeaderboardComplaintResponses::userId, value -> value));
-        var answeredFeedbackRequestsMap = answeredFeedbackRequests.stream().collect(Collectors.toMap(TutorLeaderboardAnsweredMoreFeedbackRequests::userId, value -> value));
+        var assessmentsMap = assessments.stream().collect(Collectors.toMap(TutorLeaderboardAssessmentsDTO::userId, value -> value));
+        var complaintsMap = complaints.stream().collect(Collectors.toMap(TutorLeaderboardComplaintsDTO::userId, value -> value));
+        var feedbackRequestsMap = feedbackRequests.stream().collect(Collectors.toMap(TutorLeaderboardMoreFeedbackRequestsDTO::userId, value -> value));
+        var complaintResponsesMap = complaintResponses.stream().collect(Collectors.toMap(TutorLeaderboardComplaintResponsesDTO::userId, value -> value));
+        var answeredFeedbackRequestsMap = answeredFeedbackRequests.stream().collect(Collectors.toMap(TutorLeaderboardAnsweredMoreFeedbackRequestsDTO::userId, value -> value));
 
         List<TutorLeaderboardDTO> tutorLeaderBoardEntries = new ArrayList<>();
 
@@ -121,29 +121,29 @@ public class TutorLeaderboardService {
             long numberOfTutorMoreFeedbackRequests = 0L;
             double points = 0.0;
 
-            var assessmentsOfTutor = assessmentsMap.getOrDefault(tutor.getId(), new TutorLeaderboardAssessments());
+            var assessmentsOfTutor = assessmentsMap.getOrDefault(tutor.getId(), new TutorLeaderboardAssessmentsDTO());
             numberOfAssessments += assessmentsOfTutor.assessments();
             points += assessmentsOfTutor.points();
 
-            var complaintsAboutTutor = complaintsMap.getOrDefault(tutor.getId(), new TutorLeaderboardComplaints());
+            var complaintsAboutTutor = complaintsMap.getOrDefault(tutor.getId(), new TutorLeaderboardComplaintsDTO());
             numberOfTutorComplaints += complaintsAboutTutor.allComplaints();
             numberOfAcceptedComplaints += complaintsAboutTutor.acceptedComplaints();
             // accepted complaints count 2x negatively
             points -= 2.0 * complaintsAboutTutor.points();
 
-            var complaintResponsesOfTutor = complaintResponsesMap.getOrDefault(tutor.getId(), new TutorLeaderboardComplaintResponses());
+            var complaintResponsesOfTutor = complaintResponsesMap.getOrDefault(tutor.getId(), new TutorLeaderboardComplaintResponsesDTO());
             numberOfComplaintResponses += complaintResponsesOfTutor.complaintResponses();
             // resolved complaints count 2x
             points += 2.0 * complaintResponsesOfTutor.points();
 
             if (!isExam) {
-                var feedbackRequestsAboutTutor = feedbackRequestsMap.getOrDefault(tutor.getId(), new TutorLeaderboardMoreFeedbackRequests());
+                var feedbackRequestsAboutTutor = feedbackRequestsMap.getOrDefault(tutor.getId(), new TutorLeaderboardMoreFeedbackRequestsDTO());
                 numberOfNotAnsweredMoreFeedbackRequests += feedbackRequestsAboutTutor.notAnsweredRequests();
                 numberOfTutorMoreFeedbackRequests += feedbackRequestsAboutTutor.allRequests();
                 // not answered requests count only 1x negatively
                 points -= feedbackRequestsAboutTutor.points();
 
-                var answeredFeedbackRequestsOfTutor = answeredFeedbackRequestsMap.getOrDefault(tutor.getId(), new TutorLeaderboardAnsweredMoreFeedbackRequests());
+                var answeredFeedbackRequestsOfTutor = answeredFeedbackRequestsMap.getOrDefault(tutor.getId(), new TutorLeaderboardAnsweredMoreFeedbackRequestsDTO());
                 numberOfAnsweredMoreFeedbackRequests += answeredFeedbackRequestsOfTutor.answeredRequests();
                 // answered requests doesn't count, because it only means that the tutor repaired the negative points
             }

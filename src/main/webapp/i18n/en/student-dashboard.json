@@ -11,7 +11,10 @@
             "cardTitle": "Your overall points:",
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
-            "cardExerciseLabel": "Next Exercise:",
+            "cardExerciseLabel": "Next Exercise",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points",
+            "cardScore": "Score",
+            "cardManageCourse": "Manage Course",
             "enroll": {
                 "title": "Course Enrollment",
                 "enrollSuccessful": "Enrollment successful",
@@ -88,7 +91,8 @@
                 "testExam": "Test Exam",
                 "communication": "Communication",
                 "plagiarismCases": "Plagiarism Cases",
-                "gradingSystem": "Grading System"
+                "gradingSystem": "Grading System",
+                "faq": "FAQ"
             },
             "exerciseFilter": {
                 "filter": "Filter",

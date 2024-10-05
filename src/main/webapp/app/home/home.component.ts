@@ -1,6 +1,6 @@
-import { AfterViewChecked, Component, OnInit, Renderer2 } from '@angular/core';
+import { AfterViewChecked, Component, OnInit, Renderer2, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Credentials } from 'app/core/auth/auth-jwt.service';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
@@ -11,19 +11,40 @@ import { LoginService } from 'app/core/login/login.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
-import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
+import { PASSWORD_MAX_LENGTH, PASSWORD_MIN_LENGTH, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from 'app/app.constants';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TranslateDirective } from '../shared/language/translate.directive';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 
 @Component({
     selector: 'jhi-home',
     templateUrl: './home.component.html',
     styleUrls: ['home.scss'],
+    standalone: true,
+    imports: [TranslateDirective, FormsModule, RouterLink, FaIconComponent, Saml2LoginComponent, ArtemisSharedModule],
 })
 export class HomeComponent implements OnInit, AfterViewChecked {
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private accountService = inject(AccountService);
+    private loginService = inject(LoginService);
+    private stateStorageService = inject(StateStorageService);
+    private renderer = inject(Renderer2);
+    private eventManager = inject(EventManager);
+    private orionConnectorService = inject(OrionConnectorService);
+    private modalService = inject(NgbModal);
+    private profileService = inject(ProfileService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+
     USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
+    USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
     PASSWORD_MAX_LENGTH = PASSWORD_MAX_LENGTH;
     authenticationError = false;
@@ -44,33 +65,21 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     usernamePlaceholder = 'global.form.username.placeholder'; // default, might be overridden
     usernamePlaceholderTranslated = 'Login or email'; // default, might be overridden
     // if the server is not connected to an external user management, we accept all valid username patterns
-    usernameRegexPattern = /^[a-z0-9.@_-]{4,50}$/; // default (at least 4, at most 50 characters), might be overridden
+    usernameRegexPattern = /^[a-zA-Z0-9.@_-]{4,50}$/; // default (at least 4, at most 50 characters), might be overridden
     errorMessageUsername = 'home.errors.usernameIncorrect'; // default, might be overridden
     accountName?: string; // additional information in the welcome message
 
     externalUserManagementActive = true;
 
+    isFormValid = false;
     isSubmittingLogin = false;
 
     profileInfo: ProfileInfo | undefined = undefined;
 
     // Icons
     faCircleNotch = faCircleNotch;
-
-    constructor(
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private accountService: AccountService,
-        private loginService: LoginService,
-        private stateStorageService: StateStorageService,
-        private renderer: Renderer2,
-        private eventManager: EventManager,
-        private orionConnectorService: OrionConnectorService,
-        private modalService: NgbModal,
-        private profileService: ProfileService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-    ) {}
+    usernameTouched = false;
+    passwordTouched = false;
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -111,7 +120,7 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.errorMessageUsername = 'home.errors.tumWarning';
             // Temporary workaround: Do not show a warning when TUM users login with an email address with a specific ending
             // allow emails with exactly one @ and usernames between 7 and 50 characters (shorter TUM usernames are not possible)
-            this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-z0-9.@_-]{7,50}$/);
+            this.usernameRegexPattern = new RegExp(/^(?!.*@.*@)[a-zA-Z0-9.@_-]{7,50}$/);
         }
         this.usernamePlaceholderTranslated = this.translateService.instant(this.usernamePlaceholder);
         this.translateService.onLangChange.subscribe(() => {
@@ -235,5 +244,15 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         if (event.target && event.target.name === 'password') {
             this.password = event.target.value;
         }
+    }
+
+    checkFormValidity() {
+        this.isFormValid =
+            this.username !== undefined &&
+            this.username.length >= this.USERNAME_MIN_LENGTH &&
+            this.username.length <= this.USERNAME_MAX_LENGTH &&
+            this.password !== undefined &&
+            this.password.length >= this.PASSWORD_MIN_LENGTH &&
+            this.password.length <= this.PASSWORD_MAX_LENGTH;
     }
 }

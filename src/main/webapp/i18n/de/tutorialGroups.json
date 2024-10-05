@@ -53,7 +53,9 @@
                 "utilizationHelpDetail": "Durchschnittliche Anwesenheit geteilt durch Kapazität",
                 "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}",
                 "averageAttendanceDetail": "Durchschnittliche Anwesenheit",
-                "averageAttendanceHelpDetail": "Durchschnittliche Anwesenheit in den letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt."
+                "averageAttendanceHelpDetail": "Durchschnittliche Anwesenheit in den letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
+                "profilePicture": "Tutor:in Profilbild",
+                "profilePictureAlt": "Profilbild von {{ user }}"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Wochentag",

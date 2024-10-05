@@ -1,27 +1,48 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { combineLatest } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
 
 import { MetricsService } from './metrics.service';
 import { Metrics, Thread } from 'app/admin/metrics/metrics.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { JvmMemoryComponent } from './blocks/jvm-memory/jvm-memory.component';
+import { JvmThreadsComponent } from './blocks/jvm-threads/jvm-threads.component';
+import { MetricsSystemComponent } from './blocks/metrics-system/metrics-system.component';
+import { MetricsGarbageCollectorComponent } from './blocks/metrics-garbagecollector/metrics-garbagecollector.component';
+import { MetricsRequestComponent } from './blocks/metrics-request/metrics-request.component';
+import { MetricsEndpointsRequestsComponent } from './blocks/metrics-endpoints-requests/metrics-endpoints-requests.component';
+import { MetricsCacheComponent } from './blocks/metrics-cache/metrics-cache.component';
+import { MetricsDatasourceComponent } from './blocks/metrics-datasource/metrics-datasource.component';
 
 @Component({
     selector: 'jhi-metrics',
     templateUrl: './metrics.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: true,
+    imports: [
+        TranslateDirective,
+        FaIconComponent,
+        JvmMemoryComponent,
+        JvmThreadsComponent,
+        MetricsSystemComponent,
+        MetricsGarbageCollectorComponent,
+        MetricsRequestComponent,
+        MetricsEndpointsRequestsComponent,
+        MetricsCacheComponent,
+        MetricsDatasourceComponent,
+    ],
 })
 export class MetricsComponent implements OnInit {
+    private metricsService = inject(MetricsService);
+    private changeDetector = inject(ChangeDetectorRef);
+
     metrics?: Metrics;
-    threads?: Thread[];
+    threads: Thread[] = [];
     updatingMetrics = true;
 
     // Icons
     faSync = faSync;
-
-    constructor(
-        private metricsService: MetricsService,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
 
     /**
      * Calls the refresh method on init

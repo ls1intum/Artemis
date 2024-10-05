@@ -53,7 +53,9 @@
                 "utilizationHelpDetail": "Average attendance divided by capacity",
                 "averageAttendance": "Average attendance: {{ averageAttendance }}",
                 "averageAttendanceDetail": "Average Attendance",
-                "averageAttendanceHelpDetail": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session."
+                "averageAttendanceHelpDetail": "Average attendance in the last three sessions. If no attendance is entered, the corresponding session is ignored and the calculation is performed with two or one session.",
+                "profilePicture": "Tutor Profile Picture",
+                "profilePictureAlt": "Profile picture of {{ user }}"
             },
             "tutorialGroupSchedule": {
                 "dayOfWeek": "Day of Week",

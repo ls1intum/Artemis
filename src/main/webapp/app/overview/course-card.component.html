@@ -1,102 +1,97 @@
-<div class="card" [class.guided-tour]="hasGuidedTour">
-    <div id="course-{{ course.id }}-header" class="card-header text-white" [routerLink]="['/courses', course.id!]" [ngStyle]="{ '--background-color-for-hover': courseColor }">
-        <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        <div class="container">
-            <div class="row d-flex">
-                <div class="col-2 header-col image-col">
-                    @if (course.courseIcon) {
-                        <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
-                    }
+<div class="card rounded-4 flex-grow-1" [class.guided-tour]="hasGuidedTour">
+    <div id="course-{{ course.id }}-header" class="card-header text-white px-3" [routerLink]="['/courses', course.id!]" [ngStyle]="{ '--background-color-for-hover': courseColor }">
+        <div class="d-flex align-items-center justify-content-between gap-1">
+            @if (course.courseIcon) {
+                <div class="col-auto">
+                    <jhi-secured-image [cachingStrategy]="CachingStrategy.LOCAL_STORAGE" [src]="course.courseIcon" />
                 </div>
-                <div class="col-7 header-col title-col px-3">
-                    <h5 class="card-title text-center">
-                        {{ course.title }}
-                    </h5>
+            } @else {
+                <div class="course-circle d-flex align-items-center justify-content-center">
+                    <span class="fs-4">{{ course.title | slice: 0 : 1 }}</span>
                 </div>
-                <div class="col-2 header-col course-info-col">
-                    <div class="course-info-amounts">
-                        @if (exerciseCount === 0) {
-                            <span>Exercises: {{ exerciseCount }}</span>
-                        }
-                        @if (exerciseCount > 0) {
-                            <a [routerLink]="['/courses', course.id!, 'exercises']">Exercises: {{ exerciseCount }}</a>
-                        }
-                        @if (lectureCount === 0) {
-                            <span>Lectures: {{ lectureCount }}</span>
-                        }
-                        @if (lectureCount > 0) {
-                            <a [routerLink]="['/courses', course.id!, 'lectures']">Lectures: {{ lectureCount }}</a>
-                        }
-                        @if (examCount === 0) {
-                            <span>Exams: {{ examCount }}</span>
-                        }
-                        @if (examCount > 0) {
-                            <a (click)="navigateToExams($event)">Exams: {{ examCount }}</a>
-                        }
-                    </div>
-                </div>
+            }
+            <div class="text-center px-2">
+                <h5 class="card-title">
+                    {{ course.title }}
+                </h5>
+            </div>
+            <div>
+                <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
             </div>
         </div>
     </div>
-    <div class="card-body">
+    <div class="card-body rounded-bottom-4 border-lightgrey pt-3">
         <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-        @if (exerciseCount > 0 && (totalReachableScore > 0 || totalAbsoluteScore > 0)) {
-            <div class="chart-container">
-                <div class="chart-text">
-                    <h3 class="text-center">{{ totalRelativeScore }}%</h3>
-                    <h6 class="text-center points">{{ totalAbsoluteScore }} / {{ totalReachableScore }} Pts</h6>
-                </div>
-                <ngx-charts-pie-chart
-                    id="score-chart"
-                    class="chart-level"
-                    [view]="[200, 200]"
-                    [results]="ngxDoughnutData"
-                    [scheme]="ngxColor"
-                    [doughnut]="true"
-                    [animations]="false"
-                    (select)="onSelect()"
-                    (click)="onSelect()"
-                >
-                    <ng-template #tooltipTemplate let-model="model">
-                        <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
-                        <span>: {{ model.value }}</span>
-                    </ng-template>
-                </ngx-charts-pie-chart>
-            </div>
-        } @else {
-            <h6 class="no-statistics" jhiTranslate="artemisApp.studentDashboard.noStatistics"></h6>
-        }
-    </div>
-    @if (nextRelevantExercise) {
-        <div class="card-footer text-body-secondary">
-            <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', nextRelevantExercise.id!]"></a>
-            <div class="container">
-                <div class="row">
-                    <div class="col-3 next-exercise-col">
-                        <h6 jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></h6>
-                    </div>
-                    <div class="col-6 next-exercise-col">
-                        <fa-icon class="next-exercise-icon" [icon]="nextExerciseIcon" placement="right auto" [ngbTooltip]="nextExerciseTooltip | artemisTranslate" />
-                        <span class="next-exercise-title">{{ nextRelevantExercise.title }}</span>
-                    </div>
-                    <div class="col-3 next-exercise-col text-nowrap">
-                        @if (nextExerciseDueDate) {
-                            <div>
-                                <h6>{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}:</h6>
-                                <h6>{{ nextExerciseDueDate | artemisTimeAgo }}</h6>
+        <div class="d-flex flex-column justify-content-between gap-1">
+            <div class="information-box-wrapper ms-1">
+                <div class="row mt-1">
+                    <div class="col-7" [ngClass]="{ 'col-12': !(exerciseCount && (totalReachableScore || totalAbsoluteScore)) }">
+                        @if (exerciseCount && (totalReachableScore || totalAbsoluteScore)) {
+                            <div class="align-self-center">
+                                <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
+                                <div class="fw-bold">
+                                    <div
+                                        jhiTranslate="artemisApp.studentDashboard.points"
+                                        [translateValues]="{
+                                            totalAbsoluteScore: totalAbsoluteScore,
+                                            totalReachableScore: totalReachableScore,
+                                        }"
+                                    ></div>
+                                </div>
+                            </div>
+                        } @else {
+                            <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardScore"></div>
+                            <div class="fw-bold">
+                                <span jhiTranslate="artemisApp.studentDashboard.noStatistics"></span>
+                            </div>
+                        }
+                        <hr />
+                        <div class="fw-bold text-secondary" jhiTranslate="artemisApp.studentDashboard.cardExerciseLabel"></div>
+                        @if (nextRelevantExercise && nextRelevantExercise.id && course.id) {
+                            <a class="fw-bold btn-wrapper exercise-title exercise-guided-tour" [routerLink]="['/courses', course.id, 'exercises', nextRelevantExercise.id]">
+                                {{ nextRelevantExercise.title }}
+                            </a>
+                        } @else {
+                            <div class="fw-bold mb-3 exercise-guided-tour">
+                                <span jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></span>
                             </div>
                         }
                     </div>
+                    @if (exerciseCount && (totalReachableScore || totalAbsoluteScore)) {
+                        <div class="align-self-center chart-container col-5 mb-2">
+                            <div class="chart-text">
+                                <h4 class="mb-0">{{ totalRelativeScore }}%</h4>
+                            </div>
+                            <ngx-charts-pie-chart
+                                id="score-chart"
+                                class="chart-level"
+                                style="position: absolute"
+                                [view]="[160, 160]"
+                                [results]="ngxDoughnutData"
+                                [arcWidth]="0.3"
+                                [scheme]="ngxColor"
+                                [doughnut]="true"
+                                [animations]="false"
+                                (select)="onSelect()"
+                                (click)="onSelect()"
+                            >
+                                <ng-template #tooltipTemplate let-model="model">
+                                    <span jhiTranslate="artemisApp.courseOverview.statistics.{{ model.name }}"></span>
+                                    <span>: {{ model.value }}</span>
+                                </ng-template>
+                            </ngx-charts-pie-chart>
+                        </div>
+                    }
                 </div>
             </div>
+            @if (course.isAtLeastTutor && course.id) {
+                <div class="d-flex justify-content-start align-items-center ms-1 mt-1">
+                    <a class="fw-bold btn-wrapper" [routerLink]="['/course-management', course.id]">
+                        <span jhiTranslate="artemisApp.studentDashboard.cardManageCourse"></span>
+                        <fa-icon class="ms-1" [icon]="faArrowRight" />
+                    </a>
+                </div>
+            }
         </div>
-    }
-    @if (!nextRelevantExercise) {
-        <div class="card-footer text-body-secondary">
-            <a class="stretched-link" [routerLink]="['/courses', course.id!]"></a>
-            <div class="col no-exercise">
-                <h6 jhiTranslate="artemisApp.studentDashboard.cardNoExerciseLabel"></h6>
-            </div>
-        </div>
-    }
+    </div>
 </div>
