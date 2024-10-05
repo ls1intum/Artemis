@@ -135,7 +135,7 @@ class AbstractTest(ABC):
         self._onTimeout()
         raise TimeoutError
 
-    def _failWith(self, msg: str):
+    def _failWith(self, msg: str) -> NoReturn:
         """
         Marks the current test as failed with the given message.
         Stores the complete stderr and stdout output from the run.
@@ -145,7 +145,7 @@ class AbstractTest(ABC):
         self._onFailed()
         raise TestFailedError(f"{self.name} failed.")
 
-    def __markAsFailed(self, msg: str):
+    def __markAsFailed(self, msg: str) -> None:
         """
         Marks the current test case as failed and loads all stdout and stderr.
         """
@@ -156,7 +156,7 @@ class AbstractTest(ABC):
         self.case.stderr = self._loadFullStderr()
         printTester(f"Test {self.name} failed with: {msg}")
 
-    def _timeout(self, msg: str = ""):
+    def _timeout(self, msg: str = "") -> None:
         """
         Marks the current test as failed with the given optional message.
         Stores the complete stderr and stdout output from the run.
@@ -168,7 +168,7 @@ class AbstractTest(ABC):
         else:
             self.__markAsFailed("timeout")
 
-    def __loadFileContent(self, filePath: str):
+    def __loadFileContent(self, filePath: str) -> str:
         """
         Returns the content of a file specified by filePath as string.
         """
@@ -178,14 +178,14 @@ class AbstractTest(ABC):
             return content
         return ""
 
-    def _loadFullStdout(self):
+    def _loadFullStdout(self) -> str:
         """
         Returns the stdout output of the executable.
         """
         filePath: str = self._getStdoutFilePath()
         return self.__loadFileContent(filePath)
 
-    def _loadFullStderr(self):
+    def _loadFullStderr(self) -> str:
         """
         Returns the stderr output of the executable.
         """
@@ -193,7 +193,7 @@ class AbstractTest(ABC):
         filePath: str = self._getStderrFilePath()
         return self.__loadFileContent(filePath)
 
-    def _initOutputDirectory(self):
+    def _initOutputDirectory(self) -> None:
         """
         Prepares the output directory for the stderr and stdout files.
         """
@@ -202,35 +202,35 @@ class AbstractTest(ABC):
             return
         makedirs(outDir)
 
-    def _getOutputPath(self):
+    def _getOutputPath(self) -> str:
         """
         Returns the output path for temporary stuff like the stderr and stdout files.
         """
 
         return path.join("/tmp", self.suite.name, self.name)
 
-    def _getStdoutFilePath(self):
+    def _getStdoutFilePath(self) -> str:
         """
         Returns the path of the stdout cache file.
         """
 
         return path.join(self._getOutputPath(), "stdout.txt")
 
-    def _getStderrFilePath(self):
+    def _getStderrFilePath(self) -> str:
         """
         Returns the path of the stderr cache file.
         """
 
         return path.join(self._getOutputPath(), "stderr.txt")
 
-    def _createPWrap(self, cmd: List[str], cwd: Optional[str] = None):
+    def _createPWrap(self, cmd: List[str], cwd: Optional[str] = None) -> PWrap:
         """
         Creates a new PWrap instance from the given command.
         """
 
         return PWrap(cmd, self._getStdoutFilePath(), self._getStderrFilePath(), cwd=cwd)
 
-    def _startPWrap(self, pWrap: PWrap):
+    def _startPWrap(self, pWrap: PWrap) -> None:
         """
         Starts the PWrap execution.
         Handels FileNotFoundError if for example the executable was not found or does not exist.
