@@ -25,7 +25,7 @@ class TestCatch2(AbstractProgramTest):
             self.additionalSuites.append(catchXmlSuite)
             printTester(f"Appended {catchXmlSuite}")
         except Exception as e:
-            printTester(f"Exception {str(e)}")
+            printTester(f"Exception {e}")
 
         if retCode != 0:
             self._failWith(

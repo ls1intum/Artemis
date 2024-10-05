@@ -30,7 +30,7 @@ class Tester:
 
         # A dictionary of test results:
         # Test name -> result
-        testResults: Dict[str, Result] = dict()
+        testResults: Dict[str, Result] = {}
 
         for name, test in self.tests.items():
             if test.timeoutSec >= 0:

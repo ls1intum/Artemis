@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 from contextlib import contextmanager, suppress
 from datetime import datetime, timedelta
-from io import TextIOWrapper
 from os import makedirs, path
 from signal import alarm, SIG_IGN, SIGALRM, signal
 from traceback import print_exc
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, NoReturn
 from xml.etree import ElementTree as Et
 
 from testUtils.junit.TestCase import Result, TestCase
@@ -112,7 +111,7 @@ class AbstractTest(ABC):
         self.case.time = datetime.now() - startTime
         self.suite.addCase(self.case)
 
-    def __checkTestRequirements(self, testResults: Dict[str, Result]):
+    def __checkTestRequirements(self, testResults: Dict[str, Result]) -> bool:
         """
         Checks if all requirements (i.e. other test cases were successful) are fulfilled.
         """
@@ -132,7 +131,7 @@ class AbstractTest(ABC):
         # if the timeout is not reached.
         signal(SIGALRM, SIG_IGN)
 
-    def __raiseTimeout(self, sigNum: int, frame):
+    def __raiseTimeout(self, _sigNum: int, _frame) -> NoReturn:
         self._onTimeout()
         raise TimeoutError
 
