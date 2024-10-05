@@ -7,7 +7,7 @@ from testUtils.AbstractProgramTest import AbstractProgramTest
 
 class TestClangFormat(AbstractProgramTest):
     """
-    Test case that runs CMake to configure the build
+    Test case that checks code formatting using clang-format
     """
 
     projectRoot: str
