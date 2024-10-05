@@ -68,7 +68,9 @@ import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCServletService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingSubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
+// PER_CLASS is used to avoid the overhead of creating a new Spring context for each test method.
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+// SAME_THREAD is used to avoid overloading LocalCI result processing with many buildjob results
 @Execution(ExecutionMode.SAME_THREAD)
 class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
