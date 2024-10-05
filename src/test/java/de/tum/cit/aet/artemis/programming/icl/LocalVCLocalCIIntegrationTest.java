@@ -34,6 +34,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -69,6 +71,7 @@ import de.tum.cit.aet.artemis.programming.util.LocalRepository;
  * assistant assignment, instructor assignment).
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
 class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
