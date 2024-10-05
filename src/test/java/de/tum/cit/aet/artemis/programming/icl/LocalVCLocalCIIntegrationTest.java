@@ -32,6 +32,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.slf4j.Logger;
@@ -172,6 +173,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     // ---- Tests for the base repositories ----
     @Test
+    @Order(1)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_testsRepository() throws Exception {
         // Students should not be able to fetch and push.
@@ -223,6 +225,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
+    @Order(2)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_solutionRepository() throws Exception {
         // Students should not be able to fetch and push.
@@ -254,6 +257,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
+    @Order(3)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_templateRepository() throws Exception {
         // Students should not be able to fetch and push.
@@ -285,6 +289,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
+    @Order(4)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_auxiliaryRepository() throws Exception {
 
@@ -341,6 +346,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     // ---- Tests for the student assignment repository ----
 
     @Test
+    @Order(5)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_studentAssignmentRepository_beforeAfterStartDate() throws Exception {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -395,6 +401,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
+    @Order(6)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_studentAssignmentRepository_afterDueDate() throws Exception {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -419,6 +426,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
+    @Order(7)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPush_studentAssignmentRepository_tooManySubmissions() throws Exception {
         var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -450,6 +458,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     // ---- Team Mode ----
 
     @Test
+    @Order(8)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetch_studentAssignmentRepository_teamMode_beforeAfterStartDate() throws Exception {
         LocalRepository teamLocalRepository = prepareTeamExerciseAndRepository();
@@ -503,6 +512,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
+    @Order(9)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetch_studentAssignmentRepository_teamMode_afterDueDate() throws Exception {
         LocalRepository teamLocalRepository = prepareTeamExerciseAndRepository();
@@ -547,6 +557,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     // ---- Tests for the teaching assistant assignment repository ----
 
     @Test
+    @Order(10)
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFetchPush_teachingAssistantAssignmentRepository() throws GitAPIException, IOException, URISyntaxException {
         localVCLocalCITestService.createParticipation(programmingExercise, tutor1Login);
@@ -595,6 +606,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     // ---- Tests for the instructor assignment repository ----
 
     @Test
+    @Order(11)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorAssignmentRepository() throws GitAPIException, IOException, URISyntaxException {
         localVCLocalCITestService.createParticipation(programmingExercise, instructor1Login);
@@ -639,6 +651,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     // ---- Tests for the exam mode ----
     @Test
+    @Order(12)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_assignmentRepository_examMode() throws Exception {
         ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -740,6 +753,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
+    @Order(13)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorExamTestRun() throws Exception {
         Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
@@ -820,6 +834,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     // ---- Tests for practice repositories ----
 
     @Test
+    @Order(14)
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFetchPush_studentPracticeRepository() throws Exception {
         // Practice repositories can be created after the due date of an exercise.
@@ -872,6 +887,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
+    @Order(15)
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFetchPush_teachingAssistantPracticeRepository() throws Exception {
 
@@ -910,6 +926,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     }
 
     @Test
+    @Order(16)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testFetchPush_instructorPracticeRepository() throws Exception {
 
@@ -948,6 +965,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         practiceRepository.resetLocalRepo();
     }
 
+    @Order(17)
     @Nested
     class BuildJobPriorityTest {
 
