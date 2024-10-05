@@ -1,4 +1,4 @@
-import { Directive, ElementRef } from '@angular/core';
+import { Directive, ElementRef, inject } from '@angular/core';
 
 /**
  * Avoid Reverse Tabnabbing vulnerability: https://www.owasp.org/index.php/Reverse_Tabnabbing.
@@ -7,7 +7,9 @@ import { Directive, ElementRef } from '@angular/core';
     selector: '[jhiSecureLink]',
 })
 export class SecureLinkDirective {
-    constructor(el: ElementRef) {
+    constructor() {
+        const el = inject(ElementRef);
+
         el.nativeElement.target = '_blank';
         el.nativeElement.rel = 'noopener noreferrer';
     }

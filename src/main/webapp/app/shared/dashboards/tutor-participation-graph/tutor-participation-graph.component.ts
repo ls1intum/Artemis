@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { get } from 'lodash-es';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -14,6 +14,8 @@ import { faBook, faChalkboardTeacher } from '@fortawesome/free-solid-svg-icons';
     encapsulation: ViewEncapsulation.None,
 })
 export class TutorParticipationGraphComponent implements OnInit, OnChanges {
+    private router = inject(Router);
+
     @Input() public tutorParticipation: TutorParticipation;
     @Input() public numberOfSubmissions?: DueDateStat;
     @Input() public totalNumberOfAssessments?: DueDateStat;
@@ -44,8 +46,6 @@ export class TutorParticipationGraphComponent implements OnInit, OnChanges {
     // Icons
     faBook = faBook;
     faChalkboardTeacher = faChalkboardTeacher;
-
-    constructor(private router: Router) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

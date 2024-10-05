@@ -2,20 +2,18 @@ import { DomainDependentService } from 'app/exercises/programming/shared/code-ed
 import { HttpClient } from '@angular/common/http';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
+import { inject } from '@angular/core';
 
 /**
  * Service that can be extended to update rest endpoint urls with the received domain information.
  */
 export abstract class DomainDependentEndpointService extends DomainDependentService {
     protected restResourceUrl?: string;
+    protected http = inject(HttpClient);
+    protected jhiWebsocketService = inject(JhiWebsocketService);
 
-    protected constructor(
-        protected http: HttpClient,
-        protected jhiWebsocketService: JhiWebsocketService,
-        domainService: DomainService,
-    ) {
-        super(domainService);
+    public constructor() {
+        super();
         this.initDomainSubscription();
     }
 

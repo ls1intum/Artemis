@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BuildLogEntry } from 'app/entities/programming/build-log.model';
@@ -9,9 +9,9 @@ export interface IBuildLogService {
 
 @Injectable({ providedIn: 'root' })
 export class BuildLogService implements IBuildLogService {
-    private assignmentResourceUrl = 'api/repository';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private assignmentResourceUrl = 'api/repository';
 
     /**
      * Retrieves the build logs for a given participation and optionally, a given result.

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -12,12 +12,10 @@ type EntityResponseType = HttpResponse<ComplaintResponse>;
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintResponseService {
-    private resourceUrl = 'api/complaints';
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-    ) {}
+    private resourceUrl = 'api/complaints';
 
     /**
      * Checks if a complaint response is locked for the currently logged-in user

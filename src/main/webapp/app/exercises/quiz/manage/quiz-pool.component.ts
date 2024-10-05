@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
@@ -27,6 +27,14 @@ import dayjs from 'dayjs/esm';
     encapsulation: ViewEncapsulation.None,
 })
 export class QuizPoolComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private quizPoolService = inject(QuizPoolService);
+    private examService = inject(ExamManagementService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+    private shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    private alertService = inject(AlertService);
+
     @ViewChild('quizPoolQuestionMapping')
     quizPoolMappingComponent: QuizPoolMappingComponent;
     @ViewChild('quizQuestionsEdit')
@@ -45,16 +53,6 @@ export class QuizPoolComponent implements OnInit {
     courseId: number;
     examId: number;
     isExamStarted: boolean;
-
-    constructor(
-        private route: ActivatedRoute,
-        private quizPoolService: QuizPoolService,
-        private examService: ExamManagementService,
-        private changeDetectorRef: ChangeDetectorRef,
-        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        private shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));

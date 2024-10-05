@@ -13,7 +13,7 @@ describe(`NotificationInterceptor`, () => {
             success: jest.fn(),
         } as any as AlertService;
 
-        notificationInterceptor = new NotificationInterceptor(alertServiceMock);
+        notificationInterceptor = new NotificationInterceptor();
     });
 
     afterEach(() => {

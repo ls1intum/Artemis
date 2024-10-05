@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subject, Subscription, merge } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -15,6 +15,11 @@ interface DeletionServiceInterface {
 
 @Component({ template: '' })
 export abstract class ExerciseComponent implements OnInit, OnDestroy {
+    private courseService = inject(CourseManagementService);
+    protected translateService = inject(TranslateService);
+    private route = inject(ActivatedRoute);
+    protected eventManager = inject(EventManager);
+
     private eventSubscriber: Subscription;
     @Input() embedded = false;
     @Input() course: Course;
@@ -35,12 +40,7 @@ export abstract class ExerciseComponent implements OnInit, OnDestroy {
 
     protected abstract get exercises(): Exercise[];
 
-    protected constructor(
-        private courseService: CourseManagementService,
-        protected translateService: TranslateService,
-        private route: ActivatedRoute,
-        protected eventManager: EventManager,
-    ) {
+    public constructor() {
         this.predicate = 'id';
         this.reverse = true;
     }

@@ -1,6 +1,6 @@
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,6 +37,19 @@ import { filter, finalize } from 'rxjs/operators';
     encapsulation: ViewEncapsulation.None,
 })
 export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
+    private accountService = inject(AccountService);
+    private location = inject(Location);
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private complaintService = inject(ComplaintService);
+    private fileService = inject(FileService);
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    submissionService = inject(SubmissionService);
+
     text: string;
     participation: StudentParticipation;
     submission?: FileUploadSubmission;
@@ -73,21 +86,9 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     // Icons
     farListAlt = faListAlt;
 
-    constructor(
-        private changeDetectorRef: ChangeDetectorRef,
-        private alertService: AlertService,
-        private router: Router,
-        private route: ActivatedRoute,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-        private accountService: AccountService,
-        private location: Location,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
-        private complaintService: ComplaintService,
-        private fileService: FileService,
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        public submissionService: SubmissionService,
-        translateService: TranslateService,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
+
         this.assessmentsAreValid = false;
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }

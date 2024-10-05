@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Subject } from 'rxjs';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -16,6 +16,12 @@ import { faBook, faChartBar, faListAlt, faTable, faTrash, faUserCheck, faUsers, 
     templateUrl: './non-programming-exercise-detail-common-actions.component.html',
 })
 export class NonProgrammingExerciseDetailCommonActionsComponent implements OnInit {
+    private textExerciseService = inject(TextExerciseService);
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private eventManager = inject(EventManager);
+    private router = inject(Router);
+
     @Input()
     exercise: Exercise;
 
@@ -43,14 +49,6 @@ export class NonProgrammingExerciseDetailCommonActionsComponent implements OnIni
     faListAlt = faListAlt;
     faChartBar = faChartBar;
     faUserCheck = faUserCheck;
-
-    constructor(
-        private textExerciseService: TextExerciseService,
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private modelingExerciseService: ModelingExerciseService,
-        private eventManager: EventManager,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         if (!this.isExamExercise) {

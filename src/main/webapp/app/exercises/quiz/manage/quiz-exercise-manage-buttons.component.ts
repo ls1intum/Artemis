@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
@@ -16,6 +16,13 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
     templateUrl: './quiz-exercise-manage-buttons.component.html',
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
+    private quizExerciseService = inject(QuizExerciseService);
+    private eventManager = inject(EventManager);
+    private alertService = inject(AlertService);
+    private exerciseService = inject(ExerciseService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+
     protected readonly ActionType = ActionType;
     readonly faEye = faEye;
     readonly faSignal = faSignal;
@@ -39,15 +46,6 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
 
     baseUrl: string;
     isEvaluatingQuizExercise: boolean;
-
-    constructor(
-        private quizExerciseService: QuizExerciseService,
-        private eventManager: EventManager,
-        private alertService: AlertService,
-        private exerciseService: ExerciseService,
-        private route: ActivatedRoute,
-        private router: Router,
-    ) {}
 
     @Input()
     isDetailPage: boolean;

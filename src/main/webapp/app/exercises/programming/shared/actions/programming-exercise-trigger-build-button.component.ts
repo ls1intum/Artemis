@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { filter, tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
 import { head, orderBy } from 'lodash-es';
@@ -21,6 +21,10 @@ import { hasParticipationChanged } from 'app/exercises/shared/participation/part
  */
 @Component({ template: '' })
 export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements OnChanges, OnDestroy {
+    protected submissionService = inject(ProgrammingSubmissionService);
+    protected participationWebsocketService = inject(ParticipationWebsocketService);
+    protected alertService = inject(AlertService);
+
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
 
@@ -42,12 +46,6 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
 
     // True if the student triggers. false if an instructor triggers it
     protected personalParticipation: boolean;
-
-    protected constructor(
-        protected submissionService: ProgrammingSubmissionService,
-        protected participationWebsocketService: ParticipationWebsocketService,
-        protected alertService: AlertService,
-    ) {}
 
     /**
      * Check if the participation has changed, if so set up the websocket connections.

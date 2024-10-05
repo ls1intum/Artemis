@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Submission } from 'app/entities/submission.model';
@@ -11,9 +11,9 @@ export type EntityArrayResponseType = HttpResponse<Submission[]>;
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionVersionService {
-    public resourceUrl = 'api/submissions';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api/submissions';
 
     /**
      * Find all submission versions for a given submission id.

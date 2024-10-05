@@ -1,6 +1,6 @@
 import { ActivatedRouteSnapshot, Resolve, RouterModule, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
-import { Injectable, NgModule } from '@angular/core';
+import { Injectable, NgModule, inject } from '@angular/core';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
@@ -22,7 +22,7 @@ import { VcsRepositoryAccessLogViewComponent } from 'app/localvc/vcs-repository-
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
-    constructor(private service: ProgrammingExerciseService) {}
+    private service = inject(ProgrammingExerciseService);
 
     resolve(route: ActivatedRouteSnapshot) {
         const exerciseId = route.params['exerciseId'] ? route.params['exerciseId'] : undefined;

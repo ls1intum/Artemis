@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
 import { TranslateService } from '@ngx-translate/core';
 import { GraphColors } from 'app/entities/statistics.model';
@@ -20,6 +20,12 @@ type NameToValueMap = { [name: string]: any };
     templateUrl: './exam-scores-average-scores-graph.component.html',
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private activatedRoute = inject(ActivatedRoute);
+    private service = inject(StatisticsService);
+    private translateService = inject(TranslateService);
+    private localeConversionService = inject(LocaleConversionService);
+
     @Input() averageScores: AggregatedExerciseGroupResult;
     @Input() course: Course;
 
@@ -38,14 +44,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
     } as Color;
     xScaleMax = 100;
     lookup: NameToValueMap = {};
-
-    constructor(
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private activatedRoute: ActivatedRoute,
-        private service: StatisticsService,
-        private translateService: TranslateService,
-        private localeConversionService: LocaleConversionService,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.params.subscribe((params) => {

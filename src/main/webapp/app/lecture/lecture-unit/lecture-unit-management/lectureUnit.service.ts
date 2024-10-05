@@ -6,7 +6,7 @@ import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-
 import { onError } from 'app/shared/util/global.utils';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
@@ -19,13 +19,11 @@ type EntityArrayResponseType = HttpResponse<LectureUnit[]>;
     providedIn: 'root',
 })
 export class LectureUnitService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
+    private attachmentService = inject(AttachmentService);
+    private alertService = inject(AlertService);
 
-    constructor(
-        private httpClient: HttpClient,
-        private attachmentService: AttachmentService,
-        private alertService: AlertService,
-    ) {}
+    private resourceURL = 'api';
 
     updateOrder(lectureId: number, lectureUnits: LectureUnit[]): Observable<HttpResponse<LectureUnit[]>> {
         // Send an ordered list of ids of the lecture units

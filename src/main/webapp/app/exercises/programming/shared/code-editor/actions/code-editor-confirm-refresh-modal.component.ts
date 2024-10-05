@@ -1,7 +1,6 @@
-import { Component, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
+import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -11,16 +10,12 @@ import { faBan, faExclamationTriangle, faTimes } from '@fortawesome/free-solid-s
     providers: [CodeEditorRepositoryFileService],
 })
 export class CodeEditorConfirmRefreshModalComponent {
+    activeModal = inject(NgbActiveModal);
+
     // Icons
     faExclamationTriangle = faExclamationTriangle;
     faBan = faBan;
     faTimes = faTimes;
-
-    constructor(
-        public activeModal: NgbActiveModal,
-        private repositoryService: CodeEditorRepositoryService,
-        private conflictService: CodeEditorConflictStateService,
-    ) {}
 
     shouldRefresh: EventEmitter<void> = new EventEmitter<void>();
 

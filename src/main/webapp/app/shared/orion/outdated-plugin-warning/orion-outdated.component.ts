@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -19,13 +19,11 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     standalone: true,
 })
 export class OrionOutdatedComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+
     versionString: string;
     allowedMinimumVersion: string;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * On initialization, sets the values of the used version and the minimum allowed version of orion.

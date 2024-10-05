@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Patch, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType } from '@ls1intum/apollon';
 import { TranslateService } from '@ngx-translate/core';
@@ -42,6 +42,16 @@ import { SubmissionPatch } from 'app/entities/submission-patch.model';
     styleUrls: ['./modeling-submission.component.scss'],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private modelingSubmissionService = inject(ModelingSubmissionService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+    private translateService = inject(TranslateService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private guidedTourService = inject(GuidedTourService);
+    private accountService = inject(AccountService);
+
     readonly addParticipationToResult = addParticipationToResult;
     readonly buildFeedbackTextForReview = buildFeedbackTextForReview;
 
@@ -111,17 +121,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     farListAlt = faListAlt;
     faExclamationTriangle = faExclamationTriangle;
 
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-        private translateService: TranslateService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private guidedTourService: GuidedTourService,
-        private accountService: AccountService,
-    ) {
+    constructor() {
         this.isSaving = false;
         this.autoSaveTimer = 0;
         this.isLoading = true;

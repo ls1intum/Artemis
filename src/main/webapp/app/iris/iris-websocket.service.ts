@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
@@ -9,13 +9,9 @@ type SubscribedChannel = { wsSubscription: Subscription; subject: Subject<any> }
  */
 @Injectable({ providedIn: 'root' })
 export class IrisWebsocketService implements OnDestroy {
-    private subscribedChannels: Map<number, SubscribedChannel> = new Map();
+    protected jhiWebsocketService = inject(JhiWebsocketService);
 
-    /**
-     * Creates an instance of IrisWebsocketService.
-     * @param jhiWebsocketService The JhiWebsocketService for websocket communication.
-     */
-    protected constructor(protected jhiWebsocketService: JhiWebsocketService) {}
+    private subscribedChannels: Map<number, SubscribedChannel> = new Map();
 
     /**
      * Cleans up resources before the service is destroyed.

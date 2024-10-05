@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Directive } from '@angular/core';
+import { ChangeDetectorRef, Directive, inject } from '@angular/core';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -16,6 +16,9 @@ import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-
 
 @Directive()
 export abstract class QuizExerciseValidationDirective {
+    protected dragAndDropQuestionUtil = inject(DragAndDropQuestionUtil);
+    protected shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+
     // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
@@ -36,11 +39,6 @@ export abstract class QuizExerciseValidationDirective {
 
     protected invalidFlaggedQuestions: InvalidFlaggedQuestions = {};
     pendingChangesCache: boolean;
-
-    protected constructor(
-        protected dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        protected shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-    ) {}
 
     /**
      * 1. Check whether the inputs in the quiz are valid

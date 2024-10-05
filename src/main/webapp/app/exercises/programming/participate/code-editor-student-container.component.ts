@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -32,6 +32,15 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './code-editor-student-container.component.html',
 })
 export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
+    private resultService = inject(ResultService);
+    private domainService = inject(DomainService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private guidedTourService = inject(GuidedTourService);
+    private submissionPolicyService = inject(SubmissionPolicyService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private exerciseHintService = inject(ExerciseHintService);
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly SubmissionPolicyType = SubmissionPolicyType;
@@ -60,17 +69,6 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     // Icons
     faCircleNotch = faCircleNotch;
     faTimesCircle = faTimesCircle;
-
-    constructor(
-        private resultService: ResultService,
-        private domainService: DomainService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private guidedTourService: GuidedTourService,
-        private submissionPolicyService: SubmissionPolicyService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private exerciseHintService: ExerciseHintService,
-    ) {}
 
     /**
      * On init set up the route param subscription.

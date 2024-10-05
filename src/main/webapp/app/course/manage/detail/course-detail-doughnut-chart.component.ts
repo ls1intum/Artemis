@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { DoughnutChartType } from './course-detail.component';
 import { Router } from '@angular/router';
@@ -16,6 +16,8 @@ const PIE_CHART_NA_FALLBACK_VALUE = [0, 0, 1];
     styleUrls: ['./course-detail-doughnut-chart.component.scss'],
 })
 export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
+    private router = inject(Router);
+
     @Input() contentType: DoughnutChartType;
     @Input() currentPercentage: number | undefined;
     @Input() currentAbsolute: number | undefined;
@@ -29,8 +31,6 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
 
     // Icons
     faSpinner = faSpinner;
-
-    constructor(private router: Router) {}
 
     // ngx-charts
     ngxData: NgxChartsSingleSeriesDataEntry[] = [

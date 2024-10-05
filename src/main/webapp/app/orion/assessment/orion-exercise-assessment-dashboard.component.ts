@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { Submission } from 'app/entities/submission.model';
@@ -17,6 +17,12 @@ import { OrionButtonType } from 'app/shared/orion/orion-button/orion-button.comp
     providers: [CourseManagementService],
 })
 export class OrionExerciseAssessmentDashboardComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private exerciseService = inject(ExerciseService);
+    private orionAssessmentService = inject(OrionAssessmentService);
+    private orionConnectorService = inject(OrionConnectorService);
+    private alertService = inject(AlertService);
+
     readonly ExerciseView = ExerciseView;
     readonly ExerciseType = ExerciseType;
     protected readonly OrionButtonType = OrionButtonType;
@@ -24,14 +30,6 @@ export class OrionExerciseAssessmentDashboardComponent implements OnInit {
     orionState: OrionState;
     exerciseId: number;
     exercise: Exercise;
-
-    constructor(
-        private route: ActivatedRoute,
-        private exerciseService: ExerciseService,
-        private orionAssessmentService: OrionAssessmentService,
-        private orionConnectorService: OrionConnectorService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));

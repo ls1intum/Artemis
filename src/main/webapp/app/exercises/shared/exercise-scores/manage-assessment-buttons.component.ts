@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { faBan, faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -19,6 +19,11 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
     templateUrl: './manage-assessment-buttons.component.html',
 })
 export class ManageAssessmentButtonsComponent implements OnInit {
+    private programmingAssessmentManualResultService = inject(ProgrammingAssessmentManualResultService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private textAssessmentService = inject(TextAssessmentService);
+    private fileUploadAssessmentService = inject(FileUploadAssessmentService);
+
     @Input() exercise: Exercise;
     @Input() course: Course;
     @Input() participation: Participation;
@@ -35,13 +40,9 @@ export class ManageAssessmentButtonsComponent implements OnInit {
     readonly faFolderOpen = faFolderOpen;
     readonly AssessmentType = AssessmentType;
 
-    constructor(
-        translateService: TranslateService,
-        private programmingAssessmentManualResultService: ProgrammingAssessmentManualResultService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private textAssessmentService: TextAssessmentService,
-        private fileUploadAssessmentService: FileUploadAssessmentService,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
+
         translateService.get('artemisApp.programmingAssessment.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 

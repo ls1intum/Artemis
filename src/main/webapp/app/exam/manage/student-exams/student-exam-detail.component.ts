@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -20,6 +20,11 @@ import { combineLatest, takeWhile } from 'rxjs';
     styleUrls: ['./student-exam-detail.component.scss'],
 })
 export class StudentExamDetailComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private studentExamService = inject(StudentExamService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+
     examId: number;
     courseId: number;
     studentExam: StudentExam;
@@ -46,13 +51,6 @@ export class StudentExamDetailComponent implements OnInit, OnDestroy {
     workingTimeSeconds = 0;
 
     private componentActive = true;
-
-    constructor(
-        private route: ActivatedRoute,
-        private studentExamService: StudentExamService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-    ) {}
 
     /**
      * Initialize the courseId and studentExam

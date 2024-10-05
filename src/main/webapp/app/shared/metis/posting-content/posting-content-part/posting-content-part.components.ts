@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { PostingContentPart, ReferenceType } from '../../metis.util';
 import { FileService } from 'app/shared/http/file.service';
 
@@ -27,6 +27,10 @@ import { AccountService } from 'app/core/auth/account.service';
     styleUrls: ['./../../metis.component.scss'],
 })
 export class PostingContentPartComponent {
+    private fileService = inject(FileService);
+    private dialog = inject(MatDialog);
+    private accountService = inject(AccountService);
+
     @Input() postingContentPart: PostingContentPart;
     @Output() userReferenceClicked = new EventEmitter<string>();
     @Output() channelReferenceClicked = new EventEmitter<number>();
@@ -45,12 +49,6 @@ export class PostingContentPartComponent {
     protected readonly faHashtag = faHashtag;
 
     protected readonly ReferenceType = ReferenceType;
-
-    constructor(
-        private fileService: FileService,
-        private dialog: MatDialog,
-        private accountService: AccountService,
-    ) {}
 
     /**
      * Opens an attachment with the given URL in a new window

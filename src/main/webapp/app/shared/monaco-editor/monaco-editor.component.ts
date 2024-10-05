@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, Renderer2, ViewEncapsulation, inject } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { Subscription } from 'rxjs';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
@@ -22,6 +22,10 @@ export const MAX_TAB_SIZE = 8;
     encapsulation: ViewEncapsulation.None,
 })
 export class MonacoEditorComponent implements OnInit, OnDestroy {
+    private readonly themeService = inject(ThemeService);
+    private readonly renderer = inject(Renderer2);
+    private readonly translateService = inject(TranslateService);
+
     private _editor: monaco.editor.IStandaloneCodeEditor;
     private textEditorAdapter: MonacoTextEditorAdapter;
     private monacoEditorContainerElement: HTMLElement;
@@ -39,12 +43,10 @@ export class MonacoEditorComponent implements OnInit, OnDestroy {
      */
     private static readonly DEFAULT_LINE_DECORATION_BUTTON_WIDTH = '2.3ch';
 
-    constructor(
-        private readonly themeService: ThemeService,
-        elementRef: ElementRef,
-        private readonly renderer: Renderer2,
-        private readonly translateService: TranslateService,
-    ) {
+    constructor() {
+        const elementRef = inject(ElementRef);
+        const renderer = this.renderer;
+
         /*
          * The constructor injects the editor along with its container into the empty template of this component.
          * This makes the editor available immediately (not just after ngOnInit), preventing errors when the methods

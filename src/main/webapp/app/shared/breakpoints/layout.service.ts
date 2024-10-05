@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { BreakpointsService } from './breakpoints.service';
 import { map } from 'rxjs/operators';
@@ -8,12 +8,10 @@ import { Observable } from 'rxjs';
     providedIn: 'root',
 })
 export class LayoutService {
-    activeBreakpoints: string[] = [];
+    private breakpointObserver = inject(BreakpointObserver);
+    private breakpointService = inject(BreakpointsService);
 
-    constructor(
-        private breakpointObserver: BreakpointObserver,
-        private breakpointService: BreakpointsService,
-    ) {}
+    activeBreakpoints: string[] = [];
 
     subscribeToLayoutChanges(): Observable<string[]> {
         return this.breakpointObserver.observe(this.breakpointService.getBreakpoints()).pipe(map((observeResponse) => this.parseBreakpointsResponse(observeResponse.breakpoints)));

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
 
@@ -7,9 +7,9 @@ import { HealthDetails, HealthKey } from 'app/admin/health/health.model';
     templateUrl: './health-modal.component.html',
 })
 export class HealthModalComponent {
-    health?: { key: HealthKey; value: HealthDetails };
+    private activeModal = inject(NgbActiveModal);
 
-    constructor(private activeModal: NgbActiveModal) {}
+    health?: { key: HealthKey; value: HealthDetails };
 
     readableValue(value: any): string {
         if (this.health?.key === 'diskSpace') {

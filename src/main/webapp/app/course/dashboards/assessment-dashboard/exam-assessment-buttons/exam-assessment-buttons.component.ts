@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Subscription, forkJoin } from 'rxjs';
@@ -21,6 +21,14 @@ import { faClipboard } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './exam-assessment-buttons.component.html',
 })
 export class ExamAssessmentButtonsComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private examManagementService = inject(ExamManagementService);
+    private studentExamService = inject(StudentExamService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     courseId: number;
     examId: number;
     studentExams: StudentExam[];
@@ -37,16 +45,6 @@ export class ExamAssessmentButtonsComponent implements OnInit {
 
     // icons
     faClipboard = faClipboard;
-
-    constructor(
-        private route: ActivatedRoute,
-        private examManagementService: ExamManagementService,
-        private studentExamService: StudentExamService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-    ) {}
 
     /**
      * Initialize the courseId and examId

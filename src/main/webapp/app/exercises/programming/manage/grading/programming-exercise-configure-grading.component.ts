@@ -1,5 +1,5 @@
 import { Location } from '@angular/common';
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -67,6 +67,19 @@ export type Table = 'testCases' | 'codeAnalysis';
     providers: [ProgrammingExerciseTaskService],
 })
 export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private accountService = inject(AccountService);
+    private gradingService = inject(ProgrammingExerciseGradingService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
+    private programmingExerciseWebsocketService = inject(ProgrammingExerciseWebsocketService);
+    private programmingExerciseTaskService = inject(ProgrammingExerciseTaskService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private location = inject(Location);
+    private router = inject(Router);
+    private courseManagementService = inject(CourseManagementService);
+
     readonly EditableField = EditableField;
     readonly CategoryState = StaticCodeAnalysisCategoryState;
     readonly Visibility = Visibility;
@@ -159,21 +172,6 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.showInactiveValue = showInactive;
         this.updateTestCaseFilter();
     }
-
-    constructor(
-        private accountService: AccountService,
-        private gradingService: ProgrammingExerciseGradingService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
-        private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService,
-        private programmingExerciseTaskService: ProgrammingExerciseTaskService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private location: Location,
-        private router: Router,
-        private courseManagementService: CourseManagementService,
-    ) {}
 
     /**
      * Subscribes to the route params to get the current exerciseId.

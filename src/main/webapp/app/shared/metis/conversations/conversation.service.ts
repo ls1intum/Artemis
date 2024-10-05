@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -32,13 +32,11 @@ export enum ConversationMemberSearchFilter {
 }
 @Injectable({ providedIn: 'root' })
 export class ConversationService {
-    public resourceUrl = '/api/courses/';
+    protected http = inject(HttpClient);
+    protected translationService = inject(TranslateService);
+    protected accountService = inject(AccountService);
 
-    constructor(
-        protected http: HttpClient,
-        protected translationService: TranslateService,
-        protected accountService: AccountService,
-    ) {}
+    public resourceUrl = '/api/courses/';
 
     getConversationName(conversation: ConversationDTO | undefined, showLogin = false): string {
         if (!conversation) {

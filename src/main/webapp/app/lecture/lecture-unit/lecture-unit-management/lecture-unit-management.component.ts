@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -21,6 +21,12 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
     styleUrls: ['./lecture-unit-management.component.scss'],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private lectureService = inject(LectureService);
+    private alertService = inject(AlertService);
+    lectureUnitService = inject(LectureUnitService);
+
     @Input() showCreationCard = true;
     @Input() showCompetencies = true;
     @Input() emitEditEvents = false;
@@ -55,14 +61,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     faTrash = faTrash;
     faPencilAlt = faPencilAlt;
     faEye = faEye;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private lectureService: LectureService,
-        private alertService: AlertService,
-        public lectureUnitService: LectureUnitService,
-    ) {}
 
     ngOnDestroy(): void {
         this.updateOrder();

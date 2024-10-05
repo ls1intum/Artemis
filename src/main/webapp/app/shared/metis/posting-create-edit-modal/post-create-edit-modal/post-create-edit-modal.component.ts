@@ -1,13 +1,10 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
@@ -44,15 +41,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     // Icons
     faAngleUp = faAngleUp;
     faAngleDown = faAngleDown;
-
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-        private router: Router,
-    ) {
-        super(metisService, modalService, formBuilder);
-    }
 
     /**
      * on initialization: reset all input field of the modal, determine the post context;

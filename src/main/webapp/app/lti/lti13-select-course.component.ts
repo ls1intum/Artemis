@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { SessionStorageService } from 'ngx-webstorage';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
@@ -9,12 +9,11 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './lti13-select-course.component.html',
 })
 export class LtiCoursesComponent implements OnInit {
+    private courseService = inject(CourseManagementService);
+    private sessionStorageService = inject(SessionStorageService);
+    private alertService = inject(AlertService);
+
     public courses: OnlineCourseDtoModel[];
-    constructor(
-        private courseService: CourseManagementService,
-        private sessionStorageService: SessionStorageService,
-        private alertService: AlertService,
-    ) {}
 
     async ngOnInit() {
         this.loadAndFilterCourses();

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -21,6 +21,11 @@ export type Column<T extends BaseEntity> = {
 
 @Component({ template: '' })
 export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
+    protected router = inject(Router);
+    private sortService = inject(SortService);
+    protected activeModal = inject(NgbActiveModal);
+    protected pagingService? = inject<PagingService<T>>(PagingService);
+
     loading = false;
     content: SearchResult<T>;
     total = 0;
@@ -43,13 +48,6 @@ export abstract class ImportComponent<T extends BaseEntity> implements OnInit {
     readonly faCheck = faCheck;
     protected readonly search = new Subject<void>();
     protected readonly sort = new Subject<void>();
-
-    protected constructor(
-        protected router: Router,
-        private sortService: SortService,
-        protected activeModal: NgbActiveModal,
-        protected pagingService?: PagingService<T>,
-    ) {}
 
     get page(): number {
         return this.state.page;

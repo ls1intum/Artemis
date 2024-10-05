@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { faChevronRight, faDownLeftAndUpRightToCenter, faEye, faFileExport, faFileImport, faPlus, faUpRightAndDownLeftFromCenter } from '@fortawesome/free-solid-svg-icons';
 import {
     KnowledgeAreaDTO,
@@ -30,6 +30,13 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
+    private standardizedCompetencyService = inject(StandardizedCompetencyService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     protected isLoading = false;
     // true if a competency is getting edited in the detail component
     protected isEditing = false;
@@ -57,17 +64,6 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly ButtonSize = ButtonSize;
     protected readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'StandardizedCompetencies';
-
-    constructor(
-        private adminStandardizedCompetencyService: AdminStandardizedCompetencyService,
-        private standardizedCompetencyService: StandardizedCompetencyService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private translateService: TranslateService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {
-        super();
-    }
 
     ngOnInit() {
         this.isLoading = true;

@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { BehaviorSubject, Observable, isObservable, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -38,6 +38,10 @@ export enum CachingStrategy {
     `,
 })
 export class SecuredImageComponent implements OnChanges, OnInit {
+    private domSanitizer = inject(DomSanitizer);
+    private cacheableImageService = inject(CacheableImageService);
+    element = inject(ElementRef);
+
     // This part just creates an rxjs stream from the src
     // this makes sure that we can handle it when the src changes
     // or even when the component gets destroyed
@@ -67,13 +71,6 @@ export class SecuredImageComponent implements OnChanges, OnInit {
             this.srcSubject.next(this.src);
         }
     }
-
-    // we need HttpClient to load the image and DomSanitizer to trust the url
-    constructor(
-        private domSanitizer: DomSanitizer,
-        private cacheableImageService: CacheableImageService,
-        public element: ElementRef,
-    ) {}
 
     // triggers the reload of the picture when the user clicks on a button
     retryLoadImage() {

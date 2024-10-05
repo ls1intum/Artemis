@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { Observable } from 'rxjs';
@@ -12,12 +12,10 @@ type EntityResponseType = HttpResponse<OnlineUnit>;
     providedIn: 'root',
 })
 export class OnlineUnitService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
+    private lectureUnitService = inject(LectureUnitService);
 
-    constructor(
-        private httpClient: HttpClient,
-        private lectureUnitService: LectureUnitService,
-    ) {}
+    private resourceURL = 'api';
 
     create(onlineUnit: OnlineUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient

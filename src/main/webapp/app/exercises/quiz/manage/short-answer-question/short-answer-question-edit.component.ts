@@ -11,6 +11,7 @@ import {
     SimpleChanges,
     ViewChild,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -45,6 +46,10 @@ import { SHORT_ANSWER_QUIZ_QUESTION_EDITOR_OPTIONS } from 'app/shared/monaco-edi
     encapsulation: ViewEncapsulation.None,
 })
 export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, AfterViewInit, QuizQuestionEdit {
+    shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    private modalService = inject(NgbModal);
+    private changeDetector = inject(ChangeDetectorRef);
+
     @ViewChild('questionEditor', { static: false })
     private questionEditor: MarkdownEditorMonacoComponent;
     @ViewChild('clickLayer', { static: false })
@@ -110,12 +115,6 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     protected readonly MAX_POINTS = MAX_QUIZ_QUESTION_POINTS;
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
-    constructor(
-        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private modalService: NgbModal,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.markdownActions = [

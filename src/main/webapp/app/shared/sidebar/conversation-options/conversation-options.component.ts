@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO, shouldNotifyRecipient } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -29,6 +29,12 @@ import { NotificationService } from 'app/shared/notification/notification.servic
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConversationOptionsComponent implements OnInit, OnDestroy {
+    conversationService = inject(ConversationService);
+    private metisService = inject(MetisService);
+    private notificationService = inject(NotificationService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+
     private ngUnsubscribe = new Subject<void>();
 
     favorite$ = new Subject<boolean>();
@@ -53,14 +59,6 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     faVolumeXmark = faVolumeXmark;
     faVolumeUp = faVolumeUp;
     faGear = faGear;
-
-    constructor(
-        public conversationService: ConversationService,
-        private metisService: MetisService,
-        private notificationService: NotificationService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-    ) {}
 
     getAsGroupChat = getAsGroupChatDTO;
 

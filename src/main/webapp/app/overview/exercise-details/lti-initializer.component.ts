@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { LtiInitializerModalComponent } from 'app/overview/exercise-details/lti-initializer-modal.component';
 import { UserService } from 'app/core/user/user.service';
@@ -11,16 +11,14 @@ import { AccountService } from 'app/core/auth/account.service';
     template: '',
 })
 export class LtiInitializerComponent implements OnInit {
-    modalRef: NgbModalRef | undefined;
+    private modalService = inject(NgbModal);
+    private userService = inject(UserService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private modalService: NgbModal,
-        private userService: UserService,
-        private alertService: AlertService,
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private accountService: AccountService,
-    ) {}
+    modalRef: NgbModalRef | undefined;
 
     ngOnInit() {
         this.activatedRoute.queryParams.subscribe((queryParams) => {

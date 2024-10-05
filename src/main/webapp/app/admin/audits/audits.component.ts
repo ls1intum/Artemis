@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -14,6 +14,11 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './audits.component.html',
 })
 export class AuditsComponent implements OnInit {
+    private auditsService = inject(AuditsService);
+    private activatedRoute = inject(ActivatedRoute);
+    private datePipe = inject(DatePipe);
+    private router = inject(Router);
+
     audits?: Audit[];
     fromDate = '';
     predicate!: string;
@@ -30,13 +35,6 @@ export class AuditsComponent implements OnInit {
 
     // Icon
     faSort = faSort;
-
-    constructor(
-        private auditsService: AuditsService,
-        private activatedRoute: ActivatedRoute,
-        private datePipe: DatePipe,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         this.toDate = this.today();

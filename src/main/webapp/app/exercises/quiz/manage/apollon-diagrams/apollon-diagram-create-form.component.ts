@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, ViewChild, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
@@ -11,18 +11,16 @@ import { faSave } from '@fortawesome/free-solid-svg-icons';
     providers: [ApollonDiagramService],
 })
 export class ApollonDiagramCreateFormComponent implements AfterViewInit {
+    private activeModal = inject(NgbActiveModal);
+    private apollonDiagramService = inject(ApollonDiagramService);
+    private alertService = inject(AlertService);
+
     apollonDiagram: ApollonDiagram;
     isSaving: boolean;
     @ViewChild('titleInput', { static: false }) titleInput: ElementRef;
 
     // Icons
     faSave = faSave;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private apollonDiagramService: ApollonDiagramService,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Adds focus on the title input field

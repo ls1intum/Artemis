@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
@@ -13,6 +13,9 @@ import { faCheck, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons'
     styleUrls: ['./programming-exercise-instruction-step-wizard.scss'],
 })
 export class ProgrammingExerciseInstructionStepWizardComponent implements OnChanges {
+    private modalService = inject(NgbModal);
+    private instructionService = inject(ProgrammingExerciseInstructionService);
+
     TestCaseState = TestCaseState;
 
     @Input() exercise: Exercise;
@@ -25,11 +28,6 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     faTimes = faTimes;
     faCheck = faCheck;
     faQuestion = faQuestion;
-
-    constructor(
-        private modalService: NgbModal,
-        private instructionService: ProgrammingExerciseInstructionService,
-    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that changes are detected.

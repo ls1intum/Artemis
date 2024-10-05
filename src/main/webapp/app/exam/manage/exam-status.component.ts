@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
@@ -28,6 +28,9 @@ export enum ExamConductionState {
     styleUrls: ['./exam-status.component.scss'],
 })
 export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
+    private examChecklistService = inject(ExamChecklistService);
+    private websocketService = inject(JhiWebsocketService);
+
     @Input()
     public exam: Exam;
     @Input()
@@ -67,11 +70,6 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     faArrowRight = faArrowRight;
     faDotCircle = faDotCircle;
     faCircleExclamation = faCircleExclamation;
-
-    constructor(
-        private examChecklistService: ExamChecklistService,
-        private websocketService: JhiWebsocketService,
-    ) {}
 
     ngOnInit() {
         const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);

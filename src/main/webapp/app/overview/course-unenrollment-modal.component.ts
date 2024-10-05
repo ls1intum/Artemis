@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -13,18 +13,16 @@ import { AbstractControl, FormControl, FormGroup, ValidationErrors, ValidatorFn,
     templateUrl: './course-unenrollment-modal.component.html',
 })
 export class CourseUnenrollmentModalComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+
     public course: Course;
     confirmationForm: FormGroup;
 
     // Icons
     faXmark = faXmark;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         this.confirmationForm = new FormGroup({

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
@@ -10,16 +10,14 @@ import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({ template: '' })
 export abstract class EditCourseCompetencyComponent implements OnInit {
+    protected activatedRoute = inject(ActivatedRoute);
+    protected lectureService = inject(LectureService);
+    protected router = inject(Router);
+    protected alertService = inject(AlertService);
+
     isLoading = false;
     lecturesWithLectureUnits: Lecture[] = [];
     courseId: number;
-
-    constructor(
-        protected activatedRoute: ActivatedRoute,
-        protected lectureService: LectureService,
-        protected router: Router,
-        protected alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

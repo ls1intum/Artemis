@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { EMPTY, Subject, from } from 'rxjs';
 import { faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
@@ -17,6 +17,9 @@ import { catchError, takeUntil } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
+    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
+    private modalService = inject(NgbModal);
+
     ngUnsubscribe = new Subject<void>();
 
     @Input() course: Course;
@@ -34,11 +37,6 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     faWrench = faWrench;
     faUsers = faUsers;
     faTrash = faTrash;
-
-    constructor(
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private modalService: NgbModal,
-    ) {}
 
     deleteTutorialGroupSession = () => {
         this.tutorialGroupSessionService

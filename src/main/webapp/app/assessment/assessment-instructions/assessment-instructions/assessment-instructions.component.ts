@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, TemplateRef } from '@angular/core';
+import { Component, ContentChild, Input, TemplateRef, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { UMLDiagramType, UMLModel } from '@ls1intum/apollon';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -15,6 +15,8 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
     templateUrl: './assessment-instructions.component.html',
 })
 export class AssessmentInstructionsComponent {
+    private markdownService = inject(ArtemisMarkdownService);
+
     exercise: Exercise;
     programmingExercise?: ProgrammingExercise;
     problemStatement: SafeHtml;
@@ -35,8 +37,6 @@ export class AssessmentInstructionsComponent {
 
     // extension points, see shared/extension-point
     @ContentChild('overrideTitle') overrideTitle: TemplateRef<any>;
-
-    constructor(private markdownService: ArtemisMarkdownService) {}
 
     // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('exercise') set exerciseInput(exercise: Exercise) {

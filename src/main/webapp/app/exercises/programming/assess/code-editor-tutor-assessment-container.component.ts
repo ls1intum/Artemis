@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, OnDestroy, OnInit, Output, TemplateRef, ViewChild, inject } from '@angular/core';
 import { Observable, Subscription, firstValueFrom } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
@@ -47,6 +47,22 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './code-editor-tutor-assessment-container.component.html',
 })
 export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDestroy {
+    private manualResultService = inject(ProgrammingAssessmentManualResultService);
+    private router = inject(Router);
+    private location = inject(Location);
+    private accountService = inject(AccountService);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private domainService = inject(DomainService);
+    private complaintService = inject(ComplaintService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private profileService = inject(ProfileService);
+    private modalService = inject(NgbModal);
+    private athenaService = inject(AthenaService);
+
     @ViewChild(CodeEditorContainerComponent, { static: false }) codeEditorContainer: CodeEditorContainerComponent;
     ButtonSize = ButtonSize;
     PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -119,24 +135,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         return this.feedbackSuggestions.filter((feedback) => !feedback.reference);
     }
 
-    constructor(
-        private manualResultService: ProgrammingAssessmentManualResultService,
-        private router: Router,
-        private location: Location,
-        private accountService: AccountService,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private domainService: DomainService,
-        private complaintService: ComplaintService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private structuredGradingCriterionService: StructuredGradingCriterionService,
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private profileService: ProfileService,
-        private modalService: NgbModal,
-        private athenaService: AthenaService,
-        translateService: TranslateService,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
+
         translateService.get('artemisApp.assessment.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
         translateService.get('artemisApp.assessment.messages.acceptComplaintWithoutMoreScore').subscribe((text) => (this.acceptComplaintWithoutMoreScoreText = text));
     }

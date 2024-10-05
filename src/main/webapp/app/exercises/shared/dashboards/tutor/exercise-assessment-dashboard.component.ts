@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, OnInit, TemplateRef, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -61,6 +61,26 @@ export interface ExampleSubmissionQueryParams {
     providers: [CourseManagementService],
 })
 export class ExerciseAssessmentDashboardComponent implements OnInit {
+    complaintService = inject(ComplaintService);
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private accountService = inject(AccountService);
+    private route = inject(ActivatedRoute);
+    private tutorParticipationService = inject(TutorParticipationService);
+    private submissionService = inject(SubmissionService);
+    private textSubmissionService = inject(TextSubmissionService);
+    private modelingSubmissionService = inject(ModelingSubmissionService);
+    private fileUploadSubmissionService = inject(FileUploadSubmissionService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private router = inject(Router);
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private guidedTourService = inject(GuidedTourService);
+    private artemisDatePipe = inject(ArtemisDatePipe);
+    private sortService = inject(SortService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private profileService = inject(ProfileService);
+
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly getCourseFromExercise = getCourseFromExercise;
     exercise: Exercise;
@@ -170,28 +190,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faListAlt = faListAlt;
-
-    constructor(
-        public complaintService: ComplaintService,
-        private exerciseService: ExerciseService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private accountService: AccountService,
-        private route: ActivatedRoute,
-        private tutorParticipationService: TutorParticipationService,
-        private submissionService: SubmissionService,
-        private textSubmissionService: TextSubmissionService,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private fileUploadSubmissionService: FileUploadSubmissionService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private router: Router,
-        private programmingSubmissionService: ProgrammingSubmissionService,
-        private guidedTourService: GuidedTourService,
-        private artemisDatePipe: ArtemisDatePipe,
-        private sortService: SortService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Extracts the course and exercise ids from the route params and fetches the exercise from the server

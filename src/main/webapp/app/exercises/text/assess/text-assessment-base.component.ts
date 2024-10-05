@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -13,13 +13,17 @@ import { Feedback } from 'app/entities/feedback.model';
 import { getPositiveAndCappedTotalScore, getTotalMaxPoints } from 'app/exercises/shared/exercise/exercise.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 
+/*
+ * Base Component for TextSubmissionAssessmentComponent and ExampleTextSubmissionComponent since they share a lot of same functions.
+ */
 @Component({
     template: '',
 })
 export abstract class TextAssessmentBaseComponent implements OnInit {
-    /*
-     * Base Component for TextSubmissionAssessmentComponent and ExampleTextSubmissionComponent since they share a lot of same functions.
-     */
+    protected alertService = inject(AlertService);
+    protected accountService = inject(AccountService);
+    protected assessmentsService = inject(TextAssessmentService);
+    protected structuredGradingCriterionService = inject(StructuredGradingCriterionService);
 
     exercise?: TextExercise;
     protected userId?: number;
@@ -28,13 +32,6 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     submission?: TextSubmission;
 
     readonly getCourseFromExercise = getCourseFromExercise;
-
-    protected constructor(
-        protected alertService: AlertService,
-        protected accountService: AccountService,
-        protected assessmentsService: TextAssessmentService,
-        protected structuredGradingCriterionService: StructuredGradingCriterionService,
-    ) {}
 
     async ngOnInit() {
         // Used to check if the assessor is the current user

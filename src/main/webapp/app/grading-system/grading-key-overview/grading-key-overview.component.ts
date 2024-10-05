@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep } from 'app/entities/grade-step.model';
@@ -13,18 +13,16 @@ import { loadGradingKeyUrlParams } from 'app/grading-system/grading-key-overview
     styleUrls: ['./grading-key-overview.scss'],
 })
 export class GradingKeyOverviewComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private gradingSystemService = inject(GradingSystemService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private themeService = inject(ThemeService);
+
     readonly faChevronLeft = faChevronLeft;
     readonly faPrint = faPrint;
 
     plagiarismGrade: string;
     noParticipationGrade: string;
-
-    constructor(
-        private route: ActivatedRoute,
-        private gradingSystemService: GradingSystemService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private themeService: ThemeService,
-    ) {}
 
     isExam = false;
 

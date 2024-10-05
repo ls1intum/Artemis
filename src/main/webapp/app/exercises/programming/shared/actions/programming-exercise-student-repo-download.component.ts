@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -12,6 +12,9 @@ import { take } from 'rxjs';
     templateUrl: './programming-exercise-student-repo-download.component.html',
 })
 export class ProgrammingExerciseStudentRepoDownloadComponent {
+    protected programmingExerciseService = inject(ProgrammingExerciseService);
+    protected alertService = inject(AlertService);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
@@ -30,11 +33,6 @@ export class ProgrammingExerciseStudentRepoDownloadComponent {
 
     // Icons
     faDownload = faDownload;
-
-    constructor(
-        protected programmingExerciseService: ProgrammingExerciseService,
-        protected alertService: AlertService,
-    ) {}
 
     exportRepository() {
         if (this.exerciseId && this.participationId) {

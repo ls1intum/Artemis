@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angular/core';
 import { faBan, faCheckCircle, faCircleNotch, faExclamationTriangle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LegalDocumentService } from 'app/shared/service/legal-document.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -15,6 +15,12 @@ import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/
     templateUrl: './legal-document-update.component.html',
 })
 export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked {
+    private legalDocumentService = inject(LegalDocumentService);
+    private modalService = inject(NgbModal);
+    private route = inject(ActivatedRoute);
+    private languageHelper = inject(JhiLanguageHelper);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+
     readonly SUPPORTED_LANGUAGES: LegalDocumentLanguage[] = [LegalDocumentLanguage.GERMAN, LegalDocumentLanguage.ENGLISH];
     readonly faBan = faBan;
     readonly faSave = faSave;
@@ -40,14 +46,6 @@ export class LegalDocumentUpdateComponent implements OnInit, AfterContentChecked
     currentLanguage = this.DEFAULT_LANGUAGE;
     unsavedChangesWarning: NgbModalRef;
     titleKey: string;
-
-    constructor(
-        private legalDocumentService: LegalDocumentService,
-        private modalService: NgbModal,
-        private route: ActivatedRoute,
-        private languageHelper: JhiLanguageHelper,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {}
 
     ngOnInit() {
         // Tap the URL to determine, if it's the imprint or the privacy statement

@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, inject } from '@angular/core';
 import { ApollonEditor, ApollonMode, Assessment, Selection, UMLDiagramType, UMLElementType, UMLModel, UMLRelationshipType, addOrUpdateAssessment } from '@ls1intum/apollon';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ModelElementCount } from 'app/entities/modeling-submission.model';
@@ -21,6 +21,8 @@ export interface DropInfo {
     styleUrls: ['./modeling-assessment.component.scss'],
 })
 export class ModelingAssessmentComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     @Input() maxScore: number;
     @Input() maxBonusPoints = 0;
     @Input() totalScore: number;
@@ -48,10 +50,6 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     unreferencedFeedbacks: Feedback[] = [];
     firstCorrectionRoundColor = '#3e8acc';
     secondCorrectionRoundColor = '#ffa561';
-
-    constructor(private artemisTranslatePipe: ArtemisTranslatePipe) {
-        super();
-    }
 
     async ngAfterViewInit(): Promise<void> {
         if (this.feedbacks) {

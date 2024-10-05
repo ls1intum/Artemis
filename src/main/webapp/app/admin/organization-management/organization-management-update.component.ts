@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -9,17 +9,15 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './organization-management-update.component.html',
 })
 export class OrganizationManagementUpdateComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private organizationService = inject(OrganizationManagementService);
+
     organization: Organization;
     isSaving: boolean;
 
     // Icons
     faSave = faSave;
     faBan = faBan;
-
-    constructor(
-        private route: ActivatedRoute,
-        private organizationService: OrganizationManagementService,
-    ) {}
 
     /**
      * Enable subscriptions to retrieve the organization based on the activated route on init

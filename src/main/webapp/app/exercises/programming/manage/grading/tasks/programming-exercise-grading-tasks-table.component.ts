@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
@@ -23,6 +23,8 @@ type TaskComparator = (a: ProgrammingExerciseTask | ProgrammingExerciseTestCase,
     styleUrls: ['./programming-exercise-grading-tasks-table.scss'],
 })
 export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
+    private taskService = inject(ProgrammingExerciseTaskService);
+
     @Input() exercise: ProgrammingExercise;
     @Input() course: Course;
     @Input() gradingStatisticsObservable: Observable<ProgrammingExerciseGradingStatistics>;
@@ -46,8 +48,6 @@ export class ProgrammingExerciseGradingTasksTableComponent implements OnInit {
     get ignoreInactive() {
         return this.taskService.ignoreInactive;
     }
-
-    constructor(private taskService: ProgrammingExerciseTaskService) {}
 
     ngOnInit(): void {
         this.allTasksExpandedSubject = new Subject();

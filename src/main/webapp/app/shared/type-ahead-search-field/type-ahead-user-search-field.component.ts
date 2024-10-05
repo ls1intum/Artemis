@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { Observable, OperatorFunction, catchError, of, switchMap, tap } from 'rxjs';
 import { UserService } from 'app/core/user/user.service';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
@@ -10,6 +10,8 @@ import { User } from 'app/core/user/user.model';
     styleUrls: ['./type-ahead-user-search-field.component.scss'],
 })
 export class TypeAheadUserSearchFieldComponent {
+    private userService = inject(UserService);
+
     @Input() loginOrName: string;
     @Output() loginOrNameChange = new EventEmitter<string>();
 
@@ -20,8 +22,6 @@ export class TypeAheadUserSearchFieldComponent {
 
     readonly faCircleNotch = faCircleNotch;
     readonly MIN_SEARCH_QUERY_LENGTH = 3;
-
-    constructor(private userService: UserService) {}
 
     search: OperatorFunction<string, readonly User[]> = (login: Observable<string>) => {
         this.searchFailed = false;

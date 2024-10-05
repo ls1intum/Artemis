@@ -1,28 +1,30 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { faBook, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
     templateUrl: './file-upload-exercise.component.html',
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
+    exerciseService = inject(ExerciseService);
+    fileUploadExerciseService = inject(FileUploadExerciseService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+    private sortService = inject(SortService);
+
     @Input() fileUploadExercises: FileUploadExercise[] = [];
     filteredFileUploadExercises: FileUploadExercise[] = [];
 
@@ -38,23 +40,6 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
 
     protected get exercises() {
         return this.fileUploadExercises;
-    }
-
-    constructor(
-        public exerciseService: ExerciseService,
-        public fileUploadExerciseService: FileUploadExerciseService,
-        private courseExerciseService: CourseExerciseService,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private modalService: NgbModal,
-        private router: Router,
-        private sortService: SortService,
-        courseService: CourseManagementService,
-        translateService: TranslateService,
-        eventManager: EventManager,
-        route: ActivatedRoute,
-    ) {
-        super(courseService, translateService, route, eventManager);
     }
 
     protected loadExercises(): void {

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -10,7 +10,7 @@ export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizPoolService {
-    constructor(private http: HttpClient) {}
+    private http = inject(HttpClient);
 
     /**
      * Update the given quiz pool that belongs to the given course id and exam id

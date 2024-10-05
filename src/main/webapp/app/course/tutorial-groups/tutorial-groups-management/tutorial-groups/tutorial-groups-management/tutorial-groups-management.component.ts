@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -19,6 +19,13 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private cdr = inject(ChangeDetectorRef);
+
     ngUnsubscribe = new Subject<void>();
 
     courseId: number;
@@ -35,15 +42,6 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     readonly isMessagingEnabled = isMessagingEnabled;
 
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
-
-    constructor(
-        private tutorialGroupService: TutorialGroupsService,
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private alertService: AlertService,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {

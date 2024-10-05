@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { TextUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/text-unit-form/text-unit-form.component';
 import { TextUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/textUnit.service';
@@ -15,17 +15,15 @@ import { combineLatest } from 'rxjs';
     styles: [],
 })
 export class EditTextUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private textUnitService = inject(TextUnitService);
+    private alertService = inject(AlertService);
+
     isLoading = false;
     textUnit: TextUnit;
     formData: TextUnitFormData;
     lectureId: number;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private textUnitService: TextUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

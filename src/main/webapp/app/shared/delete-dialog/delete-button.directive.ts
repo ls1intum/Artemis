@@ -1,5 +1,5 @@
 import { DeleteDialogService } from 'app/shared/delete-dialog/delete-dialog.service';
-import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, Renderer2, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionType, DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
 import { Observable } from 'rxjs';
@@ -7,6 +7,11 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 
 @Directive({ selector: '[jhiDeleteButton]' })
 export class DeleteButtonDirective implements OnInit {
+    private deleteDialogService = inject(DeleteDialogService);
+    private renderer = inject(Renderer2);
+    private elementRef = inject(ElementRef);
+    private translateService = inject(TranslateService);
+
     @Input() entityTitle?: string;
     @Input() deleteQuestion: string;
     @Input() translateValues: { [key: string]: unknown } = {};
@@ -23,13 +28,6 @@ export class DeleteButtonDirective implements OnInit {
     @Input() animation = true;
 
     deleteTextSpan: HTMLElement;
-
-    constructor(
-        private deleteDialogService: DeleteDialogService,
-        private renderer: Renderer2,
-        private elementRef: ElementRef,
-        private translateService: TranslateService,
-    ) {}
 
     /**
      * This method appends classes and type property to the button on which directive was used, additionally adds a span tag with delete text.

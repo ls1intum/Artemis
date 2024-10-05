@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
@@ -21,6 +21,13 @@ import { sortCourses } from 'app/shared/util/course.util';
     styleUrls: ['./courses.component.scss'],
 })
 export class CoursesComponent implements OnInit, OnDestroy {
+    private courseService = inject(CourseManagementService);
+    private guidedTourService = inject(GuidedTourService);
+    private teamService = inject(TeamService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private router = inject(Router);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+
     courses: Course[];
     public nextRelevantCourse?: Course;
     nextRelevantCourseForExam?: Course;
@@ -36,15 +43,6 @@ export class CoursesComponent implements OnInit, OnDestroy {
     faPenAlt = faPenAlt;
 
     coursesLoaded = false;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private guidedTourService: GuidedTourService,
-        private teamService: TeamService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private router: Router,
-        private courseAccessStorageService: CourseAccessStorageService,
-    ) {}
 
     async ngOnInit() {
         this.loadAndFilterCourses();

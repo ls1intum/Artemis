@@ -1,19 +1,16 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
-import { TranslateService } from '@ngx-translate/core';
 import { onError } from 'app/shared/util/global.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
@@ -23,8 +20,17 @@ import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exer
     templateUrl: './text-exercise.component.html',
 })
 export class TextExerciseComponent extends ExerciseComponent {
-    @Input() textExercises: TextExercise[];
-    filteredTextExercises: TextExercise[];
+    exerciseService = inject(ExerciseService);
+    textExerciseService = inject(TextExerciseService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private modalService = inject(NgbModal);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private accountService = inject(AccountService);
+
+    @Input() textExercises: TextExercise[] = [];
+    filteredTextExercises: TextExercise[] = [];
 
     // Icons
     faSort = faSort;
@@ -33,25 +39,6 @@ export class TextExerciseComponent extends ExerciseComponent {
 
     protected get exercises() {
         return this.textExercises;
-    }
-
-    constructor(
-        public exerciseService: ExerciseService,
-        public textExerciseService: TextExerciseService,
-        private courseExerciseService: CourseExerciseService,
-        private modalService: NgbModal,
-        private router: Router,
-        courseService: CourseManagementService,
-        translateService: TranslateService,
-        private alertService: AlertService,
-        private sortService: SortService,
-        eventManager: EventManager,
-        route: ActivatedRoute,
-        private accountService: AccountService,
-    ) {
-        super(courseService, translateService, route, eventManager);
-        this.textExercises = [];
-        this.filteredTextExercises = [];
     }
 
     protected loadExercises(): void {

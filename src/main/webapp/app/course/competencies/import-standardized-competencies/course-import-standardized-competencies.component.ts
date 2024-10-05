@@ -1,9 +1,4 @@
-import { ActivatedRoute, Router } from '@angular/router';
-import { Component } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { TranslateService } from '@ngx-translate/core';
-import { SortService } from 'app/shared/service/sort.service';
-import { StandardizedCompetencyService } from 'app/shared/standardized-competencies/standardized-competency.service';
+import { Component, inject } from '@angular/core';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { CourseImportStandardizedCourseCompetenciesComponent } from 'app/course/competencies/import-standardized-competencies/course-import-standardized-course-competencies.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -27,17 +22,7 @@ import { KnowledgeAreaTreeComponent } from 'app/shared/standardized-competencies
     ],
 })
 export class CourseImportStandardizedCompetenciesComponent extends CourseImportStandardizedCourseCompetenciesComponent {
-    constructor(
-        router: Router,
-        activatedRoute: ActivatedRoute,
-        standardizedCompetencyService: StandardizedCompetencyService,
-        alertService: AlertService,
-        translateService: TranslateService,
-        sortService: SortService,
-        private competencyService: CompetencyService,
-    ) {
-        super(router, activatedRoute, standardizedCompetencyService, alertService, translateService, sortService);
-    }
+    private competencyService = inject(CompetencyService);
 
     protected importCompetencies() {
         super.importCompetencies(this.competencyService);

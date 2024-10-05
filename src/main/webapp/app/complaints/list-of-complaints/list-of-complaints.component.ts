@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -22,6 +22,16 @@ import { faExclamationTriangle, faFolderOpen, faSort } from '@fortawesome/free-s
     providers: [],
 })
 export class ListOfComplaintsComponent implements OnInit {
+    complaintService = inject(ComplaintService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private modalService = inject(NgbModal);
+    private sortService = inject(SortService);
+    private translateService = inject(TranslateService);
+    private artemisDatePipe = inject(ArtemisDatePipe);
+    private courseManagementService = inject(CourseManagementService);
+
     readonly ComplaintType = ComplaintType;
 
     public complaints: Complaint[] = [];
@@ -47,19 +57,7 @@ export class ListOfComplaintsComponent implements OnInit {
     faFolderOpen = faFolderOpen;
     faExclamationTriangle = faExclamationTriangle;
 
-    readonly FILTER_OPTION_ADDRESSED_COMPLAINTS = 4; // the number passed by the chart through the route indicating that only addressed complaints should be shown
-
-    constructor(
-        public complaintService: ComplaintService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private modalService: NgbModal,
-        private sortService: SortService,
-        private translateService: TranslateService,
-        private artemisDatePipe: ArtemisDatePipe,
-        private courseManagementService: CourseManagementService,
-    ) {}
+    readonly FILTER_OPTION_ADDRESSED_COMPLAINTS = 4;
 
     ngOnInit(): void {
         this.route.params.pipe(combineLatestWith(this.route.queryParams, this.route.data)).subscribe((result) => {

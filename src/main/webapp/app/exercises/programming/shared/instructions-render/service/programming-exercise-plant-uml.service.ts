@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Cacheable } from 'ts-cacheable';
 import { Observable, Subject } from 'rxjs';
@@ -9,6 +9,9 @@ const themeChangedSubject = new Subject<void>();
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlService {
+    private http = inject(HttpClient);
+    private themeService = inject(ThemeService);
+
     private resourceUrl = 'api/plantuml';
     private encoder: HttpParameterCodec;
 
@@ -16,10 +19,7 @@ export class ProgrammingExercisePlantUmlService {
      * Cacheable configuration
      */
 
-    constructor(
-        private http: HttpClient,
-        private themeService: ThemeService,
-    ) {
+    constructor() {
         this.encoder = new HttpUrlCustomEncoder();
         this.themeService
             .getCurrentThemeObservable()

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -18,6 +18,11 @@ import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './external-submission-dialog.component.html',
 })
 export class ExternalSubmissionDialogComponent implements OnInit {
+    private participationService = inject(ParticipationService);
+    private externalSubmissionService = inject(ExternalSubmissionService);
+    private activeModal = inject(NgbActiveModal);
+    private eventManager = inject(EventManager);
+
     readonly SCORE_PATTERN = SCORE_PATTERN;
 
     @Input() exercise: Exercise;
@@ -33,13 +38,6 @@ export class ExternalSubmissionDialogComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
-
-    constructor(
-        private participationService: ParticipationService,
-        private externalSubmissionService: ExternalSubmissionService,
-        private activeModal: NgbActiveModal,
-        private eventManager: EventManager,
-    ) {}
 
     /**
      * Initialize Component by calling a helper that generates an initial manual result.

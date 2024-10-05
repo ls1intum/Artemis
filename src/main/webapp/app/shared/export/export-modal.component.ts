@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { faBan, faDownload } from '@fortawesome/free-solid-svg-icons';
@@ -35,6 +35,9 @@ export interface CsvExportOptions {
     styleUrls: ['./export-modal.component.scss'],
 })
 export class ExportModalComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private translateService = inject(TranslateService);
+
     readonly CsvFieldSeparator = CsvFieldSeparator;
     readonly CsvQuoteStrings = CsvQuoteStrings;
     readonly CsvDecimalSeparator = CsvDecimalSeparator;
@@ -45,11 +48,6 @@ export class ExportModalComponent implements OnInit {
     // Icons
     faBan = faBan;
     faDownload = faDownload;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private translateService: TranslateService,
-    ) {}
 
     ngOnInit(): void {
         // set default csv export options based on the current language

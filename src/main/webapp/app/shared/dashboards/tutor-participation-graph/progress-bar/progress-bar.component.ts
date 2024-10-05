@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { round } from 'app/shared/util/utils';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
@@ -8,6 +8,9 @@ import { Subscription } from 'rxjs';
     templateUrl: './progress-bar.component.html',
 })
 export class ProgressBarComponent implements OnInit, OnChanges, OnDestroy {
+    private themeService = inject(ThemeService);
+    private ref = inject(ChangeDetectorRef);
+
     @Input() public tooltip: string;
     @Input() public percentage: number;
     @Input() public numerator: number;
@@ -16,11 +19,6 @@ export class ProgressBarComponent implements OnInit, OnChanges, OnDestroy {
     foregroundColorClass: string;
     backgroundColorClass: string;
     themeSubscription: Subscription;
-
-    constructor(
-        private themeService: ThemeService,
-        private ref: ChangeDetectorRef,
-    ) {}
 
     ngOnInit() {
         this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe(() => {

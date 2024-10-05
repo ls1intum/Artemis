@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
@@ -18,9 +18,9 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
     standalone: true,
 })
 export class PageRibbonComponent implements OnInit {
-    ribbonEnv: string;
+    private profileService = inject(ProfileService);
 
-    constructor(private profileService: ProfileService) {}
+    ribbonEnv: string;
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

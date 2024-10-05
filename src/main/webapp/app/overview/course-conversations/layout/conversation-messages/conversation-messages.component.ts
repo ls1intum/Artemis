@@ -12,6 +12,7 @@ import {
     ViewChild,
     ViewChildren,
     ViewEncapsulation,
+    inject,
 } from '@angular/core';
 import { faCircleNotch, faEnvelope, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Conversation, ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -35,6 +36,10 @@ import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
     encapsulation: ViewEncapsulation.None,
 })
 export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
+    metisService = inject(MetisService);
+    metisConversationService = inject(MetisConversationService);
+    cdr = inject(ChangeDetectorRef);
+
     private ngUnsubscribe = new Subject<void>();
     readonly PageType = PageType;
     readonly ButtonType = ButtonType;
@@ -77,12 +82,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     faSearch = faSearch;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
-
-    constructor(
-        public metisService: MetisService, // instance from course-conversations.component
-        public metisConversationService: MetisConversationService, // instance from course-conversations.component
-        public cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.subscribeToSearch();

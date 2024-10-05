@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -22,6 +22,14 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     templateUrl: './exam-exercise-row-buttons.component.html',
 })
 export class ExamExerciseRowButtonsComponent implements OnInit {
+    private textExerciseService = inject(TextExerciseService);
+    private fileUploadExerciseService = inject(FileUploadExerciseService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private eventManager = inject(EventManager);
+    private profileService = inject(ProfileService);
+
     @Input() course: Course;
     @Input() exercise: Exercise;
     @Input() exam: Exam;
@@ -48,16 +56,6 @@ export class ExamExerciseRowButtonsComponent implements OnInit {
 
     localVCEnabled = false;
     localCIEnabled = false;
-
-    constructor(
-        private textExerciseService: TextExerciseService,
-        private fileUploadExerciseService: FileUploadExerciseService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private modelingExerciseService: ModelingExerciseService,
-        private quizExerciseService: QuizExerciseService,
-        private eventManager: EventManager,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

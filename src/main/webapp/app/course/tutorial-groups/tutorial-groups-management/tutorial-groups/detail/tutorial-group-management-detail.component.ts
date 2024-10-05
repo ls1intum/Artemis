@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
@@ -15,6 +15,12 @@ import { takeUntil } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupManagementDetailComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+    private cdr = inject(ChangeDetectorRef);
+
     ngUnsubscribe = new Subject<void>();
 
     isLoading = false;
@@ -22,14 +28,6 @@ export class TutorialGroupManagementDetailComponent implements OnInit, OnDestroy
     course: Course;
     tutorialGroupId: number;
     isAtLeastInstructor = false;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

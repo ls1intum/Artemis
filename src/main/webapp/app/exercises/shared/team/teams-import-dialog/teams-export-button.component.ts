@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Team } from 'app/entities/team.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -18,6 +18,9 @@ import { faFileExport } from '@fortawesome/free-solid-svg-icons';
     `,
 })
 export class TeamsExportButtonComponent {
+    private teamService = inject(TeamService);
+    private alertService = inject(AlertService);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -26,11 +29,6 @@ export class TeamsExportButtonComponent {
 
     // Icons
     faFileExport = faFileExport;
-
-    constructor(
-        private teamService: TeamService,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Export teams or show students if there is an error

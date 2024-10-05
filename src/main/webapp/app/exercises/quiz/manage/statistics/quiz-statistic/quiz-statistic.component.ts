@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
@@ -20,6 +20,15 @@ import { round } from 'app/shared/util/utils';
     styleUrls: ['../quiz-point-statistic/quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
 })
 export class QuizStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+    protected translateService: TranslateService;
+    private quizExerciseService = inject(QuizExerciseService);
+    private quizStatisticUtil = inject(QuizStatisticUtil);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private changeDetector = inject(ChangeDetectorRef);
+
     quizExercise: QuizExercise;
     private sub: Subscription;
 
@@ -34,17 +43,12 @@ export class QuizStatisticComponent extends QuizStatistics implements OnInit, On
     // Icons
     faSync = faSync;
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private accountService: AccountService,
-        protected translateService: TranslateService,
-        private quizExerciseService: QuizExerciseService,
-        private quizStatisticUtil: QuizStatisticUtil,
-        private jhiWebsocketService: JhiWebsocketService,
-        private changeDetector: ChangeDetectorRef,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
+
         super(translateService);
+        this.translateService = translateService;
+
         this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
             this.ngxData[this.ngxData.length - 1].name = this.translateService.instant('showStatistic.quizStatistic.average');

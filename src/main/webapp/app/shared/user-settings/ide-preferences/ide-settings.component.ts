@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, WritableSignal, inject, signal } from '@angular/core';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { Ide, ideEquals } from 'app/shared/user-settings/ide-preferences/ide.model';
 import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -11,6 +11,8 @@ import { IdeSettingsService } from 'app/shared/user-settings/ide-preferences/ide
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IdeSettingsComponent implements OnInit {
+    private ideSettingsService = inject(IdeSettingsService);
+
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
     protected readonly faPlus = faPlus;
     protected readonly faTrash = faTrash;
@@ -21,8 +23,6 @@ export class IdeSettingsComponent implements OnInit {
     assignedProgrammingLanguages: ProgrammingLanguage[] = [];
     // languages that have no IDE assigned yet
     remainingProgrammingLanguages: ProgrammingLanguage[] = Object.values(ProgrammingLanguage).filter((x) => x !== ProgrammingLanguage.EMPTY);
-
-    constructor(private ideSettingsService: IdeSettingsService) {}
 
     ngOnInit() {
         this.ideSettingsService.loadPredefinedIdes().subscribe((predefinedIde) => {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -14,6 +14,12 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
     templateUrl: './programming-exercise-edit-selected.component.html',
 })
 export class ProgrammingExerciseEditSelectedComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private exerciseService = inject(ExerciseService);
+
     newProgrammingExercise: ProgrammingExercise;
     selectedProgrammingExercises: ProgrammingExercise[];
 
@@ -26,14 +32,6 @@ export class ProgrammingExerciseEditSelectedComponent implements OnInit {
 
     // Icons
     faSave = faSave;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private translateService: TranslateService,
-        private alertService: AlertService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private exerciseService: ExerciseService,
-    ) {}
 
     ngOnInit(): void {
         this.notificationText = undefined;

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { LearningPathHealthDTO } from 'app/entities/competency/learning-path-health.model';
@@ -13,12 +13,10 @@ import { LearningPathStorageService } from 'app/course/learning-paths/participat
 
 @Injectable({ providedIn: 'root' })
 export class LearningPathService {
-    private resourceURL = 'api';
+    private httpClient = inject(HttpClient);
+    private learningPathStorageService = inject(LearningPathStorageService);
 
-    constructor(
-        private httpClient: HttpClient,
-        private learningPathStorageService: LearningPathStorageService,
-    ) {}
+    private resourceURL = 'api';
 
     enableLearningPaths(courseId: number): Observable<HttpResponse<void>> {
         return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/learning-paths/enable`, null, { observe: 'response' });

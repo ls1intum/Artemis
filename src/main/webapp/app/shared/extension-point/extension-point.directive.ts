@@ -1,4 +1,4 @@
-import { Directive, EmbeddedViewRef, Input, OnChanges, SimpleChanges, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Directive, EmbeddedViewRef, Input, OnChanges, SimpleChanges, TemplateRef, ViewContainerRef, inject } from '@angular/core';
 
 /**
  * @whatItDoes marks parts of a (parent) template as extendable to allow other (child) components to override them.
@@ -27,15 +27,13 @@ import { Directive, EmbeddedViewRef, Input, OnChanges, SimpleChanges, TemplateRe
  */
 @Directive({ selector: '[jhiExtensionPoint]' })
 export class ExtensionPointDirective implements OnChanges {
+    private viewContainerRef = inject(ViewContainerRef);
+    private templateRef = inject<TemplateRef<any>>(TemplateRef);
+
     private viewRef: EmbeddedViewRef<any> | undefined = undefined;
 
     @Input() public jhiExtensionPoint: TemplateRef<any> | undefined = undefined;
     @Input() public jhiExtensionPointContext?: any = undefined;
-
-    constructor(
-        private viewContainerRef: ViewContainerRef,
-        private templateRef: TemplateRef<any>,
-    ) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if (changes['jhiExtensionPoint']) {

@@ -12,6 +12,7 @@ import {
     ViewChild,
     ViewChildren,
     ViewContainerRef,
+    inject,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -94,6 +95,22 @@ interface SidebarItem {
     providers: [MetisConversationService],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
+    private courseService = inject(CourseManagementService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private courseStorageService = inject(CourseStorageService);
+    private route = inject(ActivatedRoute);
+    private teamService = inject(TeamService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private serverDateService = inject(ArtemisServerDateService);
+    private alertService = inject(AlertService);
+    private changeDetectorRef = inject(ChangeDetectorRef);
+    private metisConversationService = inject(MetisConversationService);
+    private router = inject(Router);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+    private profileService = inject(ProfileService);
+    private modalService = inject(NgbModal);
+    private examParticipationService = inject(ExamParticipationService);
+
     private ngUnsubscribe = new Subject<void>();
 
     // course id of the course that is currently displayed
@@ -182,24 +199,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     readonly isMessagingEnabled = isMessagingEnabled;
     readonly isCommunicationEnabled = isCommunicationEnabled;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private courseExerciseService: CourseExerciseService,
-        private courseStorageService: CourseStorageService,
-        private route: ActivatedRoute,
-        private teamService: TeamService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private serverDateService: ArtemisServerDateService,
-        private alertService: AlertService,
-        private changeDetectorRef: ChangeDetectorRef,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
-        private courseAccessStorageService: CourseAccessStorageService,
-        private profileService: ProfileService,
-        private modalService: NgbModal,
-        private examParticipationService: ExamParticipationService,
-    ) {}
 
     async ngOnInit() {
         this.subscription = this.route.params.subscribe((params) => {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
 import { EmojiUtils } from 'app/shared/metis/emoji/emoji.utils';
@@ -9,6 +9,8 @@ import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
     templateUrl: './emoji-picker.component.html',
 })
 export class EmojiPickerComponent implements OnDestroy {
+    private themeService = inject(ThemeService);
+
     @Input() emojisToShowFilter: (emoji: string | EmojiData) => boolean;
     @Input() categoriesIcons: { [key: string]: string };
     @Input() recent: string[];
@@ -20,7 +22,9 @@ export class EmojiPickerComponent implements OnDestroy {
     dark = false;
     themeSubscription: Subscription;
 
-    constructor(private themeService: ThemeService) {
+    constructor() {
+        const themeService = this.themeService;
+
         this.themeSubscription = themeService.getCurrentThemeObservable().subscribe((theme) => {
             this.dark = theme === Theme.DARK;
             this.singleImageFunction = this.dark ? EmojiUtils.singleDarkModeEmojiUrlFn : () => '';

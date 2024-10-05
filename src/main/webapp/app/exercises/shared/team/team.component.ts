@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Team } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -16,6 +16,13 @@ import { AlertService } from 'app/core/util/alert.service';
     encapsulation: ViewEncapsulation.None,
 })
 export class TeamComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private exerciseService = inject(ExerciseService);
+    private teamService = inject(TeamService);
+    private accountService = inject(AccountService);
+    private router = inject(Router);
+
     ButtonSize = ButtonSize;
 
     team: Team;
@@ -27,14 +34,7 @@ export class TeamComponent implements OnInit {
     isAdmin = false;
     isTeamOwner = false;
 
-    constructor(
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private exerciseService: ExerciseService,
-        private teamService: TeamService,
-        private accountService: AccountService,
-        private router: Router,
-    ) {
+    constructor() {
         this.accountService.identity().then((user: User) => {
             this.currentUser = user;
             this.isAdmin = this.accountService.isAdmin();

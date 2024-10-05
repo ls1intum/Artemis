@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
@@ -13,6 +13,11 @@ import { Router } from '@angular/router';
     styleUrl: './build-agent-summary.component.scss',
 })
 export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
+    private websocketService = inject(JhiWebsocketService);
+    private buildAgentsService = inject(BuildAgentsService);
+    private buildQueueService = inject(BuildQueueService);
+    private router = inject(Router);
+
     buildAgents: BuildAgent[] = [];
     buildCapacity = 0;
     currentBuilds = 0;
@@ -23,13 +28,6 @@ export class BuildAgentSummaryComponent implements OnInit, OnDestroy {
 
     //icons
     faTimes = faTimes;
-
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private buildAgentsService: BuildAgentsService,
-        private buildQueueService: BuildQueueService,
-        private router: Router,
-    ) {}
 
     ngOnInit() {
         this.routerLink = this.router.url;

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -11,6 +11,8 @@ import diff from 'html-diff-ts';
     styleUrls: ['./exam-exercise-update-highlighter.component.scss'],
 })
 export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy {
+    private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+
     subscriptionToLiveExamExerciseUpdates: Subscription;
     themeSubscription: Subscription;
     updatedProblemStatementHTML: string;
@@ -22,8 +24,6 @@ export class ExamExerciseUpdateHighlighterComponent implements OnInit, OnDestroy
     @Input() exercise: Exercise;
 
     @Output() problemStatementUpdateEvent: EventEmitter<string> = new EventEmitter<string>();
-
-    constructor(private examExerciseUpdateService: ExamExerciseUpdateService) {}
 
     ngOnInit(): void {
         this.subscriptionToLiveExamExerciseUpdates = this.examExerciseUpdateService.currentExerciseIdAndProblemStatement.subscribe((update) => {

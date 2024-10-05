@@ -1,11 +1,8 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { CompetencyImportResponseDTO, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
-import { EntityTitleService } from 'app/shared/layouts/navbar/entity-title.service';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/course/competencies/course-competency.service';
 
@@ -16,10 +13,6 @@ type EntityArrayResponseType = HttpResponse<Prerequisite[]>;
     providedIn: 'root',
 })
 export class PrerequisiteService extends CourseCompetencyService {
-    constructor(httpClient: HttpClient, entityTitleService: EntityTitleService, lectureUnitService: LectureUnitService, accountService: AccountService) {
-        super(httpClient, entityTitleService, lectureUnitService, accountService);
-    }
-
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient.get<Prerequisite[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' }).pipe(
             map((res: EntityArrayResponseType) => this.convertArrayResponseDatesFromServer(res)),

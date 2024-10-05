@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit, ViewChild } from '@angular/core';
 import { UMLModel } from '@ls1intum/apollon';
 import dayjs from 'dayjs/esm';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
@@ -40,10 +40,6 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
 
     // Icons
     farListAlt = faListAlt;
-
-    constructor(changeDetectorReference: ChangeDetectorRef) {
-        super(changeDetectorReference);
-    }
 
     ngOnInit(): void {
         // show submission answers in UI

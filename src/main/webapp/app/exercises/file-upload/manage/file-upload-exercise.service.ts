@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -12,12 +12,10 @@ export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class FileUploadExerciseService implements ExerciseServicable<FileUploadExercise> {
-    private resourceUrl = 'api/file-upload-exercises';
+    private http = inject(HttpClient);
+    private exerciseService = inject(ExerciseService);
 
-    constructor(
-        private http: HttpClient,
-        private exerciseService: ExerciseService,
-    ) {}
+    private resourceUrl = 'api/file-upload-exercises';
 
     /**
      * Sends request to create new file upload exercise

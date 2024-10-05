@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 
 import { ConfigurationService } from './configuration.service';
 import { Bean, PropertySource } from './configuration.model';
@@ -9,6 +9,8 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './configuration.component.html',
 })
 export class ConfigurationComponent implements OnInit {
+    private configurationService = inject(ConfigurationService);
+
     allBeans!: Bean[];
     beans: Bean[] = [];
     beansFilter = '';
@@ -17,8 +19,6 @@ export class ConfigurationComponent implements OnInit {
 
     // Icons
     faSort = faSort;
-
-    constructor(private configurationService: ConfigurationService) {}
 
     ngOnInit(): void {
         this.configurationService.getBeans().subscribe((beans) => {

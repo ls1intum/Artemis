@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, Optional, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -36,6 +36,14 @@ import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
+    private participationService = inject(ParticipationService);
+    private translateService = inject(TranslateService);
+    private modalService = inject(NgbModal);
+    private exerciseService = inject(ExerciseService);
+    private exerciseCacheService = inject(ExerciseCacheService, { optional: true })!;
+    private resultService = inject(ResultService);
+    private csvDownloadService = inject(CsvDownloadService);
+
     // make constants available to html
     readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly MissingResultInfo = MissingResultInformation;
@@ -73,16 +81,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly faExclamationTriangle = faExclamationTriangle;
 
     private resultUpdateSubscription?: ReturnType<typeof setTimeout>;
-
-    constructor(
-        private participationService: ParticipationService,
-        private translateService: TranslateService,
-        private modalService: NgbModal,
-        private exerciseService: ExerciseService,
-        @Optional() private exerciseCacheService: ExerciseCacheService,
-        private resultService: ResultService,
-        private csvDownloadService: CsvDownloadService,
-    ) {}
 
     /**
      * Executed on initialization. It retrieves the results of a given

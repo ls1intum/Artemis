@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -11,6 +11,8 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./grading-system.component.scss'],
 })
 export class GradingSystemComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+
     readonly GradeType = GradeType;
 
     courseId?: number;
@@ -22,8 +24,6 @@ export class GradingSystemComponent implements OnInit {
 
     // Icons
     readonly faExclamationTriangle = faExclamationTriangle;
-
-    constructor(private route: ActivatedRoute) {}
 
     ngOnInit(): void {
         this.route.params.subscribe((params) => {

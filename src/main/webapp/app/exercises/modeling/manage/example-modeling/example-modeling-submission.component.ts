@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -35,6 +35,17 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
     styleUrls: ['./example-modeling-submission.component.scss'],
 })
 export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarker {
+    private exerciseService = inject(ExerciseService);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private tutorParticipationService = inject(TutorParticipationService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private themeService = inject(ThemeService);
+
     @ViewChild(ModelingEditorComponent, { static: false })
     modelingEditor: ModelingEditorComponent;
     @ViewChild(ModelingAssessmentComponent, { static: false })
@@ -104,19 +115,6 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     faExclamation = faExclamation;
     faCodeBranch = faCodeBranch;
     faChalkboardTeacher = faChalkboardTeacher;
-
-    constructor(
-        private exerciseService: ExerciseService,
-        private exampleSubmissionService: ExampleSubmissionService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private tutorParticipationService: TutorParticipationService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private changeDetector: ChangeDetectorRef,
-        private themeService: ThemeService,
-    ) {}
 
     ngOnInit(): void {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));

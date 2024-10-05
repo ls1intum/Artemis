@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Rating } from 'app/entities/rating.model';
@@ -7,9 +7,9 @@ import { Rating } from 'app/entities/rating.model';
     providedIn: 'root',
 })
 export class RatingService {
-    private ratingResourceUrl = 'api/results/';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    private ratingResourceUrl = 'api/results/';
 
     /**
      * Create the student rating for feedback on the server.

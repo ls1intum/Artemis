@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { Subscription } from 'rxjs';
@@ -15,6 +15,11 @@ import { BuildQueueService } from 'app/localci/build-queue/build-queue.service';
     styleUrl: './build-agent-details.component.scss',
 })
 export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
+    private websocketService = inject(JhiWebsocketService);
+    private buildAgentsService = inject(BuildAgentsService);
+    private route = inject(ActivatedRoute);
+    private buildQueueService = inject(BuildQueueService);
+
     protected readonly TriggeredByPushTo = TriggeredByPushTo;
     buildAgent: BuildAgent;
     agentName: string;
@@ -28,13 +33,6 @@ export class BuildAgentDetailsComponent implements OnInit, OnDestroy {
     faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
     faTimes = faTimes;
-
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private buildAgentsService: BuildAgentsService,
-        private route: ActivatedRoute,
-        private buildQueueService: BuildQueueService,
-    ) {}
 
     ngOnInit() {
         this.paramSub = this.route.queryParams.subscribe((params) => {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from '../../manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -30,6 +30,15 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     providers: [CourseManagementService],
 })
 export class AssessmentDashboardComponent implements OnInit {
+    private courseService = inject(CourseManagementService);
+    private exerciseService = inject(ExerciseService);
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+    private route = inject(ActivatedRoute);
+    private guidedTourService = inject(GuidedTourService);
+    private sortService = inject(SortService);
+
     readonly TeamFilterProp = TeamFilterProp;
     readonly documentationType: DocumentationType = 'Assessment';
 
@@ -78,17 +87,6 @@ export class AssessmentDashboardComponent implements OnInit {
     faTable = faTable;
     faClipboard = faClipboard;
     faHeartBroken = faHeartBroken;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private exerciseService: ExerciseService,
-        private examManagementService: ExamManagementService,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private route: ActivatedRoute,
-        private guidedTourService: GuidedTourService,
-        private sortService: SortService,
-    ) {}
 
     /**
      * On init set the courseID, load all exercises and statistics for tutors and set the identity for the AccountService.

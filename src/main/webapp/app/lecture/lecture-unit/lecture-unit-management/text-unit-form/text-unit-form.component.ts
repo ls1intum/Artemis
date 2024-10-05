@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -21,6 +21,10 @@ export interface TextUnitFormData {
     styles: [],
 })
 export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
+    private fb = inject(FormBuilder);
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
+
     @Input()
     formData: TextUnitFormData;
 
@@ -42,12 +46,6 @@ export class TextUnitFormComponent implements OnInit, OnChanges, OnDestroy {
 
     private markdownChanges = new Subject<string>();
     private markdownChangesSubscription: Subscription;
-
-    constructor(
-        private fb: FormBuilder,
-        private router: Router,
-        private translateService: TranslateService,
-    ) {}
 
     get nameControl() {
         return this.form.get('name');

@@ -11,6 +11,8 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     standalone: true,
 })
 export class FooterComponent implements OnInit {
+    private profileService = inject(ProfileService);
+
     readonly RELEASE_URL = 'https://github.com/ls1intum/Artemis/releases';
     readonly FEEDBACK_URL = 'https://github.com/ls1intum/Artemis/issues/new/choose';
 
@@ -21,8 +23,6 @@ export class FooterComponent implements OnInit {
     gitCommitUser: string;
     isTestServer: boolean;
     isProduction: boolean;
-
-    private profileService = inject(ProfileService);
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

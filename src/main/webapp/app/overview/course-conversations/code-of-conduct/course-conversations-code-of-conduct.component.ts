@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -11,15 +11,13 @@ import { ConversationService } from 'app/shared/metis/conversations/conversation
     templateUrl: './course-conversations-code-of-conduct.component.html',
 })
 export class CourseConversationsCodeOfConductComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private conversationService = inject(ConversationService);
+
     @Input()
     course: Course;
 
     responsibleContacts: User[] = [];
-
-    constructor(
-        private alertService: AlertService,
-        private conversationService: ConversationService,
-    ) {}
 
     ngOnInit() {
         if (this.course.id) {

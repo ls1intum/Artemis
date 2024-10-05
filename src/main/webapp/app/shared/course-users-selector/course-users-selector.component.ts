@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -35,6 +35,9 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
     encapsulation: ViewEncapsulation.None,
 })
 export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
+    private courseManagementService = inject(CourseManagementService);
+    private cdr = inject(ChangeDetectorRef);
+
     @HostBinding('class.course-users-selector') hostClass = true;
 
     private ngUnsubscribe = new Subject<void>();
@@ -67,11 +70,6 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     selectedUsers: UserPublicInfoDTO[] = [];
     isSearching = false;
     searchFailed = false;
-
-    constructor(
-        private courseManagementService: CourseManagementService,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         if (this.rolesToAllowSearchingIn.includes('students')) {

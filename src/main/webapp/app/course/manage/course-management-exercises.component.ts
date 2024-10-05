@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, OnInit, TemplateRef, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,6 +12,10 @@ import { ExerciseType } from 'app/entities/exercise.model';
     templateUrl: './course-management-exercises.component.html',
 })
 export class CourseManagementExercisesComponent implements OnInit {
+    private courseService = inject(CourseManagementService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+
     readonly ExerciseType = ExerciseType;
     readonly documentationType: DocumentationType = 'Exercise';
 
@@ -38,12 +42,6 @@ export class CourseManagementExercisesComponent implements OnInit {
     @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
     @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
-
-    constructor(
-        private courseService: CourseManagementService,
-        private router: Router,
-        private route: ActivatedRoute,
-    ) {}
 
     /**
      * initializes course

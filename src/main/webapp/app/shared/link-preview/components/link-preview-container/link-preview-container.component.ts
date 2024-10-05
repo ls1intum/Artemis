@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { LinkPreview, LinkPreviewService } from 'app/shared/link-preview/services/link-preview.service';
 import { Link, LinkifyService } from 'app/shared/link-preview/services/linkify.service';
 import { User } from 'app/core/user/user.model';
@@ -10,6 +10,9 @@ import { Posting } from 'app/entities/metis/posting.model';
     styleUrls: ['./link-preview-container.component.scss'],
 })
 export class LinkPreviewContainerComponent implements OnInit, OnChanges {
+    linkPreviewService = inject(LinkPreviewService);
+    linkifyService = inject(LinkifyService);
+
     @Input() data: string | undefined;
     @Input() author?: User;
     @Input() posting?: Posting;
@@ -21,11 +24,6 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     loaded = false;
     showLoadingsProgress = true;
     multiple = false;
-
-    constructor(
-        public linkPreviewService: LinkPreviewService,
-        public linkifyService: LinkifyService,
-    ) {}
 
     ngOnInit() {
         this.data = this.data ?? '';

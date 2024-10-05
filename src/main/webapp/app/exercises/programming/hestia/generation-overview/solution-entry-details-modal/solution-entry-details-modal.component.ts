@@ -1,4 +1,4 @@
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { Subject } from 'rxjs';
@@ -9,17 +9,15 @@ import { ProgrammingExerciseSolutionEntryService } from 'app/exercises/shared/ex
     templateUrl: './solution-entry-details-modal.component.html',
 })
 export class SolutionEntryDetailsModalComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private solutionEntryService = inject(ProgrammingExerciseSolutionEntryService);
+
     exerciseId: number;
     solutionEntry: ProgrammingExerciseSolutionEntry;
     isEditable: boolean;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private solutionEntryService: ProgrammingExerciseSolutionEntryService,
-    ) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();

@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { Cacheable, LocalStorageStrategy } from 'ts-cacheable';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, Subscription, UnaryFunction, pipe } from 'rxjs';
@@ -29,12 +29,12 @@ export interface ICacheableImageService {
 
 @Injectable({ providedIn: 'root' })
 export class CacheableImageService implements ICacheableImageService, OnDestroy {
+    private accountService = inject(AccountService);
+    private httpClient = inject(HttpClient);
+
     private userChangeSubscription: Subscription;
 
-    constructor(
-        private accountService: AccountService,
-        private httpClient: HttpClient,
-    ) {
+    constructor() {
         this.init();
     }
 

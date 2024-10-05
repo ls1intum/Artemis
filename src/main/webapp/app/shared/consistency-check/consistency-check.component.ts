@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -12,6 +12,10 @@ import { faCheck, faTimes } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './consistency-check.component.html',
 })
 export class ConsistencyCheckComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+    private consistencyCheckService = inject(ConsistencyCheckService);
+    private alertService = inject(AlertService);
+
     @Input() exercisesToCheck: ProgrammingExercise[];
 
     inconsistencies: ConsistencyCheckError[] = [];
@@ -20,12 +24,6 @@ export class ConsistencyCheckComponent implements OnInit {
     // Icons
     faTimes = faTimes;
     faCheck = faCheck;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private consistencyCheckService: ConsistencyCheckService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;

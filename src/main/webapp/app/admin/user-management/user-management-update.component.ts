@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
@@ -27,6 +27,18 @@ import { CourseAdminService } from 'app/course/manage/course-admin.service';
     styleUrls: ['./user-management-update.component.scss'],
 })
 export class UserManagementUpdateComponent implements OnInit {
+    private languageHelper = inject(JhiLanguageHelper);
+    private userService = inject(AdminUserService);
+    private courseManagementService = inject(CourseManagementService);
+    private courseAdminService = inject(CourseAdminService);
+    private route = inject(ActivatedRoute);
+    private organizationService = inject(OrganizationManagementService);
+    private modalService = inject(NgbModal);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private fb = inject(FormBuilder);
+
     readonly USERNAME_MIN_LENGTH = USERNAME_MIN_LENGTH;
     readonly USERNAME_MAX_LENGTH = USERNAME_MAX_LENGTH;
     readonly PASSWORD_MIN_LENGTH = PASSWORD_MIN_LENGTH;
@@ -55,20 +67,6 @@ export class UserManagementUpdateComponent implements OnInit {
 
     private oldLogin?: string;
     private isJenkins: boolean;
-
-    constructor(
-        private languageHelper: JhiLanguageHelper,
-        private userService: AdminUserService,
-        private courseManagementService: CourseManagementService,
-        private courseAdminService: CourseAdminService,
-        private route: ActivatedRoute,
-        private organizationService: OrganizationManagementService,
-        private modalService: NgbModal,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private alertService: AlertService,
-        private profileService: ProfileService,
-        private fb: FormBuilder,
-    ) {}
 
     /**
      * Enable subscriptions to retrieve the user based on the activated route, all authorities and all languages on init

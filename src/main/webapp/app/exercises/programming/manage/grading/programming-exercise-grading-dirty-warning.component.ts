@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges, inject } from '@angular/core';
 import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
 import { tap } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -23,6 +23,8 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
     `,
 })
 export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChanges, OnDestroy {
+    private programmingExerciseWebsocketService = inject(ProgrammingExerciseWebsocketService);
+
     @Input() programmingExerciseId: number;
     @Input() hasUpdatedGradingConfigInitialValue: boolean;
 
@@ -31,8 +33,6 @@ export class ProgrammingExerciseGradingDirtyWarningComponent implements OnChange
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(private programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService) {}
 
     /**
      * Set the initial updated test case value on the first change of the property.

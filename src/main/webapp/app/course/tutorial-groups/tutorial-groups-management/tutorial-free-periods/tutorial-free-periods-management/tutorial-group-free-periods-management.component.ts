@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { EMPTY, Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
@@ -22,6 +22,14 @@ import { catchError, takeUntil } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private modalService = inject(NgbModal);
+    private cdr = inject(ChangeDetectorRef);
+
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     tutorialGroupFreePeriods: TutorialGroupFreePeriod[] = [];
@@ -33,16 +41,6 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
     dialogError$ = this.dialogErrorSource.asObservable();
 
     ngUnsubscribe = new Subject<void>();
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private alertService: AlertService,
-        private sortService: SortService,
-        private modalService: NgbModal,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     ngOnInit(): void {
         this.loadAll();

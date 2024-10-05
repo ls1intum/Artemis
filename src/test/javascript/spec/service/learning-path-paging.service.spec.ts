@@ -19,7 +19,7 @@ describe('LearningPathPagingService', () => {
             .compileComponents()
             .then(() => {
                 httpService = TestBed.inject(HttpClient);
-                learningPathPagingService = new LearningPathPagingService(httpService);
+                learningPathPagingService = new LearningPathPagingService();
                 getStub = jest.spyOn(httpService, 'get');
             });
     });

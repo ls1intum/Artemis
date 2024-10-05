@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -10,6 +10,9 @@ import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programmin
     styleUrls: ['../../code-hint-generation-overview/code-hint-generation-overview.component.scss'],
 })
 export class DiffGenerationStepComponent implements OnInit {
+    private exerciseService = inject(ProgrammingExerciseService);
+    private alertService = inject(AlertService);
+
     @Input()
     exercise: ProgrammingExercise;
 
@@ -20,11 +23,6 @@ export class DiffGenerationStepComponent implements OnInit {
     gitDiffReport?: ProgrammingExerciseGitDiffReport;
     templateFileContentByPath: Map<string, string>;
     solutionFileContentByPath: Map<string, string>;
-
-    constructor(
-        private exerciseService: ProgrammingExerciseService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

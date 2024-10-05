@@ -1,8 +1,6 @@
-import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, OnChanges, OnInit, Output, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { MetisService } from 'app/shared/metis/metis.service';
-import { FormBuilder, Validators } from '@angular/forms';
+import { Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
 import { LocalStorageService } from 'ngx-webstorage';
@@ -14,19 +12,11 @@ import { LocalStorageService } from 'ngx-webstorage';
     encapsulation: ViewEncapsulation.None,
 })
 export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges {
+    protected localStorageService = inject(LocalStorageService);
+
     warningDismissed = false;
 
-    @Output()
-    valueChange = new EventEmitter<void>();
-
-    constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-        protected localStorageService: LocalStorageService,
-    ) {
-        super(metisService, modalService, formBuilder);
-    }
+    @Output() valueChange = new EventEmitter<void>();
 
     ngOnInit(): void {
         super.ngOnInit();

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, of, pipe } from 'rxjs';
 import { switchMap, tap } from 'rxjs/operators';
 import { Participation } from 'app/entities/participation/participation.model';
@@ -25,6 +25,9 @@ export interface IParticipationWebsocketService {
 
 @Injectable({ providedIn: 'root' })
 export class ParticipationWebsocketService implements IParticipationWebsocketService {
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private participationService = inject(ParticipationService);
+
     cachedParticipations: Map<number /* ID of participation */, StudentParticipation> = new Map<number, StudentParticipation>();
     openResultWebsocketSubscriptions: Map<number /*ID of participation */, string /* url of websocket connection */> = new Map<number, string>();
     openPersonalWebsocketSubscription?: string; /* url of websocket connection */
@@ -32,11 +35,6 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
     participationObservable?: BehaviorSubject<Participation | undefined>;
     subscribedExercises: Map<number /* ID of exercise */, Set<number> /* IDs of the participations of this exercise */> = new Map<number, Set<number>>();
     participationSubscriptionTypes: Map<number /* ID of participation */, boolean /* Whether the participation was subscribed in personal mode */> = new Map<number, boolean>();
-
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private participationService: ParticipationService,
-    ) {}
 
     private getNotifyAllSubscribersPipe = () => {
         return pipe(tap(this.notifyResultSubscribers), switchMap(this.addResultToParticipation), tap(this.notifyParticipationSubscribers));

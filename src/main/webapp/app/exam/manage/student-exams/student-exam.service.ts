@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map, tap } from 'rxjs';
@@ -11,13 +11,11 @@ type EntityArrayResponseType = HttpResponse<StudentExam[]>;
 
 @Injectable({ providedIn: 'root' })
 export class StudentExamService {
-    public resourceUrl = 'api/courses';
+    private router = inject(Router);
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private router: Router,
-        private http: HttpClient,
-        private accountService: AccountService,
-    ) {}
+    public resourceUrl = 'api/courses';
 
     /**
      * Find a student exam on the server using a GET request.

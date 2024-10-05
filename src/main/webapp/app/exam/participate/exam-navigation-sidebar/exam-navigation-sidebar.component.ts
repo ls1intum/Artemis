@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostListener, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
@@ -37,6 +37,13 @@ export enum ExerciseButtonStatus {
     styleUrl: './exam-navigation-sidebar.component.scss',
 })
 export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
+    private profileService = inject(ProfileService);
+    private sidebarEventService = inject(SidebarEventService);
+    private examParticipationService = inject(ExamParticipationService);
+    private examExerciseUpdateService = inject(ExamExerciseUpdateService);
+    private repositoryService = inject(CodeEditorRepositoryService);
+    private conflictService = inject(CodeEditorConflictStateService);
+
     @Input() sidebarData: SidebarData;
     @Input() exercises: Exercise[] = [];
     @Input() exerciseIndex = 0;
@@ -69,15 +76,6 @@ export class ExamNavigationSidebarComponent implements OnDestroy, OnInit {
     isCollapsed: boolean = false;
     exerciseId: string;
     numberOfSavedExercises: number = 0;
-
-    constructor(
-        private profileService: ProfileService,
-        private sidebarEventService: SidebarEventService,
-        private examParticipationService: ExamParticipationService,
-        private examExerciseUpdateService: ExamExerciseUpdateService,
-        private repositoryService: CodeEditorRepositoryService,
-        private conflictService: CodeEditorConflictStateService,
-    ) {}
 
     ngOnInit(): void {
         this.profileSubscription = this.profileService.getProfileInfo()?.subscribe((profileInfo) => {

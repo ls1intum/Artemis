@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Observable } from 'rxjs';
@@ -11,6 +11,9 @@ import dayjs from 'dayjs/esm';
     templateUrl: './exercise-feedback-suggestion-options.component.html',
 })
 export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnChanges {
+    private athenaService = inject(AthenaService);
+    private activatedRoute = inject(ActivatedRoute);
+
     @Input() exercise: Exercise;
     @Input() dueDate?: dayjs.Dayjs;
     @Input() readOnly: boolean = false;
@@ -25,11 +28,6 @@ export class ExerciseFeedbackSuggestionOptionsComponent implements OnInit, OnCha
     modulesAvailable: boolean;
     availableAthenaModules: string[];
     initialAthenaModule?: string;
-
-    constructor(
-        private athenaService: AthenaService,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     ngOnInit(): void {
         const courseId = Number(this.activatedRoute.snapshot.paramMap.get('courseId'));

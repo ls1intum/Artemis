@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -24,6 +24,11 @@ import { MetisService } from 'app/shared/metis/metis.service';
     styleUrls: ['./conversation-header.component.scss'],
 })
 export class ConversationHeaderComponent implements OnInit, OnDestroy {
+    private modalService = inject(NgbModal);
+    metisConversationService = inject(MetisConversationService);
+    conversationService = inject(ConversationService);
+    private metisService = inject(MetisService);
+
     private ngUnsubscribe = new Subject<void>();
 
     @Output() collapseSearch = new EventEmitter<void>();
@@ -42,14 +47,6 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
     faUserPlus = faUserPlus;
     faUserGroup = faUserGroup;
     faSearch = faSearch;
-
-    constructor(
-        private modalService: NgbModal,
-        // instantiated at course-conversation.component.ts
-        public metisConversationService: MetisConversationService,
-        public conversationService: ConversationService,
-        private metisService: MetisService,
-    ) {}
 
     getAsGroupChat = getAsGroupChatDTO;
 

@@ -3,7 +3,7 @@ import { Exam } from 'app/entities/exam/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
@@ -14,7 +14,7 @@ import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class CourseResolve implements Resolve<Course | null> {
-    constructor(private courseManagementService: CourseManagementService) {}
+    private courseManagementService = inject(CourseManagementService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<Course | null> {
         const courseId = route.params['courseId'];
@@ -32,7 +32,7 @@ export class CourseResolve implements Resolve<Course | null> {
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
-    constructor(private examManagementService: ExamManagementService) {}
+    private examManagementService = inject(ExamManagementService);
 
     /**
      * Resolves the route by extracting the examId and returns the exam with that id if it exists
@@ -64,7 +64,7 @@ export class ExamResolve implements Resolve<Exam> {
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
-    constructor(private exerciseGroupService: ExerciseGroupService) {}
+    private exerciseGroupService = inject(ExerciseGroupService);
 
     /**
      * Resolves the route by extracting the exerciseGroupId and returns the exercise group with that id if it exists
@@ -87,7 +87,7 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
 
 @Injectable({ providedIn: 'root' })
 export class StudentExamResolve implements Resolve<StudentExamWithGradeDTO> {
-    constructor(private studentExamService: StudentExamService) {}
+    private studentExamService = inject(StudentExamService);
 
     /**
      * Resolves the route by extracting the studentExamId and returns the student exam with that id if it exists

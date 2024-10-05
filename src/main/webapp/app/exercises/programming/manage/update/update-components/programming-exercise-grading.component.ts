@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnDestroy, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnDestroy, ViewChild, inject } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { SubmissionPolicyType } from 'app/entities/submission-policy.model';
@@ -18,6 +18,8 @@ import { ImportOptions } from 'app/types/programming-exercises';
     styleUrls: ['../../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDestroy {
+    private translateService = inject(TranslateService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly faQuestionCircle = faQuestionCircle;
@@ -41,8 +43,6 @@ export class ProgrammingExerciseGradingComponent implements AfterViewInit, OnDes
     inputFieldSubscriptions: (Subscription | undefined)[] = [];
 
     editPolicyUrl: string;
-
-    constructor(private translateService: TranslateService) {}
 
     ngAfterViewInit(): void {
         this.inputFieldSubscriptions.push(this.maxScoreField?.valueChanges?.subscribe(() => this.calculateFormStatus()));

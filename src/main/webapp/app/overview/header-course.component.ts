@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnChanges } from '@angular/core';
+import { Component, HostListener, Input, OnChanges, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
@@ -11,6 +11,8 @@ import { faArrowDown } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./header-course.component.scss'],
 })
 export class HeaderCourseComponent implements OnChanges {
+    protected router = inject(Router);
+
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     readonly CachingStrategy = CachingStrategy;
 
@@ -21,7 +23,6 @@ export class HeaderCourseComponent implements OnChanges {
     public longDescriptionShown = false;
 
     faArrowDown = faArrowDown;
-    constructor(protected router: Router) {}
 
     ngOnChanges() {
         this.adjustCourseDescription();

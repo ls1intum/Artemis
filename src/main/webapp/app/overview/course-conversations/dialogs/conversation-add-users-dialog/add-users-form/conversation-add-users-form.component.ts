@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -17,6 +17,8 @@ export interface AddUsersFormData {
     templateUrl: './conversation-add-users-form.component.html',
 })
 export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
+    private fb = inject(FormBuilder);
+
     @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();
     @Input() courseId: number;
     @Input() maxSelectable?: number = undefined;
@@ -29,7 +31,6 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
     getAsChannel = getAsChannelDTO;
 
     mode: 'individual' | 'group' = 'individual';
-    constructor(private fb: FormBuilder) {}
 
     get selectedUsersControl() {
         return this.form.get('selectedUsers');

@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
 
@@ -8,10 +8,10 @@ import { SidebarEventService } from 'app/shared/sidebar/sidebar-event.service';
     styleUrl: './accordion-add-options.component.scss',
 })
 export class AccordionAddOptionsComponent {
+    private sidebarEventService = inject(SidebarEventService);
+
     @Input() groupKey: string;
     faPlus = faPlus;
-
-    constructor(private sidebarEventService: SidebarEventService) {}
 
     onPlusPressed(event: MouseEvent) {
         event.stopPropagation();

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
@@ -11,12 +11,10 @@ export type EntityResponseType = HttpResponse<Bonus>;
 
 @Injectable({ providedIn: 'root' })
 export class BonusService {
-    public resourceUrl = 'api';
+    private http = inject(HttpClient);
+    private gradingSystemService = inject(GradingSystemService);
 
-    constructor(
-        private http: HttpClient,
-        private gradingSystemService: GradingSystemService,
-    ) {}
+    public resourceUrl = 'api';
 
     /**
      * Deletes the bonus.

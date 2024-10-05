@@ -10,7 +10,7 @@ describe('OrganizationManagementResolve', () => {
 
     beforeEach(() => {
         organizationManagementService = { getOrganizationById: jest.fn() } as any as OrganizationManagementService;
-        organizationManagementResolve = new OrganizationManagementResolve(organizationManagementService);
+        organizationManagementResolve = new OrganizationManagementResolve();
     });
 
     it('should search for organization by id', () => {

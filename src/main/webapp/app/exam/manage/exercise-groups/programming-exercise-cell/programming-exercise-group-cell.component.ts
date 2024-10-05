@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming/programming-exercise-participation.model';
@@ -17,6 +17,10 @@ import { PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
     styles: [':host{display: contents}'],
 })
 export class ProgrammingExerciseGroupCellComponent implements OnInit {
+    private profileService = inject(ProfileService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private alertService = inject(AlertService);
+
     participationType = ProgrammingExerciseParticipationType;
 
     programmingExercise: ProgrammingExercise;
@@ -39,12 +43,6 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
     }
 
     faDownload = faDownload;
-
-    constructor(
-        private profileService: ProfileService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

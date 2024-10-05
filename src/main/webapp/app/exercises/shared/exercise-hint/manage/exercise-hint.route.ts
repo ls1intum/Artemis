@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -15,7 +15,7 @@ import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/pro
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintResolve implements Resolve<ExerciseHint> {
-    constructor(private service: ExerciseHintService) {}
+    private service = inject(ExerciseHintService);
 
     /**
      * Resolves the route into an exercise hint id and fetches it from the server

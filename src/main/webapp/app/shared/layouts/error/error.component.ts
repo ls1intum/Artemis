@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -7,11 +7,11 @@ import { ActivatedRoute } from '@angular/router';
     standalone: true,
 })
 export class ErrorComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+
     errorMessage: string;
     error403: boolean;
     error404: boolean;
-
-    constructor(private route: ActivatedRoute) {}
 
     ngOnInit() {
         this.route.data.subscribe((routeData) => {

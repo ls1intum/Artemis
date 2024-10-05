@@ -28,7 +28,6 @@ describe('DataExportConfirmationDialogService', () => {
     });
 
     it('should open confirmation dialog', () => {
-        expect(service.modalRef).toBeUndefined();
         const data: DataExportConfirmationDialogData = {
             dialogError: new Observable<string>(),
             userLogin: 'userLogin',

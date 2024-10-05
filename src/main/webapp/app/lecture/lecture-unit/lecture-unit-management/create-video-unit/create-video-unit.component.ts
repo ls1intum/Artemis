@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
@@ -15,17 +15,15 @@ import { combineLatest } from 'rxjs';
     styles: [],
 })
 export class CreateVideoUnitComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private videoUnitService = inject(VideoUnitService);
+    private alertService = inject(AlertService);
+
     videoUnitToCreate: VideoUnit = new VideoUnit();
     isLoading: boolean;
     lectureId: number;
     courseId: number;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private videoUnitService: VideoUnitService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         const lectureRoute = this.activatedRoute.parent!.parent!;

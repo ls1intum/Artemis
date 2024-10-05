@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
@@ -23,6 +23,8 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
     styleUrls: ['./header-exercise-page-with-details.component.scss'],
 })
 export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit {
+    private sortService = inject(SortService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -55,8 +57,6 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
 
     // Icons
     faQuestionCircle = faQuestionCircle;
-
-    constructor(private sortService: SortService) {}
 
     ngOnInit() {
         this.exerciseCategories = this.exercise.categories || [];

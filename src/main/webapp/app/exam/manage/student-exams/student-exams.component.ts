@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -37,6 +37,17 @@ export type ExamExerciseStartPreparationStatus = {
     templateUrl: './student-exams.component.html',
 })
 export class StudentExamsComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private examManagementService = inject(ExamManagementService);
+    private studentExamService = inject(StudentExamService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private accountService = inject(AccountService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private websocketService = inject(JhiWebsocketService);
+    private profileService = inject(ProfileService);
+
     courseId: number;
     examId: number;
     studentExams: StudentExam[] = [];
@@ -62,19 +73,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private route: ActivatedRoute,
-        private examManagementService: ExamManagementService,
-        private studentExamService: StudentExamService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private accountService: AccountService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-        private websocketService: JhiWebsocketService,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Initialize the courseId and examId

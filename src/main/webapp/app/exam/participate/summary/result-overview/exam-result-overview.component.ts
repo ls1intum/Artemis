@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -26,6 +26,10 @@ type ResultOverviewSection = 'grading-table' | 'grading-key' | 'bonus-grading-ke
     templateUrl: './exam-result-overview.component.html',
 })
 export class ExamResultOverviewComponent implements OnInit, OnChanges {
+    private serverDateService = inject(ArtemisServerDateService);
+    exerciseService = inject(ExerciseService);
+    private changeDetector = inject(ChangeDetectorRef);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly BonusStrategy = BonusStrategy;
 
@@ -68,12 +72,6 @@ export class ExamResultOverviewComponent implements OnInit, OnChanges {
         'grading-key': true,
         'bonus-grading-key': true,
     };
-
-    constructor(
-        private serverDateService: ArtemisServerDateService,
-        public exerciseService: ExerciseService,
-        private changeDetector: ChangeDetectorRef,
-    ) {}
 
     ngOnInit() {
         if (this.areResultsPublished()) {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { TutorEffort } from 'app/entities/tutor-effort.model';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -21,6 +21,12 @@ interface TutorEffortRange {
     styleUrls: ['./tutor-effort-statistics.component.scss'],
 })
 export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDirective implements OnInit {
+    private textExerciseService = inject(TextExerciseService);
+    private textAssessmentService = inject(TextAssessmentService);
+    private route = inject(ActivatedRoute);
+    private translateService = inject(TranslateService);
+    private router = inject(Router);
+
     tutorEfforts: TutorEffort[] = [];
     numberOfSubmissions: number;
     totalTimeSpent: number;
@@ -43,13 +49,7 @@ export class TutorEffortStatisticsComponent extends PlagiarismAndTutorEffortDire
     // Icons
     faSync = faSync;
 
-    constructor(
-        private textExerciseService: TextExerciseService,
-        private textAssessmentService: TextAssessmentService,
-        private route: ActivatedRoute,
-        private translateService: TranslateService,
-        private router: Router,
-    ) {
+    constructor() {
         super();
         this.translateService.onLangChange.subscribe(() => {
             this.translateLabels();

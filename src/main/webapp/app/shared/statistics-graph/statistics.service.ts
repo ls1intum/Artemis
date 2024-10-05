@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
@@ -11,11 +11,11 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
+    private http = inject(HttpClient);
+
     private basePath = 'management/statistics/';
     private resourceUrl = 'api/' + this.basePath;
     private adminResourceUrl = 'api/admin/' + this.basePath;
-
-    constructor(private http: HttpClient) {}
 
     /**
      * Sends a GET request to retrieve the data for a graph based on the graphType in the last *span* days and the given period

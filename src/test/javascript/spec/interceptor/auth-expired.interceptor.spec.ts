@@ -3,7 +3,6 @@ import { AuthExpiredInterceptor } from 'app/core/interceptor/auth-expired.interc
 import { LoginService } from 'app/core/login/login.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { StateStorageService } from 'app/core/auth/state-storage.service';
-import { Router } from '@angular/router';
 import { throwError } from 'rxjs';
 
 describe(`AuthExpiredInterceptor`, () => {
@@ -12,14 +11,6 @@ describe(`AuthExpiredInterceptor`, () => {
     let loginServiceMock: LoginService;
     let stateStorageServiceMock: StateStorageService;
     let accountServiceMock: AccountService;
-
-    const routerMock = {
-        routerState: {
-            snapshot: {
-                url: 'https://example.com',
-            },
-        },
-    } as any as Router;
 
     beforeEach(() => {
         loginServiceMock = {
@@ -32,7 +23,7 @@ describe(`AuthExpiredInterceptor`, () => {
             isAuthenticated: jest.fn(),
         } as any as AccountService;
 
-        authInterceptor = new AuthExpiredInterceptor(loginServiceMock, stateStorageServiceMock, routerMock, accountServiceMock);
+        authInterceptor = new AuthExpiredInterceptor();
     });
 
     afterEach(() => {

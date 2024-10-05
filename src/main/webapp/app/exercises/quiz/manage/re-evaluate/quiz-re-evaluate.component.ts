@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChildren, ViewEncapsulation, inject } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -27,6 +27,13 @@ import { ReEvaluateDragAndDropQuestionComponent } from 'app/exercises/quiz/manag
     providers: [DragAndDropQuestionUtil, ShortAnswerQuestionUtil],
 })
 export class QuizReEvaluateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, OnDestroy {
+    private quizExerciseService = inject(QuizExerciseService);
+    private route = inject(ActivatedRoute);
+    private modalServiceC = inject(NgbModal);
+    private quizExercisePopupService = inject(QuizExercisePopupService);
+    changeDetector = inject(ChangeDetectorRef);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+
     private subscription: Subscription;
 
     @ViewChildren(ReEvaluateDragAndDropQuestionComponent)
@@ -42,19 +49,6 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     faUndo = faUndo;
     faExclamationCircle = faExclamationCircle;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private quizExerciseService: QuizExerciseService,
-        private route: ActivatedRoute,
-        private modalServiceC: NgbModal,
-        private quizExercisePopupService: QuizExercisePopupService,
-        public changeDetector: ChangeDetectorRef,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-    ) {
-        super(dragAndDropQuestionUtil, shortAnswerQuestionUtil);
-    }
 
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe((params) => {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,18 +17,16 @@ import { onError } from 'app/shared/util/global.utils';
     styleUrls: ['./quiz-exercise-export.component.scss', '../shared/quiz.scss'],
 })
 export class QuizExerciseExportComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private quizExerciseService = inject(QuizExerciseService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
+
     questions: QuizQuestion[] = new Array(0);
     courseId: number;
     course: Course;
-
-    constructor(
-        private route: ActivatedRoute,
-        private quizExerciseService: QuizExerciseService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private router: Router,
-        private translateService: TranslateService,
-    ) {}
 
     /**
      * Load the quizzes of the course for export on init.

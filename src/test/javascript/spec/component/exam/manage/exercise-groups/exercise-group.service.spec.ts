@@ -1,7 +1,4 @@
-import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { MockRouter } from '../../../../helpers/mocks/mock-router';
 
 describe('Exercise Group Service', () => {
     let httpClient: any;
@@ -13,7 +10,7 @@ describe('Exercise Group Service', () => {
             delete: jest.fn(),
         };
         httpClientDeleteSpy = jest.spyOn(httpClient, 'delete');
-        service = new ExerciseGroupService(new MockRouter() as any as Router, httpClient as HttpClient);
+        service = new ExerciseGroupService();
     });
 
     it('should set additional parameters correctly in delete', () => {

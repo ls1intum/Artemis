@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
@@ -20,6 +20,9 @@ import { QuizParticipation } from 'app/entities/quiz/quiz-participation.model';
     templateUrl: './quiz-exam-summary.component.html',
 })
 export class QuizExamSummaryComponent implements OnChanges {
+    private exerciseService = inject(QuizExerciseService);
+    private serverDateService = inject(ArtemisServerDateService);
+
     readonly DRAG_AND_DROP = QuizQuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuizQuestionType.MULTIPLE_CHOICE;
     readonly SHORT_ANSWER = QuizQuestionType.SHORT_ANSWER;
@@ -41,11 +44,6 @@ export class QuizExamSummaryComponent implements OnChanges {
     exam: Exam;
 
     result?: Result;
-
-    constructor(
-        private exerciseService: QuizExerciseService,
-        private serverDateService: ArtemisServerDateService,
-    ) {}
 
     ngOnChanges(): void {
         this.updateViewFromSubmission();

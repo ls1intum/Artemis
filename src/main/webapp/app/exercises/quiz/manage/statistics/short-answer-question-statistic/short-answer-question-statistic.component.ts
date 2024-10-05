@@ -1,13 +1,8 @@
-import { ChangeDetectorRef, Component } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
+import { Component, inject } from '@angular/core';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { AccountService } from 'app/core/auth/account.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
-import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { ShortAnswerQuestionStatistic } from 'app/entities/quiz/short-answer-question-statistic.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -25,6 +20,9 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
     ],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
+    shortAnswerQuestionUtil = inject(ShortAnswerQuestionUtil);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+
     declare question: ShortAnswerQuestion;
 
     textParts: string[][];
@@ -36,21 +34,6 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
     faSync = faSync;
     faCheckCircle = faCheckCircle;
     faTimesCircle = faTimesCircle;
-
-    constructor(
-        route: ActivatedRoute,
-        router: Router,
-        accountService: AccountService,
-        translateService: TranslateService,
-        quizExerciseService: QuizExerciseService,
-        jhiWebsocketService: JhiWebsocketService,
-        quizStatisticUtil: QuizStatisticUtil,
-        public shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private artemisMarkdown: ArtemisMarkdownService,
-        protected changeDetector: ChangeDetectorRef,
-    ) {
-        super(route, router, accountService, translateService, quizExerciseService, jhiWebsocketService, changeDetector);
-    }
 
     /**
      * This functions loads the Quiz, which is necessary to build the Web-Template

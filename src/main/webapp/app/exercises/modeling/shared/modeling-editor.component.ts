@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewEncapsulation, inject } from '@angular/core';
 import { ApollonEditor, ApollonMode, SVG, UMLDiagramType, UMLElementType, UMLModel, UMLRelationship, UMLRelationshipType } from '@ls1intum/apollon';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { associationUML, personUML, studentUML } from 'app/guided-tour/guided-tour-task.model';
@@ -17,6 +17,10 @@ import { Patch } from '@ls1intum/apollon';
     encapsulation: ViewEncapsulation.None,
 })
 export class ModelingEditorComponent extends ModelingComponent implements AfterViewInit, OnDestroy, OnChanges {
+    private modalService = inject(NgbModal);
+    private guidedTourService = inject(GuidedTourService);
+    private sanitizer = inject(DomSanitizer);
+
     @Input() showHelpButton = true;
     @Input() withExplanation = false;
     @Input() savedStatus?: { isChanged?: boolean; isSaving?: boolean };
@@ -41,14 +45,6 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
 
     readonlyApollonDiagram?: SVG;
     readOnlySVG?: SafeHtml;
-
-    constructor(
-        private modalService: NgbModal,
-        private guidedTourService: GuidedTourService,
-        private sanitizer: DomSanitizer,
-    ) {
-        super();
-    }
 
     /**
      * Initializes the Apollon editor.

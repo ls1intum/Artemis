@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { Layout, NgxGraphZoomOptions } from '@swimlane/ngx-graph';
 import * as shape from 'd3-shape';
 import { Subject } from 'rxjs';
@@ -11,6 +11,8 @@ import { CompetencyProgressForLearningPathDTO, NgxLearningPathDTO, NgxLearningPa
     templateUrl: './learning-path-graph.component.html',
 })
 export class LearningPathGraphComponent implements OnInit {
+    private learningPathService = inject(LearningPathService);
+
     isLoading = false;
     @Input() learningPathId: number;
     @Input() courseId: number;
@@ -33,8 +35,6 @@ export class LearningPathGraphComponent implements OnInit {
     zoomToFit$: Subject<NgxGraphZoomOptions> = new Subject<NgxGraphZoomOptions>();
 
     protected readonly NodeType = NodeType;
-
-    constructor(private learningPathService: LearningPathService) {}
 
     ngOnInit() {
         if (this.learningPathId) {

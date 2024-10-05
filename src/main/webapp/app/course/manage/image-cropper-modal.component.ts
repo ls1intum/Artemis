@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { OutputFormat } from 'app/shared/image-cropper/interfaces/cropper-options.interface';
@@ -8,12 +8,12 @@ import { OutputFormat } from 'app/shared/image-cropper/interfaces/cropper-option
     templateUrl: './image-cropper-modal.component.html',
 })
 export class ImageCropperModalComponent {
+    private activeModal = inject(NgbActiveModal);
+
     uploadFile?: File;
     croppedImage?: string;
     roundCropper = true;
     fileFormat: OutputFormat = 'png';
-
-    constructor(private activeModal: NgbActiveModal) {}
 
     /**
      * Called when an image is cropped.

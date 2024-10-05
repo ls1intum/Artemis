@@ -1,12 +1,14 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class HealthService {
+    private http = inject(HttpClient);
+
     separator: string;
 
-    constructor(private http: HttpClient) {
+    constructor() {
         this.separator = '.';
     }
 

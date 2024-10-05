@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
@@ -20,7 +20,7 @@ import { AttachmentService } from 'app/lecture/attachment.service';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {
-    constructor(private lectureService: LectureService) {}
+    private lectureService = inject(LectureService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<Lecture> {
         const lectureId = route.params['lectureId'];
@@ -36,7 +36,7 @@ export class LectureResolve implements Resolve<Lecture> {
 
 @Injectable({ providedIn: 'root' })
 export class AttachmentResolve implements Resolve<Attachment> {
-    constructor(private attachmentService: AttachmentService) {}
+    private attachmentService = inject(AttachmentService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<Attachment> {
         const attachmentId = route.params['attachmentId'];

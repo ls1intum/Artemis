@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { Observable, combineLatest, of } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, debounceTime, distinctUntilChanged, map, switchMap, tap } from 'rxjs/operators';
@@ -14,6 +14,8 @@ import { Team } from 'app/entities/team.model';
     templateUrl: './team-student-search.component.html',
 })
 export class TeamStudentSearchComponent {
+    private teamService = inject(TeamService);
+
     @ViewChild('ngbTypeahead', { static: false }) ngbTypeahead: ElementRef;
 
     @Input() course: Course;
@@ -28,8 +30,6 @@ export class TeamStudentSearchComponent {
     @Output() searchNoResults = new EventEmitter<string | undefined>();
 
     inputDisplayValue: string;
-
-    constructor(private teamService: TeamService) {}
 
     onAutocompleteSelect = (student: User) => {
         this.inputDisplayValue = '';

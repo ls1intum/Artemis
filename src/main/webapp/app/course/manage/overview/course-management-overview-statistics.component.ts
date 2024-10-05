@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { GraphColors, Graphs } from 'app/entities/statistics.model';
 import { TranslateService } from '@ngx-translate/core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
@@ -13,6 +13,8 @@ import { ActiveStudentsChart } from 'app/shared/chart/active-students-chart';
     styleUrls: ['./course-management-overview-statistics.component.scss', '../detail/course-detail-line-chart.component.scss'],
 })
 export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsChart implements OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+
     @Input()
     amountOfStudentsInCourse: number;
 
@@ -38,10 +40,6 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
 
     // Icons
     faSpinner = faSpinner;
-
-    constructor(private translateService: TranslateService) {
-        super();
-    }
 
     ngOnInit() {
         this.translateService.onLangChange.subscribe(() => {

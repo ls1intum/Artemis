@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router } from '@angular/router';
 
 import { Observable, first, lastValueFrom, map, of, switchMap } from 'rxjs';
@@ -10,12 +10,10 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
     providedIn: 'root',
 })
 export class CourseDashboardGuard implements CanActivate {
-    constructor(
-        private featureToggleService: FeatureToggleService,
-        private courseStorageService: CourseStorageService,
-        private courseManagementService: CourseManagementService,
-        private router: Router,
-    ) {}
+    private featureToggleService = inject(FeatureToggleService);
+    private courseStorageService = inject(CourseStorageService);
+    private courseManagementService = inject(CourseManagementService);
+    private router = inject(Router);
 
     /**
      * Check if the client can activate a route.

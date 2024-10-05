@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DoCheck, Input, IterableDiffer, IterableDiffers, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DoCheck, Input, IterableDiffer, IterableDiffers, OnInit, inject } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
@@ -10,10 +10,8 @@ import dayjs from 'dayjs/esm';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
-    constructor(
-        private sortService: SortService,
-        private iterableDiffers: IterableDiffers,
-    ) {}
+    private sortService = inject(SortService);
+    private iterableDiffers = inject(IterableDiffers);
 
     @Input()
     tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];

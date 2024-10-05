@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { faBan, faCheck, faCircleNotch, faFileImport, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
 import { cleanString } from 'app/shared/util/utils';
@@ -44,6 +44,13 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
     styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
 })
 export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {
+    private fb = inject(FormBuilder);
+    private translateService = inject(TranslateService);
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private csvDownloadService = inject(CsvDownloadService);
+
     ngUnsubscribe = new Subject<void>();
 
     @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
@@ -91,15 +98,6 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     faCircleNotch = faCircleNotch;
     faFileImport = faFileImport;
     selectedFilter: filterValues = 'all';
-
-    constructor(
-        private fb: FormBuilder,
-        private translateService: TranslateService,
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-        private tutorialGroupService: TutorialGroupsService,
-        private csvDownloadService: CsvDownloadService,
-    ) {}
 
     ngOnDestroy(): void {
         this.ngUnsubscribe.next();

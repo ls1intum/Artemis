@@ -10,6 +10,7 @@ import {
     Output,
     ViewChild,
     ViewContainerRef,
+    inject,
 } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
@@ -34,6 +35,12 @@ import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-cre
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+    private metisService = inject(MetisService);
+    protected changeDetector = inject(ChangeDetectorRef);
+    private oneToOneChatService = inject(OneToOneChatService);
+    private metisConversationService = inject(MetisConversationService);
+    private router = inject(Router);
+
     @Input() lastReadDate?: dayjs.Dayjs;
     @Input() readOnlyMode: boolean;
     @Input() previewMode: boolean;
@@ -62,16 +69,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     // Icons
     faBullhorn = faBullhorn;
     faCheckSquare = faCheckSquare;
-
-    constructor(
-        private metisService: MetisService,
-        protected changeDetector: ChangeDetectorRef,
-        private oneToOneChatService: OneToOneChatService,
-        private metisConversationService: MetisConversationService,
-        private router: Router,
-    ) {
-        super();
-    }
 
     /**
      * on initialization: evaluates post context and page type

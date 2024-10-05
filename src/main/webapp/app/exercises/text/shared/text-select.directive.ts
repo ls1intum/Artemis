@@ -1,4 +1,4 @@
-import { Directive, ElementRef, EventEmitter, NgZone, OnDestroy, OnInit, Output } from '@angular/core';
+import { Directive, ElementRef, EventEmitter, NgZone, OnDestroy, OnInit, Output, inject } from '@angular/core';
 
 /**
  * Disclaimer:
@@ -32,14 +32,12 @@ enum EventType {
     selector: '[jhiTextSelect]',
 })
 export class TextSelectDirective implements OnInit, OnDestroy {
+    private elementRef = inject(ElementRef);
+    private zone = inject(NgZone);
+
     @Output()
     public jhiTextSelect = new EventEmitter<TextSelectEvent>();
     private hasSelection = false;
-
-    constructor(
-        private elementRef: ElementRef,
-        private zone: NgZone,
-    ) {}
 
     /**
      * Init text select directive by adding event listenes mouseDown and selectionChange event listeners to element.

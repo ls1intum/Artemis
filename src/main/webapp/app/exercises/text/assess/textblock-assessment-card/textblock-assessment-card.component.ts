@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild, inject } from '@angular/core';
 import { TextBlockRef } from 'app/entities/text/text-block-ref.model';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
@@ -17,6 +17,10 @@ type OptionalTextBlockRef = TextBlockRef | undefined;
     styleUrls: ['./textblock-assessment-card.component.scss'],
 })
 export class TextblockAssessmentCardComponent {
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+    protected route = inject(ActivatedRoute);
+
     @Input() textBlockRef: TextBlockRef;
     @Input() selected = false;
     @Input() readOnly: boolean;
@@ -29,11 +33,10 @@ export class TextblockAssessmentCardComponent {
     @Output() didDelete = new EventEmitter<TextBlockRef>();
     @ViewChild(TextblockFeedbackEditorComponent) feedbackEditor: TextblockFeedbackEditorComponent;
 
-    constructor(
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        public textAssessmentAnalytics: TextAssessmentAnalytics,
-        protected route: ActivatedRoute,
-    ) {
+    constructor() {
+        const textAssessmentAnalytics = this.textAssessmentAnalytics;
+        const route = this.route;
+
         textAssessmentAnalytics.setComponentRoute(route);
     }
 

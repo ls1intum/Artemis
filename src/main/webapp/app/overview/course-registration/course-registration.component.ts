@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -13,6 +13,12 @@ import { SortService } from 'app/shared/service/sort.service';
     templateUrl: './course-registration.component.html',
 })
 export class CourseRegistrationComponent implements OnInit {
+    private accountService = inject(AccountService);
+    private courseService = inject(CourseManagementService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private sortService = inject(SortService);
+
     coursesToSelect: Course[] = [];
     loading = false;
     predicate!: string;
@@ -22,14 +28,6 @@ export class CourseRegistrationComponent implements OnInit {
     // Icons
     faCheckCircle = faCheckCircle;
     faSort = faSort;
-
-    constructor(
-        private accountService: AccountService,
-        private courseService: CourseManagementService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private sortService: SortService,
-    ) {}
 
     ngOnInit(): void {
         this.handleNavigation();

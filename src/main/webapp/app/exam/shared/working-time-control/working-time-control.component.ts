@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 import { Exam } from 'app/entities/exam/exam.model';
@@ -20,6 +20,8 @@ import { getRelativeWorkingTimeExtension } from 'app/exam/participate/exam.utils
     ],
 })
 export class WorkingTimeControlComponent implements ControlValueAccessor {
+    private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
+
     // Control disabled state
     @Input() disabled = false;
     @Input() allowNegative = false;
@@ -55,8 +57,6 @@ export class WorkingTimeControlComponent implements ControlValueAccessor {
     private touched = false;
     private onTouched = () => {};
     private onChange: (_: number) => void = () => {};
-
-    constructor(private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe) {}
 
     /**
      * Updates the working time duration inputs whenever

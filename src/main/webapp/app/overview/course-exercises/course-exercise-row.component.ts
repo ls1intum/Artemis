@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnChanges, OnDestroy, OnInit, inject } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import dayjs from 'dayjs/esm';
@@ -18,6 +18,11 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
     styleUrls: ['./course-exercise-row.scss'],
 })
 export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges {
+    private accountService = inject(AccountService);
+    private participationService = inject(ParticipationService);
+    private exerciseService = inject(ExerciseService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
     @HostBinding('class') classes = 'exercise-row';
@@ -39,13 +44,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     routerLink: string[];
 
     participationUpdateListener: Subscription;
-
-    constructor(
-        private accountService: AccountService,
-        private participationService: ParticipationService,
-        private exerciseService: ExerciseService,
-        private participationWebsocketService: ParticipationWebsocketService,
-    ) {}
 
     ngOnInit() {
         if (this.exercise?.studentParticipations?.length) {

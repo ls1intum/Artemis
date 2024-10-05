@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { SubmissionExportDialogComponent } from './submission-export-dialog.component';
@@ -22,6 +22,8 @@ import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service'
     `,
 })
 export class SubmissionExportButtonComponent {
+    private modalService = inject(NgbModal);
+
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
     readonly FeatureToggle = FeatureToggle;
@@ -31,8 +33,6 @@ export class SubmissionExportButtonComponent {
 
     // Icons
     faDownload = faDownload;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Stops the propagation of the mouse event and updates the component instance

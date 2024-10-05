@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
@@ -13,6 +13,9 @@ import { AlertService } from 'app/core/util/alert.service';
     styleUrls: ['../user-settings.scss'],
 })
 export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+
     currentUser?: User;
 
     readonly faEdit = faEdit;
@@ -32,11 +35,6 @@ export class VcsAccessTokensSettingsComponent implements OnInit, OnDestroy {
 
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
-
-    constructor(
-        private accountService: AccountService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         this.authStateSubscription = this.accountService

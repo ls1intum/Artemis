@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { Course, isMessagingEnabled } from 'app/entities/course.model';
@@ -16,6 +16,8 @@ export interface TutorialGroupsConfigurationFormData {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChanges {
+    private fb = inject(FormBuilder);
+
     @Input()
     formData: TutorialGroupsConfigurationFormData = {
         period: undefined,
@@ -35,8 +37,6 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     existingChannelSetting?: boolean;
 
     form: FormGroup;
-
-    constructor(private fb: FormBuilder) {}
 
     get periodControl() {
         return this.form.get('period');

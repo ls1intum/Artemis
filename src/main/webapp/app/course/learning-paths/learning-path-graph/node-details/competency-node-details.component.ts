@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency, CompetencyProgress, getIcon, getMastery, getProgress } from 'app/entities/competency.model';
@@ -10,6 +10,9 @@ import { CourseCompetencyService } from 'app/course/competencies/course-competen
     templateUrl: './competency-node-details.component.html',
 })
 export class CompetencyNodeDetailsComponent implements OnInit {
+    private courseCompetencyService = inject(CourseCompetencyService);
+    private alertService = inject(AlertService);
+
     @Input() courseId: number;
     @Input() competencyId: number;
     @Input() competency?: Competency;
@@ -19,11 +22,6 @@ export class CompetencyNodeDetailsComponent implements OnInit {
     isLoading = false;
 
     protected readonly getIcon = getIcon;
-
-    constructor(
-        private courseCompetencyService: CourseCompetencyService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit() {
         if (!this.competency) {

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { uniq } from 'lodash-es';
 import { RegExpLineNumberMatchArray, matchRegexWithLineNumbers } from 'app/shared/util/global.utils';
@@ -17,7 +17,7 @@ const REPEATED_TEST_CASE_TRANSLATION = 'artemisApp.programmingExercise.testCaseA
  */
 @Injectable()
 export class ProgrammingExerciseInstructionAnalysisService {
-    constructor(private translateService: TranslateService) {}
+    private translateService = inject(TranslateService);
 
     /**
      * Given a programming exercise's problem statement, analyze the test cases contained (or not contained!) in it.

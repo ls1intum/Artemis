@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
@@ -20,6 +20,12 @@ import { CourseAccessStorageService } from 'app/course/course-access-storage.ser
     styleUrls: ['./course-management.component.scss'],
 })
 export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewInit {
+    private courseManagementService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
+    private guidedTourService = inject(GuidedTourService);
+    private courseAccessStorageService = inject(CourseAccessStorageService);
+
     showOnlyActive = true;
 
     courses: Course[];
@@ -41,14 +47,6 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
     faPlus = faPlus;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
-
-    constructor(
-        private courseManagementService: CourseManagementService,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private guidedTourService: GuidedTourService,
-        private courseAccessStorageService: CourseAccessStorageService,
-    ) {}
 
     /**
      * loads all courses and subscribes to courseListModification

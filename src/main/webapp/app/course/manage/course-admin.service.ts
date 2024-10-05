@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -11,12 +11,10 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 
 @Injectable({ providedIn: 'root' })
 export class CourseAdminService {
-    private resourceUrl = 'api/admin/courses';
+    private http = inject(HttpClient);
+    private courseManagementService = inject(CourseManagementService);
 
-    constructor(
-        private http: HttpClient,
-        private courseManagementService: CourseManagementService,
-    ) {}
+    private resourceUrl = 'api/admin/courses';
 
     /**
      * finds all groups for all courses using a GET request

@@ -11,7 +11,7 @@ describe('SystemNotificationManagementResolveService', () => {
 
     beforeEach(() => {
         systemNotificationService = { find: jest.fn() } as any as SystemNotificationService;
-        systemNotificationManagementResolve = new SystemNotificationManagementResolve(systemNotificationService);
+        systemNotificationManagementResolve = new SystemNotificationManagementResolve();
     });
 
     it('should search for notification by id', () => {

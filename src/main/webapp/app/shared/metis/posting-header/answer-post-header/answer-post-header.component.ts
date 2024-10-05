@@ -1,11 +1,9 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-header.directive';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { faCheck, faCog, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
-import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-answer-post-header',
@@ -13,9 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
     styleUrls: ['../../metis.component.scss'],
 })
 export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost> implements OnInit, OnChanges {
-    @Input()
-    isReadOnlyMode = false;
-
+    @Input() isReadOnlyMode = false;
     @Input() lastReadDate?: dayjs.Dayjs;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
 
@@ -27,13 +23,6 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
     faCheck = faCheck;
     faPencilAlt = faPencilAlt;
     faCog = faCog;
-
-    constructor(
-        protected metisService: MetisService,
-        protected accountService: AccountService,
-    ) {
-        super(metisService, accountService);
-    }
 
     ngOnInit() {
         super.ngOnInit();

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 
@@ -10,6 +10,8 @@ import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model'
     templateUrl: './exercise-hint-detail.component.html',
 })
 export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
+    protected route = inject(ActivatedRoute);
+
     readonly HintType = HintType;
 
     exerciseHint: ExerciseHint;
@@ -21,8 +23,6 @@ export class ExerciseHintDetailComponent implements OnInit, OnDestroy {
 
     // Icons
     faWrench = faWrench;
-
-    constructor(protected route: ActivatedRoute) {}
 
     /**
      * Extracts the course and exercise id and the exercise hint from the route params

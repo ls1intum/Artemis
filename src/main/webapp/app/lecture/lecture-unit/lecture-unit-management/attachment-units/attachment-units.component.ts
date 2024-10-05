@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { faBan, faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -30,6 +30,12 @@ export type LectureUnitInformationDTO = {
     styleUrls: [],
 })
 export class AttachmentUnitsComponent implements OnInit {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private attachmentUnitService = inject(AttachmentUnitService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+
     lectureId: number;
     courseId: number;
     isLoading: boolean;
@@ -54,13 +60,7 @@ export class AttachmentUnitsComponent implements OnInit {
     //time until the file gets uploaded again. Must be less or equal than minutesUntilDeletion in AttachmentUnitResource.java
     readonly MINUTES_UNTIL_DELETION = 29;
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private attachmentUnitService: AttachmentUnitService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-    ) {
+    constructor() {
         this.file = this.router.getCurrentNavigation()?.extras?.state?.file;
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params]) => {

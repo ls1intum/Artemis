@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -9,11 +9,10 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
     providedIn: 'root',
 })
 export class LocalVCGuard implements CanActivate {
+    private profileService = inject(ProfileService);
+    private router = inject(Router);
+
     localVCActive: boolean = false;
-    constructor(
-        private profileService: ProfileService,
-        private router: Router,
-    ) {}
 
     async canActivate(): Promise<boolean> {
         try {

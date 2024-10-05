@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { CompetencyMetrics, ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/entities/student-metrics.model';
@@ -10,9 +10,9 @@ import { CompetencyJol } from 'app/entities/competency.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseDashboardService {
-    public resourceUrl = 'api/metrics';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api/metrics';
 
     getCourseMetricsForUser(courseId: number): Observable<HttpResponse<StudentMetrics>> {
         return this.http.get<StudentMetrics>(`${this.resourceUrl}/course/${courseId}/student`, { observe: 'response' }).pipe(

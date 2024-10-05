@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subject, Subscription } from 'rxjs';
@@ -18,6 +18,11 @@ import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programmi
     templateUrl: './exercise-hint.component.html',
 })
 export class ExerciseHintComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    protected exerciseHintService = inject(ExerciseHintService);
+    private alertService = inject(AlertService);
+    protected eventManager = inject(EventManager);
+
     readonly HintType = HintType;
     ExerciseType = ExerciseType;
     exercise: ProgrammingExercise;
@@ -40,13 +45,6 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     faArrowsRotate = faArrowsRotate;
 
     readonly ProgrammingLanguage = ProgrammingLanguage;
-
-    constructor(
-        private route: ActivatedRoute,
-        protected exerciseHintService: ExerciseHintService,
-        private alertService: AlertService,
-        protected eventManager: EventManager,
-    ) {}
 
     /**
      * Subscribes to the route params to act on the currently selected exercise.

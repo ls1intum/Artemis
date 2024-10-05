@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
@@ -22,6 +22,12 @@ export type AssessmentAfterComplaint = { complaintResponse: ComplaintResponse; o
     providers: [],
 })
 export class ComplaintsForTutorComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private complaintResponseService = inject(ComplaintResponseService);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private location = inject(Location);
+
     @Input() complaint: Complaint;
     @Input() isTestRun = false;
     @Input() isAssessor = false;
@@ -42,14 +48,6 @@ export class ComplaintsForTutorComponent implements OnInit {
     isLockedForLoggedInUser = false;
     course?: Course;
     maxComplaintResponseTextLimit: number;
-
-    constructor(
-        private alertService: AlertService,
-        private complaintResponseService: ComplaintResponseService,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private location: Location,
-    ) {}
 
     ngOnInit(): void {
         this.course = getCourseFromExercise(this.exercise!);

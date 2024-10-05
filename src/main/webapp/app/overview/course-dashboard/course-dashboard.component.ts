@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -25,6 +25,15 @@ import { AccountService } from 'app/core/auth/account.service';
     styleUrls: ['./course-dashboard.component.scss'],
 })
 export class CourseDashboardComponent implements OnInit, OnDestroy {
+    private courseStorageService = inject(CourseStorageService);
+    private alertService = inject(AlertService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseDashboardService = inject(CourseDashboardService);
+    private irisSettingsService = inject(IrisSettingsService);
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+
     courseId: number;
     exerciseId: number;
     points: number = 0;
@@ -51,17 +60,6 @@ export class CourseDashboardComponent implements OnInit, OnDestroy {
     protected readonly round = round;
 
     @ViewChildren('competencyAccordionElement', { read: ElementRef }) competencyAccordions: QueryList<ElementRef>;
-
-    constructor(
-        private courseStorageService: CourseStorageService,
-        private alertService: AlertService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private courseDashboardService: CourseDashboardService,
-        private irisSettingsService: IrisSettingsService,
-        private profileService: ProfileService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit(): void {
         this.paramSubscription = this.route.parent?.parent?.params.subscribe((params) => {

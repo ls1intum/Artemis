@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -12,17 +12,15 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
     styleUrls: ['../../course-overview.scss'],
 })
 export class ProblemStatementComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private exerciseService = inject(ExerciseService);
+    private participationService = inject(ParticipationService);
+
     @Input()
     public exercise?: Exercise;
 
     @Input()
     participation?: StudentParticipation;
-
-    constructor(
-        private route: ActivatedRoute,
-        private exerciseService: ExerciseService,
-        private participationService: ParticipationService,
-    ) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {

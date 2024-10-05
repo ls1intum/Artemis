@@ -1,7 +1,5 @@
 import { HttpRequest } from '@angular/common/http';
-import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
 import { BrowserFingerprintInterceptor } from 'app/core/interceptor/browser-fingerprint.interceptor.service';
-import { of } from 'rxjs';
 
 describe(`BrowserFingerprintInterceptor`, () => {
     let fingerprintInterceptor: BrowserFingerprintInterceptor;
@@ -9,13 +7,8 @@ describe(`BrowserFingerprintInterceptor`, () => {
     const fingerprint = '123456789012345';
     const instanceIdentifier = 'abcdefgh';
 
-    const browserFingerPrintServiceMock = {
-        fingerprint: of(fingerprint),
-        instanceIdentifier: of(instanceIdentifier),
-    } as any as BrowserFingerprintService;
-
     beforeEach(() => {
-        fingerprintInterceptor = new BrowserFingerprintInterceptor(browserFingerPrintServiceMock);
+        fingerprintInterceptor = new BrowserFingerprintInterceptor();
     });
 
     afterEach(() => {
@@ -46,10 +39,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
     });
 
     it('should not send headers if fingerprint service returnes falsy values', () => {
-        fingerprintInterceptor = new BrowserFingerprintInterceptor({
-            fingerprint: of(undefined),
-            instanceIdentifier: of(undefined),
-        } as any as BrowserFingerprintService);
+        fingerprintInterceptor = new BrowserFingerprintInterceptor();
 
         const requestMock = new HttpRequest('GET', `test`);
         const cloneSpy = jest.spyOn(requestMock, 'clone');

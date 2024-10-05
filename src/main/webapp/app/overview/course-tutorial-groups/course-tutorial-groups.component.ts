@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subject, finalize } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -34,6 +34,15 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
+    private router = inject(Router);
+    private courseStorageService = inject(CourseStorageService);
+    private courseManagementService = inject(CourseManagementService);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private cdr = inject(ChangeDetectorRef);
+    private courseOverviewService = inject(CourseOverviewService);
+
     ngUnsubscribe = new Subject<void>();
 
     tutorialGroups: TutorialGroup[] = [];
@@ -50,17 +59,6 @@ export class CourseTutorialGroupsComponent implements OnInit, OnDestroy {
     accordionTutorialGroupsGroups: AccordionGroups = TUTORIAL_UNIT_GROUPS;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
     sidebarTutorialGroups: SidebarCardElement[] = [];
-
-    constructor(
-        private router: Router,
-        private courseStorageService: CourseStorageService,
-        private courseManagementService: CourseManagementService,
-        private tutorialGroupService: TutorialGroupsService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private cdr: ChangeDetectorRef,
-        private courseOverviewService: CourseOverviewService,
-    ) {}
 
     get registeredTutorialGroups() {
         if (this.course?.isAtLeastTutor) {

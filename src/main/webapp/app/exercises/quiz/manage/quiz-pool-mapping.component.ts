@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { faExclamationCircle, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
 import { Subject } from 'rxjs';
@@ -11,6 +11,8 @@ import { AlertService } from 'app/core/util/alert.service';
     styleUrls: ['./quiz-pool-mapping.component.scss'],
 })
 export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
+    private alertService = inject(AlertService);
+
     @Input() quizGroups: QuizGroup[] = [];
     @Input() quizQuestions: QuizQuestion[] = [];
     @Input() disabled = false;
@@ -27,8 +29,6 @@ export class QuizPoolMappingComponent implements OnInit, OnChanges, OnDestroy {
 
     protected dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    constructor(private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.handleUpdate();

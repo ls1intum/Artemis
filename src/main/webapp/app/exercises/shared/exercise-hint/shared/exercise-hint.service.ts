@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 
@@ -73,12 +73,10 @@ export interface IExerciseHintService {
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintService implements IExerciseHintService {
-    public resourceUrl = 'api/programming-exercises';
+    protected http = inject(HttpClient);
+    private entityTitleService = inject(EntityTitleService);
 
-    constructor(
-        protected http: HttpClient,
-        private entityTitleService: EntityTitleService,
-    ) {}
+    public resourceUrl = 'api/programming-exercises';
 
     /**
      * Creates an exercise hint

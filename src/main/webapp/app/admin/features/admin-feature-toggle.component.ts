@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { tap } from 'rxjs/operators';
 
@@ -26,9 +26,9 @@ type FeatureToggleState = {
     `,
 })
 export class AdminFeatureToggleComponent implements OnInit {
-    public availableToggles: FeatureToggleState[] = [];
+    private featureToggleService = inject(FeatureToggleService);
 
-    constructor(private featureToggleService: FeatureToggleService) {}
+    public availableToggles: FeatureToggleState[] = [];
 
     ngOnInit(): void {
         this.featureToggleService

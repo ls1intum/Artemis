@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -41,13 +41,13 @@ export type DocumentationType = keyof typeof DocumentationLinks;
     `,
 })
 export class DocumentationButtonComponent {
+    private translateService = inject(TranslateService);
+
     readonly BASE_URL = 'https://docs.artemis.cit.tum.de/user/';
     readonly faCircleInfo = faCircleInfo;
     readonly DocumentationLinks = DocumentationLinks;
 
     @Input() type: DocumentationType;
-
-    constructor(private translateService: TranslateService) {}
 
     getTooltipForType() {
         const typeKey = 'artemisApp.documentationLinks.' + this.type.toLowerCase();

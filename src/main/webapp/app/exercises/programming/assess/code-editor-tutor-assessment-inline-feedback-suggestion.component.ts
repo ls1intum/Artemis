@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, Output, inject } from '@angular/core';
 import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
@@ -32,7 +32,9 @@ export class CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent {
 
     public elementRef: ElementRef; // Needed for the outer editor to access the DOM node of this component
 
-    constructor(elementRef: ElementRef) {
+    constructor() {
+        const elementRef = inject(ElementRef);
+
         this.elementRef = elementRef;
     }
 }

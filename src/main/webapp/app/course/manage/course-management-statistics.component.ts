@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Graphs, SpanType, StatisticsView } from 'app/entities/statistics.model';
 import { Subscription } from 'rxjs';
@@ -13,6 +13,9 @@ import { Course, isCommunicationEnabled } from 'app/entities/course.model';
     styleUrls: ['./course-management-statistics.component.scss'],
 })
 export class CourseManagementStatisticsComponent implements OnInit {
+    private service = inject(StatisticsService);
+    private route = inject(ActivatedRoute);
+
     readonly documentationType: DocumentationType = 'Statistics';
     // html properties
     SpanType = SpanType;
@@ -39,11 +42,6 @@ export class CourseManagementStatisticsComponent implements OnInit {
     tutorNames: string[];
 
     courseStatistics: CourseManagementStatisticsDTO;
-
-    constructor(
-        private service: StatisticsService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {

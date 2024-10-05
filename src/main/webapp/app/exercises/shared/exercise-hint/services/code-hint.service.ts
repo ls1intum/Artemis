@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
@@ -30,9 +30,9 @@ export interface ICodeHintService {
 
 @Injectable({ providedIn: 'root' })
 export class CodeHintService implements ICodeHintService {
-    public resourceUrl = 'api/programming-exercises';
+    protected http = inject(HttpClient);
 
-    constructor(protected http: HttpClient) {}
+    public resourceUrl = 'api/programming-exercises';
 
     /**
      * Generates the code hints for a programming exercise

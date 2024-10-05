@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -52,6 +52,13 @@ type StateBeforeResetting = {
     styleUrls: ['../../../course/manage/course-exercise-card.component.scss', '../../../exercises/quiz/shared/quiz.scss', 'exam-result-summary.component.scss'],
 })
 export class ExamResultSummaryComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private serverDateService = inject(ArtemisServerDateService);
+    private themeService = inject(ThemeService);
+    private examParticipationService = inject(ExamParticipationService);
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private alertService = inject(AlertService);
+
     // make constants available to html for comparison
     readonly TEXT = ExerciseType.TEXT;
     readonly QUIZ = ExerciseType.QUIZ;
@@ -131,15 +138,6 @@ export class ExamResultSummaryComponent implements OnInit {
      * the problem statement is expanded while printing
      */
     expandProblemStatement = false;
-
-    constructor(
-        private route: ActivatedRoute,
-        private serverDateService: ArtemisServerDateService,
-        private themeService: ThemeService,
-        private examParticipationService: ExamParticipationService,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Initialise the courseId from the current url

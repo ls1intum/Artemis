@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
@@ -53,6 +53,11 @@ export interface CourseCompetencyFormData {
 
 @Component({ template: '' })
 export abstract class CourseCompetencyFormComponent {
+    protected fb = inject(FormBuilder);
+    protected lectureUnitService = inject(LectureUnitService);
+    protected courseCompetencyService = inject(CourseCompetencyService);
+    protected translateService = inject(TranslateService);
+
     abstract formData: CourseCompetencyFormData;
 
     @Input()
@@ -84,13 +89,6 @@ export abstract class CourseCompetencyFormComponent {
 
     // Constants
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
-
-    protected constructor(
-        protected fb: FormBuilder,
-        protected lectureUnitService: LectureUnitService,
-        protected courseCompetencyService: CourseCompetencyService,
-        protected translateService: TranslateService,
-    ) {}
 
     get titleControl() {
         return this.form.get('title');

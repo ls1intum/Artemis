@@ -1,12 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { Competency } from 'app/entities/competency.model';
-import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import { CompetencyService } from 'app/course/competencies/competency.service';
 import { HttpErrorResponse } from '@angular/common/http';
-import { LectureService } from 'app/lecture/lecture.service';
 import { combineLatest, forkJoin } from 'rxjs';
 import { CompetencyFormComponent } from 'app/course/competencies/forms/competency/competency-form.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -20,18 +17,10 @@ import { CourseCompetencyFormData } from 'app/course/competencies/forms/course-c
     imports: [ArtemisSharedModule, CompetencyFormComponent],
 })
 export class EditCompetencyComponent extends EditCourseCompetencyComponent implements OnInit {
+    private competencyService = inject(CompetencyService);
+
     competency: Competency;
     formData: CourseCompetencyFormData;
-
-    constructor(
-        activatedRoute: ActivatedRoute,
-        lectureService: LectureService,
-        router: Router,
-        alertService: AlertService,
-        private competencyService: CompetencyService,
-    ) {
-        super(activatedRoute, lectureService, router, alertService);
-    }
 
     ngOnInit(): void {
         super.ngOnInit();

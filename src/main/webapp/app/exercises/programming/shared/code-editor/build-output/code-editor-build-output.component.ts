@@ -1,5 +1,5 @@
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
-import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { Observable, Subscription, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { BuildLogEntry, BuildLogEntryArray } from 'app/entities/programming/build-log.model';
@@ -26,6 +26,11 @@ import { Annotation } from '../monaco/code-editor-monaco.component';
     styleUrls: ['./code-editor-build-output.scss'],
 })
 export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, OnChanges, OnDestroy {
+    private buildLogService = inject(CodeEditorBuildLogService);
+    private resultService = inject(ResultService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private submissionService = inject(CodeEditorSubmissionService);
+
     @Input()
     participation: Participation;
 
@@ -51,13 +56,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
     faChevronDown = faChevronDown;
     faCircleNotch = faCircleNotch;
     faTerminal = faTerminal;
-
-    constructor(
-        private buildLogService: CodeEditorBuildLogService,
-        private resultService: ResultService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private submissionService: CodeEditorSubmissionService,
-    ) {}
 
     ngOnInit(): void {
         this.setupSubmissionWebsocket();

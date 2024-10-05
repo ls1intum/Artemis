@@ -1,6 +1,5 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { Component, Input, OnDestroy, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AddUsersFormData } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
@@ -22,6 +21,11 @@ import { finalize } from 'rxjs/operators';
     templateUrl: './conversation-add-users-dialog.component.html',
 })
 export class ConversationAddUsersDialogComponent extends AbstractDialogComponent implements OnDestroy {
+    private alertService = inject(AlertService);
+    channelService = inject(ChannelService);
+    conversationService = inject(ConversationService);
+    groupChatService = inject(GroupChatService);
+
     private ngUnsubscribe = new Subject<void>();
 
     @Input() course: Course;
@@ -37,17 +41,6 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
                 this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (this.activeConversation?.numberOfMembers ?? 0);
             }
         }
-    }
-
-    constructor(
-        private alertService: AlertService,
-
-        activeModal: NgbActiveModal,
-        public channelService: ChannelService,
-        public conversationService: ConversationService,
-        public groupChatService: GroupChatService,
-    ) {
-        super(activeModal);
     }
 
     ngOnDestroy() {

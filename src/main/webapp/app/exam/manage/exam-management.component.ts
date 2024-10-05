@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
@@ -24,6 +24,16 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     styleUrls: ['./exam-management.component.scss'],
 })
 export class ExamManagementComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private examManagementService = inject(ExamManagementService);
+    private eventManager = inject(EventManager);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    private modalService = inject(NgbModal);
+    private router = inject(Router);
+
     readonly documentationType: DocumentationType = 'Exams';
 
     course: Course;
@@ -47,17 +57,7 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
     faClipboard = faClipboard;
     faThList = faThList;
 
-    constructor(
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private examManagementService: ExamManagementService,
-        private eventManager: EventManager,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private sortService: SortService,
-        private modalService: NgbModal,
-        private router: Router,
-    ) {
+    constructor() {
         this.predicate = 'id';
         this.ascending = true;
     }

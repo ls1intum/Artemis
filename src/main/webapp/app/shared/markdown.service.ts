@@ -1,11 +1,11 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { addCSSClass, htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import showdown from 'showdown';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisMarkdownService {
-    constructor(private sanitizer: DomSanitizer) {}
+    private sanitizer = inject(DomSanitizer);
 
     /**
      * Converts markdown into html, sanitizes it and then declares it as safe to bypass further security.

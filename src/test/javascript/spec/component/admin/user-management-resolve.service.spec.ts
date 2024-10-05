@@ -10,7 +10,7 @@ describe('UserManagementResolve', () => {
 
     beforeEach(() => {
         adminUserService = { findUser: jest.fn() } as any as AdminUserService;
-        resolve = new UserManagementResolve(adminUserService);
+        resolve = new UserManagementResolve();
     });
 
     it('should findUser the user', () => {

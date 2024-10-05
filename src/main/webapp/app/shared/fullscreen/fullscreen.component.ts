@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input } from '@angular/core';
+import { Component, ElementRef, Input, inject } from '@angular/core';
 import { faCompress } from '@fortawesome/free-solid-svg-icons';
 import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/fullscreen.util';
 
@@ -8,6 +8,8 @@ import { enterFullscreen, exitFullscreen, isFullScreen } from 'app/shared/util/f
     styleUrls: ['./fullscreen.scss'],
 })
 export class FullscreenComponent {
+    private fullScreenWrapper = inject(ElementRef);
+
     @Input()
     position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' = 'top-right';
 
@@ -16,8 +18,6 @@ export class FullscreenComponent {
 
     // Icons
     faCompress = faCompress;
-
-    constructor(private fullScreenWrapper: ElementRef) {}
 
     /**
      * check current state and toggle fullscreen

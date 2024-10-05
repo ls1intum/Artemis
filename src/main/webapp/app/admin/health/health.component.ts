@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -12,16 +12,14 @@ import { faEye, faSync } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './health.component.html',
 })
 export class HealthComponent implements OnInit {
+    private modalService = inject(NgbModal);
+    private healthService = inject(HealthService);
+
     health?: Health;
 
     // Icons
     faSync = faSync;
     faEye = faEye;
-
-    constructor(
-        private modalService: NgbModal,
-        private healthService: HealthService,
-    ) {}
 
     ngOnInit() {
         this.refresh();

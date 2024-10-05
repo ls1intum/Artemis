@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -9,12 +9,10 @@ import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingAssessmentManualResultService {
+    private http = inject(HttpClient);
+    private resultService = inject(ResultService);
+
     private resourceUrl = 'api';
-    // TODO: It would be good to refactor the convertDate methods into a separate service, so that we don't have to import the result service here.
-    constructor(
-        private http: HttpClient,
-        private resultService: ResultService,
-    ) {}
 
     /**
      * Saves a new manual result and stores it in the server

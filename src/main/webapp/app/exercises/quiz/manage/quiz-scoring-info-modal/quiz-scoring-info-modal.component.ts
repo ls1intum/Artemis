@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -7,9 +7,10 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     templateUrl: './quiz-scoring-info-modal.component.html',
 })
 export class QuizScoringInfoModalComponent {
+    private modalService = inject(NgbModal);
+
     // Icons
     farQuestionCircle = faQuestionCircle;
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Open a large modal with the given content.

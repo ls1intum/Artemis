@@ -1,4 +1,4 @@
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, Subject, Subscription, from, merge, of, timer } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, reduce, switchMap, tap } from 'rxjs/operators';
@@ -50,6 +50,11 @@ export interface IProgrammingSubmissionService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingSubmissionService implements IProgrammingSubmissionService, OnDestroy {
+    private websocketService = inject(JhiWebsocketService);
+    private http = inject(HttpClient);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private participationService = inject(ProgrammingExerciseParticipationService);
+
     public SUBMISSION_RESOURCE_URL = 'api/programming-submissions/';
     public PROGRAMMING_EXERCISE_RESOURCE_URL = 'api/programming-exercises/';
     // Default value: 2 minutes.
@@ -74,13 +79,6 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
 
     private exerciseBuildStateValue: { [exerciseId: number]: ExerciseSubmissionState } = {};
     private currentExpectedResultETA = this.DEFAULT_EXPECTED_RESULT_ETA;
-
-    constructor(
-        private websocketService: JhiWebsocketService,
-        private http: HttpClient,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private participationService: ProgrammingExerciseParticipationService,
-    ) {}
 
     ngOnDestroy(): void {
         Object.values(this.resultSubscriptions).forEach((sub) => sub.unsubscribe());

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, Input, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Lecture } from 'app/entities/lecture.model';
@@ -13,6 +13,11 @@ import { take } from 'rxjs/operators';
     styleUrls: ['./lecture-update-wizard.component.scss'],
 })
 export class LectureUpdateWizardComponent implements OnInit {
+    protected courseService = inject(CourseManagementService);
+    protected activatedRoute = inject(ActivatedRoute);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private router = inject(Router);
+
     @Input() toggleModeFunction: () => void;
     @Input() saveLectureFunction: () => void;
     @Input() validateDatesFunction: () => void;
@@ -32,13 +37,6 @@ export class LectureUpdateWizardComponent implements OnInit {
     faCheck = faCheck;
     faHandShakeAngle = faHandshakeAngle;
     faArrowRight = faArrowRight;
-
-    constructor(
-        protected courseService: CourseManagementService,
-        protected activatedRoute: ActivatedRoute,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private router: Router,
-    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

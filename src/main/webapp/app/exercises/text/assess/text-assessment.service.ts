@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
@@ -22,12 +22,10 @@ type TextAssessmentDTO = { feedbacks: Feedback[]; textBlocks: TextBlock[]; asses
     providedIn: 'root',
 })
 export class TextAssessmentService {
-    private readonly RESOURCE_URL = 'api';
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
 
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-    ) {}
+    private readonly RESOURCE_URL = 'api';
 
     /**
      * Saves the passed feedback items of the assessment.

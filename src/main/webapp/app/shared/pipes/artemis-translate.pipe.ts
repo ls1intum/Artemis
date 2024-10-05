@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { ChangeDetectorRef, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 
 @Pipe({
@@ -10,7 +10,10 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
  */
 export class ArtemisTranslatePipe implements PipeTransform, OnDestroy {
     private translatePipe: TranslatePipe;
-    constructor(translateService: TranslateService, changeDetectorRef: ChangeDetectorRef) {
+    constructor() {
+        const translateService = inject(TranslateService);
+        const changeDetectorRef = inject(ChangeDetectorRef);
+
         this.translatePipe = new TranslatePipe(translateService, changeDetectorRef);
     }
 

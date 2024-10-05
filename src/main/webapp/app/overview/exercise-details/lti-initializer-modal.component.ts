@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -8,18 +8,16 @@ import { AlertService } from 'app/core/util/alert.service';
     templateUrl: './lti-initializer-modal.component.html',
 })
 export class LtiInitializerModalComponent {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+
     password: string;
     loginName: string;
     passwordResetLocation = ['account', 'reset', 'request'];
 
     readAndUnderstood = false;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-    ) {}
 
     /**
      * Closes the dialog, removes the query parameter and shows a helper message

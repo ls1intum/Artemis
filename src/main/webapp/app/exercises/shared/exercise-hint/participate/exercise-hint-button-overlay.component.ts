@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { faCircleQuestion } from '@fortawesome/free-solid-svg-icons';
@@ -11,6 +11,8 @@ import cloneDeep from 'lodash-es/cloneDeep';
     styleUrls: ['./exercise-hint-button-overlay.component.scss'],
 })
 export class ExerciseHintButtonOverlayComponent {
+    private modalService = inject(NgbModal);
+
     @Input()
     availableExerciseHints?: ExerciseHint[];
     @Input()
@@ -20,8 +22,6 @@ export class ExerciseHintButtonOverlayComponent {
 
     faCircleQuestion = faCircleQuestion;
     ngbModalRef?: NgbModalRef;
-
-    constructor(private modalService: NgbModal) {}
 
     openModal() {
         this.ngbModalRef = this.modalService.open(ExerciseHintStudentDialogComponent as Component, { size: 'lg', backdrop: 'static' });

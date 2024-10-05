@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
@@ -12,14 +12,14 @@ import { UMLModel } from '@ls1intum/apollon';
     templateUrl: './modeling-submission-viewer.component.html',
 })
 export class ModelingSubmissionViewerComponent implements OnChanges {
+    private modelingSubmissionService = inject(ModelingSubmissionService);
+
     @Input() exercise: ModelingExercise;
     @Input() plagiarismSubmission: PlagiarismSubmission<ModelingSubmissionElement>;
     @Input() hideContent: boolean;
 
     public loading: boolean;
     public submissionModel: UMLModel;
-
-    constructor(private modelingSubmissionService: ModelingSubmissionService) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.plagiarismSubmission) {

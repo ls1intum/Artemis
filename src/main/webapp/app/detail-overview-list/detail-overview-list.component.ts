@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { isEmpty } from 'lodash-es';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, TooltipPlacement } from 'app/shared/components/button.component';
@@ -45,6 +45,10 @@ export enum DetailType {
     encapsulation: ViewEncapsulation.None,
 })
 export class DetailOverviewListComponent implements OnInit, OnDestroy {
+    private modelingExerciseService = inject(ModelingExerciseService);
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+
     protected readonly isEmpty = isEmpty;
     protected readonly DetailType = DetailType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -63,12 +67,6 @@ export class DetailOverviewListComponent implements OnInit, OnDestroy {
 
     profileSubscription: Subscription;
     isLocalVC = false;
-
-    constructor(
-        private modelingExerciseService: ModelingExerciseService,
-        private alertService: AlertService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit() {
         this.headlines = this.sections.map((section) => {

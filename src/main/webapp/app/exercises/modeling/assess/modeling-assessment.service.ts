@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
@@ -12,11 +12,11 @@ type ModelingAssessmentDTO = { feedbacks: Feedback[]; assessmentNote?: string };
 
 @Injectable({ providedIn: 'root' })
 export class ModelingAssessmentService {
+    private http = inject(HttpClient);
+
     private readonly MAX_FEEDBACK_TEXT_LENGTH = 500;
     private readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 5000;
     private resourceUrl = 'api';
-
-    constructor(private http: HttpClient) {}
 
     saveAssessment(resultId: number, feedbacks: Feedback[], submissionId: number, assessmentNote?: string, submit = false): Observable<Result> {
         let params = new HttpParams();

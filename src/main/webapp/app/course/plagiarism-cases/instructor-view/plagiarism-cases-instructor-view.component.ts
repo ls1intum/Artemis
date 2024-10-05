@@ -1,5 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
@@ -12,6 +12,9 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
     templateUrl: './plagiarism-cases-instructor-view.component.html',
 })
 export class PlagiarismCasesInstructorViewComponent implements OnInit {
+    private plagiarismCasesService = inject(PlagiarismCasesService);
+    private route = inject(ActivatedRoute);
+
     courseId: number;
     examId?: number;
     plagiarismCases: PlagiarismCase[] = [];
@@ -20,11 +23,6 @@ export class PlagiarismCasesInstructorViewComponent implements OnInit {
 
     readonly getIcon = getIcon;
     readonly documentationType: DocumentationType = 'PlagiarismChecks';
-
-    constructor(
-        private plagiarismCasesService: PlagiarismCasesService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));

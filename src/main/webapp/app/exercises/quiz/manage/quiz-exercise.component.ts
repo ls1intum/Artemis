@@ -1,18 +1,13 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
-import { TranslateService } from '@ngx-translate/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
@@ -21,6 +16,12 @@ import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.servi
     templateUrl: './quiz-exercise.component.html',
 })
 export class QuizExerciseComponent extends ExerciseComponent {
+    quizExerciseService = inject(QuizExerciseService);
+    private accountService = inject(AccountService);
+    private alertService = inject(AlertService);
+    private sortService = inject(SortService);
+    exerciseService = inject(ExerciseService);
+
     readonly ActionType = ActionType;
     readonly QuizStatus = QuizStatus;
     readonly QuizMode = QuizMode;
@@ -34,22 +35,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     protected get exercises() {
         return this.quizExercises;
-    }
-
-    constructor(
-        public quizExerciseService: QuizExerciseService,
-        private accountService: AccountService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private router: Router,
-        private sortService: SortService,
-        public exerciseService: ExerciseService,
-        courseService: CourseManagementService,
-        translateService: TranslateService,
-        eventManager: EventManager,
-        route: ActivatedRoute,
-    ) {
-        super(courseService, translateService, route, eventManager);
     }
 
     protected loadExercises(): void {

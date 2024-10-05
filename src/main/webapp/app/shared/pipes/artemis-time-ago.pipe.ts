@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, NgZone, OnDestroy, Pipe, PipeTransform } from '@angular/core';
+import { ChangeDetectorRef, NgZone, OnDestroy, Pipe, PipeTransform, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { isDate } from 'app/shared/util/utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -8,6 +8,10 @@ import { TranslateService } from '@ngx-translate/core';
     pure: false,
 })
 export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
+    private cdRef = inject(ChangeDetectorRef);
+    private ngZone = inject(NgZone);
+    private translateService = inject(TranslateService);
+
     private currentTimer: number | null;
 
     private lastTime: number;
@@ -16,12 +20,6 @@ export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     private lastLocale: string;
     private lastText: string;
     private formatFn: (m: dayjs.Dayjs) => string;
-
-    constructor(
-        private cdRef: ChangeDetectorRef,
-        private ngZone: NgZone,
-        private translateService: TranslateService,
-    ) {}
 
     format(date: dayjs.Dayjs) {
         return date.locale(this.lastLocale).from(dayjs(), this.lastOmitSuffix);

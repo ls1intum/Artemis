@@ -1,4 +1,18 @@
-import { Component, ContentChild, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+import {
+    Component,
+    ContentChild,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnChanges,
+    OnInit,
+    Output,
+    SimpleChanges,
+    TemplateRef,
+    ViewChild,
+    ViewEncapsulation,
+    inject,
+} from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@siemens/ngx-datatable';
@@ -48,6 +62,9 @@ type PagingValue = number | 'all';
     encapsulation: ViewEncapsulation.None,
 })
 export class DataTableComponent implements OnInit, OnChanges {
+    private sortService = inject(SortService);
+    private localStorage = inject(LocalStorageService);
+
     /**
      * @property templateRef Ref to the content child of this component (which is ngx-datatable)
      */
@@ -145,10 +162,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     // Icons
     faCircleNotch = faCircleNotch;
 
-    constructor(
-        private sortService: SortService,
-        private localStorage: LocalStorageService,
-    ) {
+    constructor() {
         this.entities = [];
         this.entityCriteria = {
             textSearch: [],

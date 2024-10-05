@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { Location } from '@angular/common';
 import { firstValueFrom } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
@@ -38,6 +38,20 @@ import { faCircleNotch, faQuestionCircle } from '@fortawesome/free-solid-svg-ico
     styleUrls: ['./modeling-assessment-editor.component.scss'],
 })
 export class ModelingAssessmentEditorComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private modelingSubmissionService = inject(ModelingSubmissionService);
+    private modelingAssessmentService = inject(ModelingAssessmentService);
+    private accountService = inject(AccountService);
+    private location = inject(Location);
+    private translateService = inject(TranslateService);
+    private complaintService = inject(ComplaintService);
+    private structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    private submissionService = inject(SubmissionService);
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private athenaService = inject(AthenaService);
+
     totalScore = 0;
     submission?: ModelingSubmission;
     model?: UMLModel;
@@ -78,21 +92,9 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faQuestionCircle = faQuestionCircle;
 
-    constructor(
-        private alertService: AlertService,
-        private router: Router,
-        private route: ActivatedRoute,
-        private modelingSubmissionService: ModelingSubmissionService,
-        private modelingAssessmentService: ModelingAssessmentService,
-        private accountService: AccountService,
-        private location: Location,
-        private translateService: TranslateService,
-        private complaintService: ComplaintService,
-        private structuredGradingCriterionService: StructuredGradingCriterionService,
-        private submissionService: SubmissionService,
-        private exampleSubmissionService: ExampleSubmissionService,
-        private athenaService: AthenaService,
-    ) {
+    constructor() {
+        const translateService = this.translateService;
+
         translateService.get('artemisApp.modelingAssessmentEditor.messages.confirmCancel').subscribe((text) => (this.cancelConfirmationText = text));
     }
 
