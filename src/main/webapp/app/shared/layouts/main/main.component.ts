@@ -1,21 +1,39 @@
-import { Component, Inject, OnDestroy, OnInit, Renderer2 } from '@angular/core';
+import { Component, OnDestroy, OnInit, Renderer2, inject } from '@angular/core';
 import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
+import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
+import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
     styleUrls: ['./main.component.scss'],
+    imports: [NotificationPopupComponent, ArtemisSharedModule, ArtemisSharedComponentModule, FooterComponent, PageRibbonComponent],
+    standalone: true,
 })
 export class JhiMainComponent implements OnInit, OnDestroy {
+    private jhiLanguageHelper = inject(JhiLanguageHelper);
+    private router = inject(Router);
+    private profileService = inject(ProfileService);
+    private examParticipationService = inject(ExamParticipationService);
+    private sentryErrorHandler = inject(SentryErrorHandler);
+    private analyticsService = inject(AnalyticsService);
+    private themeService = inject(ThemeService);
+    private document = inject<Document>(DOCUMENT);
+    private renderer = inject(Renderer2);
+    private courseService = inject(CourseManagementService);
+
     /**
      * If the footer and header should be shown.
      * Only set to false on specific pages designed for the native Android and iOS applications where the footer and header are not wanted.
@@ -32,19 +50,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     isTestRunExam: boolean = false;
     isCourseOverview: boolean = false;
 
-    constructor(
-        private jhiLanguageHelper: JhiLanguageHelper,
-        private router: Router,
-        private profileService: ProfileService,
-        private examParticipationService: ExamParticipationService,
-        private sentryErrorHandler: SentryErrorHandler,
-        private analyticsService: AnalyticsService,
-        private themeService: ThemeService,
-        @Inject(DOCUMENT)
-        private document: Document,
-        private renderer: Renderer2,
-        private courseService: CourseManagementService,
-    ) {
+    constructor() {
         this.setupErrorHandling().then(undefined);
         this.setupAnalytics().then(undefined);
     }

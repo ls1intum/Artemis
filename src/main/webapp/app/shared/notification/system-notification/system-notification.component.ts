@@ -1,5 +1,5 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import dayjs from 'dayjs/esm';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,8 +16,14 @@ export const WEBSOCKET_CHANNEL = '/topic/system-notification';
     selector: 'jhi-system-notification',
     templateUrl: './system-notification.component.html',
     styleUrls: ['system-notification.scss'],
+    imports: [ArtemisSharedModule],
+    standalone: true,
 })
 export class SystemNotificationComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private systemNotificationService = inject(SystemNotificationService);
+
     readonly INFO = SystemNotificationType.INFO;
     readonly WARNING = SystemNotificationType.WARNING;
 
@@ -32,13 +38,6 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
     faExclamationTriangle = faExclamationTriangle;
     faInfoCircle = faInfoCircle;
     faTimes = faTimes;
-
-    constructor(
-        private route: ActivatedRoute,
-        private accountService: AccountService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private systemNotificationService: SystemNotificationService,
-    ) {}
 
     ngOnInit() {
         this.loadActiveNotification();

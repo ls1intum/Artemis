@@ -1,10 +1,14 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-footer',
     templateUrl: './footer.component.html',
     styleUrls: ['./footer.scss'],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
+    standalone: true,
 })
 export class FooterComponent implements OnInit {
     readonly RELEASE_URL = 'https://github.com/ls1intum/Artemis/releases';
@@ -18,7 +22,7 @@ export class FooterComponent implements OnInit {
     isTestServer: boolean;
     isProduction: boolean;
 
-    constructor(private profileService: ProfileService) {}
+    private profileService = inject(ProfileService);
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

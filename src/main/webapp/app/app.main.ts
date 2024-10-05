@@ -2,15 +2,12 @@ import './polyfills';
 import 'app/shared/util/array.extension';
 import 'app/shared/util/map.extension';
 import 'app/shared/util/string.extension';
-import { platformBrowserDynamic } from '@angular/platform-browser-dynamic';
+import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
 import { ProdConfig } from './core/config/prod.config';
-import { ArtemisAppModule } from './app.module';
 import { MonacoConfig } from 'app/core/config/monaco.config';
+import { bootstrapApplication } from '@angular/platform-browser';
 
 ProdConfig();
 MonacoConfig();
 
-platformBrowserDynamic()
-    .bootstrapModule(ArtemisAppModule, { preserveWhitespaces: true })
-    .then(() => {})
-    .catch((err) => console.error(err));
+bootstrapApplication(JhiMainComponent).catch((err) => console.error(err));

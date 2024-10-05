@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { BehaviorSubject, Observable, ReplaySubject, Subject, Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -65,6 +65,15 @@ const MESSAGING_NOTIFICATION_TEXTS = [
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private router = inject(Router);
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private activatedRoute = inject(ActivatedRoute);
+    private courseManagementService = inject(CourseManagementService);
+    private notificationSettingsService = inject(NotificationSettingsService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     public resourceUrl = 'api/notifications';
     notificationSubject: ReplaySubject<Notification[]>;
     singleNotificationSubject: Subject<Notification>;
@@ -85,16 +94,7 @@ export class NotificationService {
     private mutedConversations: number[] = [];
     private loadedMutedConversations = false;
 
-    constructor(
-        private jhiWebsocketService: JhiWebsocketService,
-        private router: Router,
-        private http: HttpClient,
-        private accountService: AccountService,
-        private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
-        private notificationSettingsService: NotificationSettingsService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-    ) {
+    constructor() {
         this.initNotificationObserver();
 
         this.notificationSettingsService.getNotificationSettingsUpdates().subscribe(() => {

@@ -25,7 +25,7 @@ export class JhiConnectionWarningComponent implements OnInit, OnDestroy {
 
     constructor(
         private websocketService: JhiWebsocketService,
-        private router: Router,
+        router: Router,
     ) {
         this.routerSubscription = router.events
             .pipe(filter((event) => event instanceof NavigationEnd))

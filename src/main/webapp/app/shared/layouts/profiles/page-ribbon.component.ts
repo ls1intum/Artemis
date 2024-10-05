@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 
 @Component({
     selector: 'jhi-page-ribbon',
@@ -13,6 +14,8 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
         </div>
     `,
     styleUrls: ['page-ribbon.scss'],
+    imports: [ArtemisSharedCommonModule],
+    standalone: true,
 })
 export class PageRibbonComponent implements OnInit {
     ribbonEnv: string;

@@ -1,6 +1,13 @@
 import { Component, HostListener, OnDestroy, OnInit, inject } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
+import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
+import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
+import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
+import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { Subscription } from 'rxjs';
 import { filter, map, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -57,7 +64,16 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
     styleUrls: ['navbar.scss'],
-    imports: [ThemeSwitchComponent],
+    imports: [
+        ThemeSwitchComponent,
+        ArtemisSharedModule,
+        GuidedTourModule,
+        ActiveMenuDirective,
+        SystemNotificationComponent,
+        LoadingNotificationComponent,
+        NotificationPopupComponent,
+        NotificationSidebarComponent,
+    ],
     standalone: true,
 })
 export class NavbarComponent implements OnInit, OnDestroy {

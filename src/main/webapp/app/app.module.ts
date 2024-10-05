@@ -2,23 +2,15 @@ import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { ArtemisSystemNotificationModule } from 'app/shared/notification/system-notification/system-notification.module';
-import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
-import { PageRibbonComponent } from 'app/shared/layouts/profiles/page-ribbon.component';
 import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
-import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
 import { ArtemisAppRoutingModule } from 'app/app-routing.module';
-import { JhiMainComponent } from 'app/shared/layouts/main/main.component';
+import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { FooterComponent } from 'app/shared/layouts/footer/footer.component';
-import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { ErrorComponent } from 'app/shared/layouts/error/error.component';
 import { ArtemisCoreModule } from 'app/core/core.module';
 import { GuidedTourModule } from 'app/guided-tour/guided-tour.module';
 import { ArtemisComplaintsModule } from 'app/complaints/complaints.module';
 import { OrionOutdatedComponent } from 'app/shared/orion/outdated-plugin-warning/orion-outdated.component';
-import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
-import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
 import { UserSettingsModule } from 'app/shared/user-settings/user-settings.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FaIconLibrary } from '@fortawesome/angular-fontawesome';
@@ -36,26 +28,14 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
         ArtemisCoreModule,
         ArtemisAppRoutingModule,
         GuidedTourModule,
-        ArtemisSystemNotificationModule,
         ArtemisComplaintsModule,
         ArtemisHeaderExercisePageWithDetailsModule,
         UserSettingsModule,
         ArtemisSharedComponentModule,
         ScrollingModule,
-    ],
-    declarations: [
-        JhiMainComponent,
-        ErrorComponent,
-        OrionOutdatedComponent,
-        PageRibbonComponent,
-        ActiveMenuDirective,
-        FooterComponent,
         NotificationPopupComponent,
-        NotificationSidebarComponent,
-        SystemNotificationComponent,
-        LoadingNotificationComponent,
     ],
-    bootstrap: [JhiMainComponent],
+    declarations: [ErrorComponent, OrionOutdatedComponent],
 })
 export class ArtemisAppModule {
     constructor(library: FaIconLibrary) {

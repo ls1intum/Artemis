@@ -1,6 +1,8 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import dayjs from 'dayjs/esm';
 import { GroupNotification } from 'app/entities/group-notification.model';
 import { LIVE_EXAM_EXERCISE_UPDATE_NOTIFICATION_TITLE, NEW_MESSAGE_TITLE, Notification } from 'app/entities/notification.model';
@@ -20,8 +22,17 @@ const IRRELEVANT_NOTIFICATION_TITLES = [NEW_MESSAGE_TITLE, LIVE_EXAM_EXERCISE_UP
     selector: 'jhi-notification-sidebar',
     templateUrl: './notification-sidebar.component.html',
     styleUrls: ['./notification-sidebar.scss'],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule],
+    standalone: true,
 })
 export class NotificationSidebarComponent implements OnInit, OnDestroy {
+    private notificationService = inject(NotificationService);
+    private userService = inject(UserService);
+    private accountService = inject(AccountService);
+    private sessionStorageService = inject(SessionStorageService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     // HTML template related
     showSidebar = false;
     showButtonToHideCurrentlyDisplayedNotifications = true;
@@ -46,15 +57,6 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
     faCog = faCog;
     faArchive = faArchive;
     faEye = faEye;
-
-    constructor(
-        private notificationService: NotificationService,
-        private userService: UserService,
-        private accountService: AccountService,
-        private sessionStorageService: SessionStorageService,
-        private changeDetector: ChangeDetectorRef,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-    ) {}
 
     ngOnDestroy(): void {
         this.subscriptions.forEach((subscription) => subscription.unsubscribe());
@@ -174,13 +176,6 @@ export class NotificationSidebarComponent implements OnInit, OnDestroy {
      */
     getNotificationTextTranslation(notification: Notification): string {
         return this.notificationService.getNotificationTextTranslation(notification, this.maxNotificationLength);
-    }
-
-    private getParsedPlaceholderValues(notification: Notification): string[] {
-        if (notification.placeholderValues) {
-            return JSON.parse(notification.placeholderValues);
-        }
-        return [];
     }
 
     private subscribeToNotificationUpdates(): void {
