@@ -186,6 +186,9 @@ public class CacheConfiguration {
         // Allows using @SpringAware and therefore Spring Services in distributed tasks
         config.setManagedContext(new SpringManagedContext(applicationContext));
         config.setClassLoader(applicationContext.getClassLoader());
+        var jetConfig = config.getJetConfig();
+        jetConfig.setEnabled(true);
+        config.setJetConfig(jetConfig);
 
         config.getSerializationConfig().addSerializerConfig(createPathSerializerConfig());
 

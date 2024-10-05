@@ -40,6 +40,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -89,6 +90,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @Autowired
     private SharedQueueProcessingService sharedQueueProcessingService;
 
+    @Qualifier("hazelcastInstance")
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
@@ -116,7 +118,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @BeforeAll
     void setupAll() throws InterruptedException {
         CredentialsProvider.setDefault(new UsernamePasswordCredentialsProvider(localVCUsername, localVCPassword));
-        Thread.sleep(120000);
     }
 
     @AfterAll
@@ -164,6 +165,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         localVCLocalCITestService.mockInspectImage(dockerClient);
 
+        log.info("HAZELCAST I P{}", hazelcastInstance.getConfig().getJetConfig().isEnabled());
         queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
     }
 
