@@ -164,24 +164,24 @@ examples.forEach((activeConversation) => {
             it('should open the group chat creation dialog', fakeAsync(() => {
                 mockModalRef.result = Promise.resolve(undefined);
                 const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
-                component.onCreateGroupChatPressed();
+                component.openCreateGroupChatDialog();
                 tick();
-                expect(spy).toHaveBeenCalledWith(GroupChatCreateDialogComponent, expect.anything());
+                expect(spy).toHaveBeenCalledExactlyOnceWith(GroupChatCreateDialogComponent, expect.anything());
             }));
 
             it('should open the one-to-one chat creation dialog', fakeAsync(() => {
                 const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
-                component.onCreateDirectChatPressed();
+                component.openCreateOneToOneChatDialog();
                 tick();
-                expect(spy).toHaveBeenCalledWith(OneToOneChatCreateDialogComponent, expect.anything());
+                expect(spy).toHaveBeenCalledExactlyOnceWith(OneToOneChatCreateDialogComponent, expect.anything());
             }));
 
             it('should open the channel overview dialog', fakeAsync(() => {
                 mockModalRef.result = Promise.resolve(expectedResults);
                 const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
-                component.onBrowseChannelPressed();
+                component.openChannelOverviewDialog();
                 tick();
-                expect(spy).toHaveBeenCalledWith(ChannelsOverviewDialogComponent, expect.anything());
+                expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsOverviewDialogComponent, expect.anything());
                 expect(mockModalRef.componentInstance.initialize).toHaveBeenCalled();
             }));
 
@@ -189,10 +189,10 @@ examples.forEach((activeConversation) => {
                 mockModalRef.result = Promise.resolve(expectedResults);
                 const spy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
 
-                component.onCreateChannelPressed();
+                component.openCreateChannelDialog();
                 tick();
 
-                expect(spy).toHaveBeenCalledWith(ChannelsCreateDialogComponent, expect.anything());
+                expect(spy).toHaveBeenCalledExactlyOnceWith(ChannelsCreateDialogComponent, expect.anything());
                 expect(mockModalRef.componentInstance.course).toEqual(course);
                 expect(mockModalRef.componentInstance.initialize).toHaveBeenCalled();
             }));

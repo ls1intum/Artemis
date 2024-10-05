@@ -18,18 +18,18 @@
                     }
                 </div>
             }
-            @if (inCommunication) {
+            @if (inCommunication()) {
                 <div class="row g-1 mb-1">
                     <div class="col-6">
-                        <div class="dropdown-container">
+                        <div class="position-relative w-100 d-block">
                             <button type="button" class="btn btn-primary" (click)="toggleChatDropdown()" jhiTranslate="artemisApp.courseOverview.sidebar.createChat"></button>
 
                             <div [hidden]="!showChatDropdown" class="dropdown-menu">
-                                <button (click)="createDirectChat()" class="dropdown-item">
+                                <button (click)="createDirectChat()" class="dropdown-item p-2">
                                     <fa-icon [icon]="faUser" class="item-icon" [fixedWidth]="true"></fa-icon>
                                     <span jhiTranslate="artemisApp.courseOverview.sidebar.createDirectChat"></span>
                                 </button>
-                                <button (click)="createGroupChat()" class="dropdown-item">
+                                <button (click)="createGroupChat()" class="dropdown-item p-2">
                                     <fa-icon [icon]="faUsers" class="item-icon" [fixedWidth]="true"></fa-icon>
                                     <span jhiTranslate="artemisApp.courseOverview.sidebar.createGroupChat"></span>
                                 </button>
@@ -37,7 +37,7 @@
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="dropdown-container">
+                        <div class="position-relative w-100 d-block">
                             <button
                                 type="button"
                                 class="btn btn-secondary w-100"
@@ -45,11 +45,11 @@
                                 jhiTranslate="artemisApp.courseOverview.sidebar.addChannel"
                             ></button>
                             <div [hidden]="!showChannelDropdown" class="dropdown-menu">
-                                <button (click)="createNewChannel()" class="dropdown-item">
+                                <button (click)="createNewChannel()" class="dropdown-item p-2">
                                     <fa-icon [icon]="faPlusCircle" class="item-icon"></fa-icon>
                                     <span jhiTranslate="artemisApp.courseOverview.sidebar.createChannel"></span>
                                 </button>
-                                <button (click)="browseChannels()" class="dropdown-item">
+                                <button (click)="browseChannels()" class="dropdown-item p-2">
                                     <fa-icon [icon]="faSearch" class="item-icon"></fa-icon>
                                     <span jhiTranslate="artemisApp.courseOverview.sidebar.browseChannels"></span>
                                 </button>

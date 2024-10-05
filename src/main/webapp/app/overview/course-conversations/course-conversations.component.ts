@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -116,7 +116,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     faSearch = faSearch;
 
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
-    channelActions$ = new Subject<ChannelAction>();
+    channelActions$ = new EventEmitter<ChannelAction>();
 
     constructor(
         private router: Router,
@@ -317,22 +317,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed);
     }
 
-    onCreateChannelPressed() {
-        this.openCreateChannelDialog();
-    }
-
-    onCreateGroupChatPressed() {
-        this.openCreateGroupChatDialog();
-    }
-
-    onCreateDirectChatPressed() {
-        this.openCreateOneToOneChatDialog();
-    }
-
-    onBrowseChannelPressed() {
-        this.openChannelOverviewDialog();
-    }
-
     openCreateGroupChatDialog() {
         const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, defaultFirstLayerDialogOptions);
         modalRef.componentInstance.course = this.course;
@@ -381,7 +365,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe((channel: ChannelDTO) => {
-                this.channelActions$.next({ action: 'create', channel });
+                this.channelActions$.emit({ action: 'create', channel });
             });
     }
 

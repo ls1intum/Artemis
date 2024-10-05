@@ -49,12 +49,6 @@
     box-sizing: border-box;
 }
 
-.dropdown-container {
-    position: relative;
-    width: 100%;
-    display: block;
-}
-
 .btn-primary {
     width: 100%;
 }
@@ -74,20 +68,17 @@
     top: 100%;
     left: 0;
     right: 0;
-    background-color: white;
-    border: 1px solid #ccc;
+    background-color: var(--bs-white);
+    border: 1px solid var(--bs-gray-400);
     z-index: 1000;
     padding: 0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-    border-radius: 0 0 4px 4px;
     display: block;
 }
 
 .dropdown-item {
     width: 100%;
-    padding: 10px 10px;
     border-bottom: 1px solid #ccc;
-    cursor: pointer;
     background-color: #fff;
     text-align: left;
     color: var(--neutral-dark);

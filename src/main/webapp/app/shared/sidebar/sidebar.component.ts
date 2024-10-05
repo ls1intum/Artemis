@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, input, output } from '@angular/core';
 import { faFilter, faFilterCircleXmark, faPlusCircle, faSearch, faUser, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Params } from '@angular/router';
 import { Subscription, distinctUntilChanged } from 'rxjs';
@@ -24,10 +24,10 @@ import { ExerciseFilterModalComponent } from 'app/shared/exercise-filter/exercis
 export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Output() onSelectConversation = new EventEmitter<number>();
     @Output() onUpdateSidebar = new EventEmitter<void>();
-    @Output() onDirectChatPressed = new EventEmitter<void>();
-    @Output() onGroupChatPressed = new EventEmitter<void>();
-    @Output() onBrowsePressed = new EventEmitter<void>();
-    @Output() onCreateChannelPressed = new EventEmitter<void>();
+    onDirectChatPressed = output<void>();
+    onGroupChatPressed = output<void>();
+    onBrowsePressed = output<void>();
+    onCreateChannelPressed = output<void>();
     @Input() searchFieldEnabled: boolean = true;
     @Input() sidebarData: SidebarData;
     @Input() courseId?: number;
@@ -36,8 +36,7 @@ export class SidebarComponent implements OnDestroy, OnChanges, OnInit {
     @Input() channelTypeIcon?: ChannelTypeIcons;
     @Input() collapseState: CollapseState;
     @Input() showFilter: boolean = false;
-    @Input() inCommunication: boolean = false;
-
+    inCommunication = input<boolean>(false);
     searchValue = '';
     isCollapsed: boolean = false;
 
