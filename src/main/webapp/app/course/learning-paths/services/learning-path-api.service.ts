@@ -4,6 +4,7 @@ import {
     LearningObjectType,
     LearningPathCompetencyDTO,
     LearningPathDTO,
+    LearningPathInformationDTO,
     LearningPathNavigationDTO,
     LearningPathNavigationObjectDTO,
     LearningPathNavigationOverviewDTO,
