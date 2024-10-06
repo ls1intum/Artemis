@@ -20,9 +20,9 @@ export class FeedbackFilterModalComponent {
     @Output() filterApplied = new EventEmitter<any>();
     filterForm: FormGroup;
 
-    private FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
-    private FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
-    private FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
+    readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
+    readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
+    readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
 
     totalAmountOfTasks = signal<number>(0);
     testCaseNames = signal<string[]>([]);
@@ -30,9 +30,9 @@ export class FeedbackFilterModalComponent {
 
     constructor() {
         this.filterForm = this.fb.group({
-            tasks: [],
-            testCases: [],
-            occurrence: [],
+            tasks: [[]],
+            testCases: [[]],
+            occurrence: [[1, this.maxCount() || 1]],
         });
     }
 

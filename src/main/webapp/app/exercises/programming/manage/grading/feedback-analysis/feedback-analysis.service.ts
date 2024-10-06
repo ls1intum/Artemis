@@ -7,7 +7,7 @@ export interface FeedbackAnalysisResponse {
     feedbackDetails: SearchResult<FeedbackDetail>;
     totalItems: number;
     totalAmountOfTasks: number;
-    testCaseNames: [];
+    testCaseNames: string[];
 }
 export interface FeedbackDetail {
     count: number;

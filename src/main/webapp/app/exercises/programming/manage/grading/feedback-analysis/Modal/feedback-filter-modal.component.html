@@ -1,12 +1,11 @@
 <form [formGroup]="filterForm" (ngSubmit)="applyFilter()">
     <div class="modal-header">
-        <h5 class="modal-title">Filter Options</h5>
+        <h5 class="modal-title" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.modalTitle"></h5>
         <button type="button" class="btn-close" (click)="closeModal()"></button>
     </div>
-
     <div class="modal-body">
         <div class="form-group">
-            <label for="tasks">Tasks</label>
+            <label jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.task"></label>
             <div class="row">
                 @for (task of generateTaskArray(); track task) {
                     <div class="col-4">
@@ -19,18 +18,15 @@
                                 (change)="onCheckboxChange($event, 'tasks')"
                                 [checked]="filterForm.value.tasks.includes(task.toString())"
                             />
-                            <label class="form-check-label" for="task-${task}">{{ task }}</label>
+                            <label class="form-check-label">{{ task }}</label>
                         </div>
                     </div>
                 }
             </div>
         </div>
-
-        <!-- Test Case Filters -->
         <div class="form-group">
-            <label for="testCases">Test Cases</label>
+            <label jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.testcase"></label>
             <div class="row">
-                <!-- Thymeleaf-style @for iteration -->
                 @for (testCase of testCaseNames(); track testCase) {
                     <div class="col-4">
                         <div class="form-check">
@@ -42,15 +38,15 @@
                                 (change)="onCheckboxChange($event, 'testCases')"
                                 [checked]="filterForm.value.testCases.includes(testCase)"
                             />
-                            <label class="form-check-label" for="testCase-${testCase}">{{ testCase }}</label>
+                            <label class="form-check-label">{{ testCase }}</label>
                         </div>
                     </div>
                 }
             </div>
         </div>
-
-        <label>Occurrence (%)</label>
+        <label jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.occurrence"></label>
         <jhi-range-slider
+            ngDefaultControl
             formControlName="occurrence"
             [generalMinValue]="1"
             [generalMaxValue]="this.maxCount()"
@@ -63,8 +59,18 @@
     </div>
 
     <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" (click)="clearFilter()">Clear Filter</button>
-        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">Apply Filter</button>
+        <button
+            type="button"
+            class="btn btn-outline-secondary me-auto"
+            (click)="clearFilter()"
+            jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.clear"
+        ></button>
+        <button
+            type="button"
+            class="btn btn-secondary"
+            (click)="closeModal()"
+            jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.cancel"
+        ></button>
+        <button type="submit" class="btn btn-primary" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.apply"></button>
     </div>
 </form>

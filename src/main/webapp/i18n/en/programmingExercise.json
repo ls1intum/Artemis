@@ -337,6 +337,15 @@
                         "header": "Error Details",
                         "feedbackTitle": "Test Case Feedback",
                         "ok": "Ok"
+                    },
+                    "filterModal": {
+                        "modalTitle": "Filter Options",
+                        "task": "Tasks",
+                        "testcase": "Test Cases",
+                        "occurrence": "Occurrence",
+                        "clear": "Clear Filter",
+                        "cancel": "Cancel",
+                        "apply": "Apply Filter"
                     }
                 },
                 "help": {

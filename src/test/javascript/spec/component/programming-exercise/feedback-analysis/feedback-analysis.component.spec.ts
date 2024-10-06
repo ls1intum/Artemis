@@ -5,6 +5,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { FeedbackAnalysisComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.component';
 import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { LocalStorageService } from 'ngx-webstorage';
 import '@angular/localize/init';
 
 describe('FeedbackAnalysisComponent', () => {
@@ -12,15 +13,18 @@ describe('FeedbackAnalysisComponent', () => {
     let component: FeedbackAnalysisComponent;
     let feedbackAnalysisService: FeedbackAnalysisService;
     let searchSpy: jest.SpyInstance;
+    let localStorageService: LocalStorageService;
 
     const feedbackMock: FeedbackDetail[] = [
-        { detailText: 'Test feedback 1 detail', testCaseName: 'test1', count: 10, relativeCount: 50, taskNumber: 1 },
-        { detailText: 'Test feedback 2 detail', testCaseName: 'test2', count: 5, relativeCount: 25, taskNumber: 2 },
+        { detailText: 'Test feedback 1 detail', testCaseName: 'test1', count: 10, relativeCount: 50, taskNumber: '1', errorCategory: 'StudentError' },
+        { detailText: 'Test feedback 2 detail', testCaseName: 'test2', count: 5, relativeCount: 25, taskNumber: '2', errorCategory: 'StudentError' },
     ];
 
     const feedbackResponseMock: FeedbackAnalysisResponse = {
         feedbackDetails: { resultsOnPage: feedbackMock, numberOfPages: 1 },
         totalItems: 2,
+        totalAmountOfTasks: 1,
+        testCaseNames: ['test1', 'test2'],
     };
 
     beforeEach(async () => {
@@ -32,11 +36,17 @@ describe('FeedbackAnalysisComponent', () => {
                     useClass: MockTranslateService,
                 },
                 FeedbackAnalysisService,
+                LocalStorageService,
             ],
         }).compileComponents();
+
         fixture = TestBed.createComponent(FeedbackAnalysisComponent);
         component = fixture.componentInstance;
         feedbackAnalysisService = fixture.debugElement.injector.get(FeedbackAnalysisService);
+        localStorageService = fixture.debugElement.injector.get(LocalStorageService);
+
+        jest.spyOn(localStorageService, 'retrieve').mockReturnValue([]);
+
         searchSpy = jest.spyOn(feedbackAnalysisService, 'search').mockResolvedValue(feedbackResponseMock);
 
         fixture.componentRef.setInput('exerciseId', 1);
@@ -104,9 +114,14 @@ describe('FeedbackAnalysisComponent', () => {
     });
 
     describe('search', () => {
+        beforeEach(() => {
+            jest.spyOn(component, 'debounceLoadData' as any).mockImplementation(() => {
+                component['loadData']();
+            });
+        });
+
         it('should reset page and load data when searching', async () => {
             const loadDataSpy = jest.spyOn(component, 'loadData' as any);
-
             component.searchTerm.set('test');
             await component.search(component.searchTerm());
             expect(component.page()).toBe(1);
