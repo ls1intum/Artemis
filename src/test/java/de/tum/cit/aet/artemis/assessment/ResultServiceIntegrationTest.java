@@ -38,8 +38,6 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingCriterionUtil;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
@@ -732,8 +730,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllFeedbackDetailsForExercise() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
-        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
         ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
         testCase.setId(1L);
 
@@ -741,24 +737,24 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback.setPositive(false);
         feedback.setDetailText("Some feedback");
         feedback.setTestCase(testCase);
+
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
+
         participationUtilService.addFeedbackToResult(feedback, result);
 
-        SearchTermPageableSearchDTO<String> searchDTO = new SearchTermPageableSearchDTO<>();
-        searchDTO.setSortedColumn("detailText");
-        searchDTO.setSortingOrder(SortingOrder.ASCENDING);
-        searchDTO.setPage(1);
-        searchDTO.setPageSize(10);
+        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged" + "?page=1&pageSize=10&sortedColumn=detailText&sortingOrder=ASCENDING"
+                + "&filterTasks=&filterTestCases=&filterOccurrence=";
 
-        FeedbackAnalysisResponseDTO response = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged", searchDTO,
-                FeedbackAnalysisResponseDTO.class, HttpStatus.OK);
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
         assertThat(response.feedbackDetails().getResultsOnPage()).isNotEmpty();
-        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().getResultsOnPage().get(0);
+        FeedbackDetailDTO feedbackDetail = response.feedbackDetails().getResultsOnPage().getFirst();
         assertThat(feedbackDetail.count()).isEqualTo(1);
         assertThat(feedbackDetail.relativeCount()).isEqualTo(100.0);
         assertThat(feedbackDetail.detailText()).isEqualTo("Some feedback");
         assertThat(feedbackDetail.testCaseName()).isEqualTo("test1");
-        assertThat(feedbackDetail.taskNumber()).isEqualTo(1);
 
         assertThat(response.totalItems()).isEqualTo(1);
     }
@@ -792,14 +788,10 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         feedback3.setTestCase(testCase);
         participationUtilService.addFeedbackToResult(feedback3, result1);
 
-        SearchTermPageableSearchDTO<String> searchDTO = new SearchTermPageableSearchDTO<>();
-        searchDTO.setSortedColumn("detailText");
-        searchDTO.setSortingOrder(SortingOrder.ASCENDING);
-        searchDTO.setPage(1);
-        searchDTO.setPageSize(10);
+        String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged" + "?page=1&pageSize=10&sortedColumn=detailText&sortingOrder=ASCENDING"
+                + "&filterTasks=&filterTestCases=&filterOccurrence=";
 
-        FeedbackAnalysisResponseDTO response = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged", searchDTO,
-                FeedbackAnalysisResponseDTO.class, HttpStatus.OK);
+        FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
         List<FeedbackDetailDTO> feedbackDetails = response.feedbackDetails().getResultsOnPage();
         assertThat(feedbackDetails).hasSize(2);
@@ -813,34 +805,60 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         assertThat(firstFeedbackDetail.relativeCount()).isEqualTo(100.0);
         assertThat(firstFeedbackDetail.detailText()).isEqualTo("Some feedback");
         assertThat(firstFeedbackDetail.testCaseName()).isEqualTo("test1");
-        assertThat(firstFeedbackDetail.taskNumber()).isEqualTo(1);
 
         assertThat(secondFeedbackDetail.count()).isEqualTo(1);
         assertThat(secondFeedbackDetail.relativeCount()).isEqualTo(50.0);
         assertThat(secondFeedbackDetail.detailText()).isEqualTo("Some different feedback");
         assertThat(secondFeedbackDetail.testCaseName()).isEqualTo("test1");
-        assertThat(secondFeedbackDetail.taskNumber()).isEqualTo(1);
 
         assertThat(response.totalItems()).isEqualTo(2);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetAllFeedbackDetailsForExercise_NoParticipation() throws Exception {
+    void testGetMaxCountForExercise() throws Exception {
         ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        Result result = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        testCase.setId(1L);
 
-        SearchTermPageableSearchDTO<String> searchDTO = new SearchTermPageableSearchDTO<>();
-        searchDTO.setSortedColumn("detailText");
-        searchDTO.setSortingOrder(SortingOrder.ASCENDING);
-        searchDTO.setPage(1);
-        searchDTO.setPageSize(10);
+        Feedback feedback = new Feedback();
+        feedback.setPositive(false);
+        feedback.setDetailText("Some feedback");
+        feedback.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback, result);
 
-        FeedbackAnalysisResponseDTO response = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged", searchDTO,
-                FeedbackAnalysisResponseDTO.class, HttpStatus.OK);
+        long maxCount = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
 
-        assertThat(response.feedbackDetails().getResultsOnPage()).isEmpty();
-
-        assertThat(response.totalItems()).isEqualTo(0);
+        assertThat(maxCount).isEqualTo(1);
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetMaxCountForExerciseWithMultipleFeedback() throws Exception {
+        ProgrammingExercise programmingExercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        StudentParticipation participation1 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student1");
+        StudentParticipation participation2 = participationUtilService.createAndSaveParticipationForExercise(programmingExercise, TEST_PREFIX + "student2");
+        Result result1 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation1);
+        Result result2 = participationUtilService.addResultToParticipation(AssessmentType.AUTOMATIC, null, participation2);
+        ProgrammingExerciseTestCase testCase = programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test1");
+        testCase.setId(1L);
+
+        Feedback feedback1 = new Feedback();
+        feedback1.setPositive(false);
+        feedback1.setDetailText("Some feedback");
+        feedback1.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback1, result1);
+
+        Feedback feedback2 = new Feedback();
+        feedback2.setPositive(false);
+        feedback2.setDetailText("Some feedback");
+        feedback2.setTestCase(testCase);
+        participationUtilService.addFeedbackToResult(feedback2, result2);
+
+        long maxCount = request.get("/api/exercises/" + programmingExercise.getId() + "/feedback-details-max-count", HttpStatus.OK, Long.class);
+
+        assertThat(maxCount).isEqualTo(2);
+    }
 }

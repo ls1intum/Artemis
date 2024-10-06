@@ -1199,12 +1199,30 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     double getAvgPresentationScoreByCourseId(@Param("courseId") long courseId);
 
     /**
-     * Retrieves aggregated feedback details for a given exercise, including the count of each unique feedback detail text and test case name.
+     * Retrieves aggregated feedback details for a given exercise, including the count of each unique feedback detail text, test case name, and task.
      * <br>
-     * The relative count and task number are initially set to 0 and are calculated in a separate step in the service layer.
+     * The query calculates:
+     * - The number of occurrences of each feedback detail (COUNT).
+     * - The relative count as a percentage of the total distinct results.
+     * - The corresponding task name for each feedback item by checking if the feedback test case name is associated with a task.
+     * <br>
+     * It supports filtering by:
+     * - Search term: Case-insensitive filtering on feedback detail text.
+     * - Test case names: Filters feedback based on specific test case names.
+     * - Task names: Filters feedback based on specific task names by mapping them to their associated test cases.
+     * - Occurrence range: Filters feedback based on the count of occurrences between the specified minimum and maximum values (inclusive).
+     * <br>
+     * Grouping is done by feedback detail text and test case name. The occurrence count is filtered using the HAVING clause.
      *
-     * @param exerciseId Exercise ID.
-     * @return a list of {@link FeedbackDetailDTO} objects, with the relative count and task number set to 0.
+     * @param exerciseId          The ID of the exercise for which feedback details should be retrieved.
+     * @param distinctResultCount The total number of distinct results for calculating relative percentages.
+     * @param searchTerm          The search term used for filtering the feedback detail text (optional).
+     * @param filterTestCases     List of test case names to filter the feedback results (optional).
+     * @param filterTaskNames     List of task names to filter feedback results based on the associated test cases (optional).
+     * @param minOccurrence       The minimum number of occurrences to include in the results.
+     * @param maxOccurrence       The maximum number of occurrences to include in the results.
+     * @param pageable            Pagination information to apply.
+     * @return A page of {@link FeedbackDetailDTO} objects representing the aggregated feedback details.
      */
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
@@ -1251,23 +1269,36 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
 
     /**
      * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.
+     * <br>
+     * For each participation, it selects only the latest result (using MAX) and ensures that the participation is not a test run.
      *
-     * @param exerciseId Exercise ID.
-     * @return The count of distinct latest results for the exercise.
+     * @param exerciseId Exercise ID for which distinct results should be counted.
+     * @return The total number of distinct latest results for the given exercise.
      */
     @Query("""
-                SELECT COUNT(DISTINCT r.id)
-                FROM StudentParticipation p
-                    JOIN p.results r
-                WHERE p.exercise.id = :exerciseId
-                      AND p.testRun = FALSE
-                      AND r.id = (
-                          SELECT MAX(pr.id)
-                          FROM p.results pr
-                      )
+            SELECT COUNT(DISTINCT r.id)
+            FROM StudentParticipation p
+                JOIN p.results r
+            WHERE p.exercise.id = :exerciseId
+                  AND p.testRun = FALSE
+                  AND r.id = (
+                      SELECT MAX(pr.id)
+                      FROM p.results pr
+                  )
             """)
     long countDistinctResultsByExerciseId(@Param("exerciseId") long exerciseId);
 
+    /**
+     * Retrieves the maximum feedback count for a given exercise.
+     * <br>
+     * This query calculates the maximum number of feedback occurrences across all feedback entries for a specific exercise.
+     * It considers only the latest result per participation and excludes test runs.
+     * <br>
+     * Grouping is done by feedback detail text and test case name, and the maximum feedback count is returned.
+     *
+     * @param exerciseId The ID of the exercise for which the maximum feedback count is to be retrieved.
+     * @return The maximum count of feedback occurrences for the given exercise.
+     */
     @Query("""
             SELECT MAX(feedbackCounts.feedbackCount)
             FROM (

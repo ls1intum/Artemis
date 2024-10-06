@@ -542,93 +542,90 @@ public class ResultService {
     }
 
     /**
-     * Retrieves paginated and filtered aggregated feedback details for a given exercise, calculating relative counts based on the total number of distinct results.
-     * The task numbers are assigned based on the associated test case names, using the set of tasks fetched from the database.
+     * Retrieves paginated and filtered aggregated feedback details for a given exercise.
      * <br>
      * For each feedback detail:
      * 1. The relative count is calculated as a percentage of the total number of distinct results for the exercise.
-     * 2. The task number is determined by matching the test case name with the tasks.
+     * 2. The task numbers are assigned based on the associated test case names. A mapping between test cases and tasks is created using the set of tasks retrieved from the
+     * database.
      * <br>
-     * The method supports filtering by a search term across feedback details, test case names, counts, task numbers, and relative counts.
-     * Sorting is applied based on the specified column and order (ascending or descending).
-     * The result is paginated based on the provided page number and page size.
+     * Filtering:
+     * - **Search term**: Filters feedback details by the search term (case-insensitive).
+     * - **Test case names**: Filters feedback based on specific test case names (if provided).
+     * - **Task names**: Maps provided task numbers to task names and filters feedback based on the test cases associated with those tasks.
+     * - **Occurrences**: Filters feedback where the number of occurrences (COUNT) is between the provided minimum and maximum values (inclusive).
+     * <br>
+     * Pagination and sorting:
+     * - Sorting is applied based on the specified column and order (ascending or descending).
+     * - The result is paginated based on the provided page number and page size.
      *
      * @param exerciseId       The ID of the exercise for which feedback details should be retrieved.
      * @param search           The pageable search DTO containing page number, page size, sorting options, and a search term for filtering results.
-     * @param filterTasks
-     * @param filterTestCases
-     * @param filterOccurrence
+     * @param filterTasks      A list of task numbers to filter the feedback details based on the associated test cases (optional).
+     * @param filterTestCases  A list of test case names to filter the feedback details (optional).
+     * @param filterOccurrence A list of two strings representing the minimum and maximum occurrences to include (optional).
      * @return A {@link FeedbackAnalysisResponseDTO} object containing:
-     *         - a {@link SearchResultPageDTO} of paginated feedback details, and
-     *         - the total number of distinct results (distinctResultCount) for the exercise.
+     *         - A {@link SearchResultPageDTO} of paginated feedback details.
+     *         - The total number of distinct results for the exercise.
+     *         - The total number of tasks associated with the feedback.
+     *         - A list of test case names included in the feedback.
      */
     public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, SearchTermPageableSearchDTO<String> search, List<String> filterTasks, List<String> filterTestCases,
             List<String> filterOccurrence) {
-
-        // Extract the minimum and maximum occurrence values
-        long minOccurrence = 0;
-        long maxOccurrence = Long.MAX_VALUE; // Default to a very large number if not provided
-
-        if (filterOccurrence.size() == 2) {
-            minOccurrence = Long.parseLong(filterOccurrence.get(0));  // Convert first value to min
-            maxOccurrence = Long.parseLong(filterOccurrence.get(1));  // Convert second value to max
-        }
-
-        // Fetch the Programming Exercise
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
 
-        // Extract test case names
-        List<String> testCaseNames = programmingExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
-
-        // Get the total number of distinct results
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
 
-        // Fetch programming exercise tasks and map task names to indices
+        List<String> testCaseNames = programmingExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
+        if (filterTestCases.isEmpty()) {
+            filterTestCases = null;
+        }
+
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
         Map<String, String> taskNameToIndexMap = new HashMap<>();
         for (int i = 0; i < tasks.size(); i++) {
             taskNameToIndexMap.put(tasks.get(i).getTaskName(), String.valueOf(i + 1));
         }
-
         Map<String, String> taskIndexToNameMap = new HashMap<>();
         for (int i = 0; i < tasks.size(); i++) {
             taskIndexToNameMap.put(String.valueOf(i + 1), tasks.get(i).getTaskName());
         }
-
-        // Convert filterTasks to task names
         List<String> filterTaskNames = filterTasks.stream().map(taskIndexToNameMap::get).collect(Collectors.toList());
-
-        // Handle empty filter conditions
-        if (filterTestCases.isEmpty()) {
-            filterTestCases = null;
-        }
         if (filterTaskNames.isEmpty()) {
             filterTaskNames = null;
         }
 
-        // Set up pageable query
+        long minOccurrence = 0;
+        long maxOccurrence = Long.MAX_VALUE;
+        if (filterOccurrence.size() == 2) {
+            minOccurrence = Long.parseLong(filterOccurrence.get(0));
+            maxOccurrence = Long.parseLong(filterOccurrence.get(1));
+        }
+
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
-        // Fetch feedback details from the repository with occurrence filtering
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId, distinctResultCount,
-                search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "", filterTestCases, filterTaskNames, minOccurrence, maxOccurrence,  // Pass occurrence
-                                                                                                                                                             // values to the query
-                pageable);
+                search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "", filterTestCases, filterTaskNames, minOccurrence, maxOccurrence, pageable);
 
-        // Process feedback details and assign task indices
         List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
             String taskIndex = taskNameToIndexMap.getOrDefault(detail.taskNumber(), "0");
-            return new FeedbackDetailDTO(detail.count(), detail.relativeCount(), detail.detailText(), detail.testCaseName(), taskIndex, "StudentError" // Will be changed in follow
-                                                                                                                                                       // up
-            );
+            return new FeedbackDetailDTO(detail.count(), detail.relativeCount(), detail.detailText(), detail.testCaseName(), taskIndex, "StudentError");
         }).toList();
 
-        // Return the response with maxCount included
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), tasks.size(),
                 testCaseNames);
     }
 
+    /**
+     * Retrieves the maximum feedback count for a given exercise.
+     * <br>
+     * This method calls the repository to fetch the maximum number of feedback occurrences across all feedback items for a specific exercise.
+     * This is used for filtering feedback based on the number of occurrences.
+     *
+     * @param exerciseId The ID of the exercise for which the maximum feedback count is to be retrieved.
+     * @return The maximum count of feedback occurrences for the given exercise.
+     */
     public long getMaxCountForExercise(long exerciseId) {
         return studentParticipationRepository.findMaxCountForExercise(exerciseId);
     }

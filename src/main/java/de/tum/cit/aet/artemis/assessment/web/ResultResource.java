@@ -292,12 +292,16 @@ public class ResultResource {
      * <br>
      * The response contains both the paginated feedback details and the total count of distinct results for the exercise.
      *
-     * @param exerciseId   The ID of the exercise for which feedback details should be retrieved.
-     * @param page         The page number of the results to retrieve (0-indexed).
-     * @param pageSize     The number of feedback details per page.
-     * @param searchTerm   The search term used for filtering the results (optional).
-     * @param sortingOrder The sorting order for the results (ASCENDING or DESCENDING).
-     * @param sortedColumn The column by which the results should be sorted. If an invalid column (e.g., "taskNumber", "errorCategory") is provided, sorting defaults to "count".
+     * @param exerciseId       The ID of the exercise for which feedback details should be retrieved.
+     * @param page             The page number of the results to retrieve (0-indexed).
+     * @param pageSize         The number of feedback details per page.
+     * @param searchTerm       The search term used for filtering the results (optional).
+     * @param sortingOrder     The sorting order for the results (ASCENDING or DESCENDING).
+     * @param sortedColumn     The column by which the results should be sorted. If an invalid column (e.g., "taskNumber", "errorCategory") is provided, sorting defaults to
+     *                             "count".
+     * @param filterTasks      A list of task numbers to filter feedback details by the associated tasks (optional).
+     * @param filterTestCases  A list of test case names to filter feedback details by the associated test cases (optional).
+     * @param filterOccurrence A list of two values representing the minimum and maximum occurrence of feedback items to include (optional).
      * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes:
      *         - {@link SearchResultPageDTO < FeedbackDetailDTO >} feedbackDetails: Paginated feedback details for the exercise.
      *         - long totalItems: The total number of feedback items (used for pagination).
@@ -308,7 +312,6 @@ public class ResultResource {
     public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam int page, @RequestParam int pageSize,
             @RequestParam(required = false) String searchTerm, @RequestParam String sortingOrder, @RequestParam String sortedColumn, @RequestParam List<String> filterTasks,
             @RequestParam List<String> filterTestCases, @RequestParam List<String> filterOccurrence) {
-
         SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
         search.setPage(page);
         search.setPageSize(pageSize);
@@ -320,6 +323,14 @@ public class ResultResource {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * GET /exercises/{exerciseId}/feedback-details-max-count : Retrieves the maximum number of feedback occurrences for a given exercise.
+     * This method is useful for determining the highest count of feedback occurrences across all feedback items for the exercise,
+     * which can then be used to filter or adjust feedback analysis results.
+     *
+     * @param exerciseId The ID of the exercise for which the maximum feedback count should be retrieved.
+     * @return A {@link ResponseEntity} containing the maximum count of feedback occurrences (long).
+     */
     @GetMapping("exercises/{exerciseId}/feedback-details-max-count")
     public ResponseEntity<Long> getMaxCount(@PathVariable long exerciseId) {
         long maxCount = resultService.getMaxCountForExercise(exerciseId);
