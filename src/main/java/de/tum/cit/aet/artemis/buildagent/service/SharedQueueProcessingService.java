@@ -106,7 +106,8 @@ public class SharedQueueProcessingService {
 
     @PreDestroy
     public void removeListener() {
-        if (hazelcastInstance.getLifecycleService().isRunning()) {
+        // check if Hazelcast is still active, before invoking this
+        if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
             this.queue.removeItemListener(this.listenerId);
         }
     }

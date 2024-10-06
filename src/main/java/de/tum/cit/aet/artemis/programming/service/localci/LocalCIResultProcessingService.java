@@ -100,7 +100,8 @@ public class LocalCIResultProcessingService {
 
     @PreDestroy
     public void removeListener() {
-        if (hazelcastInstance.getLifecycleService().isRunning()) {
+        // check if Hazelcast is still active, before invoking this
+        if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
             this.resultQueue.removeItemListener(this.listenerId);
         }
     }

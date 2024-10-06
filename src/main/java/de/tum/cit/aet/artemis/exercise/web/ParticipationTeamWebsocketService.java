@@ -306,14 +306,12 @@ public class ParticipationTeamWebsocketService {
      * @param sessionId id of the sessions which is unsubscribing
      */
     public void unsubscribe(String sessionId) {
-        if (hazelcastInstance.getLifecycleService().isRunning()) {
+        // check if Hazelcast is still active, before invoking this
+        if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
             Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
+                destinationTracker.remove(sessionId);
                 Long participationId = getParticipationIdFromDestination(destination);
                 sendOnlineTeamStudents(participationId, sessionId);
-                // check if Hazelcast is still active, before invoking this
-                if (hazelcastInstance.getLifecycleService().isRunning()) {
-                    destinationTracker.remove(sessionId);
-                }
             });
         }
     }
