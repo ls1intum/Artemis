@@ -24,7 +24,7 @@
                     },
                     "noRelations": {
                         "title": "Keine Kompetenzbeziehungen",
-                        "description": "Einigen Kompetenzen wurden noch keine Beziehungen zugewiesen. Bitte weisen Sie diesen Kompetenzen Beziehungen zu.",
+                        "description": "Einigen Kompetenzen wurden noch keine Beziehungen zugewiesen. Bitte weise diesen Kompetenzen Beziehungen zu.",
                         "actionButton": "Beziehungen zuweisen"
                     }
                 }

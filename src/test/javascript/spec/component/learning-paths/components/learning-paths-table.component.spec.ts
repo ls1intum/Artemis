@@ -137,7 +137,7 @@ describe('LearningPathsTableComponent', () => {
         expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
     });
 
-    function generateResults(start: number = 0, end: number): LearningPathInformationDTO[] {
+    function generateResults(start: number, end: number): LearningPathInformationDTO[] {
         return Array.from({ length: end - start }, (_, i) => ({
             id: i + start,
             user: { name: `User ${i + start}`, login: `user${i + start}` },

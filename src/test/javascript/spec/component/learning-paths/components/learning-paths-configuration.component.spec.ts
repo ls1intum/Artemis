@@ -91,7 +91,7 @@ describe('LearningPathsConfigurationComponent', () => {
         expect(includeAllExercisesCheckBox.disabled).toBeFalse();
 
         const saveButton = fixture.nativeElement.querySelector('#save-learning-paths-configuration-button');
-        expect(saveButton).toBeDefined();
+        expect(saveButton).not.toBeNull();
         expect(component.isEditMode()).toBeTrue();
     });
 
