@@ -153,6 +153,8 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
     private void triggerBuild(ProgrammingExerciseParticipation participation, String commitHashToBuild, RepositoryType triggeredByPushTo, boolean triggerAll)
             throws LocalCIException {
 
+        log.info("Triggering build for participation {} and commit hash {}", participation.getId(), commitHashToBuild);
+
         // Commit hash related to the repository that will be tested
         String assignmentCommitHash;
 

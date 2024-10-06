@@ -130,6 +130,7 @@ public class LocalVCLocalCITestService {
         participation.setBranch(defaultBranch);
         programmingExerciseStudentParticipationRepository.save(participation);
 
+        log.debug("Created participation with id: {}", participation.getId());
         return participation;
     }
 
