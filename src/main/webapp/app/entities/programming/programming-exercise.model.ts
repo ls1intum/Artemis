@@ -13,19 +13,19 @@ import { SubmissionPolicy } from 'app/entities/submission-policy.model';
 import dayjs from 'dayjs/esm';
 
 export enum ProgrammingLanguage {
-    JAVA = 'JAVA',
-    PYTHON = 'PYTHON',
+    EMPTY = 'EMPTY',
+    ASSEMBLER = 'ASSEMBLER',
     C = 'C',
     HASKELL = 'HASKELL',
-    KOTLIN = 'KOTLIN',
-    VHDL = 'VHDL',
-    ASSEMBLER = 'ASSEMBLER',
-    SWIFT = 'SWIFT',
-    OCAML = 'OCAML',
-    EMPTY = 'EMPTY',
-    RUST = 'RUST',
+    JAVA = 'JAVA',
     JAVASCRIPT = 'JAVASCRIPT',
+    KOTLIN = 'KOTLIN',
+    OCAML = 'OCAML',
+    PYTHON = 'PYTHON',
     R = 'R',
+    RUST = 'RUST',
+    SWIFT = 'SWIFT',
+    VHDL = 'VHDL',
 }
 
 export enum ProjectType {
