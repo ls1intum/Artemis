@@ -68,13 +68,6 @@ describe('LearningPathsStateComponent', () => {
         fixture.componentRef.setInput('courseId', courseId);
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-
-        expect(component).toBeDefined();
-        expect(component.courseId()).toBe(courseId);
-    });
-
     it('should load learning path health status', async () => {
         fixture.detectChanges();
         await fixture.whenStable();

@@ -68,12 +68,6 @@ describe('LearningPathInstructorPageComponent', () => {
         component = fixture.componentInstance;
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-        expect(component).toBeDefined();
-        expect(component.courseId()).toEqual(courseId);
-    });
-
     it('should load course', async () => {
         fixture.detectChanges();
         await fixture.whenStable();

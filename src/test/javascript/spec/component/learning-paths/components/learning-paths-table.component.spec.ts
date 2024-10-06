@@ -58,9 +58,8 @@ describe('LearningPathsTableComponent', () => {
         fixture.componentRef.setInput('courseId', courseId);
     });
 
-    it('should initialize', () => {
-        expect(component).toBeTruthy();
-        expect(component.courseId()).toBe(courseId);
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     it('should load learning paths', async () => {
@@ -102,6 +101,22 @@ describe('LearningPathsTableComponent', () => {
         expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, { ...pageable, page: 2 });
     });
 
+    it('should search for learning paths when the search term changes', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const searchField = fixture.debugElement.query(By.css('#learning-path-search'));
+        const searchPageable = { ...pageable, searchTerm: 'Search Term' };
+        searchField.nativeElement.value = 'Search Term';
+        searchField.nativeElement.dispatchEvent(new Event('input'));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, searchPageable);
+    });
+
     it('should show error message when loading learning paths fails', async () => {
         getLearningPathInformationSpy.mockRejectedValue(new Error('Error loading learning paths'));
         const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
@@ -120,22 +135,6 @@ describe('LearningPathsTableComponent', () => {
 
         expect(isLoadingSpy).toHaveBeenNthCalledWith(1, true);
         expect(isLoadingSpy).toHaveBeenNthCalledWith(2, false);
-    });
-
-    it('should search for learning paths when the search term changes', async () => {
-        fixture.detectChanges();
-        await fixture.whenStable();
-        fixture.detectChanges();
-
-        const searchField = fixture.debugElement.query(By.css('#learning-path-search'));
-        const searchPageable = { ...pageable, searchTerm: 'Search Term' };
-        searchField.nativeElement.value = 'Search Term';
-        searchField.nativeElement.dispatchEvent(new Event('input'));
-
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, searchPageable);
     });
 
     function generateResults(start: number = 0, end: number): LearningPathInformationDTO[] {

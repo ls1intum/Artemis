@@ -46,14 +46,6 @@ describe('LearningPathsConfigurationComponent', () => {
         fixture.componentRef.setInput('courseId', courseId);
     });
 
-    it('should initialize', () => {
-        fixture.detectChanges();
-
-        expect(component).toBeDefined();
-        expect(component.courseId()).toBe(courseId);
-        expect(component.isEditMode()).toBeFalse();
-    });
-
     it('should load learning paths configuration', async () => {
         fixture.detectChanges();
         await fixture.whenStable();

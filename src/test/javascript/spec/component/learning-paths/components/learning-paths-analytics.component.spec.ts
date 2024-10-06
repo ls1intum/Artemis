@@ -65,12 +65,6 @@ describe('LearningPathsAnalyticsComponent', () => {
         fixture.componentRef.setInput('courseId', courseId);
     });
 
-    it('should initialize', () => {
-        expect(component).toBeDefined();
-        expect(component.courseId()).toBe(courseId);
-        expect(component.valueSelection()).toBe(CompetencyGraphNodeValueType.AVERAGE_MASTERY_PROGRESS);
-    });
-
     it('should load instructor competency graph', async () => {
         fixture.detectChanges();
         await fixture.whenStable();

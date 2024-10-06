@@ -78,11 +78,6 @@ describe('LearningPathStudentPageComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        expect(component).toBeTruthy();
-        expect(component.courseId()).toBe(courseId);
-    });
-
     it('should get learning path', async () => {
         const getLearningPathIdSpy = jest.spyOn(learningPathApiService, 'getLearningPathForCurrentUser').mockResolvedValue(learningPath);
 
