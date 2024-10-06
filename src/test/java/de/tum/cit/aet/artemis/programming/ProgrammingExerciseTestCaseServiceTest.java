@@ -82,18 +82,18 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldResetCourseExerciseTestCases() throws Exception {
+    void shouldResetCourseExerciseTestCases() {
         testResetTestCases(programmingExercise, Visibility.ALWAYS);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldResetExamExerciseTestCases() throws Exception {
+    void shouldResetExamExerciseTestCases() {
         programmingExercise.setExerciseGroup(new ExerciseGroup());
         testResetTestCases(programmingExercise, Visibility.AFTER_DUE_DATE);
     }
 
-    private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) throws Exception {
+    private void testResetTestCases(ProgrammingExercise programmingExercise, Visibility expectedVisibility) {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
         participationUtilService.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
@@ -121,8 +121,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void shouldUpdateTestWeight() throws Exception {
-        ;
+    void shouldUpdateTestWeight() {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(any());
 
@@ -150,7 +149,7 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationLo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldAllowTestCaseWeightSumZero(AssessmentType assessmentType) throws Exception {
+    void shouldAllowTestCaseWeightSumZero(AssessmentType assessmentType) {
         programmingExercise.setAssessmentType(assessmentType);
         programmingExerciseRepository.save(programmingExercise);
 
