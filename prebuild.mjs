@@ -125,26 +125,12 @@ const workerEntryPoints = [
     'vs/language/typescript/ts.worker.js',
     'vs/editor/editor.worker.js'
 ];
-await build({
+await esbuild.build({
     entryPoints: workerEntryPoints.map((entry) => `node_modules/monaco-editor/esm/${entry}`),
     bundle: true,
     format: 'iife',
-    outbase: 'node_modules/monaco-editor/esm/',
+    outbase: 'node_modules/monaco-editor/esm',
     outdir: 'node_modules/monaco-editor/bundles'
 });
-
-/**
- * Start an esbuild build with the given options and prints errors and warnings.
- * @param opts The options for the build.
- */
-async function build(opts) {
-    const result = await esbuild.build(opts);
-    if (result.errors.length > 0) {
-        console.error(result.errors);
-    }
-    if (result.warnings.length > 0) {
-        console.warn(result.warnings);
-    }
-}
 
 console.log("Pre-Build complete!");
