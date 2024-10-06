@@ -134,6 +134,17 @@ export class CourseManagementPage {
         await this.page.waitForURL('**/assessment-dashboard**');
     }
 
+    async openSubmissionsForExerciseAndCourse(courseID: number, exerciseID: number) {
+        await this.getCourse(courseID).locator('#course-card-open-exercises').click();
+        await this.page.waitForURL('**/exercises**');
+        await this.page.click(`[href="/course-management/${courseID}/modeling-exercises/${exerciseID}/scores"]`);
+        await this.page.waitForURL('**/scores');
+    }
+
+    async checkIfStudentSubmissionExists(studentName: string) {
+        await expect(this.page.locator('.datatable-body-row', { hasText: studentName })).toBeVisible();
+    }
+
     /*
      * Helper methods to get information about the course
      */

@@ -32,10 +32,12 @@ import de.jplag.c.CLanguage;
 import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.java.JavaLanguage;
+import de.jplag.javascript.JavaScriptLanguage;
 import de.jplag.kotlin.KotlinLanguage;
 import de.jplag.options.JPlagOptions;
 import de.jplag.python3.PythonLanguage;
 import de.jplag.reporting.reportobject.ReportObjectFactory;
+import de.jplag.rust.RustLanguage;
 import de.jplag.swift.SwiftLanguage;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.GitException;
@@ -313,8 +315,11 @@ public class ProgrammingPlagiarismDetectionService {
             case PYTHON -> new PythonLanguage();
             case SWIFT -> new SwiftLanguage();
             case KOTLIN -> new KotlinLanguage();
-            default -> throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
-                    "ProgrammingExercise", "notSupported");
+            case RUST -> new RustLanguage();
+            case JAVASCRIPT -> new JavaScriptLanguage();
+            case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, C_SHARP, C_PLUS_PLUS, SQL, R, TYPESCRIPT, GO, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA ->
+                throw new BadRequestAlertException("Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.",
+                        "ProgrammingExercise", "notSupported");
         };
     }
 
