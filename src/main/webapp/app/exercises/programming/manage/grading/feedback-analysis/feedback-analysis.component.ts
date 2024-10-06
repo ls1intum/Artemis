@@ -134,7 +134,7 @@ export class FeedbackAnalysisComponent {
         modalRef.componentInstance.filterForm.setValue({
             tasks: this.hasAppliedFilters ? savedTasks : [],
             testCases: this.hasAppliedFilters ? savedTestCases : [],
-            occurrence: this.hasAppliedFilters ? savedOccurrence : [0, this.maxCount()],
+            occurrence: this.hasAppliedFilters ? savedOccurrence : [1, this.maxCount()],
         });
 
         modalRef.componentInstance.totalAmountOfTasks = this.totalAmountOfTasks;

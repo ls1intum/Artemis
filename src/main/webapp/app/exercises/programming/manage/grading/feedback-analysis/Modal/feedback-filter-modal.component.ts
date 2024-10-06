@@ -67,7 +67,7 @@ export class FeedbackFilterModalComponent {
         this.filterForm.reset({
             tasks: [],
             testCases: [],
-            occurrence: [0, this.maxCount()],
+            occurrence: [1, this.maxCount()],
         });
 
         this.filterApplied.emit(this.filterForm.value);
