@@ -1,5 +1,6 @@
 /**
  * Sets up the MonacoEnvironment for the monaco editor's service worker.
+ * See https://github.com/microsoft/monaco-editor/blob/main/samples/browser-esm-esbuild/index.js
  */
 export function MonacoConfig() {
     self.MonacoEnvironment = {
