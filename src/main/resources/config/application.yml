@@ -92,6 +92,20 @@ artemis:
                 javascript:
                     default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
 
+    programming-languages:
+        java:
+            images:
+                # possible overrides: maven, gradle
+                default: "ls1tum/artemis-maven-template:java17-21"
+                maven_blackbox: "ghcr.io/uni-passau-artemis/artemis-dejagnu:22"
+        javascript:
+            images:
+                default: "ghcr.io/ls1intum/artemis-javascript-docker:v1.0.0"
+            checkout-paths:
+                assignment: "assignment"
+                test: ""
+                solution:
+
 management:
     endpoints:
         web:

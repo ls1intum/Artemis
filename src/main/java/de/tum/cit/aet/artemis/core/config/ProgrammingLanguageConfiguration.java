@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 /**
  * This configuration file provides functions to get the configured Docker Images for {@link ProgrammingLanguage ProgrammingLanguages}.
  */
-@ConfigurationProperties(prefix = "artemis.continuous-integration.build")
+@ConfigurationProperties(prefix = "artemis.programming-languages")
 @Profile(PROFILE_CORE)
 public class ProgrammingLanguageConfiguration {
 
@@ -32,12 +32,22 @@ public class ProgrammingLanguageConfiguration {
 
     private static final ProjectType GRADLE_PROJECT_TYPE = ProjectType.GRADLE_GRADLE;
 
-    private Map<ProgrammingLanguage, Map<ProjectType, String>> images = new EnumMap<>(ProgrammingLanguage.class);
+    public record LanguageProperties(Map<String, String> images, CheckoutPaths checkout_paths) {
+    }
+
+    public record CheckoutPaths(String assignment, String test, String solution) {
+    }
+
+    private final Map<ProgrammingLanguage, LanguageProperties> properties;
 
     /**
      * Contains all the docker run arguments obtained from the spring properties
      */
     private List<DockerFlag> defaultDockerFlags;
+
+    public ProgrammingLanguageConfiguration(Map<ProgrammingLanguage, LanguageProperties> properties) {
+        this.properties = properties;
+    }
 
     /**
      * Set the map of languages to build images.
@@ -45,11 +55,11 @@ public class ProgrammingLanguageConfiguration {
      *
      * @param buildImages the map of languages to build images
      */
-    public void setImages(final Map<String, Map<String, String>> buildImages) {
-        final var languageSpecificBuildImages = loadImages(buildImages);
-        checkImageForAllProgrammingLanguagesDefined(languageSpecificBuildImages);
-        images = languageSpecificBuildImages;
-        log.debug("Loaded Docker image configuration: {}", images);
+    private void setImages(final Map<String, Map<String, String>> buildImages) {
+        // final var languageSpecificBuildImages = loadImages(buildImages);
+        // checkImageForAllProgrammingLanguagesDefined(languageSpecificBuildImages);
+        // images = languageSpecificBuildImages;
+        // log.debug("Loaded Docker image configuration: {}", images);
     }
 
     /**
@@ -76,7 +86,7 @@ public class ProgrammingLanguageConfiguration {
      *
      * @param dockerFlags key value pairs of run arguments
      */
-    public void setDefaultDockerFlags(final List<DockerFlag> dockerFlags) {
+    private void setDefaultDockerFlags(final List<DockerFlag> dockerFlags) {
         log.debug("Set Docker flags to {}", dockerFlags);
         this.defaultDockerFlags = dockerFlags;
     }
@@ -177,7 +187,7 @@ public class ProgrammingLanguageConfiguration {
      * @return the docker image name
      */
     public String getImage(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
-        final Map<ProjectType, String> languageImages = images.get(programmingLanguage);
+        final Map<String, String> languageImages = properties.get(programmingLanguage).images;
         final ProjectType configuredProjectType = projectType.map(this::getConfiguredProjectType).orElse(DEFAULT_PROJECT_TYPE);
 
         if (languageImages.containsKey(configuredProjectType)) {
