@@ -103,11 +103,11 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
 
     private void testAllPreAuthorize() throws Exception {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.FORBIDDEN);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.FORBIDDEN);
-        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN, ExerciseGroup.class);
-        request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.FORBIDDEN, ExerciseGroup.class);
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.FORBIDDEN);
+        request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN, ExerciseGroup.class);
+        request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.FORBIDDEN, ExerciseGroup.class);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(exerciseGroup), ExerciseGroup.class,
                 HttpStatus.FORBIDDEN);
     }
@@ -117,13 +117,13 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
     void testCreateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setId(55L);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.BAD_REQUEST);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.BAD_REQUEST);
         exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
-        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.CONFLICT);
         exerciseGroup = ExamFactory.generateExerciseGroup(true, exam2);
         exerciseGroup.setTitle("      ExerciseGroup 123       ");
-        URI exerciseGroupUri = request.post("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CREATED);
+        URI exerciseGroupUri = request.post("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/exercise-groups", exerciseGroup, HttpStatus.CREATED);
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam2.getId());
         ExerciseGroup savedExerciseGroup = request.get(String.valueOf(exerciseGroupUri), HttpStatus.OK, ExerciseGroup.class);
         assertThat(savedExerciseGroup.getTitle()).isEqualTo("ExerciseGroup 123");
@@ -135,15 +135,15 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
     void testUpdateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ExamFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup1, HttpStatus.OK);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup, HttpStatus.CONFLICT);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", exerciseGroup1, HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExerciseGroup_asEditor() throws Exception {
-        ExerciseGroup result = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK,
+        ExerciseGroup result = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.OK,
                 ExerciseGroup.class);
         verify(examAccessService).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1);
         assertThat(result.getExam()).isEqualTo(exam1);
@@ -152,7 +152,7 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExerciseGroupsForExam_asEditor() throws Exception {
-        List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
+        List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups", HttpStatus.OK, ExerciseGroup.class);
         verify(examAccessService).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().getExercises()).hasSize(1);
@@ -163,7 +163,7 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExerciseGroup_asInstructor() throws Exception {
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
         assertThat(textExerciseRepository.findById(textExercise1.getId())).isEmpty();
     }
@@ -171,7 +171,7 @@ class ExerciseGroupIntegrationJenkinsGitlabTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testDeleteExerciseGroup_asEditor() throws Exception {
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exercise-groups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
