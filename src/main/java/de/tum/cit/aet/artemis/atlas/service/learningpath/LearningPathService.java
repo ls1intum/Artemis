@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.service.learningpath;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -376,9 +375,7 @@ public class LearningPathService {
     public LearningPathCompetencyGraphDTO generateLearningPathCompetencyInstructorGraph(long courseId) {
         List<CourseCompetency> competencies = courseCompetencyRepository.findByCourseIdOrderById(courseId);
         Set<CompetencyGraphNodeDTO> progressDTOs = competencies.stream().map(competency -> {
-            List<CompetencyProgress> studentProgress = competencyProgressRepository.findAllNonZeroStudentProgressByCompetencyId(competency.getId()).stream()
-                    .sorted(Comparator.comparingDouble(CompetencyProgressService::getMastery)).toList();
-            double averageMasteryProgress = studentProgress.stream().mapToDouble(CompetencyProgressService::getMasteryProgress).average().orElse(0.0);
+            double averageMasteryProgress = competencyProgressRepository.findAverageOfAllNonZeroStudentProgressByCompetencyId(competency.getId());
             return CompetencyGraphNodeDTO.of(competency, averageMasteryProgress, CompetencyGraphNodeDTO.CompetencyNodeValueType.AVERAGE_MASTERY_PROGRESS);
         }).collect(Collectors.toSet());
 
