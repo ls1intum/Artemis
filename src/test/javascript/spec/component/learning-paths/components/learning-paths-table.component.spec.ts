@@ -70,7 +70,7 @@ describe('LearningPathsTableComponent', () => {
 
         const learningPathRows = fixture.nativeElement.querySelectorAll('tr');
 
-        expect(getLearningPathInformationSpy).toHaveBeenCalledWith(courseId, pageable);
+        expect(getLearningPathInformationSpy).toHaveBeenCalledExactlyOnceWith(courseId, pageable);
 
         expect(component.learningPaths()).toEqual(searchResults.resultsOnPage);
         expect(learningPathRows).toHaveLength(searchResults.resultsOnPage.length + 1);
@@ -87,20 +87,19 @@ describe('LearningPathsTableComponent', () => {
 
         const learningPathIdButton = fixture.debugElement.query(By.css(`#open-competency-graph-button-${learningPathId}`));
         learningPathIdButton.nativeElement.click();
-        expect(openCompetencyGraphSpy).toHaveBeenCalledWith(1);
+        expect(openCompetencyGraphSpy).toHaveBeenCalledExactlyOnceWith(1);
     });
 
     it('should change page', async () => {
-        const onPageChangeSpy = jest.spyOn(component, 'onPageChange');
-
-        component.onPageChange(2);
+        const onPageChangeSpy = jest.spyOn(component, 'setPage');
 
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
 
-        expect(onPageChangeSpy).toHaveBeenCalledWith(2);
-        expect(getLearningPathInformationSpy).toHaveBeenCalledWith(courseId, { ...pageable, page: 2 });
+        await component.setPage(2);
+
+        expect(onPageChangeSpy).toHaveBeenLastCalledWith(2);
+        expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, { ...pageable, page: 2 });
     });
 
     it('should show error message when loading learning paths fails', async () => {
@@ -133,7 +132,10 @@ describe('LearningPathsTableComponent', () => {
         searchField.nativeElement.value = 'Search Term';
         searchField.nativeElement.dispatchEvent(new Event('input'));
 
-        expect(getLearningPathInformationSpy).toHaveBeenCalledWith(courseId, searchPageable);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(getLearningPathInformationSpy).toHaveBeenLastCalledWith(courseId, searchPageable);
     });
 
     function generateResults(start: number = 0, end: number): LearningPathInformationDTO[] {

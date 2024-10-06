@@ -10,7 +10,8 @@
                 type="search"
                 class="ms-2 form-control rounded"
                 [placeholder]="'artemisApp.learningPathManagement.learningPathsTable.searchPlaceholder' | artemisTranslate"
-                [(ngModel)]="searchTerm"
+                [ngModel]="searchTerm()"
+                (ngModelChange)="search($event)"
                 aria-label="Search"
             />
         </div>
@@ -56,7 +57,7 @@
         <ngb-pagination
             [collectionSize]="collectionSize()"
             [page]="page()"
-            (pageChange)="onPageChange($event)"
+            (pageChange)="setPage($event)"
             [pageSize]="pageSize()"
             size="sm"
             class="d-flex justify-content-end mt-2 pagination"

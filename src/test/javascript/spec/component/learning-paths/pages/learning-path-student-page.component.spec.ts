@@ -89,7 +89,7 @@ describe('LearningPathStudentPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(getLearningPathIdSpy).toHaveBeenCalledWith(courseId);
+        expect(getLearningPathIdSpy).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(component.learningPath()).toEqual(learningPath);
     });
 
@@ -116,7 +116,7 @@ describe('LearningPathStudentPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(getLearningPathIdSpy).toHaveBeenCalledWith(courseId);
+        expect(getLearningPathIdSpy).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 

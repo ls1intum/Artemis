@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { LearningPathApiService } from 'app/course/learning-paths/services/learning-path-api.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -8,6 +8,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyGraphModalComponent } from 'app/course/learning-paths/components/competency-graph-modal/competency-graph-modal.component';
+import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
 enum TableColumn {
     ID = 'ID',
@@ -36,7 +37,7 @@ export class LearningPathsTableComponent {
     private readonly searchResults = signal<SearchResult<LearningPathInformationDTO> | undefined>(undefined);
     readonly learningPaths = computed(() => this.searchResults()?.resultsOnPage ?? []);
 
-    readonly searchTerm = model<string>('');
+    readonly searchTerm = signal<string>('');
     readonly page = signal<number>(1);
     private readonly sortingOrder = signal<SortingOrder>(SortingOrder.ASCENDING);
     private readonly sortedColumn = signal<TableColumn>(TableColumn.ID);
@@ -49,24 +50,30 @@ export class LearningPathsTableComponent {
         }
     });
 
-    private readonly searchState = computed(() => {
-        return <SearchTermPageableSearch>{
-            page: this.page(),
-            pageSize: this.pageSize(),
-            searchTerm: this.searchTerm(),
-            sortingOrder: this.sortingOrder(),
-            sortedColumn: this.sortedColumn(),
-        };
-    });
+    // Debounce the loadLearningPaths function to prevent multiple requests when the user types quickly
+    private readonly debounceLoadLearningPaths = BaseApiHttpService.debounce(this.loadLearningPaths.bind(this), 300);
 
     constructor() {
-        // Load learning paths whenever the search state or courseId changes
-        effect(() => this.loadLearningPaths(this.courseId(), this.searchState()), { allowSignalWrites: true });
+        effect(
+            () => {
+                // Load learning paths whenever the courseId changes
+                const courseId = this.courseId();
+                untracked(() => this.loadLearningPaths(courseId));
+            },
+            { allowSignalWrites: true },
+        );
     }
 
-    private async loadLearningPaths(courseId: number, searchState: SearchTermPageableSearch): Promise<void> {
+    private async loadLearningPaths(courseId: number): Promise<void> {
         try {
             this.isLoading.set(true);
+            const searchState = <SearchTermPageableSearch>{
+                page: this.page(),
+                pageSize: this.pageSize(),
+                searchTerm: this.searchTerm(),
+                sortingOrder: this.sortingOrder(),
+                sortedColumn: this.sortedColumn(),
+            };
             const searchResults = await this.learningPathApiService.getLearningPathInformation(courseId, searchState);
             this.searchResults.set(searchResults);
         } catch (error) {
@@ -76,8 +83,15 @@ export class LearningPathsTableComponent {
         }
     }
 
-    onPageChange(pageNumber: number): void {
+    search(searchTerm: string): void {
+        this.searchTerm.set(searchTerm);
+        this.page.set(1);
+        this.debounceLoadLearningPaths(this.courseId());
+    }
+
+    async setPage(pageNumber: number): Promise<void> {
         this.page.set(pageNumber);
+        await this.loadLearningPaths(this.courseId());
     }
 
     openCompetencyGraph(learningPathId: number): void {

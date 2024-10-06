@@ -124,7 +124,7 @@ describe('LearningPathsStateComponent', () => {
         await clickHealthStateButton(`#health-state-button-${HealthStatus.MISSING}`);
 
         expect(generateMissingLearningPathsSpy).toHaveBeenCalledExactlyOnceWith(courseId);
-        expect(successSpy).toHaveBeenCalled();
+        expect(successSpy).toHaveBeenCalledOnce();
         expect(getLearningPathHealthStatusSpy).toHaveBeenNthCalledWith(2, courseId);
     });
 
