@@ -58,7 +58,7 @@
                 "uploadForImport": "Upload Programming Exercise for Import",
                 "fileTooBigError": "The file {{ fileName }} is too large. The maximum file size is 20 MB.",
                 "fileTypeNotSupportedError": "The file type is not supported. Please select a file with the extension .zip.",
-                "noExerciseDetailsJsonAtRootLevel": "The zip file does not contain a .json file at the root level with the exercise details.",
+                "noExerciseDetailsJsonAtRootLevel": "The zip file does not contain a JSON file at the root level with the exercise details.",
                 "notSupportedProgrammingLanguage": "The programming language {{ programmingLanguage }} is not yet supported for the import from file.",
                 "GccNotSupportedForC": "The project type is not yet supported for the import from file."
             },
@@ -458,7 +458,7 @@
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
-                "tooltip": "You are outside of the participation timeframe or you reached your submission limit, your repository is locked. You may still read the code but you may not make any changes to it."
+                "tooltip": "You are outside the participation timeframe, or you reached your submission limit, your repository is locked. You may still read the code, but you may not make any changes to it."
             },
             "checkoutDirectories": "Checkout directories",
             "preview": {
