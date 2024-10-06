@@ -8,13 +8,14 @@ export interface FeedbackAnalysisResponse {
     totalItems: number;
     totalAmountOfTasks: number;
     testCaseNames: [];
+    maxCount: number;
 }
 export interface FeedbackDetail {
     count: number;
     relativeCount: number;
     detailText: string;
     testCaseName: string;
-    taskNumber: number;
+    taskNumber: string;
     errorCategory: string;
 }
 @Injectable()

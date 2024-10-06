@@ -53,6 +53,7 @@ export class FeedbackAnalysisComponent {
     selectedFiltersCount = signal<number>(0);
     totalAmountOfTasks = signal<number>(0);
     testCaseNames = signal<string[]>([]);
+    maxCount = signal<number>(0);
 
     constructor() {
         effect(() => {
@@ -65,7 +66,7 @@ export class FeedbackAnalysisComponent {
     private async loadData(): Promise<void> {
         const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY) || [];
         const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY) || [];
-        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [0, 100];
+        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [];
 
         const state = {
             page: this.page(),
@@ -88,6 +89,7 @@ export class FeedbackAnalysisComponent {
             this.totalItems.set(response.totalItems);
             this.totalAmountOfTasks.set(response.totalAmountOfTasks);
             this.testCaseNames.set(response.testCaseNames);
+            this.maxCount.set(response.maxCount);
         } catch (error) {
             this.alertService.error('artemisApp.programmingExercise.configureGrading.feedbackAnalysis.error');
         }
@@ -122,18 +124,19 @@ export class FeedbackAnalysisComponent {
     openFilterModal(): void {
         const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY) || [];
         const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY) || [];
-        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [0, 100];
+        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [];
 
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
 
         modalRef.componentInstance.filterForm.setValue({
             tasks: this.hasAppliedFilters ? savedTasks : [],
             testCases: this.hasAppliedFilters ? savedTestCases : [],
-            occurrence: this.hasAppliedFilters ? savedOccurrence : [0, 100],
+            occurrence: this.hasAppliedFilters ? savedOccurrence : [0, this.maxCount()],
         });
 
         modalRef.componentInstance.totalAmountOfTasks = this.totalAmountOfTasks;
         modalRef.componentInstance.testCaseNames = this.testCaseNames;
+        modalRef.componentInstance.maxCount = this.maxCount;
         modalRef.componentInstance.filterApplied.subscribe((filters: any) => {
             this.applyFilters(filters);
         });
@@ -158,7 +161,7 @@ export class FeedbackAnalysisComponent {
         if (filters.testCases && filters.testCases.length > 0) {
             count += filters.testCases.length;
         }
-        if (filters.occurrence && (filters.occurrence[0] !== 0 || filters.occurrence[1] !== 100)) {
+        if (filters.occurrence && (filters.occurrence[0] !== 0 || filters.occurrence[1] !== this.maxCount())) {
             count++;
         }
         return count;

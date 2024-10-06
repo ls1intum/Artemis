@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -58,12 +59,14 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.lti.service.LtiNewResultService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTask;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
@@ -116,6 +119,8 @@ public class ResultService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
+    ProgrammingExerciseRepository programmingExerciseRepository;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
             FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
@@ -124,7 +129,7 @@ public class ResultService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
             BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -145,6 +150,7 @@ public class ResultService {
         this.buildLogEntryService = buildLogEntryService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -558,52 +564,71 @@ public class ResultService {
      */
     public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, SearchTermPageableSearchDTO<String> search, List<String> filterTasks, List<String> filterTestCases,
             List<String> filterOccurrence) {
-        long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
-        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
 
-        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
+        // Extract the minimum and maximum occurrence values
+        long minOccurrence = 0;
+        long maxOccurrence = Long.MAX_VALUE; // Default to a very large number if not provided
 
-        final var searchTerm = search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "";
-
-        Map<String, Integer> taskNumberMapping = new HashMap<>();
-        for (int i = 0; i < tasks.size(); i++) {
-            ProgrammingExerciseTask task = tasks.get(i);
-            for (ProgrammingExerciseTestCase testCase : task.getTestCases()) {
-                taskNumberMapping.put(testCase.getTestName(), i + 1); // Task number starts from 1
-            }
+        if (!filterOccurrence.isEmpty() && filterOccurrence.size() == 2) {
+            minOccurrence = Long.parseLong(filterOccurrence.get(0));  // Convert first value to min
+            maxOccurrence = Long.parseLong(filterOccurrence.get(1));  // Convert second value to max
         }
 
-        final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findAggregatedFeedbackByExerciseId(exerciseId, searchTerm, pageable);
+        // Fetch the Programming Exercise
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
 
-        ArrayList<String> testCaseNames = new ArrayList<>();
+        // Extract test case names
+        List<String> testCaseNames = programmingExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
 
-        List taskCheck = new ArrayList();
+        // Get the total number of distinct results
+        long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
 
-        // Step 1: Map the data first to set taskNumber and other transformations
-        List<FeedbackDetailDTO> mappedContentDTOs = feedbackDetailPage.getContent().stream().map(detail -> {
-            double relativeCount = (detail.count() * 100.0) / distinctResultCount;
-            int taskNumber = determineTaskNumberOfTestCase(detail.testCaseName(), tasks);
-            testCaseNames.add(detail.testCaseName());
-            return new FeedbackDetailDTO(detail.count(), relativeCount, detail.detailText(), detail.testCaseName(), taskNumber, "Student Error");
+        // Fetch the maximum count
+        long maxCount = studentParticipationRepository.findMaxCountForExercise(exerciseId);
+
+        // Fetch programming exercise tasks and map task names to indices
+        List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
+        Map<String, String> taskNameToIndexMap = new HashMap<>();
+        for (int i = 0; i < tasks.size(); i++) {
+            taskNameToIndexMap.put(tasks.get(i).getTaskName(), String.valueOf(i + 1));
+        }
+
+        Map<String, String> taskIndexToNameMap = new HashMap<>();
+        for (int i = 0; i < tasks.size(); i++) {
+            taskIndexToNameMap.put(String.valueOf(i + 1), tasks.get(i).getTaskName());
+        }
+
+        // Convert filterTasks to task names
+        List<String> filterTaskNames = filterTasks.stream().map(taskIndexToNameMap::get).collect(Collectors.toList());
+
+        // Handle empty filter conditions
+        if (filterTestCases.isEmpty()) {
+            filterTestCases = null;
+        }
+        if (filterTaskNames.isEmpty()) {
+            filterTaskNames = null;
+        }
+
+        // Set up pageable query
+        final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
+
+        // Fetch feedback details from the repository with occurrence filtering
+        final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId, distinctResultCount,
+                search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "", filterTestCases, filterTaskNames, minOccurrence, maxOccurrence,  // Pass occurrence
+                                                                                                                                                             // values to the query
+                pageable);
+
+        // Process feedback details and assign task indices
+        List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
+            String taskIndex = taskNameToIndexMap.getOrDefault(detail.taskNumber(), "0");
+            return new FeedbackDetailDTO(detail.count(), detail.relativeCount(), detail.detailText(), detail.testCaseName(), taskIndex, "StudentError" // Will be changed in follow
+                                                                                                                                                       // up
+            );
         }).toList();
 
-        // Step 2: Apply the filters after transformation
-        List<FeedbackDetailDTO> filteredContentDTOs = mappedContentDTOs.stream()
-                .filter(detail -> filterTasks.isEmpty() || filterTasks.contains(String.valueOf(detail.taskNumber())))
-                .filter(detail -> filterTestCases.isEmpty() || filterTestCases.contains(detail.testCaseName())).filter(detail -> {
-                    if (filterOccurrence.isEmpty()) {
-                        return true;
-                    }
-                    double minOccurrence = Double.parseDouble(filterOccurrence.get(0));
-                    double maxOccurrence = Double.parseDouble(filterOccurrence.get(1));
-                    return detail.relativeCount() >= minOccurrence && detail.relativeCount() <= maxOccurrence;
-                }).toList();
-        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(filteredContentDTOs, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(),
-                tasks.size(), testCaseNames);
-    }
-
-    private int determineTaskNumberOfTestCase(String testCaseName, List<ProgrammingExerciseTask> tasks) {
-        return tasks.stream().filter(task -> task.getTestCases().stream().anyMatch(tc -> tc.getTestName().equals(testCaseName))).findFirst()
-                .map(task -> tasks.stream().toList().indexOf(task) + 1).orElse(0);
+        // Return the response with maxCount included
+        return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), tasks.size(),
+                testCaseNames, maxCount);
     }
 }

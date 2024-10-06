@@ -26,12 +26,13 @@ export class FeedbackFilterModalComponent {
 
     totalAmountOfTasks = signal<number>(0);
     testCaseNames = signal<string[]>([]);
+    maxCount = signal<number>(0);
 
     constructor() {
         this.filterForm = this.fb.group({
             tasks: [[]],
             testCases: [[]],
-            occurrence: [[0, 100]],
+            occurrence: [[0, this.maxCount()]],
         });
     }
 

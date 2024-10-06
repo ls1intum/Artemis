@@ -54,7 +54,7 @@
         <jhi-range-slider
             formControlName="occurrence"
             [generalMinValue]="0"
-            [generalMaxValue]="100"
+            [generalMaxValue]="this.maxCount()"
             [(selectedMinValue)]="occurrence[0]"
             [(selectedMaxValue)]="occurrence[1]"
             (selectedMinValueChange)="occurrence = [$event, occurrence[1]]"

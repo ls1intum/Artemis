@@ -1209,29 +1209,45 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
                 COUNT(f.id),
-                0,
+                (COUNT(f.id) * 100.0) / :distinctResultCount,
                 f.detailText,
                 f.testCase.testName,
-                0,
+                COALESCE((
+                    SELECT t.taskName
+                    FROM ProgrammingExerciseTask t
+                    JOIN t.testCases tct
+                    WHERE t.exercise.id = :exerciseId AND tct.testName = f.testCase.testName
+                ), ''),
                 ''
             )
             FROM StudentParticipation p
-                 JOIN p.results r
+                 JOIN p.results r ON r.id = (
+                         SELECT MAX(pr.id)
+                         FROM p.results pr
+                         WHERE pr.participation.id = p.id
+                     )
                  JOIN r.feedbacks f
             WHERE p.exercise.id = :exerciseId
                   AND p.testRun = FALSE
+                  AND f.positive = FALSE
                   AND r.id = (
                       SELECT MAX(pr.id)
                       FROM p.results pr
                   )
-                  AND f.positive = FALSE
-                  AND (
-                      :searchTerm IS NULL OR :searchTerm = ''
-                      OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
-                  )
+                  AND (:searchTerm = '' OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
+                  AND (:filterTestCases IS NULL OR f.testCase.testName IN (:filterTestCases))
+                  AND (:filterTaskNames IS NULL OR f.testCase.testName IN (
+                      SELECT tct.testName
+                      FROM ProgrammingExerciseTask t
+                      JOIN t.testCases tct
+                      WHERE t.taskName IN (:filterTaskNames)
+                  ))
             GROUP BY f.detailText, f.testCase.testName
+            HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
             """)
-    Page<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm, Pageable pageable);
+    Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("distinctResultCount") long distinctResultCount,
+            @Param("searchTerm") String searchTerm, @Param("filterTestCases") List<String> filterTestCases, @Param("filterTaskNames") List<String> filterTaskNames,
+            @Param("minOccurrence") long minOccurrence, @Param("maxOccurrence") long maxOccurrence, Pageable pageable);
 
     /**
      * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.
@@ -1251,4 +1267,23 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       )
             """)
     long countDistinctResultsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT MAX(feedbackCounts.feedbackCount)
+            FROM (
+                SELECT COUNT(f.id) AS feedbackCount
+                FROM StudentParticipation p
+                JOIN p.results r ON r.id = (
+                    SELECT MAX(pr.id)
+                    FROM p.results pr
+                    WHERE pr.participation.id = p.id
+                )
+                JOIN r.feedbacks f
+                WHERE p.exercise.id = :exerciseId
+                  AND p.testRun = FALSE
+                  AND f.positive = FALSE
+                GROUP BY f.detailText, f.testCase.testName
+            ) AS feedbackCounts
+            """)
+    long findMaxCountForExercise(@Param("exerciseId") long exerciseId);
 }
