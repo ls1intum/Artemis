@@ -21,9 +21,9 @@ import org.springframework.core.io.Resource;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
-import de.tum.cit.aet.artemis.AbstractSpringIntegrationIndependentTest;
-import de.tum.cit.aet.artemis.connector.apollon.ApollonRequestMockProvider;
+import de.tum.cit.aet.artemis.core.connector.apollon.ApollonRequestMockProvider;
 import de.tum.cit.aet.artemis.modeling.service.apollon.ApollonConversionService;
+import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ApollonConversionServiceTest extends AbstractSpringIntegrationIndependentTest {
 

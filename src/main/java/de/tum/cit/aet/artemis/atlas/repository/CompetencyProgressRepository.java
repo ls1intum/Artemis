@@ -41,10 +41,6 @@ public interface CompetencyProgressRepository extends ArtemisJpaRepository<Compe
             """)
     Optional<CompetencyProgress> findByCompetencyIdAndUserId(@Param("competencyId") long competencyId, @Param("userId") long userId);
 
-    default CompetencyProgress findByCompetencyIdAndUserIdOrElseThrow(long competencyId, long userId) {
-        return getValueElseThrow(findByCompetencyIdAndUserId(competencyId, userId));
-    }
-
     @Query("""
             SELECT cp
             FROM CompetencyProgress cp
