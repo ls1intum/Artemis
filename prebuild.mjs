@@ -128,7 +128,7 @@ const workerEntryPoints = [
 await esbuild.build({
     entryPoints: workerEntryPoints.map((entry) => `node_modules/monaco-editor/esm/${entry}`),
     bundle: true,
-    format: 'iife',
+    format: 'esm',
     outbase: 'node_modules/monaco-editor/esm',
     outdir: 'node_modules/monaco-editor/bundles'
 });
