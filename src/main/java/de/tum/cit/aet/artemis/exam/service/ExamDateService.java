@@ -186,6 +186,14 @@ public class ExamDateService {
         return workingTimes.stream().map(timeInSeconds -> exam.getStartDate().plusSeconds(timeInSeconds)).collect(Collectors.toSet());
     }
 
+    /**
+     * Returns the unlock date for the exam programming exercise.
+     * <p>
+     * The unlock date is the exam start date minus a certain amount of time to ensure that the exam is unlocked before the start date.
+     *
+     * @param exercise the programming exercise
+     * @return the unlock date or <code>null</code> if the exercise is not an exam exercise
+     */
     @Nullable
     public static ZonedDateTime getExamProgrammingExerciseUnlockDate(ProgrammingExercise exercise) {
         // TODO: can we guarantee that this is an exam exercise to avoid the null check and return?
