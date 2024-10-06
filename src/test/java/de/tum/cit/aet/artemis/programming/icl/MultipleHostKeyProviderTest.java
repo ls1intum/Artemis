@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Profile;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.MultipleHostKeyProvider;
 
 @Profile(PROFILE_LOCALVC)
-class MultipleHostKeyProviderTest extends LocalVCIntegrationTest {
+class MultipleHostKeyProviderTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     void testMultipleHostKeyProvider() {
