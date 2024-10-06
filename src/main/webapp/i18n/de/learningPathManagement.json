@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "learningPathManagement": {
-            "learningPathDisabled": {
+            "learningPathsDisabled": {
                 "title": "Willkommen bei der Lernpfadverwaltung!",
                 "description": "Die Lernpfadfunktion ist derzeit für diesen Kurs deaktiviert. Mit dieser Funktion können Kursteilnehmer einen personalisierten Lernpfad verfolgen, der auf den von Ihnen definierten Kompetenzen basiert. Jeder Lernpfad wird auf der Grundlage des individuellen Fortschritts des Teilnehmers, der Beziehungen zwischen den Kompetenzen und der festgelegten Fälligkeitsdaten erstellt. Sie können die Lernpfadfunktion aktivieren, indem Sie auf den Button unten klicken.",
                 "buttonLabel": "Lernpfade aktivieren"
@@ -15,7 +15,7 @@
                         "title": "Fehlende Lernpfade",
                         "description": "Einige Studierende haben ihre Lernpfade noch nicht generiert. Ihre Lernpfade werden erst erstellt, wenn sie ihren Lernpfad zum ersten Mal anfordern.",
                         "actionButton": "Lernpfad generieren",
-                        "success": "Lernpfade wurden erfolgreich generiert."
+                        "successAlert": "Lernpfade wurden erfolgreich generiert."
                     },
                     "noCompetencies": {
                         "title": "Keine Kompetenzen",
