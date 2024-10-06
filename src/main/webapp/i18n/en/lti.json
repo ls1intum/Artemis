@@ -37,7 +37,7 @@
             "jwkSetUri": "JWKSet URI",
             "customName": "Custom Name",
             "startExercise": "<strong>Welcome to Artemis!</strong> Click the button <i>Start Exercise</i>!",
-            "ltiSuccessLoginRequired": "Successfully launched LTI exercise. Please login as user {{user}}.",
+            "ltiSuccessLoginRequired": "Successfully launched LTI exercise. Please log in as user {{user}}.",
             "exercises": "Exercises",
             "lti": "LTI",
             "configurationForCourse": "LTI Configuration for course {{ title }}",

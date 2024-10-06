@@ -35,7 +35,7 @@
         "emptyFile": "The uploaded file {{ fileName }} is empty. Please check the file and try again.",
         "externalSubmissionBeforeDueDate": "External submissions are not supported before the exercise due date.",
         "externalSubmissionForQuizExercise": "External submissions are not supported for Quiz exercises.",
-        "noSubmissions": "No existing user was specified or no submission exists.",
+        "noSubmissions": "No existing user was specified, or no submission exists.",
         "feedbackCreditsNull": "Error! If feedback is present, all elements must contain points.",
         "invalidGradeStepFormat": "One or more grade steps are not following the correct format. Click on the \"?\" for more information.",
         "examExerciseNotIncludedInScore": "An exam exercise must be included in the score!",
@@ -83,9 +83,9 @@
         },
         "idNull": "Invalid ID",
         "unexpectedError": "An unexpected error occurred: {{error}}",
-        "manualCodeHintOperation": "This endpoint does not allow to change code hints manually.",
+        "manualCodeHintOperation": "This endpoint does not allow changing code hints manually.",
         "exerciseNotDefined": "The exercise is not defined.",
-        "exerciseIdMismatch": "The exercise ids do not match.",
+        "exerciseIdMismatch": "The exercise IDs do not match.",
         "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement.",
         "systemNotificationNeedsBothDates": "Both notification date and expiration date must be set.",
         "systemNotificationNeedsNotificationBeforeExpiration": "The expiration date must be after the notification date.",
@@ -96,7 +96,7 @@
         "shortnameAlreadyExists": "A programming exercise with the same short name already exists. Please choose a different short name.",
         "courseTitleTooLong": "The course title is too long (max. 255 characters). Please choose a shorter title.",
         "notAllowedInExam": "This operation is not allowed in an exam.",
-        "profilePictureFilesizeTooBig": "The filesize of your image is too big, please upload a smaller one.",
+        "profilePictureFilesizeTooBig": "The file size of your image is too big, please upload a smaller one.",
         "profilePictureFileFormatNotSupported": "The file format is not supported, please make sure to upload a .png or .jpg file."
     }
 }
