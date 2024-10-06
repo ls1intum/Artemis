@@ -7,6 +7,7 @@ export class ProfileInfo {
     public activeProfiles: string[];
     public ribbonEnv: string;
     public inProduction: boolean;
+    public inDevelopment: boolean;
     public openApiEnabled?: boolean;
     public sentry?: { dsn: string };
     public postHog?: {

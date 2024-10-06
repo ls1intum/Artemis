@@ -38,6 +38,7 @@
                                     >
                                         @for (relationType of competencyRelationType | keyvalue: keepOrder; track relationType) {
                                             <option
+                                                [value]="relationType.value"
                                                 [jhiTranslate]="'artemisApp.competency.relation.type.' + relationType.value"
                                                 [title]="'artemisApp.competency.relation.typeExplanation.' + relationType.value | artemisTranslate"
                                                 [value]="relationType.value"
