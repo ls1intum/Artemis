@@ -311,13 +311,13 @@ public class ProgrammingPlagiarismDetectionService {
 
     private Language getJPlagProgrammingLanguage(ProgrammingExercise programmingExercise) {
         return switch (programmingExercise.getProgrammingLanguage()) {
-            case JAVA -> new JavaLanguage();
             case C -> new CLanguage();
-            case PYTHON -> new PythonLanguage();
-            case SWIFT -> new SwiftLanguage();
-            case KOTLIN -> new KotlinLanguage();
-            case RUST -> new RustLanguage();
+            case JAVA -> new JavaLanguage();
             case JAVASCRIPT -> new JavaScriptLanguage();
+            case KOTLIN -> new KotlinLanguage();
+            case PYTHON -> new PythonLanguage();
+            case RUST -> new RustLanguage();
+            case SWIFT -> new SwiftLanguage();
             case TYPESCRIPT -> new TypeScriptLanguage();
             case EMPTY, PHP, DART, HASKELL, ASSEMBLER, OCAML, C_SHARP, C_PLUS_PLUS, SQL, R, GO, MATLAB, BASH, VHDL, RUBY, POWERSHELL, ADA -> throw new BadRequestAlertException(
                     "Programming language " + programmingExercise.getProgrammingLanguage() + " not supported for plagiarism check.", "ProgrammingExercise", "notSupported");

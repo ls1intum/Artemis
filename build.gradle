@@ -246,6 +246,7 @@ dependencies {
     implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.5"
 
     implementation "de.jplag:jplag:${jplag_version}"
+
     implementation "de.jplag:c:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:javascript:${jplag_version}"
