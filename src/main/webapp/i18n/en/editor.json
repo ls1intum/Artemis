@@ -91,7 +91,7 @@
                 "fileExists": "File/Directory name already exists. Please choose a different name.",
                 "unsupportedFile": "File with this extension not supported.",
                 "fileOperationFailed": "File operation could not be executed. Please try again later.",
-                "participationCouldNotBeDeleted": "Participation could not be deleted and might now be corrupted .",
+                "participationCouldNotBeDeleted": "Participation could not be deleted and might now be corrupted.",
                 "participationCouldNotBeCreated": "Participation could not be created.",
                 "couldNotBeRetrieved": "The repository status could not be retrieved.",
                 "problemStatementCouldNotBeUpdated": "The problem statement of this exercise could not be updated.",
