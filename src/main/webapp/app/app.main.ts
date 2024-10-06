@@ -75,10 +75,7 @@ bootstrapApplication(JhiMainComponent, {
         provideHttpClient(withInterceptorsFromDi()),
         provideNgxWebstorage(withNgxWebstorageConfig({ prefix: 'jhi', separator: '-' }), withLocalStorage(), withSessionStorage()),
         Title,
-        {
-            provide: LOCALE_ID,
-            useValue: 'en',
-        },
+        { provide: LOCALE_ID, useValue: 'en' },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
         { provide: TraceService, deps: [Router] },
         { provide: ErrorHandler, useClass: SentryErrorHandler },
