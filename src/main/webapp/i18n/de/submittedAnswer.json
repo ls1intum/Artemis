@@ -2,21 +2,21 @@
     "artemisApp": {
         "submittedAnswer": {
             "home": {
-                "title": "Submitted Answers",
-                "createLabel": "Submitted Answer erstellen"
+                "title": "Eingereichte Antworten",
+                "createLabel": "Eingereichte Antwort erstellen"
             },
-            "created": "Submitted Answer erstellt mit ID {{ param }}",
-            "updated": "Submitted Answer aktualisiert mit ID {{ param }}",
-            "deleted": "Submitted Answer gelöscht mit ID {{ param }}",
+            "created": "Eingereichte Antwort erstellt mit ID {{ param }}",
+            "updated": "Eingereichte Antwort aktualisiert mit ID {{ param }}",
+            "deleted": "Eingereichte Antwort gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Submitted Answer {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Eingereichte Antwort {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Submitted Answer"
+                "title": "Eingereichte Antwort"
             },
-            "scoreInPoints": "Score In Points",
-            "question": "Question",
-            "submission": "Submission"
+            "scoreInPoints": "Ergebnis in Punkten",
+            "question": "Frage",
+            "submission": "Einreichung"
         }
     }
 }

@@ -32,6 +32,12 @@ export interface LearningPathCompetencyDTO {
     masteryProgress: number;
 }
 
+export interface LearningPathDTO {
+    id: number;
+    progress: number;
+    startedByStudent: boolean;
+}
+
 export interface LearningPathNavigationObjectDTO {
     id: number;
     completed: boolean;

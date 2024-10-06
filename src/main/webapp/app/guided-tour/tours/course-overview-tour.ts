@@ -60,7 +60,7 @@ export const courseOverviewTour: GuidedTour = {
             orientation: Orientation.RIGHT,
         }),
         new TextTourStep({
-            highlightSelector: '.guided-tour .card-footer',
+            highlightSelector: '.guided-tour .exercise-guided-tour',
             headlineTranslateKey: 'tour.courseOverview.courseFooter.headline',
             contentTranslateKey: 'tour.courseOverview.courseFooter.content',
             orientation: Orientation.TOPLEFT,

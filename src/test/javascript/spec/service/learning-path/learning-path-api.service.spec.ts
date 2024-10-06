@@ -27,11 +27,11 @@ describe('LearningPathApiService', () => {
         httpClient.verify();
     });
 
-    it('should get learning path id', async () => {
+    it('should get learning path for current user', async () => {
         const courseId = 1;
 
-        const methodCall = learningPathApiService.getLearningPathId(courseId);
-        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/courses/${courseId}/learning-path-id` });
+        const methodCall = learningPathApiService.getLearningPathForCurrentUser(courseId);
+        const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/courses/${courseId}/learning-path/me` });
         response.flush({});
         await methodCall;
     });
@@ -56,6 +56,13 @@ describe('LearningPathApiService', () => {
         await methodCall;
     });
 
+    it('should start learning path for current user', async () => {
+        const methodCall = learningPathApiService.startLearningPathForCurrentUser(learningPathId);
+        const response = httpClient.expectOne({ method: 'PATCH', url: `${baseUrl}/learning-path/${learningPathId}/start` });
+        response.flush({});
+        await methodCall;
+    });
+
     it('should get learning path navigation overview', async () => {
         const methodCall = learningPathApiService.getLearningPathNavigationOverview(learningPathId);
         const response = httpClient.expectOne({ method: 'GET', url: `${baseUrl}/learning-path/${learningPathId}/navigation-overview` });
@@ -63,8 +70,8 @@ describe('LearningPathApiService', () => {
         await methodCall;
     });
 
-    it('should generate learning path', async () => {
-        const methodCall = learningPathApiService.generateLearningPath(courseId);
+    it('should generate learning path for current user', async () => {
+        const methodCall = learningPathApiService.generateLearningPathForCurrentUser(courseId);
         const response = httpClient.expectOne({ method: 'POST', url: `${baseUrl}/courses/${courseId}/learning-path` });
         response.flush({});
         await methodCall;

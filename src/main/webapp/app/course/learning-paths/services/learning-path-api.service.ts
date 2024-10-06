@@ -3,7 +3,7 @@ import {
     CompetencyGraphDTO,
     LearningObjectType,
     LearningPathCompetencyDTO,
-    LearningPathInformationDTO,
+    LearningPathDTO,
     LearningPathNavigationDTO,
     LearningPathNavigationObjectDTO,
     LearningPathNavigationOverviewDTO,
@@ -18,8 +18,12 @@ import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageabl
     providedIn: 'root',
 })
 export class LearningPathApiService extends BaseApiHttpService {
-    async getLearningPathId(courseId: number): Promise<number> {
-        return await this.get<number>(`courses/${courseId}/learning-path-id`);
+    async getLearningPathForCurrentUser(courseId: number): Promise<LearningPathDTO> {
+        return await this.get<LearningPathDTO>(`courses/${courseId}/learning-path/me`);
+    }
+
+    async startLearningPathForCurrentUser(learningPathId: number): Promise<void> {
+        return await this.patch<void>(`learning-path/${learningPathId}/start`);
     }
 
     async getLearningPathNavigation(learningPathId: number): Promise<LearningPathNavigationDTO> {
@@ -39,8 +43,8 @@ export class LearningPathApiService extends BaseApiHttpService {
         return await this.get<LearningPathNavigationDTO>(`learning-path/${learningPathId}/relative-navigation`, { params: params });
     }
 
-    async generateLearningPath(courseId: number): Promise<number> {
-        return await this.post<number>(`courses/${courseId}/learning-path`);
+    async generateLearningPathForCurrentUser(courseId: number): Promise<LearningPathDTO> {
+        return await this.post<LearningPathDTO>(`courses/${courseId}/learning-path`);
     }
 
     async getLearningPathNavigationOverview(learningPathId: number): Promise<LearningPathNavigationOverviewDTO> {
