@@ -8,7 +8,6 @@
         <div class="form-group">
             <label for="tasks">Tasks</label>
             <div class="row">
-                <!-- Thymeleaf-style @for iteration -->
                 @for (task of generateTaskArray(); track task) {
                     <div class="col-4">
                         <div class="form-check">

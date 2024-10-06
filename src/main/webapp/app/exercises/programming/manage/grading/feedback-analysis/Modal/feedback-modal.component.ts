@@ -12,6 +12,5 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 })
 export class FeedbackModalComponent {
     feedbackDetail: InputSignal<FeedbackDetail> = input.required<FeedbackDetail>();
-
     activeModal: NgbActiveModal = inject(NgbActiveModal);
 }

@@ -44,7 +44,6 @@ export class FeedbackAnalysisComponent {
     readonly faUpRightAndDownLeftFromCenter = faUpRightAndDownLeftFromCenter;
     readonly SortingOrder = SortingOrder;
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
-
     readonly sortIcon = computed(() => (this.sortingOrder() === SortingOrder.ASCENDING ? this.faSortUp : this.faSortDown));
 
     private hasAppliedFilters: boolean = false;
@@ -124,9 +123,9 @@ export class FeedbackAnalysisComponent {
     }
 
     async openFilterModal(): Promise<void> {
-        const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY) || [];
-        const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY) || [];
-        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [];
+        const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY);
+        const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY);
+        const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY);
 
         this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
@@ -149,11 +148,6 @@ export class FeedbackAnalysisComponent {
     applyFilters(filters: any): void {
         this.selectedFiltersCount.set(this.countAppliedFilters(filters));
         this.hasAppliedFilters = this.selectedFiltersCount() !== 0;
-
-        this.localStorage.store(this.FILTER_TASKS_KEY, filters.tasks);
-        this.localStorage.store(this.FILTER_TEST_CASES_KEY, filters.testCases);
-        this.localStorage.store(this.FILTER_OCCURRENCE_KEY, filters.occurrence);
-
         this.loadData();
     }
 
@@ -165,7 +159,7 @@ export class FeedbackAnalysisComponent {
         if (filters.testCases && filters.testCases.length > 0) {
             count += filters.testCases.length;
         }
-        if (filters.occurrence && (filters.occurrence[0] !== 0 || filters.occurrence[1] !== this.maxCount())) {
+        if (filters.occurrence && (filters.occurrence[0] !== 1 || filters.occurrence[1] !== this.maxCount())) {
             count++;
         }
         return count;

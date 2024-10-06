@@ -17,8 +17,8 @@ export class FeedbackFilterModalComponent {
     private localStorage = inject(LocalStorageService);
     private activeModal = inject(NgbActiveModal);
     private fb = inject(FormBuilder);
-    filterForm: FormGroup;
     @Output() filterApplied = new EventEmitter<any>();
+    filterForm: FormGroup;
 
     private FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     private FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
@@ -50,11 +50,9 @@ export class FeedbackFilterModalComponent {
 
     applyFilter(): void {
         const filters = this.filterForm.value;
-
         this.localStorage.store(this.FILTER_TASKS_KEY, filters.tasks);
         this.localStorage.store(this.FILTER_TEST_CASES_KEY, filters.testCases);
         this.localStorage.store(this.FILTER_OCCURRENCE_KEY, filters.occurrence);
-
         this.filterApplied.emit(filters);
         this.activeModal.close();
     }
@@ -63,13 +61,11 @@ export class FeedbackFilterModalComponent {
         this.localStorage.clear(this.FILTER_TASKS_KEY);
         this.localStorage.clear(this.FILTER_TEST_CASES_KEY);
         this.localStorage.clear(this.FILTER_OCCURRENCE_KEY);
-
         this.filterForm.reset({
             tasks: [],
             testCases: [],
             occurrence: [1, this.maxCount()],
         });
-
         this.filterApplied.emit(this.filterForm.value);
         this.activeModal.close();
     }
