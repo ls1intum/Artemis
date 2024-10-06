@@ -3,7 +3,7 @@ package de.tum.cit.aet.artemis.tutorialgroup.architecture;
 import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleTestArchitectureTest;
 import de.tum.cit.aet.artemis.tutorialgroup.AbstractTutorialGroupIntegrationTest;
 
-public class TutorialGroupTestArchitectureTest extends AbstractModuleTestArchitectureTest<AbstractTutorialGroupIntegrationTest> {
+class TutorialGroupTestArchitectureTest extends AbstractModuleTestArchitectureTest<AbstractTutorialGroupIntegrationTest> {
 
     @Override
     public String getModulePackage() {
