@@ -17,7 +17,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     private _editor: monaco.editor.IStandaloneDiffEditor;
     monacoDiffEditorContainerElement: HTMLElement;
 
-    allowSplitView = input<boolean>();
+    allowSplitView = input<boolean>(true);
     onReadyForDisplayChange = output<boolean>();
 
     /*
