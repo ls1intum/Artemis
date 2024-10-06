@@ -30,9 +30,9 @@ export class FeedbackFilterModalComponent {
 
     constructor() {
         this.filterForm = this.fb.group({
-            tasks: [[]],
-            testCases: [[]],
-            occurrence: [[0, this.maxCount()]],
+            tasks: [],
+            testCases: [],
+            occurrence: [],
         });
     }
 
@@ -67,7 +67,7 @@ export class FeedbackFilterModalComponent {
         this.filterForm.reset({
             tasks: [],
             testCases: [],
-            occurrence: [0, 100],
+            occurrence: [0, this.maxCount()],
         });
 
         this.filterApplied.emit(this.filterForm.value);

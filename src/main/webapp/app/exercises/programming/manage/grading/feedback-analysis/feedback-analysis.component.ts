@@ -8,6 +8,7 @@ import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
 import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
 import { LocalStorageService } from 'ngx-webstorage';
+import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
 @Component({
     selector: 'jhi-feedback-analysis',
@@ -55,6 +56,8 @@ export class FeedbackAnalysisComponent {
     testCaseNames = signal<string[]>([]);
     maxCount = signal<number>(0);
 
+    private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
+
     constructor() {
         effect(() => {
             untracked(async () => {
@@ -89,7 +92,6 @@ export class FeedbackAnalysisComponent {
             this.totalItems.set(response.totalItems);
             this.totalAmountOfTasks.set(response.totalAmountOfTasks);
             this.testCaseNames.set(response.testCaseNames);
-            this.maxCount.set(response.maxCount);
         } catch (error) {
             this.alertService.error('artemisApp.programmingExercise.configureGrading.feedbackAnalysis.error');
         }
@@ -103,7 +105,7 @@ export class FeedbackAnalysisComponent {
     async search(searchTerm: string): Promise<void> {
         this.page.set(1);
         this.searchTerm.set(searchTerm);
-        await this.loadData();
+        this.debounceLoadData();
     }
 
     openFeedbackModal(feedbackDetail: FeedbackDetail): void {
@@ -121,11 +123,12 @@ export class FeedbackAnalysisComponent {
         this.loadData();
     }
 
-    openFilterModal(): void {
+    async openFilterModal(): Promise<void> {
         const savedTasks = this.localStorage.retrieve(this.FILTER_TASKS_KEY) || [];
         const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY) || [];
         const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY) || [];
 
+        this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
 
         modalRef.componentInstance.filterForm.setValue({
@@ -136,6 +139,7 @@ export class FeedbackAnalysisComponent {
 
         modalRef.componentInstance.totalAmountOfTasks = this.totalAmountOfTasks;
         modalRef.componentInstance.testCaseNames = this.testCaseNames;
+        modalRef.componentInstance.exerciseId = this.exerciseId;
         modalRef.componentInstance.maxCount = this.maxCount;
         modalRef.componentInstance.filterApplied.subscribe((filters: any) => {
             this.applyFilters(filters);

@@ -319,4 +319,10 @@ public class ResultResource {
         FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, search, filterTasks, filterTestCases, filterOccurrence);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("exercises/{exerciseId}/feedback-details-max-count")
+    public ResponseEntity<Long> getMaxCount(@PathVariable long exerciseId) {
+        long maxCount = resultService.getMaxCountForExercise(exerciseId);
+        return ResponseEntity.ok(maxCount);
+    }
 }

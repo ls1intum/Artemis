@@ -569,7 +569,7 @@ public class ResultService {
         long minOccurrence = 0;
         long maxOccurrence = Long.MAX_VALUE; // Default to a very large number if not provided
 
-        if (!filterOccurrence.isEmpty() && filterOccurrence.size() == 2) {
+        if (filterOccurrence.size() == 2) {
             minOccurrence = Long.parseLong(filterOccurrence.get(0));  // Convert first value to min
             maxOccurrence = Long.parseLong(filterOccurrence.get(1));  // Convert second value to max
         }
@@ -583,9 +583,6 @@ public class ResultService {
 
         // Get the total number of distinct results
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
-
-        // Fetch the maximum count
-        long maxCount = studentParticipationRepository.findMaxCountForExercise(exerciseId);
 
         // Fetch programming exercise tasks and map task names to indices
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
@@ -629,6 +626,10 @@ public class ResultService {
 
         // Return the response with maxCount included
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), tasks.size(),
-                testCaseNames, maxCount);
+                testCaseNames);
+    }
+
+    public long getMaxCountForExercise(long exerciseId) {
+        return studentParticipationRepository.findMaxCountForExercise(exerciseId);
     }
 }

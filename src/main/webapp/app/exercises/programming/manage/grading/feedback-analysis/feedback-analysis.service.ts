@@ -8,7 +8,6 @@ export interface FeedbackAnalysisResponse {
     totalItems: number;
     totalAmountOfTasks: number;
     testCaseNames: [];
-    maxCount: number;
 }
 export interface FeedbackDetail {
     count: number;
@@ -32,5 +31,9 @@ export class FeedbackAnalysisService extends BaseApiHttpService {
             .set('filterOccurrence', options.filters.occurrence.join(','));
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details-paged`, { params });
+    }
+
+    getMaxCount(exerciseId: number): Promise<number> {
+        return this.get<number>(`exercises/${exerciseId}/feedback-details-max-count`);
     }
 }
