@@ -32,10 +32,6 @@
     background-color: var(--module-bg);
 }
 
-.sidebar-width {
-    width: 275px !important;
-}
-
 @media print {
     .hide-on_print {
         display: none !important;

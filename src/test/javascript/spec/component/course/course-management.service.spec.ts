@@ -163,7 +163,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/onlineCourseConfiguration` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/online-course-configuration` });
         req.flush(returnedFromService);
         tick();
     }));
@@ -474,7 +474,7 @@ describe('Course Management Service', () => {
         const submissions = [submission];
         returnedFromService = [...submissions];
         courseManagementService.findAllLockedSubmissionsOfCourse(course.id!).subscribe((res) => expect(res.body).toEqual(submissions));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/lockedSubmissions` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/locked-submissions` });
         req.flush(returnedFromService);
         tick();
     }));

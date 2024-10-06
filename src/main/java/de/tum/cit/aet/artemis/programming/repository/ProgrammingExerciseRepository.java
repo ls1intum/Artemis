@@ -226,26 +226,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             """)
     List<ProgrammingExercise> findAllByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.studentParticipations
-            WHERE pe.dueDate IS NOT NULL
-                AND :endDate1 <= pe.dueDate
-                AND pe.dueDate <= :endDate2
-            """)
-    List<ProgrammingExercise> findAllWithStudentParticipationByRecentDueDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
-
-    @Query("""
-            SELECT DISTINCT pe
-            FROM ProgrammingExercise pe
-                LEFT JOIN FETCH pe.studentParticipations
-            WHERE pe.exerciseGroup IS NOT NULL
-                AND :endDate1 <= pe.exerciseGroup.exam.endDate
-                AND pe.exerciseGroup.exam.endDate <= :endDate2
-            """)
-    List<ProgrammingExercise> findAllWithStudentParticipationByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
-
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.team", "studentParticipations.team.students" })
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(long exerciseId);
 
@@ -347,8 +327,33 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
                 LEFT JOIN FETCH p.buildConfig
             WHERE p.id = :exerciseId
             """)
-    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(
+    Optional<ProgrammingExercise> findByIdWithEagerBuildConfigTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndSolutionEntriesAndBuildConfig(
             @Param("exerciseId") long exerciseId);
+
+    default ProgrammingExercise findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfigElseThrow(long exerciseId)
+            throws EntityNotFoundException {
+        return getValueElseThrow(findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(exerciseId), exerciseId);
+    }
+
+    @Query("""
+            SELECT p
+            FROM ProgrammingExercise p
+                LEFT JOIN FETCH p.testCases tc
+                LEFT JOIN FETCH p.staticCodeAnalysisCategories
+                LEFT JOIN FETCH p.exerciseHints
+                LEFT JOIN FETCH p.templateParticipation
+                LEFT JOIN FETCH p.solutionParticipation
+                LEFT JOIN FETCH p.auxiliaryRepositories
+                LEFT JOIN FETCH tc.solutionEntries
+                LEFT JOIN FETCH p.buildConfig
+                LEFT JOIN FETCH p.plagiarismDetectionConfig
+            WHERE p.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findByIdForImport(@Param("exerciseId") long exerciseId);
+
+    default ProgrammingExercise findByIdForImportElseThrow(long exerciseId) throws EntityNotFoundException {
+        return getValueElseThrow(findByIdForImport(exerciseId), exerciseId);
+    }
 
     /**
      * Returns all programming exercises that have a due date after {@code now} and have tests marked with
@@ -536,6 +541,24 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
             WHERE e.id = :exerciseId
             """)
     Optional<ProgrammingExercise> findByIdWithGradingCriteria(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT e
+            FROM ProgrammingExercise e
+                LEFT JOIN FETCH e.competencies
+            WHERE e.title = :title
+                AND e.course.id = :courseId
+            """)
+    Optional<ProgrammingExercise> findWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    @Query("""
+            SELECT e
+            FROM ProgrammingExercise e
+                LEFT JOIN FETCH e.competencies
+            WHERE e.shortName = :shortName
+                AND e.course.id = :courseId
+            """)
+    Optional<ProgrammingExercise> findByShortNameAndCourseIdWithCompetencies(@Param("shortName") String shortName, @Param("courseId") long courseId);
 
     default ProgrammingExercise findByIdWithGradingCriteriaElseThrow(long exerciseId) {
         return getValueElseThrow(findByIdWithGradingCriteria(exerciseId), exerciseId);
