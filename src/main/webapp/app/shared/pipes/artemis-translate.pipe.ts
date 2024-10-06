@@ -16,9 +16,9 @@ export class ArtemisTranslatePipe implements PipeTransform, OnDestroy {
         this.translatePipe = new TranslatePipe(translateService, changeDetectorRef);
     }
 
-    transform(query?: string, args?: any): string | undefined {
+    transform(query?: string, args?: any): string {
         if (!query || !query.length) {
-            return query;
+            return '';
         }
         // NOTE: the underlying implementation returns a string even though the method return type is specified as any
         return this.translatePipe.transform(query, args) as string;
