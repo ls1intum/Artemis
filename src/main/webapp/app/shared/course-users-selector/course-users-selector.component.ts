@@ -121,6 +121,13 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
         this.onChange(this.selectedUsers);
     }
 
+    onInputChange(event: Event): void {
+        const value = (event.target as HTMLInputElement).value;
+        if (value.length < 3) {
+            this.typeAheadInstance.dismissPopup();
+        }
+    }
+
     onFilterChange() {
         this.typeAheadInstance?.dismissPopup();
         this.searchInput.nativeElement.dispatchEvent(new Event('input'));
