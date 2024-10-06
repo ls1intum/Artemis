@@ -17,6 +17,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.dto.CourseContentCount;
+import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
@@ -99,6 +100,30 @@ public interface LectureRepository extends ArtemisJpaRepository<Lecture, Long> {
             WHERE lecture.id = :lectureId
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndSlidesAndAttachments(@Param("lectureId") long lectureId);
+
+    @Query("""
+            SELECT lecture
+            FROM Lecture lecture
+                LEFT JOIN FETCH lecture.lectureUnits
+            WHERE lecture.title = :title AND lecture.course.id = :courseId
+            """)
+    Set<Lecture> findAllByTitleAndCourseIdWithLectureUnits(@Param("title") String title, @Param("courseId") long courseId);
+
+    /**
+     * Finds a lecture by its title and course id and throws a NoUniqueQueryException if multiple lectures are found.
+     *
+     * @param title    the title of the lecture
+     * @param courseId the id of the course
+     * @return the lecture with the given title and course id
+     * @throws NoUniqueQueryException if multiple lectures are found with the same title
+     */
+    default Optional<Lecture> findUniqueByTitleAndCourseIdWithLectureUnitsElseThrow(String title, long courseId) throws NoUniqueQueryException {
+        Set<Lecture> allLectures = findAllByTitleAndCourseIdWithLectureUnits(title, courseId);
+        if (allLectures.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple lectures with title " + title + " in course with id " + courseId);
+        }
+        return allLectures.stream().findFirst();
+    }
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<Lecture> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);

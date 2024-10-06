@@ -7,8 +7,8 @@
             "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.<br>Values for last and first name are optional.",
             "csvExampleText": "Example of a valid CSV file format:",
             "csvFile": {
-                "label": "Select .csv file",
-                "tooltip": "Please select the .csv file containing the students for the import. Either 'LOGIN', 'REGISTRATION_NUMBER' or 'EMAIL' column values must be present per entry. Use the following format: login, matriculation number, email, firstname, lastname. You need to use the header in the top row"
+                "label": "Select CSV file",
+                "tooltip": "Please select the CSV file containing the students for the import. Either 'LOGIN', 'REGISTRATION_NUMBER' or 'EMAIL' column values must be present per entry. Use the following format: login, matriculation number, email, firstname, lastname. You need to use the header in the top row"
             },
             "usersForImport": {
                 "label": "Users to import",

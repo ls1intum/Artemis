@@ -30,7 +30,7 @@
             },
             "automaticAssessmentAvailable": "Herzlichen Glückwunsch! Um dir etwas Zeit zu sparen, wurden Teile dieses Modells bereits automatisch bewertet. Bitte überprüfe die automatische Bewertung und bewerte anschließend den Rest des Modells. Mit der Abgabe der Bewertung bestätigst du auch die automatische Bewertung. Bitte beachte, dass du für die gesamte Bewertung verantwortlich bist.",
             "automaticAssessmentLoading": "Automatisch generierte Feedback-Vorschläge werden geladen...",
-            "generativeAIAssessmentAvailable": "Artemis hat erstes Feedback mit Hilfe von von generativer KI erstellt, kann dabei aber Fehler machen. Bitte überprüfe wichtige Informationen.",
+            "generativeAIAssessmentAvailable": "Artemis hat erstes Feedback mithilfe von generativer KI erstellt, kann dabei aber Fehler machen. Bitte überprüfe wichtige Informationen.",
             "generativeAIAssessmentInfo": "Artemis verwendet generative KI, um auf der Grundlage der Aufgabenstellung und der Bewertungsanweisungen Feedback-Vorschläge für Abgaben zu erstellen. Auch wenn diese Vorschläge dir hoffentlich helfen, die Abgaben effizienter zu bewerten, ist es wichtig, sich bewusst zu sein, dass KI nicht immer korrekte Ergebnisse liefert. Bitte überprüfe die Vorschläge und passe sie wenn nötig an. Du bist für die gesamte Bewertung verantwortlich, einschließlich der per KI generierten Vorschläge.",
             "highlightingColors": {
                 "title": "Hervorhebungsfarbe(n)",
