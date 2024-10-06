@@ -73,7 +73,8 @@ public class PageUtil {
         )),
         FEEDBACK_ANALYSIS(Map.of(
             "count", "COUNT(f.id)",
-            "detailText", "detailText"
+            "detailText", "f.detailText",
+            "testCaseName", "f.testCase.testName"
         ));
         // @formatter:on
 

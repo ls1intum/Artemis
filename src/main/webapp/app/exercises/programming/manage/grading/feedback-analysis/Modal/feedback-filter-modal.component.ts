@@ -15,21 +15,19 @@ import { LocalStorageService } from 'ngx-webstorage';
 })
 export class FeedbackFilterModalComponent {
     private localStorage = inject(LocalStorageService);
-    @Output() filterApplied = new EventEmitter<any>();
-
-    totalAmountOfTasks = signal<number>(0);
-    testCaseNames = signal<string[]>([]);
-
+    private activeModal = inject(NgbActiveModal);
+    private fb = inject(FormBuilder);
     filterForm: FormGroup;
+    @Output() filterApplied = new EventEmitter<any>();
 
     private FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     private FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
     private FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
 
-    constructor(
-        private activeModal: NgbActiveModal,
-        private fb: FormBuilder,
-    ) {
+    totalAmountOfTasks = signal<number>(0);
+    testCaseNames = signal<string[]>([]);
+
+    constructor() {
         this.filterForm = this.fb.group({
             tasks: [[]],
             testCases: [[]],
@@ -37,37 +35,18 @@ export class FeedbackFilterModalComponent {
         });
     }
 
-    // Handle task checkbox changes
-    onTaskCheckboxChange(event: Event): void {
-        const checkbox = event.target as HTMLInputElement;
-        const tasks = this.filterForm.value.tasks;
-        if (checkbox.checked) {
-            tasks.push(checkbox.value);
-        } else {
-            const index = tasks.indexOf(checkbox.value);
-            if (index >= 0) {
-                tasks.splice(index, 1);
-            }
-        }
-        this.filterForm.patchValue({ tasks });
+    generateTaskArray(): number[] {
+        return Array.from({ length: this.totalAmountOfTasks() }, (_, i) => i + 1);
     }
 
-    // Handle test case checkbox changes
-    onTestCaseCheckboxChange(event: Event): void {
-        const checkbox = event.target as HTMLInputElement;
-        const testCases = this.filterForm.value.testCases;
-        if (checkbox.checked) {
-            testCases.push(checkbox.value);
-        } else {
-            const index = testCases.indexOf(checkbox.value);
-            if (index >= 0) {
-                testCases.splice(index, 1);
-            }
-        }
-        this.filterForm.patchValue({ testCases });
+    get occurrence(): number[] {
+        return this.filterForm.get('occurrence')?.value;
     }
 
-    // Method to apply the selected filters
+    set occurrence(value: number[]) {
+        this.filterForm.get('occurrence')?.setValue(value);
+    }
+
     applyFilter(): void {
         const filters = this.filterForm.value;
 
@@ -94,19 +73,23 @@ export class FeedbackFilterModalComponent {
         this.activeModal.close();
     }
 
+    onCheckboxChange(event: Event, controlName: string): void {
+        const checkbox = event.target as HTMLInputElement;
+        const values = this.filterForm.value[controlName];
+        if (checkbox.checked) {
+            values.push(checkbox.value);
+        } else {
+            const index = values.indexOf(checkbox.value);
+            if (index >= 0) {
+                values.splice(index, 1);
+            }
+        }
+        const patch: { [key: string]: any } = {};
+        patch[controlName] = values;
+        this.filterForm.patchValue(patch);
+    }
+
     closeModal(): void {
         this.activeModal.dismiss();
-    }
-
-    get occurrence(): number[] {
-        return this.filterForm.get('occurrence')?.value;
-    }
-
-    set occurrence(value: number[]) {
-        this.filterForm.get('occurrence')?.setValue(value);
-    }
-
-    generateTaskArray(): number[] {
-        return Array.from({ length: this.totalAmountOfTasks() }, (_, i) => i + 1);
     }
 }

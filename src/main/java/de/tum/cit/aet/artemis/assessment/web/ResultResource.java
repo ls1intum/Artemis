@@ -33,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.ResultService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -283,9 +284,12 @@ public class ResultResource {
     /**
      * GET /exercises/{exerciseId}/feedback-details-paged : Retrieves paginated and filtered aggregated feedback details for a given exercise.
      * The feedback details include counts and relative counts of feedback occurrences, test case names, and task numbers.
-     * The method allows filtering by search term and sorting by various fields.
+     * The method allows filtering by a search term and sorting by various fields.
      * <br>
      * Pagination is applied based on the provided query parameters, including page number, page size, sorting order, and search term.
+     * Sorting is applied by the specified sorted column and sorting order. If the provided sorted column is not valid for sorting (e.g., "taskNumber" or "errorCategory"),
+     * the sorting defaults to "count".
+     * <br>
      * The response contains both the paginated feedback details and the total count of distinct results for the exercise.
      *
      * @param exerciseId   The ID of the exercise for which feedback details should be retrieved.
@@ -293,12 +297,17 @@ public class ResultResource {
      * @param pageSize     The number of feedback details per page.
      * @param searchTerm   The search term used for filtering the results (optional).
      * @param sortingOrder The sorting order for the results (ASCENDING or DESCENDING).
-     * @param sortedColumn The column by which the results should be sorted.
-     * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes the paginated feedback details and the total count of distinct results.
+     * @param sortedColumn The column by which the results should be sorted. If an invalid column (e.g., "taskNumber", "errorCategory") is provided, sorting defaults to "count".
+     * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes:
+     *         - {@link SearchResultPageDTO < FeedbackDetailDTO >} feedbackDetails: Paginated feedback details for the exercise.
+     *         - long totalItems: The total number of feedback items (used for pagination).
+     *         - int totalAmountOfTasks: The total number of tasks associated with the feedback.
+     *         - List<String> testCaseNames: A list of test case names included in the feedback.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-paged")
     public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam int page, @RequestParam int pageSize,
-            @RequestParam(required = false) String searchTerm, @RequestParam String sortingOrder, @RequestParam String sortedColumn) {
+            @RequestParam(required = false) String searchTerm, @RequestParam String sortingOrder, @RequestParam String sortedColumn, @RequestParam List<String> filterTasks,
+            @RequestParam List<String> filterTestCases, @RequestParam List<String> filterOccurrence) {
 
         SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
         search.setPage(page);
@@ -307,7 +316,7 @@ public class ResultResource {
         search.setSortingOrder(SortingOrder.valueOf(sortingOrder));
         search.setSortedColumn(sortedColumn);
 
-        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, search);
+        FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, search, filterTasks, filterTestCases, filterOccurrence);
         return ResponseEntity.ok(response);
     }
 }

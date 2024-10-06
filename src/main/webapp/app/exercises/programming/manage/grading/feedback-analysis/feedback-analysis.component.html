@@ -1,8 +1,11 @@
 <ng-template #headerTemplate let-column="column" let-label="label">
-    <th scope="col">
+    <th
+        scope="col"
+        [class.clickable]="column === 'count' || column === 'detailText' || column === 'testCaseName'"
+        (click)="(column === 'count' || column === 'detailText' || column === 'testCaseName') && setSortedColumn(column)"
+    >
         <span [jhiTranslate]="label"></span>
         @if (sortedColumn() === column) {
-            <!-- Show sorting icon when the column is sorted -->
             <fa-icon [icon]="sortIcon()"></fa-icon>
         }
     </th>
@@ -11,12 +14,10 @@
 <div class="m-3">
     <div class="row m-0 justify-content-between align-items-center">
         <h3 class="m-0 col p-0" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.title" [translateValues]="{ exerciseTitle: exerciseTitle() }"></h3>
-
         <div class="col-md-auto d-flex align-items-center position-relative">
-            <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount == 0, 'btn-success': selectedFiltersCount != 0 }">
-                <fa-icon [icon]="faFilter"></fa-icon> Filters ({{ selectedFiltersCount }})
+            <button class="btn me-2" (click)="openFilterModal()" [ngClass]="{ 'btn-secondary': selectedFiltersCount() == 0, 'btn-success': selectedFiltersCount() != 0 }">
+                <fa-icon [icon]="faFilter"></fa-icon> Filters ({{ selectedFiltersCount() }})
             </button>
-
             <input
                 type="search"
                 class="form-control"
@@ -27,7 +28,6 @@
             />
         </div>
     </div>
-
     <table class="table table-striped mb-3">
         <thead>
             <tr>
@@ -60,7 +60,7 @@
                     </td>
                     <td class="text-center">{{ item.taskNumber }}</td>
                     <td>{{ item.testCaseName }}</td>
-                    <td>Student Error</td>
+                    <td>{{ item.errorCategory }}</td>
                     <td class="text-center">
                         <fa-icon [icon]="faUpRightAndDownLeftFromCenter" class="ms-2 clickable" (click)="openFeedbackModal(item)"></fa-icon>
                     </td>
@@ -68,7 +68,6 @@
             }
         </tbody>
     </table>
-
     <div class="d-flex flex-column align-items-end mt-2">
         <ngb-pagination
             [collectionSize]="collectionsSize()"
@@ -79,7 +78,6 @@
             class="pagination justify-content-end"
         >
         </ngb-pagination>
-
         <div class="text-muted text-end">
             <span class="small-text" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.totalItems" [translateValues]="{ count: totalItems() }"></span>
         </div>

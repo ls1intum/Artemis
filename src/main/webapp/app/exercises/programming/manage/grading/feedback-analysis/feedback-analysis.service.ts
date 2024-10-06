@@ -9,24 +9,26 @@ export interface FeedbackAnalysisResponse {
     totalAmountOfTasks: number;
     testCaseNames: [];
 }
-
 export interface FeedbackDetail {
     count: number;
     relativeCount: number;
     detailText: string;
     testCaseName: string;
     taskNumber: number;
+    errorCategory: string;
 }
-
 @Injectable()
 export class FeedbackAnalysisService extends BaseApiHttpService {
-    search(pageable: SearchTermPageableSearch, options: { exerciseId: number }): Promise<FeedbackAnalysisResponse> {
+    search(pageable: SearchTermPageableSearch, options: { exerciseId: number; filters: any }): Promise<FeedbackAnalysisResponse> {
         const params = new HttpParams()
             .set('page', pageable.page.toString())
             .set('pageSize', pageable.pageSize.toString())
             .set('searchTerm', pageable.searchTerm || '')
             .set('sortingOrder', pageable.sortingOrder)
-            .set('sortedColumn', pageable.sortedColumn);
+            .set('sortedColumn', pageable.sortedColumn)
+            .set('filterTasks', options.filters.tasks.join(','))
+            .set('filterTestCases', options.filters.testCases.join(','))
+            .set('filterOccurrence', options.filters.occurrence.join(','));
 
         return this.get<FeedbackAnalysisResponse>(`exercises/${options.exerciseId}/feedback-details-paged`, { params });
     }

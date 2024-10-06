@@ -5,39 +5,51 @@
     </div>
 
     <div class="modal-body">
-        <!-- Task Filters -->
         <div class="form-group">
             <label for="tasks">Tasks</label>
-            <div *ngFor="let task of generateTaskArray()" class="form-check">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    id="task-{{ task }}"
-                    [value]="task"
-                    (change)="onTaskCheckboxChange($event)"
-                    [checked]="filterForm.value.tasks.includes(task.toString())"
-                />
-                <label class="form-check-label" for="task-{{ task }}">{{ task }}</label>
+            <div class="row">
+                <!-- Thymeleaf-style @for iteration -->
+                @for (task of generateTaskArray(); track task) {
+                    <div class="col-4">
+                        <div class="form-check">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                id="task-{{ task }}"
+                                [value]="task"
+                                (change)="onCheckboxChange($event, 'tasks')"
+                                [checked]="filterForm.value.tasks.includes(task.toString())"
+                            />
+                            <label class="form-check-label" for="task-${task}">{{ task }}</label>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
 
         <!-- Test Case Filters -->
         <div class="form-group">
             <label for="testCases">Test Cases</label>
-            <div *ngFor="let testCase of testCaseNames()" class="form-check">
-                <input
-                    type="checkbox"
-                    class="form-check-input"
-                    id="testCase-{{ testCase }}"
-                    [value]="testCase"
-                    (change)="onTestCaseCheckboxChange($event)"
-                    [checked]="filterForm.value.testCases.includes(testCase)"
-                />
-                <label class="form-check-label" for="testCase-{{ testCase }}">{{ testCase }}</label>
+            <div class="row">
+                <!-- Thymeleaf-style @for iteration -->
+                @for (testCase of testCaseNames(); track testCase) {
+                    <div class="col-4">
+                        <div class="form-check">
+                            <input
+                                type="checkbox"
+                                class="form-check-input"
+                                id="testCase-{{ testCase }}"
+                                [value]="testCase"
+                                (change)="onCheckboxChange($event, 'testCases')"
+                                [checked]="filterForm.value.testCases.includes(testCase)"
+                            />
+                            <label class="form-check-label" for="testCase-${testCase}">{{ testCase }}</label>
+                        </div>
+                    </div>
+                }
             </div>
         </div>
 
-        <!-- Occurrence Range Slider -->
         <label>Occurrence (%)</label>
         <jhi-range-slider
             formControlName="occurrence"

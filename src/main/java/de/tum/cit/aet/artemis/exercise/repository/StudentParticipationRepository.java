@@ -1212,7 +1212,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 0,
                 f.detailText,
                 f.testCase.testName,
-                0
+                0,
+                ''
             )
             FROM StudentParticipation p
                  JOIN p.results r
@@ -1229,7 +1230,6 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                       OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', :searchTerm, '%'))
                   )
             GROUP BY f.detailText, f.testCase.testName
-            ORDER BY COUNT(f.id) DESC
             """)
     Page<FeedbackDetailDTO> findAggregatedFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm, Pageable pageable);
 
