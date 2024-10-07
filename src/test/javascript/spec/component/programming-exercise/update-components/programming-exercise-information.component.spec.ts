@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -16,6 +16,9 @@ import { TableEditableFieldComponent } from 'app/shared/table/table-editable-fie
 import { QueryList } from '@angular/core';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programming/manage/update/programming-exercise-update.module';
+import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
+import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
+import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -36,11 +39,16 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveKeysPipe),
                 MockModule(ArtemisProgrammingExerciseUpdateModule),
+                MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
                 {
                     provide: ActivatedRoute,
                     useValue: { queryParams: of({}) },
+                },
+                {
+                    provide: ExerciseService,
+                    useValue: MockExerciseService,
                 },
             ],
             schemas: [],
@@ -105,13 +113,23 @@ describe('ProgrammingExerciseInformationComponent', () => {
             expect(comp.programmingExercise().shortName).toBe('l01e01');
         });
 
-        it('should derive name from title', () => {
+        it('should derive shortname from title', () => {
             fixture.componentRef.setInput('isSimpleMode', true);
 
             comp.programmingExercise().title = 'Test Exercise';
             fixture.detectChanges();
 
-            expect(comp.programmingExercise().shortName).toMatch(/^TestEx\w{3}$/);
+            expect(comp.programmingExercise().shortName).toMatch('TestExercise');
+        });
+
+        it('should derive shortname from title when directly derived shortname is already taken', () => {
+            fixture.componentRef.setInput('isSimpleMode', true);
+            comp.alreadyUsedShortNames.set(['TestExercise']);
+
+            comp.programmingExercise().title = 'Test Exercise';
+            fixture.detectChanges();
+
+            expect(comp.programmingExercise().shortName).toMatch('TestExercise1');
         });
     });
 });
