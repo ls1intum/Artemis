@@ -20,14 +20,16 @@ export class GitDiffFilePanelTitleComponent {
     originalFilePath = input<string>();
     modifiedFilePath = input<string>();
 
-    titleAndFileStatus = computed(() => this.getTitleAndFileStatus(this.originalFilePath(), this.modifiedFilePath()));
+    titleAndFileStatus = computed(() => this.getTitleAndFileStatus());
 
     title = computed(() => this.titleAndFileStatus().title);
     fileStatus = computed(() => this.titleAndFileStatus().fileStatus);
 
     protected readonly FileStatus = FileStatus;
 
-    private getTitleAndFileStatus(originalFilePath?: string, modifiedFilePath?: string): { title?: string; fileStatus: FileStatus } {
+    private getTitleAndFileStatus(): { title?: string; fileStatus: FileStatus } {
+        const originalFilePath = this.originalFilePath();
+        const modifiedFilePath = this.modifiedFilePath();
         if (modifiedFilePath && originalFilePath) {
             if (modifiedFilePath !== originalFilePath) {
                 return { title: `${originalFilePath} → ${modifiedFilePath}`, fileStatus: FileStatus.RENAMED };

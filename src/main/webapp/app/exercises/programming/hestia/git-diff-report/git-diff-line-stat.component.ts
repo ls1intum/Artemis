@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 @Component({
     selector: 'jhi-git-diff-line-stat',
@@ -7,30 +7,29 @@ import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GitDiffLineStatComponent implements OnInit {
-    @Input()
-    addedLineCount: number = 0;
-    @Input()
-    removedLineCount: number = 0;
-    addedSquareCount: number;
-    removedSquareCount: number;
+export class GitDiffLineStatComponent {
+    addedLineCount = input<number>(0);
+    removedLineCount = input<number>(0);
 
-    ngOnInit(): void {
-        if (!this.addedLineCount && !this.removedLineCount) {
-            this.addedSquareCount = 1;
-            this.removedSquareCount = 1;
-        } else if (this.addedLineCount === 0) {
-            this.addedSquareCount = 0;
-            this.removedSquareCount = 5;
-        } else if (this.removedLineCount === 0) {
-            this.addedSquareCount = 5;
-            this.removedSquareCount = 0;
+    squareCounts = computed(() => this.getSquareCounts());
+    addedSquareArray = computed(() => Array.from({ length: this.squareCounts().addedSquareCount }));
+    removedSquareArray = computed(() => Array.from({ length: this.squareCounts().removedSquareCount }));
+
+    getSquareCounts(): { addedSquareCount: number; removedSquareCount: number } {
+        const addedLineCount = this.addedLineCount();
+        const removedLineCount = this.removedLineCount();
+        if (!addedLineCount && !removedLineCount) {
+            return { addedSquareCount: 1, removedSquareCount: 1 };
+        } else if (addedLineCount === 0) {
+            return { addedSquareCount: 0, removedSquareCount: 5 };
+        } else if (removedLineCount === 0) {
+            return { addedSquareCount: 5, removedSquareCount: 0 };
         } else {
-            const totalLineCount = this.addedLineCount + this.removedLineCount;
+            const totalLineCount = addedLineCount + removedLineCount;
             // Calculates the amount of green rectangles to show between 1 and 4
             // This is the rounded percentage of added lines divided by total lines
-            this.addedSquareCount = Math.round(Math.max(1, Math.min(4, (this.addedLineCount / totalLineCount) * 5)));
-            this.removedSquareCount = 5 - this.addedSquareCount;
+            const addedSquareCount = Math.round(Math.max(1, Math.min(4, (addedLineCount / totalLineCount) * 5)));
+            return { addedSquareCount, removedSquareCount: 5 - addedSquareCount };
         }
     }
 }
