@@ -132,7 +132,7 @@ describe('CourseFaqs', () => {
         const searchSpy = jest.spyOn(faqService, 'hasSearchTokens');
         const applyFilterSpy = jest.spyOn(faqService, 'applyFilters');
         courseFaqComponent.setSearchValue('questionTitle');
-        courseFaqComponent.defineSearchedAndFilteredFaq(courseFaqComponent.searchInput.getValue());
+        courseFaqComponent.refreshFaqList(courseFaqComponent.searchInput.getValue());
         expect(applyFilterSpy).toHaveBeenCalledOnce();
         expect(searchSpy).toHaveBeenCalledTimes(2);
         expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');

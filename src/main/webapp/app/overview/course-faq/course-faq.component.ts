@@ -57,8 +57,8 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
             this.loadFaqs();
             this.loadCourseExerciseCategories(this.courseId);
         });
-        this.searchInput.pipe(debounceTime(500)).subscribe((searchTerm: string) => {
-            this.defineSearchedAndFilteredFaq(searchTerm);
+        this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
+            this.refreshFaqList(searchTerm);
         });
     }
 
@@ -86,11 +86,12 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.parentParamSubscription?.unsubscribe();
+        this.searchInput.complete();
     }
 
     toggleFilters(category: string) {
         this.activeFilters = this.faqService.toggleFilter(category, this.activeFilters);
-        this.defineSearchedAndFilteredFaq(this.searchInput.getValue());
+        this.refreshFaqList(this.searchInput.getValue());
     }
 
     private applyFilters(): void {
@@ -107,7 +108,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
         this.searchInput.next(searchValue);
     }
 
-    defineSearchedAndFilteredFaq(searchTerm: string) {
+    refreshFaqList(searchTerm: string) {
         this.applyFilters();
         this.applySearch(searchTerm);
     }

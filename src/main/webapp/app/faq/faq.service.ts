@@ -138,15 +138,12 @@ export class FaqService {
         }
     }
 
-    hasSearchTokens(faq: Faq, searchTerm: string) {
-        if (searchTerm == '') {
+    hasSearchTokens(faq: Faq, searchTerm: string): boolean {
+        if (searchTerm === '') {
             return true;
         }
-        const tokens = searchTerm.split(' ');
-        if (tokens) {
-            let faqText = faq.questionTitle + ' ' + faq.questionAnswer;
-            faqText = faqText.toLowerCase();
-            return tokens.every((token) => faqText.includes(token.toLowerCase()));
-        }
+        const tokens = searchTerm.toLowerCase().split(' ');
+        const faqText = `${faq.questionTitle ?? ''} ${faq.questionAnswer ?? ''}`.toLowerCase();
+        return tokens.every((token) => faqText.includes(token));
     }
 }
