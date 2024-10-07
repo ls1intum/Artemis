@@ -455,6 +455,14 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     boolean existsByParticipationId(long participationId);
 
     /**
+     * Checks if a result exists for the given submission ID.
+     *
+     * @param submissionId the ID of the submission to check.
+     * @return true if a result exists for the given submission ID, false otherwise.
+     */
+    boolean existsBySubmissionId(long submissionId);
+
+    /**
      * Returns true if there is at least one result for the given exercise.
      *
      * @param exerciseId id of an Exercise.
