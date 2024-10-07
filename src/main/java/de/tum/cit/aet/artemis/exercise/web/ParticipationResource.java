@@ -716,7 +716,7 @@ public class ParticipationResource {
      * @param participationId the participationId of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @GetMapping("participations/{participationId}/withLatestResult")
+    @GetMapping("participations/{participationId}/with-latest-result")
     @EnforceAtLeastStudent
     public ResponseEntity<StudentParticipation> getParticipationWithLatestResult(@PathVariable Long participationId) {
         log.debug("REST request to get Participation : {}", participationId);
@@ -754,7 +754,7 @@ public class ParticipationResource {
      * @param participationId The participationId of the participation
      * @return The latest build artifact (JAR/WAR) for the participation
      */
-    @GetMapping("participations/{participationId}/buildArtifact")
+    @GetMapping("participations/{participationId}/build-artifact")
     @EnforceAtLeastStudent
     public ResponseEntity<byte[]> getParticipationBuildArtifact(@PathVariable Long participationId) {
         log.debug("REST request to get Participation build artifact: {}", participationId);
@@ -929,14 +929,14 @@ public class ParticipationResource {
     }
 
     /**
-     * DELETE /participations/:participationId : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
+     * DELETE /participations/:participationId/cleanup-build-plan : remove the build plan of the ProgrammingExerciseStudentParticipation of the "participationId".
      * This only works for programming exercises.
      *
      * @param participationId the participationId of the ProgrammingExerciseStudentParticipation for which the build plan should be removed
      * @param principal       The identity of the user accessing this resource
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("participations/{participationId}/cleanupBuildPlan")
+    @PutMapping("participations/{participationId}/cleanup-build-plan")
     @EnforceAtLeastInstructor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Participation> cleanupBuildPlan(@PathVariable Long participationId, Principal principal) {
