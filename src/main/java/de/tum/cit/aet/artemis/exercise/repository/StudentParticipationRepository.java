@@ -1214,14 +1214,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      * <br>
      * Grouping is done by feedback detail text and test case name. The occurrence count is filtered using the HAVING clause.
      *
-     * @param exerciseId          The ID of the exercise for which feedback details should be retrieved.
-     * @param distinctResultCount The total number of distinct results for calculating relative percentages.
-     * @param searchTerm          The search term used for filtering the feedback detail text (optional).
-     * @param filterTestCases     List of test case names to filter the feedback results (optional).
-     * @param filterTaskNames     List of task names to filter feedback results based on the associated test cases (optional).
-     * @param minOccurrence       The minimum number of occurrences to include in the results.
-     * @param maxOccurrence       The maximum number of occurrences to include in the results.
-     * @param pageable            Pagination information to apply.
+     * @param exerciseId      The ID of the exercise for which feedback details should be retrieved.
+     * @param searchTerm      The search term used for filtering the feedback detail text (optional).
+     * @param filterTestCases List of test case names to filter the feedback results (optional).
+     * @param filterTaskNames List of task names to filter feedback results based on the associated test cases (optional).
+     * @param minOccurrence   The minimum number of occurrences to include in the results.
+     * @param maxOccurrence   The maximum number of occurrences to include in the results.
+     * @param pageable        Pagination information to apply.
      * @return A page of {@link FeedbackDetailDTO} objects representing the aggregated feedback details.
      */
     @Query("""

@@ -93,6 +93,23 @@ public class PageUtil {
         }
     }
 
+    /**
+     * Creates a default {@link PageRequest} based on the provided {@link PageableSearchDTO} and {@link ColumnMapping}.
+     * This method maps the sorted column name from the provided search DTO using the column mapping,
+     * applies the appropriate sorting order (ascending or descending), and constructs a {@link PageRequest}
+     * with pagination and sorting information.
+     *
+     * <p>
+     * If the mapped column name contains a "COUNT(" expression, this method treats it as an unsafe sort expression
+     * and uses {@link JpaSort(String)} to apply sorting directly to the database column.
+     * </p>
+     *
+     * @param search        The {@link PageableSearchDTO} containing pagination and sorting parameters (e.g., page number, page size, sorted column, and sorting order).
+     * @param columnMapping The {@link ColumnMapping} object used to map the sorted column name from the DTO to the actual database column.
+     * @return A {@link PageRequest} object containing the pagination and sorting options based on the search and column mapping.
+     * @throws IllegalArgumentException if any of the parameters are invalid or missing.
+     * @throws NullPointerException     if the search or columnMapping parameters are null.
+     */
     @NotNull
     public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
         String mappedColumn = columnMapping.getMappedColumnName(search.getSortedColumn());
