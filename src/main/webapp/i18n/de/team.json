@@ -62,8 +62,8 @@
                 "all": "Alle Teams",
                 "own": "Eigene Teams"
             },
-            "invalidFileType": "Ungültiger Dateityp für den Team Import: {{ fileType }}",
-            "invalidCsvHeader": "Die CSV Datei muss folgende Kopfzeile haben: {{ expectedHeader }}",
+            "invalidFileType": "Ungültiger Dateityp für den Team-Import: {{ fileType }}",
+            "invalidCsvHeader": "Die CSV-Datei muss folgende Kopfzeile haben: {{ expectedHeader }}",
             "invalidCsvLine": "Zeile {{ line }} ist falsch formatiert",
             "missingUserNameOrId": "Der/Die Studierende in Eintrag {{ entryNr }} hat weder einen Login noch eine Matrikelnummer.",
             "noStudentsAddedYet": "Noch keine Studierenden hinzugefügt.",
@@ -106,7 +106,7 @@
                 "buttonLabel": "Importiere Teams",
                 "dialogTitle": "Importiere Teams nach:",
                 "introTextExercise": "Dieser Dialog kann dazu verwendet werden, Teams einer anderen Übung dieses Kurses in diese Übung zu importieren.",
-                "introTextFile": "Dieser Dialog kann dazu verwendet werden, Teams aus einer .json oder .csv Datei in diese Übung zu importieren.",
+                "introTextFile": "Dieser Dialog kann dazu verwendet werden, Teams aus einer JSON- oder CSV-Datei in diese Übung zu importieren.",
                 "error": "Teams konnten nicht importiert werden. Bitte versuche es nochmal.",
                 "fromAnExercise": "Von einer Übung",
                 "fromAFile": "Aus einer Datei"

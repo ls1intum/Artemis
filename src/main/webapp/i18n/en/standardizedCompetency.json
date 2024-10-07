@@ -51,16 +51,16 @@
                     },
                     "format": {
                         "title": "Required File Format",
-                        "text1": "Standardized competencies can be imported from a .json file into Artemis. After selecting a file, you can then verify that the knowledge areas and competencies were read correctly.",
-                        "text2": "The .json file must contain an object with the keys <code>knowledgeAreas</code> and <code>sources</code>. The former contains all knowledge areas and standardized competencies to import and the latter contains all source details of the competencies imported.",
+                        "text1": "Standardized competencies can be imported from a JSON file into Artemis. After selecting a file, you can then verify that the knowledge areas and competencies were read correctly.",
+                        "text2": "The JSON file must contain an object with the keys <code>knowledgeAreas</code> and <code>sources</code>. The former contains all knowledge areas and standardized competencies to import, and the latter contains all source details of the competencies imported.",
                         "text3": "Example of a valid import file (except for the comments):"
                     },
                     "count": "Read {{competencies}} competencies and {{knowledgeAreas}} knowledge areas from the file",
                     "error": {
                         "fileCount": "Please only upload one file",
                         "fileTooBig": "The file is too big. The maximum file size is 20 MB",
-                        "fileExtension": "Unsupported file extension. Please upload a .json file",
-                        "fileSyntax": "Unable to parse file. Please upload a file with valid .json syntax",
+                        "fileExtension": "Unsupported file extension. Please upload a JSON file",
+                        "fileSyntax": "Unable to parse file. Please upload a file with valid JSON syntax",
                         "fileStructure": "Unable to parse file. Please verify it follows the required file structure"
                     },
                     "success": "Successfully imported all knowledge areas and standardized competencies"

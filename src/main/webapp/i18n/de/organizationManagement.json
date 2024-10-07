@@ -34,9 +34,9 @@
             "patternChangeWarning": "Beim Ändern des E-Mail-Musters wird eine Neuzuweisung der Nutzer:innen zu dieser Organisation ausgeführt"
         },
         "organization": {
-            "updated": "Organization updated!",
-            "deleted": "Organization deleted!",
-            "created": "Organization created!"
+            "updated": "Organisation aktualisiert!",
+            "deleted": "Organisation gelöscht!",
+            "created": "Organisation angelegt!"
         }
     }
 }

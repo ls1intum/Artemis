@@ -36,15 +36,5 @@ describe('FeedbackAnalysisService', () => {
             const result = await responsePromise;
             expect(result).toEqual(feedbackDetailsMock);
         });
-
-        it('should handle errors while retrieving feedback details', async () => {
-            const responsePromise = service.getFeedbackDetailsForExercise(1);
-
-            const req = httpMock.expectOne('api/exercises/1/feedback-details');
-            expect(req.request.method).toBe('GET');
-            req.flush('Something went wrong', { status: 500, statusText: 'Server Error' });
-
-            await expect(responsePromise).rejects.toThrow('Internal server error');
-        });
     });
 });

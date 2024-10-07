@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Rating;
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCount;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCountDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -38,8 +38,8 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
 
     // Valid JPQL syntax, only SCA is not able to parse it
     @Query("""
-                SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCount(
-                    CAST(SUM(ra.rating) AS double) / SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END),
+                SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseRatingCountDTO(
+                    CAST(CAST(SUM(ra.rating) AS double) / SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END) AS double),
                     SUM(CASE WHEN ra.rating IS NOT NULL THEN 1 ELSE 0 END))
                 FROM Result r
                     JOIN r.participation p
@@ -48,7 +48,7 @@ public interface RatingRepository extends ArtemisJpaRepository<Rating, Long> {
                 WHERE r.completionDate IS NOT NULL
                     AND e.id = :exerciseId
             """)
-    ExerciseRatingCount averageRatingByExerciseId(@Param("exerciseId") long exerciseId);
+    ExerciseRatingCountDTO averageRatingByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Count all ratings given to submissions for the given course.
