@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, input, output, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, input, output, viewChild } from '@angular/core';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
 
@@ -25,13 +25,8 @@ export class GitDiffFileComponent {
     fileUnchanged = computed(() => this.originalFileContent() === this.modifiedFileContent());
 
     constructor() {
-        effect(
-            () => {
-                untracked(() => {
-                    this.monacoDiffEditor().setFileContents(this.originalFileContent(), this.originalFilePath(), this.modifiedFileContent(), this.modifiedFilePath());
-                });
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => {
+            this.monacoDiffEditor().setFileContents(this.originalFileContent(), this.originalFilePath(), this.modifiedFileContent(), this.modifiedFilePath());
+        });
     }
 }
