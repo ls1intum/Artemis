@@ -77,6 +77,19 @@ describe('FeedbackFilterModalComponent', () => {
         expect(component.filterForm.value.tasks).toEqual(['test-task']);
     });
 
+    it('should remove the value from form control when checkbox is unchecked', () => {
+        component.filterForm.get('tasks')?.setValue(['test-task', 'task-2']);
+        const event = { target: { checked: false, value: 'test-task' } } as unknown as Event;
+        component.onCheckboxChange(event, 'tasks');
+        expect(component.filterForm.value.tasks).toEqual(['task-2']);
+    });
+
+    it('should set occurrence correctly using the setter', () => {
+        const setValueSpy = jest.spyOn(component.filterForm.get('occurrence')!, 'setValue');
+        component.occurrence = [5, 15];
+        expect(setValueSpy).toHaveBeenCalledWith([5, 15]);
+    });
+
     it('should dismiss modal when closeModal is called', () => {
         const dismissSpy = jest.spyOn(activeModal, 'dismiss');
         component.closeModal();

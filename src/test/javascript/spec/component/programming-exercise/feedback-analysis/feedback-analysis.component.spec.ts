@@ -7,6 +7,7 @@ import { FeedbackAnalysisResponse, FeedbackAnalysisService, FeedbackDetail } fro
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { LocalStorageService } from 'ngx-webstorage';
 import '@angular/localize/init';
+import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
 
 describe('FeedbackAnalysisComponent', () => {
     let fixture: ComponentFixture<FeedbackAnalysisComponent>;
@@ -138,6 +139,80 @@ describe('FeedbackAnalysisComponent', () => {
             component.openFeedbackModal(feedbackDetail);
 
             expect(modalSpy).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('openFilterModal', () => {
+        it('should open filter modal and pass correct form values and properties', async () => {
+            const modalService = fixture.debugElement.injector.get(NgbModal);
+            const modalSpy = jest.spyOn(modalService, 'open').mockReturnValue({
+                componentInstance: {
+                    filterForm: { setValue: jest.fn() },
+                    filterApplied: { subscribe: jest.fn() },
+                },
+            } as any);
+            const getMaxCountSpy = jest.spyOn(feedbackAnalysisService, 'getMaxCount').mockResolvedValue(10);
+            component.hasAppliedFilters = true;
+
+            jest.spyOn(localStorageService, 'retrieve').mockReturnValueOnce(['task1']).mockReturnValueOnce(['testCase1']).mockReturnValueOnce([1, 5]);
+
+            await component.openFilterModal();
+
+            expect(getMaxCountSpy).toHaveBeenCalledWith(1);
+            expect(modalSpy).toHaveBeenCalledWith(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
+            const modalInstance = modalSpy.mock.results[0].value.componentInstance;
+            expect(modalInstance.filterForm.setValue).toHaveBeenCalledWith({
+                tasks: ['task1'],
+                testCases: ['testCase1'],
+                occurrence: [1, 5],
+            });
+            expect(modalInstance.totalAmountOfTasks).toBe(component.totalAmountOfTasks);
+            expect(modalInstance.testCaseNames).toBe(component.testCaseNames);
+            expect(modalInstance.exerciseId).toBe(component.exerciseId);
+            expect(modalInstance.maxCount).toBe(component.maxCount);
+        });
+    });
+
+    describe('applyFilters', () => {
+        it('should apply filters, update filter count, and reload data', () => {
+            const loadDataSpy = jest.spyOn(component, 'loadData' as any);
+            const countAppliedFiltersSpy = jest.spyOn(component, 'countAppliedFilters').mockReturnValue(2);
+
+            const filters = {
+                tasks: ['task1'],
+                testCases: ['testCase1'],
+                occurrence: [1, 10],
+            };
+
+            component.applyFilters(filters);
+            expect(countAppliedFiltersSpy).toHaveBeenCalledWith(filters);
+            expect(component.selectedFiltersCount()).toBe(2);
+            expect(component.hasAppliedFilters).toBeTrue();
+            expect(loadDataSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('countAppliedFilters', () => {
+        it('should count the applied filters correctly', () => {
+            const filters = {
+                tasks: ['task1', 'task2'],
+                testCases: ['testCase1'],
+                occurrence: [1, 10],
+            };
+
+            const count = component.countAppliedFilters(filters);
+
+            expect(count).toBe(3);
+        });
+
+        it('should return 0 if no filters are applied', () => {
+            const filters = {
+                tasks: [],
+                testCases: [],
+                occurrence: [1, component.maxCount()],
+            };
+            const count = component.countAppliedFilters(filters);
+            expect(count).toBe(0);
         });
     });
 });
