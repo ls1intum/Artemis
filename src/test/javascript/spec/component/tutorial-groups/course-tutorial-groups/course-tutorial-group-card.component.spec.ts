@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
+import {} from '@angular/router/testing';
 import { CourseTutorialGroupCardComponent } from 'app/overview/course-tutorial-groups/course-tutorial-group-card/course-tutorial-group-card.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,6 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
+import { RouterModule } from '@angular/router';
 
 describe('CourseTutorialGroupCardComponent', () => {
     let component: CourseTutorialGroupCardComponent;
@@ -19,7 +20,7 @@ describe('CourseTutorialGroupCardComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([])],
+            imports: [RouterModule.forRoot([])],
             declarations: [CourseTutorialGroupCardComponent, MockComponent(FaIconComponent), TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [
                 {

@@ -8,8 +8,8 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute } from '@angular/router';
+import {} from '@angular/router/testing';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -61,7 +61,7 @@ describe('ModelingSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([routes[0]])],
+            imports: [ArtemisTestModule, RouterModule.forRoot([routes[0]])],
             declarations: [
                 ModelingSubmissionComponent,
                 MockComponent(ModelingEditorComponent),

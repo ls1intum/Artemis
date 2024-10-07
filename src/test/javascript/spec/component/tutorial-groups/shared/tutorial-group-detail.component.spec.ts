@@ -1,5 +1,5 @@
 import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
-import { RouterTestingModule } from '@angular/router/testing';
+import {} from '@angular/router/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -21,6 +21,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { provideHttpClient } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -57,7 +58,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule, RouterTestingModule.withRoutes([])],
+            imports: [NgbTooltipMocksModule, RouterModule.forRoot([])],
             declarations: [
                 TutorialGroupDetailComponent,
                 DetailOverviewListComponent,
@@ -109,7 +110,7 @@ describe('TutorialGroupDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule, RouterTestingModule.withRoutes([])],
+            imports: [NgbTooltipMocksModule, RouterModule.forRoot([])],
             declarations: [
                 TutorialGroupDetailComponent,
                 MockPipe(ArtemisTranslatePipe),
