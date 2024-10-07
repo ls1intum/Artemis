@@ -64,7 +64,7 @@
                                             <fa-icon [fixedWidth]="true" [icon]="faEllipsis" class="ms-2 me-3" />
                                             <span
                                                 class="more"
-                                                [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed': isNavbarCollapsed }"
+                                                [ngClass]="{ 'auto-collapse': !isNavbarCollapsed, 'sidebar-collapsed-course-overview': isNavbarCollapsed }"
                                                 [jhiTranslate]="'artemisApp.courseOverview.menu.more'"
                                             ></span>
                                         </div>
@@ -124,7 +124,7 @@
                                 [ngbTooltip]="(isNavbarCollapsed ? 'Expand' : 'Collapse') + ' Menu (Ctrl + M)'"
                                 (click)="toggleCollapseState()"
                             >
-                                <div [attr.aria-expanded]="!isNavbarCollapsed" aria-controls="collapseBasic">
+                                <div class="double-arrow-icon" [attr.aria-expanded]="!isNavbarCollapsed" aria-controls="collapseBasic">
                                     <fa-icon class="me-negative fa-xs" [icon]="faChevronRight" />
                                     <fa-icon class="fa-xs" [icon]="faChevronRight" />
                                 </div>
@@ -132,7 +132,6 @@
                         </div>
                     </div>
                 </mat-sidenav>
-
                 <mat-sidenav-content
                     [ngClass]="{
                         'exam-wrapper': isExamStarted,
@@ -150,11 +149,16 @@
                                 @if (hasSidebar) {
                                     <button
                                         [ngbTooltip]="'Toggle Sidebar (⇧ + Ctrl + B)'"
+                                        [ngClass]="{ 'is-collapsed': isSidebarCollapsed }"
                                         triggers="hover"
                                         class="btn btn-sidebar-collapse me-3 btn-sm rounded-3"
                                         (click)="toggleSidebar()"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="facSidebar" class="text-secondary" size="lg" />
+                                        <div class="btn-sidebar-collapse-chevron">
+                                            <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary btn-sidebar-collapse-chevron-start" size="xs" />
+                                            <fa-icon [fixedWidth]="true" [icon]="faChevronRight" class="text-secondary" size="xs" />
+                                        </div>
                                     </button>
                                 }
                                 <div class="align-self-center">{{ 'artemisApp.courseOverview.menu.' + pageTitle | artemisTranslate }}</div>
@@ -173,23 +177,23 @@
                                 }
                             </div>
                         </div>
-                    }
-                    <div
-                        class="course-body-container"
-                        [ngClass]="{
-                            'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar,
-                            'content-height-dev': !isProduction || isTestServer,
-                            'mx-3': !isExamStarted,
-                        }"
-                    >
-                        @if (!hasSidebar) {
-                            <ng-container class="d-flex ms-auto" #controlsViewContainer />
-                        }
-                        <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
-                        <div class="refresh-overlay" [class.active]="refreshingCourse">
-                            <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
+                        <div
+                            class="course-body-container"
+                            [ngClass]="{
+                                'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar,
+                                'content-height-dev': !isProduction || isTestServer,
+                                'mx-3': !isExamStarted,
+                            }"
+                        >
+                            @if (!hasSidebar) {
+                                <ng-container class="d-flex ms-auto" #controlsViewContainer />
+                            }
+                            <router-outlet (activate)="onSubRouteActivate($event)" (deactivate)="onSubRouteDeactivate()" />
+                            <div class="refresh-overlay" [class.active]="refreshingCourse">
+                                <fa-icon size="lg" [icon]="faCircleNotch" animation="spin" />
+                            </div>
                         </div>
-                    </div>
+                    }
                 </mat-sidenav-content>
             </mat-sidenav-container>
         </div>

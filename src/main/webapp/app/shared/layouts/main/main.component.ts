@@ -1,5 +1,5 @@
 import { Component, Inject, OnDestroy, OnInit, Renderer2 } from '@angular/core';
-import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
@@ -8,11 +8,13 @@ import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { CourseManagementService } from '../../../course/manage/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
+    styleUrls: ['./main.component.scss'],
 })
 export class JhiMainComponent implements OnInit, OnDestroy {
     /**
@@ -23,11 +25,13 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     public showSkeleton = true;
     profileSubscription: Subscription;
     examStartedSubscription: Subscription;
+    courseOverviewSubscription: Subscription;
     testRunSubscription: Subscription;
     isProduction: boolean = true;
     isTestServer: boolean = false;
     isExamStarted: boolean = false;
     isTestRunExam: boolean = false;
+    isCourseOverview: boolean = false;
     isLti: boolean = false;
 
     constructor(
@@ -41,6 +45,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         @Inject(DOCUMENT)
         private document: Document,
         private renderer: Renderer2,
+        private courseService: CourseManagementService,
         private route: ActivatedRoute,
         private ltiService: LtiService,
     ) {
@@ -115,6 +120,10 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isTestRunExam = isStarted;
         });
 
+        this.courseOverviewSubscription = this.courseService.isCourseOverview$.subscribe((isPresent) => {
+            this.isCourseOverview = isPresent;
+        });
+
         //this.checkLtiParameter();
 
         this.ltiService.isLti$.subscribe((isLti) => {
@@ -146,5 +155,6 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.testRunSubscription?.unsubscribe();
+        this.courseOverviewSubscription?.unsubscribe();
     }
 }
