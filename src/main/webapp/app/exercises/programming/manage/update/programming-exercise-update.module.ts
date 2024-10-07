@@ -32,7 +32,7 @@ import { FormsModule } from 'app/forms/forms.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 
 @NgModule({
@@ -58,7 +58,7 @@ import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercis
         FormsModule,
         ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
-        MonacoEditorModule,
+        MonacoEditorComponent,
         ProgrammingExerciseTheiaComponent,
         ProgrammingExerciseEditCheckoutDirectoriesComponent,
     ],

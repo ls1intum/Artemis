@@ -1,10 +1,11 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { take } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ModelingSubmission Service', () => {
     let service: ModelingSubmissionService;
@@ -13,8 +14,8 @@ describe('ModelingSubmission Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: AccountService, useClass: MockAccountService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         });
         service = TestBed.inject(ModelingSubmissionService);
         httpMock = TestBed.inject(HttpTestingController);

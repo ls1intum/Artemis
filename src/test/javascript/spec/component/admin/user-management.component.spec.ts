@@ -11,7 +11,7 @@ import {
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpHeaders, HttpParams, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { Subscription, of } from 'rxjs';
 import { AbstractControl, ReactiveFormsModule } from '@angular/forms';
@@ -25,7 +25,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -62,7 +62,7 @@ describe('UserManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(NgbModule), HttpClientTestingModule],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(NgbModule)],
             declarations: [
                 UserManagementComponent,
                 MockRouterLinkDirective,
@@ -73,6 +73,8 @@ describe('UserManagementComponent', () => {
                 MockDirective(SortDirective),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: route,
