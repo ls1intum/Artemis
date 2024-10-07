@@ -70,8 +70,8 @@
                 [allowSplitView]="allowSplitView"
                 [diffForTemplateAndSolution]="diffForTemplateAndSolution"
                 [diffEntries]="diffInformation.entries"
-                [templateFileContent]="diffInformation.templateFileContent"
-                [solutionFileContent]="diffInformation.solutionFileContent"
+                [originalFileContent]="diffInformation.templateFileContent"
+                [modifiedFileContent]="diffInformation.solutionFileContent"
                 (onDiffReady)="onDiffReady(diffInformation.path, $event)"
             />
         </div>
