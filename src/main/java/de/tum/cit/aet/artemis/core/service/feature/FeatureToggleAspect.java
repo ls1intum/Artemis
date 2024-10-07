@@ -29,11 +29,9 @@ public class FeatureToggleAspect {
 
     /**
      * Pointcut around all methods or classes annotated with {@link FeatureToggle}.
-     *
-     * @param featureToggle The feature toggle annotation containing the relevant features
      */
-    @Pointcut("@within(featureToggle) || @annotation(featureToggle)")
-    public void callAt(FeatureToggle featureToggle) {
+    @Pointcut("@within(de.tum.cit.aet.artemis.core.service.feature.FeatureToggle) || @annotation(de.tum.cit.aet.artemis.core.service.feature.FeatureToggle) || execution(@(@de.tum.cit.aet.artemis.core.service.feature.FeatureToggle *) * *(..))")
+    protected void callAt() {
     }
 
     /**
