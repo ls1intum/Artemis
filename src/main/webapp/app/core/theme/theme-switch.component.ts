@@ -5,6 +5,7 @@ import { PlacementArray } from '@ng-bootstrap/ng-bootstrap/util/positioning';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { fromEvent } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.
@@ -15,7 +16,7 @@ import { faSync } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
-    imports: [TranslateModule, NgbModule],
+    imports: [TranslateModule, NgbModule, FontAwesomeModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
 })

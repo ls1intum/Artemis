@@ -110,7 +110,7 @@ describe('NavbarComponent', () => {
                 MockComponent(JhiConnectionWarningComponent),
                 MockComponent(SystemNotificationComponent),
                 MockComponent(FaIconComponent),
-                ThemeSwitchComponent,
+                MockComponent(ThemeSwitchComponent),
             ],
             providers: [
                 provideHttpClient(),
@@ -136,6 +136,11 @@ describe('NavbarComponent', () => {
                 },
             ],
         })
+            .overrideComponent(NavbarComponent, {
+                remove: {
+                    imports: [ThemeSwitchComponent],
+                },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(NavbarComponent);
