@@ -174,10 +174,35 @@
             "manage": {
                 "importAllButton": "Import all of a course"
             },
+            "importSettings": {
+                "importRelationsLabel": "Import relations",
+                "importRelationsTooltip": "Imports all relations between the course competencies",
+                "importExercisesLabel": "Import exercises",
+                "importExercisesTooltip": "Imports all exercises of the course competencies or links them to the imported course competency if an exercise with that name already exists",
+                "importLecturesLabel": "Import lectures",
+                "importLecturesTooltip": "Imports all related lecture units of the course competencies or links them to the imported course competency if a lecture unit with that name already exists",
+                "referenceDateLabel": "Reference date",
+                "referenceDateTooltip": "The reference date is used to calculate the dates of the imported resources. The earliest date of this type is set to the reference date and all other dates are set relative to this date.",
+                "referenceDateTypeLabel": "Reference date type",
+                "referenceDateTypeTooltip": "'Release date' refers to the release date of exercises and lecture units as well as the visible date of lectures. 'Due date' refers to the due date of exercises and competencies as well as the end date of lectures.",
+                "referenceDateType": {
+                    "noSelection": "-- Choose a reference date first --",
+                    "releaseDate": "Release date",
+                    "dueDate": "Due date"
+                }
+            },
             "importAll": {
                 "title": "Import all Competencies and Prerequisites from another course",
                 "success": "Imported {{ noOfCompetencies }} competencies and prerequisites from course \"{{ courseTitle }}\".",
-                "warning": "No competencies or prerequisites were found for course \"{{ courseTitle }}\"."
+                "warning": "No competencies or prerequisites were found for course \"{{ courseTitle }}\".",
+                "table": {
+                    "title": "Courses",
+                    "columns": {
+                        "TITLE": "Title",
+                        "SHORT_NAME": "Short Name",
+                        "SEMESTER": "Semester"
+                    }
+                }
             },
             "create": {
                 "titleUniqueValidationError": "There already exists a competency/prerequisite with this title in the course",

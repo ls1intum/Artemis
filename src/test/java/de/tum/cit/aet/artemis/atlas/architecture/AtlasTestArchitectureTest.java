@@ -1,13 +1,13 @@
 package de.tum.cit.aet.artemis.atlas.architecture;
 
 import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
-import de.tum.cit.aet.artemis.shared.architecture.AbstractModuleTestArchitectureTest;
+import de.tum.cit.aet.artemis.shared.architecture.module.AbstractModuleTestArchitectureTest;
 
 class AtlasTestArchitectureTest extends AbstractModuleTestArchitectureTest<AbstractAtlasIntegrationTest> {
 
     @Override
-    protected String getModulePackageName() {
-        return "atlas";
+    public String getModulePackage() {
+        return ARTEMIS_PACKAGE + ".atlas";
     }
 
     @Override
