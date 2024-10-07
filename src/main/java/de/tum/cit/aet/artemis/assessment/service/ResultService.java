@@ -591,7 +591,7 @@ public class ResultService {
         for (int i = 0; i < tasks.size(); i++) {
             taskIndexToNameMap.put(String.valueOf(i + 1), tasks.get(i).getTaskName());
         }
-        List<String> filterTaskNames = filterTasks.stream().map(taskIndexToNameMap::get).filter(Objects::nonNull).collect(Collectors.toList());
+        List<String> filterTaskNames = filterTasks.stream().map(taskIndexToNameMap::get).filter(Objects::nonNull).toList();
         if (filterTaskNames.isEmpty()) {
             filterTaskNames = null;
         }
