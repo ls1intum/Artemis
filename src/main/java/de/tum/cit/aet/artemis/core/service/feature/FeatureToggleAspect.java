@@ -1,10 +1,11 @@
 package de.tum.cit.aet.artemis.core.service.feature;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.security.annotations.AnnotationUtils.getAnnotation;
+import static de.tum.cit.aet.artemis.core.security.annotations.AnnotationUtils.getAnnotations;
 
 import java.util.Arrays;
-import java.util.Optional;
+import java.util.List;
+import java.util.stream.Stream;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -45,8 +46,9 @@ public class FeatureToggleAspect {
      */
     @Around(value = "callAt()", argNames = "joinPoint")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        Optional<FeatureToggle> featureToggle = getAnnotation(FeatureToggle.class, joinPoint);
-        if (featureToggle.isPresent() && Arrays.stream(featureToggle.get().value()).allMatch(featureToggleService::isFeatureEnabled)) {
+        List<FeatureToggle> featureToggleAnnotations = getAnnotations(FeatureToggle.class, joinPoint);
+        Stream<Feature> features = featureToggleAnnotations.stream().flatMap(featureToggle -> Arrays.stream(featureToggle.value()));
+        if (features.allMatch(featureToggleService::isFeatureEnabled)) {
             return joinPoint.proceed();
         }
         else {

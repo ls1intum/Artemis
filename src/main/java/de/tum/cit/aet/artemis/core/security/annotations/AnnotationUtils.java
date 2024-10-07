@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.core.security.annotations;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.constraints.NotBlank;
@@ -53,6 +55,33 @@ public final class AnnotationUtils {
             }
         }
         return Optional.empty();
+    }
+
+    public static <T extends Annotation> List<T> getAnnotations(@NotNull Class<T> clazz, @NotNull ProceedingJoinPoint joinPoint) {
+        List<T> annotations = new ArrayList<>();
+
+        final var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
+        T annotation = method.getAnnotation(clazz);
+        if (annotation != null) {
+            annotations.add(annotation);
+        }
+        for (Annotation a : method.getDeclaredAnnotations()) {
+            annotation = a.annotationType().getAnnotation(clazz);
+            if (annotation != null) {
+                annotations.add(annotation);
+            }
+        }
+        annotation = method.getDeclaringClass().getAnnotation(clazz);
+        if (annotation != null) {
+            annotations.add(annotation);
+        }
+        for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
+            annotation = a.annotationType().getAnnotation(clazz);
+            if (annotation != null) {
+                annotations.add(annotation);
+            }
+        }
+        return annotations;
     }
 
     /**
