@@ -1,12 +1,19 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { GitDiffFilePanelTitleComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel-title.component';
+import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @Component({
     selector: 'jhi-git-diff-file-panel',
     templateUrl: './git-diff-file-panel.component.html',
     styleUrls: ['./git-diff-file-panel.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [GitDiffFilePanelTitleComponent, GitDiffLineStatComponent, GitDiffFileComponent, ArtemisSharedModule],
 })
 export class GitDiffFilePanelComponent implements OnInit {
     @Input() diffEntries: ProgrammingExerciseGitDiffEntry[];
