@@ -124,7 +124,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isCourseOverview = isPresent;
         });
 
-        this.checkLtiParameter();
+        // this.checkLtiParameter();
 
         this.ltiService.isLti$.subscribe((isLti) => {
             this.isLti = isLti;
