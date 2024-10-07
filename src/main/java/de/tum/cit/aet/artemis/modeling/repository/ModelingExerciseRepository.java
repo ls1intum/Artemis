@@ -6,6 +6,7 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -16,6 +17,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 
@@ -54,9 +56,10 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
                 LEFT JOIN FETCH results.assessor
                 LEFT JOIN FETCH modelingExercise.teamAssignmentConfig
                 LEFT JOIN FETCH modelingExercise.plagiarismDetectionConfig
+                LEFT JOIN FETCH modelingExercise.gradingCriteria
             WHERE modelingExercise.id = :exerciseId
             """)
-    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(@Param("exerciseId") Long exerciseId);
+    Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(@Param("exerciseId") Long exerciseId);
 
     /**
      * Get all modeling exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -94,6 +97,31 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
     @EntityGraph(type = LOAD, attributePaths = { "studentParticipations", "studentParticipations.submissions", "studentParticipations.submissions.results" })
     Optional<ModelingExercise> findWithStudentParticipationsSubmissionsResultsById(Long exerciseId);
 
+    @Query("""
+            SELECT m
+            FROM ModelingExercise m
+                LEFT JOIN FETCH m.competencies
+            WHERE m.title = :title
+                AND m.course.id = :courseId
+            """)
+    Set<ModelingExercise> findAllWithCompetenciesByTitleAndCourseId(@Param("title") String title, @Param("courseId") long courseId);
+
+    /**
+     * Finds a modeling exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
+     *
+     * @param title    the title of the exercise
+     * @param courseId the id of the course
+     * @return the exercise with the given title and course id
+     * @throws NoUniqueQueryException if multiple exercises are found with the same title
+     */
+    default Optional<ModelingExercise> findUniqueWithCompetenciesByTitleAndCourseId(String title, long courseId) throws NoUniqueQueryException {
+        Set<ModelingExercise> allExercises = findAllWithCompetenciesByTitleAndCourseId(title, courseId);
+        if (allExercises.size() > 1) {
+            throw new NoUniqueQueryException("Found multiple exercises with title " + title + " in course with id " + courseId);
+        }
+        return allExercises.stream().findFirst();
+    }
+
     @NotNull
     default ModelingExercise findWithEagerExampleSubmissionsAndCompetenciesByIdElseThrow(long exerciseId) {
         return getValueElseThrow(findWithEagerExampleSubmissionsAndCompetenciesById(exerciseId), exerciseId);
@@ -106,7 +134,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
 
     @NotNull
     default ModelingExercise findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigElseThrow(long exerciseId) {
-        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfig(exerciseId), exerciseId);
+        return getValueElseThrow(findByIdWithExampleSubmissionsAndResultsAndPlagiarismDetectionConfigAndGradingCriteria(exerciseId), exerciseId);
     }
 
     @NotNull

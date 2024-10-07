@@ -7,6 +7,7 @@ import { FormControl } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { Observable, map, startWith } from 'rxjs';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FaqCategory } from 'app/entities/faq-category.model';
 
 const DEFAULT_COLORS = ['#6ae8ac', '#9dca53', '#94a11c', '#691b0b', '#ad5658', '#1b97ca', '#0d3cc2', '#0ab84f'];
 
@@ -22,9 +23,9 @@ export class CategorySelectorComponent implements OnChanges {
     private readonly COLOR_SELECTOR_HEIGHT = 150;
 
     /** the selected categories, which can be manipulated by the user in the UI */
-    @Input() categories: ExerciseCategory[];
+    @Input() categories: ExerciseCategory[] | FaqCategory[];
     /** the existing categories used for auto-completion, might include duplicates */
-    @Input() existingCategories: ExerciseCategory[];
+    @Input() existingCategories: ExerciseCategory[] | FaqCategory[];
 
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     @ViewChild('categoryInput') categoryInput: ElementRef<HTMLInputElement>;

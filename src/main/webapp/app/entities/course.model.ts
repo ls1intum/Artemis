@@ -62,6 +62,7 @@ export class Course implements BaseEntity {
     public color?: string;
     public courseIcon?: string;
     public onlineCourse?: boolean;
+    public faqEnabled?: boolean;
     public enrollmentEnabled?: boolean;
     public enrollmentConfirmationMessage?: string;
     public unenrollmentEnabled?: boolean;
