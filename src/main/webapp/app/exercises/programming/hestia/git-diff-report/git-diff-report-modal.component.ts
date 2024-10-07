@@ -1,14 +1,19 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { CachedRepositoryFilesService } from 'app/exercises/programming/manage/services/cached-repository-files.service';
 import { Subscription } from 'rxjs';
+import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-git-diff-report-modal',
     templateUrl: './git-diff-report-modal.component.html',
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [GitDiffReportComponent, TranslateDirective],
 })
 export class GitDiffReportModalComponent implements OnInit, OnDestroy {
     @Input() report: ProgrammingExerciseGitDiffReport;

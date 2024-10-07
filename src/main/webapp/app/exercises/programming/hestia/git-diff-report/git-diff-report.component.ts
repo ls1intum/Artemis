@@ -1,8 +1,12 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { GitDiffFilePanelComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file-panel.component';
 
 interface DiffInformation {
     path: string;
@@ -15,6 +19,9 @@ interface DiffInformation {
 @Component({
     selector: 'jhi-git-diff-report',
     templateUrl: './git-diff-report.component.html',
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [GitDiffLineStatComponent, ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffFilePanelComponent],
 })
 export class GitDiffReportComponent implements OnInit {
     @Input() report: ProgrammingExerciseGitDiffReport;
