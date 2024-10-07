@@ -298,7 +298,7 @@ class MetricsIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             final var competencyInformation = result.competencyMetrics().competencyInformation();
 
-            final var competencies = competencyRepository.findAllForCourse(course.getId());
+            final var competencies = competencyRepository.findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(course.getId());
             final var expectedDTOs = competencies.stream().map(CompetencyInformationDTO::of).collect(Collectors.toSet());
 
             assertThat(competencyInformation.values()).containsExactlyInAnyOrderElementsOf(expectedDTOs);
