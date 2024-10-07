@@ -72,7 +72,7 @@ describe('FeedbackAnalysisComponent', () => {
     describe('loadData', () => {
         it('should load feedback details and update state correctly', async () => {
             await component['loadData']();
-            expect(searchSpy).toHaveBeenCalled();
+            expect(searchSpy).toHaveBeenCalledTimes(2);
             expect(component.content().resultsOnPage).toEqual(feedbackMock);
             expect(component.totalItems()).toBe(2);
         });
@@ -188,7 +188,7 @@ describe('FeedbackAnalysisComponent', () => {
             expect(countAppliedFiltersSpy).toHaveBeenCalledWith(filters);
             expect(component.selectedFiltersCount()).toBe(2);
             expect(component.hasAppliedFilters).toBeTrue();
-            expect(loadDataSpy).toHaveBeenCalled();
+            expect(loadDataSpy).toHaveBeenCalledOnce();
         });
     });
 

@@ -48,8 +48,8 @@ describe('FeedbackFilterModalComponent', () => {
         expect(storeSpy).toHaveBeenCalledWith(component.FILTER_TASKS_KEY, []);
         expect(storeSpy).toHaveBeenCalledWith(component.FILTER_TEST_CASES_KEY, []);
         expect(storeSpy).toHaveBeenCalledWith(component.FILTER_OCCURRENCE_KEY, [1, 10]);
-        expect(emitSpy).toHaveBeenCalled();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 
     it('should clear filters and reset the form', () => {
@@ -67,8 +67,8 @@ describe('FeedbackFilterModalComponent', () => {
             testCases: [],
             occurrence: [1, 10],
         });
-        expect(emitSpy).toHaveBeenCalled();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 
     it('should update form values when checkboxes change', () => {
@@ -93,6 +93,6 @@ describe('FeedbackFilterModalComponent', () => {
     it('should dismiss modal when closeModal is called', () => {
         const dismissSpy = jest.spyOn(activeModal, 'dismiss');
         component.closeModal();
-        expect(dismissSpy).toHaveBeenCalled();
+        expect(dismissSpy).toHaveBeenCalledOnce();
     });
 });
