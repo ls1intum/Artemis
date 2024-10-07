@@ -1,8 +1,10 @@
 package de.tum.cit.aet.artemis.core.service.feature;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.security.annotations.AnnotationUtils.getAnnotation;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -37,14 +39,14 @@ public class FeatureToggleAspect {
      * Aspect around all methods for which a feature toggle has been activated. Will check all specified features and only
      * execute the underlying method if all features are enabled. Will otherwise return forbidden (as response entity)
      *
-     * @param joinPoint     Proceeding join point of the aspect
-     * @param featureToggle The feature toggle annotation containing all features that should get checked
+     * @param joinPoint Proceeding join point of the aspect
      * @return The original return value of the called method, if all features are enabled, a forbidden response entity otherwise
      * @throws Throwable If there was any error during method execution (both the aspect or the actual called method)
      */
-    @Around(value = "callAt(featureToggle)", argNames = "joinPoint,featureToggle")
-    public Object around(ProceedingJoinPoint joinPoint, FeatureToggle featureToggle) throws Throwable {
-        if (Arrays.stream(featureToggle.value()).allMatch(featureToggleService::isFeatureEnabled)) {
+    @Around(value = "callAt()", argNames = "joinPoint")
+    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+        Optional<FeatureToggle> featureToggle = getAnnotation(FeatureToggle.class, joinPoint);
+        if (featureToggle.isPresent() && Arrays.stream(featureToggle.get().value()).allMatch(featureToggleService::isFeatureEnabled)) {
             return joinPoint.proceed();
         }
         else {
