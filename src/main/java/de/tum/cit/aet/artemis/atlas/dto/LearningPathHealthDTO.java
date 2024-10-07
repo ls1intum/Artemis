@@ -14,6 +14,6 @@ public record LearningPathHealthDTO(@NotEmpty Set<HealthStatus> status, Long mis
     }
 
     public enum HealthStatus {
-        DISABLED, MISSING, NO_COMPETENCIES, NO_RELATIONS
+        MISSING, NO_COMPETENCIES, NO_RELATIONS
     }
 }
