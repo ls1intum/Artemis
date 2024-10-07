@@ -1,4 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 enum FileStatus {
     CREATED = 'created',
@@ -10,6 +11,9 @@ enum FileStatus {
     selector: 'jhi-git-diff-file-panel-title',
     templateUrl: './git-diff-file-panel-title.component.html',
     styleUrls: ['./git-diff-file-panel-title.component.scss'],
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective],
 })
 export class GitDiffFilePanelTitleComponent implements OnInit {
     @Input()
