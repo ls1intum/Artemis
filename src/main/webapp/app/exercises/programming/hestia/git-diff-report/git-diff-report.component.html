@@ -1,18 +1,18 @@
 <div class="row border-bottom">
     <div class="col-6">
         <h4 class="ps-2">
-            @if (isRepositoryView && leftCommit) {
-                @if (diffForTemplateAndEmptyRepository) {
+            @if (isRepositoryView() && leftCommit()) {
+                @if (diffForTemplateAndEmptyRepository()) {
                     {{ 'artemisApp.programmingExercise.diffReport.emptyRepository' | artemisTranslate }}
                 } @else {
                     {{ 'artemisApp.programmingExercise.diffReport.previousCommit' | artemisTranslate }}
                     <span class="text-primary">
-                        {{ leftCommit }}
+                        {{ leftCommit() }}
                     </span>
                 }
             } @else {
                 {{
-                    (diffForTemplateAndSolution || !report.participationIdForLeftCommit
+                    (diffForTemplateAndSolution() || !report().participationIdForLeftCommit
                         ? 'artemisApp.programmingExercise.diffReport.template'
                         : 'artemisApp.programmingExercise.diffReport.previousSubmission'
                     ) | artemisTranslate
@@ -22,18 +22,18 @@
     </div>
     <div class="col-3">
         <h4 class="ps-2">
-            @if (isRepositoryView && rightCommit) {
-                @if (diffForTemplateAndEmptyRepository) {
+            @if (isRepositoryView() && rightCommit()) {
+                @if (diffForTemplateAndEmptyRepository()) {
                     {{ 'artemisApp.programmingExercise.diffReport.template' | artemisTranslate }}
                 } @else {
                     {{ 'artemisApp.programmingExercise.diffReport.currentCommit' | artemisTranslate }}
                     <span class="text-primary">
-                        {{ rightCommit }}
+                        {{ rightCommit() }}
                     </span>
                 }
             } @else {
                 {{
-                    (diffForTemplateAndSolution ? 'artemisApp.programmingExercise.diffReport.solution' : 'artemisApp.programmingExercise.diffReport.currentSubmission')
+                    (diffForTemplateAndSolution() ? 'artemisApp.programmingExercise.diffReport.solution' : 'artemisApp.programmingExercise.diffReport.currentSubmission')
                         | artemisTranslate
                 }}
             }
@@ -46,15 +46,15 @@
                 [btnSize]="ButtonSize.SMALL"
                 [icon]="faTableColumns"
                 tooltip="artemisApp.programmingExercise.diffReport.splitView.tooltip"
-                [title]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView ? 'disable' : 'enable')"
-                (onClick)="allowSplitView = !allowSplitView"
+                [title]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"
+                (onClick)="allowSplitView.set(!allowSplitView())"
             />
             <jhi-git-diff-line-stat
                 class="mt-1 fw-bold"
-                [addedLineCount]="addedLineCount"
-                [removedLineCount]="removedLineCount"
+                [addedLineCount]="addedLineCount()"
+                [removedLineCount]="removedLineCount()"
                 ngbTooltip="{{
-                    (diffForTemplateAndSolution
+                    (diffForTemplateAndSolution()
                         ? 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport'
                         : 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReportExamTimeline'
                     ) | artemisTranslate
@@ -63,12 +63,12 @@
         </div>
     </div>
 </div>
-<div [hidden]="!allDiffsReady">
-    @for (diffInformation of diffInformationForPaths; track diffInformation) {
+<div [hidden]="!allDiffsReady()">
+    @for (diffInformation of diffInformationForPaths(); track diffInformation) {
         <div class="mt-2">
             <jhi-git-diff-file-panel
-                [allowSplitView]="allowSplitView"
-                [diffForTemplateAndSolution]="diffForTemplateAndSolution"
+                [allowSplitView]="allowSplitView()"
+                [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
                 [diffEntries]="diffInformation.entries"
                 [originalFileContent]="diffInformation.templateFileContent"
                 [modifiedFileContent]="diffInformation.solutionFileContent"
@@ -78,9 +78,9 @@
     }
 </div>
 <div class="d-flex w-100 justify-content-center align-items-center fs-4">
-    @if (nothingToDisplay) {
+    @if (nothingToDisplay()) {
         <div class="text-secondary mt-3" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.empty"></div>
-    } @else if (!allDiffsReady) {
+    } @else if (!allDiffsReady()) {
         <div>
             <fa-icon [icon]="faSpinner" animation="spin" />
         </div>
