@@ -54,13 +54,9 @@
                 "button": "Im Git Client klonen",
                 "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
             },
-            "cloneVSCode": {
-                "button": "In VSCode klonen",
-                "helpIcon": "Klone das Repository direkt in Visual Studio Code."
-            },
-            "cloneIntelliJ": {
-                "button": "In IntelliJ klonen",
-                "helpIcon": "Klone das Repository direkt in IntelliJ. Dieses Feature benötigt die Jetbrains Toolbox."
+            "ideButton": {
+                "openIn": "Öffnen in {{ ideName }}",
+                "helpIcon": "IDE kann in den Einstellungen festgelegt werden"
             },
             "goToBuildPlan": "Zum Build Plan gehen",
             "openTextEditor": "Texteditor öffnen",
@@ -69,6 +65,8 @@
             "uploadFile": "Datei hochladen",
             "viewTeam": "Team",
             "sshKeyTip": "Um SSH zu nutzen, musst du {link:hier} einen SSH Schlüssel zu deinem Konto hinzufügen.",
+            "vcsTokenTip": "Um mit einem VCS-Zugriffstoken auf das Repository zuzugreifen, musst du {link:hier} ein neues hinzufügen.",
+            "vcsTokenExpiredTip": "Dein VCS-Zugriffstoken ist abgelaufen. Erneuere es {link:hier}.",
             "startExerciseBeforeStartDate": "Du kannst vor dem Startdatum nicht an der Aufgabe teilnehmen.",
             "deleteMultipleExercisesQuestion": "Sollen die ausgewählten Aufgaben wirklich dauerhaft gelöscht werden?"
         }

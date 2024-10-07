@@ -8,7 +8,7 @@ import { courseOverviewTour } from 'app/guided-tour/tours/course-overview-tour';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { Router } from '@angular/router';
 import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
@@ -49,6 +49,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
     async ngOnInit() {
         this.loadAndFilterCourses();
         (await this.teamService.teamAssignmentUpdates).subscribe();
+        this.courseService.enableCourseOverviewBackground();
     }
 
     /**
@@ -58,6 +59,7 @@ export class CoursesComponent implements OnInit, OnDestroy {
         if (this.quizExercisesChannels) {
             this.quizExercisesChannels.forEach((channel) => this.jhiWebsocketService.unsubscribe(channel));
         }
+        this.courseService.disableCourseOverviewBackground();
     }
 
     loadAndFilterCourses() {

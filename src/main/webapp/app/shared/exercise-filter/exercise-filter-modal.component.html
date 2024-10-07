@@ -1,0 +1,145 @@
+<form name="exerciseFilterForm" (ngSubmit)="applyFilter()">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <fa-icon [icon]="faFilter" />
+            <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.modalTitle"></span>
+        </h4>
+        <button type="button" class="btn-close" (click)="closeModal()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            @if (noFiltersAvailable) {
+                <div>
+                    <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.noFilterAvailable"></span>
+                </div>
+            }
+
+            @if (selectableCategoryOptions.length || selectedCategoryOptions.length) {
+                <label for="exercise-categories-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.categories"></label>
+
+                <input
+                    id="exercise-categories-filter-selection"
+                    type="text"
+                    class="form-control mb-2"
+                    name="category-filter-selection"
+                    [(ngModel)]="model"
+                    [ngbTypeahead]="search"
+                    [placeholder]="
+                        (!selectableCategoryOptions.length ? 'artemisApp.courseOverview.exerciseFilter.noMoreOptions' : 'artemisApp.exercise.selectCategories') | artemisTranslate
+                    "
+                    (focus)="focus$.next($any($event).target.value)"
+                    (click)="click$.next($any($event).target.value)"
+                    #categoriesFilterSelection="ngbTypeahead"
+                    (selectItem)="onSelectItem($event)"
+                    [resultFormatter]="resultFormatter"
+                    (keydown.enter)="onSelectItem($event)"
+                    [disabled]="!selectableCategoryOptions.length"
+                />
+
+                <div class="row">
+                    <div class="d-flex flex-row flex-wrap">
+                        @for (categoryFilterOption of selectedCategoryOptions; track categoryFilterOption) {
+                            <div class="p-1">
+                                <jhi-custom-exercise-category-badge
+                                    [category]="categoryFilterOption.category"
+                                    [displayRemoveButton]="true"
+                                    [onClick]="removeItem(categoryFilterOption)"
+                                    [fontSize]="'small'"
+                                />
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        @if (typeFilter?.isDisplayed) {
+            <div class="form-group">
+                <label for="exercise-type-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.ratingList.exerciseType"></label>
+                <div id="exercise-type-filter-selection">
+                    @for (typeFilter of typeFilter!.options; track typeFilter) {
+                        <div class="form-check form-check-inline no-left-margin-padding">
+                            <label class="pointer">
+                                <input type="checkbox" [(ngModel)]="typeFilter.checked" [name]="typeFilter.value" class="pointer" />
+                                <fa-icon [icon]="typeFilter.icon" class="ms-2" />
+                                <span [jhiTranslate]="typeFilter.name" class="ms-1"></span>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!--        <div class="form-group">-->
+        <!--            <label class="form-control-label h6" jhiTranslate="artemisApp.courseOverview.exerciseFilter.dueDateRange"> </label>-->
+        <!--            TODO: Implement Date Range Picker (follow up PR @FlorianGlombik)-->
+        <!--        </div>-->
+
+        <!--    On typescript version 5.5.4 the explicit check for difficultyFilter is needed,
+        as otherwise typescript thinks it could be undefined in the loop (the client would not start in this case) -->
+        @if (difficultyFilter?.isDisplayed && difficultyFilter) {
+            <div class="form-group">
+                <label for="difficulty-filter-selection" class="form-control-label h6" jhiTranslate="artemisApp.exercise.difficulty"></label>
+                <div id="difficulty-filter-selection">
+                    @for (difficultyFilterOption of difficultyFilter.options; track difficultyFilterOption) {
+                        <div class="form-check form-check-inline no-left-margin-padding">
+                            <label class="pointer">
+                                <input type="checkbox" [(ngModel)]="difficultyFilterOption.checked" [name]="difficultyFilterOption.value" class="pointer" />
+                                <span [jhiTranslate]="difficultyFilterOption.name" class="ms-1"></span>
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+
+        <!--    On typescript version 5.5.4 the explicit check for achievedScore is needed,
+        as otherwise typescript thinks achievedScore could be undefined (the client would not start in this case) -->
+        @if (achievedScore && achievedScore?.isDisplayed) {
+            <div class="form-group">
+                <label class="form-control-label h6" for="achieved-score-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievedScore"></label>
+                <jhi-range-slider
+                    id="achieved-score-range-slider"
+                    [generalMinValue]="achievedScore.filter.generalMin"
+                    [generalMaxValue]="achievedScore.filter.generalMax"
+                    [(selectedMinValue)]="achievedScore.filter.selectedMin"
+                    [(selectedMaxValue)]="achievedScore.filter.selectedMax"
+                    [step]="achievedScore.filter.step"
+                    [labelSymbol]="'%'"
+                />
+            </div>
+        }
+
+        <!--    On typescript version 5.5.4 the explicit check for achievablePoints is needed,
+        as otherwise typescript thinks achievablePoints could be undefined (the client would not start in this case) -->
+        @if (achievablePoints && achievablePoints.isDisplayed) {
+            <div class="form-group">
+                <label class="form-control-label h6" for="achieved-points-range-slider" jhiTranslate="artemisApp.courseOverview.exerciseFilter.achievablePoints"></label>
+                <jhi-range-slider
+                    id="achieved-points-range-slider"
+                    [generalMinValue]="achievablePoints.filter.generalMin"
+                    [generalMaxValue]="achievablePoints.filter.generalMax"
+                    [(selectedMinValue)]="achievablePoints.filter.selectedMin"
+                    [(selectedMaxValue)]="achievablePoints.filter.selectedMax"
+                    [step]="achievablePoints.filter.step"
+                />
+            </div>
+        }
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" (click)="clearFilter()">
+            <span jhiTranslate="artemisApp.courseOverview.exerciseFilter.clearFilter"></span>
+        </button>
+
+        <div class="ms-auto">
+            <button type="button" class="btn btn-secondary" (click)="closeModal()" jhiTranslate="entity.action.cancel" aria-label="Close"></button>
+            <button
+                type="button"
+                class="btn btn-primary"
+                (click)="applyFilter()"
+                jhiTranslate="artemisApp.courseOverview.exerciseFilter.applyFilter"
+                [disabled]="noFiltersAvailable"
+            ></button>
+        </div>
+    </div>
+</form>

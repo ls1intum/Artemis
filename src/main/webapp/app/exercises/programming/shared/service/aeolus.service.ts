@@ -1,8 +1,10 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
+import { WindFile } from 'app/entities/programming/wind.file';
 import { Observable } from 'rxjs';
 
-import { BuildAction, PlatformAction, ProgrammingLanguage, ProjectType, ScriptAction, WindFile } from 'app/entities/programming-exercise.model';
+import { ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class AeolusService {
@@ -38,7 +40,7 @@ export class AeolusService {
      */
     getAeolusTemplateScript(language: ProgrammingLanguage, projectType?: ProjectType, staticAnalysis?: boolean, sequentialRuns?: boolean, coverage?: boolean): Observable<string> {
         const uriWithParams = this.buildURIWithParams(language, projectType, staticAnalysis, sequentialRuns, coverage);
-        return this.http.get<string>(`${this.resourceUrl}/templateScripts/` + uriWithParams.uri, {
+        return this.http.get<string>(`${this.resourceUrl}/template-scripts/` + uriWithParams.uri, {
             responseType: 'text' as 'json',
             params: uriWithParams.params,
         });

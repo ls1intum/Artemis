@@ -1,18 +1,19 @@
 import { ProgrammingExerciseTaskService } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task.service';
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../test.module';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
-import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming/programming-exercise-test-case-statistics.model';
 import { MockProvider } from 'ng-mocks';
 import { MockProgrammingExerciseGradingService } from '../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseTask } from 'app/exercises/programming/manage/grading/tasks/programming-exercise-task';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
-import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType, Visibility } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase, ProgrammingExerciseTestCaseType, Visibility } from 'app/entities/programming/programming-exercise-test-case.model';
 import { firstValueFrom, of } from 'rxjs';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExerciseTask Service', () => {
     let service: ProgrammingExerciseTaskService;
@@ -127,8 +128,10 @@ describe('ProgrammingExerciseTask Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 ProgrammingExerciseTaskService,
                 { provide: ProgrammingExerciseGradingService, useClass: MockProgrammingExerciseGradingService },
                 MockProvider(AlertService),

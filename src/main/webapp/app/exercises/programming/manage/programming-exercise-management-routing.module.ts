@@ -3,7 +3,7 @@ import { UserRouteAccessService } from 'app/core/auth/user-route-access-service'
 import { Injectable, NgModule } from '@angular/core';
 import { ProgrammingExerciseDetailComponent } from 'app/exercises/programming/manage/programming-exercise-detail.component';
 import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { map } from 'rxjs/operators';
 import { HttpResponse } from '@angular/common/http';
@@ -18,6 +18,7 @@ import { RepositoryViewComponent } from 'app/localvc/repository-view/repository-
 import { CommitHistoryComponent } from 'app/localvc/commit-history/commit-history.component';
 import { CommitDetailsViewComponent } from 'app/localvc/commit-details-view/commit-details-view.component';
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
+import { VcsRepositoryAccessLogViewComponent } from 'app/localvc/vcs-repository-access-log-view/vcs-repository-access-log-view.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -184,6 +185,18 @@ export const routes: Routes = [
         canActivate: [LocalVCGuard],
     },
     {
+        path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/vcs-access-log',
+        component: VcsRepositoryAccessLogViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [LocalVCGuard],
+    },
+    {
         path: ':courseId/programming-exercises/:exerciseId/repository/:repositoryType/commit-history/:commitHash',
         component: CommitDetailsViewComponent,
         data: {
@@ -212,6 +225,18 @@ export const routes: Routes = [
         component: CommitHistoryComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
+            pageTitle: 'artemisApp.repository.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {},
+        },
+        canActivate: [UserRouteAccessService, LocalVCGuard],
+    },
+    {
+        path: ':courseId/programming-exercises/:exerciseId/participations/:participationId/repository/vcs-access-log',
+        component: VcsRepositoryAccessLogViewComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.repository.title',
             flushRepositoryCacheAfter: 900000, // 15 min
             participationCache: {},

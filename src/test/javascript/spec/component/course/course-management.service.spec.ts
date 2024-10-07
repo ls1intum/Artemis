@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,6 +28,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -59,8 +60,10 @@ describe('Course Management Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -163,7 +166,7 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/onlineCourseConfiguration` });
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/online-course-configuration` });
         req.flush(returnedFromService);
         tick();
     }));
@@ -474,7 +477,7 @@ describe('Course Management Service', () => {
         const submissions = [submission];
         returnedFromService = [...submissions];
         courseManagementService.findAllLockedSubmissionsOfCourse(course.id!).subscribe((res) => expect(res.body).toEqual(submissions));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/lockedSubmissions` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/locked-submissions` });
         req.flush(returnedFromService);
         tick();
     }));

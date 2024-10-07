@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { MockExerciseService } from '../helpers/mocks/service/mock-exercise.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
@@ -17,8 +17,8 @@ describe('ExerciseHint Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: ExerciseService, useClass: MockExerciseService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ExerciseService, useClass: MockExerciseService }],
         });
         expectedResult = {} as HttpResponse<ExerciseHint>;
         service = TestBed.inject(ExerciseHintService);

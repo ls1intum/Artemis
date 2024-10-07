@@ -1,0 +1,20 @@
+/*
+ensures that the category dropdown selection does not overflow the screen to the bottom
+(instead a scrollbar will be displayed)
+ */
+:host ::ng-deep ngb-typeahead-window.dropdown-menu {
+    max-height: 25rem;
+    overflow-y: auto;
+}
+
+/* align the first checkbox to the left */
+.no-left-margin-padding:first-child {
+    margin-left: 0;
+    padding-left: 0;
+}
+
+/* otherwise the dropdown changes the color on hover if no further options can be selected */
+.form-control:disabled,
+.form-control[disabled] {
+    pointer-events: none;
+}

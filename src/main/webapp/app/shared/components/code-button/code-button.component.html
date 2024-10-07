@@ -14,8 +14,14 @@
         container="body"
     ></button>
     <ng-template #popContent>
-        @if (useSsh && (!user.sshPublicKey || gitlabVCEnabled)) {
-            <div class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
+        @if (useSsh && !copyEnabled) {
+            <div class="alert alert-warning" [innerHTML]="sshKeyMissingTip"></div>
+        }
+        @if (useToken && !copyEnabled && tokenMissing) {
+            <div class="alert alert-warning" [innerHTML]="tokenMissingTip"></div>
+        }
+        @if (useToken && !copyEnabled && tokenExpired) {
+            <div class="alert alert-warning" [innerHTML]="tokenExpiredTip"></div>
         }
         @if (participations && participations.length > 1) {
             <div class="form-check form-switch">
@@ -34,7 +40,7 @@
                         @if (showCloneUrlWithoutToken) {
                             <a (click)="useHttpsUrlWithoutToken()" class="dropdown-item {{ !useToken && !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
                         }
-                        @if (useVersionControlAccessToken && participations) {
+                        @if (accessTokensEnabled && (!useParticipationVcsAccessToken || participations)) {
                             <a (click)="useHttpsUrlWithToken()" class="dropdown-item {{ useToken && !useSsh ? 'active' : '' }}" id="useHTTPSWithTokenButton">Token</a>
                         }
                         <a (click)="useSshUrl()" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
@@ -50,7 +56,7 @@
                     'url-box-remove-line-right': !localVCEnabled || !!routerLinkForRepositoryView,
                 }"
                 [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
-                (cdkCopyToClipboardCopied)="onCopyFinished($event)"
+                (cdkCopyToClipboardCopied)="copyEnabled ? onCopyFinished($event) : null"
                 >{{ getHttpOrSshRepositoryUri() }} </pre
             >
             <div class="d-flex align-items-center">
@@ -86,16 +92,22 @@
         <button
             [cdkCopyToClipboard]="getHttpOrSshRepositoryUri(false)"
             (cdkCopyToClipboardCopied)="onCopyFinished($event)"
+            [disabled]="!copyEnabled"
             [class.btn-success]="wasCopied"
             class="btn btn-primary btn-sm me-2"
             type="button"
             style="min-width: 100px"
             jhiTranslate="{{ wasCopied ? 'artemisApp.exerciseActions.copiedUrl' : 'artemisApp.exerciseActions.copyUrl' }}"
         ></button>
-        <a class="btn btn-primary btn-sm" [href]="buildVSCodeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneVSCode.button"> </a>
-        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneVSCode.helpIcon" />
-        <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildJetbrainsUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneIntelliJ.button"> </a>
-        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.cloneIntelliJ.helpIcon" />
+        <a
+            class="btn btn-primary btn-sm"
+            target="hidden-iframe"
+            [href]="buildIdeUrl() | safeUrl"
+            jhiTranslate="artemisApp.exerciseActions.ideButton.openIn"
+            [translateValues]="{ ideName: ideName }"
+        >
+        </a>
+        <jhi-help-icon placement="right auto" text="artemisApp.exerciseActions.ideButton.helpIcon" />
         <a class="btn btn-primary btn-sm" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl" jhiTranslate="artemisApp.exerciseActions.cloneSourceTree.button"> </a>
         <!-- This hidden iframe is used to avoid "Do you want to leave the site" messages in the exam mode -->
         <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>

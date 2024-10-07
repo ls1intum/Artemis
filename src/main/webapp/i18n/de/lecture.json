@@ -55,7 +55,7 @@
                 "notificationText": "Mitteilungstext",
                 "notificationPlaceholder": "Was wurde geändert?",
                 "chooseFile": "Datei auswählen",
-                "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20MB.",
+                "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
                 "fileLimitation": "(max. Größe 20 MB)",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },
@@ -96,7 +96,12 @@
             "deleteQuestion": "Soll der Anhang wirklich gelöscht werden?",
             "created": "Anhang erstellt mit ID {{ param }}",
             "updated": "Anhang aktualisiert mit ID {{ param }}",
-            "deleted": "Anhang gelöscht mit ID {{ param }}"
+            "deleted": "Anhang gelöscht mit ID {{ param }}",
+            "pdfPreview": {
+                "title": "Anhang",
+                "attachmentIDError": "Ungültiger Anhang oder ungültige Anhangs-ID.",
+                "attachmentUnitIDError": "Ungültige Dateieinheit oder ungültige Dateieinheits-ID."
+            }
         }
     }
 }

@@ -11,7 +11,10 @@
             "cardTitle": "Your overall points:",
             "noStatistics": "No statistics available",
             "cardNoExerciseLabel": "No exercise planned",
-            "cardExerciseLabel": "Next Exercise:",
+            "cardExerciseLabel": "Next Exercise",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Points",
+            "cardScore": "Score",
+            "cardManageCourse": "Manage Course",
             "enroll": {
                 "title": "Course Enrollment",
                 "enrollSuccessful": "Enrollment successful",
@@ -33,7 +36,8 @@
             "manage": "Manage",
             "studentView": "Student view",
             "general": {
-                "noDataFound": "No data found."
+                "noDataFound": "No data found.",
+                "noElementFoundWithAppliedFilter": "No element matches the applied filter."
             },
             "sidebar": {
                 "past": "Past",
@@ -87,7 +91,19 @@
                 "testExam": "Test Exam",
                 "communication": "Communication",
                 "plagiarismCases": "Plagiarism Cases",
-                "gradingSystem": "Grading System"
+                "gradingSystem": "Grading System",
+                "faq": "FAQ"
+            },
+            "exerciseFilter": {
+                "filter": "Filter",
+                "modalTitle": "Filter Exercises",
+                "dueDateRange": "Due Date Range",
+                "achievedScore": "Achieved Score",
+                "achievablePoints": "Achievable Points",
+                "applyFilter": "Apply filter",
+                "clearFilter": "Clear filter",
+                "noFilterAvailable": "There are no distinguishing filter options for the existing exercises",
+                "noMoreOptions": "No more options"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",
@@ -285,7 +301,7 @@
                 "assessmentDue": "Assessment due:",
                 "assessmentDueTooltip": "The assessment is due by {{date}}.",
                 "complaintDue": "Complaint due:",
-                "complaintDueTooltip": "You can write a complain until {{date}}.",
+                "complaintDueTooltip": "You can write a complaint until {{date}}.",
                 "complaintPossible": "Complaint possible:",
                 "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint.",
                 "presented": "Presented:",

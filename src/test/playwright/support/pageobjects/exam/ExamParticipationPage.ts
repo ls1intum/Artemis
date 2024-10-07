@@ -1,6 +1,6 @@
 import { Page, expect } from '@playwright/test';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { AdditionalData, ExerciseType } from '../../constants';
 import { UserCredentials } from '../../users';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
@@ -113,6 +113,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
 
     async startExam() {
         await this.examStartEnd.startExam(true);
+    }
+
+    async almostStartExam() {
+        await this.examStartEnd.onlyClickConfirmationCheckmark();
     }
 
     async handInEarly() {

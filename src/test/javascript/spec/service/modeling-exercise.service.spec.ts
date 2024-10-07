@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
@@ -16,18 +16,21 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { lastValueFrom } from 'rxjs';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ModelingExercise Service', () => {
     let service: ModelingExerciseService;
     let httpMock: HttpTestingController;
     let elemDefault: ModelingExercise;
     let plagiarismResult: ModelingPlagiarismResult;
-    const category = { color: 'red', category: 'testCategory' } as ExerciseCategory;
-    const categories = [JSON.stringify(category) as ExerciseCategory];
+    const category = new ExerciseCategory('testCategory', 'red');
+    const categories = [JSON.stringify(category) as unknown as ExerciseCategory] as ExerciseCategory[];
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },

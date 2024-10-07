@@ -1,8 +1,8 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -10,7 +10,7 @@ import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.serv
 import { ArtemisTestModule } from '../test.module';
 import dayjs from 'dayjs/esm';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
@@ -20,6 +20,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { Submission } from 'app/entities/submission.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
@@ -30,8 +31,10 @@ describe('ProgrammingExercise Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -179,6 +182,7 @@ describe('ProgrammingExercise Service', () => {
                 solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
                 allowOnlineEditor: true,
+                allowOnlineIde: true,
                 releaseDate: undefined,
                 dueDate: undefined,
                 assessmentDueDate: undefined,
@@ -222,6 +226,7 @@ describe('ProgrammingExercise Service', () => {
                 solutionRepositoryUri: 'BBBBBB',
                 templateBuildPlanId: 'BBBBBB',
                 allowOnlineEditor: true,
+                allowOnlineIde: true,
                 releaseDate: undefined,
                 dueDate: undefined,
                 assessmentDueDate: undefined,

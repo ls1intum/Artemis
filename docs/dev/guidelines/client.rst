@@ -9,9 +9,30 @@ The Artemis client is an Angular project. Keep https://angular.io/guide/stylegui
 
 Some general aspects:
 
-* The Artemis client uses lazy loading to keep the initial bundle size below 2 MB.
+* The Artemis client uses lazy loading to keep the initial bundle size as small as possible.
 * Code quality and test coverage are important. Try to reuse code and avoid code duplication. Write meaningful tests!
 
+**Angular Migration**
+
+* Use **standalone components** instead of Angular modules: https://angular.dev/reference/migrations/standalone
+* Use the new ``signals`` to granular track how and where state is used throughout an application, allowing Angular to optimize rendering updates: https://angular.dev/guide/signals
+* Find out more in the following guide: https://blog.angular-university.io/angular-signal-components
+* Use the new ``input()`` and ``output()`` decorators instead of ``@Input()`` and ``@Output()``.
+
+    .. code-block:: ts
+
+        // Don't
+        @Input() myInput: string;
+        @Output() myOutput = new EventEmitter<string>();
+
+        // Do
+        myInput = input<string>();
+        myOutput = output<string>();
+
+* Use the new ``inject`` function, because it offers more accurate types and better compatibility with standard decorators, compared to constructor-based injection: https://angular.dev/reference/migrations/inject-function
+* Use the new way of defining queries for ``viewChild()``, ``contentChild()``, ``viewChildren()``, ``contentChildren()``: https://ngxtension.netlify.app/utilities/migrations/queries-migration
+* You can find an example for a migration in the pull request `9299 <https://github.com/ls1intum/Artemis/pull/9299>`_.
+* Use ``OnPush`` change detection strategy for components whenever possible: https://blog.angular-university.io/onpush-change-detection-how-it-works
 
 .. WARNING::
     **Never invoke methods from the html template. The automatic change tracking in Angular will kill the application performance!**
@@ -72,7 +93,7 @@ More info about standalone components: https://angular.dev/guide/components/impo
 
 
 
-6. Use strict typing to avoid type errors: Do not use ``any``.
+6. Use strict typing to avoid type errors: **Never** use ``any``.
 
 7. Do not use anonymous data structures.
 
@@ -92,7 +113,7 @@ More info about standalone components: https://angular.dev/guide/components/impo
 4. ``null`` and ``undefined``
 =============================
 
-Use **undefined**. Do not use null.
+Use **undefined**. **Never** use ``null``.
 
 5. General Assumptions
 ======================
@@ -104,6 +125,8 @@ Use **undefined**. Do not use null.
 ============
 
 Use JSDoc style comments for functions, interfaces, enums, and classes.
+Provide extensive documentation inline and using JSDoc to make sure other developers can understand the code and the rationale behind the implementation
+without having to read the code.
 
 7. Strings
 ============

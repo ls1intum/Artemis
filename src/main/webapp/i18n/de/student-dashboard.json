@@ -11,7 +11,10 @@
             "cardTitle": "Deine insgesamte Punktzahl:",
             "noStatistics": "Keine Statistik verfügbar",
             "cardNoExerciseLabel": "Keine Übung geplant",
-            "cardExerciseLabel": "Nächste Übung:",
+            "cardExerciseLabel": "Nächste Übung",
+            "points": "{{ totalAbsoluteScore }} / {{ totalReachableScore }} Punkte",
+            "cardScore": "Punktzahl",
+            "cardManageCourse": "Kurs Verwalten",
             "enroll": {
                 "title": "Kurseinschreibung",
                 "enrollSuccessful": "Einschreibung erfolgreich",
@@ -33,7 +36,8 @@
             "manage": "Verwalten",
             "studentView": "Studentenansicht",
             "general": {
-                "noDataFound": "Keine Einträge gefunden."
+                "noDataFound": "Keine Einträge gefunden.",
+                "noElementFoundWithAppliedFilter": "Keine Einträge für die angewendeten Filtereinstellungen gefunden."
             },
             "sidebar": {
                 "past": "Vorangegangen",
@@ -64,7 +68,7 @@
                 "examChannels": "Klausuren",
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
-                "groupChats": "Gruppen-Chats",
+                "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern"
             },
@@ -87,7 +91,19 @@
                 "testExam": "Testklausur",
                 "communication": "Kommunikation",
                 "plagiarismCases": "Plagiatsfälle",
-                "gradingSystem": "Notenschlüssel"
+                "gradingSystem": "Notenschlüssel",
+                "faq": "FAQ"
+            },
+            "exerciseFilter": {
+                "filter": "Filter",
+                "modalTitle": "Aufgaben Filtern",
+                "dueDateRange": "Zeitraum der Einreichungsfrist",
+                "achievedScore": "Erreichtes Ergebnis",
+                "achievablePoints": "Erreichbare Punktzahl",
+                "applyFilter": "Filter anwenden",
+                "resetFilter": "Filter zurücksetzen",
+                "noFilterAvailable": "Für die bisherigen Aufgaben gibt es keine unterscheidenden Filteroptionen",
+                "noMoreOptions": "Keine weiteren Auswahlmöglichkeiten"
             },
             "exerciseList": {
                 "filter": "Filter ({{ num }})",

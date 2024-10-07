@@ -17,20 +17,33 @@ import { AlertService } from 'app/core/util/alert.service';
 import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.service';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { of } from 'rxjs';
+import { CourseInformationSharingConfiguration } from 'app/entities/course.model';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { MockComponent } from 'ng-mocks';
+import { LearningPathNavigationService } from 'app/course/learning-paths/services/learning-path-navigation.service';
+import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 
 describe('LearningPathLectureUnitComponent', () => {
     let component: LearningPathLectureUnitComponent;
     let fixture: ComponentFixture<LearningPathLectureUnitComponent>;
 
+    let learningPathNavigationService: LearningPathNavigationService;
     let lectureUnitService: LectureUnitService;
     let getLectureUnitByIdSpy: jest.SpyInstance;
+    let setLearningObjectCompletionSpy: jest.SpyInstance;
 
     const learningPathId = 1;
     const lectureUnit: VideoUnit = {
         id: 1,
         description: 'Example video unit',
         name: 'Example video',
-        lecture: { id: 2 },
+        lecture: {
+            id: 2,
+            course: {
+                courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
+            },
+        },
         completed: false,
         visibleToStudents: true,
         source: 'https://www.youtube.com/embed/8iU8LPEa4o0',
@@ -38,7 +51,7 @@ describe('LearningPathLectureUnitComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [LearningPathLectureUnitComponent],
+            imports: [LearningPathLectureUnitComponent, MockComponent(DiscussionSectionComponent)],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -70,6 +83,8 @@ describe('LearningPathLectureUnitComponent', () => {
         lectureUnitService = TestBed.inject(LectureUnitService);
         getLectureUnitByIdSpy = jest.spyOn(lectureUnitService, 'getLectureUnitById').mockReturnValue(of(lectureUnit));
         lectureUnitService = TestBed.inject(LectureUnitService);
+        learningPathNavigationService = TestBed.inject(LearningPathNavigationService);
+        setLearningObjectCompletionSpy = jest.spyOn(learningPathNavigationService, 'setCurrentLearningObjectCompletion').mockReturnValue();
 
         fixture = TestBed.createComponent(LearningPathLectureUnitComponent);
         component = fixture.componentInstance;
@@ -83,10 +98,11 @@ describe('LearningPathLectureUnitComponent', () => {
     it('should initialize', () => {
         expect(component).toBeTruthy();
         expect(component.lectureUnitId()).toBe(learningPathId);
+        expect(component.isCommunicationEnabled()).toBeFalse();
     });
 
     it('should get lecture unit', async () => {
-        const getLectureUnitSpy = jest.spyOn(component, 'getLectureUnit');
+        const getLectureUnitSpy = jest.spyOn(component, 'loadLectureUnit');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -101,13 +117,68 @@ describe('LearningPathLectureUnitComponent', () => {
         expect(component.lectureUnit()).toEqual(lectureUnit);
     });
 
+    it('should not set current learning object on error', async () => {
+        const completeLectureUnitSpy = jest.spyOn(lectureUnitService, 'completeLectureUnit').mockImplementationOnce(() => {});
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component.setLearningObjectCompletion({ completed: true, lectureUnit: lectureUnit });
+
+        expect(completeLectureUnitSpy).toHaveBeenCalledExactlyOnceWith(lectureUnit.lecture, {
+            completed: true,
+            lectureUnit: lectureUnit,
+        });
+        expect(setLearningObjectCompletionSpy).not.toHaveBeenCalled();
+    });
+
+    it('should set current learning object completion', async () => {
+        const completeLectureUnitSpy = jest
+            .spyOn(lectureUnitService, 'completeLectureUnit')
+            .mockImplementationOnce((lecture: Lecture, completionEvent: LectureUnitCompletionEvent) => (completionEvent.lectureUnit.completed = completionEvent.completed));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        component.setLearningObjectCompletion({ completed: true, lectureUnit: lectureUnit });
+
+        expect(completeLectureUnitSpy).toHaveBeenCalledExactlyOnceWith(lectureUnit.lecture, {
+            completed: true,
+            lectureUnit: lectureUnit,
+        });
+        expect(setLearningObjectCompletionSpy).toHaveBeenCalledExactlyOnceWith(true);
+    });
+
     it('should set loading state correctly', async () => {
-        const setIsLoadingSpy = jest.spyOn(component.isLectureUnitLoading, 'set');
+        const setIsLoadingSpy = jest.spyOn(component.isLoading, 'set');
         fixture.detectChanges();
         await fixture.whenStable();
         fixture.detectChanges();
 
         expect(setIsLoadingSpy).toHaveBeenCalledWith(true);
         expect(setIsLoadingSpy).toHaveBeenCalledWith(false);
+    });
+
+    it('should show discussion section when communication is enabled', async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeTruthy();
+    });
+
+    it('should not show discussion section when communication is disabled', async () => {
+        const lecture = {
+            ...lectureUnit.lecture,
+            course: { courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED },
+        };
+        getLectureUnitByIdSpy.mockReturnValue(of({ ...lectureUnit, lecture }));
+
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const discussionSection = fixture.nativeElement.querySelector('jhi-discussion-section');
+        expect(discussionSection).toBeFalsy();
     });
 });

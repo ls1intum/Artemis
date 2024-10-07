@@ -9,16 +9,16 @@ import { NgbNavModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
-import { MonacoColorAction } from 'app/shared/monaco-editor/model/actions/monaco-color.action';
+import { ColorAction } from 'app/shared/monaco-editor/model/actions/color.action';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CdkDragMove, DragDropModule } from '@angular/cdk/drag-drop';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { MonacoUrlAction } from 'app/shared/monaco-editor/model/actions/monaco-url.action';
-import { MonacoAttachmentAction } from 'app/shared/monaco-editor/model/actions/monaco-attachment.action';
-import { MonacoFormulaAction } from 'app/shared/monaco-editor/model/actions/monaco-formula.action';
-import { MonacoTestCaseAction } from 'app/shared/monaco-editor/model/actions/monaco-test-case.action';
-import { MonacoTaskAction } from 'app/shared/monaco-editor/model/actions/monaco-task.action';
-import { MonacoFullscreenAction } from 'app/shared/monaco-editor/model/actions/monaco-fullscreen.action';
+import { UrlAction } from 'app/shared/monaco-editor/model/actions/url.action';
+import { AttachmentAction } from 'app/shared/monaco-editor/model/actions/attachment.action';
+import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
+import { TestCaseAction } from 'app/shared/monaco-editor/model/actions/test-case.action';
+import { TaskAction } from 'app/shared/monaco-editor/model/actions/task.action';
+import { FullscreenAction } from 'app/shared/monaco-editor/model/actions/fullscreen.action';
 import { MonacoEditorOptionPreset } from 'app/shared/monaco-editor/model/monaco-editor-option-preset.model';
 import { COMMUNICATION_MARKDOWN_EDITOR_OPTIONS } from 'app/shared/monaco-editor/monaco-editor-option.helper';
 
@@ -45,7 +45,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture = TestBed.createComponent(MarkdownEditorMonacoComponent);
         comp = fixture.componentInstance;
         comp.initialEditorHeight = 'external';
-        comp.domainActions = [new MonacoFormulaAction(), new MonacoTaskAction(), new MonacoTestCaseAction()];
+        comp.domainActions = [new FormulaAction(), new TaskAction(), new TestCaseAction()];
         fileUploaderService = fixture.debugElement.injector.get(FileUploaderService);
     });
 
@@ -152,9 +152,9 @@ describe('MarkdownEditorMonacoComponent', () => {
     }));
 
     it('should embed image and .pdf files', fakeAsync(() => {
-        const urlAction = new MonacoUrlAction();
+        const urlAction = new UrlAction();
         const urlStub = jest.spyOn(urlAction, 'executeInCurrentEditor').mockImplementation();
-        const attachmentAction = new MonacoAttachmentAction();
+        const attachmentAction = new AttachmentAction();
         const attachmentStub = jest.spyOn(attachmentAction, 'executeInCurrentEditor').mockImplementation();
         const fileInformation = [
             { file: new File([''], 'test.png'), url: 'https://test.invalid/generated42.png' },
@@ -187,7 +187,7 @@ describe('MarkdownEditorMonacoComponent', () => {
     });
 
     it('should pass the correct color as argument to the color action', () => {
-        comp.colorAction = new MonacoColorAction();
+        comp.colorAction = new ColorAction();
         fixture.detectChanges();
         const executeInCurrentEditorStub = jest.spyOn(comp.colorAction, 'executeInCurrentEditor').mockImplementation();
         const markdownColors = comp.colorSignal();
@@ -200,7 +200,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should pass the entire element to the fullscreen action for external height', () => {
         comp.initialEditorHeight = 'external';
-        const fullscreenAction = new MonacoFullscreenAction();
+        const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
         fixture.detectChanges();
         expect(fullscreenAction.element).toBe(comp.fullElement.nativeElement);
@@ -208,7 +208,7 @@ describe('MarkdownEditorMonacoComponent', () => {
 
     it('should pass the wrapper element to the fullscreen action for a set initial height', () => {
         comp.initialEditorHeight = MarkdownEditorHeight.MEDIUM;
-        const fullscreenAction = new MonacoFullscreenAction();
+        const fullscreenAction = new FullscreenAction();
         comp.metaActions = [fullscreenAction];
         fixture.detectChanges();
         expect(fullscreenAction.element).toBe(comp.wrapper.nativeElement);

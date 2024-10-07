@@ -1,28 +1,25 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ArtemisTestModule } from '../../../test.module';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
-import { MonacoInsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-option.action';
-import { MonacoInsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-insert-short-answer-spot.action';
-import { MonacoWrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-wrong-multiple-choice-answer.action';
-import { MonacoCorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-correct-multiple-choice-answer.action';
-import { MonacoQuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-explanation.action';
-import { MonacoQuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/monaco-quiz-hint.action';
+import { InsertShortAnswerOptionAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-option.action';
+import { InsertShortAnswerSpotAction } from 'app/shared/monaco-editor/model/actions/quiz/insert-short-answer-spot.action';
+import { WrongMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/wrong-multiple-choice-answer.action';
+import { CorrectMultipleChoiceAnswerAction } from 'app/shared/monaco-editor/model/actions/quiz/correct-multiple-choice-answer.action';
+import { QuizExplanationAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-explanation.action';
+import { QuizHintAction } from 'app/shared/monaco-editor/model/actions/quiz/quiz-hint.action';
 
 describe('MonacoEditorActionQuizIntegration', () => {
     let fixture: ComponentFixture<MonacoEditorComponent>;
     let comp: MonacoEditorComponent;
 
     // Actions
-    let insertShortAnswerOptionAction: MonacoInsertShortAnswerOptionAction;
-    let insertShortAnswerSpotAction: MonacoInsertShortAnswerSpotAction;
+    let insertShortAnswerOptionAction: InsertShortAnswerOptionAction;
+    let insertShortAnswerSpotAction: InsertShortAnswerSpotAction;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule],
-            declarations: [MonacoEditorComponent],
-            providers: [],
+            imports: [ArtemisTestModule, MonacoEditorComponent],
         })
             .compileComponents()
             .then(() => {
@@ -31,8 +28,8 @@ describe('MonacoEditorActionQuizIntegration', () => {
                 global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
                     return new MockResizeObserver(callback);
                 });
-                insertShortAnswerOptionAction = new MonacoInsertShortAnswerOptionAction();
-                insertShortAnswerSpotAction = new MonacoInsertShortAnswerSpotAction(insertShortAnswerOptionAction);
+                insertShortAnswerOptionAction = new InsertShortAnswerOptionAction();
+                insertShortAnswerSpotAction = new InsertShortAnswerSpotAction(insertShortAnswerOptionAction);
                 fixture.detectChanges();
                 comp.registerAction(insertShortAnswerOptionAction);
                 comp.registerAction(insertShortAnswerSpotAction);
@@ -49,7 +46,7 @@ describe('MonacoEditorActionQuizIntegration', () => {
         it('should insert text with the default answer option', () => {
             insertShortAnswerOptionAction.executeInCurrentEditor();
             // Text must match
-            expect(getLastLine()).toBe(`[-option #] ${MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT}`);
+            expect(getLastLine()).toBe(`[-option #] ${InsertShortAnswerOptionAction.DEFAULT_TEXT}`);
             // Also test if the selection works. Type the option text.
             comp.triggerKeySequence('This is an actual option!');
             expect(getLastLine()).toBe('[-option #] This is an actual option!');
@@ -57,13 +54,13 @@ describe('MonacoEditorActionQuizIntegration', () => {
 
         it('should insert the default text for blank option texts', () => {
             insertShortAnswerOptionAction.executeInCurrentEditor({ optionText: '' });
-            expect(getLastLine()).toBe(`[-option #] ${MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT}`);
+            expect(getLastLine()).toBe(`[-option #] ${InsertShortAnswerOptionAction.DEFAULT_TEXT}`);
         });
 
         it('should insert text with the specified spot number', () => {
             insertShortAnswerOptionAction.executeInCurrentEditor({ spotNumber: 5 });
             // Text must match
-            expect(getLastLine()).toBe(`[-option 5] ${MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT}`);
+            expect(getLastLine()).toBe(`[-option 5] ${InsertShortAnswerOptionAction.DEFAULT_TEXT}`);
             // Also test if the selection works. Type the option text.
             comp.triggerKeySequence('This is an actual option!');
             expect(getLastLine()).toBe('[-option 5] This is an actual option!');
@@ -81,7 +78,7 @@ describe('MonacoEditorActionQuizIntegration', () => {
 
         it('should insert text after the last option', () => {
             const text = '[-option 1] Option 1\n[-option 2] Option 2\n[-option 3] Option 3';
-            const expectedText = text + `\n[-option #] ${MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT}`;
+            const expectedText = text + `\n[-option #] ${InsertShortAnswerOptionAction.DEFAULT_TEXT}`;
             comp.setText('[-option 1] Option 1\n[-option 2] Option 2\n[-option 3] Option 3');
             insertShortAnswerOptionAction.executeInCurrentEditor();
             expect(comp.getText()).toBe(expectedText);
@@ -89,14 +86,14 @@ describe('MonacoEditorActionQuizIntegration', () => {
 
         it('should insert text with more space if the last line is not an option', () => {
             const text = 'Some question text\nof a question\nwith lines';
-            const expectedText = text + `\n\n\n[-option #] ${MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT}`;
+            const expectedText = text + `\n\n\n[-option #] ${InsertShortAnswerOptionAction.DEFAULT_TEXT}`;
             comp.setText(text);
             insertShortAnswerOptionAction.executeInCurrentEditor();
             expect(comp.getText()).toBe(expectedText);
         });
     });
 
-    describe('MonacoEditorInsertShortAnswerSpotAction', () => {
+    describe('EditorInsertShortAnswerSpotAction', () => {
         let insertAnswerOptionActionExecuteStub: jest.SpyInstance;
 
         beforeEach(() => {
@@ -136,14 +133,14 @@ describe('MonacoEditorActionQuizIntegration', () => {
             // Type the text so the cursor moves along
             comp.triggerKeySequence(questionText);
             insertShortAnswerSpotAction.executeInCurrentEditor();
-            expect(comp.getText()).toBe(questionText + '[-spot 1]' + `\n\n\n[-option 1] ${MonacoInsertShortAnswerOptionAction.DEFAULT_TEXT}`);
+            expect(comp.getText()).toBe(questionText + '[-spot 1]' + `\n\n\n[-option 1] ${InsertShortAnswerOptionAction.DEFAULT_TEXT}`);
         });
     });
 
     describe('Multiple Choice answer options', () => {
         it('should insert a wrong MC option', () => {
             comp.triggerKeySequence('This is a question that needs some options.');
-            const action = new MonacoWrongMultipleChoiceAnswerAction();
+            const action = new WrongMultipleChoiceAnswerAction();
             comp.registerAction(action);
             action.executeInCurrentEditor();
             expect(comp.getText()).toBe('This is a question that needs some options.\n[wrong] Enter a wrong answer option here');
@@ -151,7 +148,7 @@ describe('MonacoEditorActionQuizIntegration', () => {
 
         it('should insert a correct MC option', () => {
             comp.triggerKeySequence('This is a question that needs some options.');
-            const action = new MonacoCorrectMultipleChoiceAnswerAction();
+            const action = new CorrectMultipleChoiceAnswerAction();
             comp.registerAction(action);
             action.executeInCurrentEditor();
             expect(comp.getText()).toBe('This is a question that needs some options.\n[correct] Enter a correct answer option here');
@@ -159,7 +156,7 @@ describe('MonacoEditorActionQuizIntegration', () => {
 
         it('should add an explanation to an answer option', () => {
             comp.triggerKeySequence('This is a question that has an option.\n[correct] Option 1');
-            const action = new MonacoQuizExplanationAction();
+            const action = new QuizExplanationAction();
             comp.registerAction(action);
             action.executeInCurrentEditor();
             expect(comp.getText()).toBe(
@@ -169,7 +166,7 @@ describe('MonacoEditorActionQuizIntegration', () => {
 
         it('should add a hint to an answer option', () => {
             comp.triggerKeySequence('This is a question that has an option.\n[correct] Option 1');
-            const action = new MonacoQuizHintAction();
+            const action = new QuizHintAction();
             comp.registerAction(action);
             action.executeInCurrentEditor();
             expect(comp.getText()).toBe('This is a question that has an option.\n[correct] Option 1\n\t[hint] Add a hint here (visible during the quiz via ?-Button)');

@@ -8,8 +8,8 @@ import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { ProgrammingAssessmentManualResultService } from 'app/exercises/programming/assess/manual-result/programming-assessment-manual-result.service';
@@ -19,8 +19,9 @@ import { of } from 'rxjs';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AssessmentLocksComponent', () => {
     let component: AssessmentLocksComponent;
@@ -39,9 +40,11 @@ describe('AssessmentLocksComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), HttpClientTestingModule],
+            imports: [TranslateModule.forRoot()],
             declarations: [AssessmentLocksComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockHasAnyAuthorityDirective, MockPipe(ArtemisDatePipe)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(TextAssessmentService),
                 MockProvider(CourseManagementService),
                 MockProvider(ModelingAssessmentService),
