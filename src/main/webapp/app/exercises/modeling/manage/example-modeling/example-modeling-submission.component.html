@@ -129,9 +129,9 @@
         <div class="col-12">
             <div class="row flex-nowrap">
                 <div class="col editor-container-outer">
-                    @if (highlightedElements && highlightedElements.size > 0) {
+                    @if (highlightedElements() && highlightedElements().size > 0) {
                         <div class="col">
-                            <div [style.background-color]="highlightColor" class="my-2 text-center">
+                            <div [style.background-color]="highlightColor()" class="my-2 text-center">
                                 <span jhiTranslate="artemisApp.exampleSubmission.modelElementHint"></span>
                             </div>
                         </div>
@@ -160,7 +160,7 @@
                                 [readOnly]="readOnly"
                                 [course]="course"
                                 [explanation]="explanationText"
-                                [highlightedElements]="highlightedElements"
+                                [highlightedElements]="highlightedElements()"
                                 (feedbackChanged)="onReferencedFeedbackChanged($event)"
                             />
                         }

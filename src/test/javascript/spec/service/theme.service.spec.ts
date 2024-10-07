@@ -10,7 +10,7 @@ describe('ThemeService', () => {
     let linkElement: HTMLElement;
     let documentGetElementMock: jest.SpyInstance;
     let headElement: HTMLElement;
-    let documentgetElementsByTagNameMock: jest.SpyInstance;
+    let documentGetElementsByTagNameMock: jest.SpyInstance;
     let newElement: HTMLLinkElement;
     let documentCreateElementMock: jest.SpyInstance;
     let storeSpy: jest.SpyInstance;
@@ -36,7 +36,7 @@ describe('ThemeService', () => {
                     getElementsByTagName: jest.fn().mockReturnValue([{}, {}]),
                     insertBefore: jest.fn(),
                 } as any as HTMLElement;
-                documentgetElementsByTagNameMock = jest.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
+                documentGetElementsByTagNameMock = jest.spyOn(document, 'getElementsByTagName').mockReturnValue([headElement] as unknown as HTMLCollectionOf<HTMLElement>);
 
                 newElement = {} as HTMLLinkElement;
                 documentCreateElementMock = jest.spyOn(document, 'createElement').mockReturnValue(newElement);
@@ -70,8 +70,8 @@ describe('ThemeService', () => {
         expect(documentGetElementMock).toHaveBeenCalledTimes(2);
         expect(documentGetElementMock).toHaveBeenCalledWith(THEME_OVERRIDE_ID);
 
-        expect(documentgetElementsByTagNameMock).toHaveBeenCalledOnce();
-        expect(documentgetElementsByTagNameMock).toHaveBeenCalledWith('head');
+        expect(documentGetElementsByTagNameMock).toHaveBeenCalledOnce();
+        expect(documentGetElementsByTagNameMock).toHaveBeenCalledWith('head');
         expect(documentCreateElementMock).toHaveBeenCalledOnce();
         expect(documentCreateElementMock).toHaveBeenCalledWith('link');
 

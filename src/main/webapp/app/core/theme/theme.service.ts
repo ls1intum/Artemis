@@ -1,8 +1,6 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { Injectable, computed, effect, inject, signal, untracked } from '@angular/core';
 import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
-import { combineLatest, distinctUntilChanged, map, tap } from 'rxjs';
 
 export const THEME_LOCAL_STORAGE_KEY = 'artemisapp.theme.preference';
 export const THEME_OVERRIDE_ID = 'artemis-theme-override';
@@ -64,18 +62,19 @@ export class ThemeService {
     /**
      * The currently applied theme as Signal.
      */
-    public currentTheme = toSignal(
-        combineLatest([toObservable(this.userPreference), toObservable(this.systemPreference)]).pipe(
-            map(([preference, systemPreference]) => preference ?? systemPreference),
-            distinctUntilChanged(),
-            tap((theme) => this.applyTheme(theme)),
-        ),
-        { initialValue: Theme.LIGHT },
-    );
+    public currentTheme = computed(() => this.userPreference() ?? this.systemPreference());
 
     private localStorageService = inject(LocalStorageService);
 
     private darkSchemeMediaQuery: MediaQueryList;
+
+    constructor() {
+        effect(() => {
+            // Apply the theme as soon as the currentTheme changes
+            const currentTheme = this.currentTheme();
+            untracked(() => this.applyTheme(currentTheme));
+        });
+    }
 
     /**
      * Should be called once on application startup.

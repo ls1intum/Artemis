@@ -210,6 +210,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.participation = participation;
         comp.isInitial = false;
         triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
+        fixture.detectChanges();
         expect(comp.markdownExtensions).toHaveLength(2);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
@@ -365,6 +366,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
+        fixture.detectChanges();
         tick();
         fixture.detectChanges();
 
@@ -426,7 +428,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         comp.updateMarkdown();
 
-        fixture.detectChanges();
         tick();
 
         // first test should be green (successful), second red (failed)
@@ -448,7 +449,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     it('should update the markdown on a theme change', () => {
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
         themeService.applyThemePreference(Theme.DARK);
-        TestBed.flushEffects();
+
+        fixture.detectChanges();
 
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
     });
