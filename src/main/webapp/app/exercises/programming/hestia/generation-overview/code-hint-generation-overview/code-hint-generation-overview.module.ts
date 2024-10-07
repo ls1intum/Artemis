@@ -16,6 +16,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { CodeHintGenerationStatusStepComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-status/code-hint-generation-status-step.component';
 import { ManualSolutionEntryCreationModalComponent } from '../manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
+import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.component';
 
 @NgModule({
     imports: [
@@ -31,6 +32,7 @@ import { ManualSolutionEntryCreationModalComponent } from '../manual-solution-en
         ArtemisMarkdownModule,
         ArtemisExerciseHintSharedModule,
         MatExpansionModule,
+        GitDiffReportComponent,
     ],
     declarations: [
         CodeHintGenerationStatusComponent,

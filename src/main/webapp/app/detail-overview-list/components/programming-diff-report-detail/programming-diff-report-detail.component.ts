@@ -9,12 +9,13 @@ import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-r
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 
 @Component({
     selector: 'jhi-programming-diff-report-detail',
     templateUrl: 'programming-diff-report-detail.component.html',
     standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffReportModule],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffReportModule, GitDiffLineStatComponent],
 })
 export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
