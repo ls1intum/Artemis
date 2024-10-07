@@ -5,7 +5,6 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { MockComponent } from 'ng-mocks';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
 
 describe('FeedbackFilterModalComponent', () => {
@@ -16,9 +15,8 @@ describe('FeedbackFilterModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TranslateModule.forRoot(), ReactiveFormsModule, ArtemisSharedCommonModule],
+            imports: [TranslateModule.forRoot(), ReactiveFormsModule, ArtemisSharedCommonModule, RangeSliderComponent, FeedbackFilterModalComponent],
             providers: [{ provide: LocalStorageService, useValue: { store: jest.fn(), clear: jest.fn(), retrieve: jest.fn() } }, NgbActiveModal, FormBuilder],
-            declarations: [FeedbackFilterModalComponent, MockComponent(RangeSliderComponent)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(FeedbackFilterModalComponent);

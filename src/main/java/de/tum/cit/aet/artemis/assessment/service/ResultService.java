@@ -119,7 +119,7 @@ public class ResultService {
 
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiNewResultService> ltiNewResultService,
             ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
@@ -591,7 +591,7 @@ public class ResultService {
         for (int i = 0; i < tasks.size(); i++) {
             taskIndexToNameMap.put(String.valueOf(i + 1), tasks.get(i).getTaskName());
         }
-        List<String> filterTaskNames = filterTasks.stream().map(taskIndexToNameMap::get).collect(Collectors.toList());
+        List<String> filterTaskNames = filterTasks.stream().map(taskIndexToNameMap::get).filter(Objects::nonNull).collect(Collectors.toList());
         if (filterTaskNames.isEmpty()) {
             filterTaskNames = null;
         }
@@ -605,12 +605,12 @@ public class ResultService {
 
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
-        final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId, distinctResultCount,
+        final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
                 search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "", filterTestCases, filterTaskNames, minOccurrence, maxOccurrence, pageable);
 
         List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
             String taskIndex = taskNameToIndexMap.getOrDefault(detail.taskNumber(), "0");
-            return new FeedbackDetailDTO(detail.count(), detail.relativeCount(), detail.detailText(), detail.testCaseName(), taskIndex, "StudentError");
+            return new FeedbackDetailDTO(detail.count(), (detail.count() * 100.00) / distinctResultCount, detail.detailText(), detail.testCaseName(), taskIndex, "StudentError");
         }).toList();
 
         return new FeedbackAnalysisResponseDTO(new SearchResultPageDTO<>(processedDetails, feedbackDetailPage.getTotalPages()), feedbackDetailPage.getTotalElements(), tasks.size(),

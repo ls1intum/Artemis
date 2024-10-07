@@ -1,9 +1,5 @@
 <ng-template #headerTemplate let-column="column" let-label="label">
-    <th
-        scope="col"
-        [class.clickable]="column === 'count' || column === 'detailText' || column === 'testCaseName'"
-        (click)="(column === 'count' || column === 'detailText' || column === 'testCaseName') && setSortedColumn(column)"
-    >
+    <th scope="col" [class.clickable]="isSortableColumn()(column)" (click)="isSortableColumn()(column) && setSortedColumn(column)">
         <span [jhiTranslate]="label"></span>
         @if (sortedColumn() === column) {
             <fa-icon [icon]="sortIcon()"></fa-icon>

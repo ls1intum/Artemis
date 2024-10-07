@@ -309,6 +309,7 @@ public class ResultResource {
      *         - List<String> testCaseNames: A list of test case names included in the feedback.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-paged")
+    @EnforceAtLeastInstructor
     public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam int page, @RequestParam int pageSize,
             @RequestParam(required = false) String searchTerm, @RequestParam String sortingOrder, @RequestParam String sortedColumn, @RequestParam List<String> filterTasks,
             @RequestParam List<String> filterTestCases, @RequestParam List<String> filterOccurrence) {
@@ -332,6 +333,7 @@ public class ResultResource {
      * @return A {@link ResponseEntity} containing the maximum count of feedback occurrences (long).
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-max-count")
+    @EnforceAtLeastInstructor
     public ResponseEntity<Long> getMaxCount(@PathVariable long exerciseId) {
         long maxCount = resultService.getMaxCountForExercise(exerciseId);
         return ResponseEntity.ok(maxCount);

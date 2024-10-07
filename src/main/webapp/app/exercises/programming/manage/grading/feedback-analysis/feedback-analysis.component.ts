@@ -28,10 +28,11 @@ export class FeedbackAnalysisComponent {
     private localStorage = inject(LocalStorageService);
 
     readonly page = signal<number>(1);
-    readonly pageSize = signal<number>(10);
+    readonly pageSize = signal<number>(20);
     readonly searchTerm = signal<string>('');
     readonly sortingOrder = signal<SortingOrder>(SortingOrder.DESCENDING);
     readonly sortedColumn = signal<string>('count');
+    readonly isSortableColumn = computed(() => (column: string) => ['count', 'detailText', 'testCaseName'].includes(column));
 
     readonly content = signal<SearchResult<FeedbackDetail>>({ resultsOnPage: [], numberOfPages: 0 });
     readonly totalItems = signal<number>(0);
@@ -46,14 +47,14 @@ export class FeedbackAnalysisComponent {
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
     readonly sortIcon = computed(() => (this.sortingOrder() === SortingOrder.ASCENDING ? this.faSortUp : this.faSortDown));
 
-    private hasAppliedFilters: boolean = false;
+    hasAppliedFilters: boolean = false;
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
     readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
-    selectedFiltersCount = signal<number>(0);
-    totalAmountOfTasks = signal<number>(0);
-    testCaseNames = signal<string[]>([]);
-    maxCount = signal<number>(0);
+    readonly selectedFiltersCount = signal<number>(0);
+    readonly totalAmountOfTasks = signal<number>(0);
+    readonly testCaseNames = signal<string[]>([]);
+    readonly maxCount = signal<number>(0);
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
 

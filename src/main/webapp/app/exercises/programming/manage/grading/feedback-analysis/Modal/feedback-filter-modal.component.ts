@@ -18,15 +18,15 @@ export class FeedbackFilterModalComponent {
     private activeModal = inject(NgbActiveModal);
     private fb = inject(FormBuilder);
     @Output() filterApplied = new EventEmitter<any>();
-    filterForm: FormGroup;
+    readonly filterForm: FormGroup;
 
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
     readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
 
-    totalAmountOfTasks = signal<number>(0);
-    testCaseNames = signal<string[]>([]);
-    maxCount = signal<number>(0);
+    readonly totalAmountOfTasks = signal<number>(0);
+    readonly testCaseNames = signal<string[]>([]);
+    readonly maxCount = signal<number>(0);
 
     constructor() {
         this.filterForm = this.fb.group({

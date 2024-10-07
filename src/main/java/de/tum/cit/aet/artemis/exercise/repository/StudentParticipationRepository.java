@@ -1227,7 +1227,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT new de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO(
                 COUNT(f.id),
-                (COUNT(f.id) * 100.0) / :distinctResultCount,
+                0,
                 f.detailText,
                 f.testCase.testName,
                 COALESCE((
@@ -1263,9 +1263,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             GROUP BY f.detailText, f.testCase.testName
             HAVING COUNT(f.id) BETWEEN :minOccurrence AND :maxOccurrence
             """)
-    Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("distinctResultCount") long distinctResultCount,
-            @Param("searchTerm") String searchTerm, @Param("filterTestCases") List<String> filterTestCases, @Param("filterTaskNames") List<String> filterTaskNames,
-            @Param("minOccurrence") long minOccurrence, @Param("maxOccurrence") long maxOccurrence, Pageable pageable);
+    Page<FeedbackDetailDTO> findFilteredFeedbackByExerciseId(@Param("exerciseId") long exerciseId, @Param("searchTerm") String searchTerm,
+            @Param("filterTestCases") List<String> filterTestCases, @Param("filterTaskNames") List<String> filterTaskNames, @Param("minOccurrence") long minOccurrence,
+            @Param("maxOccurrence") long maxOccurrence, Pageable pageable);
 
     /**
      * Counts the distinct number of latest results for a given exercise, excluding those in practice mode.

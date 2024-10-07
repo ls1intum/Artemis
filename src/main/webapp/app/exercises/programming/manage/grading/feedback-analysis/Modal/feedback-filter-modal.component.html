@@ -46,8 +46,6 @@
         </div>
         <label jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.occurrence"></label>
         <jhi-range-slider
-            ngDefaultControl
-            formControlName="occurrence"
             [generalMinValue]="1"
             [generalMaxValue]="this.maxCount()"
             [(selectedMinValue)]="occurrence[0]"
