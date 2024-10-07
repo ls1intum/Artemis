@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
 import { MonacoDiffEditorComponent } from '../../../../../../main/webapp/app/shared/monaco-editor/monaco-diff-editor.component';
-import { MockComponent } from 'ng-mocks';
 
 function getDiffEntryWithPaths(previousFilePath?: string, filePath?: string) {
     return {
@@ -18,8 +17,8 @@ describe('GitDiffFileComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [MockComponent(MonacoDiffEditorComponent)],
+            imports: [ArtemisTestModule, MonacoDiffEditorComponent],
+            declarations: [],
             providers: [],
         }).compileComponents();
         // Required because Monaco uses the ResizeObserver for the diff editor.
@@ -49,5 +48,6 @@ describe('GitDiffFileComponent', () => {
         jest.spyOn(comp.monacoDiffEditor(), 'setFileContents').mockImplementation();
         fixture.detectChanges();
         expect(setFileContentsStub).toHaveBeenCalledExactlyOnceWith(originalContent, fileName, modifiedContent, fileName);
+        expect(comp.fileUnchanged()).toBeFalse();
     });
 });
