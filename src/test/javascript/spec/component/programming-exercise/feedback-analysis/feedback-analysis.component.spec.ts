@@ -154,7 +154,7 @@ describe('FeedbackAnalysisComponent', () => {
             const getMaxCountSpy = jest.spyOn(feedbackAnalysisService, 'getMaxCount').mockResolvedValue(10);
             component.hasAppliedFilters = true;
 
-            jest.spyOn(localStorageService, 'retrieve').mockReturnValueOnce(['task1']).mockReturnValueOnce(['testCase1']).mockReturnValueOnce([1, 5]);
+            jest.spyOn(localStorageService, 'retrieve').mockReturnValueOnce(['task1']).mockReturnValueOnce(['testCase1']).mockReturnValueOnce([component.minCount(), 5]);
 
             await component.openFilterModal();
 
@@ -164,7 +164,7 @@ describe('FeedbackAnalysisComponent', () => {
             expect(modalInstance.filterForm.setValue).toHaveBeenCalledWith({
                 tasks: ['task1'],
                 testCases: ['testCase1'],
-                occurrence: [1, 5],
+                occurrence: [component.minCount(), 5],
             });
             expect(modalInstance.totalAmountOfTasks).toBe(component.totalAmountOfTasks);
             expect(modalInstance.testCaseNames).toBe(component.testCaseNames);
@@ -181,7 +181,7 @@ describe('FeedbackAnalysisComponent', () => {
             const filters = {
                 tasks: ['task1'],
                 testCases: ['testCase1'],
-                occurrence: [1, 10],
+                occurrence: [component.minCount(), 10],
             };
 
             component.applyFilters(filters);
@@ -194,12 +194,12 @@ describe('FeedbackAnalysisComponent', () => {
 
     describe('countAppliedFilters', () => {
         it('should count the applied filters correctly', () => {
+            component.maxCount.set(10);
             const filters = {
                 tasks: ['task1', 'task2'],
                 testCases: ['testCase1'],
-                occurrence: [1, 10],
+                occurrence: [component.minCount(), component.maxCount()],
             };
-            component.maxCount.set(10);
             const count = component.countAppliedFilters(filters);
 
             expect(count).toBe(3);
@@ -209,7 +209,7 @@ describe('FeedbackAnalysisComponent', () => {
             const filters = {
                 tasks: [],
                 testCases: [],
-                occurrence: [1, component.maxCount()],
+                occurrence: [component.minCount(), component.maxCount()],
             };
             const count = component.countAppliedFilters(filters);
             expect(count).toBe(0);

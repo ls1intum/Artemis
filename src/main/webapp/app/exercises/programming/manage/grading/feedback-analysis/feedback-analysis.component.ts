@@ -54,6 +54,7 @@ export class FeedbackAnalysisComponent {
     readonly selectedFiltersCount = signal<number>(0);
     readonly totalAmountOfTasks = signal<number>(0);
     readonly testCaseNames = signal<string[]>([]);
+    readonly minCount = signal<number>(0);
     readonly maxCount = signal<number>(0);
 
     private readonly debounceLoadData = BaseApiHttpService.debounce(this.loadData.bind(this), 300);
@@ -128,13 +129,14 @@ export class FeedbackAnalysisComponent {
         const savedTestCases = this.localStorage.retrieve(this.FILTER_TEST_CASES_KEY);
         const savedOccurrence = this.localStorage.retrieve(this.FILTER_OCCURRENCE_KEY);
 
+        this.minCount.set(0);
         this.maxCount.set(await this.feedbackAnalysisService.getMaxCount(this.exerciseId()));
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
 
         modalRef.componentInstance.filterForm.setValue({
             tasks: this.hasAppliedFilters ? savedTasks : [],
             testCases: this.hasAppliedFilters ? savedTestCases : [],
-            occurrence: this.hasAppliedFilters ? savedOccurrence : [1, this.maxCount()],
+            occurrence: this.hasAppliedFilters ? savedOccurrence : [this.minCount(), this.maxCount()],
         });
 
         modalRef.componentInstance.totalAmountOfTasks = this.totalAmountOfTasks;
@@ -160,7 +162,7 @@ export class FeedbackAnalysisComponent {
         if (filters.testCases && filters.testCases.length > 0) {
             count += filters.testCases.length;
         }
-        if (filters.occurrence && (filters.occurrence[0] !== 1 || filters.occurrence[1] !== this.maxCount())) {
+        if (filters.occurrence && (filters.occurrence[0] !== 0 || filters.occurrence[1] !== this.maxCount())) {
             count++;
         }
         return count;

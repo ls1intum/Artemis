@@ -46,7 +46,7 @@
         </div>
         <label jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.filterModal.occurrence"></label>
         <jhi-range-slider
-            [generalMinValue]="1"
+            [generalMinValue]="this.minCount()"
             [generalMaxValue]="this.maxCount()"
             [(selectedMinValue)]="occurrence[0]"
             [(selectedMaxValue)]="occurrence[1]"

@@ -23,17 +23,18 @@ describe('FeedbackFilterModalComponent', () => {
         component = fixture.componentInstance;
         localStorageService = TestBed.inject(LocalStorageService);
         activeModal = TestBed.inject(NgbActiveModal);
+        component.minCount.set(0);
         component.maxCount.set(10);
         fixture.detectChanges();
     });
 
     it('should initialize filter form correctly', () => {
         expect(component.filterForm).toBeDefined();
-        component.filterForm.get('occurrence')?.setValue([1, component.maxCount()]);
+        component.filterForm.get('occurrence')?.setValue([component.minCount(), component.maxCount()]);
         expect(component.filterForm.value).toEqual({
             tasks: [],
             testCases: [],
-            occurrence: [1, 10],
+            occurrence: [0, 10],
         });
     });
 
@@ -41,13 +42,14 @@ describe('FeedbackFilterModalComponent', () => {
         const storeSpy = jest.spyOn(localStorageService, 'store');
         const emitSpy = jest.spyOn(component.filterApplied, 'emit');
         const closeSpy = jest.spyOn(activeModal, 'close');
+        component.maxCount.set(0);
         component.maxCount.set(10);
-        component.filterForm.get('occurrence')?.setValue([1, component.maxCount()]);
+        component.filterForm.get('occurrence')?.setValue([component.minCount(), component.maxCount()]);
         component.applyFilter();
 
         expect(storeSpy).toHaveBeenCalledWith(component.FILTER_TASKS_KEY, []);
         expect(storeSpy).toHaveBeenCalledWith(component.FILTER_TEST_CASES_KEY, []);
-        expect(storeSpy).toHaveBeenCalledWith(component.FILTER_OCCURRENCE_KEY, [1, 10]);
+        expect(storeSpy).toHaveBeenCalledWith(component.FILTER_OCCURRENCE_KEY, [0, 10]);
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(closeSpy).toHaveBeenCalledOnce();
     });
@@ -65,7 +67,7 @@ describe('FeedbackFilterModalComponent', () => {
         expect(component.filterForm.value).toEqual({
             tasks: [],
             testCases: [],
-            occurrence: [1, 10],
+            occurrence: [0, 10],
         });
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(closeSpy).toHaveBeenCalledOnce();

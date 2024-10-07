@@ -26,13 +26,14 @@ export class FeedbackFilterModalComponent {
 
     readonly totalAmountOfTasks = signal<number>(0);
     readonly testCaseNames = signal<string[]>([]);
+    readonly minCount = signal<number>(0);
     readonly maxCount = signal<number>(0);
 
     constructor() {
         this.filterForm = this.fb.group({
             tasks: [[]],
             testCases: [[]],
-            occurrence: [[1, this.maxCount() || 1]],
+            occurrence: [[this.minCount(), this.maxCount() || 1]],
         });
     }
 
@@ -64,7 +65,7 @@ export class FeedbackFilterModalComponent {
         this.filterForm.reset({
             tasks: [],
             testCases: [],
-            occurrence: [1, this.maxCount()],
+            occurrence: [this.minCount(), this.maxCount()],
         });
         this.filterApplied.emit(this.filterForm.value);
         this.activeModal.close();
