@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TestBed } from '@angular/core/testing';
@@ -40,6 +40,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { User } from 'app/core/user/user.model';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Notification Service', () => {
     const resourceUrl = 'api/notifications';
@@ -155,9 +156,11 @@ describe('Notification Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
+            imports: [TranslateTestingModule, RouterTestingModule.withRoutes([])],
             declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useClass: MockRouter },
