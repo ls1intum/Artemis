@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Map;
 import java.util.Optional;
 
 import jakarta.servlet.ServletException;
@@ -69,7 +70,7 @@ public class PublicUserJwtResource {
      */
     @PostMapping("authenticate")
     @EnforceNothing
-    public ResponseEntity<String> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
+    public ResponseEntity<Map<String, String>> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
 
         var username = loginVM.getUsername();
         var password = loginVM.getPassword();
@@ -86,7 +87,7 @@ public class PublicUserJwtResource {
             ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(rememberMe);
             response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
-            return ResponseEntity.ok(responseCookie.getValue());
+            return ResponseEntity.ok(Map.of("access_token", responseCookie.getValue()));
         }
         catch (BadCredentialsException ex) {
             log.warn("Wrong credentials during login for user {}", loginVM.getUsername());
