@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.iris.dto;
+package de.tum.cit.aet.artemis.iris.dto;
 
 import java.util.Set;
 

@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.iris.settings;
+package de.tum.cit.aet.artemis.iris.domain.settings;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -11,7 +11,7 @@ import jakarta.persistence.OneToMany;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.in.www1.artemis.domain.iris.settings.event.IrisEventSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventSettings;
 
 /**
  * Represents the specific ingestion sub-settings of lectures for Iris.

@@ -25,13 +25,20 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSe
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisHestiaSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisProactivitySubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisBuildFailedEventSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisJolEventSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisProgressStalledEventSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedEventSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedHestiaSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedProactivitySubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.

@@ -1,14 +1,17 @@
-package de.tum.in.www1.artemis.service.connectors.pyris.event;
+package de.tum.cit.aet.artemis.iris.service.pyris;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.service.iris.session.AbstractIrisChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
-import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.PyrisEvent;
+import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
 
 /**
  * Service to handle Pyris events.

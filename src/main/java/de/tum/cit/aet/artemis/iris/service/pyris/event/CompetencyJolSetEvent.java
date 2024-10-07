@@ -1,7 +1,7 @@
-package de.tum.in.www1.artemis.service.connectors.pyris.event;
+package de.tum.cit.aet.artemis.iris.service.pyris.event;
 
-import de.tum.in.www1.artemis.domain.competency.CompetencyJol;
-import de.tum.in.www1.artemis.service.iris.session.IrisCourseChatSessionService;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
+import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 
 public class CompetencyJolSetEvent extends PyrisEvent<IrisCourseChatSessionService, CompetencyJol> {
 

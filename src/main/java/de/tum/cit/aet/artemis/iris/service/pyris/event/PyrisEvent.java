@@ -1,7 +1,7 @@
-package de.tum.in.www1.artemis.service.connectors.pyris.event;
+package de.tum.cit.aet.artemis.iris.service.pyris.event;
 
-import de.tum.in.www1.artemis.domain.iris.session.IrisChatSession;
-import de.tum.in.www1.artemis.service.iris.session.AbstractIrisChatSessionService;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
 
 public abstract class PyrisEvent<S extends AbstractIrisChatSessionService<? extends IrisChatSession>, T> {
 

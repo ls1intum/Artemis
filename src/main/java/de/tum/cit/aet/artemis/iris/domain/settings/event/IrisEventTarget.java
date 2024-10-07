@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.iris.settings.event;
+package de.tum.cit.aet.artemis.iris.domain.settings.event;
 
 /**
  * The target session type of Iris event. Currently, only EXERCISE and COURSE are supported.

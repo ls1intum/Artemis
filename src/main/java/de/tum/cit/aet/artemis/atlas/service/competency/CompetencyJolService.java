@@ -23,6 +23,8 @@ import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisEventService;
+import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 
 /**
  * Service Implementation for managing CompetencyJol.

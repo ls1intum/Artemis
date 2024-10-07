@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.iris.settings.event;
+package de.tum.cit.aet.artemis.iris.domain.settings.event;
 
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;

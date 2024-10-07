@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.pyris.dto.chat;
+package de.tum.cit.aet.artemis.iris.service.pyris.dto.chat;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 

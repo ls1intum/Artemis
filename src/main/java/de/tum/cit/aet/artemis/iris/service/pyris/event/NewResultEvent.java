@@ -1,8 +1,8 @@
-package de.tum.in.www1.artemis.service.connectors.pyris.event;
+package de.tum.cit.aet.artemis.iris.service.pyris.event;
 
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.service.iris.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 public class NewResultEvent extends PyrisEvent<IrisExerciseChatSessionService, Result> {
 

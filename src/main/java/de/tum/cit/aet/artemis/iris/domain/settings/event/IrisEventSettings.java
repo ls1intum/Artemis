@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.iris.settings.event;
+package de.tum.cit.aet.artemis.iris.domain.settings.event;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
@@ -24,8 +24,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.iris.settings.IrisProactivitySubSettings;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisProactivitySubSettings;
 
 @Entity
 @Table(name = "iris_event_settings")
