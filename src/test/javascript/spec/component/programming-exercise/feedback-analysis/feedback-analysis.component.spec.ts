@@ -199,7 +199,7 @@ describe('FeedbackAnalysisComponent', () => {
                 testCases: ['testCase1'],
                 occurrence: [1, 10],
             };
-
+            component.maxCount.set(10);
             const count = component.countAppliedFilters(filters);
 
             expect(count).toBe(3);
