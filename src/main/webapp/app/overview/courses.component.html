@@ -25,11 +25,7 @@
         <div class="d-flex gap-3 align-items-center ms-1">
             <div class="text-primary d-inline-flex">
                 <a (click)="onSort()" class="d-inline-flex align-items-center">
-                    @if (isSortAscending) {
-                        <fa-icon [icon]="faArrowDownAZ" />
-                    } @else {
-                        <fa-icon [icon]="faArrowUpAZ" />
-                    }
+                    <fa-icon [icon]="isSortAscending ? faArrowDownAZ : faArrowUpAZ" />
                     <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.studentDashboard.sort"></span>
                 </a>
             </div>
