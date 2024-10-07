@@ -72,13 +72,13 @@ describe('CourseLectures', () => {
                 CourseLecturesComponent,
                 CourseLectureRowStubComponent,
                 SidebarComponent,
-                SearchFilterComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(SearchFilterPipe),
                 MockComponent(SidePanelComponent),
                 MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
+                MockComponent(SearchFilterComponent),
             ],
             providers: [
                 MockProvider(CourseStorageService, {

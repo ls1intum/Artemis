@@ -18,6 +18,7 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-catego
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
 import { Faq } from 'app/entities/faq.model';
 import { FaqCategory } from 'app/entities/faq-category.model';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
@@ -48,7 +49,13 @@ describe('CourseFaqs', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisSharedComponentModule, ArtemisSharedModule, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent)],
-            declarations: [CourseFaqComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            declarations: [
+                CourseFaqComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
+                MockComponent(SearchFilterComponent),
+            ],
             providers: [
                 MockProvider(FaqService),
                 { provide: Router, useClass: MockRouter },
