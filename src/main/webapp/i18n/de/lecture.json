@@ -56,7 +56,7 @@
                 "notificationText": "Mitteilungstext",
                 "notificationPlaceholder": "Was wurde geändert?",
                 "chooseFile": "Datei auswählen",
-                "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20MB.",
+                "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 20 MB.",
                 "fileLimitation": "(max. Größe 20 MB)",
                 "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },

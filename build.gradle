@@ -25,7 +25,7 @@ plugins {
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "7.5.6"
+version = "7.6.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -252,6 +252,8 @@ dependencies {
     implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
     implementation "de.jplag:python-3:${jplag_version}"
+    implementation "de.jplag:rust:${jplag_version}"
+    implementation "de.jplag:javascript:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
 
     // those are transitive dependencies of JPlag Text --> Stanford NLP
@@ -270,7 +272,7 @@ dependencies {
         }
     }
 
-    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.0"
+    implementation "org.apache.logging.log4j:log4j-to-slf4j:2.24.1"
 
     // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
     // implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.11"
@@ -342,7 +344,7 @@ dependencies {
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
-    implementation "io.micrometer:micrometer-registry-prometheus:1.13.4"
+    implementation "io.micrometer:micrometer-registry-prometheus:1.13.5"
     implementation "net.logstash.logback:logstash-logback-encoder:8.0"
 
     // Defines low-level streaming API, and includes JSON-specific implementations
@@ -405,7 +407,7 @@ dependencies {
     implementation "org.springframework.cloud:spring-cloud-starter-config:4.1.3"
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.4"
 
-    implementation "io.netty:netty-all:4.1.113.Final"
+    implementation "io.netty:netty-all:4.1.114.Final"
     implementation "io.projectreactor.netty:reactor-netty:1.1.22"
     implementation "org.springframework:spring-messaging:6.1.13"
     implementation "org.springframework.retry:spring-retry:2.0.9"
@@ -416,7 +418,7 @@ dependencies {
     implementation "org.springframework.security:spring-security-oauth2-core:${spring_security_version}"
     implementation "org.springframework.security:spring-security-oauth2-client:${spring_security_version}"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:9.41.1"
+    implementation "com.nimbusds:nimbus-jose-jwt:9.41.2"
 
     implementation "org.springframework.security:spring-security-oauth2-jose:${spring_security_version}"
     implementation "org.springframework.security:spring-security-crypto:${spring_security_version}"
@@ -464,7 +466,7 @@ dependencies {
     implementation "com.google.code.gson:gson:2.11.0"
 
 
-    implementation "com.google.errorprone:error_prone_annotations:2.32.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.33.0"
 
     // NOTE: we want to keep the same unique version for all configurations, implementation and annotationProcessor
     implementation("net.bytebuddy:byte-buddy") {
@@ -528,7 +530,7 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
 
-    testImplementation "io.github.classgraph:classgraph:4.8.176"
+    testImplementation "io.github.classgraph:classgraph:4.8.177"
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.10.2"
