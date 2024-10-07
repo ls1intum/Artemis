@@ -1,12 +1,10 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModule, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { PlacementArray } from '@ng-bootstrap/ng-bootstrap/util/positioning';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { fromEvent } from 'rxjs';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.
@@ -17,7 +15,7 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     selector: 'jhi-theme-switch',
     templateUrl: './theme-switch.component.html',
     styleUrls: ['theme-switch.component.scss'],
-    imports: [TranslateModule, CommonModule, ArtemisSharedModule],
+    imports: [TranslateModule, NgbModule],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
 })
