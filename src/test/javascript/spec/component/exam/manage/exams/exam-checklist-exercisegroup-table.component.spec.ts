@@ -6,12 +6,13 @@ import { Component } from '@angular/core';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { ChecklistCheckComponent } from 'app/shared/components/checklist-check/checklist-check.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
+import { provideHttpClient } from '@angular/common/http';
 
 @Component({
     template: '',
@@ -67,7 +68,6 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
                     { path: 'course-management/:courseId/exams/:examId/test-runs', component: DummyComponent },
                     { path: 'course-management/:courseId/exams/:examId/students', component: DummyComponent },
                 ]),
-                HttpClientTestingModule,
             ],
             declarations: [
                 DummyComponent,
@@ -80,7 +80,7 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
                 ProgressBarComponent,
                 MockComponent(FaIconComponent),
             ],
-            providers: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
