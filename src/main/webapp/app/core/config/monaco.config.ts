@@ -4,7 +4,7 @@
  */
 export function MonacoConfig() {
     self.MonacoEnvironment = {
-        getWorkerUrl: function (moduleId, label) {
+        getWorkerUrl: (_moduleId: string, label: string): string => {
             if (label === 'json') {
                 return './vs/language/json/json.worker.js';
             }
