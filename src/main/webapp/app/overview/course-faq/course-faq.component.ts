@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { map } from 'rxjs/operators';
-import { Subject, Subscription } from 'rxjs';
+import { debounceTime, map } from 'rxjs/operators';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
 import { ButtonType } from 'app/shared/components/button.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -15,7 +15,7 @@ import { FaqCategory } from 'app/entities/faq-category.model';
 import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
-import { SearchComponent } from 'app/shared/search/search.component';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 @Component({
     selector: 'jhi-course-faq',
@@ -23,7 +23,7 @@ import { SearchComponent } from 'app/shared/search/search.component';
     styleUrls: ['../course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchComponent],
+    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -39,7 +39,7 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
     hasCategories = false;
     isCollapsed = false;
 
-    searchValue = '';
+    searchInput = new BehaviorSubject<string>('');
 
     readonly ButtonType = ButtonType;
 
@@ -56,6 +56,9 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
             this.courseId = Number(params.courseId);
             this.loadFaqs();
             this.loadCourseExerciseCategories(this.courseId);
+        });
+        this.searchInput.pipe(debounceTime(500)).subscribe((searchTerm: string) => {
+            this.defineSearchedAndFilteredFaq(searchTerm);
         });
     }
 
@@ -87,14 +90,25 @@ export class CourseFaqComponent implements OnInit, OnDestroy {
 
     toggleFilters(category: string) {
         this.activeFilters = this.faqService.toggleFilter(category, this.activeFilters);
-        this.applyFilters();
+        this.defineSearchedAndFilteredFaq(this.searchInput.getValue());
     }
 
     private applyFilters(): void {
         this.filteredFaqs = this.faqService.applyFilters(this.activeFilters, this.faqs);
     }
 
+    private applySearch(searchTerm: string) {
+        this.filteredFaqs = this.filteredFaqs.filter((faq) => {
+            return this.faqService.hasSearchTokens(faq, searchTerm);
+        });
+    }
+
     setSearchValue(searchValue: string) {
-        this.searchValue = searchValue;
+        this.searchInput.next(searchValue);
+    }
+
+    defineSearchedAndFilteredFaq(searchTerm: string) {
+        this.applyFilters();
+        this.applySearch(searchTerm);
     }
 }

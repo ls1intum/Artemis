@@ -1,6 +1,6 @@
 <div>
     <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg d-flex justify-content-between">
-        <jhi-search class="flex-grow-1" (newSearchEvent)="setSearchValue($event)" />
+        <jhi-search-filter class="flex-grow-1" (newSearchEvent)="setSearchValue($event)" />
         <div class="ms-2 me-2" aria-label="Filter Dropdown" ngbDropdown>
             <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
                 <fa-icon [icon]="faFilter" />

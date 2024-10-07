@@ -137,4 +137,16 @@ export class FaqService {
             return categories.some((category) => filteredCategory.has(category!));
         }
     }
+
+    hasSearchTokens(faq: Faq, searchTerm: string) {
+        if (searchTerm == '') {
+            return true;
+        }
+        const tokens = searchTerm.split(' ');
+        if (tokens) {
+            let faqText = faq.questionTitle + ' ' + faq.questionAnswer;
+            faqText = faqText.toLowerCase();
+            return tokens.every((token) => faqText.includes(token.toLowerCase()));
+        }
+    }
 }
