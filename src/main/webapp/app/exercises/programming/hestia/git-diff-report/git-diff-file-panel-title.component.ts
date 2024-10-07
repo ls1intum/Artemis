@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CommonModule } from '@angular/common';
 
@@ -16,34 +16,28 @@ enum FileStatus {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [TranslateDirective, CommonModule],
 })
-export class GitDiffFilePanelTitleComponent implements OnInit {
-    @Input()
-    previousFilePath?: string;
+export class GitDiffFilePanelTitleComponent {
+    originalFilePath = input<string>();
+    modifiedFilePath = input<string>();
 
-    @Input()
-    filePath?: string;
+    titleAndFileStatus = computed(() => this.getTitleAndFileStatus(this.originalFilePath(), this.modifiedFilePath()));
 
-    title?: string;
-    fileStatus: FileStatus = FileStatus.UNCHANGED;
+    title = computed(() => this.titleAndFileStatus().title);
+    fileStatus = computed(() => this.titleAndFileStatus().fileStatus);
 
-    // Expose to template
     protected readonly FileStatus = FileStatus;
 
-    ngOnInit(): void {
-        if (this.filePath && this.previousFilePath) {
-            if (this.filePath !== this.previousFilePath) {
-                this.title = `${this.previousFilePath} → ${this.filePath}`;
-                this.fileStatus = FileStatus.RENAMED;
+    private getTitleAndFileStatus(originalFilePath?: string, modifiedFilePath?: string): { title?: string; fileStatus: FileStatus } {
+        if (modifiedFilePath && originalFilePath) {
+            if (modifiedFilePath !== originalFilePath) {
+                return { title: `${originalFilePath} → ${modifiedFilePath}`, fileStatus: FileStatus.RENAMED };
             } else {
-                this.title = this.filePath;
-                this.fileStatus = FileStatus.UNCHANGED;
+                return { title: modifiedFilePath, fileStatus: FileStatus.UNCHANGED };
             }
-        } else if (this.filePath) {
-            this.title = this.filePath;
-            this.fileStatus = FileStatus.CREATED;
+        } else if (modifiedFilePath) {
+            return { title: modifiedFilePath, fileStatus: FileStatus.CREATED };
         } else {
-            this.title = this.previousFilePath;
-            this.fileStatus = FileStatus.DELETED;
+            return { title: originalFilePath, fileStatus: FileStatus.DELETED };
         }
     }
 }
