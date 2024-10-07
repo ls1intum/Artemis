@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -29,12 +29,12 @@ export class GitDiffReportModalComponent implements OnInit, OnDestroy {
     private participationRepoFilesAtLeftCommitSubscription: Subscription;
     private participationRepoFilesAtRightCommitSubscription: Subscription;
 
-    constructor(
-        protected activeModal: NgbActiveModal,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private cachedRepositoryFilesService: CachedRepositoryFilesService,
-    ) {}
+    private readonly activeModal = inject(NgbActiveModal);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private readonly cachedRepositoryFilesService = inject(CachedRepositoryFilesService);
+
+    constructor() {}
 
     ngOnInit(): void {
         if (this.diffForTemplateAndSolution) {
