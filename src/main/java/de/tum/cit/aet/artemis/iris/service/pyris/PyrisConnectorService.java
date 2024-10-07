@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import java.util.Arrays;
 import java.util.List;
 
-import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -21,9 +19,11 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
 

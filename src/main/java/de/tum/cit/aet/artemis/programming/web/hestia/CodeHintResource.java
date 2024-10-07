@@ -1,11 +1,9 @@
 package de.tum.cit.aet.artemis.programming.web.hestia;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 
 import org.slf4j.Logger;
