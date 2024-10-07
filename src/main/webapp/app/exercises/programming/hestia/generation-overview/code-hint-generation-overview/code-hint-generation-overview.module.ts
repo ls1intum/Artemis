@@ -9,7 +9,6 @@ import { CoverageGenerationStepComponent } from '../steps/coverage-generation-st
 import { SolutionEntryGenerationStepComponent } from '../steps/solution-entry-generation-step/solution-entry-generation-step.component';
 import { CodeHintGenerationStepComponent } from '../steps/code-hint-generation-step/code-hint-generation-step.component';
 import { TestwiseCoverageReportModule } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report.module';
-import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { CodeHintGenerationOverviewComponent } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.component';
 import { RouterModule } from '@angular/router';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
@@ -25,12 +24,7 @@ import { GitDiffReportComponent } from 'app/exercises/programming/hestia/git-dif
         ArtemisExerciseHintSharedModule,
         ArtemisSharedComponentModule,
         TestwiseCoverageReportModule,
-        GitDiffReportModule,
-        GitDiffReportModule,
-        TestwiseCoverageReportModule,
-        ArtemisSharedComponentModule,
         ArtemisMarkdownModule,
-        ArtemisExerciseHintSharedModule,
         MatExpansionModule,
         GitDiffReportComponent,
     ],

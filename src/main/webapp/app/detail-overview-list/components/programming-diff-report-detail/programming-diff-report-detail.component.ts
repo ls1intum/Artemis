@@ -5,7 +5,6 @@ import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/
 import { faCodeCompare } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
-import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
@@ -15,7 +14,7 @@ import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-d
     selector: 'jhi-programming-diff-report-detail',
     templateUrl: 'programming-diff-report-detail.component.html',
     standalone: true,
-    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffReportModule, GitDiffLineStatComponent],
+    imports: [ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffLineStatComponent],
 })
 export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
