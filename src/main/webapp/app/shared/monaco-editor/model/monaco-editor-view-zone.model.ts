@@ -22,7 +22,7 @@ export class MonacoEditorViewZone extends MonacoCodeEditorElement implements mon
      * @param linkedContentDomNode The content to which this view zone should be linked. When the linked content
      * resizes, so does this view zone. Note that the content must be rendered elsewhere, e.g. in an {@link MonacoEditorOverlayWidget}.
      */
-    constructor(editor: monaco.editor.ICodeEditor, afterLineNumber: number, linkedContentDomNode: HTMLElement) {
+    constructor(editor: monaco.editor.IStandaloneCodeEditor, afterLineNumber: number, linkedContentDomNode: HTMLElement) {
         // id is unavailable until the view zone is added to the editor.
         super(editor, undefined);
         this.afterLineNumber = afterLineNumber;

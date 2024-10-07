@@ -56,7 +56,7 @@
             },
             "cloneRepository": {
                 "headline": "Clone repository in IntelliJ",
-                "content": "Watch the following video to learn how to clone a git repository in IntelliJ. After this step, you should click on the <tt>X</tt> button in the top right to stop the tutorial and apply the steps you saw in the video. Afterwards, resume the tutorial from your account menu (user name on the top right).",
+                "content": "Watch the following video to learn how to clone a git repository in IntelliJ. After this step, you should click on the <tt>X</tt> button in the top right to stop the tutorial and apply the steps you saw in the video. Afterwards, resume the tutorial from your account menu (username on the top right).",
                 "hint": "If you haven't installed the Java JDK 17 version, the video will show you how to do this.",
                 "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25977?video_only=1"
             },

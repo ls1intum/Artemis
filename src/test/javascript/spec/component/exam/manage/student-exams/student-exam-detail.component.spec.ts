@@ -6,11 +6,11 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { NgbModal, NgbModalRef, NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
 import { NgForm, NgModel, ReactiveFormsModule } from '@angular/forms';
@@ -24,7 +24,7 @@ import { ParticipationType } from 'app/entities/participation/participation.mode
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -128,15 +128,7 @@ describe('StudentExamDetailComponent', () => {
         } as StudentExamWithGradeDTO;
 
         await TestBed.configureTestingModule({
-            imports: [
-                ArtemisTestModule,
-                RouterTestingModule.withRoutes([]),
-                NgbModule,
-                NgxDatatableModule,
-                ReactiveFormsModule,
-                TranslateModule.forRoot(),
-                HttpClientTestingModule,
-            ],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbModule, NgxDatatableModule, ReactiveFormsModule, TranslateModule.forRoot()],
             declarations: [
                 StudentExamDetailComponent,
                 MockComponent(DataTableComponent),
@@ -150,6 +142,8 @@ describe('StudentExamDetailComponent', () => {
                 StudentExamDetailTableRowComponent,
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(StudentExamService, {
                     updateWorkingTime: () => {
                         return of(

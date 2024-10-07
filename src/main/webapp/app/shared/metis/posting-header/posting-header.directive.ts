@@ -3,6 +3,13 @@ import { Directive, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { UserRole } from 'app/shared/metis/metis.util';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { User } from 'app/core/user/user.model';
+import { AccountService } from 'app/core/auth/account.service';
+import { tap } from 'rxjs';
+import { getBackgroundColorHue } from 'app/utils/color.utils';
+import { getInitialsFromString } from 'app/utils/text.utils';
 
 @Directive()
 export abstract class PostingHeaderDirective<T extends Posting> implements OnInit {
@@ -15,11 +22,18 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     isAuthorOfPosting: boolean;
     postingIsOfToday: boolean;
     todayFlag?: string;
+    userAuthorityIcon: IconProp;
     userAuthority: string;
     userRoleBadge: string;
     userAuthorityTooltip: string;
+    userProfilePictureBackgroundColor: string;
+    userProfilePictureInitials: string;
+    currentUser?: User;
 
-    protected constructor(protected metisService: MetisService) {}
+    protected constructor(
+        protected metisService: MetisService,
+        protected accountService: AccountService,
+    ) {}
 
     /**
      * on initialization: determines if user is at least tutor in the course and if user is author of posting by invoking the metis service,
@@ -27,6 +41,10 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
      * determines icon and tooltip for authority type of the author
      */
     ngOnInit(): void {
+        this.accountService
+            .getAuthenticationState()
+            .pipe(tap((user: User) => (this.currentUser = user)))
+            .subscribe();
         this.postingIsOfToday = dayjs().isSame(this.posting.creationDate, 'day');
         this.todayFlag = this.getTodayFlag();
         this.setUserProperties();
@@ -63,16 +81,20 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
     setUserAuthorityIconAndTooltip(): void {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         const roleBadgeTranslationPath = 'artemisApp.metis.userRoles.';
-
+        this.userProfilePictureInitials = this.posting.author?.name === undefined ? 'NA' : getInitialsFromString(this.posting.author?.name);
+        this.userProfilePictureBackgroundColor = getBackgroundColorHue(this.posting.author?.id?.toString());
+        this.userAuthorityIcon = faUser;
         if (this.posting.authorRole === UserRole.USER) {
             this.userAuthority = 'student';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
         } else if (this.posting.authorRole === UserRole.INSTRUCTOR) {
+            this.userAuthorityIcon = faUserGraduate;
             this.userAuthority = 'instructor';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;
         } else if (this.posting.authorRole === UserRole.TUTOR) {
+            this.userAuthorityIcon = faUserCheck;
             this.userAuthority = 'tutor';
             this.userRoleBadge = roleBadgeTranslationPath + this.userAuthority;
             this.userAuthorityTooltip = toolTipTranslationPath + this.userAuthority;

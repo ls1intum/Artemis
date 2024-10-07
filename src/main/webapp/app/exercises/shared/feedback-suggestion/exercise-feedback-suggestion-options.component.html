@@ -18,6 +18,20 @@
             ></label>
             <jhi-help-icon placement="right auto" [text]="'artemisApp.exercise.feedbackSuggestionsEnabledTooltip'" />
         </div>
+        @if (this.exercise.type === ExerciseType.TEXT || this.exercise.type === ExerciseType.MODELING) {
+            <div class="form-check">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    name="allowFeedbackRequests"
+                    [checked]="!!exercise.allowFeedbackRequests"
+                    id="allowFeedbackRequests"
+                    (change)="toggleFeedbackRequests($event)"
+                />
+                <label class="form-control-label" for="allowFeedbackRequests" jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests"></label>
+                <jhi-help-icon placement="right auto" [text]="'artemisApp.programmingExercise.timeline.allowFeedbackRequestsTooltip'" />
+            </div>
+        }
         @if (!!this.exercise.feedbackSuggestionModule) {
             <div class="form-group">
                 <label for="athenaModuleSelect">Athena Module</label>

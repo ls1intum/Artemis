@@ -9,6 +9,13 @@
                 },
                 "deleted": "{{ param }} Nutzer:innen wurden gelöscht"
             },
+            "notEnrolled": {
+                "delete": {
+                    "cancel": "Keine nicht eingeschriebenen Nutzer:innen zum Löschen gefunden.",
+                    "caption": "Nicht eingeschriebene Nutzer:innen löschen",
+                    "question": "Sollen diese Nutzer:innen wirklich dauerhaft gelöscht werden? <br> {{ users }} <br> Das sind <strong>{{ title }}</strong> Nutzer:innen! Diese Aktion kann NICHT rückgängig gemacht werden!"
+                }
+            },
             "filter": {
                 "modal": {
                     "open": "Filter ({{ num }})",
@@ -17,7 +24,7 @@
                 },
                 "authority": {
                     "title": "Rolle ({{ num }})",
-                    "tooltip": "Filter die Nutzer:innen anhand ihrere Berechtigungen",
+                    "tooltip": "Filter die Nutzer:innen anhand ihrer Berechtigungen",
                     "admin": "Administrator",
                     "instructor": "Lehrende",
                     "editor": "Editor:in",
