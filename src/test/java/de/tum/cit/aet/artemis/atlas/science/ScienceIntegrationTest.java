@@ -6,25 +6,16 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceEventType;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceEventDTO;
-import de.tum.cit.aet.artemis.atlas.test_repository.ScienceEventTestRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
-import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class ScienceIntegrationTest extends AbstractSpringIntegrationIndependentTest {
-
-    @Autowired
-    private ScienceEventTestRepository scienceEventRepository;
-
-    @Autowired
-    private FeatureToggleService featureToggleService;
+class ScienceIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @BeforeEach
     void enableFeatureToggle() {

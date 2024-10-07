@@ -20,6 +20,8 @@ export interface DetailOverviewSection {
 export enum DetailType {
     Link = 'detail-link',
     Text = 'detail-text',
+    DefaultProfilePicture = 'detail-default-profile-picture',
+    Image = 'detail-image',
     Date = 'detail-date',
     Boolean = 'detail-boolean',
     Markdown = 'detail-markdown',
