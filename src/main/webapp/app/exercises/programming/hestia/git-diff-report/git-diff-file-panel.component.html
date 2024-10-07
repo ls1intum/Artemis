@@ -25,7 +25,9 @@
                     [diffForTemplateAndSolution]="diffForTemplateAndSolution"
                     [diffEntries]="diffEntries"
                     [originalFileContent]="templateFileContent"
+                    [originalFilePath]="previousFilePath"
                     [modifiedFileContent]="solutionFileContent"
+                    [modifiedFilePath]="filePath"
                     (onDiffReady)="onDiffReady.emit($event)"
                 />
             </div>

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ViewEncapsulation, effect, input, output, signal, untracked, viewChild } from '@angular/core';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
 
@@ -10,50 +10,29 @@ import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MonacoDiffEditorComponent],
 })
-export class GitDiffFileComponent implements OnInit {
-    @ViewChild(MonacoDiffEditorComponent, { static: true })
-    monacoDiffEditor: MonacoDiffEditorComponent;
+export class GitDiffFileComponent {
+    monacoDiffEditor = viewChild.required(MonacoDiffEditorComponent);
 
-    @Input()
-    diffForTemplateAndSolution: boolean = false;
+    diffForTemplateAndSolution = input<boolean>(false);
+    diffEntries = input.required<ProgrammingExerciseGitDiffEntry[]>();
+    originalFileContent = input<string>();
+    originalFilePath = input<string>();
+    modifiedFileContent = input<string>();
+    modifiedFilePath = input<string>();
+    allowSplitView = input<boolean>(true);
+    onDiffReady = output<boolean>();
 
-    @Input()
-    diffEntries: ProgrammingExerciseGitDiffEntry[];
+    fileUnchanged = signal<boolean>(false);
 
-    @Input()
-    originalFileContent?: string;
-
-    @Input()
-    modifiedFileContent?: string;
-
-    @Input()
-    allowSplitView = true;
-
-    @Output()
-    onDiffReady = new EventEmitter<boolean>();
-
-    originalFilePath?: string;
-    modifiedFilePath?: string;
-    fileUnchanged = false;
-
-    ngOnInit(): void {
-        this.determineFilePaths();
-        this.monacoDiffEditor.setFileContents(this.originalFileContent, this.originalFilePath, this.modifiedFileContent, this.modifiedFilePath);
-        this.fileUnchanged = this.originalFileContent === this.modifiedFileContent;
-    }
-
-    /**
-     * Determines the previous and current file path of the current file
-     */
-    private determineFilePaths() {
-        this.modifiedFilePath = this.diffEntries
-            .map((entry) => entry.filePath)
-            .filter((filePath) => filePath)
-            .first();
-
-        this.originalFilePath = this.diffEntries
-            .map((entry) => entry.previousFilePath)
-            .filter((filePath) => filePath)
-            .first();
+    constructor() {
+        effect(
+            () => {
+                untracked(() => {
+                    this.monacoDiffEditor().setFileContents(this.originalFileContent(), this.originalFilePath(), this.modifiedFileContent(), this.modifiedFilePath());
+                    this.fileUnchanged.set(this.originalFileContent() === this.modifiedFileContent());
+                });
+            },
+            { allowSignalWrites: true },
+        );
     }
 }
