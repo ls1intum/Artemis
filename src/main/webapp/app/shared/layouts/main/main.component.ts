@@ -1,5 +1,5 @@
 import { Component, Inject, OnDestroy, OnInit, Renderer2 } from '@angular/core';
-import { ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
@@ -8,7 +8,7 @@ import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { CourseManagementService } from '../../../course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { LtiService } from 'app/shared/service/lti.service';
 
 @Component({
@@ -124,7 +124,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isCourseOverview = isPresent;
         });
 
-        //this.checkLtiParameter();
+        this.checkLtiParameter();
 
         this.ltiService.isLti$.subscribe((isLti) => {
             this.isLti = isLti;
@@ -135,7 +135,6 @@ export class JhiMainComponent implements OnInit, OnDestroy {
 
     private checkLtiParameter() {
         this.route.queryParams.subscribe((params) => {
-            //this.isLti = params['lti'] === 'true';
             this.ltiService.setLti(params['lti'] === 'true');
             console.log(params);
         });
