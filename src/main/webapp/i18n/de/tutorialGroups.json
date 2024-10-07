@@ -51,7 +51,7 @@
                 "attendance": "Anwesenheit",
                 "utilizationHelp": "Durchschnittliche Anwesenheit geteilt durch Kapazität (falls definiert). Die durchschnittliche Anwesenheit bezieht sich auf die letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
                 "utilizationHelpDetail": "Durchschnittliche Anwesenheit geteilt durch Kapazität",
-                "averageAttendance": "Duchschnittliche Anwesenheit: {{ averageAttendance }}",
+                "averageAttendance": "Durchschnittliche Anwesenheit: {{ averageAttendance }}",
                 "averageAttendanceDetail": "Durchschnittliche Anwesenheit",
                 "averageAttendanceHelpDetail": "Durchschnittliche Anwesenheit in den letzten drei Sitzungen. Falls keine Anwesenheit eingetragen wurde, wird die entsprechende Sitzung ignoriert und die Berechnung mit zwei, bzw. einer Sitzung durchgeführt.",
                 "profilePicture": "Tutor:in Profilbild",
@@ -110,7 +110,7 @@
                     "placeholder": "Wähle einen Campus, auf dem sich diese Übungsgruppe trifft.",
                     "loadingText": "Campus laden ...",
                     "notFoundText": "Kein Campus gefunden.",
-                    "campusHelp": "In das Feld tippen um nach einem Campus zu suchen.",
+                    "campusHelp": "In das Feld tippen, um nach einem Campus zu suchen.",
                     "maxLengthValidationError": "Der Campus ist auf {{ max }} Zeichen beschränkt!"
                 },
                 "additionalInformationInput": {
@@ -128,17 +128,17 @@
                     "placeholder": "Wähle eine Sprache",
                     "loadingText": "Sprachen laden ...",
                     "notFoundText": "Keine Sprachen gefunden.",
-                    "languageHelp": "In das Feld tippen um nach einer Sprache zu suchen.",
+                    "languageHelp": "In das Feld tippen, um nach einer Sprache zu suchen.",
                     "maxLengthValidationError": "Die Sprache ist auf {{ max }} Zeichen beschränkt!",
                     "requiredValidationError": "Eine Sprache ist erforderlich!"
                 },
                 "isOnlineInput": {
-                    "label": "Trifft sich sich diese Übungsgruppe online oder offline?"
+                    "label": "Trifft sich diese Übungsgruppe online oder offline?"
                 },
                 "notificationInput": {
                     "label": "Optional: Benachrichtigung über Änderungen",
                     "placeholder": "Benachrichtigungstext",
-                    "maxLengthValidationError": "Der Benachrichtigungstext is limitiert auf {{ max }} Zeichen!",
+                    "maxLengthValidationError": "Der Benachrichtigungstext ist limitiert auf {{ max }} Zeichen!",
                     "help": "Wenn du die eingeschriebenen Studierenden und den zugewiesenen Tutor über Änderungen in dieser Übungsgruppe informieren möchtest, kannst du hier einen Benachrichtigungstext eingeben. Es wird eine Benachrichtigung mit dem Text versendet."
                 }
             },
@@ -196,7 +196,7 @@
                     "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
                 },
                 "reasonInput": {
-                    "label": "Grund für keine Übunsgruppen an diesem Tag",
+                    "label": "Grund für keine Übungsgruppen an diesem Tag",
                     "placeholder": "Nationalfeiertag",
                     "maxLengthValidationError": "Die Vernunft beschränkt sich auf {{ max }} Zeichen!"
                 }
@@ -225,7 +225,7 @@
                     "beta": "Die Zeitzone wird momentan nur in Verbindung mit dem Übungsgruppen-Feature verwendet. Sie hat momentan keinen Einfluss auf andere Bereiche von Artemis",
                     "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
                     "placeholder": "Wähle eine Zeitzone aus",
-                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen um nach einer Zeitzone zu suchen.",
+                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen, um nach einer Zeitzone zu suchen.",
                     "requiredValidationError": "Eine Zeitzone muss ausgewählt werden!"
                 },
                 "periodInput": {
@@ -244,7 +244,7 @@
         },
         "pages": {
             "tutorialGroupsManagement": {
-                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgrupen! Eine Beta-Funktion von Artemis, die es ermöglicht, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
+                "intro": "Willkommen auf der Seite zur Verwaltung der Übungsgruppen! Eine Beta-Funktion von Artemis, die es ermöglicht, wöchentliche Online- und Offline-Übungsgruppen zu verwalten. Du kannst damit beginnen, Übungsgruppen aus einer CSV-Datei zu importieren oder manuell eine neue Übungsgruppe zu erstellen.",
                 "title": "Übungsgruppen-Verwaltung",
                 "freePeriodsButtons": "Freie Tage",
                 "creatTutorialGroupButton": "Neue Übungsgruppe",
@@ -267,7 +267,7 @@
                 "configurationExplanation": "Der Kurs benötigt eine kursweite Konfiguration für die Übungsgruppen. Diese Konfiguration enthält Standardeinstellungen für alle Übungsgruppen.",
                 "configuration": "Der Kurs hat eine Konfiguration für die Übungsgruppen",
                 "createConfiguration": "Konfiguration erstellen",
-                "continueToManagement": "Weiter zur Übungsgruppenverwaltung"
+                "continueToManagement": "Weiter zur Übungsgruppen-Verwaltung"
             },
             "createTutorialGroup": {
                 "title": "Übungsgruppe erstellen"

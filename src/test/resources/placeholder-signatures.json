@@ -16,7 +16,7 @@
     "fieldName" : "courseTitle",
     "fieldType" : "java.lang.String"
   }, {
-    "fieldName" : "channelName",
+    "fieldName" : "conversationName",
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "responsibleForUserName",
@@ -49,7 +49,7 @@
     "fieldName" : "courseTitle",
     "fieldType" : "java.lang.String"
   }, {
-    "fieldName" : "channelName",
+    "fieldName" : "conversationName",
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "responsibleForUserName",
@@ -67,7 +67,7 @@
     "fieldName" : "messageCreationDate",
     "fieldType" : "java.lang.String"
   }, {
-    "fieldName" : "channelName",
+    "fieldName" : "conversationName",
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "authorName",
@@ -109,7 +109,7 @@
     "fieldName" : "courseTitle",
     "fieldType" : "java.lang.String"
   }, {
-    "fieldName" : "channelName",
+    "fieldName" : "conversationName",
     "fieldType" : "java.lang.String"
   }, {
     "fieldName" : "responsibleForUserName",
