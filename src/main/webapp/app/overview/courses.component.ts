@@ -13,7 +13,7 @@ import { Router } from '@angular/router';
 import { faArrowDownAZ, faArrowUpAZ, faDoorOpen, faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
-import { sortCourses, sortCoursesDescending } from 'app/shared/util/course.util';
+import { sortCourses } from 'app/shared/util/course.util';
 
 @Component({
     selector: 'jhi-overview',
@@ -135,14 +135,13 @@ export class CoursesComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Sorts the courses and changes the sort direction in the end
+     * Sorts the courses in alphabetical order
      */
-    onSort(isAscending: boolean): void {
-        const sortFunction = isAscending ? sortCourses : sortCoursesDescending;
+    onSort(): void {
         if (this.courses) {
-            this.regularCourses = [...sortFunction(this.regularCourses)];
-            this.recentlyAccessedCourses = [...sortFunction(this.recentlyAccessedCourses)];
-            this.isSortAscending = isAscending;
+            this.isSortAscending = !this.isSortAscending;
+            this.regularCourses = [...sortCourses(this.regularCourses, this.isSortAscending)];
+            this.recentlyAccessedCourses = [...sortCourses(this.recentlyAccessedCourses, this.isSortAscending)];
         }
     }
 }
