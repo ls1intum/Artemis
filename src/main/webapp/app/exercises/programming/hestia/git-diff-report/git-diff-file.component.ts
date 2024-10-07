@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
 
@@ -6,6 +6,9 @@ import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-
     selector: 'jhi-git-diff-file',
     templateUrl: './git-diff-file.component.html',
     encapsulation: ViewEncapsulation.None,
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [MonacoDiffEditorComponent],
 })
 export class GitDiffFileComponent implements OnInit {
     @ViewChild(MonacoDiffEditorComponent, { static: true })
