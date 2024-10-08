@@ -283,6 +283,7 @@ info:
 jhipster:
     clientApp:
         name: 'artemisApp'
+    # cors is needed for vscode plugin
     cors:
         allowed-methods: "*"
         allowed-headers: "*"
