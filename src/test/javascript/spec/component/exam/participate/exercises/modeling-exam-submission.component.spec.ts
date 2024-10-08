@@ -16,7 +16,6 @@ import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
 import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
-import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 
 describe('ModelingExamSubmissionComponent', () => {
@@ -69,10 +68,9 @@ describe('ModelingExamSubmissionComponent', () => {
             expect(ModelingExamSubmissionComponent).not.toBeNull();
         });
 
-        it('should show exercise group title', () => {
-            comp.exercise.exerciseGroup = { title: 'Test Group' } as ExerciseGroup;
+        it('should show static text in header', () => {
             fixture.detectChanges();
-            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === comp.exercise.exerciseGroup?.title);
+            const el = fixture.debugElement.query((de) => de.nativeElement.textContent === 'artemisApp.exam.yourSolution');
             expect(el).not.toBeNull();
         });
 

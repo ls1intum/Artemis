@@ -15,7 +15,7 @@
     <hr />
     <jhi-resizeable-container [examTimeline]="examTimeline">
         <!--region Left Panel-->
-        <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : (exercise?.exerciseGroup?.title ?? '-') }}</span>
+        <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">
                 @if (isActive && !result && exercise && studentSubmission && !readonly) {
