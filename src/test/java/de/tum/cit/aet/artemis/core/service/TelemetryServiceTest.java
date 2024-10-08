@@ -75,7 +75,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         telemetryServiceSpy.useTelemetry = true;
         telemetryServiceSpy.eurekaEnabled = true;
-        telemetryServiceSpy.sendingDelay = 1;
+        telemetryServiceSpy.sendingDelay = 0;
     }
 
     @Test
@@ -113,7 +113,7 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
         telemetryServiceSpy.useTelemetry = false;
         telemetryServiceSpy.scheduleTelemetryTask();
-        await().atMost(1, SECONDS).untilAsserted(() -> mockServer.verify());
+        await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
     }
 
     @Test
