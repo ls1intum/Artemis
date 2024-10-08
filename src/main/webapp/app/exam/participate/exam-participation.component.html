@@ -68,7 +68,11 @@
                                                     />
                                                 }
                                                 @case (TEXT) {
-                                                    <jhi-text-editor-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
+                                                    <jhi-text-editor-exam
+                                                        [exercise]="exercise"
+                                                        [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                                        (saveCurrentExercise)="triggerSave(false)"
+                                                    />
                                                 }
                                                 @case (MODELING) {
                                                     <jhi-modeling-submission-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />

@@ -1,17 +1,36 @@
 @if (exercise) {
-    <h3 class="text-align-left fw-normal">
-        <span>
-            {{ exercise.exerciseGroup?.title }}
-        </span>
-        <!-- prettier-ignore -->
-        <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-            <span
-            >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+    <div class="d-flex justify-content-between align-items-center">
+        <h3 class="text-align-left fw-normal">
+            <span>
+                {{ exercise.exerciseGroup?.title }}
+            </span>
+            <!-- prettier-ignore -->
+            <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
+                <span
+                >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
             }) @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge
-            [includedInOverallScore]="exercise.includedInOverallScore" />
-          }</span>
-    </h3>
+                <jhi-included-in-score-badge
+                [includedInOverallScore]="exercise.includedInOverallScore" />
+            }</span>
+        </h3>
+        <!-- @if (submission && submission.submitted && submission.isSynced) {
+            <button id="save-exam" type="submit" [disabled]="true" class="btn btn-primary" (click)="onSave()">
+                <fa-icon [fixedWidth]="true" [icon]="faCheck"></fa-icon>
+                <span class="d-none d-sm-inline">{{ 'Exercise Saved' }}</span>
+            </button>
+        } @else {
+            <button id="save-exam" type="submit" [disabled]="!(submission && submission.submitted) && submission?.isSynced" class="btn btn-primary" (click)="onSave()">
+                <fa-icon [fixedWidth]="true" [icon]="faFloppyDisk"></fa-icon>
+                <span class="d-none d-sm-inline">{{ 'Save Exercise' }}</span>
+            </button>
+        } -->
+        <button id="save-exam" type="submit" [disabled]="submission?.isSynced" class="btn btn-primary" (click)="onSave()">
+            <fa-icon [fixedWidth]="true" [icon]="submission?.submitted && submission?.isSynced ? faCheck : faFloppyDisk"> </fa-icon>
+            <span class="d-none d-sm-inline">
+                {{ submission?.submitted && submission?.isSynced ? 'Exercise Saved' : 'Save Exercise' }}
+            </span>
+        </button>
+    </div>
     <hr />
     <!--resizable container-->
     <jhi-resizeable-container class="col-12" [examTimeline]="examTimeline">

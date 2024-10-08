@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { Subject } from 'rxjs';
 import { TextSubmission } from 'app/entities/text/text-submission.model';
@@ -6,10 +6,11 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
-import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { faCheck, faFloppyDisk, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { ExamParticipationService } from '../../exam-participation.service';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -26,6 +27,8 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     @Input()
     exercise: Exercise;
 
+    @Output() saveCurrentExercise = new EventEmitter<void>();
+
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
 
@@ -33,13 +36,17 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     answer: string;
     problemStatementHtml: string;
     private textEditorInput = new Subject<string>();
+    submission?: Submission;
 
     // Icons
-    farListAlt = faListAlt;
+    readonly farListAlt = faListAlt;
+    readonly faFloppyDisk = faFloppyDisk;
+    readonly faCheck = faCheck;
 
     constructor(
         private textService: TextEditorService,
         private stringCountService: StringCountService,
+        private examParticipationService: ExamParticipationService,
         changeDetectorReference: ChangeDetectorRef,
     ) {
         super(changeDetectorReference);
@@ -49,6 +56,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         // show submission answers in UI
         this.problemStatementHtml = htmlForMarkdown(this.exercise?.problemStatement);
         this.updateViewFromSubmission();
+        this.submission = ExamParticipationService.getSubmissionForExercise(this.exercise);
     }
 
     getExerciseId(): number | undefined {
@@ -120,5 +128,12 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     setSubmissionVersion(submissionVersion: SubmissionVersion): void {
         this.submissionVersion = submissionVersion;
         this.updateViewFromSubmissionVersion();
+    }
+
+    onSave() {
+        if (this.submission) {
+            this.submission.submitted = true;
+        }
+        this.saveCurrentExercise.emit();
     }
 }
