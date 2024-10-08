@@ -1,11 +1,10 @@
 import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/shared/tutorial-group-detail/tutorial-group-detail.component';
-import { RouterTestingModule } from '@angular/router/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
-import { Component, Input, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -15,12 +14,13 @@ import { RemoveSecondsPipe } from 'app/course/tutorial-groups/shared/remove-seco
 import { DetailOverviewListComponent } from 'app/detail-overview-list/detail-overview-list.component';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { ChangeDetectorRef } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { RouterModule } from '@angular/router';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -57,7 +57,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule, RouterTestingModule.withRoutes([]), HttpClientTestingModule],
+            imports: [NgbTooltipMocksModule, RouterModule.forRoot([])],
             declarations: [
                 TutorialGroupDetailComponent,
                 DetailOverviewListComponent,
@@ -69,6 +69,8 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(ArtemisMarkdownService),
                 MockProvider(SortService),
                 MockProvider(SessionStorageService),
@@ -107,7 +109,7 @@ describe('TutorialGroupDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbTooltipMocksModule, RouterTestingModule.withRoutes([])],
+            imports: [NgbTooltipMocksModule, RouterModule.forRoot([])],
             declarations: [
                 TutorialGroupDetailComponent,
                 MockPipe(ArtemisTranslatePipe),

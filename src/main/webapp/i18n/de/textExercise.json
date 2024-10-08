@@ -28,11 +28,11 @@
             "assessmentPending": "Bewertung ausstehend",
             "createExampleSubmissions": "Beispielabgabe erstellen",
             "checkPlagiarism": "Plagiatsprüfung",
-            "saveSuccessful": "Dein Antwort wurde erfolgreich gespeichert!",
+            "saveSuccessful": "Deine Antwort wurde erfolgreich gespeichert!",
             "error": "Ein Fehler ist aufgetreten. Bitte versuche es später noch einmal.",
             "tutorEffortStatistics": {
                 "title": "Tutor Aufwand Statistik",
-                "titleDescription": "Verteilung des Tutor Aufwands: Zeigt wie viele Tutor:innen wie viele Minuten damit verbracht haben, Abgaben dieser Aufgabe zu korrigieren. Das Interval, das den Median dieser Verteilung beinhaltet, ist in dunkelblau gekennzeichnet, falls mindestens ein/e Tutor:in in dieses Intervall fällt.",
+                "titleDescription": "Verteilung des Tutor-Aufwands: Zeigt wie viele Tutor:innen wie viele Minuten damit verbracht haben, Abgaben dieser Aufgabe zu korrigieren. Das Intervall, das den Median dieser Verteilung beinhaltet, ist in dunkelblau gekennzeichnet, falls mindestens ein/e Tutor:in in dieses Intervall fällt.",
                 "numberOfSubmissionsAssessed": "Anzahl der bewerteten Einreichungen",
                 "totalTimeSpent": "Gesamtdauer der Benotung (in Minuten)",
                 "averageTime": "Bewertungsgeschwindigkeit (Einreichungen/Minuten)",

@@ -9,31 +9,18 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
-import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolPairDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyJolRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class CompetencyJolIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "competencyjolintegrationtest";
-
-    @Autowired
-    private CompetencyUtilService competencyUtilService;
-
-    @Autowired
-    private CompetencyProgressUtilService competencyProgressUtilService;
-
-    @Autowired
-    private CompetencyJolRepository competencyJOLRepository;
 
     private final Competency[] competency = new Competency[3];
 
@@ -63,7 +50,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
 
     @AfterEach
     void tearDown() {
-        competencyJOLRepository.deleteAll();
+        competencyJolRepository.deleteAll();
     }
 
     @Nested
@@ -100,7 +87,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
         void shouldCreateJOL() throws Exception {
             short jolValue = 3;
             sendRequest(competency[0].getId(), jolValue, HttpStatus.OK);
-            final var jol = competencyJOLRepository.findLatestByCompetencyIdAndUserId(competency[0].getId(), student.getId());
+            final var jol = competencyJolRepository.findLatestByCompetencyIdAndUserId(competency[0].getId(), student.getId());
             assertThat(jol).isPresent();
             assertThat(jol.get().getValue()).isEqualTo(jolValue);
             assertThat(jol.get().getCompetencyConfidence()).isEqualTo(competencyProgress.getConfidence());
@@ -113,7 +100,7 @@ class CompetencyJolIntegrationTest extends AbstractSpringIntegrationIndependentT
             competencyUtilService.createJol(competency[0], student, (short) 123, ZonedDateTime.now().minusDays(1), 0.0, 0.0);
             short jolValue = 3;
             sendRequest(competency[0].getId(), jolValue, HttpStatus.OK);
-            final var jol = competencyJOLRepository.findLatestByCompetencyIdAndUserId(competency[0].getId(), student.getId());
+            final var jol = competencyJolRepository.findLatestByCompetencyIdAndUserId(competency[0].getId(), student.getId());
             assertThat(jol).isPresent();
             assertThat(jol.get().getValue()).isEqualTo(jolValue);
             assertThat(jol.get().getCompetencyConfidence()).isEqualTo(competencyProgress.getConfidence());

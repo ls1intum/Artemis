@@ -23,7 +23,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
 import de.tum.cit.aet.artemis.programming.hestia.util.TestwiseCoverageTestUtil;
-import de.tum.cit.aet.artemis.programming.localvcci.AbstractLocalCILocalVCIntegrationTest;
+import de.tum.cit.aet.artemis.programming.icl.AbstractLocalCILocalVCIntegrationTest;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.TestwiseCoverageService;

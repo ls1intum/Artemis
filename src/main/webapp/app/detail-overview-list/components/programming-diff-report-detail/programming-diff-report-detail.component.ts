@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, Input, OnDestroy, inject } from '@angular/core';
 import type { ProgrammingDiffReportDetail } from 'app/detail-overview-list/detail.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
@@ -8,7 +8,7 @@ import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/gi
 import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-programming-diff-report-detail',
@@ -16,7 +16,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
     standalone: true,
     imports: [ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffReportModule],
 })
-export class ProgrammingDiffReportDetailComponent {
+export class ProgrammingDiffReportDetailComponent implements OnDestroy {
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonSize = ButtonSize;
     protected readonly TooltipPlacement = TooltipPlacement;
@@ -25,15 +25,20 @@ export class ProgrammingDiffReportDetailComponent {
     protected readonly faCodeCompare = faCodeCompare;
 
     private readonly modalService = inject(NgbModal);
+    private modalRef?: NgbModalRef;
 
     @Input({ required: true }) detail: ProgrammingDiffReportDetail;
+
+    ngOnDestroy() {
+        this.modalRef?.close();
+    }
 
     showGitDiff(gitDiff?: ProgrammingExerciseGitDiffReport) {
         if (!gitDiff) {
             return;
         }
 
-        const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: 'diff-view-modal' });
-        modalRef.componentInstance.report = gitDiff;
+        this.modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: 'diff-view-modal' });
+        this.modalRef.componentInstance.report = gitDiff;
     }
 }
