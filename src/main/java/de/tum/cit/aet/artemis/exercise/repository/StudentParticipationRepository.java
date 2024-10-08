@@ -1248,8 +1248,8 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                   AND p.testRun = FALSE
                   AND f.positive = FALSE
                   AND (:searchTerm = '' OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
-                  AND (:#{#filterTestCases != null && #filterTestCases.size() < 1} = TRUE OR f.testCase.testName IN (:filterTestCases))
-                  AND (:#{#filterTaskNames != null && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName IN (
+                  AND (:#{#filterTestCases != NULL && #filterTestCases.size() < 1} = TRUE OR f.testCase.testName IN (:filterTestCases))
+                  AND (:#{#filterTaskNames != NULL && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName IN (
                       SELECT tct.testName
                       FROM ProgrammingExerciseTask t
                       JOIN t.testCases tct
