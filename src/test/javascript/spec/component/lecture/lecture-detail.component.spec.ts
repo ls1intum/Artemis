@@ -13,9 +13,9 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateService } from '@ngx-translate/core';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { LectureService } from 'app/lecture/lecture.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_IRIS } from 'app/app.constants';
@@ -49,8 +49,10 @@ describe('LectureDetailComponent', () => {
         };
 
         await TestBed.configureTestingModule({
-            declarations: [LectureDetailComponent, HtmlForMarkdownPipe, MockPipe(ArtemisDatePipe), MockModule(RouterModule), DetailOverviewListComponent, HttpClientTestingModule],
+            declarations: [LectureDetailComponent, HtmlForMarkdownPipe, MockPipe(ArtemisDatePipe), MockModule(RouterModule), DetailOverviewListComponent],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 MockProvider(SessionStorageService),
                 { provide: TranslateService, useClass: MockTranslateService },
