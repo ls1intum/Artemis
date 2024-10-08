@@ -45,6 +45,44 @@ public interface CourseCompetencyRepository extends ArtemisJpaRepository<CourseC
             """)
     Set<CourseCompetency> findAllForCourse(@Param("courseId") long courseId);
 
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+                LEFT JOIN FETCH c.exercises ex
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH lu.lecture l
+                LEFT JOIN FETCH l.attachments
+            WHERE c.course.id = :courseId
+            """)
+    Set<CourseCompetency> findAllForCourseWithExercisesAndLectureUnitsAndLecturesAndAttachments(@Param("courseId") long courseId);
+
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+                LEFT JOIN FETCH c.exercises ex
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH lu.lecture l
+                LEFT JOIN FETCH l.lectureUnits
+                LEFT JOIN FETCH l.attachments
+            WHERE c.id = :id
+            """)
+    Optional<CourseCompetency> findByIdWithExercisesAndLectureUnitsAndLectures(@Param("id") long id);
+
+    default CourseCompetency findByIdWithExercisesAndLectureUnitsAndLecturesElseThrow(long id) {
+        return getValueElseThrow(findByIdWithExercisesAndLectureUnitsAndLectures(id), id);
+    }
+
+    @Query("""
+            SELECT c
+            FROM CourseCompetency c
+                LEFT JOIN FETCH c.exercises ex
+                LEFT JOIN FETCH c.lectureUnits lu
+                LEFT JOIN FETCH lu.lecture l
+                LEFT JOIN FETCH l.attachments
+            WHERE c.id IN :ids
+            """)
+    Set<CourseCompetency> findAllByIdWithExercisesAndLectureUnitsAndLecturesAndAttachments(@Param("ids") Set<Long> ids);
+
     /**
      * Fetches all information related to the calculation of the mastery for exercises in a competency.
      * The complex grouping by is necessary for postgres

@@ -129,12 +129,6 @@
                                 [useParticipationVcsAccessToken]="true"
                             />
                         }
-                        @if (theiaEnabled) {
-                            <a class="btn btn-primary" [class.btn-sm]="smallButtons" (click)="startOnlineIDE()" target="_blank" rel="noopener noreferrer">
-                                <fa-icon [icon]="faDesktop" [fixedWidth]="true" />
-                                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.openOnlineIDE"></span>
-                            </a>
-                        }
                         @if (exercise.allowFeedbackRequests) {
                             @if (athenaEnabled) {
                                 <a
