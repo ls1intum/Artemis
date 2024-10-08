@@ -23,12 +23,6 @@
                     }
                     <span jhiTranslate="artemisApp.studentExams.generateMissingStudentExams"></span>
                 </button>
-                <button id="startExercisesButton" class="btn btn-primary mt-1" (click)="startExercises()" [disabled]="isLoading || isExamStarted || exercisePreparationRunning">
-                    @if (isLoading) {
-                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    }
-                    <span jhiTranslate="artemisApp.studentExams.startExercises"></span>
-                </button>
             }
         }
         @if (!localVCEnabled && course?.isAtLeastInstructor) {

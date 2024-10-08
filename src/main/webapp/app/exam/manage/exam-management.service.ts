@@ -359,15 +359,6 @@ export class ExamManagementService {
     }
 
     /**
-     * Start all the exercises for all the student exams belonging to the exam
-     * @param courseId course to which the exam belongs
-     * @param examId exam to which the student exams belong
-     */
-    startExercises(courseId: number, examId: number): Observable<HttpResponse<void>> {
-        return this.http.post<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
-    }
-
-    /**
      * Get the current progress of starting exercises for all students
      * @param courseId course to which the exam belongs
      * @param examId exam to which the student exams belong

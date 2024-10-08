@@ -192,23 +192,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         });
     }
 
-    /**
-     * Starts all the exercises of the student exams that belong to the exam
-     */
-    startExercises() {
-        this.isLoading = true;
-        this.examManagementService.startExercises(this.courseId, this.examId).subscribe({
-            next: () => {
-                this.alertService.success('artemisApp.studentExams.startExerciseSuccess');
-                this.isLoading = false;
-            },
-            error: (err: HttpErrorResponse) => {
-                this.handleError('artemisApp.studentExams.startExerciseFailure', err);
-                this.isLoading = false;
-            },
-        });
-    }
-
     setExercisePreparationStatus(newStatus?: ExamExerciseStartPreparationStatus) {
         this.exercisePreparationStatus = newStatus;
         const processedExams = (newStatus?.finished ?? 0) + (newStatus?.failed ?? 0);
