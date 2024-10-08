@@ -1,3 +1,9 @@
+# Sorting using `<algorithm>` building blocks
+
+An array `v` is considered _sorted_ if each pair of neighboring elements fulfills `v[i] <= v[i + 1]`.
+Sorting an array means rearranging the elements such that it is sorted. This also means that
+sorting may not add or remove elements. This is usually achieved by swapping elements.
+
 1. [task][CMake runs correctly](TestConfigure)
 2. [task][Your code compiles](CompileSort)
 
@@ -5,10 +11,80 @@
 # Sorting Algorithms
 [task][All algorithms sort correctly](TestCatch2(sort-test))
 1. [task][Selection Sort](sorting_algorithms/selection_sort,sorting_algorithms/all_elements_equal/selection_sort,sorting_algorithms/reverse-sorted_values/selection_sort,sorting_algorithms/single_values/selection_sort,sorting_algorithms/empty_input/selection_sort,sorting_algorithms/large_input/selection_sort)
+    Find the correct value for the next position, one position at a time.
+
+    Implement the following function using suitable C++ standard library algorithms.
+    ```c++
+    void selection_sort(std::vector<int>::iterator begin,
+                        std::vector<int>::iterator end) { /* ... */ }
+    ```
+
 2. [task][Insertion Sort](sorting_algorithms/insertion_sort,sorting_algorithms/all_elements_equal/insertion_sort,sorting_algorithms/reverse-sorted_values/insertion_sort,sorting_algorithms/single_values/insertion_sort,sorting_algorithms/empty_input/insertion_sort,sorting_algorithms/large_input/insertion_sort)
+    Find the correct position in the sorted sequence for the next value, one value at a time.
+
+    Implement the following function using suitable C++ standard library algorithms:
+    ```c++
+    void insertion_sort(std::vector<int>::iterator begin,
+                        std::vector<int>::iterator end) { /* ... */ }
+    ```
+
 3. [task][Quicksort](sorting_algorithms/quicksort,sorting_algorithms/all_elements_equal/quicksort,sorting_algorithms/reverse-sorted_values/quicksort,sorting_algorithms/single_values/quicksort,sorting_algorithms/empty_input/quicksort,sorting_algorithms/large_input/quicksort)
+    Quicksort chooses a single element (called _pivot_ `p`) from the input and partitions the
+    remaining elements into $$ \le p $$ and $$ \gt p $$, with the pivot placed between them.
+
+    ```c++
+    void quicksort(std::vector<int>::iterator begin,
+                   std::vector<int>::iterator end) { /* .. */ }
+    ```
+
+    Don't forget to catch the base case (sorting 0 or 1 elements)!
+
 4. [task][Mergesort](sorting_algorithms/mergesort,sorting_algorithms/all_elements_equal/mergesort,sorting_algorithms/reverse-sorted_values/mergesort,sorting_algorithms/single_values/mergesort,sorting_algorithms/empty_input/mergesort,sorting_algorithms/large_input/mergesort)
+    Split the input into 2 equal-sized halves, call `mergesort` on them and then merge/interleave
+    the two sorted halves using an appropriate algorithm with linear time complexity.
+
+    ```c++
+    void mergesort(std::vector<int>::iterator begin,
+                   std::vector<int>::iterator end) { /* ... */ }
+    ```
+
+    Don't forget to catch the base case (sorting 0 or 1 elements)!
+
 5. [task][Mergesort Inplace](sorting_algorithms/mergesort_inplace,sorting_algorithms/all_elements_equal/mergesort_inplace,sorting_algorithms/reverse-sorted_values/mergesort_inplace,sorting_algorithms/single_values/mergesort_inplace,sorting_algorithms/empty_input/mergesort_inplace,sorting_algorithms/large_input/mergesort_inplace)
+    Split the input into 2 equal-sized halves, call `mergesort_inplace` on them and then merge/interleave
+    the two sorted halves using an appropriate algorithm without allocating additional memory.
+
+    ```c++
+    void mergesort_inplace(std::vector<int>::iterator begin,
+                           std::vector<int>::iterator end) { /* ... */ }
+    ```
+
+    Don't forget to catch the base case (sorting 0 or 1 elements)!
+
 6. [task][Heapsort](sorting_algorithms/heapsort,sorting_algorithms/all_elements_equal/heapsort,sorting_algorithms/reverse-sorted_values/heapsort,sorting_algorithms/single_values/heapsort,sorting_algorithms/empty_input/heapsort,sorting_algorithms/large_input/heapsort)
+    Construct a heap from the input. Then sort it with an appropriate algorithm.
+
+    ```c++
+    void heapsort(std::vector<int>::iterator begin,
+                  std::vector<int>::iterator end) { /* ... */ }
+    ```
+
 7. [task][Explicit Heapsort](sorting_algorithms/heapsort_explicit,sorting_algorithms/all_elements_equal/heapsort_explicit,sorting_algorithms/reverse-sorted_values/heapsort_explicit,sorting_algorithms/single_values/heapsort_explicit,sorting_algorithms/empty_input/heapsort_explicit,sorting_algorithms/large_input/heapsort_explicit)
+    Implement Heapsort without using `sort_heap`.
+    You do not need to understand the details of the algorithm, you should only look at the
+    documentation for heap algorightms, e.g.
+    [cppreference.com: `sort_heap`](https://en.cppreference.com/w/cpp/algorithm/sort_heap), and figure out which algorithms
+    need to be called.
+
+    ```c++
+    void heapsort_explicit(std::vector<int>::iterator begin,
+                           std::vector<int>::iterator end) { /* ... */ }
+    ```
+
 8. [task][Bogosort](bogosort,bogosort/empty_input,bogosort/single_value)
+    As long as the vector is not sorted, (randomly or deterministically) shuffle the entire vector.
+
+    ```c++
+    void bogosort(std::vector<int>::iterator begin,
+                  std::vector<int>::iterator end) { /* ... */ }
+    ```
