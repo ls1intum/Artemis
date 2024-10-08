@@ -41,9 +41,9 @@ export class LearningPathsTableComponent {
     readonly page = signal<number>(1);
     private readonly sortingOrder = signal<SortingOrder>(SortingOrder.ASCENDING);
     private readonly sortedColumn = signal<TableColumn>(TableColumn.ID);
-    readonly pageSize = signal<number>(50).asReadonly();
+    readonly pageSize = signal<number>(100).asReadonly();
     readonly collectionSize = computed(() => {
-        if (this.learningPaths().length <= this.pageSize()) {
+        if (this.learningPaths().length < this.pageSize()) {
             return this.learningPaths().length;
         } else {
             return (this.searchResults()?.numberOfPages ?? 1) * this.pageSize();
