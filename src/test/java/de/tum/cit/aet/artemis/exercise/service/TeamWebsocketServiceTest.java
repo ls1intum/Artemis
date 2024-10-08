@@ -24,7 +24,6 @@ import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.dto.TeamAssignmentPayload;
 import de.tum.cit.aet.artemis.exercise.dto.TeamImportStrategyType;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -37,9 +36,6 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest 
 
     @Autowired
     private UserTestRepository userRepo;
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -77,11 +73,11 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationIndependentTest 
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
                 exercise.setMode(ExerciseMode.TEAM);
-                modelingExercise = (ModelingExercise) exerciseRepo.save(exercise);
+                modelingExercise = (ModelingExercise) exerciseRepository.save(exercise);
             }
             if (exercise instanceof TextExercise) {
                 exercise.setMode(ExerciseMode.TEAM);
-                textExercise = (TextExercise) exerciseRepo.save(exercise);
+                textExercise = (TextExercise) exerciseRepository.save(exercise);
             }
         }
         assertThat(modelingExercise).isNotNull();

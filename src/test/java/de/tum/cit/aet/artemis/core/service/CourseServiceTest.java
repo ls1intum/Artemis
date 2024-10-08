@@ -29,7 +29,6 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -51,9 +50,6 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepo;
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -79,7 +75,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         var course = courseUtilService.addEmptyCourse();
         var exercise = TextExerciseFactory.generateTextExercise(date, date, date, course);
         course.addExercises(exercise);
-        exercise = exerciseRepo.save(exercise);
+        exercise = exerciseRepository.save(exercise);
 
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var participation1 = new StudentParticipation();
@@ -140,7 +136,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         var course = courseUtilService.addEmptyCourse();
         var exercise = TextExerciseFactory.generateTextExercise(date, date, date, course);
         course.addExercises(exercise);
-        exercise = exerciseRepo.save(exercise);
+        exercise = exerciseRepository.save(exercise);
 
         var student1 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         var participation1 = new StudentParticipation();

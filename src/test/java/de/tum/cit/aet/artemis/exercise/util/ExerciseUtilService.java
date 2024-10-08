@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -65,7 +65,7 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 public class ExerciseUtilService {
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseTestRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepo;
@@ -122,7 +122,7 @@ public class ExerciseUtilService {
         exercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(10.0);
-        return exerciseRepo.save(exercise);
+        return exerciseTestRepository.save(exercise);
     }
 
     /**
@@ -222,7 +222,7 @@ public class ExerciseUtilService {
         switch (exerciseType) {
             case "modeling" -> {
                 course = modelingExerciseUtilService.addCourseWithOneModelingExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
+                exercise = exerciseTestRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     StudentParticipation participation = participationUtilService.createAndSaveParticipationForExercise(exercise, userPrefix + "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
@@ -235,7 +235,7 @@ public class ExerciseUtilService {
             }
             case "programming" -> {
                 course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
+                exercise = exerciseTestRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     ProgrammingSubmission submission = new ProgrammingSubmission();
                     programmingExerciseUtilService.addProgrammingSubmission((ProgrammingExercise) exercise, submission, userPrefix + "student" + j);
@@ -244,7 +244,7 @@ public class ExerciseUtilService {
             }
             case "text" -> {
                 course = textExerciseUtilService.addCourseWithOneFinishedTextExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
+                exercise = exerciseTestRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     TextSubmission textSubmission = ParticipationFactory.generateTextSubmission("Text" + j + j, null, true);
                     textExerciseUtilService.saveTextSubmission((TextExercise) exercise, textSubmission, userPrefix + "student" + j);
@@ -253,7 +253,7 @@ public class ExerciseUtilService {
             }
             case "file-upload" -> {
                 course = fileUploadExerciseUtilService.addCourseWithFileUploadExercise();
-                exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
+                exercise = exerciseTestRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     FileUploadSubmission submission = ParticipationFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
                     fileUploadExerciseUtilService.saveFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
@@ -313,12 +313,13 @@ public class ExerciseUtilService {
      * @param newDueDate The new due date of the exercise.
      */
     public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {
-        Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
+        Exercise exercise = exerciseTestRepository.findById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setDueDate(newDueDate);
         if (exercise instanceof ProgrammingExercise) {
             ((ProgrammingExercise) exercise).setBuildAndTestStudentSubmissionsAfterDueDate(newDueDate);
         }
-        exerciseRepo.save(exercise);
+        exerciseTestRepository.save(exercise);
     }
 
     /**
@@ -328,9 +329,10 @@ public class ExerciseUtilService {
      * @param newDueDate The new assessment due date of the exercise.
      */
     public void updateAssessmentDueDate(long exerciseId, ZonedDateTime newDueDate) {
-        Exercise exercise = exerciseRepo.findById(exerciseId).orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
+        Exercise exercise = exerciseTestRepository.findById(exerciseId)
+                .orElseThrow(() -> new IllegalArgumentException("Exercise with given ID " + exerciseId + " could not be found"));
         exercise.setAssessmentDueDate(newDueDate);
-        exerciseRepo.save(exercise);
+        exerciseTestRepository.save(exercise);
     }
 
     /**

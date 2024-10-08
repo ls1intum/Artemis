@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -44,9 +44,6 @@ public class FileUploadExerciseUtilService {
     private static final ZonedDateTime FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(1);
 
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private CourseTestRepository courseRepo;
@@ -72,6 +69,9 @@ public class FileUploadExerciseUtilService {
     @Autowired
     private UserUtilService userUtilService;
 
+    @Autowired
+    private ExerciseTestRepository exerciseRepository;
+
     /**
      * Creates and saves a new Course and an Exam with one mandatory FileUploadExercise.
      *
@@ -82,7 +82,7 @@ public class FileUploadExerciseUtilService {
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise(boolean startDateBeforeCurrentTime) {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamAndCourse(true, startDateBeforeCurrentTime);
         FileUploadExercise fileUploadExercise = FileUploadExerciseFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
-        return exerciseRepo.save(fileUploadExercise);
+        return exerciseRepository.save(fileUploadExercise);
     }
 
     /**
@@ -118,10 +118,10 @@ public class FileUploadExerciseUtilService {
     public Course addCourseWithThreeFileUploadExercise() {
         var fileUploadExercises = createFileUploadExercisesWithCourse();
         assertThat(fileUploadExercises).as("created three exercises").hasSize(3);
-        exerciseRepo.saveAll(fileUploadExercises);
+        exerciseRepository.saveAll(fileUploadExercises);
         long courseId = fileUploadExercises.getFirst().getCourseViaExerciseGroupOrCourseMember().getId();
         Course course = courseRepo.findByIdWithEagerExercisesElseThrow(courseId);
-        List<Exercise> exercises = exerciseRepo.findAllExercisesByCourseId(courseId).stream().toList();
+        List<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(courseId).stream().toList();
         assertThat(exercises).as("three exercises got stored").hasSize(3);
         assertThat(course.getExercises()).as("course contains the exercises").containsExactlyInAnyOrder(exercises.toArray(new Exercise[] {}));
         return course;
@@ -152,7 +152,7 @@ public class FileUploadExerciseUtilService {
         fileUploadExercises.add(finishedFileUploadExercise);
         fileUploadExercises.add(assessedFileUploadExercise);
         fileUploadExercises.add(noDueDateFileUploadExercise);
-        exerciseRepo.saveAll(fileUploadExercises);
+        exerciseRepository.saveAll(fileUploadExercises);
 
         return courseRepo.findByIdWithEagerExercisesElseThrow(course.getId());
     }
@@ -168,7 +168,7 @@ public class FileUploadExerciseUtilService {
         assessedFileUploadExercise.setTitle("assessed");
         course.addExercises(assessedFileUploadExercise);
         courseRepo.save(course);
-        exerciseRepo.save(assessedFileUploadExercise);
+        exerciseRepository.save(assessedFileUploadExercise);
         return course;
     }
 
