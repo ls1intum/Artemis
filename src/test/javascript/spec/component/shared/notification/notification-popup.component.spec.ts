@@ -52,8 +52,8 @@ describe('Notification Popup Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [NotificationPopupComponent, RouterModule.forRoot([]), MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, RouterModule.forRoot([])],
+            declarations: [NotificationPopupComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
