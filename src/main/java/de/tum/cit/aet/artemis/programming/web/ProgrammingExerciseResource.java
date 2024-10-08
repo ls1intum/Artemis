@@ -279,7 +279,7 @@ public class ProgrammingExerciseResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise updatedProgrammingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
+            @RequestParam(value = "notificationText") Optional<String> notificationText) throws JsonProcessingException {
         log.debug("REST request to update ProgrammingExercise : {}", updatedProgrammingExercise);
         if (updatedProgrammingExercise.getId() == null) {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
@@ -388,7 +388,7 @@ public class ProgrammingExerciseResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> updateProgrammingExerciseTimeline(@RequestBody ProgrammingExercise updatedProgrammingExercise,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText") Optional<String> notificationText) {
         log.debug("REST request to update the timeline of ProgrammingExercise : {}", updatedProgrammingExercise);
         var existingProgrammingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -411,7 +411,7 @@ public class ProgrammingExerciseResource {
     @PatchMapping("programming-exercises/{exerciseId}/problem-statement")
     @EnforceAtLeastEditor
     public ResponseEntity<ProgrammingExercise> updateProblemStatement(@PathVariable long exerciseId, @RequestBody String updatedProblemStatement,
-            @RequestParam(value = "notificationText", required = false) String notificationText) {
+            @RequestParam(value = "notificationText") Optional<String> notificationText) {
         log.debug("REST request to update ProgrammingExercise with new problem statement: {}", updatedProblemStatement);
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
@@ -755,7 +755,7 @@ public class ProgrammingExerciseResource {
     @EnforceAtLeastEditor
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> reEvaluateAndUpdateProgrammingExercise(@PathVariable long exerciseId, @RequestBody ProgrammingExercise programmingExercise,
-            @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
+            @RequestParam(value = "deleteFeedback", required = false, defaultValue = "false") boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
         log.debug("REST request to re-evaluate ProgrammingExercise : {}", programmingExercise);
         // check that the exercise exists for given id
         programmingExerciseRepository.findByIdElseThrow(exerciseId);
