@@ -60,8 +60,8 @@ Before you can use SSH keys to secure a connection with Artemis the following mu
 - SSH is enabled on your university's Artemis instance
 - You need an SSH key! See :ref:`Creating SSH keys<create ssh key>`.
 
-Note that:
+.. note::
 
-- You can use the same SSH key for multiple repositories or projects.
-- An Artemis user can currently only add one key to their account.
-- Artemis supports ECDSA, RSA2, and Ed25519 key types.
+    - You can use the same SSH key for multiple repositories or projects.
+    - An Artemis user can currently only add one key to their account.
+    - Artemis supports ECDSA, RSA2, and Ed25519 key types.
