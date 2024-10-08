@@ -224,5 +224,5 @@ Each one represents a single test case feedback and should have the format:
 Integrated Code Lifecycle
 -------------------------
 
-The Artemis Integrated Code Lifecycle system allows to use programming exercises fully integrated within Artemis, without the need of any external tools.
+The Artemis Integrated Code Lifecycle system allows you to use programming exercises fully integrated within Artemis, without the need of any external tools.
 Find more information on it :ref:`here<integrated code lifecycle>`.
