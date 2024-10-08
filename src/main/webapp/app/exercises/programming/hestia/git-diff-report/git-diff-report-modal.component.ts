@@ -33,21 +33,21 @@ export class GitDiffReportModalComponent {
         effect(
             async () => {
                 if (this.diffForTemplateAndSolution()) {
-                    await this.loadFilesForTemplateAndSolution2();
+                    await this.loadFilesForTemplateAndSolution();
                 } else {
-                    await this.loadRepositoryFilesForParticipationsFromCacheIfAvailable2();
+                    await this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
                 }
             },
             { allowSignalWrites: true },
         );
     }
 
-    private async loadFilesForTemplateAndSolution2(): Promise<void> {
-        await this.fetchTemplateRepoFiles2();
-        await this.fetchSolutionRepoFiles2();
+    private async loadFilesForTemplateAndSolution(): Promise<void> {
+        await this.fetchTemplateRepoFiles();
+        await this.fetchSolutionRepoFiles();
     }
 
-    private async fetchSolutionRepoFiles2(): Promise<void> {
+    private async fetchSolutionRepoFiles(): Promise<void> {
         try {
             const solutionRepoFiles = await firstValueFrom(this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.report().programmingExercise.id!));
             this.rightCommitFileContentByPath.set(solutionRepoFiles);
@@ -56,22 +56,22 @@ export class GitDiffReportModalComponent {
         }
     }
 
-    private async loadRepositoryFilesForParticipationsFromCacheIfAvailable2(): Promise<void> {
+    private async loadRepositoryFilesForParticipationsFromCacheIfAvailable(): Promise<void> {
         if (this.report().participationIdForLeftCommit) {
             const key = this.report().leftCommitHash!;
             if (this.cachedRepositoryFiles().has(key)) {
                 this.leftCommitFileContentByPath.set(this.cachedRepositoryFiles().get(key)!);
-                await this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable2();
+                await this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
             } else {
-                await this.fetchParticipationRepoFilesAtLeftCommit2();
+                await this.fetchParticipationRepoFilesAtLeftCommit();
             }
         } else {
-            await this.loadTemplateRepoFilesFromCacheIfAvailable2();
-            await this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable2();
+            await this.loadTemplateRepoFilesFromCacheIfAvailable();
+            await this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
         }
     }
 
-    private async fetchParticipationRepoFilesAtLeftCommit2(): Promise<void> {
+    private async fetchParticipationRepoFilesAtLeftCommit(): Promise<void> {
         try {
             const filesWithContent =
                 (await firstValueFrom(
@@ -83,31 +83,31 @@ export class GitDiffReportModalComponent {
             this.leftCommitFileContentByPath.set(filesWithContent);
             this.cachedRepositoryFiles().set(this.report().leftCommitHash!, filesWithContent);
             this.cachedRepositoryFilesService.emitCachedRepositoryFiles(this.cachedRepositoryFiles());
-            await this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable2();
+            await this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
         } catch (e) {
             this.errorWhileFetchingRepos.set(true);
         }
     }
 
-    private async loadTemplateRepoFilesFromCacheIfAvailable2(): Promise<void> {
+    private async loadTemplateRepoFilesFromCacheIfAvailable(): Promise<void> {
         const key = this.calculateTemplateMapKey();
         if (this.cachedRepositoryFiles().has(key)) {
             this.leftCommitFileContentByPath.set(this.cachedRepositoryFiles().get(key)!);
         } else {
-            await this.fetchTemplateRepoFiles2();
+            await this.fetchTemplateRepoFiles();
         }
     }
 
-    private async loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable2(): Promise<void> {
+    private async loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable(): Promise<void> {
         const key = this.report().rightCommitHash!;
         if (this.cachedRepositoryFiles().has(key)) {
             this.rightCommitFileContentByPath.set(this.cachedRepositoryFiles().get(key)!);
         } else {
-            await this.fetchParticipationRepoFilesAtRightCommit2();
+            await this.fetchParticipationRepoFilesAtRightCommit();
         }
     }
 
-    private async fetchTemplateRepoFiles2(): Promise<void> {
+    private async fetchTemplateRepoFiles(): Promise<void> {
         const key = this.calculateTemplateMapKey();
         try {
             const response =
@@ -121,7 +121,7 @@ export class GitDiffReportModalComponent {
         }
     }
 
-    private async fetchParticipationRepoFilesAtRightCommit2(): Promise<void> {
+    private async fetchParticipationRepoFilesAtRightCommit(): Promise<void> {
         try {
             const filesWithContent =
                 (await firstValueFrom(
