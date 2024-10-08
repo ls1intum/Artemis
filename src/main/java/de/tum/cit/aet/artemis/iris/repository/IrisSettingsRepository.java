@@ -29,7 +29,6 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
             FROM IrisGlobalSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings
                 LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
-                LEFT JOIN FETCH irisSettings.irisHestiaSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
             """)
     Set<IrisGlobalSettings> findAllGlobalSettings();
@@ -43,7 +42,6 @@ public interface IrisSettingsRepository extends ArtemisJpaRepository<IrisSetting
             FROM IrisCourseSettings irisSettings
                 LEFT JOIN FETCH irisSettings.irisChatSettings
                 LEFT JOIN FETCH irisSettings.irisLectureIngestionSettings
-                LEFT JOIN FETCH irisSettings.irisHestiaSettings
                 LEFT JOIN FETCH irisSettings.irisCompetencyGenerationSettings
             WHERE irisSettings.course.id = :courseId
             """)

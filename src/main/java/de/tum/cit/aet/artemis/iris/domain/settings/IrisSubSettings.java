@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
  * IrisSubSettings is an abstract super class for the specific sub settings types.
  * Sub Settings are settings for a specific feature of Iris.
  * {@link IrisChatSubSettings} are used to specify settings for the chat feature.
- * {@link IrisHestiaSubSettings} are used to specify settings for the Hestia integration.
  * {@link IrisCompetencyGenerationSubSettings} are used to specify settings for the competency generation feature.
  * <p>
  * Also see {@link de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService} for more information.
@@ -41,7 +40,6 @@ import de.tum.cit.aet.artemis.core.domain.DomainObject;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = IrisChatSubSettings.class, name = "chat"),
     @JsonSubTypes.Type(value = IrisLectureIngestionSubSettings.class, name = "lecture-ingestion"),
-    @JsonSubTypes.Type(value = IrisHestiaSubSettings.class, name = "hestia"),
     @JsonSubTypes.Type(value = IrisCompetencyGenerationSubSettings.class, name = "competency-generation")
 })
 // @formatter:on
@@ -51,13 +49,12 @@ public abstract class IrisSubSettings extends DomainObject {
     @Column(name = "enabled")
     private boolean enabled = false;
 
-    @Column(name = "allowed_models")
-    @Convert(converter = IrisModelListConverter.class)
-    private SortedSet<String> allowedModels = new TreeSet<>();
+    @Column(name = "allowed_variants", nullable = false)
+    @Convert(converter = IrisListConverter.class)
+    private SortedSet<String> allowedVariants = new TreeSet<>();
 
-    @Nullable
-    @Column(name = "preferred_model")
-    private String preferredModel;
+    @Column(name = "selected_variant", nullable = false)
+    private String selectedVariant;
 
     public boolean isEnabled() {
         return enabled;
@@ -67,20 +64,20 @@ public abstract class IrisSubSettings extends DomainObject {
         this.enabled = enabled;
     }
 
-    public SortedSet<String> getAllowedModels() {
-        return allowedModels;
+    public SortedSet<String> getAllowedVariants() {
+        return allowedVariants;
     }
 
-    public void setAllowedModels(SortedSet<String> allowedModels) {
-        this.allowedModels = allowedModels;
+    public void setAllowedVariants(SortedSet<String> allowedVariants) {
+        this.allowedVariants = allowedVariants;
     }
 
     @Nullable
-    public String getPreferredModel() {
-        return preferredModel;
+    public String getSelectedVariant() {
+        return selectedVariant;
     }
 
-    public void setPreferredModel(@Nullable String preferredModel) {
-        this.preferredModel = preferredModel;
+    public void setSelectedVariant(@Nullable String selectedVariant) {
+        this.selectedVariant = selectedVariant;
     }
 }

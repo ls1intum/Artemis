@@ -28,11 +28,6 @@ public class IrisExerciseSettings extends IrisSettings {
     @JoinColumn(name = "iris_chat_settings_id")
     private IrisChatSubSettings irisChatSettings;
 
-    @Override
-    public boolean isValid() {
-        return exercise != null;
-    }
-
     public Exercise getExercise() {
         return exercise;
     }
@@ -58,16 +53,6 @@ public class IrisExerciseSettings extends IrisSettings {
     @Override
     public void setIrisChatSettings(IrisChatSubSettings irisChatSettings) {
         this.irisChatSettings = irisChatSettings;
-    }
-
-    @Override
-    public IrisHestiaSubSettings getIrisHestiaSettings() {
-        return null;
-    }
-
-    @Override
-    public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
-
     }
 
     @Override
