@@ -3,13 +3,13 @@ These changes are stored in a repository. A repository is a collection of files 
 How to navigate through the repository and view the code is explained in the following sections. This guide is divided into two parts: one for students and one for instructors.
 It is demonstrated using course programming exercises, but the same principles apply to exams as well.
 
-For Students
-""""""""""""
+Access Repositories as a Student
+""""""""""""""""""""""""""""""""
 
 As a student, you can use the repository to view your course submissions.
 To access your submissions, you need to navigate to the exercise, press the '*Code*' button, and click on |open-repository-button|.
 
-.. figure:: programming/open-repository-student.png
+.. figure:: local-vc/open-repository-student.png
    :alt: Opening the repository in the student view
    :align: center
 
@@ -22,7 +22,7 @@ To the right side of the screen, above the problem statement, you can see the re
 the '*Code*' button to clone the repository to your local machine and see the full commit history by pressing the '*Open Commit History*' button. Finally, you can
 download the repository as a ZIP file by pressing the '*Download Repository*' button.
 
-.. figure:: programming/current-repository-content-view.png
+.. figure:: local-vc/current-repository-content-view.png
    :alt: Current Repository Content
    :align: center
 
@@ -33,7 +33,7 @@ You can see the commit message, the author of the commit, the date of the commit
 If you created a submission with multiple commits, you can see all of them here but only the last commit has the result of the submission.
 Lastly, you can also view the code of the commit by pressing on the commit hash.
 
-.. figure:: programming/commit-history-view.png
+.. figure:: local-vc/commit-history-view.png
    :alt: Commit History View
    :align: center
 
@@ -44,20 +44,20 @@ You can see the changes in the code, the files that have been added, the files t
 Green color indicates the lines that have been added and red color indicates the lines that have been deleted.
 You can also see the commit message, the author of the commit, the date of the commit and the commit hash.
 
-.. figure:: programming/commit-diff-view.png
+.. figure:: local-vc/commit-diff-view.png
    :alt: Commit Diff View
    :align: center
 
    Commit Diff View
 
-For Instructors
-"""""""""""""""
+Access Repositories as an Instructor
+""""""""""""""""""""""""""""""""""""
 
 As an instructor, you can use the repository to view the submissions of your students. For this purpose, you need to navigate to the exercise participations page.
 Here you can see all the students’ participations for the exercise and navigate to the repository of a student by pressing the '*Code*' button and clicking on |open-repository-button|.
 This will show the repository of the student just like it is shown to the student.
 
-.. figure:: programming/open-repository-instructor-participations.png
+.. figure:: local-vc/open-repository-instructor-participations.png
    :alt: Open Repository Button in Participations Page
    :align: center
 
@@ -66,11 +66,11 @@ This will show the repository of the student just like it is shown to the studen
 You can also see the repositories for an exercises **solution**, **template** and **test** repositories on the exercise management page.
 You can navigate to these repositories by pressing the '*Code*' button and clicking |open-repository-button| as described above.
 
-.. figure:: programming/course-management-repositories.png
+.. figure:: local-vc/course-management-repositories.png
    :alt: Solution, Template and Test Repositories in Exercise Management Page
    :align: center
 
    Solution, Template and Test Repositories in Exercise Management Page
 
-.. |open-repository-button| image:: programming/open-repository-button.png
+.. |open-repository-button| image:: local-vc/open-repository-button.png
    :scale: 50%
