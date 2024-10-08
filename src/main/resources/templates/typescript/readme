@@ -21,11 +21,14 @@ Use the strategy pattern to select the right sorting algorithm at runtime.
 
 **You have the following tasks:**
 
-1. [task][Context Class](structural_Context_has_properties,structural_Context_has_methods)
+1. SortStrategy Interface
+Create a `SortStrategy` interface and adjust the sorting algorithms so that they implement this interface.
+
+2. [task][Context Class](structural_Context_has_properties,structural_Context_has_methods)
 Create and implement a `Context` class following the below class diagram.
 Add `get` and `set` accessors for the attribute.
 
-2. [task][Context Policy](structural_Policy_has_properties,structural_Policy_has_methods)
+3. [task][Context Policy](structural_Policy_has_properties,structural_Policy_has_methods)
 Create and implement a `Policy` class following the below class diagram.
 Add `get` and `set` accessors for the attribute.
 `Policy` should implement a simple configuration mechanism:
@@ -36,7 +39,7 @@ Add `get` and `set` accessors for the attribute.
     2. [task][Select BubbleSort](behavior_Policy_uses_BubbleSort_for_small_list)
     Select `BubbleSort` when the List has less or equal 10 dates.
 
-3. Complete the `main()` function which demonstrates switching between two strategies at runtime.
+4. Complete the `main()` function which demonstrates switching between two strategies at runtime.
 
 @startuml
 
