@@ -19,7 +19,6 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -202,7 +201,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     @NotNull Map<String, Object> attributes) {
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
-                    return JWTFilter.extractValidJwt((HttpServletRequest) servletRequest, tokenProvider) != null;
+                    return JWTFilter.extractValidJwt(servletRequest.getServletRequest(), tokenProvider) != null;
                 }
                 return false;
             }
