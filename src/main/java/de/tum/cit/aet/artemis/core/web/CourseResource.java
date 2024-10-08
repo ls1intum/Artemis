@@ -1456,6 +1456,13 @@ public class CourseResource {
         return ResponseEntity.ok(Math.max(complaintService.getMaxComplaintsPerParticipant(course, participant) - unacceptedComplaints, 0));
     }
 
+    /**
+     * GET courses/{courseId}/existing-exercise-details: Get the exercise names and shortNames of all exercises in the given course.
+     *
+     * @param courseId          of the course for which all exercise names (and optionally shortNames) should be fetched
+     * @param includeShortNames should be true for programming exercises and false for other exercise types as the shortName is not used there
+     * @return {@link CourseExistingExerciseDetails} with the exerciseNames and optionally shortNames of the course
+     */
     @GetMapping("courses/{courseId}/existing-exercise-details")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean includeShortNames) {
