@@ -149,7 +149,7 @@ describe('GitDiffReportModalComponent', () => {
         expect(comp.rightCommitFileContentByPath()).toEqual(filesWithContentParticipation1);
     });
 
-    it('should load files from cache if available for participation repo at both commits', () => {
+    it('should load files from cache if available for participation repo at both commits', async () => {
         const cachedRepositoryFiles = new Map<string, Map<string, string>>();
         cachedRepositoryFiles.set('def', filesWithContentParticipation1);
         cachedRepositoryFiles.set('abc', filesWithContentParticipation2);
@@ -163,6 +163,7 @@ describe('GitDiffReportModalComponent', () => {
         } as ProgrammingExerciseGitDiffReport);
         fixture.componentRef.setInput('diffForTemplateAndSolution', false);
         fixture.detectChanges();
+        await finishEffects();
         expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
         expect(comp.leftCommitFileContentByPath()).toEqual(filesWithContentParticipation1);
         expect(comp.rightCommitFileContentByPath()).toEqual(filesWithContentParticipation2);
