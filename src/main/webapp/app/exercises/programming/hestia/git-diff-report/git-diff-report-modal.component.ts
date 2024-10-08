@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, input, signal, untracked } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -16,26 +16,28 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [GitDiffReportComponent, TranslateDirective],
 })
 export class GitDiffReportModalComponent {
-    report = input.required<ProgrammingExerciseGitDiffReport>();
-    diffForTemplateAndSolution = input<boolean>(true);
-    cachedRepositoryFiles = input<Map<string, Map<string, string>>>(new Map<string, Map<string, string>>());
-
-    errorWhileFetchingRepos = signal<boolean>(false);
-    leftCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
-    rightCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
-
     private readonly activeModal = inject(NgbActiveModal);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
     private readonly cachedRepositoryFilesService = inject(CachedRepositoryFilesService);
 
+    readonly report = input.required<ProgrammingExerciseGitDiffReport>();
+    readonly diffForTemplateAndSolution = input<boolean>(true);
+    readonly cachedRepositoryFiles = input<Map<string, Map<string, string>>>(new Map<string, Map<string, string>>());
+
+    readonly errorWhileFetchingRepos = signal<boolean>(false);
+    readonly leftCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
+    readonly rightCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
+
     constructor() {
         effect(
             async () => {
+                // We call the signal here to ensure the effect always runs when the report changes.
+                this.report();
                 if (this.diffForTemplateAndSolution()) {
-                    await this.loadFilesForTemplateAndSolution();
+                    untracked(async () => await this.loadFilesForTemplateAndSolution());
                 } else {
-                    await this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
+                    untracked(async () => await this.loadRepositoryFilesForParticipationsFromCacheIfAvailable());
                 }
             },
             { allowSignalWrites: true },
