@@ -1,8 +1,8 @@
-import { HttpClientTestingModule, HttpTestingController, TestRequest } from '@angular/common/http/testing';
+import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@angular/common/http/testing';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
 import {
@@ -16,7 +16,6 @@ import {
     Notification,
 } from 'app/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -40,6 +39,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { User } from 'app/core/user/user.model';
 import { ConversationType } from 'app/entities/metis/conversation/conversation.model';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Notification Service', () => {
     const resourceUrl = 'api/notifications';
@@ -155,9 +155,12 @@ describe('Notification Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
+            imports: [TranslateTestingModule],
             declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [
+                provideRouter([]),
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: Router, useClass: MockRouter },
@@ -434,9 +437,9 @@ describe('Notification Service', () => {
 
         it('should return default message if translation not found and original text is undefined', () => {
             const notification: Notification = { textIsPlaceholder: true, text: 'abcdef' };
-            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue(undefined);
+            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue('');
             const result = notificationService.getNotificationTextTranslation(notification, 50);
-            expect(result).toBeUndefined();
+            expect(result).toBe('');
         });
 
         it('should replace specific text patterns in the translation', () => {

@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -10,6 +10,7 @@ import { CommonModule } from '@angular/common';
 import { QuizQuestionListEditExistingComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('QuizQuestionListEditComponent', () => {
     let fixture: ComponentFixture<QuizQuestionListEditComponent>;
@@ -24,7 +25,7 @@ describe('QuizQuestionListEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [CommonModule, ArtemisTestModule, HttpClientTestingModule],
+            imports: [CommonModule, ArtemisTestModule],
             declarations: [
                 QuizQuestionListEditComponent,
                 MockComponent(QuizQuestionListEditExistingComponent),
@@ -32,7 +33,7 @@ describe('QuizQuestionListEditComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {

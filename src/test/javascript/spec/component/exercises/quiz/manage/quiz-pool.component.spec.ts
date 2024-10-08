@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -9,7 +9,7 @@ import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { QuizPoolService } from 'app/exercises/quiz/manage/quiz-pool.service';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { QuizPool } from 'app/entities/quiz/quiz-pool.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
@@ -37,7 +37,7 @@ describe('QuizPoolComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, NgbModule, FormsModule],
+            imports: [ArtemisTestModule, NgbModule, FormsModule],
             declarations: [
                 QuizPoolComponent,
                 MockComponent(QuizPoolMappingComponent),
@@ -46,7 +46,7 @@ describe('QuizPoolComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockDirective(TranslateDirective),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(ChangeDetectorRef), MockProvider(AlertService)],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: ActivatedRoute, useValue: route }, MockProvider(ChangeDetectorRef), MockProvider(AlertService)],
         })
             .compileComponents()
             .then(() => {

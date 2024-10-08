@@ -29,6 +29,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     let cleanBuildAction: ScriptAction = new ScriptAction();
     let platformAction: PlatformAction = new PlatformAction();
     let mockAeolusService: AeolusService;
+    let monacoEditorComponent: MonacoEditorComponent;
 
     beforeEach(() => {
         programmingExercise = new ProgrammingExercise(course, undefined);
@@ -72,10 +73,10 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
             });
 
         const fixture = TestBed.createComponent(ProgrammingExerciseCustomAeolusBuildPlanComponent);
-        // These are not directly injected into the component, but are needed for the tests.
         comp = fixture.componentInstance;
 
         comp.programmingExercise = programmingExercise;
+        monacoEditorComponent = TestBed.createComponent(MonacoEditorComponent).componentInstance;
     });
 
     afterEach(() => {
@@ -114,10 +115,13 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
         expect(programmingExercise.buildConfig?.windfile?.actions.length).toBe(size! + 1);
     });
 
-    it('should accept editor', () => {
+    it('should accept and setup editor', () => {
+        const setTextStub = jest.spyOn(monacoEditorComponent, 'setText').mockImplementation();
+        comp.code = 'void';
         expect(comp.editor).toBeUndefined();
-        comp.editor = new MonacoEditorComponent();
-        expect(comp.editor).toBeDefined();
+        comp.editor = monacoEditorComponent;
+        expect(comp.editor).toBe(monacoEditorComponent);
+        expect(setTextStub).toHaveBeenCalledExactlyOnceWith(comp.code);
     });
 
     it('should change code of active action', () => {
@@ -165,7 +169,7 @@ describe('ProgrammingExercise Aeolus Custom Build Plan', () => {
     });
 
     it('should set editor text', () => {
-        comp.editor = new MonacoEditorComponent();
+        comp.editor = monacoEditorComponent;
         comp.changeActiveAction('gradle');
         expect(comp.editor?.getText()).toBe(gradleBuildAction.script);
     });

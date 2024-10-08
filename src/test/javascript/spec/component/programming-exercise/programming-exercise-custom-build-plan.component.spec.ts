@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BuildAction, PlatformAction, ScriptAction } from 'app/entities/programming/build.action';
 import { DockerConfiguration } from 'app/entities/programming/docker.configuration';
 import { WindFile } from 'app/entities/programming/wind.file';
@@ -19,6 +19,7 @@ import { Observable } from 'rxjs';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 describe('ProgrammingExercise Custom Build Plan', () => {
+    let fixture: ComponentFixture<ProgrammingExerciseCustomBuildPlanComponent>;
     let comp: ProgrammingExerciseCustomBuildPlanComponent;
     const course = { id: 123 } as Course;
 
@@ -65,7 +66,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
                 mockAeolusService = TestBed.inject(AeolusService);
             });
 
-        const fixture = TestBed.createComponent(ProgrammingExerciseCustomBuildPlanComponent);
+        fixture = TestBed.createComponent(ProgrammingExerciseCustomBuildPlanComponent);
         comp = fixture.componentInstance;
         comp.programmingExercise = programmingExercise;
     });
@@ -84,7 +85,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
     it('should accept editor', () => {
         expect(comp.editor).toBeUndefined();
-        comp.editor = new MonacoEditorComponent();
+        comp.editor = TestBed.createComponent(MonacoEditorComponent).componentInstance;
         expect(comp.editor).toBeDefined();
     });
 
@@ -215,13 +216,13 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     it('should accept editor for existing exercise', () => {
         comp.programmingExercise.id = 1;
         comp.programmingExercise.buildConfig!.buildScript = 'buildscript';
-        const editor = new MonacoEditorComponent();
+        const editor = TestBed.createComponent(MonacoEditorComponent).componentInstance;
         expect(comp.editor).toBeUndefined();
         comp.editor = editor;
         expect(comp.code).toBe('buildscript');
         expect(comp.editor).toBeDefined();
         comp.programmingExercise.buildConfig!.buildScript = undefined;
-        comp.editor = new MonacoEditorComponent();
+        comp.editor = TestBed.createComponent(MonacoEditorComponent).componentInstance;
         expect(comp.code).toBe('');
     });
 
