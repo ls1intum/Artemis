@@ -7,7 +7,6 @@ import { FileUploadExerciseDetailComponent } from 'app/exercises/file-upload/man
 import { MockFileUploadExerciseService, fileUploadExercise } from '../../helpers/mocks/service/mock-file-upload-exercise.service';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AlertService } from 'app/core/util/alert.service';
-import {} from '@angular/router/testing';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FileUploadExerciseService } from 'app/exercises/file-upload/manage/file-upload-exercise.service';

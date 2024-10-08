@@ -37,7 +37,6 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import {} from '@angular/router/testing';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';

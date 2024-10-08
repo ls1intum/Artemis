@@ -163,9 +163,15 @@ describe('CourseOverviewComponent', () => {
         router = new MockRouter();
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(MatSidenavModule), MockModule(NgbTooltipModule), MockModule(BrowserAnimationsModule), NgbDropdownMocksModule],
-            declarations: [
+            imports: [
                 RouterModule.forRoot([]),
+                ArtemisTestModule,
+                MockModule(MatSidenavModule),
+                MockModule(NgbTooltipModule),
+                MockModule(BrowserAnimationsModule),
+                NgbDropdownMocksModule,
+            ],
+            declarations: [
                 CourseOverviewComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
                 MockDirective(OrionFilterDirective),

@@ -12,8 +12,8 @@ describe('FooterComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [FooterComponent, MockPipe(ArtemisTranslatePipe), RouterModule.forRoot([])],
-            imports: [ArtemisTestModule, TranslateModule.forRoot()],
+            declarations: [FooterComponent, MockPipe(ArtemisTranslatePipe)],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), RouterModule.forRoot([])],
             providers: [],
         }).compileComponents();
     });
