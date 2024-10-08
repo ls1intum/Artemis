@@ -4,7 +4,7 @@ import { DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/programming-exercise-difficulty.component';
+import { ProgrammingExerciseModeComponent } from 'app/exercises/programming/manage/update/update-components/mode/programming-exercise-mode.component';
 import { CheckboxControlValueAccessor, DefaultValueAccessor, NgModel, NumberValueAccessor, SelectControlValueAccessor } from '@angular/forms';
 import { DifficultyPickerComponent } from 'app/exercises/shared/difficulty-picker/difficulty-picker.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
@@ -14,10 +14,11 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ArtemisTestModule } from '../../../test.module';
+import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 
-describe('ProgrammingExerciseDifficultyComponent', () => {
-    let fixture: ComponentFixture<ProgrammingExerciseDifficultyComponent>;
-    let comp: ProgrammingExerciseDifficultyComponent;
+describe('ProgrammingExerciseModeComponent', () => {
+    let fixture: ComponentFixture<ProgrammingExerciseModeComponent>;
+    let comp: ProgrammingExerciseModeComponent;
     let debugElement: DebugElement;
     let profileService: ProfileService;
     let getProfileInfoSub: jest.SpyInstance;
@@ -31,10 +32,11 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
                 SelectControlValueAccessor,
                 NumberValueAccessor,
                 NgModel,
-                ProgrammingExerciseDifficultyComponent,
+                ProgrammingExerciseModeComponent,
                 MockComponent(DifficultyPickerComponent),
                 MockComponent(TeamConfigFormGroupComponent),
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(ProgrammingExerciseDifficultyComponent),
             ],
             providers: [
                 {
@@ -46,15 +48,27 @@ describe('ProgrammingExerciseDifficultyComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(ProgrammingExerciseDifficultyComponent);
+                fixture = TestBed.createComponent(ProgrammingExerciseModeComponent);
                 comp = fixture.componentInstance;
                 comp.programmingExercise = new ProgrammingExercise(undefined, undefined);
                 comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
 
+                fixture.componentRef.setInput('isEditFieldDisplayedRecord', {
+                    difficulty: true,
+                    participationMode: true,
+                    allowOfflineIde: true,
+                    allowOnlineIde: true,
+                });
+
                 debugElement = fixture.debugElement;
                 profileService = debugElement.injector.get(ProfileService);
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
-                getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
+                getProfileInfoSub.mockReturnValue(
+                    of({
+                        inProduction: false,
+                        sshCloneURLTemplate: 'ssh://git@testserver.com:1234/',
+                    } as ProfileInfo),
+                );
             });
     });
 

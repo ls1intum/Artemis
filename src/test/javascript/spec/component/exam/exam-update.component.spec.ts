@@ -43,6 +43,7 @@ import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/ti
 import { UMLDiagramType } from '@ls1intum/apollon';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 
 @Component({
     template: '',
@@ -73,7 +74,15 @@ describe('ExamUpdateComponent', () => {
     describe('create and edit exams', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
+                imports: [
+                    RouterTestingModule.withRoutes(routes),
+                    MockModule(NgbModule),
+                    TranslateModule.forRoot(),
+                    FormsModule,
+                    HttpClientModule,
+                    ArtemisExamModePickerModule,
+                    TitleChannelNameComponent,
+                ],
                 declarations: [
                     ExamUpdateComponent,
                     MockComponent(FormDateTimePickerComponent),
@@ -86,7 +95,7 @@ describe('ExamUpdateComponent', () => {
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
                     MockDirective(FeatureToggleDirective),
-                    MockComponent(TitleChannelNameComponent),
+                    MockDirective(CustomNotIncludedInValidatorDirective),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -601,7 +610,15 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
+                imports: [
+                    RouterTestingModule.withRoutes(routes),
+                    MockModule(NgbModule),
+                    TranslateModule.forRoot(),
+                    FormsModule,
+                    HttpClientModule,
+                    ArtemisExamModePickerModule,
+                    TitleChannelNameComponent,
+                ],
                 declarations: [
                     ExamUpdateComponent,
                     ExamExerciseImportComponent,
@@ -618,7 +635,7 @@ describe('ExamUpdateComponent', () => {
                     MockComponent(DifficultyBadgeComponent),
                     MockComponent(DocumentationButtonComponent),
                     MockDirective(FeatureToggleDirective),
-                    MockComponent(TitleChannelNameComponent),
+                    MockDirective(CustomNotIncludedInValidatorDirective),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
