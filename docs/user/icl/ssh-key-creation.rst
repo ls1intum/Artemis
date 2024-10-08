@@ -55,7 +55,7 @@ If you don't have an existing SSH key that you wish to use, generate one as foll
    ssh-keygen -t ed25519 -C "your_email@example.com"
 
 Associating the key with your email address helps you to identify the key later on.
-Note that the ssh-keygen command is only available if you have already installed `Git (with Git Bash)`_.
+Note that the `ssh-keygen` command is only available if you have already installed `Git (with Git Bash)`_.
 You'll see a response similar to this:
 
 .. code-block:: bash

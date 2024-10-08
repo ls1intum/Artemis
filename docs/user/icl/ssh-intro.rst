@@ -24,7 +24,7 @@ Why use SSH?
 
 The main advantage of SSH is security.
 When you connect to a remote machine using SSH, all the data exchanged between your computer and the server is encrypted.
-This means if someone tries to intercept the communication, they can't read it. It’s like sending messages through a locked box that only you and the server can open.
+This means if someone tries to intercept the communication, they can't read it. It's like sending messages through a locked box that only you and the server can open.
 
 How does SSH work?
 """"""""""""""""""
