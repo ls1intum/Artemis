@@ -123,6 +123,7 @@ public class TelemetrySendingService {
      *
      * @param sendAdminDetails whether to include admin contact information in the telemetry data
      * @param isMultiNode      whether the application runs in multi node or single node mode
+     * @param numberOfNodes    the number of nodes which are part of the cluster
      * @return an instance of {@link TelemetryData} containing the gathered telemetry information
      */
     private TelemetryData buildTelemetryData(boolean sendAdminDetails, boolean isMultiNode, long numberOfNodes) {
