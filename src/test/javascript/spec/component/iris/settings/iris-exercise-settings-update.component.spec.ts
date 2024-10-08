@@ -8,8 +8,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { mockSettings } from './mock-settings';
 import { IrisExerciseSettingsUpdateComponent } from 'app/iris/settings/iris-exercise-settings-update/iris-exercise-settings-update.component';
-import { ActivatedRoute, Params } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { NgModel } from '@angular/forms';
 import { By } from '@angular/platform-browser';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
@@ -27,7 +26,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 IrisExerciseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
@@ -35,7 +34,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
             ],
-            providers: [MockProvider(IrisSettingsService), { provide: ActivatedRoute, useValue: route }],
+            providers: [provideRouter([]), MockProvider(IrisSettingsService), { provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()
             .then(() => {
