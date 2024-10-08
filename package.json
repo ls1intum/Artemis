@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "7.5.6",
+    "version": "7.6.0",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -88,18 +88,20 @@
             "d3-transition": "^3.0.1"
         },
         "@typescript-eslint/utils": {
-            "eslint": "^9.11.0"
+            "eslint": "^9.12.0"
         },
         "braces": "3.0.3",
+        "cookie": "0.7.1",
         "critters": "0.0.24",
         "debug": "4.3.7",
         "eslint-plugin-deprecation": {
-            "eslint": "^9.11.0"
+            "eslint": "^9.12.0"
         },
         "eslint-plugin-jest": {
-            "@typescript-eslint/eslint-plugin": "^8.6.0"
+            "@typescript-eslint/eslint-plugin": "^8.8.0"
         },
-        "jsdom": "25.0.0",
+        "express": "4.21.0",
+        "jsdom": "25.0.1",
         "katex": "0.16.11",
         "postcss": "8.4.47",
         "rimraf": "6.0.1",
@@ -110,6 +112,7 @@
         "tough-cookie": "5.0.0",
         "vite": "5.4.8",
         "webpack-dev-middleware": "7.4.2",
+        "webpack-dev-server": "5.1.0",
         "word-wrap": "1.2.5",
         "ws": "8.18.0",
         "yargs-parser": "21.1.1"
@@ -139,7 +142,7 @@
         "@types/uuid": "10.0.0",
         "@typescript-eslint/eslint-plugin": "8.8.0",
         "@typescript-eslint/parser": "8.8.0",
-        "eslint": "9.11.1",
+        "eslint": "9.12.0",
         "eslint-config-prettier": "9.1.0",
         "eslint-plugin-deprecation": "3.0.0",
         "eslint-plugin-jest": "28.8.3",
