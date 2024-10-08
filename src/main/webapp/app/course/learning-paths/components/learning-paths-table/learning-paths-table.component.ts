@@ -42,13 +42,7 @@ export class LearningPathsTableComponent {
     private readonly sortingOrder = signal<SortingOrder>(SortingOrder.ASCENDING);
     private readonly sortedColumn = signal<TableColumn>(TableColumn.ID);
     readonly pageSize = signal<number>(100).asReadonly();
-    readonly collectionSize = computed(() => {
-        if (this.learningPaths().length < this.pageSize()) {
-            return this.learningPaths().length;
-        } else {
-            return (this.searchResults()?.numberOfPages ?? 1) * this.pageSize();
-        }
-    });
+    readonly collectionSize = computed(() => (this.searchResults()?.numberOfPages ?? 1) * this.pageSize());
 
     // Debounce the loadLearningPaths function to prevent multiple requests when the user types quickly
     private readonly debounceLoadLearningPaths = BaseApiHttpService.debounce(this.loadLearningPaths.bind(this), 300);
