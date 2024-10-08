@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, Output, ViewChild, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { mapValues } from 'lodash-es';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -13,6 +13,9 @@ import { NgForm } from '@angular/forms';
     templateUrl: './delete-dialog.component.html',
 })
 export class DeleteDialogComponent implements OnInit, OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+
     readonly actionTypes = ActionType;
     private dialogErrorSubscription: Subscription;
     dialogError: Observable<string>;
@@ -44,11 +47,6 @@ export class DeleteDialogComponent implements OnInit, OnDestroy {
     faCheck = faCheck;
     faUndo = faUndo;
     warningTextColor: string;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-    ) {}
 
     /**
      * Life cycle hook called by Angular to indicate that Angular is done creating the component

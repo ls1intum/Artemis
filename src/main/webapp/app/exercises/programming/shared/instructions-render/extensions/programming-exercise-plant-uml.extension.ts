@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { Subject } from 'rxjs';
 import { tap } from 'rxjs/operators';
@@ -15,17 +15,15 @@ const testsColorRegex = /testsColor\((\s*[^()\s]+(\([^()]*\))?)\)/g;
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExercisePlantUmlExtensionWrapper implements ArtemisShowdownExtensionWrapper {
+    private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
+    private plantUmlService = inject(ProgrammingExercisePlantUmlService);
+
     private latestResult?: Result;
     private testCases?: ProgrammingExerciseTestCase[];
     private injectableElementsFoundSubject = new Subject<() => void>();
 
     // unique index, even if multiple plant uml diagrams are shown from different problem statements on the same page (in different tabs)
     private plantUmlIndex = 0;
-
-    constructor(
-        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private plantUmlService: ProgrammingExercisePlantUmlService,
-    ) {}
 
     /**
      * Sets latest result according to parameter.

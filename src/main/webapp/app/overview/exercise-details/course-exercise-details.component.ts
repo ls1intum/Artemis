@@ -1,4 +1,4 @@
-import { Component, ContentChild, OnDestroy, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, OnDestroy, OnInit, TemplateRef, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
@@ -40,7 +40,6 @@ import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
-import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
 
@@ -51,6 +50,19 @@ import { PROFILE_IRIS } from 'app/app.constants';
     providers: [ExerciseCacheService],
 })
 export class CourseExerciseDetailsComponent extends AbstractScienceComponent implements OnInit, OnDestroy {
+    private exerciseService = inject(ExerciseService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private participationService = inject(ParticipationService);
+    private route = inject(ActivatedRoute);
+    private profileService = inject(ProfileService);
+    private guidedTourService = inject(GuidedTourService);
+    private alertService = inject(AlertService);
+    private teamService = inject(TeamService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private complaintService = inject(ComplaintService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private exerciseHintService = inject(ExerciseHintService);
+
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
@@ -114,22 +126,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
-    constructor(
-        private exerciseService: ExerciseService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private participationService: ParticipationService,
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private guidedTourService: GuidedTourService,
-        private alertService: AlertService,
-        private teamService: TeamService,
-        private quizExerciseService: QuizExerciseService,
-        private complaintService: ComplaintService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private exerciseHintService: ExerciseHintService,
-        scienceService: ScienceService,
-    ) {
-        super(scienceService, ScienceEventType.EXERCISE__OPEN);
+    constructor() {
+        super(ScienceEventType.EXERCISE__OPEN);
     }
 
     ngOnInit() {

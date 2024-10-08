@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
@@ -35,6 +35,9 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
     ],
 })
 export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+    lectureUnitService = inject(LectureUnitService);
+
     @Input()
     formData: CourseCompetencyFormData;
     @Input()
@@ -69,11 +72,6 @@ export class CommonCourseCompetencyFormComponent implements OnInit, OnChanges {
     // Constants
     protected readonly DEFAULT_MASTERY_THRESHOLD = DEFAULT_MASTERY_THRESHOLD;
     protected readonly competencyTaxonomy = CompetencyTaxonomy;
-
-    constructor(
-        private translateService: TranslateService,
-        public lectureUnitService: LectureUnitService,
-    ) {}
 
     get titleControl() {
         return this.form.get('title');

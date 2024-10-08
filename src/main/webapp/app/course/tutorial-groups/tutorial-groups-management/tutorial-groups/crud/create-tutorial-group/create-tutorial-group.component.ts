@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -18,17 +18,16 @@ import { Subject } from 'rxjs';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateTutorialGroupComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+
     tutorialGroupToCreate: TutorialGroup = new TutorialGroup();
     isLoading: boolean;
     course: Course;
 
     ngUnsubscribe = new Subject<void>();
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.data.pipe(takeUntil(this.ngUnsubscribe)).subscribe(({ course }) => {

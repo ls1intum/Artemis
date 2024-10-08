@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting } from 'app/shared/user-settings/user-settings.model';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
@@ -11,12 +11,12 @@ export const SCIENCE_SETTING_LOCAL_STORAGE_KEY = 'artemisapp.science.settings';
 
 @Injectable({ providedIn: 'root' })
 export class ScienceSettingsService {
+    private userSettingsService = inject(UserSettingsService);
+    private localStorageService = inject(LocalStorageService);
+
     private currentScienceSettingsSubject = new ReplaySubject<ScienceSetting[]>(1);
 
-    constructor(
-        private userSettingsService: UserSettingsService,
-        private localStorageService: LocalStorageService,
-    ) {
+    constructor() {
         this.initialize();
         this.listenForScienceSettingsChanges();
     }

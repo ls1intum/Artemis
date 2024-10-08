@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import { ProgrammingExerciseInstructionAnalysisService } from 'app/exercises/programming/manage/instructions-editor/analysis/programming-exercise-instruction-analysis.service';
@@ -10,6 +10,8 @@ import { faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-sv
     templateUrl: './programming-exercise-instruction-analysis.component.html',
 })
 export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, OnChanges, OnDestroy {
+    private analysisService = inject(ProgrammingExerciseInstructionAnalysisService);
+
     @Input() exerciseTestCases: string[];
     @Input() problemStatement: string;
     @Input() taskRegex: RegExp;
@@ -26,8 +28,6 @@ export class ProgrammingExerciseInstructionAnalysisComponent implements OnInit, 
     // Icons
     faCheckCircle = faCheckCircle;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(private analysisService: ProgrammingExerciseInstructionAnalysisService) {}
 
     ngOnInit(): void {
         this.analysisSubscription = this.delayedAnalysisSubject

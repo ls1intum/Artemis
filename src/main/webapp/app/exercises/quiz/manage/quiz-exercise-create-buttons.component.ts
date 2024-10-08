@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { faCheckDouble, faFileExport, faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
@@ -12,6 +12,9 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
     templateUrl: './quiz-exercise-create-buttons.component.html',
 })
 export class QuizExerciseCreateButtonsComponent {
+    private router = inject(Router);
+    private modalService = inject(NgbModal);
+
     @Input() course: Course;
 
     @Input() quizExercisesCount: number;
@@ -20,11 +23,6 @@ export class QuizExerciseCreateButtonsComponent {
     faFileImport = faFileImport;
     faFileExport = faFileExport;
     faCheckDouble = faCheckDouble;
-
-    constructor(
-        private router: Router,
-        private modalService: NgbModal,
-    ) {}
 
     /**
      * Opens the import modal for a quiz exercise

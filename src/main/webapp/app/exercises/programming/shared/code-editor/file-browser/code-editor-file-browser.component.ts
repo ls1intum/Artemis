@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -49,6 +49,12 @@ export interface FileTreeItem extends TreeItem<string> {
     providers: [NgbModal],
 })
 export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterViewInit, IFileDeleteDelegate {
+    modalService = inject(NgbModal);
+    private repositoryFileService = inject(CodeEditorRepositoryFileService);
+    private repositoryService = inject(CodeEditorRepositoryService);
+    private fileService = inject(CodeEditorFileService);
+    private conflictService = inject(CodeEditorConflictStateService);
+
     CommitState = CommitState;
     FileType = FileType;
 
@@ -141,14 +147,6 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
     }
-
-    constructor(
-        public modalService: NgbModal,
-        private repositoryFileService: CodeEditorRepositoryFileService,
-        private repositoryService: CodeEditorRepositoryService,
-        private fileService: CodeEditorFileService,
-        private conflictService: CodeEditorConflictStateService,
-    ) {}
 
     ngOnInit(): void {
         this.conflictSubscription = this.conflictService.subscribeConflictState().subscribe((gitConflictState: GitConflictState) => {

@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -36,6 +36,15 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
     styleUrls: ['./text-editor.component.scss'],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
+    private route = inject(ActivatedRoute);
+    private textSubmissionService = inject(TextSubmissionService);
+    private textService = inject(TextEditorService);
+    private alertService = inject(AlertService);
+    private translateService = inject(TranslateService);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private stringCountService = inject(StringCountService);
+    private accountService = inject(AccountService);
+
     readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
 
@@ -75,16 +84,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     // Icon
     farListAlt = faListAlt;
 
-    constructor(
-        private route: ActivatedRoute,
-        private textSubmissionService: TextSubmissionService,
-        private textService: TextEditorService,
-        private alertService: AlertService,
-        private translateService: TranslateService,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private stringCountService: StringCountService,
-        private accountService: AccountService,
-    ) {
+    constructor() {
         this.isSaving = false;
     }
 

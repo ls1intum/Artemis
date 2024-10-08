@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,15 +16,15 @@ type LtiLaunchResponse = {
     templateUrl: './lti13-exercise-launch.component.html',
 })
 export class Lti13ExerciseLaunchComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private router = inject(Router);
+    private sessionStorageService = inject(SessionStorageService);
+
     isLaunching: boolean;
 
-    constructor(
-        private route: ActivatedRoute,
-        private http: HttpClient,
-        private accountService: AccountService,
-        private router: Router,
-        private sessionStorageService: SessionStorageService,
-    ) {
+    constructor() {
         this.isLaunching = true;
     }
 

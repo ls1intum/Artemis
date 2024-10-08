@@ -9,20 +9,18 @@ import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
-    private resourceUrl = `api/courses`;
+    private http = inject(HttpClient);
+    private participationWebsocketService = inject(ParticipationWebsocketService);
+    private accountService = inject(AccountService);
+    private profileService = inject(ProfileService);
 
-    constructor(
-        private http: HttpClient,
-        private participationWebsocketService: ParticipationWebsocketService,
-        private accountService: AccountService,
-        private profileService: ProfileService,
-    ) {}
+    private resourceUrl = `api/courses`;
 
     /**
      * returns all programming exercises for the course corresponding to courseId

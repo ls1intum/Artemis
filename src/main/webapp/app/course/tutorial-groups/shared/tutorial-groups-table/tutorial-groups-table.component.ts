@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, inject } from '@angular/core';
 import { faQuestionCircle, faSort } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -12,6 +12,9 @@ import dayjs from 'dayjs/esm';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupsTableComponent implements OnChanges {
+    private sortService = inject(SortService);
+    private cdr = inject(ChangeDetectorRef);
+
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
     @Input()
@@ -49,11 +52,6 @@ export class TutorialGroupsTableComponent implements OnChanges {
      * If true we show the language column
      */
     mifOfDifferentLanguages = false;
-
-    constructor(
-        private sortService: SortService,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     trackId(index: number, item: TutorialGroup) {
         return item.id;

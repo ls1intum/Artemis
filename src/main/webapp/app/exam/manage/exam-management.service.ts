@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
 import { ExamUserAttendanceCheckDTO } from 'app/entities/exam/exam-users-attendance-check-dto.model';
 import { filter, map, tap } from 'rxjs/operators';
@@ -27,14 +27,12 @@ type EntityArrayResponseType = HttpResponse<Exam[]>;
 
 @Injectable({ providedIn: 'root' })
 export class ExamManagementService {
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private entityTitleService = inject(EntityTitleService);
+
     public resourceUrl = 'api/courses';
     public adminResourceUrl = 'api/admin/courses';
-
-    constructor(
-        private http: HttpClient,
-        private accountService: AccountService,
-        private entityTitleService: EntityTitleService,
-    ) {}
 
     /**
      * Create an exam on the server using a POST request.

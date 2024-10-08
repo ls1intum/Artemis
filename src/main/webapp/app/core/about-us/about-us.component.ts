@@ -1,17 +1,26 @@
-import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { VERSION } from 'app/app.constants';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { TranslateModule } from '@ngx-translate/core';
+import { CommonModule } from '@angular/common';
 
 @Component({
     selector: 'jhi-about-us',
     templateUrl: './about-us.component.html',
     styleUrls: ['./about-us.component.scss'],
+    standalone: true,
+    imports: [TranslateDirective, ArtemisSharedCommonModule, TranslateModule, CommonModule, ArtemisSharedModule],
 })
 export class AboutUsComponent implements OnInit {
+    private profileService = inject(ProfileService);
+    private staticContentService = inject(StaticContentService);
+
     private readonly ISSUE_BASE_URL = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
     readonly BUG_REPORT_URL = `${this.ISSUE_BASE_URL}&labels=bug&template=bug-report.yml`;
     readonly FEATURE_REQUEST_URL = `${this.ISSUE_BASE_URL}&labels=feature&template=feature-request.yml`;
@@ -50,12 +59,6 @@ export class AboutUsComponent implements OnInit {
         ['customizable', { customizableUrl: 'https://docs.artemis.cit.tum.de/user/courses/customizable' }],
         ['openSource', { openSourceUrl: 'https://docs.artemis.cit.tum.de/dev/open-source/' }],
     ];
-
-    constructor(
-        private route: ActivatedRoute,
-        private profileService: ProfileService,
-        private staticContentService: StaticContentService,
-    ) {}
 
     /**
      * On init get the json file from the Artemis server and save it.

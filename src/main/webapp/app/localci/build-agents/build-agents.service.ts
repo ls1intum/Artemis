@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { BuildAgent } from 'app/entities/programming/build-agent.model';
@@ -6,9 +6,9 @@ import { catchError } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class BuildAgentsService {
-    public adminResourceUrl = 'api/admin';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public adminResourceUrl = 'api/admin';
 
     /**
      * Get all build agents

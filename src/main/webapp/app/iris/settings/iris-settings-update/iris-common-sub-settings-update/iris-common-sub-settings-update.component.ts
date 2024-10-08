@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, inject } from '@angular/core';
 import { IrisSubSettings, IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -42,7 +42,9 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     // Icons
     faTrash = faTrash;
 
-    constructor(accountService: AccountService) {
+    constructor() {
+        const accountService = inject(AccountService);
+
         this.isAdmin = accountService.isAdmin();
     }
 

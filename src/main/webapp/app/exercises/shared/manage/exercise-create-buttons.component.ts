@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { faFileImport, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseImportWrapperComponent } from 'app/exercises/shared/import/exercise-import-wrapper/exercise-import-wrapper.component';
@@ -12,6 +12,9 @@ import { Router } from '@angular/router';
     templateUrl: './exercise-create-buttons.component.html',
 })
 export class ExerciseCreateButtonsComponent implements OnInit {
+    private router = inject(Router);
+    private modalService = inject(NgbModal);
+
     @Input() course: Course;
     @Input() exerciseType: ExerciseType;
 
@@ -21,11 +24,6 @@ export class ExerciseCreateButtonsComponent implements OnInit {
     faFileImport = faFileImport;
 
     getExerciseTypeIcon = getIcon;
-
-    constructor(
-        private router: Router,
-        private modalService: NgbModal,
-    ) {}
 
     ngOnInit(): void {
         if (this.exerciseType === ExerciseType.FILE_UPLOAD) {

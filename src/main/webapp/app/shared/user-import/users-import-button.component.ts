@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { UsersImportDialogComponent } from 'app/shared/user-import/users-import-dialog.component';
@@ -14,6 +14,8 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     `,
 })
 export class UsersImportButtonComponent {
+    private modalService = inject(NgbModal);
+
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
 
@@ -30,8 +32,6 @@ export class UsersImportButtonComponent {
 
     // Icons
     faFileImport = faFileImport;
-
-    constructor(private modalService: NgbModal) {}
 
     /**
      * Open up import dialog for users

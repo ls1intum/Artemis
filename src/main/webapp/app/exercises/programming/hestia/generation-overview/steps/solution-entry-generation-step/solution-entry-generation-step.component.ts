@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { SolutionEntryDetailsModalComponent } from 'app/exercises/programming/hestia/generation-overview/solution-entry-details-modal/solution-entry-details-modal.component';
@@ -21,6 +21,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrls: ['../../code-hint-generation-overview/code-hint-generation-overview.component.scss'],
 })
 export class SolutionEntryGenerationStepComponent implements OnInit, OnDestroy {
+    private modalService = inject(NgbModal);
+    private exerciseService = inject(ProgrammingExerciseService);
+    private alertService = inject(AlertService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+    private codeHintService = inject(CodeHintService);
+    private solutionEntryService = inject(ProgrammingExerciseSolutionEntryService);
+
     @Input()
     exercise: ProgrammingExercise;
 
@@ -40,15 +47,6 @@ export class SolutionEntryGenerationStepComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     readonly SortingOrder = SortingOrder;
-
-    constructor(
-        private modalService: NgbModal,
-        private exerciseService: ProgrammingExerciseService,
-        private alertService: AlertService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-        private codeHintService: CodeHintService,
-        private solutionEntryService: ProgrammingExerciseSolutionEntryService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

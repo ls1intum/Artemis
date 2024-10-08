@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -16,6 +16,8 @@ export interface LectureUnitCompletionEvent {
     templateUrl: './learning-path-lecture-unit-view.component.html',
 })
 export class LearningPathLectureUnitViewComponent {
+    private lectureUnitService = inject(LectureUnitService);
+
     @Input() lecture: Lecture;
     @Input() lectureUnit: LectureUnit;
     readonly LectureUnitType = LectureUnitType;
@@ -24,8 +26,6 @@ export class LearningPathLectureUnitViewComponent {
 
     protected readonly isMessagingEnabled = isMessagingEnabled;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
-
-    constructor(private lectureUnitService: LectureUnitService) {}
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
         this.lectureUnitService.completeLectureUnit(this.lecture, event);

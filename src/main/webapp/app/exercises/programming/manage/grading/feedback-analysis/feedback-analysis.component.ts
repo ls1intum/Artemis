@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { AlertService } from 'app/core/util/alert.service';
@@ -11,14 +11,12 @@ import { AlertService } from 'app/core/util/alert.service';
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent implements OnInit {
+    private feedbackAnalysisService = inject(FeedbackAnalysisService);
+    private alertService = inject(AlertService);
+
     @Input() exerciseTitle: string;
     @Input() exerciseId: number;
     feedbackDetails: FeedbackDetail[] = [];
-
-    constructor(
-        private feedbackAnalysisService: FeedbackAnalysisService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         this.loadFeedbackDetails(this.exerciseId);

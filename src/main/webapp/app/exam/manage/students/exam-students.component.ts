@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/entities/exam/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
@@ -31,6 +31,15 @@ const cssClasses = {
     encapsulation: ViewEncapsulation.None,
 })
 export class ExamStudentsComponent implements OnInit, OnDestroy {
+    private router = inject(Router);
+    private route = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private eventManager = inject(EventManager);
+    private examManagementService = inject(ExamManagementService);
+    private userService = inject(UserService);
+    private accountService = inject(AccountService);
+    private studentExamService = inject(StudentExamService);
+
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
     readonly ButtonType = ButtonType;
@@ -67,16 +76,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     faUpload = faUpload;
     faCheck = faCheck;
     faTimes = faTimes;
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private examManagementService: ExamManagementService,
-        private userService: UserService,
-        private accountService: AccountService,
-        private studentExamService: StudentExamService,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

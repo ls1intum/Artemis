@@ -1,5 +1,5 @@
 import { ActivatedRoute, Params } from '@angular/router';
-import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -46,6 +46,21 @@ import { ImportOptions } from 'app/types/programming-exercises';
     styleUrls: ['../programming-exercise-form.scss'],
 })
 export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDestroy, OnInit {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private modalService = inject(NgbModal);
+    private popupService = inject(ExerciseUpdateWarningService);
+    private courseService = inject(CourseManagementService);
+    private alertService = inject(AlertService);
+    private exerciseService = inject(ExerciseService);
+    private fileService = inject(FileService);
+    private activatedRoute = inject(ActivatedRoute);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private aeolusService = inject(AeolusService);
+
     @ViewChild(ProgrammingExerciseInformationComponent) exerciseInfoComponent?: ProgrammingExerciseInformationComponent;
     @ViewChild(ProgrammingExerciseDifficultyComponent) exerciseDifficultyComponent?: ProgrammingExerciseDifficultyComponent;
     @ViewChild(ProgrammingExerciseLanguageComponent) exerciseLanguageComponent?: ProgrammingExerciseLanguageComponent;
@@ -155,23 +170,6 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     // Icons
     faQuestionCircle = faQuestionCircle;
     faExclamationCircle = faExclamationCircle;
-
-    constructor(
-        private programmingExerciseService: ProgrammingExerciseService,
-        private modalService: NgbModal,
-        private popupService: ExerciseUpdateWarningService,
-        private courseService: CourseManagementService,
-        private alertService: AlertService,
-        private exerciseService: ExerciseService,
-        private fileService: FileService,
-        private activatedRoute: ActivatedRoute,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private exerciseGroupService: ExerciseGroupService,
-        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private aeolusService: AeolusService,
-    ) {}
 
     /**
      * Updates the name of the editedAuxiliaryRepository.

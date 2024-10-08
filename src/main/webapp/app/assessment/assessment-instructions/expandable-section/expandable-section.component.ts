@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
 
@@ -7,6 +7,8 @@ import { LocalStorageService } from 'ngx-webstorage';
     templateUrl: './expandable-section.component.html',
 })
 export class ExpandableSectionComponent implements OnInit {
+    private localStorageService = inject(LocalStorageService);
+
     @Input() headerKey: string;
     @Input() hasTranslation = true;
     @Input() isSubHeader = false;
@@ -17,8 +19,6 @@ export class ExpandableSectionComponent implements OnInit {
     faAngleDown = faAngleDown;
 
     readonly PREFIX = 'collapsed.';
-
-    constructor(private localStorageService: LocalStorageService) {}
 
     ngOnInit(): void {
         this.isCollapsed = !!this.localStorageService.retrieve(this.storageKey);

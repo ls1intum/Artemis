@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
@@ -15,16 +15,14 @@ import { tap } from 'rxjs';
     styleUrls: ['user-settings-container.component.scss'],
 })
 export class UserSettingsContainerComponent implements OnInit {
+    private profileService = inject(ProfileService);
+    private accountService = inject(AccountService);
+
     // Icons
     faUser = faUser;
 
     currentUser?: User;
     localVCEnabled = false;
-
-    constructor(
-        private profileService: ProfileService,
-        private accountService: AccountService,
-    ) {}
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {

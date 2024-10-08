@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation, inject } from '@angular/core';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
@@ -15,6 +15,8 @@ import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/sta
     encapsulation: ViewEncapsulation.None,
 })
 export class ExerciseHintExpandableComponent {
+    private exerciseHintService = inject(ExerciseHintService);
+
     @Input() exerciseHint: ExerciseHint;
     @Input() hasUsed: boolean;
     @Output()
@@ -26,8 +28,6 @@ export class ExerciseHintExpandableComponent {
     faQuestionCircle = faQuestionCircle;
 
     readonly HintType = HintType;
-
-    constructor(private exerciseHintService: ExerciseHintService) {}
 
     displayHintContent() {
         this.expanded = true;

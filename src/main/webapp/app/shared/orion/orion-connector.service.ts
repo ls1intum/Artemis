@@ -1,4 +1,4 @@
-import { Injectable, Injector } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { Router } from '@angular/router';
@@ -34,16 +34,14 @@ function theWindow(): any {
     providedIn: 'root',
 })
 export class OrionConnectorService {
+    private injector = inject(Injector);
+    private alertService = inject(AlertService);
+
     private orionState: OrionState;
     private orionStateSubject: BehaviorSubject<OrionState>;
 
     // When loaded, the AssessmentComponent registers here to receive updates from the plugin
     activeAssessmentComponent: OrionTutorAssessmentComponent | undefined = undefined;
-
-    constructor(
-        private injector: Injector,
-        private alertService: AlertService,
-    ) {}
 
     static initConnector(connector: OrionConnectorService) {
         theWindow().artemisClientConnector = connector;

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, inject } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,6 +16,9 @@ import { catchError, takeUntil } from 'rxjs/operators';
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
+    private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
+    private modalService = inject(NgbModal);
+
     @Input() course: Course;
     @Input() tutorialGroupConfiguration: TutorialGroupsConfiguration;
     @Input() tutorialFreePeriod: TutorialGroupFreePeriod;
@@ -30,11 +33,6 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     faWrench = faWrench;
     faUsers = faUsers;
     faTrash = faTrash;
-
-    constructor(
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
-        private modalService: NgbModal,
-    ) {}
 
     deleteTutorialFreePeriod = () => {
         this.tutorialGroupFreePeriodService

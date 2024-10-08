@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
 import { Observable, Subscription, filter, switchMap } from 'rxjs';
@@ -31,6 +31,16 @@ const DEFAULT_DISPLAY_THRESHOLD = 3;
     templateUrl: './exercise-hint-update.component.html',
 })
 export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    protected alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    protected codeHintService = inject(CodeHintService);
+    protected exerciseHintService = inject(ExerciseHintService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    protected irisSettingsService = inject(IrisSettingsService);
+    private profileService = inject(ProfileService);
+
     MarkdownEditorHeight = MarkdownEditorHeight;
 
     courseId: number;
@@ -56,18 +66,6 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     // Enums
     readonly HintType = HintType;
     readonly ButtonType = ButtonType;
-
-    constructor(
-        private route: ActivatedRoute,
-        protected alertService: AlertService,
-        private modalService: NgbModal,
-        protected codeHintService: CodeHintService,
-        protected exerciseHintService: ExerciseHintService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        protected irisSettingsService: IrisSettingsService,
-        private profileService: ProfileService,
-    ) {}
 
     /**
      * Fetches the exercise from the server and assigns it on the exercise hint

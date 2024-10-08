@@ -1,5 +1,4 @@
 import { Component, Input } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 
 export interface GenericConfirmationTranslationKeys {
@@ -13,21 +12,10 @@ export interface GenericConfirmationTranslationKeys {
     templateUrl: './generic-confirmation-dialog.component.html',
 })
 export class GenericConfirmationDialogComponent extends AbstractDialogComponent {
-    @Input()
-    translationParameters = {};
-
-    @Input()
-    translationKeys: GenericConfirmationTranslationKeys;
-
-    @Input()
-    canBeUndone = true;
-
-    @Input()
-    isDangerousAction = false;
-
-    constructor(activeModal: NgbActiveModal) {
-        super(activeModal);
-    }
+    @Input() translationParameters = {};
+    @Input() translationKeys: GenericConfirmationTranslationKeys;
+    @Input() canBeUndone = true;
+    @Input() isDangerousAction = false;
 
     initialize() {
         super.initialize(['translationKeys']);

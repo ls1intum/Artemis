@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { DeleteDialogData } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -7,12 +7,10 @@ import { AlertService } from 'app/core/util/alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class DeleteDialogService {
-    modalRef: NgbModalRef | null;
+    private modalService = inject(NgbModal);
+    alertService = inject(AlertService);
 
-    constructor(
-        private modalService: NgbModal,
-        public alertService: AlertService,
-    ) {}
+    modalRef: NgbModalRef | null;
 
     /**
      * Opens delete dialog

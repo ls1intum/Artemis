@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { faBan, faPencil, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { KnowledgeArea, Source, StandardizedCompetencyDTO, StandardizedCompetencyValidators } from 'app/entities/competency/standardized-competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
@@ -11,6 +11,8 @@ import { Observable } from 'rxjs';
     templateUrl: './standardized-competency-edit.component.html',
 })
 export class StandardizedCompetencyEditComponent {
+    private formBuilder = inject(FormBuilder);
+
     // values for the knowledge area select
     @Input() knowledgeAreas: KnowledgeArea[] = [];
     // values for the source select
@@ -73,8 +75,6 @@ export class StandardizedCompetencyEditComponent {
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
     protected readonly validators = StandardizedCompetencyValidators;
-
-    constructor(private formBuilder: FormBuilder) {}
 
     save() {
         const updatedValues = this.form.getRawValue();

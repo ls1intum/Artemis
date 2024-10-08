@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, HostListener, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -26,6 +26,11 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
     encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseEditableInstructionComponent implements AfterViewInit, OnChanges, OnDestroy {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private alertService = inject(AlertService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private testCaseService = inject(ProgrammingExerciseGradingService);
+
     participationValue: Participation;
     programmingExercise: ProgrammingExercise;
 
@@ -94,13 +99,6 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     faGripLines = faGripLines;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
-    constructor(
-        private programmingExerciseService: ProgrammingExerciseService,
-        private alertService: AlertService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private testCaseService: ProgrammingExerciseGradingService,
-    ) {}
 
     ngOnChanges(changes: SimpleChanges): void {
         if (hasExerciseChanged(changes)) {

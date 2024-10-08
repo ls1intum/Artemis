@@ -1,5 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { PagingService } from 'app/exercises/shared/manage/paging.service';
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { Observable } from 'rxjs';
@@ -9,11 +9,9 @@ import { LearningPathInformationDTO } from 'app/entities/competency/learning-pat
 type EntityResponseType = SearchResult<LearningPathInformationDTO>;
 @Injectable({ providedIn: 'root' })
 export class LearningPathPagingService extends PagingService<LearningPathInformationDTO> {
-    public resourceUrl = 'api';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {
-        super();
-    }
+    public resourceUrl = 'api';
 
     override search(pageable: SearchTermPageableSearch, options: { courseId: number }): Observable<EntityResponseType> {
         const params = this.createHttpParams(pageable);

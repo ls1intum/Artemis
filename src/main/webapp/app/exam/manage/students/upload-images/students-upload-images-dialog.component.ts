@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, Input, OnDestroy, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { NgForm } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -21,6 +21,10 @@ class NotFoundExamUserType {
     encapsulation: ViewEncapsulation.None,
 })
 export class StudentsUploadImagesDialogComponent implements OnDestroy {
+    private activeModal = inject(NgbActiveModal);
+    private alertService = inject(AlertService);
+    private examManagementService = inject(ExamManagementService);
+
     readonly ActionType = ActionType;
 
     @ViewChild('importForm', { static: false }) importForm: NgForm;
@@ -43,12 +47,6 @@ export class StudentsUploadImagesDialogComponent implements OnDestroy {
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
     faArrowRight = faArrowRight;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private alertService: AlertService,
-        private examManagementService: ExamManagementService,
-    ) {}
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();

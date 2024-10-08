@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { debounceTime, map, tap } from 'rxjs/operators';
 import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/exercises/programming/participate/programming-submission.service';
 import { Subscription } from 'rxjs';
@@ -20,6 +20,8 @@ import { faCircleNotch, faClock, faRedo } from '@fortawesome/free-solid-svg-icon
     templateUrl: './programming-exercise-instructor-submission-state.component.html',
 })
 export class ProgrammingExerciseInstructorSubmissionStateComponent implements OnChanges, OnInit {
+    private programmingSubmissionService = inject(ProgrammingSubmissionService);
+
     FeatureToggle = FeatureToggle;
     ButtonType = ButtonType;
     ProgrammingSubmissionState = ProgrammingSubmissionState;
@@ -40,8 +42,6 @@ export class ProgrammingExerciseInstructorSubmissionStateComponent implements On
     faClock = faClock;
     faCircleNotch = faCircleNotch;
     faRedo = faRedo;
-
-    constructor(private programmingSubmissionService: ProgrammingSubmissionService) {}
 
     ngOnInit(): void {
         this.resultEtaSubscription = this.programmingSubmissionService.getResultEtaInMs().subscribe((resultEta) => (this.resultEtaInMs = resultEta));

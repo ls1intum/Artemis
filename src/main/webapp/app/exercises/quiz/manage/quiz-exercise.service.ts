@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -17,12 +17,10 @@ export type EntityArrayResponseType = HttpResponse<QuizExercise[]>;
 
 @Injectable({ providedIn: 'root' })
 export class QuizExerciseService {
+    private http = inject(HttpClient);
+    private exerciseService = inject(ExerciseService);
+    private fileService = inject(FileService);
     private resourceUrl = 'api/quiz-exercises';
-
-    constructor(
-        private http: HttpClient,
-        private exerciseService: ExerciseService,
-    ) {}
 
     /**
      * Create the given quiz exercise
@@ -286,7 +284,7 @@ export class QuizExerciseService {
 
     findImagesInMarkdown(description: string) {
         // Will return all matches of ![file_name](path), will group file_name and path
-        const embeddedImageRegex = /!\[(.+?)\]\((.+?)\)/g;
+        const embeddedImageRegex = /!\[(.+?)]\((.+?)\)/g;
         return [...description.matchAll(embeddedImageRegex)];
     }
 
@@ -297,8 +295,7 @@ export class QuizExerciseService {
      * @param filePath the internal path of the file to be fetched
      */
     async fetchFilePromise(fileName: string, zip: JSZip, filePath: string) {
-        const fileService = new FileService(this.http);
-        return fileService
+        return this.fileService
             .getFile(filePath)
             .then((fileResult) => {
                 zip.file(fileName, fileResult);

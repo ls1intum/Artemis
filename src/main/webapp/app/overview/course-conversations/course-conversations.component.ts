@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -72,6 +72,14 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     providers: [MetisService],
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private metisConversationService = inject(MetisConversationService);
+    private metisService = inject(MetisService);
+    private courseOverviewService = inject(CourseOverviewService);
+    private modalService = inject(NgbModal);
+    private profileService = inject(ProfileService);
+
     private ngUnsubscribe = new Subject<void>();
     course?: Course;
     isLoading = false;
@@ -113,17 +121,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faFilter = faFilter;
     faSearch = faSearch;
-
-    // MetisConversationService is created in course overview, so we can use it here
-    constructor(
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private metisConversationService: MetisConversationService,
-        private metisService: MetisService,
-        private courseOverviewService: CourseOverviewService,
-        private modalService: NgbModal,
-        private profileService: ProfileService,
-    ) {}
 
     getAsChannel = getAsChannelDTO;
 

@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { TheiaService } from 'app/exercises/programming/shared/service/theia.service';
@@ -12,13 +12,13 @@ import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
     imports: [ArtemisSharedLibsModule],
 })
 export class ProgrammingExerciseTheiaComponent implements OnChanges {
+    private theiaService = inject(TheiaService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
     programmingLanguage?: ProgrammingLanguage;
     theiaImages = {};
-
-    constructor(private theiaService: TheiaService) {}
 
     ngOnChanges(changes: SimpleChanges) {
         if ((changes.programmingExerciseCreationConfig || changes.programmingExercise) && this.shouldReloadTemplate()) {

@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -11,6 +11,11 @@ import { Subscription } from 'rxjs';
     templateUrl: './git-diff-report-modal.component.html',
 })
 export class GitDiffReportModalComponent implements OnInit, OnDestroy {
+    protected activeModal = inject(NgbActiveModal);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private cachedRepositoryFilesService = inject(CachedRepositoryFilesService);
+
     @Input() report: ProgrammingExerciseGitDiffReport;
     @Input() diffForTemplateAndSolution = true;
     @Input() cachedRepositoryFiles: Map<string, Map<string, string>> = new Map<string, Map<string, string>>();
@@ -23,13 +28,6 @@ export class GitDiffReportModalComponent implements OnInit, OnDestroy {
     private solutionRepoFilesSubscription: Subscription;
     private participationRepoFilesAtLeftCommitSubscription: Subscription;
     private participationRepoFilesAtRightCommitSubscription: Subscription;
-
-    constructor(
-        protected activeModal: NgbActiveModal,
-        private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private cachedRepositoryFilesService: CachedRepositoryFilesService,
-    ) {}
 
     ngOnInit(): void {
         if (this.diffForTemplateAndSolution) {

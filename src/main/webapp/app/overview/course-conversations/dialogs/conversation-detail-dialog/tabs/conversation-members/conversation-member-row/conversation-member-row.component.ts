@@ -1,4 +1,4 @@
-import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { faChalkboardTeacher, faEllipsis, faUser, faUserCheck, faUserGear } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
@@ -28,6 +28,13 @@ import { catchError } from 'rxjs/operators';
     styleUrls: ['./conversation-member-row.component.scss'],
 })
 export class ConversationMemberRowComponent implements OnInit, OnDestroy {
+    private accountService = inject(AccountService);
+    private modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private alertService = inject(AlertService);
+
     private ngUnsubscribe = new Subject<void>();
 
     @Input()
@@ -68,14 +75,6 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     canGrantChannelModeratorRole = canGrantChannelModeratorRole;
     canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
     canRemoveUsersFromConversation = canRemoveUsersFromConversation;
-    constructor(
-        private accountService: AccountService,
-        private modalService: NgbModal,
-        private translateService: TranslateService,
-        private channelService: ChannelService,
-        private groupChatService: GroupChatService,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         if (this.conversationMember && this.activeConversation) {

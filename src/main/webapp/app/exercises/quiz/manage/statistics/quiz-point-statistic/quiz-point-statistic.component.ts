@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { QuizStatisticUtil } from 'app/exercises/quiz/shared/quiz-statistic-util.service';
@@ -24,6 +24,16 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
     styleUrls: ['./quiz-point-statistic.component.scss', '../../../../../shared/chart/vertical-bar-chart.scss'],
 })
 export class QuizPointStatisticComponent extends QuizStatistics implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private accountService = inject(AccountService);
+    protected translateService: TranslateService;
+    private quizExerciseService = inject(QuizExerciseService);
+    private quizStatisticUtil = inject(QuizStatisticUtil);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    protected changeDetector = inject(ChangeDetectorRef);
+    private serverDateService = inject(ArtemisServerDateService);
+
     readonly round = round;
 
     quizExercise: QuizExercise;
@@ -60,18 +70,12 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
     // Icons
     faSync = faSync;
 
-    constructor(
-        private route: ActivatedRoute,
-        private router: Router,
-        private accountService: AccountService,
-        protected translateService: TranslateService,
-        private quizExerciseService: QuizExerciseService,
-        private quizStatisticUtil: QuizStatisticUtil,
-        private jhiWebsocketService: JhiWebsocketService,
-        protected changeDetector: ChangeDetectorRef,
-        private serverDateService: ArtemisServerDateService,
-    ) {
+    constructor() {
+        const translateService = inject(TranslateService);
+
         super(translateService);
+        this.translateService = translateService;
+
         this.translateService.onLangChange.subscribe(() => {
             this.setAxisLabels('showStatistic.quizPointStatistic.xAxes', 'showStatistic.quizPointStatistic.yAxes');
         });

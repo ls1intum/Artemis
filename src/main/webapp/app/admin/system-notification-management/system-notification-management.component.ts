@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subject, Subscription } from 'rxjs';
@@ -26,6 +26,15 @@ enum NotificationState {
     templateUrl: './system-notification-management.component.html',
 })
 export class SystemNotificationManagementComponent implements OnInit, OnDestroy {
+    private systemNotificationService = inject(SystemNotificationService);
+    private adminSystemNotificationService = inject(AdminSystemNotificationService);
+    private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
+    private parseLinks = inject(ParseLinks);
+    private activatedRoute = inject(ActivatedRoute);
+    private router = inject(Router);
+    private eventManager = inject(EventManager);
+
     readonly SCHEDULED = NotificationState.SCHEDULED;
     readonly ACTIVE = NotificationState.ACTIVE;
     readonly EXPIRED = NotificationState.EXPIRED;
@@ -55,16 +64,7 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     faEye = faEye;
     faWrench = faWrench;
 
-    constructor(
-        private systemNotificationService: SystemNotificationService,
-        private adminSystemNotificationService: AdminSystemNotificationService,
-        private alertService: AlertService,
-        private accountService: AccountService,
-        private parseLinks: ParseLinks,
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private eventManager: EventManager,
-    ) {
+    constructor() {
         this.routeData = this.activatedRoute.data.subscribe((data) => {
             const pagingParams = data['pagingParams'];
             if (pagingParams) {

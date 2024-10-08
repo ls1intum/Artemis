@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
@@ -8,6 +8,8 @@ import { ProgrammingLanguage } from 'app/entities/programming/programming-exerci
     templateUrl: './exercise-import-wrapper.component.html',
 })
 export class ExerciseImportWrapperComponent implements OnInit {
+    private activeModal = inject(NgbActiveModal);
+
     readonly ExerciseType = ExerciseType;
 
     @Input()
@@ -15,8 +17,6 @@ export class ExerciseImportWrapperComponent implements OnInit {
     titleKey: string;
     @Input()
     programmingLanguage?: ProgrammingLanguage;
-
-    constructor(private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {
         if (this.programmingLanguage) {

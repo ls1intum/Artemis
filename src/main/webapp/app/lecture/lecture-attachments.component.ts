@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
@@ -18,6 +18,13 @@ import { LectureService } from 'app/lecture/lecture.service';
     styleUrls: ['./lecture-attachments.component.scss'],
 })
 export class LectureAttachmentsComponent implements OnInit, OnDestroy {
+    protected activatedRoute = inject(ActivatedRoute);
+    private attachmentService = inject(AttachmentService);
+    private lectureService = inject(LectureService);
+    private httpClient = inject(HttpClient);
+    private fileUploaderService = inject(FileUploaderService);
+    private fileService = inject(FileService);
+
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
     @Input() lectureId: number | undefined;
     @Input() showHeader = true;
@@ -49,15 +56,6 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     faPaperclip = faPaperclip;
     faQuestionCircle = faQuestionCircle;
     faEye = faEye;
-
-    constructor(
-        protected activatedRoute: ActivatedRoute,
-        private attachmentService: AttachmentService,
-        private lectureService: LectureService,
-        private httpClient: HttpClient,
-        private fileUploaderService: FileUploaderService,
-        private fileService: FileService,
-    ) {}
 
     ngOnInit() {
         this.notificationText = undefined;

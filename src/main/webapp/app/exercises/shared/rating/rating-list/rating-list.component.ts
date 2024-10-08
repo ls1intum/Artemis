@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RatingService } from 'app/exercises/shared/rating/rating.service';
 import { Rating } from 'app/entities/rating.model';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -12,6 +12,11 @@ import { faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
     styleUrls: [],
 })
 export class RatingListComponent implements OnInit {
+    private ratingService = inject(RatingService);
+    private route = inject(ActivatedRoute);
+    private sortService = inject(SortService);
+    private router = inject(Router);
+
     public ratings: Rating[] = [];
 
     private courseId: number;
@@ -22,13 +27,6 @@ export class RatingListComponent implements OnInit {
     // Icons
     faSort = faSort;
     faFolderOpen = faFolderOpen;
-
-    constructor(
-        private ratingService: RatingService,
-        private route: ActivatedRoute,
-        private sortService: SortService,
-        private router: Router,
-    ) {}
 
     ngOnInit(): void {
         this.route.parent!.params.subscribe((params) => {

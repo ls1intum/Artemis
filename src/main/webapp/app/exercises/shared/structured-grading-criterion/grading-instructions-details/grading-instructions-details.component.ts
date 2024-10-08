@@ -1,4 +1,4 @@
-import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren, inject } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { Exercise } from 'app/entities/exercise.model';
@@ -20,6 +20,8 @@ import { GradingInstructionAction } from 'app/shared/monaco-editor/model/actions
     styleUrls: ['./grading-instructions-details.component.scss'],
 })
 export class GradingInstructionsDetailsComponent implements OnInit, AfterContentInit {
+    private changeDetector = inject(ChangeDetectorRef);
+
     @ViewChildren('markdownEditors')
     private markdownEditors: QueryList<MarkdownEditorMonacoComponent>;
     @ViewChild('markdownEditor', { static: false })
@@ -65,8 +67,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     faUndo = faUndo;
 
     protected readonly MarkdownEditorHeight = MarkdownEditorHeight;
-
-    constructor(private changeDetector: ChangeDetectorRef) {}
 
     ngOnInit() {
         this.criteria = this.exercise.gradingCriteria || [];

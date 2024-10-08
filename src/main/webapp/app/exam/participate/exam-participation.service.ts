@@ -1,5 +1,5 @@
 import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { faLightbulb } from '@fortawesome/free-solid-svg-icons';
 import { captureException } from '@sentry/angular';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -22,6 +22,10 @@ export type ButtonTooltipType = 'submitted' | 'submittedSubmissionLimitReached' 
 
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
+    private httpClient = inject(HttpClient);
+    private localStorageService = inject(LocalStorageService);
+    private sessionStorage = inject(SessionStorageService);
+
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
 
     private examIsStartedSubject = new BehaviorSubject<boolean>(false);
@@ -36,12 +40,6 @@ export class ExamParticipationService {
     public getResourceURL(courseId: number, examId: number): string {
         return `api/courses/${courseId}/exams/${examId}`;
     }
-
-    constructor(
-        private httpClient: HttpClient,
-        private localStorageService: LocalStorageService,
-        private sessionStorage: SessionStorageService,
-    ) {}
 
     private static getLocalStorageKeyForStudentExam(courseId: number, examId: number): string {
         const prefix = 'artemis_student_exam';

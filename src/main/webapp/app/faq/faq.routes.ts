@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -8,7 +8,7 @@ import { Faq } from 'app/entities/faq.model';
 
 @Injectable({ providedIn: 'root' })
 export class FaqResolve implements Resolve<Faq> {
-    constructor(private faqService: FaqService) {}
+    private faqService = inject(FaqService);
 
     resolve(route: ActivatedRouteSnapshot): Observable<Faq> {
         const faqId = route.params['faqId'];

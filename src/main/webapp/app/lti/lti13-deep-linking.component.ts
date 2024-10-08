@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Exercise } from 'app/entities/exercise.model';
@@ -16,6 +16,15 @@ import { SessionStorageService } from 'ngx-webstorage';
     templateUrl: './lti13-deep-linking.component.html',
 })
 export class Lti13DeepLinkingComponent implements OnInit {
+    route = inject(ActivatedRoute);
+    private sortService = inject(SortService);
+    private courseManagementService = inject(CourseManagementService);
+    private http = inject(HttpClient);
+    private accountService = inject(AccountService);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private sessionStorageService = inject(SessionStorageService);
+
     courseId: number;
     exercises: Exercise[];
     selectedExercises?: Set<number> = new Set();
@@ -29,16 +38,6 @@ export class Lti13DeepLinkingComponent implements OnInit {
     faSort = faSort;
     faExclamationTriangle = faExclamationTriangle;
     faWrench = faWrench;
-    constructor(
-        public route: ActivatedRoute,
-        private sortService: SortService,
-        private courseManagementService: CourseManagementService,
-        private http: HttpClient,
-        private accountService: AccountService,
-        private router: Router,
-        private alertService: AlertService,
-        private sessionStorageService: SessionStorageService,
-    ) {}
 
     /**
      * Initializes the component.

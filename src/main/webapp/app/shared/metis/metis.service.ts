@@ -6,7 +6,7 @@ import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Posting } from 'app/entities/metis/posting.model';
-import { Injectable, OnDestroy } from '@angular/core';
+import { Injectable, OnDestroy, inject } from '@angular/core';
 import { AnswerPostService } from 'app/shared/metis/answer-post.service';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { Reaction } from 'app/entities/metis/reaction.model';
@@ -34,6 +34,14 @@ import { NotificationService } from 'app/shared/notification/notification.servic
 
 @Injectable()
 export class MetisService implements OnDestroy {
+    protected postService = inject(PostService);
+    protected answerPostService = inject(AnswerPostService);
+    protected reactionService = inject(ReactionService);
+    protected accountService = inject(AccountService);
+    protected exerciseService = inject(ExerciseService);
+    private jhiWebsocketService = inject(JhiWebsocketService);
+    private conversationService = inject(ConversationService);
+
     private posts$: ReplaySubject<Post[]> = new ReplaySubject<Post[]>(1);
     private tags$: BehaviorSubject<string[]> = new BehaviorSubject<string[]>([]);
     private totalNumberOfPosts$: ReplaySubject<number> = new ReplaySubject<number>(1);
@@ -50,16 +58,9 @@ export class MetisService implements OnDestroy {
 
     private courseWideTopicSubscription: Subscription;
 
-    constructor(
-        protected postService: PostService,
-        protected answerPostService: AnswerPostService,
-        protected reactionService: ReactionService,
-        protected accountService: AccountService,
-        protected exerciseService: ExerciseService,
-        private jhiWebsocketService: JhiWebsocketService,
-        private conversationService: ConversationService,
-        notificationService: NotificationService,
-    ) {
+    constructor() {
+        const notificationService = inject(NotificationService);
+
         this.accountService.identity().then((user: User) => {
             this.user = user!;
         });

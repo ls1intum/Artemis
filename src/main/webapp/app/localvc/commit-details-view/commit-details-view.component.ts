@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
@@ -13,6 +13,10 @@ import { catchError, map, tap } from 'rxjs/operators';
     templateUrl: './commit-details-view.component.html',
 })
 export class CommitDetailsViewComponent implements OnDestroy, OnInit {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    private programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
+    private route = inject(ActivatedRoute);
+
     report: ProgrammingExerciseGitDiffReport;
     exerciseId: number;
     participationId?: number;
@@ -33,12 +37,6 @@ export class CommitDetailsViewComponent implements OnDestroy, OnInit {
 
     paramSub: Subscription;
     participationSub: Subscription;
-
-    constructor(
-        private programmingExerciseService: ProgrammingExerciseService,
-        private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        private route: ActivatedRoute,
-    ) {}
 
     ngOnDestroy(): void {
         this.repoFilesSubscription?.unsubscribe();

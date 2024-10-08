@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, inject } from '@angular/core';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import type { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -16,12 +16,12 @@ import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/ex
     imports: [ArtemisSharedComponentModule, ArtemisSharedCommonModule, ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent],
 })
 export class ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent implements OnInit, OnChanges, OnDestroy {
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingLanguage?: ProgrammingLanguage;
     @Input() isLocal: boolean;
     @Input() checkoutSolutionRepository?: boolean = true;
-
-    constructor(private programmingExerciseService: ProgrammingExerciseService) {}
 
     checkoutDirectorySubscription?: Subscription;
 

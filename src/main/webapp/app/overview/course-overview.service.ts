@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { Exercise, getIcon } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -68,11 +68,9 @@ const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     providedIn: 'root',
 })
 export class CourseOverviewService {
-    constructor(
-        private participationService: ParticipationService,
-        private translate: TranslateService,
-        private conversationService: ConversationService,
-    ) {}
+    private participationService = inject(ParticipationService);
+    private translate = inject(TranslateService);
+    private conversationService = inject(ConversationService);
 
     readonly faBullhorn = faBullhorn;
     readonly faHashtag = faHashtag;

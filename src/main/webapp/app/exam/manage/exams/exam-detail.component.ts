@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -23,6 +23,15 @@ import { scrollToTopOfPage } from 'app/shared/util/utils';
     templateUrl: './exam-detail.component.html',
 })
 export class ExamDetailComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private accountService = inject(AccountService);
+    private examManagementService = inject(ExamManagementService);
+    private router = inject(Router);
+    private alertService = inject(AlertService);
+    private gradingSystemService = inject(GradingSystemService);
+    private artemisDurationFromSecondsPipe = inject(ArtemisDurationFromSecondsPipe);
+
     exam: Exam;
     formattedStartText?: SafeHtml;
     formattedConfirmationStartText?: SafeHtml;
@@ -51,17 +60,6 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     canHaveBonus = false;
 
     examDetailSections: DetailOverviewSection[];
-
-    constructor(
-        private route: ActivatedRoute,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private accountService: AccountService,
-        private examManagementService: ExamManagementService,
-        private router: Router,
-        private alertService: AlertService,
-        private gradingSystemService: GradingSystemService,
-        private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
-    ) {}
 
     /**
      * Initialize the exam

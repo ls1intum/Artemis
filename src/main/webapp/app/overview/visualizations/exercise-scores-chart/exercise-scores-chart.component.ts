@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, Input, OnChanges } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, inject } from '@angular/core';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/overview/visualizations/exercise-scores-chart.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -37,6 +37,13 @@ type SeriesDatapoint = {
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
 export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private activatedRoute = inject(ActivatedRoute);
+    private alertService = inject(AlertService);
+    private exerciseScoresChartService = inject(ExerciseScoresChartService);
+    exerciseTypeFilter = inject(ChartExerciseTypeFilter);
+    private translateService = inject(TranslateService);
+
     @Input() filteredExerciseIDs: number[];
 
     courseId: number;
@@ -69,14 +76,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     maximumScoreLabel: string;
     maxScale = 101;
 
-    constructor(
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private activatedRoute: ActivatedRoute,
-        private alertService: AlertService,
-        private exerciseScoresChartService: ExerciseScoresChartService,
-        public exerciseTypeFilter: ChartExerciseTypeFilter, // used in html, therefore it must be public
-        private translateService: TranslateService,
-    ) {
+    constructor() {
         this.translateService.onLangChange.subscribe(() => {
             this.setTranslations();
         });

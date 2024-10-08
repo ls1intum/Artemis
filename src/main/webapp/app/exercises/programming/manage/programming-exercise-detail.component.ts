@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
@@ -65,6 +65,24 @@ import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.s
     encapsulation: ViewEncapsulation.None,
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
+    private activatedRoute = inject(ActivatedRoute);
+    private accountService = inject(AccountService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    exerciseService = inject(ExerciseService);
+    private artemisMarkdown = inject(ArtemisMarkdownService);
+    private alertService = inject(AlertService);
+    private programmingExerciseSubmissionPolicyService = inject(SubmissionPolicyService);
+    private eventManager = inject(EventManager);
+    modalService = inject(NgbModal);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private statisticsService = inject(StatisticsService);
+    private router = inject(Router);
+    private programmingLanguageFeatureService = inject(ProgrammingLanguageFeatureService);
+    private consistencyCheckService = inject(ConsistencyCheckService);
+    private irisSettingsService = inject(IrisSettingsService);
+    private aeolusService = inject(AeolusService);
+
     readonly dayjs = dayjs;
     readonly ActionType = ActionType;
     readonly ProgrammingExerciseParticipationType = ProgrammingExerciseParticipationType;
@@ -134,26 +152,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faEye = faEye;
     faUserCheck = faUserCheck;
     faRobot = faRobot;
-
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private accountService: AccountService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        public exerciseService: ExerciseService,
-        private artemisMarkdown: ArtemisMarkdownService,
-        private alertService: AlertService,
-        private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
-        private eventManager: EventManager,
-        public modalService: NgbModal,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private statisticsService: StatisticsService,
-        private router: Router,
-        private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
-        private consistencyCheckService: ConsistencyCheckService,
-        private irisSettingsService: IrisSettingsService,
-        private aeolusService: AeolusService,
-    ) {}
 
     ngOnInit() {
         this.checkBuildPlanEditable();

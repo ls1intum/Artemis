@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -72,6 +72,17 @@ export enum MedianType {
     styleUrls: ['./exam-scores.component.scss', '../../shared/chart/vertical-bar-chart.scss'],
 })
 export class ExamScoresComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private examService = inject(ExamManagementService);
+    private sortService = inject(SortService);
+    private alertService = inject(AlertService);
+    private changeDetector = inject(ChangeDetectorRef);
+    private languageHelper = inject(JhiLanguageHelper);
+    private localeConversionService = inject(LocaleConversionService);
+    private participantScoresService = inject(ParticipantScoresService);
+    private gradingSystemService = inject(GradingSystemService);
+    private courseManagementService = inject(CourseManagementService);
+
     public examScoreDTO: ExamScoreDTO;
     public exerciseGroups: ExerciseGroup[];
     public studentResults: StudentResult[];
@@ -130,18 +141,6 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     faExclamationTriangle = faExclamationTriangle;
 
     private languageChangeSubscription?: Subscription;
-    constructor(
-        private route: ActivatedRoute,
-        private examService: ExamManagementService,
-        private sortService: SortService,
-        private alertService: AlertService,
-        private changeDetector: ChangeDetectorRef,
-        private languageHelper: JhiLanguageHelper,
-        private localeConversionService: LocaleConversionService,
-        private participantScoresService: ParticipantScoresService,
-        private gradingSystemService: GradingSystemService,
-        private courseManagementService: CourseManagementService,
-    ) {}
 
     ngOnInit() {
         this.route.params.subscribe((params) => {

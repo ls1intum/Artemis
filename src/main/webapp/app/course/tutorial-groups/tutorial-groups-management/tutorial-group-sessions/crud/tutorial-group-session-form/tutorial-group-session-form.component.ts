@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
@@ -19,6 +19,8 @@ export interface TutorialGroupSessionFormData {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
+    private fb = inject(FormBuilder);
+
     @Input()
     formData: TutorialGroupSessionFormData = {
         date: undefined,
@@ -66,8 +68,6 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
     get isSubmitPossible() {
         return !this.form.invalid;
     }
-
-    constructor(private fb: FormBuilder) {}
 
     ngOnInit(): void {
         this.initializeForm();

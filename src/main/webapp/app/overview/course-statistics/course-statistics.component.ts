@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -94,6 +94,14 @@ enum ChartBarTitle {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewInit, BarControlConfigurationProvider {
+    private courseStorageService = inject(CourseStorageService);
+    private scoresStorageService = inject(ScoresStorageService);
+    private translateService = inject(TranslateService);
+    private route = inject(ActivatedRoute);
+    private gradingSystemService = inject(GradingSystemService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    categoryFilter = inject(ChartCategoryFilter);
+
     readonly documentationType: DocumentationType = 'Statistics';
 
     courseId: number;
@@ -212,16 +220,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
     };
-
-    constructor(
-        private courseStorageService: CourseStorageService,
-        private scoresStorageService: ScoresStorageService,
-        private translateService: TranslateService,
-        private route: ActivatedRoute,
-        private gradingSystemService: GradingSystemService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        public categoryFilter: ChartCategoryFilter,
-    ) {}
 
     ngOnInit() {
         // Note: due to lazy loading and router outlet, we use parent 2x here

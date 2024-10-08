@@ -1,4 +1,4 @@
-import { Injectable, Renderer2, RendererFactory2 } from '@angular/core';
+import { Injectable, RendererFactory2, inject } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,20 +11,26 @@ import { LocaleConversionService } from 'app/shared/service/locale-conversion.se
 
 @Injectable({ providedIn: 'root' })
 export class JhiLanguageHelper {
-    private renderer: Renderer2;
+    private translateService = inject(TranslateService);
+    private localeConversionService = inject(LocaleConversionService);
+    private titleService = inject(Title);
+    private router = inject(Router);
+    private sessionStorage = inject(SessionStorageService);
+    private renderer = inject(RendererFactory2).createRenderer(document.querySelector('html'), null);
+
     private _language: BehaviorSubject<string>;
 
-    constructor(
-        private translateService: TranslateService,
-        private localeConversionService: LocaleConversionService,
-        private titleService: Title,
-        private router: Router,
-        rootRenderer: RendererFactory2,
-        private sessionStorage: SessionStorageService,
-    ) {
+    constructor() {
         this._language = new BehaviorSubject<string>(this.translateService.currentLang);
-        this.renderer = rootRenderer.createRenderer(document.querySelector('html'), null);
-        this.init();
+
+        this.translateService.onLangChange.subscribe(() => {
+            const languageKey = this.translateService.currentLang;
+            this._language.next(languageKey);
+            this.localeConversionService.locale = languageKey;
+            this.sessionStorage.store('locale', languageKey);
+            this.renderer.setAttribute(document.querySelector('html'), 'lang', this.translateService.currentLang);
+            this.updateTitle();
+        });
     }
 
     /**
@@ -55,17 +61,6 @@ export class JhiLanguageHelper {
             } else {
                 captureException(new Error(`Translation key '${titleKey}' for page title not found`));
             }
-        });
-    }
-
-    private init() {
-        this.translateService.onLangChange.subscribe(() => {
-            const languageKey = this.translateService.currentLang;
-            this._language.next(languageKey);
-            this.localeConversionService.locale = languageKey;
-            this.sessionStorage.store('locale', languageKey);
-            this.renderer.setAttribute(document.querySelector('html'), 'lang', this.translateService.currentLang);
-            this.updateTitle();
         });
     }
 

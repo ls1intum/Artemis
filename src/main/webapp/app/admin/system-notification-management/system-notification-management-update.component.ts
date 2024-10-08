@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
@@ -12,6 +12,11 @@ import { AdminSystemNotificationService } from 'app/shared/notification/system-n
     templateUrl: './system-notification-management-update.component.html',
 })
 export class SystemNotificationManagementUpdateComponent implements OnInit {
+    private userService = inject(UserService);
+    private systemNotificationService = inject(AdminSystemNotificationService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+
     notification: SystemNotification;
     isSaving: boolean;
 
@@ -25,13 +30,6 @@ export class SystemNotificationManagementUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
-
-    constructor(
-        private userService: UserService,
-        private systemNotificationService: AdminSystemNotificationService,
-        private route: ActivatedRoute,
-        private router: Router,
-    ) {}
 
     /**
      * Loads notification from route data

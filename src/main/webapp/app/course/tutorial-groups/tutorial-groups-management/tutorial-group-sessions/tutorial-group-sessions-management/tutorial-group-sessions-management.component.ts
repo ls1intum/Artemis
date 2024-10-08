@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation, inject } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -22,6 +22,12 @@ import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/
     encapsulation: ViewEncapsulation.None,
 })
 export class TutorialGroupSessionsManagementComponent implements OnDestroy {
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+    private modalService = inject(NgbModal);
+    private activeModal = inject(NgbActiveModal);
+    private cdr = inject(ChangeDetectorRef);
+
     ngUnsubscribe = new Subject<void>();
 
     isLoading = false;
@@ -38,14 +44,6 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     attendanceUpdated = false;
 
     isInitialized = false;
-
-    constructor(
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private modalService: NgbModal,
-        private activeModal: NgbActiveModal,
-        private cdr: ChangeDetectorRef,
-    ) {}
 
     initialize() {
         if (!this.tutorialGroupId || !this.course) {

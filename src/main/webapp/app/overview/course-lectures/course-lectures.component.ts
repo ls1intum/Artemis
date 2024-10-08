@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -29,6 +29,11 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
     styleUrls: ['../course-overview.scss'],
 })
 export class CourseLecturesComponent implements OnInit, OnDestroy {
+    private courseStorageService = inject(CourseStorageService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private courseOverviewService = inject(CourseOverviewService);
+
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
     course?: Course;
@@ -41,13 +46,6 @@ export class CourseLecturesComponent implements OnInit, OnDestroy {
     sidebarLectures: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
-
-    constructor(
-        private courseStorageService: CourseStorageService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private courseOverviewService: CourseOverviewService,
-    ) {}
 
     ngOnInit() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('lecture');

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -19,6 +19,10 @@ import { OrderedListAction } from 'app/shared/monaco-editor/model/actions/ordere
     styleUrls: ['./exam-live-announcement-create-modal.component.scss'],
 })
 export class ExamLiveAnnouncementCreateModalComponent {
+    private activeModal = inject(NgbActiveModal);
+    private examManagementService = inject(ExamManagementService);
+    private accountService = inject(AccountService);
+
     actions = [new BoldAction(), new ItalicAction(), new UnderlineAction(), new CodeAction(), new CodeBlockAction(), new OrderedListAction(), new OrderedListAction()];
 
     courseId: number;
@@ -34,12 +38,6 @@ export class ExamLiveAnnouncementCreateModalComponent {
     // Icons
     faSpinner = faSpinner;
     faCheckCircle = faCheckCircle;
-
-    constructor(
-        private activeModal: NgbActiveModal,
-        private examManagementService: ExamManagementService,
-        private accountService: AccountService,
-    ) {}
 
     submitAnnouncement() {
         this.status = 'submitting';

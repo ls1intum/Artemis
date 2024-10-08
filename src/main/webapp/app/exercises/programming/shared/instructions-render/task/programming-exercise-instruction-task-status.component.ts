@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, inject } from '@angular/core';
 import { faCheckCircle, faTimesCircle } from '@fortawesome/free-regular-svg-icons';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -13,6 +13,9 @@ import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.compon
     styleUrls: ['./programming-exercise-instruction-task-status.scss'],
 })
 export class ProgrammingExerciseInstructionTaskStatusComponent {
+    private programmingExerciseInstructionService = inject(ProgrammingExerciseInstructionService);
+    private modalService = inject(NgbModal);
+
     TestCaseState = TestCaseState;
     translationBasePath = 'artemisApp.editor.testStatusLabels.';
 
@@ -44,11 +47,6 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
     faQuestionCircle = faQuestionCircle;
     farCheckCircle = faCheckCircle;
     farTimesCircle = faTimesCircle;
-
-    constructor(
-        private programmingExerciseInstructionService: ProgrammingExerciseInstructionService,
-        private modalService: NgbModal,
-    ) {}
 
     set testIds(testIds: number[]) {
         this.testIdsValue = testIds;

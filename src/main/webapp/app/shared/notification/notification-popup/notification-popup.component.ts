@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute, IsActiveMatchOptions, Params, Router, UrlTree } from '@angular/router';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import {
@@ -21,6 +21,7 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { faCheckDouble, faExclamationTriangle, faMessage, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { NotificationSettingsService } from 'app/shared/user-settings/notification-settings/notification-settings.service';
 import { translationNotFoundMessage } from 'app/core/config/translation.config';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -44,8 +45,16 @@ const conversationMessageNotificationTitles = [
     selector: 'jhi-notification-popup',
     templateUrl: './notification-popup.component.html',
     styleUrls: ['./notification-popup.scss'],
+    imports: [ArtemisSharedModule],
+    standalone: true,
 })
 export class NotificationPopupComponent implements OnInit {
+    private notificationService = inject(NotificationService);
+    private router = inject(Router);
+    private activatedRoute = inject(ActivatedRoute);
+    private notificationSettingsService = inject(NotificationSettingsService);
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     notifications: Notification[] = [];
     QuizNotificationTitleHtmlConst = 'Quiz started';
 
@@ -61,14 +70,6 @@ export class NotificationPopupComponent implements OnInit {
     faMessage = faMessage;
     faCheckDouble = faCheckDouble;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(
-        private notificationService: NotificationService,
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-        private notificationSettingsService: NotificationSettingsService,
-        private artemisTranslatePipe: ArtemisTranslatePipe,
-    ) {}
 
     ngOnInit(): void {
         this.notificationService.subscribeToSingleIncomingNotifications().subscribe((notification: Notification) => {

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -14,6 +14,11 @@ import { PROFILE_AEOLUS, PROFILE_LOCALCI } from 'app/app.constants';
     styles: ['textarea { width: 100%; }'],
 })
 export class ProgrammingExerciseResetDialogComponent implements OnInit {
+    private alertService = inject(AlertService);
+    private profileService = inject(ProfileService);
+    private programmingExerciseService = inject(ProgrammingExerciseService);
+    activeModal = inject(NgbActiveModal);
+
     readonly FeatureToggle = FeatureToggle;
 
     @Input() programmingExercise: ProgrammingExercise;
@@ -32,13 +37,6 @@ export class ProgrammingExerciseResetDialogComponent implements OnInit {
     faCircleNotch = faCircleNotch;
     faSpinner = faSpinner;
     faUndo = faUndo;
-
-    constructor(
-        private alertService: AlertService,
-        private profileService: ProfileService,
-        private programmingExerciseService: ProgrammingExerciseService,
-        public activeModal: NgbActiveModal,
-    ) {}
 
     ngOnInit() {
         this.isLoading = true;

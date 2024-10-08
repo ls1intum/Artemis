@@ -1,4 +1,4 @@
-import { Component, ElementRef, NgZone, OnInit, SecurityContext, ViewChild } from '@angular/core';
+import { Component, ElementRef, NgZone, OnInit, SecurityContext, ViewChild, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { DomSanitizer } from '@angular/platform-browser';
 
@@ -13,6 +13,10 @@ import { DomSanitizer } from '@angular/platform-browser';
     templateUrl: './lti13-select-content.component.html',
 })
 export class Lti13SelectContentComponent implements OnInit {
+    private route = inject(ActivatedRoute);
+    private sanitizer = inject(DomSanitizer);
+    private zone = inject(NgZone);
+
     jwt: string;
     id: string;
     actionLink: string;
@@ -20,12 +24,6 @@ export class Lti13SelectContentComponent implements OnInit {
 
     @ViewChild('deepLinkingForm', { static: false })
     deepLinkingForm?: ElementRef;
-
-    constructor(
-        private route: ActivatedRoute,
-        private sanitizer: DomSanitizer,
-        private zone: NgZone,
-    ) {}
 
     /**
      * Initializes the component.

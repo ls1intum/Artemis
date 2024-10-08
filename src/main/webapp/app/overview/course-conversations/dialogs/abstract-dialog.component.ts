@@ -1,8 +1,10 @@
-import { Directive } from '@angular/core';
+import { Directive, inject } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Directive()
 export abstract class AbstractDialogComponent {
+    activeModal = inject(NgbActiveModal);
+
     isInitialized = false;
 
     initialize(requiredInputs?: string[]) {
@@ -13,8 +15,6 @@ export abstract class AbstractDialogComponent {
             this.isInitialized = true;
         }
     }
-
-    constructor(public activeModal: NgbActiveModal) {}
 
     dismiss() {
         if (this.activeModal) {

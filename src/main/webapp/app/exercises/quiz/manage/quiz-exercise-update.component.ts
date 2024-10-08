@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnChanges, OnInit, SimpleChanges, ViewChild, ViewEncapsulation, inject } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -43,6 +43,18 @@ import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.mod
     encapsulation: ViewEncapsulation.None,
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
+    private route = inject(ActivatedRoute);
+    private courseService = inject(CourseManagementService);
+    private quizExerciseService = inject(QuizExerciseService);
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
+    private exerciseService = inject(ExerciseService);
+    private alertService = inject(AlertService);
+    changeDetector = inject(ChangeDetectorRef);
+    private exerciseGroupService = inject(ExerciseGroupService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private modalService = inject(NgbModal);
+
     @ViewChild('quizQuestionsEdit')
     quizQuestionListEditComponent: QuizQuestionListEditComponent;
 
@@ -101,24 +113,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         backdropClass: 'second-layer-modal-bg',
         centered: true,
     };
-
-    constructor(
-        private route: ActivatedRoute,
-        private courseService: CourseManagementService,
-        private quizExerciseService: QuizExerciseService,
-        private router: Router,
-        private translateService: TranslateService,
-        private exerciseService: ExerciseService,
-        private alertService: AlertService,
-        public changeDetector: ChangeDetectorRef,
-        private exerciseGroupService: ExerciseGroupService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-        shortAnswerQuestionUtil: ShortAnswerQuestionUtil,
-        private modalService: NgbModal,
-    ) {
-        super(dragAndDropQuestionUtil, shortAnswerQuestionUtil);
-    }
 
     /**
      * Initialize variables and load course and quiz from server.

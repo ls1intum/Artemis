@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, HostBinding, Input, OnChanges, OnInit, Output, TemplateRef, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExternalCloningService } from 'app/exercises/programming/shared/service/external-cloning.service';
@@ -28,6 +28,13 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
     providers: [ExternalCloningService],
 })
 export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
+    private alertService = inject(AlertService);
+    private courseExerciseService = inject(CourseExerciseService);
+    private router = inject(Router);
+    private translateService = inject(TranslateService);
+    private participationService = inject(ParticipationService);
+    private profileService = inject(ProfileService);
+
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
@@ -74,15 +81,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly faPenSquare = faPenSquare;
 
     private feedbackSent = false;
-
-    constructor(
-        private alertService: AlertService,
-        private courseExerciseService: CourseExerciseService,
-        private router: Router,
-        private translateService: TranslateService,
-        private participationService: ParticipationService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit(): void {
         this.repositoryLink = this.router.url;

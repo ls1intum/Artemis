@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, inject } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import dayjs from 'dayjs/esm';
 import { CourseManagementService } from '../course-management.service';
@@ -22,6 +22,9 @@ export enum SwitchTimeSpanDirection {
     styleUrls: ['./course-detail-line-chart.component.scss'],
 })
 export class CourseDetailLineChartComponent extends ActiveStudentsChart implements OnChanges {
+    private service = inject(CourseManagementService);
+    private translateService = inject(TranslateService);
+
     @Input()
     course: Course;
     @Input()
@@ -70,10 +73,7 @@ export class CourseDetailLineChartComponent extends ActiveStudentsChart implemen
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(
-        private service: CourseManagementService,
-        private translateService: TranslateService,
-    ) {
+    constructor() {
         super();
         this.translateService.onLangChange.subscribe(() => {
             this.loadTranslations();

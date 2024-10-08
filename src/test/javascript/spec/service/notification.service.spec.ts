@@ -437,9 +437,9 @@ describe('Notification Service', () => {
 
         it('should return default message if translation not found and original text is undefined', () => {
             const notification: Notification = { textIsPlaceholder: true, text: 'abcdef' };
-            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue(undefined);
+            jest.spyOn(artemisTranslatePipe, 'transform').mockReturnValue('');
             const result = notificationService.getNotificationTextTranslation(notification, 50);
-            expect(result).toBeUndefined();
+            expect(result).toBe('');
         });
 
         it('should replace specific text patterns in the translation', () => {

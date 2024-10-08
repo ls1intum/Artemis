@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
@@ -12,6 +12,10 @@ const MAX_CONTENT_LENGTH = 5000;
 
 @Directive()
 export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit, OnChanges {
+    protected metisService = inject(MetisService);
+    protected modalService = inject(NgbModal);
+    protected formBuilder = inject(FormBuilder);
+
     @Input() posting: T;
     @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
     @Output() isModalOpen = new EventEmitter<void>();
@@ -23,12 +27,6 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     content: string;
     formGroup: FormGroup;
     readonly EditType = PostingEditType;
-
-    protected constructor(
-        protected metisService: MetisService,
-        protected modalService: NgbModal,
-        protected formBuilder: FormBuilder,
-    ) {}
 
     get editType(): PostingEditType {
         return this.posting.id ? PostingEditType.UPDATE : PostingEditType.CREATE;

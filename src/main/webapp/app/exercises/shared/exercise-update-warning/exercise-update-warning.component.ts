@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { faBan, faCheck, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
@@ -8,6 +8,8 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
     styleUrls: ['./exercise-update-warning.component.scss'],
 })
 export class ExerciseUpdateWarningComponent {
+    activeModal = inject(NgbActiveModal);
+
     instructionDeleted = false;
     creditChanged = false;
     deleteFeedback = false;
@@ -26,8 +28,6 @@ export class ExerciseUpdateWarningComponent {
     faBan = faBan;
     faCheck = faCheck;
     faExclamationTriangle = faExclamationTriangle;
-
-    constructor(public activeModal: NgbActiveModal) {}
 
     /**
      * Closes the modal

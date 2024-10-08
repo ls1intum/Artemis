@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, inject } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
@@ -33,6 +33,9 @@ export interface FileProperties {
     templateUrl: './attachment-unit-form.component.html',
 })
 export class AttachmentUnitFormComponent implements OnInit, OnChanges {
+    private translateService = inject(TranslateService);
+    private fb = inject(FormBuilder);
+
     @Input()
     formData: AttachmentUnitFormData;
     @Input()
@@ -63,11 +66,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     fileName?: string;
     fileInputTouched = false;
     isFileTooBig: boolean;
-
-    constructor(
-        private translateService: TranslateService,
-        private fb: FormBuilder,
-    ) {}
 
     ngOnChanges(): void {
         this.initializeForm();

@@ -9,7 +9,7 @@ export abstract class BaseApiHttpService {
     private readonly baseUrl = 'api';
 
     /**
-     * Debounces a function call to prevent it from being called multiple times in a short period.
+     * Debounce a function call to prevent it from being called multiple times in a short period.
      * @param callback The function to debounce.
      * @param delay The delay in milliseconds to wait before calling the function.
      */

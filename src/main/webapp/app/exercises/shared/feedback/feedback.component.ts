@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
+import { Component, Injector, Input, OnChanges, OnInit, SimpleChanges, inject } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -39,6 +39,15 @@ import { cloneDeep } from 'lodash-es';
     styleUrls: ['./feedback.scss'],
 })
 export class FeedbackComponent implements OnInit, OnChanges {
+    private resultService = inject(ResultService);
+    private buildLogService = inject(BuildLogService);
+    private translateService = inject(TranslateService);
+    private profileService = inject(ProfileService);
+    private feedbackService = inject(FeedbackService);
+    private feedbackChartService = inject(FeedbackChartService);
+    private injector = inject(Injector);
+    activeModal? = inject(NgbActiveModal, { optional: true });
+
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
@@ -115,17 +124,9 @@ export class FeedbackComponent implements OnInit, OnChanges {
      */
     private feedbackItemNodesBeforePrinting: FeedbackNode[];
 
-    constructor(
-        private resultService: ResultService,
-        private buildLogService: BuildLogService,
-        private translateService: TranslateService,
-        private profileService: ProfileService,
-        private feedbackService: FeedbackService,
-        private feedbackChartService: FeedbackChartService,
-        private injector: Injector,
-        @Optional()
-        public activeModal?: NgbActiveModal,
-    ) {
+    constructor() {
+        const translateService = this.translateService;
+
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
         this.labels = [pointsLabel, deductionsLabel];

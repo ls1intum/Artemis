@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Course } from 'app/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
@@ -16,6 +16,12 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
     styleUrls: ['./course-tutorial-group-detail.component.scss'],
 })
 export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
+    private route = inject(ActivatedRoute);
+    private tutorialGroupService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+    private courseManagementService = inject(CourseManagementService);
+    private profileService = inject(ProfileService);
+
     isLoading$ = new BehaviorSubject<boolean>(false);
     tutorialGroup?: TutorialGroup;
     course?: Course;
@@ -23,14 +29,6 @@ export class CourseTutorialGroupDetailComponent implements OnInit, OnDestroy {
     profileSubscription?: Subscription;
     isProduction = true;
     isTestServer = false;
-
-    constructor(
-        private route: ActivatedRoute,
-        private tutorialGroupService: TutorialGroupsService,
-        private alertService: AlertService,
-        private courseManagementService: CourseManagementService,
-        private profileService: ProfileService,
-    ) {}
 
     ngOnInit(): void {
         const courseIdParams$ = this.route.parent?.parent?.params;

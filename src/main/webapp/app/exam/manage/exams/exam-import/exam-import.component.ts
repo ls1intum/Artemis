@@ -1,15 +1,11 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Component, Input, ViewChild } from '@angular/core';
-import { Router } from '@angular/router';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, Input, ViewChild, inject } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { ExamImportPagingService } from 'app/exam/manage/exams/exam-import/exam-import-paging.service';
 import { ImportComponent } from 'app/shared/import/import.component';
-import { SortService } from 'app/shared/service/sort.service';
 import { onError } from 'app/shared/util/global.utils';
 
 @Component({
@@ -17,6 +13,9 @@ import { onError } from 'app/shared/util/global.utils';
     templateUrl: './exam-import.component.html',
 })
 export class ExamImportComponent extends ImportComponent<Exam> {
+    private examManagementService = inject(ExamManagementService);
+    private alertService = inject(AlertService);
+
     // boolean to indicate, if the import modal should include the exerciseGroup selection subsequently.
     @Input() subsequentExerciseGroupSelection: boolean;
     // Values to specify the target of the exercise group import
@@ -29,17 +28,6 @@ export class ExamImportComponent extends ImportComponent<Exam> {
     exam?: Exam;
     isImportingExercises = false;
     isImportInSameCourse = false;
-
-    constructor(
-        router: Router,
-        sortService: SortService,
-        activeModal: NgbActiveModal,
-        pagingService: ExamImportPagingService,
-        private examManagementService: ExamManagementService,
-        private alertService: AlertService,
-    ) {
-        super(router, sortService, activeModal, pagingService);
-    }
 
     /**
      * After the user has chosen an Exam, this method is called to load the exercise groups for the selected exam

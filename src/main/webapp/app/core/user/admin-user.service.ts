@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 
@@ -8,9 +8,9 @@ import { UserFilter } from 'app/admin/user-management/user-management.component'
 
 @Injectable({ providedIn: 'root' })
 export class AdminUserService {
-    public resourceUrl = 'api/admin/users';
+    private http = inject(HttpClient);
 
-    constructor(private http: HttpClient) {}
+    public resourceUrl = 'api/admin/users';
 
     /**
      * Create a user on the server.

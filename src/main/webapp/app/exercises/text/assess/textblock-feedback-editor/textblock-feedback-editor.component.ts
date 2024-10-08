@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, HostBinding, Input, Output, ViewChild, inject } from '@angular/core';
 import { TextBlock } from 'app/entities/text/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -16,6 +16,11 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
     styleUrls: ['./textblock-feedback-editor.component.scss'],
 })
 export class TextblockFeedbackEditorComponent implements AfterViewInit {
+    structuredGradingCriterionService = inject(StructuredGradingCriterionService);
+    protected modalService = inject(NgbModal);
+    protected route = inject(ActivatedRoute);
+    textAssessmentAnalytics = inject(TextAssessmentAnalytics);
+
     readonly FeedbackType = FeedbackType;
 
     @Input() textBlock: TextBlock = new TextBlock();
@@ -58,12 +63,10 @@ export class TextblockFeedbackEditorComponent implements AfterViewInit {
     faTrash = faTrash;
     faAngleRight = faAngleRight;
 
-    constructor(
-        public structuredGradingCriterionService: StructuredGradingCriterionService,
-        protected modalService: NgbModal,
-        protected route: ActivatedRoute,
-        public textAssessmentAnalytics: TextAssessmentAnalytics,
-    ) {
+    constructor() {
+        const route = this.route;
+        const textAssessmentAnalytics = this.textAssessmentAnalytics;
+
         textAssessmentAnalytics.setComponentRoute(route);
     }
 

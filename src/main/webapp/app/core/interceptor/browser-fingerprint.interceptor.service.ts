@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
@@ -6,12 +6,14 @@ import { isRequestToArtemisServer } from './interceptor.util';
 
 @Injectable()
 export class BrowserFingerprintInterceptor implements HttpInterceptor {
+    private browserFingerprintService = inject(BrowserFingerprintService);
+
     private fingerprint?: string;
     private instanceIdentifier?: string;
 
-    constructor(private browserFingerprintService: BrowserFingerprintService) {
-        browserFingerprintService.fingerprint.subscribe((fingerprint) => (this.fingerprint = fingerprint));
-        browserFingerprintService.instanceIdentifier.subscribe((instanceIdentifier) => (this.instanceIdentifier = instanceIdentifier));
+    constructor() {
+        this.browserFingerprintService.fingerprint.subscribe((fingerprint) => (this.fingerprint = fingerprint));
+        this.browserFingerprintService.instanceIdentifier.subscribe((instanceIdentifier) => (this.instanceIdentifier = instanceIdentifier));
     }
 
     /**

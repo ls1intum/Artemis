@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
@@ -44,9 +44,9 @@ export interface IProgrammingExerciseSolutionEntryService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseSolutionEntryService implements IProgrammingExerciseSolutionEntryService {
-    public resourceUrl = 'api/programming-exercises';
+    protected http = inject(HttpClient);
 
-    constructor(protected http: HttpClient) {}
+    public resourceUrl = 'api/programming-exercises';
 
     /**
      * Create a custom solution entry for a programming exercise and test case.

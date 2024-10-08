@@ -1,10 +1,13 @@
-import { AfterViewInit, Directive, ElementRef, HostListener, Input, OnChanges, OnInit, Renderer2, SimpleChanges } from '@angular/core';
+import { AfterViewInit, Directive, ElementRef, HostListener, Input, OnChanges, OnInit, Renderer2, SimpleChanges, inject } from '@angular/core';
 
 // NOTE: this code was taken from https://github.com/sollenne/angular-fittext because the repository was not maintained any more since June 2018
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: '[fitText]' })
 export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
+    private el = inject(ElementRef);
+    private renderer = inject(Renderer2);
+
     @Input() fitText = true;
     @Input() compression = 1;
     @Input() activateOnResize = true;
@@ -25,10 +28,9 @@ export class FitTextDirective implements AfterViewInit, OnInit, OnChanges {
     private calcSize = 10;
     private resizeTimeout: any;
 
-    constructor(
-        private el: ElementRef,
-        private renderer: Renderer2,
-    ) {
+    constructor() {
+        const el = this.el;
+
         this.fitTextElement = el.nativeElement;
         this.fitTextParent = this.fitTextElement.parentElement!;
         this.computed = window.getComputedStyle(this.fitTextElement);

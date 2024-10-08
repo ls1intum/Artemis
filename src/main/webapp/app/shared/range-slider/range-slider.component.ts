@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 const DEFAULT_STEP = 1;
@@ -11,6 +11,8 @@ const DEFAULT_STEP = 1;
     imports: [FormsModule, ReactiveFormsModule],
 })
 export class RangeSliderComponent implements OnInit, OnDestroy {
+    private elRef = inject(ElementRef);
+
     @Input() generalMaxValue: number;
     @Input() generalMinValue: number;
     @Input() step: number = DEFAULT_STEP;
@@ -49,8 +51,6 @@ export class RangeSliderComponent implements OnInit, OnDestroy {
      * ends at the right end of the range thumb. - This is the problem that we address with this factor.</i>
      */
     SLIDER_THUMB_LABEL_POSITION_ADJUSTMENT_FACTOR = 0.97;
-
-    constructor(private elRef: ElementRef) {}
 
     ngOnInit() {
         this.rangeInputElements = this.elRef.nativeElement.querySelectorAll('.range-input input');

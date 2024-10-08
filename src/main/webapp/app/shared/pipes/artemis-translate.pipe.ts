@@ -6,19 +6,22 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
     pure: false,
 })
 /**
- * a simple wrapper to prevent compile errors in IntelliJ
+ * A simple wrapper to prevent compile errors in IntelliJ
  */
 export class ArtemisTranslatePipe implements PipeTransform, OnDestroy {
     private translatePipe: TranslatePipe;
-    constructor(
-        private translateService: TranslateService,
-        private changeDetectorRef: ChangeDetectorRef,
-    ) {
+
+    // Note: we cannot use inject here, for some reason it does not work
+    constructor(translateService: TranslateService, changeDetectorRef: ChangeDetectorRef) {
         this.translatePipe = new TranslatePipe(translateService, changeDetectorRef);
     }
 
-    transform(query: any, args?: any): any {
-        return this.translatePipe.transform(query, args);
+    transform(query?: string, args?: any): string {
+        if (!query || !query.length) {
+            return '';
+        }
+        // NOTE: the underlying implementation returns a string even though the method return type is specified as any
+        return this.translatePipe.transform(query, args) as string;
     }
 
     ngOnDestroy() {

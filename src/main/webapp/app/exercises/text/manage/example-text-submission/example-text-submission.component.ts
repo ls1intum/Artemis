@@ -1,11 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { EntityResponseType, ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
-import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { tutorAssessmentTour } from 'app/guided-tour/tours/tutor-assessment-tour';
 import { ExampleSubmission, ExampleSubmissionMode } from 'app/entities/example-submission.model';
@@ -16,7 +14,6 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { setLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-assessment-base.component';
-import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
 import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
@@ -35,6 +32,14 @@ type ExampleSubmissionResponseType = EntityResponseType;
     styleUrls: ['./example-text-submission.component.scss'],
 })
 export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent implements OnInit, Context, FeedbackMarker {
+    private exampleSubmissionService = inject(ExampleSubmissionService);
+    private tutorParticipationService = inject(TutorParticipationService);
+    private route = inject(ActivatedRoute);
+    private router = inject(Router);
+    private guidedTourService = inject(GuidedTourService);
+    private navigationUtilService = inject(ArtemisNavigationUtilService);
+    private exerciseService = inject(ExerciseService);
+
     isNewSubmission: boolean;
     areNewAssessments = true;
 
@@ -62,20 +67,8 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     faEdit = faEdit;
     farListAlt = faListAlt;
 
-    constructor(
-        private exampleSubmissionService: ExampleSubmissionService,
-        private tutorParticipationService: TutorParticipationService,
-        private route: ActivatedRoute,
-        private router: Router,
-        private guidedTourService: GuidedTourService,
-        private navigationUtilService: ArtemisNavigationUtilService,
-        private exerciseService: ExerciseService,
-        alertService: AlertService,
-        accountService: AccountService,
-        assessmentsService: TextAssessmentService,
-        structuredGradingCriterionService: StructuredGradingCriterionService,
-    ) {
-        super(alertService, accountService, assessmentsService, structuredGradingCriterionService);
+    constructor() {
+        super();
         this.textBlockRefs = [];
         this.unusedTextBlockRefs = [];
         this.submission = new TextSubmission();
@@ -314,9 +307,9 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
             }
         } else {
             if (this.readOnly || this.toComplete) {
-                this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
+                await this.router.navigate(['/course-management', courseId, 'assessment-dashboard', this.exerciseId]);
             } else {
-                this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'example-submissions']);
+                await this.router.navigate(['/course-management', courseId, 'text-exercises', this.exerciseId, 'example-submissions']);
             }
         }
     }

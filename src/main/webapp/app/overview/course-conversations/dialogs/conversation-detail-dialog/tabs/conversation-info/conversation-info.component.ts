@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
@@ -26,6 +26,11 @@ import { catchError } from 'rxjs/operators';
     styleUrls: ['./conversation-info.component.scss'],
 })
 export class ConversationInfoComponent implements OnInit, OnDestroy {
+    private channelService = inject(ChannelService);
+    private groupChatService = inject(GroupChatService);
+    private modalService = inject(NgbModal);
+    private alertService = inject(AlertService);
+
     private ngUnsubscribe = new Subject<void>();
 
     isGroupChat = isGroupChatDTO;
@@ -49,12 +54,6 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     changesPerformed = new EventEmitter<void>();
 
     readOnlyMode = false;
-    constructor(
-        private channelService: ChannelService,
-        private groupChatService: GroupChatService,
-        private modalService: NgbModal,
-        private alertService: AlertService,
-    ) {}
 
     ngOnInit(): void {
         if (this.activeConversation) {
