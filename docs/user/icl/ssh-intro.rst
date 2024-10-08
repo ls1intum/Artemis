@@ -17,7 +17,7 @@ What is SSH?
 `SSH (Secure Shell)`_ is a protocol that allows you to securely connect to another computer over a network.
 It’s mostly used by system administrators, developers, and IT professionals to remotely manage servers or computers.
 SSH provides a secure, encrypted communication channel between your computer and a remote machine, so any data passed (like passwords or commands) is protected from eavesdropping.
-In Artemis you cna use SSH to access your repositories with Git.
+In Artemis you an use SSH to access your repositories with Git.
 
 Why use SSH?
 """"""""""""
@@ -53,7 +53,7 @@ They are based on `public-key cryptography`_ and come in pairs: a public key and
 When you try to connect to the server, your computer proves it has the private key that matches the server's public key, allowing you access.
 You can add a personal SSH key to your user account to easily authenticate when performing read operations from your local machine.
 An Artemis user can currently add one key to their account.
-For instructions on how to add your SSH key to your Artemis account, please refer to :ref:`link to relevant documentation<use ssh key>`.
+For instructions on how to add your SSH key to your Artemis account, please refer to :ref:`the relevant documentation<use ssh key>`.
 
 Before you can use SSH keys to secure a connection with Artemis the following must have already been done:
 
