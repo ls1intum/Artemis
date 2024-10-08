@@ -89,7 +89,6 @@ public class SshGitLocationResolverService implements GitLocationResolver {
         // we cannot trust unvalidated user input
         final var localRepositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
         try (Repository repo = localVCServletService.resolveRepository(localRepositoryPath)) {
-            localVCServletService.addVcsAccessLogForSSH(user, localVCRepositoryUri, repo, repositoryAction, session);
             return repo.getDirectory().toPath();
         }
     }

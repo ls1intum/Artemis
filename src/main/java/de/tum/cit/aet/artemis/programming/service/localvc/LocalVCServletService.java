@@ -5,7 +5,6 @@ import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonal
 import static de.tum.cit.aet.artemis.programming.service.localvc.LocalVCPersonalAccessTokenManagementService.VCS_ACCESS_TOKEN_LENGTH;
 
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -802,26 +801,6 @@ public class LocalVCServletService {
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
 
-        }
-        catch (Exception ignored) {
-        }
-    }
-
-    @Async
-    public void addVcsAccessLogForSSH(User user, LocalVCRepositoryUri localVCRepositoryUri, Repository repo, RepositoryActionType repositoryAction, ServerSession session) {
-        try {
-            String commitHash = null;
-            try {
-                commitHash = getLatestCommitHash(repo);
-            }
-            catch (Exception e) {
-                log.warn("failed attempt to add VCS access log for user " + user.getName() + ": " + e.getMessage());
-            }
-            var participation = getExerciseParticipationFromLocalVCRepositoryUri(localVCRepositoryUri);
-            var ipAddress = ((InetSocketAddress) session.getRemoteAddress()).getAddress().getHostAddress();
-            RepositoryActionType finalActionType = repositoryAction == RepositoryActionType.READ ? RepositoryActionType.PULL : RepositoryActionType.PUSH;
-            String finalCommitHash = commitHash;
-            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, finalActionType, AuthenticationMechanism.SSH, finalCommitHash, ipAddress));
         }
         catch (Exception ignored) {
         }
