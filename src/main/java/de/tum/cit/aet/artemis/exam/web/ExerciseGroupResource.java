@@ -83,7 +83,7 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/exerciseGroups : Create a new exercise group.
+     * POST /courses/{courseId}/exams/{examId}/exercise-groups : Create a new exercise group.
      *
      * @param courseId      the course to which the exercise group belongs to
      * @param examId        the exam to which the exercise group belongs to
@@ -92,7 +92,7 @@ public class ExerciseGroupResource {
      *         or with status 400 (Bad Request) if the exerciseGroup has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
+    @PostMapping("courses/{courseId}/exams/{examId}/exercise-groups")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroup> createExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup exerciseGroup)
             throws URISyntaxException {
@@ -117,11 +117,11 @@ public class ExerciseGroupResource {
         Exam savedExam = examRepository.save(examFromDB);
         ExerciseGroup savedExerciseGroup = savedExam.getExerciseGroups().getLast();
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/exerciseGroups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/exercise-groups/" + savedExerciseGroup.getId())).body(savedExerciseGroup);
     }
 
     /**
-     * PUT /courses/{courseId}/exams/{examId}/exerciseGroups : Update an existing exercise group.
+     * PUT /courses/{courseId}/exams/{examId}/exercise-groups : Update an existing exercise group.
      *
      * @param courseId             the course to which the exercise group belongs to
      * @param examId               the exam to which the exercise group belongs to
@@ -129,7 +129,7 @@ public class ExerciseGroupResource {
      * @return the ResponseEntity with status 200 (OK) and with the body of the updated exercise group
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
+    @PutMapping("courses/{courseId}/exams/{examId}/exercise-groups")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroup> updateExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody ExerciseGroup updatedExerciseGroup)
             throws URISyntaxException {
@@ -170,14 +170,14 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId} : Find an exercise group by id.
+     * GET /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId} : Find an exercise group by id.
      *
      * @param courseId        the course to which the exercise group belongs to
      * @param examId          the exam to which the exercise group belongs to
      * @param exerciseGroupId the id of the exercise group to find
      * @return the ResponseEntity with status 200 (OK) and with the found exercise group as body
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
+    @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
     @EnforceAtLeastEditor
     public ResponseEntity<ExerciseGroup> getExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId) {
         log.debug("REST request to get exercise group : {}", exerciseGroupId);
@@ -189,13 +189,13 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * GET courses/{courseId}/exams/{examId}/exerciseGroups : Get all exercise groups of the given exam
+     * GET courses/{courseId}/exams/{examId}/exercise-groups : Get all exercise groups of the given exam
      *
      * @param courseId the course to which the exercise groups belong to
      * @param examId   the exam to which the exercise groups belong to
      * @return the ResponseEntity with status 200 (OK) and a list of exercise groups. The list can be empty
      */
-    @GetMapping("courses/{courseId}/exams/{examId}/exerciseGroups")
+    @GetMapping("courses/{courseId}/exams/{examId}/exercise-groups")
     @EnforceAtLeastEditor
     public ResponseEntity<List<ExerciseGroup>> getExerciseGroupsForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get all exercise groups for exam : {}", examId);
@@ -207,7 +207,7 @@ public class ExerciseGroupResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId} : Delete the exercise group with the given id.
+     * DELETE /courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId} : Delete the exercise group with the given id.
      *
      * @param courseId                     the course to which the exercise group belongs to
      * @param examId                       the exam to which the exercise group belongs to
@@ -218,7 +218,7 @@ public class ExerciseGroupResource {
      *                                         LocalCI, it does not make sense to keep these artifacts
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("courses/{courseId}/exams/{examId}/exerciseGroups/{exerciseGroupId}")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/exercise-groups/{exerciseGroupId}")
     @EnforceAtLeastInstructor
     public ResponseEntity<Void> deleteExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long exerciseGroupId,
             @RequestParam(defaultValue = "true") boolean deleteStudentReposBuildPlans, @RequestParam(defaultValue = "true") boolean deleteBaseReposBuildPlans) {

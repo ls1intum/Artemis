@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { BuildJob } from 'app/entities/programming/build-job.model';
@@ -10,6 +10,7 @@ import { BuildAgent } from 'app/entities/programming/build-agent.model';
 import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
 import { BuildConfig } from 'app/entities/programming/build-config.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('BuildAgentsService', () => {
     let service: BuildAgentsService;
@@ -75,8 +76,8 @@ describe('BuildAgentsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(BuildAgentsService);
         httpMock = TestBed.inject(HttpTestingController);
