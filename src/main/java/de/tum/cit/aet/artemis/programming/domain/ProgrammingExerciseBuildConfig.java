@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlServ
 @Entity
 @Table(name = "programming_exercise_build_config")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonIgnoreProperties(value = { "programmingExercise" })
 public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     private static final Logger log = LoggerFactory.getLogger(ProgrammingExerciseBuildConfig.class);
@@ -58,7 +59,6 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
     private String dockerFlags;
 
     @OneToOne(mappedBy = "buildConfig")
-    @JsonIgnoreProperties("buildConfig")
     private ProgrammingExercise programmingExercise;
 
     @Column(name = "testwise_coverage_enabled")
