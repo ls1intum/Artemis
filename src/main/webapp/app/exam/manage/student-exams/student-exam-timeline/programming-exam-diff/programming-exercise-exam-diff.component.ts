@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, signal } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -124,9 +124,9 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
      */
     showGitDiff(): void {
         const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
-        modalRef.componentInstance.report = this.exercise.gitDiffReport;
-        modalRef.componentInstance.diffForTemplateAndSolution = false;
-        modalRef.componentInstance.cachedRepositoryFiles = this.cachedRepositoryFiles;
+        modalRef.componentInstance.report = signal(this.exercise.gitDiffReport);
+        modalRef.componentInstance.diffForTemplateAndSolution = signal(false);
+        modalRef.componentInstance.cachedRepositoryFiles = signal(this.cachedRepositoryFiles);
         this.cachedRepositoryFilesService.getCachedRepositoryFilesObservable().subscribe((cachedRepositoryFiles) => {
             this.cachedRepositoryFiles = cachedRepositoryFiles;
         });
