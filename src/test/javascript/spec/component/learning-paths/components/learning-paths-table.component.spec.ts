@@ -23,12 +23,12 @@ describe('LearningPathsTableComponent', () => {
 
     const searchResults = <SearchResult<LearningPathInformationDTO>>{
         numberOfPages: 2,
-        resultsOnPage: generateResults(0, 50),
+        resultsOnPage: generateResults(0, 100),
     };
 
     const pageable = <SearchTermPageableSearch>{
         page: 1,
-        pageSize: 50,
+        pageSize: 100,
         searchTerm: '',
         sortingOrder: 'ASCENDING',
         sortedColumn: 'ID',
@@ -73,7 +73,7 @@ describe('LearningPathsTableComponent', () => {
 
         expect(component.learningPaths()).toEqual(searchResults.resultsOnPage);
         expect(learningPathRows).toHaveLength(searchResults.resultsOnPage.length + 1);
-        expect(component.collectionSize()).toBe(searchResults.resultsOnPage.length);
+        expect(component.collectionSize()).toBe(searchResults.resultsOnPage.length * searchResults.numberOfPages);
     });
 
     it('should open competency graph modal', async () => {
