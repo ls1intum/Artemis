@@ -38,7 +38,7 @@ public class TelemetryService {
     @Value("${eureka.client.enabled:false}")
     public boolean eurekaEnabled;
 
-    @Value("${artemis.telemetry.sendingDelay:120}")
+    @Value("${artemis.telemetry.sendingDelay:180}")
     public long sendingDelay;
 
     public TelemetryService(ProfileService profileService, TelemetrySendingService telemetrySendingService) {
