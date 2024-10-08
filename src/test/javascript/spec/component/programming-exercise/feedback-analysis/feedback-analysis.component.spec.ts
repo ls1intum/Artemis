@@ -154,6 +154,8 @@ describe('FeedbackAnalysisComponent', () => {
             const getMaxCountSpy = jest.spyOn(feedbackAnalysisService, 'getMaxCount').mockResolvedValue(10);
             jest.spyOn(localStorageService, 'retrieve').mockReturnValueOnce(['task1']).mockReturnValueOnce(['testCase1']).mockReturnValueOnce([component.minCount(), 5]);
 
+            component.maxCount.set(5);
+            component.selectedFiltersCount.set(1);
             await component.openFilterModal();
 
             expect(getMaxCountSpy).toHaveBeenCalledWith(1);
