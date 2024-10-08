@@ -2,7 +2,7 @@ import { HttpTestingController, TestRequest, provideHttpClientTesting } from '@a
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, provideRouter } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
 import {
@@ -16,7 +16,6 @@ import {
     Notification,
 } from 'app/entities/notification.model';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
@@ -156,9 +155,10 @@ describe('Notification Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [TranslateTestingModule, RouterTestingModule.withRoutes([])],
+            imports: [TranslateTestingModule],
             declarations: [MockPipe(ArtemisTranslatePipe)],
             providers: [
+                provideRouter([]),
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
