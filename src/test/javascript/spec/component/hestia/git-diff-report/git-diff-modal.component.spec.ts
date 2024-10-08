@@ -52,12 +52,19 @@ describe('GitDiffReportModalComponent', () => {
         jest.restoreAllMocks();
     });
 
+    const finishEffects = async () => {
+        // We need to wait for all asynchronous code to finish execution before we can expect the results.
+        // See https://stackoverflow.com/questions/44741102/how-to-make-jest-wait-for-all-asynchronous-code-to-finish-execution-before-expec/51045733#51045733
+        await new Promise(process.nextTick);
+        await fixture.whenStable();
+    };
+
     it('should call correct service method onInit', async () => {
         // case 1: diff for template and solution
         fixture.componentRef.setInput('report', { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'abc' } as ProgrammingExerciseGitDiffReport);
         fixture.componentRef.setInput('diffForTemplateAndSolution', true);
         fixture.detectChanges();
-        await fixture.whenStable();
+        await finishEffects();
         expect(loadTemplateFilesSpy).toHaveBeenCalledExactlyOnceWith(1);
         expect(loadSolutionFilesSpy).toHaveBeenCalledExactlyOnceWith(1);
         expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
@@ -70,7 +77,7 @@ describe('GitDiffReportModalComponent', () => {
         // case 2: diff for submission with template
         fixture.componentRef.setInput('diffForTemplateAndSolution', false);
         fixture.detectChanges();
-        await fixture.whenStable();
+        await finishEffects();
         expect(loadParticipationFilesSpy).toHaveBeenCalledExactlyOnceWith(3, 'abc');
         expect(loadTemplateFilesSpy).toHaveBeenCalledExactlyOnceWith(1);
         expect(comp.leftCommitFileContentByPath()).toEqual(filesWithContentTemplate);
@@ -88,7 +95,7 @@ describe('GitDiffReportModalComponent', () => {
         } as ProgrammingExerciseGitDiffReport);
         fixture.componentRef.setInput('diffForTemplateAndSolution', false);
         fixture.detectChanges();
-        await fixture.whenStable();
+        await finishEffects();
         expect(loadParticipationFilesSpy).toHaveBeenCalledTimes(2);
         expect(loadParticipationFilesSpy).toHaveBeenCalledWith(2, 'def');
         expect(loadParticipationFilesSpy).toHaveBeenCalledWith(3, 'abc');
@@ -127,7 +134,7 @@ describe('GitDiffReportModalComponent', () => {
         expect(modalServiceSpy).toHaveBeenCalled();
     });
 
-    it('should load files from cache if available for template and participation repo', () => {
+    it('should load files from cache if available for template and participation repo', async () => {
         const cachedRepositoryFiles = new Map<string, Map<string, string>>();
         cachedRepositoryFiles.set('1-template', filesWithContentTemplate);
         cachedRepositoryFiles.set('def', filesWithContentParticipation1);
@@ -135,6 +142,7 @@ describe('GitDiffReportModalComponent', () => {
         fixture.componentRef.setInput('report', { programmingExercise: { id: 1 }, participationIdForRightCommit: 3, rightCommitHash: 'def' } as ProgrammingExerciseGitDiffReport);
         fixture.componentRef.setInput('diffForTemplateAndSolution', false);
         fixture.detectChanges();
+        await finishEffects();
         expect(loadParticipationFilesSpy).not.toHaveBeenCalled();
         expect(loadTemplateFilesSpy).not.toHaveBeenCalled();
         expect(comp.leftCommitFileContentByPath()).toEqual(filesWithContentTemplate);
