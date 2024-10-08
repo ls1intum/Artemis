@@ -2,7 +2,6 @@ import { Injectable, effect, inject } from '@angular/core';
 import * as monaco from 'monaco-editor';
 import { CUSTOM_MARKDOWN_CONFIG, CUSTOM_MARKDOWN_LANGUAGE, CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { toSignal } from '@angular/core/rxjs-interop';
 
 /**
  * Service providing shared functionality for the Monaco editor.
@@ -15,7 +14,7 @@ export class MonacoEditorService {
     static readonly DARK_THEME_ID = 'vs-dark';
 
     private readonly themeService: ThemeService = inject(ThemeService);
-    private readonly currentTheme = toSignal(this.themeService.getCurrentThemeObservable(), { requireSync: true });
+    private readonly currentTheme = this.themeService.currentTheme;
 
     constructor() {
         monaco.languages.register({ id: CUSTOM_MARKDOWN_LANGUAGE_ID });
