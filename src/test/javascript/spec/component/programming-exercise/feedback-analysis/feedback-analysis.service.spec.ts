@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { FeedbackAnalysisService, FeedbackDetail } from 'app/exercises/programming/manage/grading/feedback-analysis/feedback-analysis.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('FeedbackAnalysisService', () => {
     let service: FeedbackAnalysisService;
@@ -13,8 +14,8 @@ describe('FeedbackAnalysisService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [FeedbackAnalysisService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), FeedbackAnalysisService],
         });
 
         service = TestBed.inject(FeedbackAnalysisService);

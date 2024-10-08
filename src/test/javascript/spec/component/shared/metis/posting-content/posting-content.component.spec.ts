@@ -3,7 +3,7 @@ import { PostingContentPartComponent } from 'app/shared/metis/posting-content/po
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { PostingContentComponent } from 'app/shared/metis/posting-content/posting-content.components';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { PatternMatch, PostingContentPart, ReferenceType } from 'app/shared/metis/metis.util';
 import { Observable, of } from 'rxjs';
@@ -12,6 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { metisCourse, metisCoursePosts, metisExercisePosts, metisGeneralCourseWidePosts, metisLecturePosts } from '../../../../helpers/sample/metis-sample-data';
 import { Params } from '@angular/router';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('PostingContentComponent', () => {
     let component: PostingContentComponent;
@@ -20,8 +21,8 @@ describe('PostingContentComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: MetisService, useClass: MockMetisService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MetisService, useClass: MockMetisService }],
             declarations: [PostingContentComponent, MockComponent(PostingContentPartComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
         })
             .compileComponents()
