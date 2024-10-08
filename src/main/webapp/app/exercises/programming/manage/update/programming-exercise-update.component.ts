@@ -38,6 +38,8 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 import { ImportOptions } from 'app/types/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
+const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
+
 @Component({
     selector: 'jhi-programming-exercise-update',
     templateUrl: './programming-exercise-update.component.html',
@@ -181,6 +183,19 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             function updateStatusBarSectionsWhenEditModeChanges() {
                 if (this.isSimpleMode()) {
                     this.calculateFormStatusSections();
+                }
+            }.bind(this),
+            { allowSignalWrites: true },
+        );
+
+        effect(
+            function initializeEditMode() {
+                const editModeRetrievedFromLocalStorage = localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+                if (editModeRetrievedFromLocalStorage) {
+                    this.isSimpleMode.set(editModeRetrievedFromLocalStorage === 'true');
+                } else {
+                    const DEFAULT_EDIT_MODE_IS_SIMPLE_MODE = true;
+                    this.isSimpleMode.set(DEFAULT_EDIT_MODE_IS_SIMPLE_MODE);
                 }
             }.bind(this),
             { allowSignalWrites: true },
@@ -838,6 +853,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
 
     switchEditMode = () => {
         this.isSimpleMode.update((isSimpleMode) => !isSimpleMode);
+        localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, JSON.stringify(this.isSimpleMode()));
     };
 
     /**
