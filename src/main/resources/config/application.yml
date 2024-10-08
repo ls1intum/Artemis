@@ -283,7 +283,7 @@ info:
 jhipster:
     clientApp:
         name: 'artemisApp'
-    # By default CORS is disabled. Uncomment to enable.
+    # CORS is needed for the VSCode plugin
     cors:
         allowed-methods: "*"
         allowed-headers: "*"
