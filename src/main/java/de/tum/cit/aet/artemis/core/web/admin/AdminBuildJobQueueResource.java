@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -196,5 +197,47 @@ public class AdminBuildJobQueueResource {
         List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), null);
         BuildJobsStatisticsDTO buildJobStatistics = BuildJobsStatisticsDTO.of(buildJobResultCountDtos);
         return ResponseEntity.ok(buildJobStatistics);
+    }
+
+    /**
+     * {@code PUT /api/admin/agent/{agentName}/pause} : Pause the specified build agent.
+     * This endpoint allows administrators to pause a specific build agent by its name.
+     * Pausing a build agent will prevent it from picking up any new build jobs until it is resumed.
+     *
+     * <p>
+     * <strong>Authorization:</strong> This operation requires admin privileges, enforced by {@code @EnforceAdmin}.
+     * </p>
+     *
+     * @param agentName the name of the build agent to be paused (provided as a path variable)
+     * @return {@link ResponseEntity} with status code 204 (No Content) if the agent was successfully paused
+     *         or an appropriate error response if something went wrong
+     */
+    @PutMapping("agent/{agentName}/pause")
+    @EnforceAdmin
+    public ResponseEntity<Void> pauseBuildAgent(@PathVariable String agentName) {
+        log.debug("REST request to pause agent {}", agentName);
+        localCIBuildJobQueueService.pauseBuildAgent(agentName);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * {@code PUT /api/admin/agent/{agentName}/resume} : Resume the specified build agent.
+     * This endpoint allows administrators to resume a specific build agent by its name.
+     * Resuming a build agent will allow it to pick up new build jobs again.
+     *
+     * <p>
+     * <strong>Authorization:</strong> This operation requires admin privileges, enforced by {@code @EnforceAdmin}.
+     * </p>
+     *
+     * @param agentName the name of the build agent to be resumed (provided as a path variable)
+     * @return {@link ResponseEntity} with status code 204 (No Content) if the agent was successfully resumed
+     *         or an appropriate error response if something went wrong
+     */
+    @PutMapping("agent/{agentName}/resume")
+    @EnforceAdmin
+    public ResponseEntity<Void> resumeBuildAgent(@PathVariable String agentName) {
+        log.debug("REST request to resume agent {}", agentName);
+        localCIBuildJobQueueService.resumeBuildAgent(agentName);
+        return ResponseEntity.noContent().build();
     }
 }

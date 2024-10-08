@@ -27,4 +27,28 @@ export class BuildAgentsService {
             }),
         );
     }
+
+    /**
+     * Pause Build Agent
+     */
+    pauseBuildAgent(agentName: string): Observable<void> {
+        const encodedAgentName = encodeURIComponent(agentName);
+        return this.http.put<void>(`${this.adminResourceUrl}/agent/${encodedAgentName}/pause`, null).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to pause build agent ${agentName}\n${err.message}`));
+            }),
+        );
+    }
+
+    /**
+     * Resume Build Agent
+     */
+    resumeBuildAgent(agentName: string): Observable<void> {
+        const encodedAgentName = encodeURIComponent(agentName);
+        return this.http.put<void>(`${this.adminResourceUrl}/agent/${encodedAgentName}/resume`, null).pipe(
+            catchError((err) => {
+                return throwError(() => new Error(`Failed to resume build agent ${agentName}\n${err.message}`));
+            }),
+        );
+    }
 }
