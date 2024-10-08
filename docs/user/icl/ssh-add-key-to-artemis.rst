@@ -17,7 +17,7 @@ Add an SSH key to your Artemis account
 
 **1. Copy your public key**
 
-On Windows in your command prompt, change directory to your .ssh directory, and copy the public key file to your clipboard by running:
+On Windows in your command prompt, change directory to your `.ssh` directory, and copy the public key file to your clipboard by running:
 
 .. code-block:: bash
 
@@ -32,7 +32,7 @@ On macOS or Linux simply run the following in a terminal:
 
     pbcopy < ~/.ssh/id_ed25519.pub
 
-If pbcopy isn't working, locate the hidden .ssh folder, open the file in a text editor, and copy it to your clipboard.
+If `pbcopy` isn't working, locate the hidden `.ssh` folder, open the file in a text editor, and copy it to your clipboard.
 Note that on Linux, you may need to download and install `xclip`_, then use that, as shown in this code snippet:
 
 .. code-block:: bash
