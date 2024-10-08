@@ -279,8 +279,8 @@ export class CodeButtonComponent implements OnInit, OnChanges {
      * @param url the url to which the credentials should be added
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
-    private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
-        const includeToken = this.accessTokensEnabled && this.user.vcsAccessToken && this.useToken;
+    private addCredentialsToHttpUrl(url: string, insertPlaceholder = false, alwaysToken = false): string {
+        const includeToken = this.accessTokensEnabled && this.user.vcsAccessToken && (this.useToken || alwaysToken);
         const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
         const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
@@ -379,8 +379,7 @@ export class CodeButtonComponent implements OnInit, OnChanges {
 
         const data = {
             appDef: this.exercise?.buildConfig?.theiaImage ?? '',
-            gitUri: this.addCredentialsToHttpUrl(this.activeParticipation?.repositoryUri ?? '', false),
-            gitToken: this.activeParticipation?.vcsAccessToken ?? '',
+            gitUri: this.addCredentialsToHttpUrl(this.getRepositoryUri(), false, true),
             artemisToken: artemisToken,
         };
 
