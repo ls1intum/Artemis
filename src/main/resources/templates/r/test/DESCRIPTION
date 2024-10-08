@@ -1,0 +1,14 @@
+Package: test
+Title: Artemis R Tests
+Version: 0.0.0.9000
+Author: Artemis
+Description: This package tests the student assignment.
+License: MIT
+Encoding: UTF-8
+Imports:
+    assignment
+Remotes:
+    local::./assignment
+Suggests:
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

@@ -1,0 +1,14 @@
+api: v0.0.1
+metadata:
+  name: R
+  id: r
+  description: Test package using testthat
+actions:
+  - name: install
+    script: R CMD INSTALL assignment
+  - name: run_all_tests
+    script: Rscript -e 'library("testthat"); options(testthat.output_file = "junit.xml"); test_local(".", reporter = "junit")'
+    results:
+      - name: junit
+        path: tests/testthat/junit.xml
+        type: junit

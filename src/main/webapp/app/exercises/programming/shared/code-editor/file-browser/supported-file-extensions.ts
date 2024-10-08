@@ -1,5 +1,6 @@
 export const supportedTextFileExtensions = [
     'Makefile',
+    'R',
     'Rakefile',
     'ada',
     'adb',
