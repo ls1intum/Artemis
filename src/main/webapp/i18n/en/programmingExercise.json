@@ -8,7 +8,9 @@
                 "importLabel": "Import Programming Exercise",
                 "linkLabel": "Link new Programming Exercise",
                 "switchToSimpleMode": "Switch to simple mode",
-                "switchToAdvancedMode": "Switch to advanced mode"
+                "simpleModeTooltip": "The simple mode reduces the view to configuration options that are needed for a basic programming exercise. Changes made in the advanced mode will be saved.",
+                "switchToAdvancedMode": "Switch to advanced mode",
+                "advancedModeTooltip": "The advanced mode offers extended configuration options."
             },
             "created": "Created new Programming Exercise with title {{ param }}",
             "updated": "Updated Programming Exercise with title {{ param }}",

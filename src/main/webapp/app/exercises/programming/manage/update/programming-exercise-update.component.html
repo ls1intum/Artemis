@@ -8,7 +8,6 @@
             <h2 id="jhi-programming-exercise-heading-import" jhiTranslate="artemisApp.programmingExercise.home.importLabel"></h2>
         }
         <jhi-documentation-button [type]="documentationType" />
-        <jhi-switch-edit-mode-button class="ms-3" [isSimpleMode]="isSimpleMode()" [switchEditMode]="switchEditMode" />
     </div>
     <jhi-form-status-bar [formStatusSections]="formStatusSections()" />
     <form name="editForm" role="form" novalidate #editForm="ngForm" (keydown.enter)="isEventInsideTextArea($event)">

@@ -8,7 +8,9 @@
                 "importLabel": "Programmieraufgabe importieren",
                 "linkLabel": "Neue Programmieraufgabe verlinken",
                 "switchToSimpleMode": "Zum einfachen Modus wechseln",
-                "switchToAdvancedMode": "Zum erweiterten Modus wechseln"
+                "simpleModeTooltip": "Der einfache Modus reduziert die Ansicht auf Konfigurationsoptionen die für eine grundlegende Programmieraufgabe benötigt werden. Änderungen aus dem erweiterten Modus werden beim Speichern übernommen.",
+                "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
+                "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
             },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",

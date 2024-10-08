@@ -1,7 +1,10 @@
 <div class="update-footer gap-4">
     <div class="text-start">
         @if (isSimpleMode() !== undefined && switchEditMode !== undefined) {
-            <jhi-switch-edit-mode-button [isSimpleMode]="isSimpleMode()!" [switchEditMode]="switchEditMode" [buttonSize]="ButtonSize.SMALL" />
+            <div class="d-flex align-items-center">
+                <jhi-switch-edit-mode-button class="me-1" [isSimpleMode]="isSimpleMode()!" [switchEditMode]="switchEditMode" [buttonSize]="ButtonSize.SMALL" />
+                <jhi-help-icon [text]="isSimpleMode() ? 'artemisApp.programmingExercise.home.advancedModeTooltip' : 'artemisApp.programmingExercise.home.simpleModeTooltip'" />
+            </div>
         }
     </div>
     @if (!isCreation() && !isImport()) {
