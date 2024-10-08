@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -28,6 +28,7 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { OnlineCourseDtoModel } from 'app/lti/online-course-dto.model';
 import { CoursesForDashboardDTO } from 'app/course/manage/courses-for-dashboard-dto';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -59,8 +60,10 @@ describe('Course Management Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: Router, useClass: MockRouter },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

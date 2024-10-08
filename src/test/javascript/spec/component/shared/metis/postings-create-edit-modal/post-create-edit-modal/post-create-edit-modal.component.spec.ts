@@ -11,12 +11,13 @@ import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { PostTagSelectorComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-tag-selector/post-tag-selector.component';
 import { PageType } from 'app/shared/metis/metis.util';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ArtemisTestModule } from '../../../../../test.module';
 import { PostComponent } from 'app/shared/metis/post/post.component';
 import { metisCourse, metisExercise, metisPostLectureUser1, metisPostTechSupport, metisPostToCreateUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { Channel } from 'app/entities/metis/conversation/channel.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
@@ -30,7 +31,7 @@ describe('PostCreateEditModalComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             declarations: [
                 PostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -40,7 +41,13 @@ describe('PostCreateEditModalComponent', () => {
                 MockComponent(HelpIconComponent),
                 MockComponent(PostTagSelectorComponent),
             ],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: NgbModal, useClass: MockNgbModalService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                FormBuilder,
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: NgbModal, useClass: MockNgbModalService },
+            ],
         })
             .compileComponents()
             .then(() => {

@@ -13,7 +13,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Result } from 'app/entities/result.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -22,6 +22,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
+import { provideHttpClient } from '@angular/common/http';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -128,7 +129,7 @@ const textExerciseResult = {
 describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientTestingModule],
+            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule)],
             declarations: [
                 ExamResultOverviewComponent,
                 MockComponent(FaIconComponent),
@@ -136,7 +137,7 @@ describe('ExamResultOverviewComponent', () => {
                 MockComponent(GradingKeyTableComponent),
                 MockComponent(CollapsibleCardComponent),
             ],
-            providers: [MockProvider(ExerciseService)],
+            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(ExerciseService)],
         })
             .compileComponents()
             .then(() => {

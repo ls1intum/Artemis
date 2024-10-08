@@ -77,6 +77,7 @@ describe('BuildAgentsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [],
             providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(BuildAgentsService);
