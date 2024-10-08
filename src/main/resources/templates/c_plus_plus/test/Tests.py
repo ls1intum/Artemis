@@ -3,7 +3,6 @@
 from tests.TestCompile import TestCompile
 from tests.TestConfigure import TestConfigure
 from tests.TestCatch2 import TestCatch2
-from tests.TestClangFormat import TestClangFormat
 from testUtils.Tester import Tester
 
 
@@ -22,7 +21,6 @@ def main() -> None:
     tester.addTest(testConfigure)
     tester.addTest(TestCompile(buildDir, "sort-test", requirements=[testConfigure.name], name="CompileSort"))
     tester.addTest(TestCatch2(buildDir, "sort-test", ["CompileSort"]))
-    tester.addTest(TestClangFormat("./assignment", "src/sort.cpp", name="clang-format(sort.cpp)"))
 
     # Run the actual tests:
     tester.run()

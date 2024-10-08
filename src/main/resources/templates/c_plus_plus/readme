@@ -1,6 +1,5 @@
 1. [task][CMake runs correctly](TestConfigure)
 2. [task][Your code compiles](CompileSort)
-3. [task][Code is formatted with clang-format](clang-format(sort.cpp))
 
 
 # Sorting Algorithms
