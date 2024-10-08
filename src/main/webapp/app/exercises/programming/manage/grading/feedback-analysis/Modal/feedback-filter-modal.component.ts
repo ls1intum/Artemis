@@ -1,4 +1,4 @@
-import { Component, computed, inject, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, output, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
@@ -17,6 +17,7 @@ export interface FilterData {
     imports: [RangeSliderComponent, ArtemisSharedCommonModule, ReactiveFormsModule],
     providers: [FeedbackAnalysisService],
     standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FeedbackFilterModalComponent {
     private localStorage = inject(LocalStorageService);
