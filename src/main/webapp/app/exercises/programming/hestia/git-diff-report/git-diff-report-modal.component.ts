@@ -24,13 +24,6 @@ export class GitDiffReportModalComponent {
     leftCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
     rightCommitFileContentByPath = signal<Map<string, string> | undefined>(undefined);
 
-    /*
-    private templateRepoFilesSubscription: Subscription;
-    private solutionRepoFilesSubscription: Subscription;
-    private participationRepoFilesAtLeftCommitSubscription: Subscription;
-    private participationRepoFilesAtRightCommitSubscription: Subscription;
-     */
-
     private readonly activeModal = inject(NgbActiveModal);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);
@@ -49,31 +42,10 @@ export class GitDiffReportModalComponent {
         );
     }
 
-    /* ngOnInit(): void {
-        if (this.diffForTemplateAndSolution) {
-            this.loadFilesForTemplateAndSolution();
-        } else {
-            this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
-        }
-    }
-
-    ngOnDestroy(): void {
-        this.templateRepoFilesSubscription?.unsubscribe();
-        this.solutionRepoFilesSubscription?.unsubscribe();
-        this.participationRepoFilesAtLeftCommitSubscription?.unsubscribe();
-        this.participationRepoFilesAtRightCommitSubscription?.unsubscribe();
-    }*/
-
     private async loadFilesForTemplateAndSolution2(): Promise<void> {
         await this.fetchTemplateRepoFiles2();
         await this.fetchSolutionRepoFiles2();
     }
-
-    /*
-    private loadFilesForTemplateAndSolution() {
-        this.fetchTemplateRepoFiles();
-        this.fetchSolutionRepoFiles();
-    }*/
 
     private async fetchSolutionRepoFiles2(): Promise<void> {
         try {
@@ -83,17 +55,6 @@ export class GitDiffReportModalComponent {
             this.errorWhileFetchingRepos.set(true);
         }
     }
-
-    /*private fetchSolutionRepoFiles() {
-        this.solutionRepoFilesSubscription = this.programmingExerciseService.getSolutionRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
-            next: (response: Map<string, string>) => {
-                this.rightCommitFileContentByPath = response;
-            },
-            error: () => {
-                this.errorWhileFetchingRepos = true;
-            },
-        });
-    }*/
 
     private async loadRepositoryFilesForParticipationsFromCacheIfAvailable2(): Promise<void> {
         if (this.report().participationIdForLeftCommit) {
@@ -109,22 +70,6 @@ export class GitDiffReportModalComponent {
             await this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable2();
         }
     }
-
-    /*private loadRepositoryFilesForParticipationsFromCacheIfAvailable() {
-        if (this.report.participationIdForLeftCommit) {
-            const key = this.report.leftCommitHash!;
-            if (this.cachedRepositoryFiles.has(key)) {
-                this.leftCommitFileContentByPath = this.cachedRepositoryFiles.get(key)!;
-                this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
-            } else {
-                this.fetchParticipationRepoFilesAtLeftCommit();
-            }
-        } else {
-            // if there is no left commit, we want to see the diff between the current submission and the template
-            this.loadTemplateRepoFilesFromCacheIfAvailable();
-            this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
-        }
-    }*/
 
     private async fetchParticipationRepoFilesAtLeftCommit2(): Promise<void> {
         try {
@@ -144,22 +89,6 @@ export class GitDiffReportModalComponent {
         }
     }
 
-    /*private fetchParticipationRepoFilesAtLeftCommit() {
-        this.participationRepoFilesAtLeftCommitSubscription = this.programmingExerciseParticipationService
-            .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForLeftCommit!, this.report.leftCommitHash!)
-            .subscribe({
-                next: (filesWithContent: Map<string, string>) => {
-                    this.leftCommitFileContentByPath = filesWithContent;
-                    this.cachedRepositoryFiles.set(this.report.leftCommitHash!, filesWithContent);
-                    this.cachedRepositoryFilesService.emitCachedRepositoryFiles(this.cachedRepositoryFiles);
-                    this.loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable();
-                },
-                error: () => {
-                    this.errorWhileFetchingRepos = true;
-                },
-            });
-    }*/
-
     private async loadTemplateRepoFilesFromCacheIfAvailable2(): Promise<void> {
         const key = this.calculateTemplateMapKey();
         if (this.cachedRepositoryFiles().has(key)) {
@@ -169,15 +98,6 @@ export class GitDiffReportModalComponent {
         }
     }
 
-    /*private loadTemplateRepoFilesFromCacheIfAvailable() {
-        const key = this.calculateTemplateMapKey();
-        if (this.cachedRepositoryFiles.has(key)) {
-            this.leftCommitFileContentByPath = this.cachedRepositoryFiles.get(key)!;
-        } else {
-            this.fetchTemplateRepoFiles();
-        }
-    }*/
-
     private async loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable2(): Promise<void> {
         const key = this.report().rightCommitHash!;
         if (this.cachedRepositoryFiles().has(key)) {
@@ -186,15 +106,6 @@ export class GitDiffReportModalComponent {
             await this.fetchParticipationRepoFilesAtRightCommit2();
         }
     }
-
-    /*private loadParticipationRepoFilesAtRightCommitFromCacheIfAvailable() {
-        const key = this.report.rightCommitHash!;
-        if (this.cachedRepositoryFiles.has(key)) {
-            this.rightCommitFileContentByPath = this.cachedRepositoryFiles.get(key)!;
-        } else {
-            this.fetchParticipationRepoFilesAtRightCommit();
-        }
-    }*/
 
     private async fetchTemplateRepoFiles2(): Promise<void> {
         const key = this.calculateTemplateMapKey();
@@ -209,20 +120,6 @@ export class GitDiffReportModalComponent {
             this.errorWhileFetchingRepos.set(true);
         }
     }
-
-    /*private fetchTemplateRepoFiles() {
-        const key = this.calculateTemplateMapKey();
-        this.templateRepoFilesSubscription = this.programmingExerciseService.getTemplateRepositoryTestFilesWithContent(this.report.programmingExercise.id!).subscribe({
-            next: (response: Map<string, string>) => {
-                this.leftCommitFileContentByPath = response;
-                this.cachedRepositoryFiles.set(key, response);
-                this.cachedRepositoryFilesService.emitCachedRepositoryFiles(this.cachedRepositoryFiles);
-            },
-            error: () => {
-                this.errorWhileFetchingRepos = true;
-            },
-        });
-    }*/
 
     private async fetchParticipationRepoFilesAtRightCommit2(): Promise<void> {
         try {
@@ -240,21 +137,6 @@ export class GitDiffReportModalComponent {
             this.errorWhileFetchingRepos.set(true);
         }
     }
-
-    /*private fetchParticipationRepoFilesAtRightCommit() {
-        this.participationRepoFilesAtRightCommitSubscription = this.programmingExerciseParticipationService
-            .getParticipationRepositoryFilesWithContentAtCommit(this.report.participationIdForRightCommit!, this.report.rightCommitHash!)
-            .subscribe({
-                next: (filesWithContent: Map<string, string>) => {
-                    this.rightCommitFileContentByPath = filesWithContent;
-                    this.cachedRepositoryFiles.set(this.report.rightCommitHash!, filesWithContent);
-                    this.cachedRepositoryFilesService.emitCachedRepositoryFiles(this.cachedRepositoryFiles);
-                },
-                error: () => {
-                    this.errorWhileFetchingRepos = true;
-                },
-            });
-    }*/
 
     close(): void {
         this.activeModal.dismiss();
