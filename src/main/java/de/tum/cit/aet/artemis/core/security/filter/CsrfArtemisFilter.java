@@ -29,4 +29,10 @@ public class CsrfArtemisFilter extends OncePerRequestFilter {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "Missing CSRF protection header");
         }
     }
+
+    // exclude all non api calls such as git, ...
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
+        return !request.getRequestURI().startsWith("/api/");
+    }
 }

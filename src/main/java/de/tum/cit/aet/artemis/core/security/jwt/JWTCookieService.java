@@ -50,7 +50,7 @@ public class JWTCookieService {
      * @return the response cookie that should be set containing the jwt
      */
     private ResponseCookie buildJWTCookie(String jwt, Duration duration) {
-        // TODO Add Partitioned flag for third party cookies, read: https://developer.mozilla.org/en-US/docs/Web/Privacy/Privacy_sandbox/Partitioned_cookies
+
         return ResponseCookie.from(JWT_COOKIE_NAME, jwt).httpOnly(true) // Must be httpOnly
                 .sameSite("None") // Must be None to allow cross-site requests to Artemis from the VS Code plugin
                 .secure(true) // Must be secure to allow sameSite=None
