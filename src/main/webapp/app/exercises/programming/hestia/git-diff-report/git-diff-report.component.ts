@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, signal, un
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { faSpinner, faTableColumns } from '@fortawesome/free-solid-svg-icons';
-import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { ButtonSize, ButtonType, TooltipPlacement } from 'app/shared/components/button.component';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -114,10 +114,9 @@ export class GitDiffReportComponent {
 
     protected readonly faSpinner = faSpinner;
     protected readonly faTableColumns = faTableColumns;
-
-    // Expose to template
     protected readonly ButtonSize = ButtonSize;
     protected readonly ButtonType = ButtonType;
+    protected readonly TooltipPlacement = TooltipPlacement;
 
     constructor() {
         effect(() => {

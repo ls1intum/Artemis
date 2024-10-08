@@ -46,6 +46,7 @@
                 [btnSize]="ButtonSize.SMALL"
                 [icon]="faTableColumns"
                 tooltip="artemisApp.programmingExercise.diffReport.splitView.tooltip"
+                [tooltipPlacement]="TooltipPlacement.BOTTOM"
                 [title]="'artemisApp.programmingExercise.diffReport.splitView.' + (allowSplitView() ? 'disable' : 'enable')"
                 (onClick)="allowSplitView.set(!allowSplitView())"
             />
