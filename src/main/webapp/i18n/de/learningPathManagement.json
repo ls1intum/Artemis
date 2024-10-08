@@ -1,0 +1,60 @@
+{
+    "artemisApp": {
+        "learningPathManagement": {
+            "learningPathsDisabled": {
+                "title": "Willkommen bei der Lernpfadverwaltung!",
+                "description": "Die Lernpfadfunktion ist derzeit für diesen Kurs deaktiviert. Mit dieser Funktion können Kursteilnehmer einen personalisierten Lernpfad verfolgen, der auf den definierten Kompetenzen basiert. Jeder Lernpfad wird auf der Grundlage des individuellen Fortschritts des Teilnehmers, der Beziehungen zwischen den Kompetenzen und der festgelegten Fälligkeitsdaten erstellt. Mit dem folgenden Button kann die Lernpfadfunktion aktiviert werden.",
+                "buttonLabel": "Lernpfade aktivieren"
+            },
+            "learningPathsState": {
+                "title": "Status",
+                "emptyState": "Alles ist eingerichtet und bereit!",
+                "refreshButtonLabel": "Aktualisieren",
+                "type": {
+                    "missing": {
+                        "title": "Fehlende Lernpfade",
+                        "description": "Einige Studierende haben ihre Lernpfade noch nicht generiert. Ihre Lernpfade werden erst erstellt, wenn sie ihren Lernpfad zum ersten Mal anfordern.",
+                        "actionButton": "Lernpfad generieren",
+                        "successAlert": "Lernpfade wurden erfolgreich generiert."
+                    },
+                    "noCompetencies": {
+                        "title": "Keine Kompetenzen",
+                        "description": "Es existieren noch keine Kompetenzen für diesen Kurs. Bitte erstelle Kompetenzen für diesen Kurs.",
+                        "actionButton": "Kompetenzen zuweisen"
+                    },
+                    "noRelations": {
+                        "title": "Keine Kompetenzbeziehungen",
+                        "description": "Einigen Kompetenzen wurden noch keine Beziehungen zugewiesen. Bitte weise diesen Kompetenzen Beziehungen zu.",
+                        "actionButton": "Beziehungen zuweisen"
+                    }
+                }
+            },
+            "learningPathsConfiguration": {
+                "title": "Konfiguration",
+                "saveButtonLabel": "Speichern",
+                "editButtonLabel": "Bearbeiten",
+                "configuration": {
+                    "includeAllGradedExercises": "Alle bewerteten Aufgaben einbeziehen",
+                    "includeAllGradedExercisesToolTip": "Die Lernpfade werden alle Aufgaben enthalten, die in die Kursbewertung einfließen. Dadurch können Studierende keine wichtigen Aufgaben im Lernpfad übersehen."
+                },
+                "saveSuccess": "Die Konfiguration wurde erfolgreich gespeichert."
+            },
+            "learningPathsTable": {
+                "title": "Individuelle Lernpfade",
+                "searchPlaceholder": "Suchen",
+                "columnLabel": {
+                    "name": "Name",
+                    "login": "Login",
+                    "progress": "Fortschritt"
+                },
+                "noResults": "Keine Lernpfade gefunden!"
+            },
+            "learningPathsAnalytics": {
+                "title": "Analyse",
+                "graphSelection": {
+                    "AVERAGE_MASTERY_PROGRESS": "Ø Beherrschungsfortschritt"
+                }
+            }
+        }
+    }
+}

@@ -2,6 +2,7 @@ import { HttpMethod } from 'app/admin/metrics/metrics.model';
 import { inject } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { lastValueFrom } from 'rxjs';
+import { SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 
 export abstract class BaseApiHttpService {
     private readonly httpClient: HttpClient = inject(HttpClient);
@@ -65,6 +66,22 @@ export abstract class BaseApiHttpService {
         } catch (error) {
             throw error as HttpErrorResponse;
         }
+    }
+
+    /**
+     * Creates a `HttpParams` object from the given `SearchTermPageableSearch` object.
+     * @param pageable The pageable object to create the `HttpParams` object from.
+     * @protected
+     *
+     * @return The `HttpParams` object.
+     */
+    protected createHttpSearchParams(pageable: SearchTermPageableSearch): HttpParams {
+        return new HttpParams()
+            .set('pageSize', String(pageable.pageSize))
+            .set('page', String(pageable.page))
+            .set('sortingOrder', pageable.sortingOrder)
+            .set('searchTerm', pageable.searchTerm)
+            .set('sortedColumn', pageable.sortedColumn);
     }
 
     /**
@@ -184,5 +201,35 @@ export abstract class BaseApiHttpService {
         },
     ): Promise<T> {
         return await this.request<T>(HttpMethod.Patch, url, { body: body, ...options });
+    }
+
+    /**
+     * Constructs a `PUT` request that interprets the body as JSON and
+     * returns a Promise of an object of type `T`.
+     *
+     * @param url The endpoint URL excluding the base server url (/api).
+     * @param body The content to include in the body of the request.
+     * @param options The HTTP options to send with the request.
+     * @protected
+     *
+     * @return A `Promise` of type `Object` (T),
+     */
+    protected async put<T>(
+        url: string,
+        body?: any,
+        options?: {
+            headers?:
+                | HttpHeaders
+                | {
+                      [header: string]: string | string[];
+                  };
+            params?:
+                | HttpParams
+                | {
+                      [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>;
+                  };
+        },
+    ): Promise<T> {
+        return await this.request<T>(HttpMethod.Put, url, { body: body, ...options });
     }
 }

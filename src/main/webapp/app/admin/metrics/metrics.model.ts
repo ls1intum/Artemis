@@ -83,6 +83,7 @@ export interface Services {
 export enum HttpMethod {
     Post = 'POST',
     Get = 'GET',
+    Put = 'PUT',
     Delete = 'DELETE',
     Patch = 'PATCH',
 }

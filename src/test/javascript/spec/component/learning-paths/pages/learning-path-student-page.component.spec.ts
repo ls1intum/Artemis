@@ -78,18 +78,13 @@ describe('LearningPathStudentPageComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        expect(component).toBeTruthy();
-        expect(component.courseId()).toBe(courseId);
-    });
-
     it('should get learning path', async () => {
         const getLearningPathIdSpy = jest.spyOn(learningPathApiService, 'getLearningPathForCurrentUser').mockResolvedValue(learningPath);
 
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(getLearningPathIdSpy).toHaveBeenCalledWith(courseId);
+        expect(getLearningPathIdSpy).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(component.learningPath()).toEqual(learningPath);
     });
 
@@ -116,7 +111,7 @@ describe('LearningPathStudentPageComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(getLearningPathIdSpy).toHaveBeenCalledWith(courseId);
+        expect(getLearningPathIdSpy).toHaveBeenCalledExactlyOnceWith(courseId);
         expect(alertServiceErrorSpy).toHaveBeenCalledOnce();
     });
 

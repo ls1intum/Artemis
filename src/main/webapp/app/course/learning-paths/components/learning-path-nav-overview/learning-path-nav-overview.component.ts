@@ -61,11 +61,6 @@ export class LearningPathNavOverviewComponent {
     }
 
     openCompetencyGraph(): void {
-        const modalRef = this.modalService.open(CompetencyGraphModalComponent, {
-            size: 'xl',
-            backdrop: 'static',
-            windowClass: 'competency-graph-modal',
-        });
-        modalRef.componentInstance.learningPathId = this.learningPathId;
+        CompetencyGraphModalComponent.openCompetencyGraphModal(this.modalService, this.learningPathId());
     }
 }

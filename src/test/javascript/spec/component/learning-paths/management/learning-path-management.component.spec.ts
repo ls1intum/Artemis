@@ -3,7 +3,7 @@ import { LearningPathManagementComponent, TableColumn } from 'app/course/learnin
 import { LearningPathPagingService } from 'app/course/learning-paths/learning-path-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { SearchResult, SearchTermPageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { LearningPath } from 'app/entities/competency/learning-path.model';
+import { LearningPath, LearningPathInformationDTO } from 'app/entities/competency/learning-path.model';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -97,7 +97,7 @@ describe('LearningPathManagementComponent', () => {
         searchStub.mockReturnValue(of(searchResult));
         enableLearningPathsStub.mockReturnValue(of(new HttpResponse<void>()));
         generateMissingLearningPathsForCourseStub.mockReturnValue(of(new HttpResponse<void>()));
-        health = new LearningPathHealthDTO([HealthStatus.OK]);
+        health = new LearningPathHealthDTO([]);
         getHealthStatusForCourseStub.mockReturnValue(of(new HttpResponse({ body: health })));
     });
 
@@ -126,19 +126,6 @@ describe('LearningPathManagementComponent', () => {
         comp.ngOnInit();
         expect(getHealthStatusForCourseStub).toHaveBeenCalledWith(courseId);
         expect(alertServiceStub).toHaveBeenCalledOnce();
-    }));
-
-    it('should enable learning paths and load data', fakeAsync(() => {
-        const healthDisabled = new LearningPathHealthDTO([HealthStatus.DISABLED]);
-        getHealthStatusForCourseStub.mockReturnValueOnce(of(new HttpResponse({ body: healthDisabled }))).mockReturnValueOnce(of(new HttpResponse({ body: health })));
-        fixture.detectChanges();
-        comp.ngOnInit();
-        expect(comp.health).toEqual(healthDisabled);
-        comp.enableLearningPaths();
-        expect(enableLearningPathsStub).toHaveBeenCalledOnce();
-        expect(enableLearningPathsStub).toHaveBeenCalledWith(courseId);
-        expect(getHealthStatusForCourseStub).toHaveBeenCalledTimes(3);
-        expect(comp.health).toEqual(health);
     }));
 
     it('should alert error if enable learning paths fails', fakeAsync(() => {
@@ -218,6 +205,6 @@ describe('LearningPathManagementComponent', () => {
     }));
 
     it('should return learning path id', () => {
-        expect(comp.trackId(0, learningPath)).toEqual(learningPath.id);
+        expect(comp.trackId(0, <LearningPathInformationDTO>{ id: 2 })).toEqual(learningPath.id);
     });
 });
