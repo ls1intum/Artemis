@@ -43,6 +43,7 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [MonacoEditorComponent],
             providers: [
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -51,7 +52,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 MockProvider(CourseManagementService),
                 MockProvider(ChannelService),
             ],
-            declarations: [MonacoEditorComponent],
         })
             .compileComponents()
             .then(() => {
@@ -60,7 +60,6 @@ describe('MonacoEditorCommunicationActionIntegration', () => {
                 });
                 fixture = TestBed.createComponent(MonacoEditorComponent);
                 comp = fixture.componentInstance;
-                // debugElement = fixture.debugElement;
                 metisService = TestBed.inject(MetisService);
                 courseManagementService = TestBed.inject(CourseManagementService);
                 lectureService = TestBed.inject(LectureService);
