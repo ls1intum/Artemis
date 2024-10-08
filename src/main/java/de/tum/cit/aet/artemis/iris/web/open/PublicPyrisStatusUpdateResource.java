@@ -6,8 +6,12 @@ import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
+import de.tum.cit.aet.artemis.iris.dto.IngestionState;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
@@ -42,9 +48,14 @@ public class PublicPyrisStatusUpdateResource {
 
     private final PyrisStatusUpdateService pyrisStatusUpdateService;
 
-    public PublicPyrisStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService) {
+    private final PyrisConnectorService pyrisConnectorService;
+
+    private static final Logger log = LoggerFactory.getLogger(PublicPyrisStatusUpdateResource.class);
+
+    public PublicPyrisStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService, PyrisConnectorService pyrisConnectorService) {
         this.pyrisJobService = pyrisJobService;
         this.pyrisStatusUpdateService = pyrisStatusUpdateService;
+        this.pyrisConnectorService = pyrisConnectorService;
     }
 
     /**
@@ -145,7 +156,61 @@ public class PublicPyrisStatusUpdateResource {
         }
 
         pyrisStatusUpdateService.handleStatusUpdate(ingestionWebhookJob, statusUpdateDTO);
-
         return ResponseEntity.ok().build();
     }
+
+    /**
+     * Retrieves the overall ingestion state of a lecture by communicating with Pyris.
+     *
+     * <p>
+     * This method sends a GET request to the external Pyris service to fetch the current ingestion
+     * state of a lecture, identified by its `lectureId`. The ingestion state can be aggregated from
+     * multiple lecture units or can reflect the overall status of the lecture ingestion process.
+     * </p>
+     *
+     * @param lectureId the ID of the lecture for which the ingestion state is being requested
+     * @param courseId  the ID of the lecture for which the ingestion state is being requested
+     * @return a {@link ResponseEntity} containing the {@link IngestionState} of the lecture,
+     */
+    @GetMapping("courses/{courseId}/lectures/{lectureId}/ingestion-state")
+    @EnforceNothing
+    public ResponseEntity<IngestionState> getStatusOfLectureIngestion(@PathVariable long courseId, @PathVariable long lectureId) {
+        try {
+            IngestionState state = pyrisConnectorService.getLectureIngestionState(courseId, lectureId);
+            return ResponseEntity.ok(state);
+        }
+        catch (Exception e) {
+            log.error("Error fetching ingestion state for lecture {}", lectureId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * Retrieves the ingestion state of a specific lecture unit by communicating with Pyris.
+     *
+     * <p>
+     * This method sends a GET request to the external Pyris service to fetch the current ingestion
+     * state of a lecture unit, identified by its ID. It constructs a request using the provided
+     * `lectureId` and `lectureUnitId` and returns the state of the ingestion process (e.g., NOT_STARTED,
+     * IN_PROGRESS, DONE, ERROR).
+     * </p>
+     *
+     * @param courseId      the ID of the lecture the unit belongs to
+     * @param lectureId     the ID of the lecture the unit belongs to
+     * @param lectureUnitId the ID of the lecture unit for which the ingestion state is being requested
+     * @return a {@link ResponseEntity} containing the {@link IngestionState} of the lecture unit,
+     */
+    @GetMapping("courses/{courseId}/lectures/{lectureId}/lecture-units/{lectureUnitId}/ingestion-state")
+    @EnforceNothing
+    public ResponseEntity<IngestionState> getStatusOfLectureUnitIngestion(@PathVariable long courseId, @PathVariable long lectureId, @PathVariable long lectureUnitId) {
+        try {
+            IngestionState state = pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, lectureUnitId);
+            return ResponseEntity.ok(state);
+        }
+        catch (Exception e) {
+            log.error("Error fetching ingestion state for lecture unit {} in lecture {}", lectureUnitId, lectureId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 }

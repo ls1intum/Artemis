@@ -23,9 +23,6 @@ import { LectureImportComponent } from 'app/lecture/lecture-import.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { Course } from 'app/entities/course.model';
-import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
-import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
-import { PROFILE_IRIS } from 'app/app.constants';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
@@ -34,7 +31,6 @@ describe('Lecture', () => {
     let lectureComponent: LectureComponent;
     let lectureService: LectureService;
     let profileService: ProfileService;
-    let irisSettingsService: IrisSettingsService;
     let modalService: NgbModal;
 
     let pastLecture: Lecture;
@@ -134,7 +130,7 @@ describe('Lecture', () => {
                     },
                 },
                 MockProvider(LectureService, {
-                    findAllByCourseId: () => {
+                    findAllByCourseIdWithSlides: () => {
                         return of(
                             new HttpResponse({
                                 body: [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture],
@@ -172,7 +168,7 @@ describe('Lecture', () => {
     });
 
     it('should fetch lectures when initialized', () => {
-        const findAllSpy = jest.spyOn(lectureService, 'findAllByCourseId');
+        const findAllSpy = jest.spyOn(lectureService, 'findAllByCourseIdWithSlides');
 
         lectureComponentFixture.detectChanges();
 
@@ -282,22 +278,5 @@ describe('Lecture', () => {
         jest.spyOn(lectureService, 'ingestLecturesInPyris').mockReturnValue(throwError(() => new Error('Error while ingesting')));
         lectureComponent.ingestLecturesInPyris();
         expect(consoleSpy).toHaveBeenCalledWith('Failed to send Ingestion request', expect.any(Error));
-    });
-    it('should set lectureIngestionEnabled based on service response', () => {
-        irisSettingsService = TestBed.inject(IrisSettingsService);
-        profileService = TestBed.inject(ProfileService);
-        const profileInfoResponse = {
-            activeProfiles: [PROFILE_IRIS],
-        } as ProfileInfo;
-        const irisSettingsResponse = {
-            irisLectureIngestionSettings: {
-                enabled: true,
-            },
-        } as IrisCourseSettings;
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfoResponse));
-        jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockImplementation(() => of(irisSettingsResponse));
-        lectureComponent.ngOnInit();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(lectureComponent.courseId);
-        expect(lectureComponent.lectureIngestionEnabled).toBeTrue();
     });
 });
