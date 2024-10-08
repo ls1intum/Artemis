@@ -29,7 +29,7 @@ following dependencies/tools on your machine:
    We use Java (JDK 21) to develop and run the Artemis application
    server, which is based on `Spring
    Boot <http://projects.spring.io/spring-boot>`__.
-2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL <https://www.postgresql.org/>`_:
+2. `MySQL Database Server 9 <https://dev.mysql.com/downloads/mysql>`__, or `PostgreSQL 17 <https://www.postgresql.org/>`_:
    Artemis uses Hibernate to store entities in an SQL database and Liquibase to
    automatically apply schema transformations when updating Artemis.
 3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=20.16.0 < 21) to compile

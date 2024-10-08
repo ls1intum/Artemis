@@ -44,6 +44,7 @@ export class ProfileService {
                                 profileInfo.ribbonEnv = ribbonProfiles[0];
                             }
                             profileInfo.inProduction = profileInfo.activeProfiles.includes('prod');
+                            profileInfo.inDevelopment = profileInfo.activeProfiles.includes('dev');
                             profileInfo.openApiEnabled = profileInfo.activeProfiles.includes('openapi');
                         }
                         profileInfo.ribbonEnv = profileInfo.ribbonEnv ?? '';
