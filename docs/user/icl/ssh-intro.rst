@@ -57,7 +57,7 @@ For instructions on how to add your SSH key to your Artemis account, please refe
 
 Before you can use SSH keys to secure a connection with Artemis the following must have already been done:
 
-- SSH is enabled on your universities Artemis instance
+- SSH is enabled on your university's Artemis instance
 - You need an SSH key! See :ref:`Creating SSH keys<create ssh key>`.
 
 Note that:
