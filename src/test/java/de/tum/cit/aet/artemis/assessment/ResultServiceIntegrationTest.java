@@ -745,7 +745,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         participationUtilService.addFeedbackToResult(feedback, result);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged" + "?page=1&pageSize=10&sortedColumn=detailText&sortingOrder=ASCENDING"
-                + "&filterTasks=&filterTestCases=&filterOccurrence=";
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
@@ -789,7 +789,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationLocalCILocal
         participationUtilService.addFeedbackToResult(feedback3, result1);
 
         String url = "/api/exercises/" + programmingExercise.getId() + "/feedback-details-paged" + "?page=1&pageSize=10&sortedColumn=detailText&sortingOrder=ASCENDING"
-                + "&filterTasks=&filterTestCases=&filterOccurrence=";
+                + "&searchTerm=&filterTasks=&filterTestCases=&filterOccurrence=";
 
         FeedbackAnalysisResponseDTO response = request.get(url, HttpStatus.OK, FeedbackAnalysisResponseDTO.class);
 
