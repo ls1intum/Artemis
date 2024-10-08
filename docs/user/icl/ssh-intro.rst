@@ -50,7 +50,7 @@ They are based on `public-key cryptography`_ and come in pairs: a public key and
 - Public Key: This key is stored on the server. Think of it like a lock that only you can open.
 - Private Key: This key stays on your local machine (never shared!). It’s like the key to that lock.
 
-When you try to connect to the server, your computer proves it has the private key that matches the server's public key, allowing you access.
+When you try to connect to the server, your computer proves it has the private key that matches the server's public key, granting you access.
 You can add a personal SSH key to your user account to easily authenticate when performing read operations from your local machine.
 An Artemis user can currently add one key to their account.
 For instructions on how to add your SSH key to your Artemis account, please refer to :ref:`the relevant documentation<use ssh key>`.
