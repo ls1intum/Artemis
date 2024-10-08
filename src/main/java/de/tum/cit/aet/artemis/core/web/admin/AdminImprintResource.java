@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.service.LegalDocumentService;
  * REST controller for editing the imprint as an admin.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminImprintResource {
@@ -40,7 +41,6 @@ public class AdminImprintResource {
      * @return the ResponseEntity with status 200 (OK) and with body the imprint with the given language
      */
     @GetMapping("imprint-for-update")
-    @EnforceAdmin
     public ResponseEntity<ImprintDTO> getImprintForUpdate(@RequestParam("language") String language) {
         if (!Language.isValidShortName(language)) {
             throw new BadRequestException("Language not supported");
@@ -55,7 +55,6 @@ public class AdminImprintResource {
      * @return the ResponseEntity with status 200 (OK) and with body the updated imprint
      */
     @PutMapping("imprint")
-    @EnforceAdmin
     public ResponseEntity<ImprintDTO> updateImprint(@RequestBody ImprintDTO imprint) {
         return ResponseEntity.ok(legalDocumentService.updateImprint(imprint));
     }

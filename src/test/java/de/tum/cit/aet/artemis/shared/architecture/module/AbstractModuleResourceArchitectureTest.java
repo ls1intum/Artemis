@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -32,6 +33,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 
 import de.tum.cit.aet.artemis.communication.web.LinkPreviewResource;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAdmin;
 import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 
 public abstract class AbstractModuleResourceArchitectureTest extends AbstractArchitectureTest implements ModuleArchitectureTest {
@@ -149,5 +151,30 @@ public abstract class AbstractModuleResourceArchitectureTest extends AbstractArc
         for (String value : values) {
             tester.accept(value);
         }
+    }
+
+    @Test
+    void testClassWithEnforceAdminInCorrectlyNamed() {
+        ArchRule annotationToNameRule = classesOfThisModuleThat().areAnnotatedWith(EnforceAdmin.class).should().haveSimpleNameStartingWith("Admin")
+                .andShould(new ArchCondition<>("Have package name ending with .admin") {
+
+                    @Override
+                    public void check(JavaClass item, ConditionEvents events) {
+                        if (!item.getPackage().getName().endsWith(".admin")) {
+                            events.add(violated(item, "Classes annotated with @EnforceAdmin should be in an admin subpackage."));
+                        }
+                    }
+                });
+        annotationToNameRule.allowEmptyShould(true).check(productionClasses);
+
+        ArchRule nameToAnnotationRule = classesOfThisModuleThat().haveSimpleNameStartingWith("Admin").should().beAnnotatedWith(EnforceAdmin.class);
+        nameToAnnotationRule.allowEmptyShould(true).check(productionClasses);
+    }
+
+    @Test
+    void testNoOverrideOfEnforceAdmin() {
+        ArchRule rule = methodsOfThisModuleThat().areDeclaredInClassesThat().areAnnotatedWith(EnforceAdmin.class).should().notBeAnnotatedWith(EnforceAdmin.class).andShould()
+                .notBeMetaAnnotatedWith(PreAuthorize.class);
+        rule.allowEmptyShould(true).check(productionClasses);
     }
 }

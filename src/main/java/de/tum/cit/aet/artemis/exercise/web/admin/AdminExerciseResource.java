@@ -20,6 +20,7 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
  * REST controller for administrating Exercise.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminExerciseResource {
@@ -38,7 +39,6 @@ public class AdminExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and a list of exercises.
      */
     @GetMapping("exercises/upcoming")
-    @EnforceAdmin
     public ResponseEntity<Set<Exercise>> getUpcomingExercises() {
         log.debug("REST request to get all upcoming exercises");
         Set<Exercise> upcomingExercises = exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDate();

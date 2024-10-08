@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.modeling.service.ModelingExerciseService;
  * REST controller for administrating ModelingExercise.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminModelingExerciseResource {
@@ -59,7 +60,6 @@ public class AdminModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @GetMapping("modeling-exercises/{exerciseId}/check-clusters")
-    @EnforceAdmin
     public ResponseEntity<Integer> checkClusters(@PathVariable Long exerciseId) {
         log.info("REST request to check clusters of ModelingExercise : {}", exerciseId);
         int clusterCount = modelClusterRepository.countByExerciseIdWithEagerElements(exerciseId);
@@ -73,7 +73,6 @@ public class AdminModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("modeling-exercises/{exerciseId}/clusters")
-    @EnforceAdmin
     public ResponseEntity<Void> deleteModelingExerciseClustersAndElements(@PathVariable Long exerciseId) {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -91,7 +90,6 @@ public class AdminModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("modeling-exercises/{exerciseId}/trigger-automatic-assessment")
-    @EnforceAdmin
     public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
         instanceMessageSendService.sendModelingExerciseInstantClustering(exerciseId);
         return ResponseEntity.ok().build();

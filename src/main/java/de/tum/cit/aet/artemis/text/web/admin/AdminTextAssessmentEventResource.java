@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.text.domain.TextAssessmentEvent;
  * REST controller for administrating TextAssessmentEventResource.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminTextAssessmentEventResource {
@@ -36,7 +37,6 @@ public class AdminTextAssessmentEventResource {
      * @return returns a List of TextAssessmentEvent's
      */
     @GetMapping("event-insights/text-assessment/events/{courseId}")
-    @EnforceAdmin
     public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@PathVariable Long courseId) {
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(events);
