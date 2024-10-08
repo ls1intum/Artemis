@@ -131,9 +131,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
 
         // if athena results are present, then create a new submission on submit
-        var result = resultRepository.existsBySubmissionId(modelingSubmission.getId());
-        if (result) {
-            log.debug("Creating a new submission due to Athena results for user: {}", user.getLogin());
+        if (modelingSubmission.getId() != null && resultRepository.existsBySubmissionId(modelingSubmission.getId())) {
             modelingSubmission.setId(null);
         }
 
