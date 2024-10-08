@@ -1,9 +1,10 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { take } from 'rxjs/operators';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Submission Policy Service', () => {
     let httpMock: HttpTestingController;
@@ -15,8 +16,8 @@ describe('Submission Policy Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: SubmissionPolicyService, useClass: SubmissionPolicyService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: SubmissionPolicyService, useClass: SubmissionPolicyService }],
         });
         httpMock = TestBed.inject(HttpTestingController);
         submissionPolicyService = TestBed.inject(SubmissionPolicyService);
