@@ -1278,7 +1278,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         final var endpoint = "/programming-exercises/" + programmingExerciseSCAEnabled.getId() + "/grading/statistics";
         final var statistics = request.get("/api" + endpoint, HttpStatus.OK, ProgrammingExerciseGradingStatisticsDTO.class);
 
-        assertThat(statistics.getNumParticipations()).isEqualTo(5);
+        assertThat(statistics.numParticipations()).isEqualTo(5);
 
         var testCaseStatsMap = new HashMap<String, ProgrammingExerciseGradingStatisticsDTO.TestCaseStats>();
         testCaseStatsMap.put("test1", new ProgrammingExerciseGradingStatisticsDTO.TestCaseStats(5, 0));
@@ -1288,12 +1288,12 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         // check some additional methods to increase test coverage
         var test1 = testCaseStatsMap.get("test1");
         var test2 = testCaseStatsMap.get("test2");
-        assertThat(test1.getNumFailed()).isZero();
-        assertThat(test1.getNumPassed()).isEqualTo(5);
+        assertThat(test1.numFailed()).isZero();
+        assertThat(test1.numPassed()).isEqualTo(5);
         assertThat(test1.hashCode()).isNotEqualTo(test2.hashCode());
         assertThat(test1).isNotEqualTo(test2).isNotNull();
 
-        assertThat(statistics.getTestCaseStatsMap()).containsExactlyInAnyOrderEntriesOf(testCaseStatsMap);
+        assertThat(statistics.testCaseStatsMap()).containsExactlyInAnyOrderEntriesOf(testCaseStatsMap);
 
         var categoryIssuesMap = new HashMap<String, Map<Integer, Integer>>();
         categoryIssuesMap.put("Bad Practice", Map.of(2, 1, 5, 3));
@@ -1301,7 +1301,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         categoryIssuesMap.put("Potential Bugs", Map.of(1, 5));
         categoryIssuesMap.put("Miscellaneous", Map.of());
 
-        assertThat(statistics.getCategoryIssuesMap()).containsExactlyInAnyOrderEntriesOf(categoryIssuesMap);
+        assertThat(statistics.categoryIssuesMap()).containsExactlyInAnyOrderEntriesOf(categoryIssuesMap);
     }
 
     @Test
