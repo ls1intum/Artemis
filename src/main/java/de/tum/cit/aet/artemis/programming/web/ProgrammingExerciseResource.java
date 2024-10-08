@@ -533,20 +533,17 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET /programming-exercises : Returns the courseId and exerciseId of the exercise with the given short names.
+     * GET /programming-exercises : Queries a programming exercise by its project key.
      *
-     * @return the courseId and exerciseId of the exercise wrapped in an ResponseEntity or 404 Not Found if no exercise with those short names exists
+     * @return the ProgrammingExercise of this project key in an ResponseEntity or 404 Not Found if no exercise exists
      */
     @GetMapping("programming-exercises/project-key/{projectKey}")
     @EnforceAtLeastStudent
     public ResponseEntity<ProgrammingExercise> getExerciseByProjectKey(@PathVariable String projectKey) {
-        try {
-            final ProgrammingExercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
-            return ResponseEntity.ok(exercise);
-        }
-        catch (EntityNotFoundException e) {
-            return ResponseEntity.notFound().build();
-        }
+        final ProgrammingExercise exercise = programmingExerciseRepository.findOneByProjectKeyOrThrow(projectKey, false);
+        authCheckService.checkIsAtLeastRoleInExerciseElseThrow(Role.STUDENT, exercise.getId());
+
+        return ResponseEntity.ok(exercise);
     }
 
     /**
