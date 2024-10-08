@@ -740,17 +740,7 @@ public class LocalVCServletService {
         return LocalVCService.getDefaultBranchOfRepository(repositoryFolderPath.toString());
     }
 
-    public void logFailedAttempt(HttpServletRequest servletRequest) {
-        try {
-            User user = getUserFromRequest(servletRequest);
-            var participation = getExerciseParticipationFromRequest(servletRequest);
-            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, AuthenticationMechanism.PASSWORD, "", ""));
-        }
-        catch (LocalVCAuthException ignored) {
-        }
-    }
-
-    public void addVCSAccessLogForCloneAndPull(HttpServletRequest request, int cntOffered) {
+    public void updateVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, int cntOffered) {
         try {
             String authorizationHeader = request.getHeader("Authorization");
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
@@ -769,7 +759,28 @@ public class LocalVCServletService {
         }
     }
 
-    public void addVCSAccessLogForCloneAndPulloverSSH(ServerSession session, Path rootDir, int cntOffered) {
+    @Async
+    public void updateVCSAccessLogForPushHTTPS(HttpServletRequest request) {
+        if (!request.getMethod().equals("POST")) {
+            return;
+        }
+        try {
+            String authorizationHeader = request.getHeader("Authorization");
+            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+            String userName = usernameAndPassword.username();
+            if (userName.equals("buildjob_user")) {
+                return;
+            }
+            RepositoryActionType repositoryActionType = RepositoryActionType.PUSH;
+            var participation = getExerciseParticipationFromRequest(request);
+
+            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
+        }
+        catch (Exception ignored) {
+        }
+    }
+
+    public void updateVCSAccessLogForCloneAndPullSSH(ServerSession session, Path rootDir, int cntOffered) {
         try {
             if (session.getAttribute(SshConstants.USER_KEY).getName().equals("buildjob_user")) {
                 return;
@@ -782,37 +793,18 @@ public class LocalVCServletService {
         }
     }
 
-    @Async
-    public void addVCSAccessLogForPush(HttpServletRequest request) {
-        if (!request.getMethod().equals("POST")) {
-            return;
-        }
+    public void addVCSAccessLogFailedAttempt(HttpServletRequest servletRequest) {
         try {
-            String authorizationHeader = request.getHeader("Authorization");
-            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
-            String userName = usernameAndPassword.username();
-
-            if (userName.equals("buildjob_user")) {
-                return;
-            }
-            RepositoryActionType repositoryActionType = RepositoryActionType.PUSH;
-
-            var participation = getExerciseParticipationFromRequest(request);
-
-            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
-
+            User user = getUserFromRequest(servletRequest);
+            var participation = getExerciseParticipationFromRequest(servletRequest);
+            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, AuthenticationMechanism.PASSWORD, "", ""));
         }
-        catch (Exception ignored) {
+        catch (LocalVCAuthException ignored) {
         }
     }
 
     public RepositoryActionType getRepositoryActionReadType(int cntOffered) {
-        if (cntOffered == 0) {
-            return RepositoryActionType.CLONE;
-        }
-        else {
-            return RepositoryActionType.PULL;
-        }
+        return cntOffered == 0 ? RepositoryActionType.CLONE : RepositoryActionType.PULL;
     }
 
     record UsernameAndPassword(String username, String password) {
