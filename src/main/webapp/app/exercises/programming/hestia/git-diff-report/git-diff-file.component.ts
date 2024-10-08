@@ -11,18 +11,16 @@ import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-
     imports: [MonacoDiffEditorComponent],
 })
 export class GitDiffFileComponent {
-    monacoDiffEditor = viewChild.required(MonacoDiffEditorComponent);
-
-    diffForTemplateAndSolution = input<boolean>(false);
-    diffEntries = input.required<ProgrammingExerciseGitDiffEntry[]>();
-    originalFileContent = input<string>();
-    originalFilePath = input<string>();
-    modifiedFileContent = input<string>();
-    modifiedFilePath = input<string>();
-    allowSplitView = input<boolean>(true);
-    onDiffReady = output<boolean>();
-
-    fileUnchanged = computed(() => this.originalFileContent() === this.modifiedFileContent());
+    readonly monacoDiffEditor = viewChild.required(MonacoDiffEditorComponent);
+    readonly diffForTemplateAndSolution = input<boolean>(false);
+    readonly diffEntries = input.required<ProgrammingExerciseGitDiffEntry[]>();
+    readonly originalFileContent = input<string>();
+    readonly originalFilePath = input<string>();
+    readonly modifiedFileContent = input<string>();
+    readonly modifiedFilePath = input<string>();
+    readonly allowSplitView = input<boolean>(true);
+    readonly onDiffReady = output<boolean>();
+    readonly fileUnchanged = computed(() => this.originalFileContent() === this.modifiedFileContent());
 
     constructor() {
         effect(() => {

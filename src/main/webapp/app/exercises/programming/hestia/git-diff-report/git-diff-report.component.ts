@@ -24,15 +24,14 @@ interface DiffInformation {
     imports: [GitDiffLineStatComponent, ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffFilePanelComponent],
 })
 export class GitDiffReportComponent {
-    report = input.required<ProgrammingExerciseGitDiffReport>();
-    templateFileContentByPath = input.required<Map<string, string>>();
-    solutionFileContentByPath = input.required<Map<string, string>>();
-    diffForTemplateAndSolution = input<boolean>(true);
-    diffForTemplateAndEmptyRepository = input<boolean>(false);
-    isRepositoryView = input<boolean>(false);
+    readonly report = input.required<ProgrammingExerciseGitDiffReport>();
+    readonly templateFileContentByPath = input.required<Map<string, string>>();
+    readonly solutionFileContentByPath = input.required<Map<string, string>>();
+    readonly diffForTemplateAndSolution = input<boolean>(true);
+    readonly diffForTemplateAndEmptyRepository = input<boolean>(false);
+    readonly isRepositoryView = input<boolean>(false);
 
-    // TODO rename to sortedEntries
-    entries = computed(() => {
+    readonly sortedEntries = computed(() => {
         return (
             this.report().entries?.sort((a, b) => {
                 const filePathA = a.filePath ?? a.previousFilePath ?? '';
@@ -47,8 +46,9 @@ export class GitDiffReportComponent {
             }) ?? []
         );
     });
-    addedLineCount = computed(() => {
-        return this.entries()
+
+    readonly addedLineCount = computed(() => {
+        return this.sortedEntries()
             .flatMap((entry) => {
                 if (entry && entry.filePath && entry.startLine && entry.lineCount) {
                     return this.solutionFileContentByPath()
@@ -60,8 +60,8 @@ export class GitDiffReportComponent {
             .filter((line) => line && line.trim().length !== 0).length;
     });
 
-    removedLineCount = computed(() => {
-        return this.entries()
+    readonly removedLineCount = computed(() => {
+        return this.sortedEntries()
             .flatMap((entry) => {
                 if (entry && entry.previousFilePath && entry.previousStartLine && entry.previousLineCount) {
                     return this.templateFileContentByPath()
@@ -73,13 +73,13 @@ export class GitDiffReportComponent {
             .filter((line) => line && line.trim().length !== 0).length;
     });
 
-    filePaths = computed(() => {
+    readonly filePaths = computed(() => {
         return [...new Set([...this.templateFileContentByPath().keys(), ...this.solutionFileContentByPath().keys()])].sort();
     });
 
-    renamedFilePaths = computed(() => {
+    readonly renamedFilePaths = computed(() => {
         const renamedFilePaths: { [before: string]: string | undefined } = {};
-        this.entries().forEach((entry) => {
+        this.sortedEntries().forEach((entry) => {
             // Accounts only for files that have existed in the original and the modified version, but under different names
             if (entry.filePath && entry.previousFilePath && entry.filePath !== entry.previousFilePath) {
                 renamedFilePaths[entry.filePath] = entry.previousFilePath;
@@ -88,32 +88,32 @@ export class GitDiffReportComponent {
         return renamedFilePaths;
     });
 
-    entriesByPath = computed(() => {
+    readonly entriesByPath = computed(() => {
         const entriesByPath = new Map<string, ProgrammingExerciseGitDiffEntry[]>();
         this.filePaths().forEach((filePath) => {
             entriesByPath.set(
                 filePath,
-                this.entries().filter((entry) => entry.previousFilePath === filePath && !entry.filePath),
+                this.sortedEntries().filter((entry) => entry.previousFilePath === filePath && !entry.filePath),
             );
         });
         this.filePaths().forEach((filePath) => {
             entriesByPath.set(
                 filePath,
-                this.entries().filter((entry) => entry.filePath === filePath),
+                this.sortedEntries().filter((entry) => entry.filePath === filePath),
             );
         });
         return entriesByPath;
     });
 
-    leftCommit = computed(() => this.report().leftCommitHash?.substring(0, 10));
-    rightCommit = computed(() => this.report().rightCommitHash?.substring(0, 10));
-    diffInformationForPaths = signal<DiffInformation[]>([]);
-    nothingToDisplay = computed(() => this.diffInformationForPaths().length === 0);
-    allDiffsReady = computed(() => Object.values(this.diffInformationForPaths()).every((info) => info.diffReady));
-    allowSplitView = signal<boolean>(true);
+    readonly leftCommit = computed(() => this.report().leftCommitHash?.substring(0, 10));
+    readonly rightCommit = computed(() => this.report().rightCommitHash?.substring(0, 10));
+    readonly diffInformationForPaths = signal<DiffInformation[]>([]);
+    readonly nothingToDisplay = computed(() => this.diffInformationForPaths().length === 0);
+    readonly allDiffsReady = computed(() => Object.values(this.diffInformationForPaths()).every((info) => info.diffReady));
+    readonly allowSplitView = signal<boolean>(true);
 
-    faSpinner = faSpinner;
-    faTableColumns = faTableColumns;
+    protected readonly faSpinner = faSpinner;
+    protected readonly faTableColumns = faTableColumns;
 
     // Expose to template
     protected readonly ButtonSize = ButtonSize;

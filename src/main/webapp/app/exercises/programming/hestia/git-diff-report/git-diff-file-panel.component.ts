@@ -16,27 +16,28 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     imports: [GitDiffFilePanelTitleComponent, GitDiffLineStatComponent, GitDiffFileComponent, ArtemisSharedModule],
 })
 export class GitDiffFilePanelComponent {
-    diffEntries = input.required<ProgrammingExerciseGitDiffEntry[]>();
-    originalFileContent = input<string>();
-    modifiedFileContent = input<string>();
-    diffForTemplateAndSolution = input<boolean>(true);
-    allowSplitView = input<boolean>(true);
-    onDiffReady = output<boolean>();
+    readonly diffEntries = input.required<ProgrammingExerciseGitDiffEntry[]>();
+    readonly originalFileContent = input<string>();
+    readonly modifiedFileContent = input<string>();
+    readonly diffForTemplateAndSolution = input<boolean>(true);
+    readonly allowSplitView = input<boolean>(true);
+    readonly onDiffReady = output<boolean>();
 
-    originalFilePath = computed(() =>
+    readonly originalFilePath = computed(() =>
         this.diffEntries()
             .map((entry) => entry.previousFilePath)
             .filter((filePath) => filePath)
             .first(),
     );
-    modifiedFilePath = computed(() =>
+
+    readonly modifiedFilePath = computed(() =>
         this.diffEntries()
             .map((entry) => entry.filePath)
             .filter((filePath) => filePath)
             .first(),
     );
 
-    addedLineCount = computed(
+    readonly addedLineCount = computed(
         () =>
             this.diffEntries()
                 .filter((entry) => entry && entry.filePath && entry.startLine && entry.lineCount)
@@ -48,7 +49,7 @@ export class GitDiffFilePanelComponent {
                 .filter((line) => line && line.trim().length !== 0).length,
     );
 
-    removedLineCount = computed(
+    readonly removedLineCount = computed(
         () =>
             this.diffEntries()
                 .filter((entry) => entry && entry.previousFilePath && entry.previousStartLine && entry.previousLineCount)
@@ -60,6 +61,6 @@ export class GitDiffFilePanelComponent {
                 .filter((line) => line && line.trim().length !== 0).length,
     );
 
-    faAngleUp = faAngleUp;
-    faAngleDown = faAngleDown;
+    protected readonly faAngleUp = faAngleUp;
+    protected readonly faAngleDown = faAngleDown;
 }

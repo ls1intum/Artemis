@@ -8,14 +8,13 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GitDiffLineStatComponent {
-    addedLineCount = input<number>(0);
-    removedLineCount = input<number>(0);
+    readonly addedLineCount = input<number>(0);
+    readonly removedLineCount = input<number>(0);
+    readonly squareCounts = computed(() => this.getSquareCounts());
+    readonly addedSquareArray = computed(() => Array.from({ length: this.squareCounts().addedSquareCount }));
+    readonly removedSquareArray = computed(() => Array.from({ length: this.squareCounts().removedSquareCount }));
 
-    squareCounts = computed(() => this.getSquareCounts());
-    addedSquareArray = computed(() => Array.from({ length: this.squareCounts().addedSquareCount }));
-    removedSquareArray = computed(() => Array.from({ length: this.squareCounts().removedSquareCount }));
-
-    getSquareCounts(): { addedSquareCount: number; removedSquareCount: number } {
+    private getSquareCounts(): { addedSquareCount: number; removedSquareCount: number } {
         const addedLineCount = this.addedLineCount();
         const removedLineCount = this.removedLineCount();
         if (!addedLineCount && !removedLineCount) {

@@ -56,7 +56,7 @@ describe('ProgrammingExerciseGitDiffReport Component', () => {
 
         fixture.componentRef.setInput('report', { entries } as ProgrammingExerciseGitDiffReport);
         fixture.detectChanges();
-        expect(comp.entries()).toStrictEqual(expectedEntries);
+        expect(comp.sortedEntries()).toStrictEqual(expectedEntries);
     });
 
     it('Should set added/removed lines to 1-0', () => {

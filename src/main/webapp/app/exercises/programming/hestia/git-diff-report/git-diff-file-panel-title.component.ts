@@ -17,13 +17,12 @@ enum FileStatus {
     imports: [TranslateDirective, CommonModule],
 })
 export class GitDiffFilePanelTitleComponent {
-    originalFilePath = input<string>();
-    modifiedFilePath = input<string>();
+    readonly originalFilePath = input<string>();
+    readonly modifiedFilePath = input<string>();
 
-    titleAndFileStatus = computed(() => this.getTitleAndFileStatus());
-
-    title = computed(() => this.titleAndFileStatus().title);
-    fileStatus = computed(() => this.titleAndFileStatus().fileStatus);
+    readonly titleAndFileStatus = computed(() => this.getTitleAndFileStatus());
+    readonly title = computed(() => this.titleAndFileStatus().title);
+    readonly fileStatus = computed(() => this.titleAndFileStatus().fileStatus);
 
     protected readonly FileStatus = FileStatus;
 
