@@ -366,7 +366,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
-        fixture.detectChanges();
         tick();
         fixture.detectChanges();
 
