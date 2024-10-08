@@ -41,7 +41,7 @@ ${appName}<?xml version="1.0" encoding="UTF-8"?>
             BlueprintIdentifier = "4F4474F426BD8F87004E6064"
             BuildableName = "${appName}.app"
             BlueprintName = "${appName}"
-            ReferencedContainer = "container:assignment/${appName}.xcodeproj">
+            ReferencedContainer = "container:${studentParentWorkingDirectoryName}/${appName}.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -57,7 +57,7 @@ ${appName}<?xml version="1.0" encoding="UTF-8"?>
             BlueprintIdentifier = "4F4474F426BD8F87004E6064"
             BuildableName = "${appName}.app"
             BlueprintName = "${appName}"
-            ReferencedContainer = "container:assignment/${appName}.xcodeproj">
+            ReferencedContainer = "container:${studentParentWorkingDirectoryName}/${appName}.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
    </ProfileAction>

@@ -7,9 +7,12 @@
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
             @if (programmingExercise.buildConfig?.windfile && programmingExercise.buildConfig?.windfile?.metadata && programmingExercise.buildConfig?.windfile?.metadata?.docker) {
-                <jhi-programming-exercise-docker-image
+                <jhi-programming-exercise-build-configuration
                     [dockerImage]="programmingExercise.buildConfig!.windfile!.metadata.docker.image"
                     (dockerImageChange)="setDockerImage($event)"
+                    [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
+                    (timeoutChange)="setTimeout($event)"
+                    [isAeolus]="false"
                 />
             }
             <label jhiTranslate="artemisApp.programmingExercise.script" class="mb-2"></label>

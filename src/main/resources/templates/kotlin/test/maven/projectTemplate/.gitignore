@@ -1,4 +1,4 @@
-assignment/
+${studentParentWorkingDirectoryName}/
 target/
 
 # Taken from https://github.com/github/gitignore

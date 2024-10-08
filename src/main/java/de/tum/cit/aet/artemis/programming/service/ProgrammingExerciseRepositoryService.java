@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -662,8 +663,32 @@ public class ProgrammingExerciseRepositoryService {
 
         replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replace(" ", "-")); // Used e.g. in artifactId
         replacements.put("${exerciseName}", programmingExercise.getTitle());
-        replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
         replacements.put("${packaging}", programmingExercise.getBuildConfig().hasSequentialTestRuns() ? "pom" : "jar");
+
+        var buildConfig = programmingExercise.getBuildConfig();
+
+        // replace checkout directory placeholders
+        String studentWorkingDirectory = !StringUtils.isBlank(buildConfig.getAssignmentCheckoutPath()) ? buildConfig.getAssignmentCheckoutPath() : Constants.ASSIGNMENT_REPO_NAME;
+        if (studentWorkingDirectory.startsWith("/")) {
+            studentWorkingDirectory = studentWorkingDirectory.substring(1);
+        }
+        String testWorkingDirectory = buildConfig.getTestCheckoutPath() != null && !buildConfig.getTestCheckoutPath().isBlank() ? buildConfig.getTestCheckoutPath()
+                : Constants.TEST_REPO_NAME;
+        String solutionWorkingDirectory = buildConfig.getSolutionCheckoutPath() != null && !buildConfig.getSolutionCheckoutPath().isBlank() ? buildConfig.getSolutionCheckoutPath()
+                : Constants.SOLUTION_REPO_NAME;
+
+        if (programmingLanguage == ProgrammingLanguage.PYTHON) {
+            replacements.put(Constants.ASSIGNMENT_REPO_PARENT_PLACEHOLDER, studentWorkingDirectory.replace("/", "."));
+        }
+        else {
+            replacements.put(Constants.ASSIGNMENT_REPO_PARENT_PLACEHOLDER, studentWorkingDirectory);
+        }
+        replacements.put(Constants.ASSIGNMENT_REPO_PLACEHOLDER, "/" + studentWorkingDirectory + "/src");
+        replacements.put(Constants.TEST_REPO_PLACEHOLDER, testWorkingDirectory);
+        replacements.put(Constants.SOLUTION_REPO_PLACEHOLDER, solutionWorkingDirectory);
+        if ((programmingLanguage == ProgrammingLanguage.JAVA && programmingExercise.getProjectType().isGradle()) || programmingLanguage == ProgrammingLanguage.RUST) {
+            replacements.put(Constants.ASSIGNMENT_REPO_PLACEHOLDER_NO_SLASH, studentWorkingDirectory + "/src");
+        }
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath(), replacements, List.of("gradle-wrapper.jar"));
     }
 

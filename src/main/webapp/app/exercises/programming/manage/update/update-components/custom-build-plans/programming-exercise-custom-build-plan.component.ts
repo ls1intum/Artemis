@@ -3,8 +3,9 @@ import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entit
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/exercises/programming/manage/update/programming-exercise-creation-config';
 import { AeolusService } from 'app/exercises/programming/shared/service/aeolus.service';
-import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
+import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -15,7 +16,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     @Input() programmingExercise: ProgrammingExercise;
     @Input() programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
 
-    @ViewChild(ProgrammingExerciseDockerImageComponent) programmingExerciseDockerImageComponent?: ProgrammingExerciseDockerImageComponent;
+    @ViewChild(ProgrammingExerciseBuildConfigurationComponent) programmingExerciseDockerImageComponent?: ProgrammingExerciseBuildConfigurationComponent;
 
     programmingLanguage?: ProgrammingLanguage;
     projectType?: ProjectType;
@@ -57,6 +58,15 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                 this.programmingExercise.staticCodeAnalysisEnabled !== this.staticCodeAnalysisEnabled ||
                 this.programmingExercise.buildConfig!.sequentialTestRuns !== this.sequentialTestRuns ||
                 this.programmingExercise.buildConfig!.testwiseCoverageEnabled !== this.testwiseCoverageEnabled)
+        );
+    }
+
+    shouldReplacePlaceholders(): boolean {
+        return (
+            (!!this.programmingExercise.buildConfig?.assignmentCheckoutPath && this.programmingExercise.buildConfig?.assignmentCheckoutPath.trim() !== '') ||
+            (!!this.programmingExercise.buildConfig?.testCheckoutPath && this.programmingExercise.buildConfig?.testCheckoutPath.trim() !== '') ||
+            !!this.programmingExercise.buildConfig?.buildScript?.includes('${studentParentWorkingDirectoryName}') ||
+            !!this.programmingExercise.buildConfig?.buildScript?.includes('${testWorkingDirectory}')
         );
     }
 
@@ -107,6 +117,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
                 .getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns, this.testwiseCoverageEnabled)
                 .subscribe({
                     next: (file: string) => {
+                        file = this.replacePlaceholders(file);
                         this.codeChanged(file);
                         this.editor?.setText(file);
                     },
@@ -118,6 +129,9 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         if (!this.programmingExercise.buildConfig?.buildScript) {
             this.resetCustomBuildPlan();
         }
+        if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
+            this.programmingExercise.buildConfig!.timeoutSeconds = 0;
+        }
     }
 
     get editor(): MonacoEditorComponent | undefined {
@@ -128,6 +142,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
 
     codeChanged(code: string): void {
         this.code = code;
+        this.editor?.setText(code);
         this.programmingExercise.buildConfig!.buildScript = code;
     }
 
@@ -146,5 +161,17 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             return;
         }
         this.programmingExercise.buildConfig!.windfile.metadata.docker.image = dockerImage.trim();
+    }
+
+    setTimeout(timeout: number) {
+        this.programmingExercise.buildConfig!.timeoutSeconds = timeout;
+    }
+
+    replacePlaceholders(buildScript: string): string {
+        const assignmentRepoName = this.programmingExercise.buildConfig?.assignmentCheckoutPath || ASSIGNMENT_REPO_NAME;
+        const testRepoName = this.programmingExercise.buildConfig?.testCheckoutPath || TEST_REPO_NAME;
+        buildScript = buildScript.replaceAll('${studentParentWorkingDirectoryName}', assignmentRepoName);
+        buildScript = buildScript.replaceAll('${testWorkingDirectory}', testRepoName);
+        return buildScript;
     }
 }

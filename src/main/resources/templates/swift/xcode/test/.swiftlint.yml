@@ -292,7 +292,7 @@ only_rules:
     # An XCTFail call should include a description of the assertion.
 
 included: # paths to include during linting. `--path` is ignored if present.
-    - assignment
+    - ${studentParentWorkingDirectoryName}
 
 excluded: # paths to ignore during linting. Takes precedence over `included`.
   - Carthage

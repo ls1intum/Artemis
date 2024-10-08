@@ -10,12 +10,12 @@ actions:
       # ------------------------------
 
       # Updating assignment and test-reports ownership...
-      sudo chown artemis_user:artemis_user assignment/ -R
+      sudo chown artemis_user:artemis_user ${studentParentWorkingDirectoryName}/ -R
       mkdir test-reports
       chown artemis_user:artemis_user test-reports/ -R
 
       # assignment
-      cd tests
+      cd ${testWorkingDirectory}
       REQ_FILE=requirements.txt
       if [ -f "$REQ_FILE" ]; then
           pip3 install --user -r requirements.txt || true
@@ -33,18 +33,18 @@ actions:
       # Setup makefile
       # ------------------------------
 
-      shadowFilePath="../tests/testUtils/c/shadow_exec.c"
+      shadowFilePath="../${testWorkingDirectory}/testUtils/c/shadow_exec.c"
 
-      foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' assignment/Makefile`
+      foundIncludeDirs=`grep -m 1 'INCLUDEDIRS\s*=' ${studentParentWorkingDirectoryName}/Makefile`
 
-      foundSource=`grep -m 1 'SOURCE\s*=' assignment/Makefile`
+      foundSource=`grep -m 1 'SOURCE\s*=' ${studentParentWorkingDirectoryName}/Makefile`
       foundSource="$foundSource $shadowFilePath"
 
-      rm -f assignment/GNUmakefile
-      rm -f assignment/makefile
+      rm -f ${studentParentWorkingDirectoryName}/GNUmakefile
+      rm -f ${studentParentWorkingDirectoryName}/makefile
 
-      cp -f tests/Makefile assignment/Makefile || exit 2
-      sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" assignment/Makefile
+      cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
+      sed -i "s~\bINCLUDEDIRS\s*=.*~${foundIncludeDirs}~; s~\bSOURCE\s*=.*~${foundSource}~" ${studentParentWorkingDirectoryName}/Makefile
     runAlways: false
   - name: build_and_run_all_tests
     script: |-
@@ -55,10 +55,10 @@ actions:
       # Build and run all tests if the compilation succeeds
       # ------------------------------
       sudo chown artemis_user:artemis_user .
-      gcc -c -Wall assignment/*.c || error=true
+      gcc -c -Wall ${studentParentWorkingDirectoryName}/*.c || error=true
       if [ ! $error ]
       then
-          cd tests || exit 0
+          cd ${testWorkingDirectory} || exit 0
           python3 Tests.py || true
       fi
     runAlways: false

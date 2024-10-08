@@ -5,7 +5,9 @@ export class ProgrammingExerciseBuildConfig {
     public buildPlanConfiguration?: string;
     public buildScript?: string;
     public checkoutSolutionRepository?: boolean;
-    public checkoutPath?: string;
+    public assignmentCheckoutPath?: string;
+    public testCheckoutPath?: string;
+    public solutionCheckoutPath?: string;
     public timeoutSeconds?: number;
     public dockerFlags?: string;
     public windfile?: WindFile;

@@ -6,7 +6,7 @@
         "test:ci": "jest --ci --reporters=default --reporters=jest-junit"
     },
     "workspaces": [
-        "assignment"
+        "${studentParentWorkingDirectoryName}"
     ],
     "devDependencies": {
         "@babel/core": "^7.24.7",

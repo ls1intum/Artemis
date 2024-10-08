@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.service;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.ALLOWED_CHECKOUT_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.SOLUTION;
 import static de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType.TEMPLATE;
@@ -362,6 +363,7 @@ public class ProgrammingExerciseService {
         programmingExercise.validateGeneralSettings();
         programmingExercise.validateProgrammingSettings();
         programmingExercise.validateSettingsForFeedbackRequest();
+        validateCustomCheckoutPaths(programmingExercise);
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
@@ -427,6 +429,27 @@ public class ProgrammingExerciseService {
         }
     }
 
+    private void validateCustomCheckoutPaths(ProgrammingExercise programmingExercise) {
+        var buildConfig = programmingExercise.getBuildConfig();
+
+        boolean assignmentCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getAssignmentCheckoutPath());
+        boolean solutionCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getSolutionCheckoutPath());
+        boolean testCheckoutPathIsValid = isValidCheckoutPath(buildConfig.getTestCheckoutPath());
+
+        if (!assignmentCheckoutPathIsValid || !solutionCheckoutPathIsValid || !testCheckoutPathIsValid) {
+            throw new BadRequestAlertException("The custom checkout paths are invalid", "Exercise", "checkoutDirectoriesInvalid");
+        }
+    }
+
+    private boolean isValidCheckoutPath(String checkoutPath) {
+        // Checkout paths are optional for the assignment, solution, and test repositories. If not set, the default path is used.
+        if (checkoutPath == null) {
+            return true;
+        }
+        Matcher matcher = ALLOWED_CHECKOUT_DIRECTORY.matcher(checkoutPath);
+        return matcher.matches();
+    }
+
     /**
      * Validates static code analysis settings
      *
@@ -436,6 +459,22 @@ public class ProgrammingExerciseService {
         ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.orElseThrow()
                 .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
         programmingExercise.validateStaticCodeAnalysisSettings(programmingLanguageFeature);
+    }
+
+    /**
+     * Validates the settings of an updated programming exercise. Checks if the custom checkout paths have changed.
+     *
+     * @param originalProgrammingExercise The original programming exercise
+     * @param updatedProgrammingExercise  The updated programming exercise
+     */
+    public void validateCheckoutDirectoriesUnchanged(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise updatedProgrammingExercise) {
+        var originalBuildConfig = originalProgrammingExercise.getBuildConfig();
+        var updatedBuildConfig = updatedProgrammingExercise.getBuildConfig();
+        if (!Objects.equals(originalBuildConfig.getAssignmentCheckoutPath(), updatedBuildConfig.getAssignmentCheckoutPath())
+                || !Objects.equals(originalBuildConfig.getSolutionCheckoutPath(), updatedBuildConfig.getSolutionCheckoutPath())
+                || !Objects.equals(originalBuildConfig.getTestCheckoutPath(), updatedBuildConfig.getTestCheckoutPath())) {
+            throw new BadRequestAlertException("The custom checkout paths cannot be changed!", "programmingExercise", "checkoutDirectoriesChanged");
+        }
     }
 
     /**

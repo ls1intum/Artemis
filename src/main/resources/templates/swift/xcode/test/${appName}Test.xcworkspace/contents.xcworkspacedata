@@ -5,6 +5,6 @@
       location = "group:${appName}Test.xcodeproj">
    </FileRef>
    <FileRef
-      location = "group:assignment/${appName}.xcodeproj">
+      location = "group:${studentParentWorkingDirectoryName}/${appName}.xcodeproj">
    </FileRef>
 </Workspace>

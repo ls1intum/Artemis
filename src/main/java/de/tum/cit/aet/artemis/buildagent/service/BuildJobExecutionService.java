@@ -245,7 +245,8 @@ public class BuildJobExecutionService {
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
         buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
-                buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage());
+                buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage(), buildJob.buildConfig().assignmentCheckoutPath(),
+                buildJob.buildConfig().testCheckoutPath(), buildJob.buildConfig().solutionCheckoutPath());
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);

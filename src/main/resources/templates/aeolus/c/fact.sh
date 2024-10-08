@@ -8,8 +8,8 @@ setup_the_build_environment () {
   # Task Description:
   # Build and run all tests
   # ------------------------------
-  # Updating assignment and test-reports ownership...
-  sudo chown artemis_user:artemis_user assignment/ -R || true
+  # Updating ${studentParentWorkingDirectoryName} and test-reports ownership...
+  sudo chown artemis_user:artemis_user ${studentParentWorkingDirectoryName}/ -R || true
   sudo mkdir test-reports
   sudo chown artemis_user:artemis_user test-reports/ -R || true
 }
@@ -22,13 +22,13 @@ build_and_run_all_tests () {
   # Build and run all tests
   # ------------------------------
 
-  rm -f assignment/GNUmakefile
-  rm -f assignment/Makefile
-  cp -f tests/Makefile assignment/Makefile || exit 2
-  cd tests
+  rm -f ${studentParentWorkingDirectoryName}/GNUmakefile
+  rm -f ${studentParentWorkingDirectoryName}/Makefile
+  cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
+  cd ${testWorkingDirectory}
   python3 Tests.py
   rm Tests.py
-  rm -rf ./tests || true
+  rm -rf ./${testWorkingDirectory} || true
 }
 
 main () {

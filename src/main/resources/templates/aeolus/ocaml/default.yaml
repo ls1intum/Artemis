@@ -5,7 +5,7 @@ actions:
       # the build process is specified in `run.sh` in the test repository
       chmod +x run.sh
       ./run.sh -s
-    workdir: tests
+    workdir: ${testWorkingDirectory}
     runAlways: false
   - name: junit
     script: '#empty script action, just for the results'

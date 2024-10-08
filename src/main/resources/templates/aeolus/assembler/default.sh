@@ -8,15 +8,15 @@ provide_environment_information () {
   python3 --version
   pip3 --version
   echo "--------------------Contents of tests repository--------------------"
-  ls -la tests
+  ls -la ${testWorkingDirectory}
   echo "---------------------------------------------"
   echo "--------------------Contents of assignment repository--------------------"
-  ls -la assignment
+  ls -la ${studentParentWorkingDirectoryName}
   echo "---------------------------------------------"
   #Fallback in case Docker does not work as intended
-  REQ_FILE=tests/requirements.txt
+  REQ_FILE=${testWorkingDirectory}/requirements.txt
   if [ -f "$REQ_FILE" ]; then
-      pip3 install --user -r tests/requirements.txt
+      pip3 install --user -r ${testWorkingDirectory}/requirements.txt
   else
       echo "$REQ_FILE does not exist"
   fi
@@ -25,18 +25,18 @@ provide_environment_information () {
 prepare_makefile () {
   echo '⚙️ executing prepare_makefile'
   #!/usr/bin/env bash
-  rm -f assignment/{GNUmakefile, Makefile, makefile}
-  rm -f assignment/io.inc
-  cp -f tests/Makefile assignment/Makefile || exit 2
-  cp -f tests/io.inc assignment/io.inc || exit 2
+  rm -f ${studentParentWorkingDirectoryName}/{GNUmakefile, Makefile, makefile}
+  rm -f ${studentParentWorkingDirectoryName}/io.inc
+  cp -f ${testWorkingDirectory}/Makefile ${studentParentWorkingDirectoryName}/Makefile || exit 2
+  cp -f ${testWorkingDirectory}/io.inc ${studentParentWorkingDirectoryName}/io.inc || exit 2
 }
 
 run_and_compile () {
   echo '⚙️ executing run_and_compile'
-  cd tests
-  python3 compileTest.py ../assignment/
+  cd ${testWorkingDirectory}
+  python3 compileTest.py ../${studentParentWorkingDirectoryName}/
   rm compileTest.py
-  cp result.xml ../assignment/result.xml
+  cp result.xml ../${studentParentWorkingDirectoryName}/result.xml
 }
 
 junit () {

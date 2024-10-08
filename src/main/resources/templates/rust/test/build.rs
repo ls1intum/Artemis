@@ -6,7 +6,7 @@ use std::{fs, io};
 
 use syn::{parse_file, FnArg, ImplItem, Item, TraitItem, Type, TypeParamBound};
 
-const SRC_DIR: &str = "assignment/src";
+const SRC_DIR: &str = "${studentWorkingDirectoryNoSlash}";
 
 fn main() {
     println!("cargo::rerun-if-changed={SRC_DIR}");

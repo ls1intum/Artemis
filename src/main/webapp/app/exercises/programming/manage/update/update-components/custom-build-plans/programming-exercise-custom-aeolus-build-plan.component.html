@@ -7,9 +7,10 @@
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
         <div class="row m-1">
             @if (programmingExercise.buildConfig?.windfile && programmingExercise.buildConfig?.windfile?.metadata && programmingExercise.buildConfig?.windfile?.metadata?.docker) {
-                <jhi-programming-exercise-docker-image
+                <jhi-programming-exercise-build-configuration
                     [dockerImage]="programmingExercise.buildConfig!.windfile!.metadata.docker.image"
                     (dockerImageChange)="setDockerImage($event)"
+                    [isAeolus]="true"
                 />
             }
             <div class="col-3 col-md-3">

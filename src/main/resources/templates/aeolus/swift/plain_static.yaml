@@ -2,14 +2,14 @@ api: v0.0.1
 actions:
   - name: build_and_test_the_code
     script: |-
-      cp -R Sources assignment
+      cp -R Sources ${studentParentWorkingDirectoryName}
       # copy test files
-      cp -R Tests assignment
-      cp Package.swift assignment
+      cp -R Tests ${studentParentWorkingDirectoryName}
+      cp Package.swift ${studentParentWorkingDirectoryName}
 
       # In order to get the correct console output we need to execute the command within the assignment directory
       # swift build
-      cd assignment
+      cd ${studentParentWorkingDirectoryName}
       swift build || error=true
 
       if [ ! $error ]
@@ -26,10 +26,10 @@ actions:
   - name: run_static_code_analysis
     script: |-
       # Copy SwiftLint rules
-      cp .swiftlint.yml assignment || true
+      cp .swiftlint.yml ${studentParentWorkingDirectoryName} || true
       # create target directory for SCA Parser
       mkdir target
-      cd assignment
+      cd ${studentParentWorkingDirectoryName}
       # Execute static code analysis
       swiftlint > ../target/swiftlint-result.xml
     runAlways: true
@@ -39,6 +39,6 @@ actions:
         before: false
         type: static-code-analysis
       - name: junit_tests.xml
-        path: assignment/tests.xml
+        path: ${studentParentWorkingDirectoryName}/tests.xml
         type: junit
         before: true

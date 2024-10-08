@@ -6,8 +6,8 @@ Tests are run using [stack](https://docs.haskellstack.org/en/stable/README/) in 
 
 ## Setup
 
-The executables specified in `test.cabal` expect the solution repository checked out in the `solution` subdirectory and
-the submission checked out in the `assignment` subdirectory.
+The executables specified in `test.cabal` expect the solution repository checked out in the `${solutionWorkingDirectory}` subdirectory and
+the submission checked out in the `${studentParentWorkingDirectoryName}` subdirectory.
 Moreover, `test.cabal` provides an executable to test the template repository locally.
 For this, it expects the template repository in the `template` subdirectory.
 

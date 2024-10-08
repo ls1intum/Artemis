@@ -203,6 +203,19 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateProgrammingExercise_Invalid_CheckoutPaths() throws Exception {
+        // The mock commit hashes don't allow the getPushDate() method in the LocalVCService to retrieve the push date using the commit hash. Thus, this method must be mocked.
+        doReturn(ZonedDateTime.now().minusSeconds(2)).when(versionControlService).getPushDate(any(), any(), any());
+
+        ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+        newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+        newExercise.getBuildConfig().setAssignmentCheckoutPath("/invalid/assignment");
+
+        request.postWithResponseBody("/api/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateProgrammingExercise() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(1));
         programmingExercise.setCompetencies(Set.of(competency));

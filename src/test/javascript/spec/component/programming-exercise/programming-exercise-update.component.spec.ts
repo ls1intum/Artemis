@@ -940,6 +940,49 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 });
             }
         });
+
+        it('should find invalid timeout', () => {
+            comp.programmingExercise.buildConfig!.timeoutSeconds = -1;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.timeout.alert',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.timeoutSeconds = 100;
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.timeout.alert',
+                translateValues: {},
+            });
+        });
+
+        it('should find invalid checkoutpaths', () => {
+            comp.programmingExercise.buildConfig!.assignmentCheckoutPath = 'assignment';
+            comp.programmingExercise.buildConfig!.testCheckoutPath = 'assignment';
+            comp.programmingExercise.buildConfig!.solutionCheckoutPath = 'solution';
+
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.testCheckoutPath = 'test';
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.assignmentCheckoutPath = 'assignment/';
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+
+            comp.programmingExercise.buildConfig!.assignmentCheckoutPath = 'assignment';
+            expect(comp.getInvalidReasons()).not.toContainEqual({
+                translateKey: 'artemisApp.programmingExercise.checkoutPath.invalid',
+                translateValues: {},
+            });
+        });
     });
 
     describe('disable features based on selected language and project type', () => {
