@@ -1,0 +1,26 @@
+{
+    "artemisApp": {
+        "faq": {
+            "home": {
+                "title": "FAQ",
+                "createLabel": "Create a new FAQ",
+                "filterLabel": "Filter",
+                "createOrEditLabel": "Create or edit FAQ"
+            },
+            "created": "The FAQ was successfully created",
+            "updated": "The FAQ was successfully updated",
+            "deleted": "The FAQ was successfully deleted",
+            "delete": {
+                "question": "Are you sure you want to permanently delete the FAQ <strong>{{ title }}</strong>? This action can NOT be undone!",
+                "typeNameToConfirm": "Please type in the name of the FAQ to confirm."
+            },
+
+            "table": {
+                "questionTitle": "Question title",
+                "questionAnswer": "Question answer",
+                "categories": "Categories"
+            },
+            "course": "Course"
+        }
+    }
+}

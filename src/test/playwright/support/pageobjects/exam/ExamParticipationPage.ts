@@ -115,6 +115,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
         await this.examStartEnd.startExam(true);
     }
 
+    async almostStartExam() {
+        await this.examStartEnd.onlyClickConfirmationCheckmark();
+    }
+
     async handInEarly() {
         await this.examNavigation.handInEarly();
         const response = await this.examStartEnd.finishExam();
