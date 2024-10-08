@@ -74,6 +74,7 @@ import { PROFILE_THEIA } from 'app/app.constants';
 import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { ExerciseTitleChannelNameModule } from 'app/exercises/shared/exercise-title-channel-name/exercise-title-channel-name.module';
+import { CustomNotIncludedInValidatorDirective } from '../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 
 describe('ProgrammingExerciseUpdateComponent', () => {
     const courseId = 1;
@@ -146,6 +147,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 MockComponent(ExerciseUpdatePlagiarismComponent),
                 MockComponent(SwitchEditModeButtonComponent),
                 MockModule(ExerciseTitleChannelNameModule),
+                MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
