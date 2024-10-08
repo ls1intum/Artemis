@@ -364,14 +364,14 @@ public class CourseResource {
     }
 
     /**
-     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given course.
+     * PUT courses/:courseId/online-course-configuration : Updates the onlineCourseConfiguration for the given course.
      *
      * @param courseId                  the id of the course to update
      * @param onlineCourseConfiguration the online course configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
      */
     // TODO: move into LTIResource
-    @PutMapping("courses/{courseId}/onlineCourseConfiguration")
+    @PutMapping("courses/{courseId}/online-course-configuration")
     @EnforceAtLeastInstructor
     @Profile(PROFILE_LTI)
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
@@ -821,12 +821,12 @@ public class CourseResource {
     }
 
     /**
-     * GET /courses/:courseId/lockedSubmissions Get locked submissions for course for user
+     * GET /courses/:courseId/locked-submissions Get locked submissions for course for user
      *
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
-    @GetMapping("courses/{courseId}/lockedSubmissions")
+    @GetMapping("courses/{courseId}/locked-submissions")
     @EnforceAtLeastTutor
     public ResponseEntity<List<Submission>> getLockedSubmissionsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all locked submissions for course : {}", courseId);

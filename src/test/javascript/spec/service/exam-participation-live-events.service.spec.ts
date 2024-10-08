@@ -1,5 +1,5 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Subject, firstValueFrom } from 'rxjs';
 import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -7,6 +7,7 @@ import { ExamLiveEvent, ExamLiveEventType, ExamParticipationLiveEventsService } 
 import { LocalStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ExamParticipationLiveEventsService', () => {
     let service: ExamParticipationLiveEventsService;
@@ -34,8 +35,10 @@ describe('ExamParticipationLiveEventsService', () => {
         mockWebsocketService = tmpMockWebsocketService as unknown as JhiWebsocketService;
 
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: JhiWebsocketService, useValue: mockWebsocketService },
                 { provide: ExamParticipationService, useValue: mockExamParticipationService },
                 { provide: LocalStorageService, useValue: mockLocalStorageService },

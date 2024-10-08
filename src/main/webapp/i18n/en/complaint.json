@@ -60,8 +60,8 @@
         },
         "moreFeedback": {
             "title": "More Feedback Request",
-            "description": "If something is not clear enough and you need more explanation, you can request the tutor to provide more feedback.",
-            "descriptionTeam": "If something is not clear enough and you need more explanation, you can request your tutor to provide more feedback.",
+            "description": "If something is not clear enough, and you need more explanation, you can request the tutor to provide more feedback.",
+            "descriptionTeam": "If something is not clear enough, and you need more explanation, you can request your tutor to provide more feedback.",
             "beDescriptive": "Please describe in detail what is unclear to you about the assessment. Your request will then be evaluated by the same reviewer.",
             "beDescriptiveTeam": "Please describe in detail what is unclear to you about the assessment. Your tutor will then clarify their assessment.",
             "created": "Your More Feedback Request has been submitted!",
