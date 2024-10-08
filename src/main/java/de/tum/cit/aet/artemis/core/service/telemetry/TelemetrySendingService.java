@@ -13,7 +13,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -91,7 +90,6 @@ public class TelemetrySendingService {
      * @param sendAdminDetails a flag indicating whether to include administrator details in the
      *                             telemetry data (such as contact information and admin name).
      */
-    @Async
     public void sendTelemetryByPostRequest(boolean eurekaEnabled, boolean sendAdminDetails) {
 
         long numberOfNodes = 1;

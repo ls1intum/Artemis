@@ -29,9 +29,6 @@ public class TelemetryService {
 
     private final TelemetrySendingService telemetrySendingService;
 
-    @Value("${artemis.telemetry.destination}")
-    private String destination;
-
     @Value("${artemis.telemetry.enabled}")
     public boolean useTelemetry;
 
@@ -52,11 +49,11 @@ public class TelemetryService {
     }
 
     /**
-     * Schedules the sending of telemetry data to the server after the application is ready.
+     * Schedules the sending of telemetry data to the server after the application is ready, after enough time for other instances to start has passed.
      * This method is triggered automatically when the application context is fully initialized.
      * <p>
-     * The task will be scheduled to run after a delay, specified by the {@code initialDelay} variable.
-     * This is 120 seconds by default.
+     * The task will be scheduled to run after a delay, specified by the {@code sendingDelay} variable.
+     * This is 180 seconds by default, but can be changed in the configs (Three minutes)
      * If telemetry is disabled (as specified by the {@code useTelemetry} flag), the task will not be scheduled.
      * <p>
      * It uses a {@link TaskScheduler} to schedule the {@link #sendTelemetry()} method to run asynchronously
@@ -65,11 +62,11 @@ public class TelemetryService {
      */
     @EventListener(ApplicationReadyEvent.class)
     public void scheduleTelemetryTask() {
-        if (!useTelemetry) { // || profileService.isDevActive()) {
+        if (!useTelemetry || profileService.isDevActive()) {
             return;
         }
 
-        log.info("Scheduling telemetry information to be sent after {}-second delay", sendingDelay);
+        log.info("Scheduling telemetry information to be sent after {} seconds delay", sendingDelay);
         Instant startTime = Instant.now().plus(Duration.ofSeconds(sendingDelay));
         taskScheduler.schedule(this::sendTelemetry, startTime);
     }
@@ -79,7 +76,7 @@ public class TelemetryService {
      * If telemetry is disabled in artemis.telemetry.enabled, no data is sent.
      */
     private void sendTelemetry() {
-        log.info("Sending telemetry information asynchronously after 2-minute delay");
+        log.info("Sending telemetry information asynchronously after {} seconds delay", sendingDelay);
         telemetrySendingService.sendTelemetryByPostRequest(eurekaEnabled, sendAdminDetails);
     }
 }
