@@ -32,12 +32,11 @@ import { Course } from 'app/entities/course.model';
 import { delay } from 'rxjs/operators';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
-import { RouterTestingModule } from '@angular/router/testing';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -173,7 +172,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 CodeEditorTutorAssessmentContainerComponent,
                 MockComponent(ProgrammingAssessmentRepoExportButtonComponent),
@@ -204,7 +203,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 ExtensionPointDirective,
             ],
             providers: [
-                MockProvider(Router),
+                provideRouter([]),
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
                 { provide: RepositoryFileService, useClass: MockRepositoryFileService },

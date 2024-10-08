@@ -26,9 +26,9 @@ import { MockProfileService } from '../../helpers/mocks/service/mock-profile.ser
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import { RouterTestingModule } from '@angular/router/testing';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { provideRouter } from '@angular/router';
 import { PROFILE_THEIA } from 'app/app.constants';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -109,7 +109,7 @@ describe('CodeButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule, RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule],
             declarations: [
                 CodeButtonComponent,
                 MockComponent(ExerciseActionButtonComponent),
@@ -120,6 +120,7 @@ describe('CodeButtonComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
+                provideRouter([]),
                 MockProvider(AlertService),
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
                 { provide: AccountService, useClass: MockAccountService },
