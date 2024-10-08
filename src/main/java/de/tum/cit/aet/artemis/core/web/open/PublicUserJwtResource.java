@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.dto.vm.LoginVM;
@@ -111,7 +112,8 @@ public class PublicUserJwtResource {
      */
     @PostMapping("theia-token")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> reKey(HttpServletRequest request, HttpServletResponse response) {
+    public ResponseEntity<String> getTheiaToken(@RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request,
+            HttpServletResponse response) {
         // remaining time in milliseconds
         var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
         if (jwtToken == null) {
@@ -125,7 +127,9 @@ public class PublicUserJwtResource {
         long maxDuration = Duration.ofDays(1).toMillis();
         ResponseCookie responseCookie = jwtCookieService.buildTheiaCookie(Math.min(tokenRemainingTime, maxDuration));
 
-        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        if (asCookie) {
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        }
         return ResponseEntity.ok(responseCookie.getValue());
     }
 
