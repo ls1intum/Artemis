@@ -3,7 +3,9 @@ package de.tum.cit.aet.artemis.core.security.annotations;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.validation.constraints.NotBlank;
@@ -22,7 +24,8 @@ public final class AnnotationUtils {
     }
 
     /**
-     * Extracts the annotation from the method or type
+     * Extracts the annotation from the method or type and all super classes.
+     * In case multiple versions of the annotation are present, the one closest to the method is returned.
      *
      * @param clazz     the annotation class
      * @param joinPoint the join point
@@ -33,26 +36,71 @@ public final class AnnotationUtils {
     public static <T extends Annotation> Optional<T> getAnnotation(@NotNull Class<T> clazz, @NotNull ProceedingJoinPoint joinPoint) {
         final var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
         T annotation = method.getAnnotation(clazz);
-        if (annotation != null) {
-            return Optional.of(annotation);
+
+        Optional<T> foundAnnotation = getAnnotation(clazz, method.getDeclaredAnnotations(), annotation);
+        if (foundAnnotation.isPresent()) {
+            return foundAnnotation;
         }
-        for (Annotation a : method.getDeclaredAnnotations()) {
-            annotation = a.annotationType().getAnnotation(clazz);
-            if (annotation != null) {
-                return Optional.of(annotation);
+
+        for (Class<?> declaringClass = method.getDeclaringClass(); declaringClass != null; declaringClass = declaringClass.getSuperclass()) {
+            annotation = declaringClass.getAnnotation(clazz);
+            foundAnnotation = getAnnotation(clazz, declaringClass.getDeclaredAnnotations(), annotation);
+            if (foundAnnotation.isPresent()) {
+                return foundAnnotation;
             }
         }
-        annotation = method.getDeclaringClass().getAnnotation(clazz);
+
+        return Optional.empty();
+    }
+
+    private static <T extends Annotation> Optional<T> getAnnotation(Class<T> clazz, Annotation[] declaredAnnotations, T annotation) {
         if (annotation != null) {
             return Optional.of(annotation);
         }
-        for (Annotation a : method.getDeclaringClass().getDeclaredAnnotations()) {
+        for (Annotation a : declaredAnnotations) {
             annotation = a.annotationType().getAnnotation(clazz);
             if (annotation != null) {
                 return Optional.of(annotation);
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * Extracts the annotations from the method or type and all super classes.
+     * In case multiple versions of the annotation are present, all are returned.
+     *
+     * @param clazz     the annotation class
+     * @param joinPoint the join point
+     * @param <T>       the type of the annotation
+     * @return the annotations if they are present, empty otherwise
+     */
+    public static <T extends Annotation> List<T> getAnnotations(@NotNull Class<T> clazz, @NotNull ProceedingJoinPoint joinPoint) {
+        List<T> annotations = new ArrayList<>();
+
+        final var method = ((MethodSignature) joinPoint.getSignature()).getMethod();
+        T annotation = method.getAnnotation(clazz);
+
+        addAnnotations(clazz, method.getDeclaredAnnotations(), annotation, annotations);
+
+        for (Class<?> declaringClass = method.getDeclaringClass(); declaringClass != null; declaringClass = declaringClass.getSuperclass()) {
+            annotation = declaringClass.getAnnotation(clazz);
+            addAnnotations(clazz, declaringClass.getDeclaredAnnotations(), annotation, annotations);
+        }
+
+        return annotations;
+    }
+
+    private static <T extends Annotation> void addAnnotations(Class<T> clazz, Annotation[] declaredAnnotations, T annotation, List<T> annotations) {
+        if (annotation != null) {
+            annotations.add(annotation);
+        }
+        for (Annotation a : declaredAnnotations) {
+            annotation = a.annotationType().getAnnotation(clazz);
+            if (annotation != null) {
+                annotations.add(annotation);
+            }
+        }
     }
 
     /**

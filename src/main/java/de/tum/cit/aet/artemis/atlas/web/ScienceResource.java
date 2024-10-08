@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
  * REST controller providing the science related endpoints.
  */
 @Profile(PROFILE_CORE)
+@FeatureToggle(Feature.Science)
 @RestController
 @RequestMapping("api/")
 public class ScienceResource {
@@ -40,7 +41,6 @@ public class ScienceResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PutMapping(value = "science")
-    @FeatureToggle(Feature.Science)
     @EnforceAtLeastStudent
     public ResponseEntity<Void> science(@RequestBody ScienceEventDTO event) {
         log.debug("REST request to log science event of type {}", event);
