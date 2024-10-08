@@ -1247,13 +1247,9 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             WHERE p.exercise.id = :exerciseId
                   AND p.testRun = FALSE
                   AND f.positive = FALSE
-                  AND r.id = (
-                      SELECT MAX(pr.id)
-                      FROM p.results pr
-                  )
                   AND (:searchTerm = '' OR LOWER(f.detailText) LIKE LOWER(CONCAT('%', :searchTerm, '%')))
-                  AND (:filterTestCases IS NULL OR f.testCase.testName IN (:filterTestCases))
-                  AND (:filterTaskNames IS NULL OR f.testCase.testName IN (
+                  AND (:#{#filterTestCases != null && #filterTestCases.size() < 1} = TRUE OR f.testCase.testName IN (:filterTestCases))
+                  AND (:#{#filterTaskNames != null && #filterTaskNames.size() < 1} = TRUE OR f.testCase.testName IN (
                       SELECT tct.testName
                       FROM ProgrammingExerciseTask t
                       JOIN t.testCases tct
@@ -1277,13 +1273,13 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
     @Query("""
             SELECT COUNT(DISTINCT r.id)
             FROM StudentParticipation p
-                JOIN p.results r
+                JOIN p.results r ON r.id = (
+                         SELECT MAX(pr.id)
+                         FROM p.results pr
+                         WHERE pr.participation.id = p.id
+                     )
             WHERE p.exercise.id = :exerciseId
                   AND p.testRun = FALSE
-                  AND r.id = (
-                      SELECT MAX(pr.id)
-                      FROM p.results pr
-                  )
             """)
     long countDistinctResultsByExerciseId(@Param("exerciseId") long exerciseId);
 

@@ -1,4 +1,4 @@
-import { Component, InputSignal, computed, effect, inject, input, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { FeedbackAnalysisService, FeedbackDetail } from './feedback-analysis.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { AlertService } from 'app/core/util/alert.service';
@@ -6,7 +6,7 @@ import { faFilter, faSort, faSortDown, faSortUp, faUpRightAndDownLeftFromCenter 
 import { SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { FeedbackModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-modal.component';
-import { FeedbackFilterModalComponent } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
+import { FeedbackFilterModalComponent, FilterData } from 'app/exercises/programming/manage/grading/feedback-analysis/Modal/feedback-filter-modal.component';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
 
@@ -19,8 +19,8 @@ import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-
     providers: [FeedbackAnalysisService],
 })
 export class FeedbackAnalysisComponent {
-    exerciseTitle: InputSignal<string> = input.required<string>();
-    exerciseId: InputSignal<number> = input.required<number>();
+    exerciseTitle = input.required<string>();
+    exerciseId = input.required<number>();
 
     private feedbackAnalysisService = inject(FeedbackAnalysisService);
     private alertService = inject(AlertService);
@@ -32,7 +32,6 @@ export class FeedbackAnalysisComponent {
     readonly searchTerm = signal<string>('');
     readonly sortingOrder = signal<SortingOrder>(SortingOrder.DESCENDING);
     readonly sortedColumn = signal<string>('count');
-    readonly isSortableColumn = computed(() => (column: string) => ['count', 'detailText', 'testCaseName'].includes(column));
 
     readonly content = signal<SearchResult<FeedbackDetail>>({ resultsOnPage: [], numberOfPages: 0 });
     readonly totalItems = signal<number>(0);
@@ -47,7 +46,6 @@ export class FeedbackAnalysisComponent {
     readonly MAX_FEEDBACK_DETAIL_TEXT_LENGTH = 150;
     readonly sortIcon = computed(() => (this.sortingOrder() === SortingOrder.ASCENDING ? this.faSortUp : this.faSortDown));
 
-    hasAppliedFilters: boolean = false;
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
     readonly FILTER_TEST_CASES_KEY = 'feedbackAnalysis.testCases';
     readonly FILTER_OCCURRENCE_KEY = 'feedbackAnalysis.occurrence';
@@ -84,9 +82,9 @@ export class FeedbackAnalysisComponent {
             const response = await this.feedbackAnalysisService.search(state, {
                 exerciseId: this.exerciseId(),
                 filters: {
-                    tasks: this.hasAppliedFilters ? savedTasks : [],
-                    testCases: this.hasAppliedFilters ? savedTestCases : [],
-                    occurrence: this.hasAppliedFilters ? savedOccurrence : [],
+                    tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
+                    testCases: this.selectedFiltersCount() !== 0 ? savedTestCases : [],
+                    occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [],
                 },
             });
             this.content.set(response.feedbackDetails);
@@ -114,6 +112,10 @@ export class FeedbackAnalysisComponent {
         modalRef.componentInstance.feedbackDetail = signal(feedbackDetail);
     }
 
+    isSortableColumn(column: string): boolean {
+        return ['count', 'detailText', 'testCaseName'].includes(column);
+    }
+
     setSortedColumn(column: string): void {
         if (this.sortedColumn() === column) {
             this.sortingOrder.set(this.sortingOrder() === SortingOrder.ASCENDING ? SortingOrder.DESCENDING : SortingOrder.ASCENDING);
@@ -134,9 +136,9 @@ export class FeedbackAnalysisComponent {
         const modalRef = this.modalService.open(FeedbackFilterModalComponent, { centered: true, size: 'lg' });
 
         modalRef.componentInstance.filterForm.setValue({
-            tasks: this.hasAppliedFilters ? savedTasks : [],
-            testCases: this.hasAppliedFilters ? savedTestCases : [],
-            occurrence: this.hasAppliedFilters ? savedOccurrence : [this.minCount(), this.maxCount()],
+            tasks: this.selectedFiltersCount() !== 0 ? savedTasks : [],
+            testCases: this.selectedFiltersCount() !== 0 ? savedTestCases : [],
+            occurrence: this.selectedFiltersCount() !== 0 ? savedOccurrence : [this.minCount(), this.maxCount()],
         });
 
         modalRef.componentInstance.totalAmountOfTasks = this.totalAmountOfTasks;
@@ -148,13 +150,12 @@ export class FeedbackAnalysisComponent {
         });
     }
 
-    applyFilters(filters: any): void {
+    applyFilters(filters: FilterData): void {
         this.selectedFiltersCount.set(this.countAppliedFilters(filters));
-        this.hasAppliedFilters = this.selectedFiltersCount() !== 0;
         this.loadData();
     }
 
-    countAppliedFilters(filters: any): number {
+    countAppliedFilters(filters: FilterData): number {
         let count = 0;
         if (filters.tasks && filters.tasks.length > 0) {
             count += filters.tasks.length;

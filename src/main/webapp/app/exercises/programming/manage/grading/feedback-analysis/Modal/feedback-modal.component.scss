@@ -2,6 +2,10 @@
     padding: 1rem;
 }
 
+.modal-body p {
+    margin-bottom: 0;
+}
+
 .modal-label {
     font-weight: bold;
 }
@@ -16,12 +20,4 @@
     border-bottom: none;
     padding-left: 1rem;
     padding-top: 1.5rem;
-}
-
-.modal-body p {
-    margin-bottom: 0;
-}
-
-.modal-footer {
-    border-top: none;
 }

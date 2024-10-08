@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { Component, computed, inject, output, signal } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { RangeSliderComponent } from 'app/shared/range-slider/range-slider.component';
@@ -6,6 +6,11 @@ import { FeedbackAnalysisService } from 'app/exercises/programming/manage/gradin
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { LocalStorageService } from 'ngx-webstorage';
 
+export interface FilterData {
+    tasks: string[];
+    testCases: string[];
+    occurrence: number[];
+}
 @Component({
     selector: 'jhi-feedback-filter-modal',
     templateUrl: './feedback-filter-modal.component.html',
@@ -17,7 +22,7 @@ export class FeedbackFilterModalComponent {
     private localStorage = inject(LocalStorageService);
     private activeModal = inject(NgbActiveModal);
     private fb = inject(FormBuilder);
-    @Output() filterApplied = new EventEmitter<any>();
+    filterApplied = output<FilterData>();
     readonly filterForm: FormGroup;
 
     readonly FILTER_TASKS_KEY = 'feedbackAnalysis.tasks';
@@ -28,6 +33,7 @@ export class FeedbackFilterModalComponent {
     readonly testCaseNames = signal<string[]>([]);
     readonly minCount = signal<number>(0);
     readonly maxCount = signal<number>(0);
+    readonly taskArray = computed(() => Array.from({ length: this.totalAmountOfTasks() }, (_, i) => i + 1));
 
     constructor() {
         this.filterForm = this.fb.group({
@@ -35,10 +41,6 @@ export class FeedbackFilterModalComponent {
             testCases: [[]],
             occurrence: [[this.minCount(), this.maxCount() || 1]],
         });
-    }
-
-    generateTaskArray(): number[] {
-        return Array.from({ length: this.totalAmountOfTasks() }, (_, i) => i + 1);
     }
 
     get occurrence(): number[] {
@@ -50,7 +52,7 @@ export class FeedbackFilterModalComponent {
     }
 
     applyFilter(): void {
-        const filters = this.filterForm.value;
+        const filters: FilterData = this.filterForm.value;
         this.localStorage.store(this.FILTER_TASKS_KEY, filters.tasks);
         this.localStorage.store(this.FILTER_TEST_CASES_KEY, filters.testCases);
         this.localStorage.store(this.FILTER_OCCURRENCE_KEY, filters.occurrence);
@@ -67,24 +69,39 @@ export class FeedbackFilterModalComponent {
             testCases: [],
             occurrence: [this.minCount(), this.maxCount()],
         });
-        this.filterApplied.emit(this.filterForm.value);
+        this.filterApplied.emit(this.filterForm.value as FilterData);
         this.activeModal.close();
     }
 
-    onCheckboxChange(event: Event, controlName: string): void {
+    onCheckboxChange(event: Event, controlName: keyof FilterData): void {
         const checkbox = event.target as HTMLInputElement;
-        const values = this.filterForm.value[controlName];
-        if (checkbox.checked) {
-            values.push(checkbox.value);
-        } else {
-            const index = values.indexOf(checkbox.value);
-            if (index >= 0) {
-                values.splice(index, 1);
+
+        if (controlName === 'occurrence') {
+            const values = this.filterForm.value[controlName] as number[];
+            const numericValue = Number(checkbox.value);
+            if (checkbox.checked) {
+                values.push(numericValue);
+            } else {
+                const index = values.indexOf(numericValue);
+                if (index >= 0) {
+                    values.splice(index, 1);
+                }
             }
+            this.filterForm.patchValue({ occurrence: values });
+        } else {
+            const values = this.filterForm.value[controlName] as string[];
+            if (checkbox.checked) {
+                values.push(checkbox.value);
+            } else {
+                const index = values.indexOf(checkbox.value);
+                if (index >= 0) {
+                    values.splice(index, 1);
+                }
+            }
+            const patch: Partial<FilterData> = {};
+            patch[controlName] = values;
+            this.filterForm.patchValue(patch);
         }
-        const patch: { [key: string]: any } = {};
-        patch[controlName] = values;
-        this.filterForm.patchValue(patch);
     }
 
     closeModal(): void {

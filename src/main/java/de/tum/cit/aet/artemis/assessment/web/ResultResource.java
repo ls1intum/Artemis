@@ -42,6 +42,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -301,7 +302,7 @@ public class ResultResource {
      *                             "count".
      * @param filterTasks      A list of task numbers to filter feedback details by the associated tasks (optional).
      * @param filterTestCases  A list of test case names to filter feedback details by the associated test cases (optional).
-     * @param filterOccurrence A list of two values representing the minimum and maximum occurrence of feedback items to include (optional).
+     * @param filterOccurrence An array of two values representing the minimum and maximum occurrence of feedback items to include (optional).
      * @return A {@link ResponseEntity} containing a {@link FeedbackAnalysisResponseDTO}, which includes:
      *         - {@link SearchResultPageDTO < FeedbackDetailDTO >} feedbackDetails: Paginated feedback details for the exercise.
      *         - long totalItems: The total number of feedback items (used for pagination).
@@ -309,15 +310,16 @@ public class ResultResource {
      *         - List<String> testCaseNames: A list of test case names included in the feedback.
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-paged")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<FeedbackAnalysisResponseDTO> getFeedbackDetailsPaged(@PathVariable long exerciseId, @RequestParam int page, @RequestParam int pageSize,
-            @RequestParam(required = false) String searchTerm, @RequestParam String sortingOrder, @RequestParam String sortedColumn, @RequestParam List<String> filterTasks,
-            @RequestParam List<String> filterTestCases, @RequestParam List<String> filterOccurrence) {
+            @RequestParam String searchTerm, @RequestParam SortingOrder sortingOrder, @RequestParam String sortedColumn, @RequestParam List<String> filterTasks,
+            @RequestParam List<String> filterTestCases, @RequestParam String[] filterOccurrence) {
+
         SearchTermPageableSearchDTO<String> search = new SearchTermPageableSearchDTO<>();
         search.setPage(page);
         search.setPageSize(pageSize);
         search.setSearchTerm(searchTerm);
-        search.setSortingOrder(SortingOrder.valueOf(sortingOrder));
+        search.setSortingOrder(sortingOrder);
         search.setSortedColumn(sortedColumn);
 
         FeedbackAnalysisResponseDTO response = resultService.getFeedbackDetailsOnPage(exerciseId, search, filterTasks, filterTestCases, filterOccurrence);
@@ -333,7 +335,7 @@ public class ResultResource {
      * @return A {@link ResponseEntity} containing the maximum count of feedback occurrences (long).
      */
     @GetMapping("exercises/{exerciseId}/feedback-details-max-count")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInExercise
     public ResponseEntity<Long> getMaxCount(@PathVariable long exerciseId) {
         long maxCount = resultService.getMaxCountForExercise(exerciseId);
         return ResponseEntity.ok(maxCount);

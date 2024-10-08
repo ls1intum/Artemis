@@ -331,15 +331,16 @@
                     "totalItems": "Insgesamt {{count}} Elemente",
                     "error": "Beim Laden des Feedbacks ist ein Fehler aufgetreten.",
                     "search": "Suche ...",
+                    "filter": "Filter",
                     "feedbackModal": {
-                        "header": "Fehler Details",
-                        "feedbackTitle": "Test Fälle Feedback",
+                        "header": "Fehlerdetails",
+                        "feedbackTitle": "Feedback zu Testfällen",
                         "ok": "Ok"
                     },
                     "filterModal": {
-                        "modalTitle": "Filter Optionen",
+                        "modalTitle": "Filteroptionen",
                         "task": "Tasks",
-                        "testcase": "Test Fälle",
+                        "testcase": "Testfälle",
                         "occurrence": "Häufigkeit",
                         "clear": "Filter zurücksetzen",
                         "cancel": "Abbrechen",

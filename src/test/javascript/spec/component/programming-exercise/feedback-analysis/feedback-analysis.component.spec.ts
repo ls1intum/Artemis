@@ -152,8 +152,6 @@ describe('FeedbackAnalysisComponent', () => {
                 },
             } as any);
             const getMaxCountSpy = jest.spyOn(feedbackAnalysisService, 'getMaxCount').mockResolvedValue(10);
-            component.hasAppliedFilters = true;
-
             jest.spyOn(localStorageService, 'retrieve').mockReturnValueOnce(['task1']).mockReturnValueOnce(['testCase1']).mockReturnValueOnce([component.minCount(), 5]);
 
             await component.openFilterModal();
@@ -187,7 +185,6 @@ describe('FeedbackAnalysisComponent', () => {
             component.applyFilters(filters);
             expect(countAppliedFiltersSpy).toHaveBeenCalledWith(filters);
             expect(component.selectedFiltersCount()).toBe(2);
-            expect(component.hasAppliedFilters).toBeTrue();
             expect(loadDataSpy).toHaveBeenCalledOnce();
         });
     });

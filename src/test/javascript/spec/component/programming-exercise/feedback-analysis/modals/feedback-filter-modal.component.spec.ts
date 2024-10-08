@@ -89,7 +89,7 @@ describe('FeedbackFilterModalComponent', () => {
     it('should set occurrence correctly using the setter', () => {
         const setValueSpy = jest.spyOn(component.filterForm.get('occurrence')!, 'setValue');
         component.occurrence = [5, 15];
-        expect(setValueSpy).toHaveBeenCalledWith([5, 15]);
+        expect(setValueSpy).toHaveBeenCalledExactlyOnceWith([5, 15]);
     });
 
     it('should dismiss modal when closeModal is called', () => {

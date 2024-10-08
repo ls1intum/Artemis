@@ -114,7 +114,7 @@ public class PageUtil {
     public static PageRequest createDefaultPageRequest(PageableSearchDTO<String> search, ColumnMapping columnMapping) {
         String mappedColumn = columnMapping.getMappedColumnName(search.getSortedColumn());
 
-        var sortOptions = mappedColumn.contains("COUNT(") ? JpaSort.unsafe(mappedColumn) : Sort.by(mappedColumn);
+        var sortOptions = mappedColumn.contains("(") ? JpaSort.unsafe(mappedColumn) : Sort.by(mappedColumn);
 
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);

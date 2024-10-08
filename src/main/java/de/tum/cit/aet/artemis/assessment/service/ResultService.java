@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -563,7 +563,7 @@ public class ResultService {
      * @param search           The pageable search DTO containing page number, page size, sorting options, and a search term for filtering results.
      * @param filterTasks      A list of task numbers to filter the feedback details based on the associated test cases (optional).
      * @param filterTestCases  A list of test case names to filter the feedback details (optional).
-     * @param filterOccurrence A list of two strings representing the minimum and maximum occurrences to include (optional).
+     * @param filterOccurrence An array of two strings representing the minimum and maximum occurrences to include (optional).
      * @return A {@link FeedbackAnalysisResponseDTO} object containing:
      *         - A {@link SearchResultPageDTO} of paginated feedback details.
      *         - The total number of distinct results for the exercise.
@@ -571,16 +571,12 @@ public class ResultService {
      *         - A list of test case names included in the feedback.
      */
     public FeedbackAnalysisResponseDTO getFeedbackDetailsOnPage(long exerciseId, SearchTermPageableSearchDTO<String> search, List<String> filterTasks, List<String> filterTestCases,
-            List<String> filterOccurrence) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+            String[] filterOccurrence) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesByIdElseThrow(exerciseId);
 
         long distinctResultCount = studentParticipationRepository.countDistinctResultsByExerciseId(exerciseId);
 
         List<String> testCaseNames = programmingExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
-        if (filterTestCases.isEmpty()) {
-            filterTestCases = null;
-        }
 
         List<ProgrammingExerciseTask> tasks = programmingExerciseTaskService.getTasksWithUnassignedTestCases(exerciseId);
         Map<String, String> taskNameToIndexMap = new HashMap<>();
@@ -591,22 +587,20 @@ public class ResultService {
         for (int i = 0; i < tasks.size(); i++) {
             taskIndexToNameMap.put(String.valueOf(i + 1), tasks.get(i).getTaskName());
         }
+
         List<String> filterTaskNames = filterTasks.stream().map(taskIndexToNameMap::get).filter(Objects::nonNull).toList();
-        if (filterTaskNames.isEmpty()) {
-            filterTaskNames = null;
-        }
 
         long minOccurrence = 0;
-        long maxOccurrence = Long.MAX_VALUE;
-        if (filterOccurrence.size() == 2) {
-            minOccurrence = Long.parseLong(filterOccurrence.get(0));
-            maxOccurrence = Long.parseLong(filterOccurrence.get(1));
+        long maxOccurrence = Integer.MAX_VALUE;
+        if (filterOccurrence.length == 2) {
+            minOccurrence = Integer.parseInt(filterOccurrence[0]);
+            maxOccurrence = Integer.parseInt(filterOccurrence[1]);
         }
 
         final var pageable = PageUtil.createDefaultPageRequest(search, PageUtil.ColumnMapping.FEEDBACK_ANALYSIS);
 
         final Page<FeedbackDetailDTO> feedbackDetailPage = studentParticipationRepository.findFilteredFeedbackByExerciseId(exerciseId,
-                search.getSearchTerm() != null ? search.getSearchTerm().toLowerCase() : "", filterTestCases, filterTaskNames, minOccurrence, maxOccurrence, pageable);
+                StringUtils.isBlank(search.getSearchTerm()) ? "" : search.getSearchTerm().toLowerCase(), filterTestCases, filterTaskNames, minOccurrence, maxOccurrence, pageable);
 
         List<FeedbackDetailDTO> processedDetails = feedbackDetailPage.getContent().stream().map(detail -> {
             String taskIndex = taskNameToIndexMap.getOrDefault(detail.taskNumber(), "0");
