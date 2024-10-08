@@ -32,7 +32,7 @@ import { FormsModule } from 'app/forms/forms.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
@@ -61,7 +61,7 @@ import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/cus
         FormsModule,
         ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
-        MonacoEditorModule,
+        MonacoEditorComponent,
         ProgrammingExerciseTheiaComponent,
         ProgrammingExerciseDifficultyComponent,
         SwitchEditModeButtonComponent,
