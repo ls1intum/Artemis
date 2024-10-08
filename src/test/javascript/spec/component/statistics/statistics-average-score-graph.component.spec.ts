@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PerformanceInterval, StatisticsAverageScoreGraphComponent } from 'app/shared/statistics-graph/statistics-average-score-graph.component';
@@ -13,6 +12,7 @@ import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-fi
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
+import { provideRouter } from '@angular/router';
 
 describe('StatisticsAverageScoreGraphComponent', () => {
     let fixture: ComponentFixture<StatisticsAverageScoreGraphComponent>;
@@ -78,9 +78,9 @@ describe('StatisticsAverageScoreGraphComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(BarChartModule)],
+            imports: [ArtemisTestModule, MockModule(BarChartModule)],
             declarations: [StatisticsAverageScoreGraphComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(ArtemisNavigationUtilService), MockProvider(ChartExerciseTypeFilter), MockProvider(ChartCategoryFilter)],
+            providers: [provideRouter([]), MockProvider(ArtemisNavigationUtilService), MockProvider(ChartExerciseTypeFilter), MockProvider(ChartCategoryFilter)],
         })
             .compileComponents()
             .then(() => {
