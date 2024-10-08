@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 
@@ -33,6 +34,9 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExamUserRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.quiz.util.QuizExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -59,6 +63,9 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ExerciseRepository exerciseRepository;
 
     private Course course1;
 
@@ -123,11 +130,20 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         examUser1 = examUserRepository.save(examUser1);
         testExam2.setExamUsers(Set.of(examUser1));
         exerciseGroup1 = exam1.getExerciseGroups().getFirst();
+        QuizExercise quiz = QuizExerciseFactory.generateQuizExerciseForExam(exerciseGroup1);
+        exerciseGroup1.addExercise(quiz);
+        exerciseRepository.save(quiz);
         exerciseGroup2 = exam2.getExerciseGroups().getFirst();
-        studentExam1 = examUtilService.addStudentExam(exam1);
+        studentExam1 = examUtilService.addStudentExamWithUser(exam1, student1);
         studentExam2 = examUtilService.addStudentExam(exam2);
         studentExamForTestExam1 = examUtilService.addStudentExamForTestExam(testExam1, student1);
         studentExamForTestExam2 = examUtilService.addStudentExamForTestExam(testExam2, student1);
+        ExamUser examUser2 = new ExamUser();
+        examUser2.setExam(exam1);
+        examUser2.setUser(student1);
+        examUser2 = examUserRepository.save(examUser2);
+        exam1.setExamUsers(Set.of(examUser2));
+        exam1 = examRepository.save(exam1);
     }
 
     @Test
@@ -332,10 +348,49 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser() {
-        exam1.setExamUsers(Set.of());
+    void testCheckAndGetCourseAndExamAccessForConduction_notRegisteredUser() {
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam2.getId())).isInstanceOf(BadRequestAlertException.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent_examCanBeStarted() {
+        exam1.setStudentExams(Set.of());
+        exam1.setStartDate(ZonedDateTime.now().plusMinutes(3));
+        exam1.setEndDate(ZonedDateTime.now().plusMinutes(10));
         examRepository.save(exam1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(BadRequestAlertException.class);
+        studentExamRepository.delete(studentExam1);
+        assertThatNoException().isThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent_examCannotBeStarted() {
+        exam1.setStudentExams(Set.of());
+        exam1.setStartDate(ZonedDateTime.now().plusMinutes(7));
+        examRepository.save(exam1);
+        studentExamRepository.delete(studentExam1);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
+                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_noStudentExamPresent_examHasEnded() {
+        exam1.setStudentExams(Set.of());
+        exam1.setStartDate(ZonedDateTime.now().minusMinutes(10));
+        exam1.setEndDate(ZonedDateTime.now().minusMinutes(7));
+        examRepository.save(exam1);
+        studentExamRepository.delete(studentExam1);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
+                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCheckAndGetCourseAndExamAccessForConduction_registeredUser_studentExamPresent() {
+        StudentExam studentExam = examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId());
+        assertThat(studentExam.equals(studentExam1)).isEqualTo(true);
     }
 
     @Test
@@ -353,14 +408,6 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationIndependentTest {
         student1.setGroups(Set.of());
         userRepository.save(student1);
         assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), testExam1.getId())).isInstanceOf(AccessForbiddenException.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetExamInCourseElseThrow_realExam() {
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).asInstanceOf(type(BadRequestAlertException.class))
-                .satisfies(error -> assertThat(error.getParameters().get("skipAlert")).isEqualTo(Boolean.TRUE));
-
     }
 
     @Test
