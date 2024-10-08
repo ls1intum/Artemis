@@ -26,7 +26,6 @@ import { TextBlock, TextBlockType } from 'app/entities/text/text-block.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AlertService } from 'app/core/util/alert.service';
-import {} from '@angular/router/testing';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { GradingInstructionLinkIconComponent } from 'app/shared/grading-instruction-link-icon/grading-instruction-link-icon.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
