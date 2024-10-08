@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.core.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.Duration;
+import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,6 +40,8 @@ import de.tum.cit.aet.artemis.core.security.UserNotActivatedException;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
+import de.tum.cit.aet.artemis.core.security.jwt.JWTFilter;
+import de.tum.cit.aet.artemis.core.security.jwt.TokenProvider;
 import de.tum.cit.aet.artemis.core.service.connectors.SAML2Service;
 
 /**
@@ -52,12 +56,15 @@ public class PublicUserJwtResource {
 
     private final JWTCookieService jwtCookieService;
 
+    private final TokenProvider tokenProvider;
+
     private final AuthenticationManager authenticationManager;
 
     private final Optional<SAML2Service> saml2Service;
 
-    public PublicUserJwtResource(JWTCookieService jwtCookieService, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
+    public PublicUserJwtResource(JWTCookieService jwtCookieService, TokenProvider tokenProvider, AuthenticationManager authenticationManager, Optional<SAML2Service> saml2Service) {
         this.jwtCookieService = jwtCookieService;
+        this.tokenProvider = tokenProvider;
         this.authenticationManager = authenticationManager;
         this.saml2Service = saml2Service;
     }
@@ -98,21 +105,33 @@ public class PublicUserJwtResource {
     }
 
     /**
-     * Sends the token back as either a cookie or a bearer token
+     * Sends a theia token back as cookie and bearer token
      *
+     * @param request  HTTP request
      * @param response HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized)
      */
-    @PostMapping("re-key")
+    @PostMapping("theia-token")
     @EnforceAtLeastStudent
-    public ResponseEntity<String> reKey(@RequestParam(value = "as-bearer", defaultValue = "false") boolean asBearer, HttpServletResponse response) {
-        ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
-        if (asBearer) {
-            return ResponseEntity.ok(responseCookie.getValue());
+    public ResponseEntity<String> getTheiaToken(@RequestParam(name = "as-cookie", defaultValue = "false") boolean asCookie, HttpServletRequest request,
+            HttpServletResponse response) {
+        // remaining time in milliseconds
+        var jwtToken = JWTFilter.extractValidJwt(request, tokenProvider);
+        if (jwtToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
 
-        return ResponseEntity.ok().build();
+        // get validity of the token
+        long tokenRemainingTime = tokenProvider.getExpirationDate(jwtToken).getTime() - new Date().getTime();
+
+        // 1 day validity
+        long maxDuration = Duration.ofDays(1).toMillis();
+        ResponseCookie responseCookie = jwtCookieService.buildTheiaCookie(Math.min(tokenRemainingTime, maxDuration));
+
+        if (asCookie) {
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+        }
+        return ResponseEntity.ok(responseCookie.getValue());
     }
 
     /**

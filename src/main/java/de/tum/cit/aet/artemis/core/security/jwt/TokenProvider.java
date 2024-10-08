@@ -95,11 +95,26 @@ public class TokenProvider {
      * @return JWT Token
      */
     public String createToken(Authentication authentication, boolean rememberMe) {
+        return createToken(authentication, getTokenValidity(rememberMe));
+    }
+
+    /**
+     * Create JWT Token a fully populated <code>Authentication</code> object.
+     *
+     * @param authentication Authentication Object
+     * @param duration       the Token lifetime
+     * @param tools          tools this token is used for
+     * @return JWT Token
+     */
+    public String createToken(Authentication authentication, long duration, String... tools) {
         String authorities = authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).collect(Collectors.joining(","));
 
+        String toolClaims = String.join(",", tools);
+
         long now = (new Date()).getTime();
-        Date validity = new Date(now + getTokenValidity(rememberMe));
-        return Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).signWith(key, Jwts.SIG.HS512).expiration(validity).compact();
+        Date validity = new Date(now + duration);
+        return Jwts.builder().subject(authentication.getName()).claim(AUTHORITIES_KEY, authorities).claim("tools", toolClaims).signWith(key, Jwts.SIG.HS512).expiration(validity)
+                .compact();
     }
 
     /**
