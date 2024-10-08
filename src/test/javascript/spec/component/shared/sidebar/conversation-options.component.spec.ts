@@ -14,7 +14,6 @@ import { CourseExerciseDetailsComponent } from 'app/overview/exercise-details/co
 import { ExamDetailComponent } from 'app/exam/manage/exams/exam-detail.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
-import { RouterTestingModule } from '@angular/router/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../../../helpers/mocks/service/mock-metis-service.service';
@@ -27,6 +26,7 @@ import { ConversationDetailDialogComponent } from 'app/overview/course-conversat
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { provideRouter } from '@angular/router';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
@@ -51,17 +51,14 @@ examples.forEach((conversation) => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [
-                    ArtemisSharedModule,
-                    NgbDropdownMocksModule,
-                    RouterTestingModule.withRoutes([
+                imports: [ArtemisSharedModule, NgbDropdownMocksModule],
+                declarations: [ConversationOptionsComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+                providers: [
+                    provideRouter([
                         { path: 'courses/:courseId/lectures/:lectureId', component: CourseLectureDetailsComponent },
                         { path: 'courses/:courseId/exercises/:exerciseId', component: CourseExerciseDetailsComponent },
                         { path: 'courses/:courseId/exams/:examId', component: ExamDetailComponent },
                     ]),
-                ],
-                declarations: [ConversationOptionsComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-                providers: [
                     MockProvider(ConversationService),
                     MockProvider(MetisConversationService),
                     MockProvider(AlertService),
