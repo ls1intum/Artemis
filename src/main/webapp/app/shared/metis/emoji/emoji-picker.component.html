@@ -7,8 +7,8 @@
     [color]="'var(--primary)'"
     [recent]="recent"
     [i18n]="{ search: 'artemisApp.metis.searchEmoji' | artemisTranslate, categories: { recent: 'artemisApp.metis.courseEmojiSelectionCategory' | artemisTranslate } }"
-    [darkMode]="dark"
-    [imageUrlFn]="singleImageFunction"
+    [darkMode]="dark()"
+    [imageUrlFn]="singleImageFunction()"
     [backgroundImageFn]="utils.EMOJI_SHEET_URL"
     (emojiSelect)="onEmojiSelect($event)"
 />

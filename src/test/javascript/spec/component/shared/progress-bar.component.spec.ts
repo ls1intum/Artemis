@@ -5,6 +5,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { SimpleChange } from '@angular/core';
 import { MockDirective } from 'ng-mocks';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockThemeService } from '../../helpers/mocks/service/mock-theme.service';
 
 describe('ProgressBarComponent', () => {
     let fixture: ComponentFixture<ProgressBarComponent>;
@@ -14,6 +15,12 @@ describe('ProgressBarComponent', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [ProgressBarComponent],
+            providers: [
+                {
+                    class: ThemeService,
+                    useClass: MockThemeService,
+                },
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -49,7 +56,10 @@ describe('ProgressBarComponent', () => {
         component.ngOnChanges({ percentage: {} as SimpleChange });
         expect(component.foregroundColorClass).toBe('text-dark');
 
-        themeService.applyThemeExplicitly(Theme.DARK);
+        themeService.applyThemePreference(Theme.DARK);
+
+        fixture.detectChanges();
+
         expect(component.foregroundColorClass).toBe('text-white');
     });
 

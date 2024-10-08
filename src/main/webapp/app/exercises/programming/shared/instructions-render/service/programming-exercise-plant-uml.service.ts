@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, effect, inject } from '@angular/core';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 import { Cacheable } from 'ts-cacheable';
 import { Observable, Subject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 const themeChangedSubject = new Subject<void>();
@@ -12,19 +12,20 @@ export class ProgrammingExercisePlantUmlService {
     private resourceUrl = 'api/plantuml';
     private encoder: HttpParameterCodec;
 
+    private readonly themeService = inject(ThemeService);
+    private readonly http = inject(HttpClient);
+
     /**
      * Cacheable configuration
      */
 
-    constructor(
-        private http: HttpClient,
-        private themeService: ThemeService,
-    ) {
+    constructor() {
         this.encoder = new HttpUrlCustomEncoder();
-        this.themeService
-            .getCurrentThemeObservable()
-            .pipe(tap(() => themeChangedSubject.next()))
-            .subscribe();
+        effect(() => {
+            // Apply the theme as soon as the currentTheme changes
+            this.themeService.currentTheme();
+            themeChangedSubject.next();
+        });
     }
 
     /**
@@ -43,7 +44,7 @@ export class ProgrammingExercisePlantUmlService {
     getPlantUmlImage(plantUml: string) {
         return this.http
             .get(`${this.resourceUrl}/png`, {
-                params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.getCurrentTheme() === Theme.DARK),
+                params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.currentTheme() === Theme.DARK),
                 responseType: 'arraybuffer',
             })
             .pipe(map((res) => this.convertPlantUmlResponseToBase64(res)));
@@ -64,7 +65,7 @@ export class ProgrammingExercisePlantUmlService {
     })
     getPlantUmlSvg(plantUml: string): Observable<string> {
         return this.http.get(`${this.resourceUrl}/svg`, {
-            params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.getCurrentTheme() === Theme.DARK),
+            params: new HttpParams({ encoder: this.encoder }).set('plantuml', plantUml).set('useDarkTheme', this.themeService.currentTheme() === Theme.DARK),
             responseType: 'text',
         });
     }
