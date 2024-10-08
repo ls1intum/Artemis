@@ -18,6 +18,8 @@ public class CsrfArtemisFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         log.info("origin: {}", request.getHeader("origin"));
+        log.info("csrf: {}", request.getHeader("X-ARTEMIS-CSRF"));
+        log.info("bearer token: {}", request.getHeader("Authorization"));
 
         // Check if the custom CSRF header is present in the request
         if (request.getHeader("X-ARTEMIS-CSRF") != null) {
