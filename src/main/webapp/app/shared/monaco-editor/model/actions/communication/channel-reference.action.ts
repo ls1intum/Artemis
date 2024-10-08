@@ -44,11 +44,12 @@ export class ChannelReferenceAction extends TextEditorAction {
     }
 
     /**
-     * Types the text '#' into the editor and focuses it. This will trigger the completion provider to show the available channels.
+     * Inserts the text '#' into the editor and focuses it. This method will trigger the completion provider to show the available channels.
      * @param editor The editor to type the text into.
      */
     run(editor: TextEditor) {
-        this.typeText(editor, ChannelReferenceAction.DEFAULT_INSERT_TEXT);
+        this.replaceTextAtCurrentSelection(editor, ChannelReferenceAction.DEFAULT_INSERT_TEXT);
+        editor.triggerCompletion();
         editor.focus();
     }
 

@@ -58,7 +58,7 @@
         "jszip": "3.10.1",
         "lodash-es": "4.17.21",
         "mobile-drag-drop": "3.0.0-rc.0",
-        "monaco-editor": "0.51.0",
+        "monaco-editor": "0.52.0",
         "ngx-infinite-scroll": "18.0.0",
         "ngx-webstorage": "18.0.0",
         "papaparse": "5.4.1",

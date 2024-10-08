@@ -1,19 +1,23 @@
 /**
  * Sets up the MonacoEnvironment for the monaco editor's service worker.
+ * See https://github.com/microsoft/monaco-editor/blob/main/samples/browser-esm-esbuild/index.js
  */
 export function MonacoConfig() {
     self.MonacoEnvironment = {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        getWorkerUrl: function (workerId: string, label: string) {
-            /*
-             * This is the AMD-based service worker, which comes bundled with a few special workers for selected languages.
-             * (e.g.: javascript, typescript, html, css)
-             *
-             * It is also possible to use an ESM-based approach, which requires a little more setup and case distinctions in this method.
-             * At the moment, it seems that the ESM-based approaches are incompatible with the Artemis client, as they would require custom builders.
-             * Support for custom builders was removed in #6546.
-             */
-            return 'vs/base/worker/workerMain.js';
+        getWorkerUrl: (_moduleId: string, label: string): string => {
+            if (label === 'json') {
+                return './vs/language/json/json.worker.js';
+            }
+            if (label === 'css' || label === 'scss' || label === 'less') {
+                return './vs/language/css/css.worker.js';
+            }
+            if (label === 'html' || label === 'handlebars' || label === 'razor') {
+                return './vs/language/html/html.worker.js';
+            }
+            if (label === 'typescript' || label === 'javascript') {
+                return './vs/language/typescript/ts.worker.js';
+            }
+            return './vs/editor/editor.worker.js';
         },
     };
 }

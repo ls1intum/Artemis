@@ -152,8 +152,8 @@ export class MonacoTextEditorAdapter implements TextEditor {
         return this.editor.getDomNode() ?? undefined;
     }
 
-    typeText(text: string) {
-        this.editor.trigger('MonacoTextEditorAdapter::typeText', 'type', { text });
+    triggerCompletion(): void {
+        this.editor.trigger('MonacoTextEditorAdapter::triggerCompletion', 'editor.action.triggerSuggest', {});
     }
 
     getTextAtRange(range: TextEditorRange): string {
