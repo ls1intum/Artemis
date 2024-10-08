@@ -9,7 +9,7 @@ import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { faEye, faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
@@ -34,9 +34,9 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     viewButtonAvailable: Record<number, boolean> = {};
 
     // A human-readable list of allowed file extensions
-    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
     // The list of file extensions for the "accept" attribute of the file input field
-    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+    readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
