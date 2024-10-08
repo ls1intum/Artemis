@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -8,6 +8,7 @@ import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupRegistrationImportDTO } from 'app/entities/tutorial-group/tutorial-group-import-dto.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('TutorialGroupService', () => {
     let service: TutorialGroupsService;
@@ -28,8 +29,10 @@ describe('TutorialGroupService', () => {
         };
 
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: TutorialGroupSessionService, useValue: spySessionService },
                 { provide: TutorialGroupsConfigurationService, useValue: spyConfigService },
             ],

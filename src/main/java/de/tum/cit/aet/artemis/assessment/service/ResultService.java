@@ -61,7 +61,6 @@ import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.TemplateProgrammingExerciseParticipationRepository;
-import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.cit.aet.artemis.programming.service.BuildLogEntryService;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseTaskService;
 
@@ -119,7 +118,7 @@ public class ResultService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, StudentExamRepository studentExamRepository,
             BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiNewResultService = ltiNewResultService;
@@ -450,10 +449,11 @@ public class ResultService {
     /**
      * Get a map of result ids to the respective build job ids if build log files for this build job exist.
      *
-     * @param results the results for which to check the availability of build logs
+     * @param results       the results for which to check the availability of build logs
+     * @param participation the participation the results belong to
      * @return a map of result ids to respective build job ids if the build log files exist, null otherwise
      */
-    public Map<Long, String> getLogsAvailabilityForResults(List<Result> results) {
+    public Map<Long, String> getLogsAvailabilityForResults(List<Result> results, Participation participation) {
 
         Map<Long, String> logsAvailability = new HashMap<>();
 
@@ -466,7 +466,7 @@ public class ResultService {
             String buildJobId = resultBuildJobSet.get(resultId);
             if (buildJobId != null) {
 
-                if (buildLogEntryService.buildJobHasLogFile(buildJobId)) {
+                if (buildLogEntryService.buildJobHasLogFile(buildJobId, ((ProgrammingExerciseParticipation) participation).getProgrammingExercise())) {
                     logsAvailability.put(resultId, buildJobId);
                 }
                 else {

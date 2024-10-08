@@ -17,11 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintType;
-import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry;
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests;
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses;
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints;
-import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequests;
+import de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponsesDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO;
+import de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequestsDTO;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 
 /**
@@ -151,7 +151,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of exercise ids with the number of complaints based on the complaint type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
                 c.result.participation.exercise.id,
                 COUNT(DISTINCT c)
             )
@@ -160,7 +160,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND c.complaintType = :complaintType
             GROUP BY c.result.participation.exercise.id
             """)
-    List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
+    List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
     /**
      * This method counts the number of complaints by complaint type associated to an exercise id ignoring test runs
@@ -170,7 +170,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of exercise ids with the number of complaints based on the complaint type
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntry(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.dashboard.ExerciseMapEntryDTO(
                 c.result.participation.exercise.id,
                 COUNT(DISTINCT c)
             )
@@ -180,7 +180,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND c.result.participation.testRun = FALSE
             GROUP BY c.result.participation.exercise.id
             """)
-    List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
+    List<ExerciseMapEntryDTO> countComplaintsByExerciseIdsAndComplaintTypeIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds,
             @Param("complaintType") ComplaintType complaintType);
 
     /**
@@ -208,15 +208,6 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
     @Transactional // ok because of delete
     @Modifying
     void deleteByResult_Id(long resultId);
-
-    /**
-     * Given a user id, retrieve all complaints related to assessments made by that assessor
-     *
-     * @param assessorId - the id of the assessor
-     * @return a list of complaints
-     */
-    @EntityGraph(type = LOAD, attributePaths = { "result.participation", "result.submission", "result.assessor" })
-    List<Complaint> getAllByResult_Assessor_Id(Long assessorId);
 
     /**
      * Given an exercise id, retrieve all complaints related to that exercise
@@ -273,7 +264,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
@@ -289,7 +280,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByCourseId(@Param("courseId") long courseId);
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
@@ -299,7 +290,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
@@ -315,7 +306,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExerciseId(@Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByExerciseId(@Param("exerciseId") long exerciseId);
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
@@ -325,7 +316,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaints
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaints(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintsDTO(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted = TRUE ) THEN 1L ELSE 0L END),
@@ -342,7 +333,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND r.assessor.id IS NOT NULL
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardComplaints> findTutorLeaderboardComplaintsByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardComplaintsDTO> findTutorLeaderboardComplaintsByExamId(@Param("examId") long examId);
 
     /**
      * Get the number of complaintResponses for all tutors assessments of a course
@@ -351,7 +342,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponsesDTO(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)
@@ -367,7 +358,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND c.accepted IS NOT NULL
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByCourseId(@Param("courseId") long courseId);
 
     /**
      * Get the number of complaintResponses for all tutors assessments of an exercise
@@ -376,7 +367,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponsesDTO(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)
@@ -392,7 +383,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND c.accepted IS NOT NULL
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByExerciseId(@Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Get the number of complaintResponses for all tutors assessments of an exam
@@ -401,7 +392,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardComplaintResponses
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponses(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardComplaintResponsesDTO(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)
@@ -418,7 +409,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND c.accepted IS NOT NULL
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardComplaintResponses> findTutorLeaderboardComplaintResponsesByExamId(@Param("examId") long examId);
+    List<TutorLeaderboardComplaintResponsesDTO> findTutorLeaderboardComplaintResponsesByExamId(@Param("examId") long examId);
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
@@ -428,7 +419,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardMoreFeedbackRequests
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequests(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequestsDTO(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted IS NULL) THEN 1L ELSE 0L END),
@@ -443,7 +434,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND r.completionDate IS NOT NULL
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardMoreFeedbackRequests> findTutorLeaderboardMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardMoreFeedbackRequestsDTO> findTutorLeaderboardMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
 
     // Valid JPQL syntax. Only SCA fails to properly detect the types.
     /**
@@ -453,7 +444,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardMoreFeedbackRequests
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequests(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardMoreFeedbackRequestsDTO(
                 r.assessor.id,
                 COUNT(c),
                 SUM( CASE WHEN (c.accepted IS NULL) THEN 1L ELSE 0L END),
@@ -469,7 +460,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND r.completionDate IS NOT NULL
             GROUP BY r.assessor.id
             """)
-    List<TutorLeaderboardMoreFeedbackRequests> findTutorLeaderboardMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardMoreFeedbackRequestsDTO> findTutorLeaderboardMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Get the number of Feedback Request Responses for all tutors assessments of a course
@@ -478,7 +469,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsDTO(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)
@@ -494,7 +485,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND c.accepted = TRUE
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
+    List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> findTutorLeaderboardAnsweredMoreFeedbackRequestsByCourseId(@Param("courseId") long courseId);
 
     /**
      * Get the number of Feedback Request Responses for all tutors assessments of an exercise
@@ -503,7 +494,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
      * @return list of TutorLeaderboardAnsweredMoreFeedbackRequests
      */
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequests(
+            SELECT new de.tum.cit.aet.artemis.assessment.dto.tutor.TutorLeaderboardAnsweredMoreFeedbackRequestsDTO(
                 cr.reviewer.id,
                 COUNT(c),
                 SUM(e.maxPoints)
@@ -519,7 +510,7 @@ public interface ComplaintRepository extends ArtemisJpaRepository<Complaint, Lon
                 AND c.accepted = TRUE
             GROUP BY cr.reviewer.id
             """)
-    List<TutorLeaderboardAnsweredMoreFeedbackRequests> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
+    List<TutorLeaderboardAnsweredMoreFeedbackRequestsDTO> findTutorLeaderboardAnsweredMoreFeedbackRequestsByExerciseId(@Param("exerciseId") long exerciseId);
 
     default Complaint findWithEagerAssessorByIdElseThrow(Long complaintId) {
         return getValueElseThrow(findByIdWithEagerAssessor(complaintId), complaintId);

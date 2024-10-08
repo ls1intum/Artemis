@@ -2,20 +2,20 @@
     "artemisApp": {
         "shortAnswerSpotCounter": {
             "home": {
-                "title": "Short Answer Spot Counters",
-                "createLabel": "Short Answer Spot Counter erstellen"
+                "title": "Kurzantwort-Spot-Zähler",
+                "createLabel": "Kurzantwort-Spot-Zähler erstellen"
             },
-            "created": "Short Answer Spot Counter erstellt mit ID {{ param }}",
-            "updated": "Short Answer Spot Counter aktualisiert mit ID {{ param }}",
-            "deleted": "Short Answer Spot Counter gelöscht mit ID {{ param }}",
+            "created": "Kurzantwort-Spot-Zähler erstellt mit ID {{ param }}",
+            "updated": "Kurzantwort-Spot-Zähler aktualisiert mit ID {{ param }}",
+            "deleted": "Kurzantwort-Spot-Zähler gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Short Answer Spot Counter {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Kurzantwort-Spot-Zähler {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Short Answer Spot Counter"
+                "title": "Kurzantwort-Spot-Zähler"
             },
             "spot": "Spot",
-            "shortAnswerQuestionStatistic": "Short Answer Question Statistic"
+            "shortAnswerQuestionStatistic": "Kurzantwort-Fragestatistik"
         }
     }
 }

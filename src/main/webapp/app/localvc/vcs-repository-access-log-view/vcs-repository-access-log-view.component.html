@@ -1,0 +1,34 @@
+<ng-container>
+    <div class="d-flex justify-content-between">
+        <h3 jhiTranslate="artemisApp.repository.vcsAccessLog.title"></h3>
+    </div>
+
+    <div style="overflow-x: auto">
+        <table class="table table-responsive">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.userId"></th>
+                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.author"></th>
+                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.actionType"></th>
+                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.authMechanism"></th>
+                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.commitHash"></th>
+                    <th scope="col" jhiTranslate="artemisApp.repository.vcsAccessLog.timeStamp"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (entry of vcsAccessLogEntries(); track entry; let i = $index) {
+                    <tr class="w-25">
+                        <td class="p-2">{{ i }}</td>
+                        <td class="p-2">{{ entry.userId }}</td>
+                        <td class="p-2">{{ entry.name + ', ' + entry.email }}</td>
+                        <td class="p-2">{{ entry.repositoryActionType }}</td>
+                        <td class="p-2">{{ entry.authenticationMechanism }}</td>
+                        <td class="p-2">{{ entry.commitHash }}</td>
+                        <td class="p-2">{{ entry.timestamp }}</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</ng-container>

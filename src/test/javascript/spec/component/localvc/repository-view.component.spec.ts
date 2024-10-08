@@ -16,6 +16,8 @@ import { HttpResponse } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('RepositoryViewComponent', () => {
     let component: RepositoryViewComponent;
@@ -39,6 +41,7 @@ describe('RepositoryViewComponent', () => {
                 { provide: ProgrammingExerciseParticipationService, useClass: MockProgrammingExerciseParticipationService },
                 { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
                 { provide: Router, useClass: MockRouter },
+                { provide: ProfileService, useClass: MockProfileService },
             ],
         })
             .compileComponents()
@@ -206,7 +209,16 @@ describe('RepositoryViewComponent', () => {
         const mockParticipation: ProgrammingExerciseStudentParticipation = {
             id: 2,
             repositoryUri: 'student-repo-uri',
-            exercise: { id: 1, numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()], studentAssignedTeamIdComputed: true, secondCorrectionEnabled: true },
+            exercise: {
+                id: 1,
+                numberOfAssessmentsOfCorrectionRounds: [new DueDateStat()],
+                studentAssignedTeamIdComputed: true,
+                secondCorrectionEnabled: true,
+                course: {
+                    instructorGroupName: 'instructorGroup',
+                    isAtLeastInstructor: true,
+                },
+            },
             results: [
                 { id: 3, successful: true, score: 100, rated: true, hasComplaint: false, exampleResult: false, testCaseCount: 10, passedTestCaseCount: 10, codeIssueCount: 0 },
                 { id: 4, successful: true, score: 100, rated: true, hasComplaint: false, exampleResult: false, testCaseCount: 10, passedTestCaseCount: 10, codeIssueCount: 0 },
