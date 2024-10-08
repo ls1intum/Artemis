@@ -995,6 +995,6 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      * @throws EntityNotFoundException if the programming exercise with the given id cannot be found.
      */
     default ProgrammingExercise findWithTestCasesByIdElseThrow(Long exerciseId) {
-        return findWithTestCasesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+        return getArbitraryValueElseThrow(findWithTestCasesById(exerciseId), Long.toString(exerciseId));
     }
 }
