@@ -1,46 +1,44 @@
 @for (groupKey of Object.keys(groupedData); track groupKey; let i = $index) {
-    <div
-        id="test-accordion-item-container-{{ i }}"
-        class="pointer"
-        [ngClass]="{ 'd-none': (!showAddOptions || searchValue?.length !== 0) && !(groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }"
-    >
-        <div
-            [id]="'test-accordion-item-header-' + groupKey"
-            class="control-label d-flex align-items-center justify-content-between py-2 bg-module"
-            (click)="toggleGroupCategoryCollapse(groupKey)"
-        >
-            <div class="my-2">
-                @if (showLeadingIcon) {
-                    <fa-icon [fixedWidth]="true" [icon]="$any(channelTypeIcon)?.[groupKey]" />
-                }
-                {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
-                ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
+    @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
+        <div id="test-accordion-item-container-{{ i }}" class="pointer">
+            <div
+                [id]="'test-accordion-item-header-' + groupKey"
+                class="control-label d-flex align-items-center justify-content-between py-2 bg-module"
+                (click)="toggleGroupCategoryCollapse(groupKey)"
+            >
+                <div class="my-2">
+                    @if (showLeadingIcon) {
+                        <fa-icon [fixedWidth]="true" [icon]="$any(channelTypeIcon)?.[groupKey]" />
+                    }
+                    {{ 'artemisApp.courseOverview.sidebar.' + groupKey | artemisTranslate | titlecase }}
+                    ({{ (groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length }})
+                </div>
+                <div class="icon-container pe-3">
+                    <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
+                </div>
             </div>
-            <div class="icon-container pe-3">
-                <jhi-accordion-add-options [hidden]="!showAddOptions || (showAddOption ? !getGroupKey(groupKey) : false)" [groupKey]="groupKey" />
-                <fa-icon [icon]="faChevronRight" class="rotate-icon chevron-position" [class.rotated]="!collapseState[groupKey]" />
-            </div>
-        </div>
-        @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
-            <hr class="my-0" />
-            <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="p-2 bg-body">
-                @for (sidebarItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
-                    <div [ngClass]="{ 'mb-2': !last }">
-                        <!-- loading sidebarCard with help of a directive depending on its size input-->
-                        <div
-                            jhiSidebarCard
-                            [size]="sidebarItem.size"
-                            [itemSelected]="itemSelected"
-                            [sidebarType]="sidebarType"
-                            [sidebarItem]="sidebarItem"
-                            (onUpdateSidebar)="onUpdateSidebar.emit()"
-                        ></div>
-                    </div>
-                }
-            </div>
-            @if (!collapseState[groupKey]) {
+            @if ((groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue)?.length) {
                 <hr class="my-0" />
+                <div id="test-accordion-item-content" [ngbCollapse]="collapseState[groupKey]" class="p-2 bg-body">
+                    @for (sidebarItem of groupedData[groupKey].entityData | searchFilter: ['title', 'type'] : searchValue; let last = $last; track sidebarItem) {
+                        <div [ngClass]="{ 'mb-2': !last }">
+                            <!-- loading sidebarCard with help of a directive depending on its size input-->
+                            <div
+                                jhiSidebarCard
+                                [size]="sidebarItem.size"
+                                [itemSelected]="itemSelected"
+                                [sidebarType]="sidebarType"
+                                [sidebarItem]="sidebarItem"
+                                [groupKey]="groupKey"
+                                (onUpdateSidebar)="onUpdateSidebar.emit()"
+                            ></div>
+                        </div>
+                    }
+                </div>
+                @if (!collapseState[groupKey]) {
+                    <hr class="my-0" />
+                }
             }
-        }
-    </div>
+        </div>
+    }
 }
