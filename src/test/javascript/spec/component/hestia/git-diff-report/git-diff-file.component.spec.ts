@@ -1,8 +1,8 @@
 import { ArtemisTestModule } from '../../../test.module';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
+import { MonacoDiffEditorComponent } from '../../../../../../main/webapp/app/shared/monaco-editor/monaco-diff-editor.component';
 
 function getDiffEntryWithPaths(previousFilePath?: string, filePath?: string) {
     return {
@@ -17,7 +17,7 @@ describe('GitDiffFileComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MonacoEditorModule],
+            imports: [ArtemisTestModule, MonacoDiffEditorComponent],
             declarations: [GitDiffFileComponent],
             providers: [],
         }).compileComponents();
