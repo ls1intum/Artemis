@@ -1,4 +1,33 @@
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of, throwError } from 'rxjs';
+import { AttachmentService } from 'app/lecture/attachment.service';
+import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
+import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
+import { ElementRef } from '@angular/core';
+import { AlertService } from 'app/core/util/alert.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { PDFDocument } from 'pdf-lib';
+
+jest.mock('pdf-lib', () => {
+    const originalModule = jest.requireActual('pdf-lib');
+
+    return {
+        ...originalModule,
+        PDFDocument: {
+            ...originalModule.PDFDocument,
+            load: jest.fn(),
+            create: jest.fn(),
+            prototype: {
+                removePage: jest.fn(),
+                save: jest.fn(),
+            },
+        },
+    };
+});
 
 jest.mock('pdfjs-dist', () => {
     return {
@@ -32,17 +61,6 @@ function createMockEvent(target: Element, eventType = 'click'): MouseEvent {
     return event;
 }
 
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
-import { of, throwError } from 'rxjs';
-import { AttachmentService } from 'app/lecture/attachment.service';
-import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { PdfPreviewComponent } from 'app/lecture/pdf-preview/pdf-preview.component';
-import { ElementRef } from '@angular/core';
-import { AlertService } from 'app/core/util/alert.service';
-import { HttpErrorResponse } from '@angular/common/http';
-import { TranslateService } from '@ngx-translate/core';
-
 describe('PdfPreviewComponent', () => {
     let component: PdfPreviewComponent;
     let fixture: ComponentFixture<PdfPreviewComponent>;
@@ -59,9 +77,11 @@ describe('PdfPreviewComponent', () => {
         global.URL.createObjectURL = jest.fn().mockReturnValue('mocked_blob_url');
         attachmentServiceMock = {
             getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
+            update: jest.fn().mockReturnValue(of({})),
         };
         attachmentUnitServiceMock = {
             getAttachmentFile: jest.fn().mockReturnValue(of(new Blob([''], { type: 'application/pdf' }))),
+            update: jest.fn().mockReturnValue(of({})),
         };
         routeMock = {
             data: of({
@@ -73,6 +93,7 @@ describe('PdfPreviewComponent', () => {
         alertServiceMock = {
             addAlert: jest.fn(),
             error: jest.fn(),
+            success: jest.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -118,7 +139,9 @@ describe('PdfPreviewComponent', () => {
         mockOverlay = document.createElement('div');
         mockOverlay.style.opacity = '0';
         mockCanvasElement.appendChild(mockOverlay);
+        component.currentPdfBlob = new Blob(['dummy content'], { type: 'application/pdf' });
 
+        global.URL.createObjectURL = jest.fn().mockReturnValue('blob-url');
         fixture.detectChanges();
 
         component.pdfContainer = new ElementRef(document.createElement('div'));
@@ -184,15 +207,19 @@ describe('PdfPreviewComponent', () => {
         expect(alertServiceSpy).toHaveBeenCalledOnce();
     });
 
-    it('should load PDF and verify rendering of pages', () => {
-        const mockBlob = new Blob(['PDF content'], { type: 'application/pdf' });
+    it('should load PDF and verify rendering of pages', async () => {
+        const spyCreateCanvas = jest.spyOn(component, 'createCanvas');
+        const spyCreateCanvasContainer = jest.spyOn(component, 'createCanvasContainer');
+        const spyAppendChild = jest.spyOn(component.pdfContainer.nativeElement, 'appendChild');
 
-        attachmentServiceMock.getAttachmentFile.mockReturnValue(of(mockBlob));
-        component.ngOnInit();
+        await component.loadOrAppendPdf('fake-url');
 
-        expect(URL.createObjectURL).toHaveBeenCalledWith(mockBlob);
-        expect(attachmentServiceMock.getAttachmentFile).toHaveBeenCalledWith(1, 1);
-        expect(component.totalPages).toBeGreaterThan(0);
+        expect(spyCreateCanvas).toHaveBeenCalledOnce();
+        expect(spyCreateCanvasContainer).toHaveBeenCalledOnce();
+        expect(spyAppendChild).toHaveBeenCalledOnce();
+        expect(component.totalPages).toBe(1);
+        expect(component.isPdfLoading).toBeFalse();
+        expect(component.fileInput.nativeElement.value).toBe('');
     });
 
     it('should navigate through pages using keyboard in enlarged view', () => {
@@ -212,7 +239,7 @@ describe('PdfPreviewComponent', () => {
 
     it('should toggle enlarged view state', () => {
         const mockCanvas = document.createElement('canvas');
-        component.displayEnlargedCanvas(mockCanvas, 1);
+        component.displayEnlargedCanvas(mockCanvas);
         expect(component.isEnlargedView).toBeTrue();
 
         const clickEvent = new MouseEvent('click', {
@@ -300,7 +327,7 @@ describe('PdfPreviewComponent', () => {
 
         const canvas = document.createElement('canvas');
         const pdfContainer = document.createElement('div');
-        pdfContainer.className = 'pdf-page-container';
+        pdfContainer.classList.add('pdf-canvas-container');
         pdfContainer.appendChild(canvas);
         component.pdfContainer = {
             nativeElement: pdfContainer,
@@ -396,22 +423,22 @@ describe('PdfPreviewComponent', () => {
         mockCanvas.style.width = '600px';
         mockCanvas.style.height = '400px';
 
-        const container = component.createContainer(mockCanvas, 1);
+        const container = component.createCanvasContainer(mockCanvas, 1);
         expect(container.tagName).toBe('DIV');
-        expect(container.classList.contains('pdf-page-container')).toBeTruthy();
+        expect(container.classList.contains('pdf-canvas-container')).toBeTrue();
         expect(container.style.position).toBe('relative');
         expect(container.style.display).toBe('inline-block');
         expect(container.style.width).toBe('600px');
         expect(container.style.height).toBe('400px');
         expect(container.style.margin).toBe('20px');
-        expect(container.children).toHaveLength(2);
+        expect(container.children).toHaveLength(3);
 
         expect(container.firstChild).toBe(mockCanvas);
     });
 
     it('should handle mouseenter and mouseleave events correctly', () => {
         const mockCanvas = document.createElement('canvas');
-        const container = component.createContainer(mockCanvas, 1);
+        const container = component.createCanvasContainer(mockCanvas, 1);
         const overlay = container.children[1] as HTMLElement;
 
         // Trigger mouseenter
@@ -428,10 +455,237 @@ describe('PdfPreviewComponent', () => {
     it('should handle click event on overlay to trigger displayEnlargedCanvas', () => {
         jest.spyOn(component, 'displayEnlargedCanvas');
         const mockCanvas = document.createElement('canvas');
-        const container = component.createContainer(mockCanvas, 1);
+        const container = component.createCanvasContainer(mockCanvas, 1);
         const overlay = container.children[1];
 
         overlay.dispatchEvent(new Event('click'));
-        expect(component.displayEnlargedCanvas).toHaveBeenCalledWith(mockCanvas, 1);
+        expect(component.displayEnlargedCanvas).toHaveBeenCalledWith(mockCanvas);
+    });
+
+    it('should trigger the file input click event', () => {
+        const mockFileInput = document.createElement('input');
+        mockFileInput.type = 'file';
+        component.fileInput = new ElementRef(mockFileInput);
+
+        const clickSpy = jest.spyOn(component.fileInput.nativeElement, 'click');
+        component.triggerFileInput();
+        expect(clickSpy).toHaveBeenCalled();
+    });
+
+    it('should merge PDF files correctly and update the component state', async () => {
+        const mockFile = new File(['new pdf'], 'test.pdf', { type: 'application/pdf' });
+        mockFile.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simplicity
+        const mockEvent = { target: { files: [mockFile] } };
+
+        const existingPdfDoc = {
+            copyPages: jest.fn().mockResolvedValue(['page']),
+            addPage: jest.fn(),
+            save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+        };
+
+        const newPdfDoc = {
+            getPageIndices: jest.fn().mockReturnValue([0]),
+        };
+
+        PDFDocument.load = jest
+            .fn()
+            .mockImplementationOnce(() => Promise.resolve(existingPdfDoc))
+            .mockImplementationOnce(() => Promise.resolve(newPdfDoc));
+
+        component.currentPdfBlob = new Blob(['existing pdf'], { type: 'application/pdf' });
+        component.currentPdfBlob.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simplicity
+
+        component.selectedPages = new Set([1]); // Assume there is initially a selected page
+
+        await component.mergePDF(mockEvent as any);
+
+        expect(PDFDocument.load).toHaveBeenCalledTimes(2);
+        expect(existingPdfDoc.copyPages).toHaveBeenCalledWith(newPdfDoc, [0]);
+        expect(existingPdfDoc.addPage).toHaveBeenCalledOnce();
+        expect(existingPdfDoc.save).toHaveBeenCalled();
+        expect(component.currentPdfBlob).toBeDefined();
+        expect(component.selectedPages.size).toBe(0);
+        expect(component.isPdfLoading).toBeFalse();
+        expect(URL.createObjectURL).toHaveBeenCalledWith(new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' }));
+    });
+
+    it('should handle errors when merging PDFs fails', async () => {
+        const mockFile = new File(['new pdf'], 'test.pdf', { type: 'application/pdf' });
+
+        // Mock the arrayBuffer method for the file object
+        mockFile.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simplicity
+
+        const mockEvent = { target: { files: [mockFile] } };
+        const error = new Error('Error loading PDF');
+
+        component.currentPdfBlob = new Blob(['existing pdf'], { type: 'application/pdf' });
+        component.currentPdfBlob.arrayBuffer = jest.fn().mockResolvedValue(new ArrayBuffer(8)); // Return an empty ArrayBuffer for simp
+
+        // Mock PDFDocument.load to throw an error on the first call
+        PDFDocument.load = jest
+            .fn()
+            .mockImplementationOnce(() => Promise.reject(error)) // First call throws an error
+            .mockImplementationOnce(() => Promise.resolve({})); // Second call (not actually needed here)
+
+        await component.mergePDF(mockEvent as any);
+
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.mergeFailedError', { error: error.message });
+        expect(component.isPdfLoading).toBeFalse();
+    });
+
+    it('should update the IDs of remaining pages after some have been removed', () => {
+        const mockContainer = document.createElement('div');
+
+        for (let i = 1; i <= 3; i++) {
+            const mockPageContainer = document.createElement('div');
+            mockPageContainer.classList.add('pdf-canvas-container');
+            mockPageContainer.id = `pdf-page-${i}`;
+
+            const mockCanvas = document.createElement('canvas');
+            mockCanvas.id = String(i);
+            mockPageContainer.appendChild(mockCanvas);
+
+            const mockOverlay = document.createElement('div');
+            mockOverlay.innerHTML = `<span>${i}</span>`;
+            mockPageContainer.appendChild(mockOverlay);
+
+            const mockCheckbox = document.createElement('input');
+            mockCheckbox.type = 'checkbox';
+            mockCheckbox.id = String(i);
+            mockPageContainer.appendChild(mockCheckbox);
+
+            mockContainer.appendChild(mockPageContainer);
+        }
+
+        component.pdfContainer = new ElementRef(mockContainer);
+        component.updatePageIDs();
+
+        const remainingPages = component.pdfContainer.nativeElement.querySelectorAll('.pdf-canvas-container');
+        remainingPages.forEach((pageContainer, index) => {
+            const pageIndex = index + 1;
+            const canvas = pageContainer.querySelector('canvas');
+            const overlay = pageContainer.querySelector('div');
+            const checkbox = pageContainer.querySelector('input[type="checkbox"]');
+
+            expect(pageContainer.id).toBe(`pdf-page-${pageIndex}`);
+            expect(canvas!.id).toBe(String(pageIndex));
+            expect(overlay!.innerHTML).toBe(`<span>${pageIndex}</span>`);
+            expect(checkbox!.id).toBe(String(pageIndex));
+        });
+        while (mockContainer.firstChild) {
+            mockContainer.removeChild(mockContainer.firstChild);
+        }
+    });
+
+    it('should update attachment successfully and show success alert', () => {
+        component.attachment = { id: 1, version: 1 };
+        component.updateAttachmentWithFile();
+
+        expect(attachmentServiceMock.update).toHaveBeenCalled();
+        expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+    });
+
+    it('should not update attachment if file size exceeds the limit and show an error alert', () => {
+        const oversizedData = new Uint8Array(MAX_FILE_SIZE + 1).fill(0);
+        component.currentPdfBlob = new Blob([oversizedData], { type: 'application/pdf' });
+
+        component.updateAttachmentWithFile();
+
+        expect(attachmentServiceMock.update).not.toHaveBeenCalled();
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.fileSizeError');
+    });
+
+    it('should handle errors when updating an attachment fails', () => {
+        attachmentServiceMock.update.mockReturnValue(throwError(() => new Error('Update failed')));
+        component.attachment = { id: 1, version: 1 };
+
+        component.updateAttachmentWithFile();
+
+        expect(attachmentServiceMock.update).toHaveBeenCalled();
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
+    });
+
+    it('should update attachment unit successfully and show success alert', () => {
+        component.attachment = undefined;
+        component.attachmentUnit = {
+            id: 1,
+            lecture: { id: 1 },
+            attachment: { id: 1, version: 1 },
+        };
+        attachmentUnitServiceMock.update.mockReturnValue(of({}));
+
+        component.updateAttachmentWithFile();
+
+        expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
+        expect(alertServiceMock.success).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateSuccess');
+    });
+
+    it('should handle errors when updating an attachment unit fails', () => {
+        component.attachment = undefined;
+        component.attachmentUnit = {
+            id: 1,
+            lecture: { id: 1 },
+            attachment: { id: 1, version: 1 },
+        };
+        const errorResponse = { message: 'Update failed' };
+        attachmentUnitServiceMock.update.mockReturnValue(throwError(() => errorResponse));
+
+        component.updateAttachmentWithFile();
+
+        expect(attachmentUnitServiceMock.update).toHaveBeenCalledWith(1, 1, expect.any(FormData));
+        expect(alertServiceMock.error).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: 'Update failed' });
+    });
+
+    it('should delete selected slides and update the PDF', async () => {
+        const existingPdfDoc = {
+            removePage: jest.fn(),
+            save: jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3])),
+        };
+
+        PDFDocument.load = jest.fn().mockResolvedValue(existingPdfDoc);
+        const mockArrayBuffer = new ArrayBuffer(8);
+        component.currentPdfBlob = new Blob(['existing pdf'], { type: 'application/pdf' });
+        component.currentPdfBlob.arrayBuffer = jest.fn().mockResolvedValue(mockArrayBuffer);
+
+        const objectUrl = 'blob-url';
+        global.URL.createObjectURL = jest.fn().mockReturnValue(objectUrl);
+        global.URL.revokeObjectURL = jest.fn();
+
+        component.selectedPages = new Set([1, 2]); // Pages 1 and 2 selected
+
+        const loadOrAppendPdfSpy = jest.spyOn(component, 'loadOrAppendPdf');
+        const alertServiceErrorSpy = jest.spyOn(alertServiceMock, 'error');
+
+        await component.deleteSelectedSlides();
+
+        expect(PDFDocument.load).toHaveBeenCalledWith(mockArrayBuffer);
+        expect(existingPdfDoc.removePage).toHaveBeenCalledWith(1);
+        expect(existingPdfDoc.removePage).toHaveBeenCalledWith(0);
+        expect(existingPdfDoc.removePage).toHaveBeenCalledTimes(2);
+        expect(existingPdfDoc.save).toHaveBeenCalled();
+        expect(component.currentPdfBlob).toEqual(new Blob([new Uint8Array([1, 2, 3])], { type: 'application/pdf' }));
+        expect(loadOrAppendPdfSpy).toHaveBeenCalledWith(objectUrl, false);
+        expect(component.selectedPages.size).toBe(0);
+        expect(alertServiceErrorSpy).not.toHaveBeenCalled();
+        expect(URL.revokeObjectURL).toHaveBeenCalledWith(objectUrl);
+        expect(component.isPdfLoading).toBeFalse();
+    });
+
+    it('should handle errors when deleting slides', async () => {
+        // Mock the arrayBuffer method for the current PDF Blob
+        component.currentPdfBlob = new Blob(['existing pdf'], { type: 'application/pdf' });
+        component.currentPdfBlob.arrayBuffer = jest.fn().mockRejectedValue(new Error('Failed to load PDF'));
+
+        // Spy on the alert service
+        const alertServiceErrorSpy = jest.spyOn(alertServiceMock, 'error');
+
+        // Call the method
+        await component.deleteSelectedSlides();
+
+        // Ensure the alert service was called with the correct error message
+        expect(alertServiceErrorSpy).toHaveBeenCalledWith('artemisApp.attachment.pdfPreview.pageDeleteError', { error: 'Failed to load PDF' });
+
+        // Verify that the loading state is set to false after the operation
+        expect(component.isPdfLoading).toBeFalse();
     });
 });
