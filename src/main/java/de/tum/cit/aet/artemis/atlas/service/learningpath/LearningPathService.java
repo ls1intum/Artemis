@@ -303,10 +303,6 @@ public class LearningPathService {
      * @return dto containing the health status and additional information (missing learning paths) if needed
      */
     public LearningPathHealthDTO getHealthStatusForCourse(@NotNull Course course) {
-        if (!course.getLearningPathsEnabled()) {
-            return new LearningPathHealthDTO(Set.of(LearningPathHealthDTO.HealthStatus.DISABLED));
-        }
-
         Set<LearningPathHealthDTO.HealthStatus> status = new HashSet<>();
         Long numberOfMissingLearningPaths = checkMissingLearningPaths(course, status);
         checkNoCompetencies(course, status);
