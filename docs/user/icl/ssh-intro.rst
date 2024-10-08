@@ -16,7 +16,7 @@ What is SSH?
 
 `SSH (Secure Shell)`_ is a protocol that allows you to securely connect to another computer over a network.
 It’s mostly used by system administrators, developers, and IT professionals to remotely manage servers or computers.
-SSH provides a secure, encrypted communication channel between your computer and a remote machine, so any data passed (like passwords or commands) is protected from eavesdropping.
+SSH provides a secure and encrypted communication channel between your computer and a remote machine, so any data passed (like passwords or commands) is protected from eavesdropping.
 In Artemis you an use SSH to access your repositories with Git.
 
 Why use SSH?
