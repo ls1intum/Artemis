@@ -1,5 +1,5 @@
 import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
-import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
+import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/entities/competency.model';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -122,7 +122,9 @@ export class CourseCompetencyRelationFormComponent {
         try {
             this.isLoading.set(true);
             const newRelationType = this.relationType()!;
-            await this.courseCompetencyApiService.updateCourseCompetencyRelation(this.courseId(), currentRelation!.id!, newRelationType);
+            await this.courseCompetencyApiService.updateCourseCompetencyRelation(this.courseId(), currentRelation!.id!, <UpdateCourseCompetencyRelationDTO>{
+                newRelationType: newRelationType,
+            });
             this.onRelationUpdate.emit({ ...currentRelation, relationType: newRelationType });
             this.resetForm();
         } catch (error) {

@@ -1,6 +1,12 @@
 import { Injectable } from '@angular/core';
 import { BaseApiHttpService } from 'app/course/learning-paths/services/base-api-http.service';
-import { CompetencyRelationDTO, CompetencyRelationType, CompetencyWithTailRelationDTO, CourseCompetency, CourseCompetencyImportOptionsDTO } from 'app/entities/competency.model';
+import {
+    CompetencyRelationDTO,
+    CompetencyWithTailRelationDTO,
+    CourseCompetency,
+    CourseCompetencyImportOptionsDTO,
+    UpdateCourseCompetencyRelationDTO,
+} from 'app/entities/competency.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseCompetencyApiService extends BaseApiHttpService {
@@ -18,8 +24,8 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
         return await this.post<CompetencyRelationDTO>(`${this.getPath(courseId)}/relations`, relation);
     }
 
-    async updateCourseCompetencyRelation(courseId: number, relationId: number, newRelationType: CompetencyRelationType): Promise<void> {
-        return await this.patch<void>(`${this.getPath(courseId)}/relations/${relationId}`, newRelationType);
+    async updateCourseCompetencyRelation(courseId: number, relationId: number, updateCourseCompetencyRelationDTO: UpdateCourseCompetencyRelationDTO): Promise<void> {
+        return await this.patch<void>(`${this.getPath(courseId)}/relations/${relationId}`, updateCourseCompetencyRelationDTO);
     }
 
     async deleteCourseCompetencyRelation(courseId: number, relationId: number): Promise<void> {
