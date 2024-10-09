@@ -23,17 +23,15 @@ public class LocalVCFetchPreUploadHookSSH implements PreUploadHook {
     }
 
     @Override
-    public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int cntOffered) {
-        localVCServletService.updateVCSAccessLogForCloneAndPullSSH(serverSession, rootDir, cntOffered);
+    public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {
+        localVCServletService.updateVCSAccessLogForCloneAndPullSSH(serverSession, rootDir, clientOffered);
     }
 
     @Override
     public void onEndNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int i, int i1, boolean b) {
-
     }
 
     @Override
     public void onSendPack(UploadPack uploadPack, Collection<? extends ObjectId> collection, Collection<? extends ObjectId> collection1) {
-
     }
 }

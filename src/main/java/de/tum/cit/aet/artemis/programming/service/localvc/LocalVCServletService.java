@@ -130,6 +130,8 @@ public class LocalVCServletService {
      */
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
+    public static final String BUILD_USER_NAME = "buildjob_user";
+
     // Cache the retrieved repositories for quicker access.
     // The resolveRepository method is called multiple times per request.
     // Key: repositoryPath --> Value: Repository
@@ -764,27 +766,27 @@ public class LocalVCServletService {
      * <p>
      * This method logs the access information based on the incoming HTTP request. It checks if the action
      * is performed by a build job user and, if not, records the user's repository action (clone or pull).
-     * The action type is determined based on the number of offers (`cntOffered`).
+     * The action type is determined based on the number of offers (`clientOffered`).
      *
-     * @param request    the {@link HttpServletRequest} containing the HTTP request data, including headers.
-     * @param cntOffered the number of objects offered by the client in the operation, used to determine
-     *                       if the action is a clone (if 0) or a pull (if greater than 0).
+     * @param request       the {@link HttpServletRequest} containing the HTTP request data, including headers.
+     * @param clientOffered the number of objects offered by the client in the operation, used to determine
+     *                          if the action is a clone (if 0) or a pull (if greater than 0).
      */
     @Async
-    public void updateVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, int cntOffered) {
+    public void updateVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, int clientOffered) {
         try {
             String authorizationHeader = request.getHeader("Authorization");
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             String userName = usernameAndPassword.username();
-            if (userName.equals("buildjob_user")) {
+            if (userName.equals(BUILD_USER_NAME)) {
                 return;
             }
-            RepositoryActionType repositoryActionType = getRepositoryActionReadType(cntOffered);
+            RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
             var participation = getExerciseParticipationFromRequest(request);
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
 
-            log.info("username {} int {}", usernameAndPassword.username(), cntOffered);
+            log.info("username {} int {}", usernameAndPassword.username(), clientOffered);
         }
         catch (Exception ignored) {
         }
@@ -809,7 +811,7 @@ public class LocalVCServletService {
             String authorizationHeader = request.getHeader("Authorization");
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             String userName = usernameAndPassword.username();
-            if (userName.equals("buildjob_user")) {
+            if (userName.equals(BUILD_USER_NAME)) {
                 return;
             }
             RepositoryActionType repositoryActionType = RepositoryActionType.PUSH;
@@ -825,21 +827,21 @@ public class LocalVCServletService {
      * Updates the VCS access log for clone and pull actions performed over SSH.
      * <p>
      * This method logs access information based on the SSH session and the root directory of the repository.
-     * It determines the repository action (clone or pull) based on the number of offers (`cntOffered`) and
+     * It determines the repository action (clone or pull) based on the number of offers (`clientOffered`) and
      * fetches participation details from the local VC repository URI.
      *
-     * @param session    the {@link ServerSession} representing the SSH session.
-     * @param rootDir    the {@link Path} to the root directory of the repository.
-     * @param cntOffered the number of objects offered by the client in the operation, used to determine
-     *                       if the action is a clone (if 0) or a pull (if greater than 0).
+     * @param session       the {@link ServerSession} representing the SSH session.
+     * @param rootDir       the {@link Path} to the root directory of the repository.
+     * @param clientOffered the number of objects offered by the client in the operation, used to determine
+     *                          if the action is a clone (if 0) or a pull (if greater than 0).
      */
     @Async
-    public void updateVCSAccessLogForCloneAndPullSSH(ServerSession session, Path rootDir, int cntOffered) {
+    public void updateVCSAccessLogForCloneAndPullSSH(ServerSession session, Path rootDir, int clientOffered) {
         try {
-            if (session.getAttribute(SshConstants.USER_KEY).getName().equals("buildjob_user")) {
+            if (session.getAttribute(SshConstants.USER_KEY).getName().equals(BUILD_USER_NAME)) {
                 return;
             }
-            RepositoryActionType repositoryActionType = getRepositoryActionReadType(cntOffered);
+            RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
             var parti = getExerciseParticipationFromLocalVCRepositoryUri(getLocalVCRepositoryUri(rootDir));
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(parti, repositoryActionType));
         }
@@ -855,7 +857,7 @@ public class LocalVCServletService {
      *
      * @param servletRequest the {@link HttpServletRequest} containing the HTTP request data.
      */
-    public void addVCSAccessLogFailedAttempt(HttpServletRequest servletRequest) {
+    public void createVCSAccessLogForFailedAuthenticationAttempt(HttpServletRequest servletRequest) {
         try {
             User user = getUserFromRequest(servletRequest);
             var participation = getExerciseParticipationFromRequest(servletRequest);
@@ -871,11 +873,11 @@ public class LocalVCServletService {
      * This method returns a {@link RepositoryActionType} based on the number of objects offered.
      * If no objects are offered (0), it is considered a clone; otherwise, it is a pull action.
      *
-     * @param cntOffered the number of objects offered to the client in the operation.
+     * @param clientOffered the number of objects offered to the client in the operation.
      * @return the {@link RepositoryActionType} based on the number of objects offered (clone if 0, pull if greater than 0).
      */
-    public RepositoryActionType getRepositoryActionReadType(int cntOffered) {
-        return cntOffered == 0 ? RepositoryActionType.CLONE : RepositoryActionType.PULL;
+    public RepositoryActionType getRepositoryActionReadType(int clientOffered) {
+        return clientOffered == 0 ? RepositoryActionType.CLONE : RepositoryActionType.PULL;
     }
 
     record UsernameAndPassword(String username, String password) {

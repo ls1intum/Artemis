@@ -20,18 +20,15 @@ public class LocalVCFetchPreUploadHook implements PreUploadHook {
     }
 
     @Override
-    public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int cntOffered) {
-        localVCServletService.updateVCSAccessLogForCloneAndPullHTTPS(request, cntOffered);
-
+    public void onBeginNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int clientOffered) {
+        localVCServletService.updateVCSAccessLogForCloneAndPullHTTPS(request, clientOffered);
     }
 
     @Override
     public void onEndNegotiateRound(UploadPack uploadPack, Collection<? extends ObjectId> collection, int i, int i1, boolean b) {
-
     }
 
     @Override
     public void onSendPack(UploadPack uploadPack, Collection<? extends ObjectId> collection, Collection<? extends ObjectId> collection1) {
-
     }
 }

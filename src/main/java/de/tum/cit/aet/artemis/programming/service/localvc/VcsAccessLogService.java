@@ -70,12 +70,11 @@ public class VcsAccessLogService {
     }
 
     /**
-     * Updates the repository action type of the newest log entry
+     * Updates the repository action type of the newest log entry. This method is not Async, as it should already be called from an @Async context
      *
      * @param participation        The participation to which the repository belongs to
      * @param repositoryActionType The repositoryActionType which should get set for the newest access log entry
      */
-    @Async
     public void updateRepositoryActionType(ProgrammingExerciseParticipation participation, RepositoryActionType repositoryActionType) {
         vcsAccessLogRepository.findNewestByParticipationId(participation.getId()).ifPresent(entry -> {
             entry.setRepositoryActionType(repositoryActionType);
@@ -96,7 +95,11 @@ public class VcsAccessLogService {
             String lastCommitHash = git.log().setMaxCount(1).call().iterator().next().getName();
             var participation = participationRepository.findById(participationId);
             if (participation.isPresent() && participation.get() instanceof ProgrammingExerciseParticipation programmingParticipation) {
-                storeAccessLog(user, programmingParticipation, RepositoryActionType.WRITE, AuthenticationMechanism.CODE_EDITOR, lastCommitHash, null);
+                log.debug("Storing access operation for user {}", user);
+
+                VcsAccessLog accessLogEntry = new VcsAccessLog(user, (Participation) programmingParticipation, user.getName(), user.getEmail(), RepositoryActionType.WRITE,
+                        AuthenticationMechanism.CODE_EDITOR, lastCommitHash, null);
+                vcsAccessLogRepository.save(accessLogEntry);
             }
         }
     }
