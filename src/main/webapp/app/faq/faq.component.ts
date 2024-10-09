@@ -79,7 +79,6 @@ export class FaqComponent implements OnInit, OnDestroy {
             if (course) {
                 this.course = course;
                 this.isAtleastInstrucor = this.accountService.isAtLeastInstructorInCourse(course);
-                console.log(this.isAtleastInstrucor);
             }
         });
     }
@@ -162,20 +161,28 @@ export class FaqComponent implements OnInit, OnDestroy {
     }
 
     rejectFaq(courseId: number, faq: Faq) {
+        const previousState = faq.faqState;
         faq.faqState = FaqState.REJECTED;
         faq.course = this.course;
         this.faqService.update(courseId, faq).subscribe({
             next: () => this.alertService.success(this.translateService.instant('artemisApp.faq.rejected', { id: faq.id })),
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            error: (error: HttpErrorResponse) => {
+                this.dialogErrorSource.next(error.message);
+                faq.faqState = previousState;
+            },
         });
     }
 
     acceptProposedFaq(courseId: number, faq: Faq) {
+        const previousState = faq.faqState;
         faq.faqState = FaqState.ACCEPTED;
         faq.course = this.course;
         this.faqService.update(courseId, faq).subscribe({
             next: () => this.alertService.success(this.translateService.instant('artemisApp.faq.accepted', { id: faq.id })),
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            error: (error: HttpErrorResponse) => {
+                this.dialogErrorSource.next(error.message);
+                faq.faqState = previousState;
+            },
         });
     }
 }

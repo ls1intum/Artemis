@@ -16,7 +16,6 @@ export class FaqService {
 
     create(courseId: number, faq: Faq): Observable<EntityResponseType> {
         const copy = FaqService.convertFaqFromClient(faq);
-        copy.faqState = FaqState.ACCEPTED;
         return this.http.post<Faq>(`${this.resourceUrl}/${courseId}/faqs`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 return res;
@@ -24,13 +23,7 @@ export class FaqService {
         );
     }
 
-    proposeFaq(courseId: number, faq: Faq) {
-        faq.faqState = FaqState.PROPOSED;
-        this.create(courseId, faq);
-    }
-
     update(courseId: number, faq: Faq): Observable<EntityResponseType> {
-        console.log(faq);
         const copy = FaqService.convertFaqFromClient(faq);
         return this.http.put<Faq>(`${this.resourceUrl}/${courseId}/faqs/${faq.id}`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
