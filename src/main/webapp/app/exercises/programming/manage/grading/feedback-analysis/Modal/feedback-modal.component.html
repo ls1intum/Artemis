@@ -11,7 +11,7 @@
         </div>
         <div class="border">
             <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.occurrence"></span>
-            <p>{{ feedbackDetail().relativeCount }}% ({{ feedbackDetail().count }})</p>
+            <p>{{ feedbackDetail().relativeCount | number: '1.0-0' }}% ({{ feedbackDetail().count }})</p>
         </div>
         <div class="border">
             <span class="modal-label" jhiTranslate="artemisApp.programmingExercise.configureGrading.feedbackAnalysis.testcase"></span>
