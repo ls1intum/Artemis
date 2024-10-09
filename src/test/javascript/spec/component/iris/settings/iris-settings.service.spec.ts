@@ -1,8 +1,9 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
 import { mockSettings } from './mock-settings';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Iris Settings Service', () => {
     let service: IrisSettingsService;
@@ -10,8 +11,8 @@ describe('Iris Settings Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [IrisSettingsService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), IrisSettingsService],
         });
         service = TestBed.inject(IrisSettingsService);
         httpMock = TestBed.inject(HttpTestingController);

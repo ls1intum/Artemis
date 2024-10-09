@@ -14,6 +14,8 @@
                 *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise }"
                 [courseId]="courseId"
                 [exercise]="exercise"
+                [isGeneratingFeedback]="isGeneratingFeedback"
+                (generatingFeedback)="this.isGeneratingFeedback = true"
             />
             @if (plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
                 <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]">
@@ -255,7 +257,7 @@
             </div>
             <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
                 @if (exercise.course && (isCommunicationEnabled(exercise.course) || isMessagingEnabled(exercise.course))) {
-                    <router-outlet (activate)="onChildActivate($event)" />
+                    <jhi-discussion-section [exercise]="exercise" />
                 }
             </div>
         </div>

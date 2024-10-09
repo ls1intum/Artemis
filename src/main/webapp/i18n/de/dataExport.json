@@ -3,7 +3,7 @@
         "dataExport": {
             "title": "Datenexport",
             "titleDownload": "Datenexport herunterladen",
-            "description": "Hier kannst du einen Datenexport gemäß Art.15 DSGVO Auskunftsrecht der betroffenen Person anfordern. Sobald der Export erstellt wurde, erhältst du eine Email mit einem Link um diesen herunterzuladen. Du kannst den Export sieben Tage lang herunterladen, danach wird er gelöscht. ",
+            "description": "Hier kannst du einen Datenexport gemäß Art.15 DSGVO Auskunftsrecht der betroffenen Person anfordern. Sobald der Export erstellt wurde, erhältst du eine E-Mail mit einem Link um diesen herunterzuladen. Du kannst den Export sieben Tage lang herunterladen, danach wird er gelöscht. ",
             "descriptionDownload": "Hier kannst du deinen angeforderten Datenexport herunterladen.",
             "request": "Datenexport anfordern",
             "download": "Datenexport herunterladen",
@@ -22,7 +22,7 @@
             "isBeingCreated": "Dein angeforderter Datenexport wird aktuell noch erstellt.",
             "lastRequestDate": "Du hast deinen letzten Datenexport angefordert am ",
             "nextRequestDate": "Du kannst wieder einen Datenexport anfordern am ",
-            "typeUserLoginToConfirm": "Bitte gib die Benutzerkennung des Nutzers ein, für den du den Datenexport anfordern möchtest um den Datenexport zu bestätigen",
+            "typeUserLoginToConfirm": "Bitte gib die Benutzerkennung des Nutzers ein, für den du den Datenexport anfordern möchtest, um den Datenexport zu bestätigen.",
             "loginOrName": "Benutzerkennung oder Name des Nutzers",
             "searchQueryTooShort": "Bitte gib mindestens {{ length }} Zeichen ein"
         }

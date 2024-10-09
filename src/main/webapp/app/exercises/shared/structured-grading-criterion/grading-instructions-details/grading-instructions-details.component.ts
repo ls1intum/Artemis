@@ -4,15 +4,15 @@ import { GradingInstruction } from 'app/exercises/shared/structured-grading-crit
 import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
-import { MonacoEditorDomainAction } from 'app/shared/monaco-editor/model/actions/monaco-editor-domain-action.model';
-import { MonacoGradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-credits.action';
-import { MonacoGradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-scale.action';
-import { MonacoGradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-description.action';
-import { MonacoGradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-feedback.action';
-import { MonacoGradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-usage-count.action';
+import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/text-editor-domain-action.model';
+import { GradingCreditsAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-credits.action';
+import { GradingScaleAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-scale.action';
+import { GradingDescriptionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-description.action';
+import { GradingFeedbackAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-feedback.action';
+import { GradingUsageCountAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-usage-count.action';
 import { MarkdownEditorHeight, MarkdownEditorMonacoComponent, TextWithDomainAction } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
-import { MonacoGradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-criterion.action';
-import { MonacoGradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/monaco-grading-instruction.action';
+import { GradingCriterionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-criterion.action';
+import { GradingInstructionAction } from 'app/shared/monaco-editor/model/actions/grading-criteria/grading-instruction.action';
 
 @Component({
     selector: 'jhi-grading-instructions-details',
@@ -33,13 +33,13 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     markdownEditorText = '';
     showEditMode: boolean;
 
-    creditsAction = new MonacoGradingCreditsAction();
-    gradingScaleAction = new MonacoGradingScaleAction();
-    descriptionAction = new MonacoGradingDescriptionAction();
-    feedbackAction = new MonacoGradingFeedbackAction();
-    usageCountAction = new MonacoGradingUsageCountAction();
-    gradingInstructionAction = new MonacoGradingInstructionAction(this.creditsAction, this.gradingScaleAction, this.descriptionAction, this.feedbackAction, this.usageCountAction);
-    gradingCriterionAction = new MonacoGradingCriterionAction(this.gradingInstructionAction);
+    creditsAction = new GradingCreditsAction();
+    gradingScaleAction = new GradingScaleAction();
+    descriptionAction = new GradingDescriptionAction();
+    feedbackAction = new GradingFeedbackAction();
+    usageCountAction = new GradingUsageCountAction();
+    gradingInstructionAction = new GradingInstructionAction(this.creditsAction, this.gradingScaleAction, this.descriptionAction, this.feedbackAction, this.usageCountAction);
+    gradingCriterionAction = new GradingCriterionAction(this.gradingInstructionAction);
 
     domainActionsForMainEditor = [
         this.creditsAction,
@@ -51,7 +51,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
         this.gradingCriterionAction,
     ];
 
-    domainActionsForGradingInstructionParsing: MonacoEditorDomainAction[] = [
+    domainActionsForGradingInstructionParsing: TextEditorDomainAction[] = [
         this.creditsAction,
         this.gradingScaleAction,
         this.descriptionAction,
@@ -102,7 +102,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                     // if it is a dummy criterion, leave out the action identifier
                     markdownText += this.generateInstructionsMarkdown(criterion);
                 } else {
-                    markdownText += `${MonacoGradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
+                    markdownText += `${GradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t${this.generateInstructionsMarkdown(criterion)}`;
                 }
             }
         }
@@ -130,7 +130,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     generateInstructionText(instruction: GradingInstruction): string {
         let markdownText = '';
         markdownText =
-            MonacoGradingInstructionAction.IDENTIFIER +
+            GradingInstructionAction.IDENTIFIER +
             '\n' +
             '\t' +
             this.generateCreditsText(instruction) +
@@ -152,8 +152,8 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     generateCreditsText(instruction: GradingInstruction): string {
-        const creditsText = MonacoGradingCreditsAction.TEXT;
-        const creditsIdentifier = MonacoGradingCreditsAction.IDENTIFIER;
+        const creditsText = GradingCreditsAction.TEXT;
+        const creditsIdentifier = GradingCreditsAction.IDENTIFIER;
         if (instruction.credits == undefined) {
             instruction.credits = parseFloat(creditsText) || 0;
         }
@@ -162,30 +162,30 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
 
     generateGradingScaleText(instruction: GradingInstruction): string {
         if (instruction.gradingScale == undefined) {
-            instruction.gradingScale = MonacoGradingScaleAction.TEXT;
+            instruction.gradingScale = GradingScaleAction.TEXT;
         }
-        return `${MonacoGradingScaleAction.IDENTIFIER} ${instruction.gradingScale}`;
+        return `${GradingScaleAction.IDENTIFIER} ${instruction.gradingScale}`;
     }
 
     generateInstructionDescriptionText(instruction: GradingInstruction): string {
         if (instruction.instructionDescription == undefined) {
-            instruction.instructionDescription = MonacoGradingDescriptionAction.TEXT;
+            instruction.instructionDescription = GradingDescriptionAction.TEXT;
         }
-        return `${MonacoGradingDescriptionAction.IDENTIFIER} ${instruction.instructionDescription}`;
+        return `${GradingDescriptionAction.IDENTIFIER} ${instruction.instructionDescription}`;
     }
 
     generateInstructionFeedback(instruction: GradingInstruction): string {
         if (instruction.feedback == undefined) {
-            instruction.feedback = MonacoGradingFeedbackAction.TEXT;
+            instruction.feedback = GradingFeedbackAction.TEXT;
         }
-        return `${MonacoGradingFeedbackAction.IDENTIFIER} ${instruction.feedback}`;
+        return `${GradingFeedbackAction.IDENTIFIER} ${instruction.feedback}`;
     }
 
     generateUsageCount(instruction: GradingInstruction): string {
         if (instruction.usageCount == undefined) {
-            instruction.usageCount = parseInt(MonacoGradingUsageCountAction.TEXT, 10) || 0;
+            instruction.usageCount = parseInt(GradingUsageCountAction.TEXT, 10) || 0;
         }
-        return `${MonacoGradingUsageCountAction.IDENTIFIER} ${instruction.usageCount}`;
+        return `${GradingUsageCountAction.IDENTIFIER} ${instruction.usageCount}`;
     }
 
     initializeExerciseGradingInstructionText(): string {
@@ -211,7 +211,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     }
 
     hasCriterionAction(textWithDomainActions: TextWithDomainAction[]): boolean {
-        return textWithDomainActions.some(({ action }) => action instanceof MonacoGradingCriterionAction);
+        return textWithDomainActions.some(({ action }) => action instanceof GradingCriterionAction);
     }
 
     /**
@@ -228,7 +228,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             for (const { action } of textWithDomainActions) {
                 endOfInstructionsAction++;
                 this.setExerciseGradingInstructionText(textWithDomainActions);
-                if (action instanceof MonacoGradingCriterionAction) {
+                if (action instanceof GradingCriterionAction) {
                     instructionActions = textWithDomainActions.slice(0, endOfInstructionsAction - 1);
                     if (instructionActions.length !== 0) {
                         this.setParentForInstructionsWithNoCriterion(instructionActions);
@@ -251,7 +251,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     setParentForInstructionsWithNoCriterion(textWithDomainActions: TextWithDomainAction[]): void {
         for (const { action } of textWithDomainActions) {
             this.setExerciseGradingInstructionText(textWithDomainActions);
-            if (action instanceof MonacoGradingInstructionAction) {
+            if (action instanceof GradingInstructionAction) {
                 const dummyCriterion = new GradingCriterion();
                 const newInstruction = new GradingInstruction();
                 dummyCriterion.structuredGradingInstructions = [];
@@ -274,7 +274,7 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             this.exercise.gradingCriteria = [];
         }
         for (const { text, action } of textWithDomainActions) {
-            if (action instanceof MonacoGradingCriterionAction) {
+            if (action instanceof GradingCriterionAction) {
                 const newCriterion = new GradingCriterion();
                 newCriterion.title = text;
                 this.exercise.gradingCriteria.push(newCriterion);
@@ -284,19 +284,19 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
                 for (const remainingTextWithDomainAction of arrayWithoutCriterion) {
                     const instrAction = remainingTextWithDomainAction.action;
                     endOfCriterion++;
-                    if (instrAction instanceof MonacoGradingInstructionAction) {
+                    if (instrAction instanceof GradingInstructionAction) {
                         const newInstruction = new GradingInstruction(); // create instruction objects that belong to the above created criterion
                         newCriterion.structuredGradingInstructions.push(newInstruction);
                         this.instructions.push(newInstruction);
                     }
-                    if (instrAction instanceof MonacoGradingCriterionAction) {
+                    if (instrAction instanceof GradingCriterionAction) {
                         textWithDomainActions = textWithDomainActions.slice(endOfCriterion, textWithDomainActions.length);
                         break;
                     }
                 }
             }
         }
-        this.setInstructionParameters(initialCriterionActions.filter(({ action }) => !(action instanceof MonacoGradingCriterionAction)));
+        this.setInstructionParameters(initialCriterionActions.filter(({ action }) => !(action instanceof GradingCriterionAction)));
     }
 
     /**
@@ -309,15 +309,15 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
             if (!this.instructions[index]) {
                 break;
             }
-            if (action instanceof MonacoGradingCreditsAction) {
+            if (action instanceof GradingCreditsAction) {
                 this.instructions[index].credits = parseFloat(text);
-            } else if (action instanceof MonacoGradingScaleAction) {
+            } else if (action instanceof GradingScaleAction) {
                 this.instructions[index].gradingScale = text;
-            } else if (action instanceof MonacoGradingDescriptionAction) {
+            } else if (action instanceof GradingDescriptionAction) {
                 this.instructions[index].instructionDescription = text;
-            } else if (action instanceof MonacoGradingFeedbackAction) {
+            } else if (action instanceof GradingFeedbackAction) {
                 this.instructions[index].feedback = text;
-            } else if (action instanceof MonacoGradingUsageCountAction) {
+            } else if (action instanceof GradingUsageCountAction) {
                 this.instructions[index].usageCount = parseInt(text, 10);
                 index++; // index must be increased after the last parameter of the instruction to continue with the next instruction object
             }

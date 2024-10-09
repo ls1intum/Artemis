@@ -1,15 +1,14 @@
-import { HttpClientModule, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -29,6 +28,7 @@ import { MockTranslateService } from '../../../helpers/mocks/service/mock-transl
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { AlertService } from 'app/core/util/alert.service';
 import { NgbTooltipMocksModule } from '../../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('Test Run Management Component', () => {
     let component: TestRunManagementComponent;
@@ -49,7 +49,7 @@ describe('Test Run Management Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), FontAwesomeTestingModule, TranslateModule.forRoot(), HttpClientModule, NgbTooltipMocksModule],
+            imports: [RouterModule.forRoot([]), FontAwesomeTestingModule, TranslateModule.forRoot(), NgbTooltipMocksModule],
 
             declarations: [
                 TestRunManagementComponent,
@@ -61,6 +61,8 @@ describe('Test Run Management Component', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },

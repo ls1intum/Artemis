@@ -1,18 +1,18 @@
 import { Injectable } from '@angular/core';
-import { ExamUserDTO } from 'app/entities/exam-user-dto.model';
-import { ExamUserAttendanceCheckDTO } from 'app/entities/exam-users-attendance-check-dto.model';
+import { ExamUserDTO } from 'app/entities/exam/exam-user-dto.model';
+import { ExamUserAttendanceCheckDTO } from 'app/entities/exam/exam-users-attendance-check-dto.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
-import { ExamInformationDTO } from 'app/entities/exam-information.model';
-import { ExamChecklist } from 'app/entities/exam-checklist.model';
+import { ExamInformationDTO } from 'app/entities/exam/exam-information.model';
+import { ExamChecklist } from 'app/entities/exam/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -487,7 +487,7 @@ export class ExamManagementService {
     }
 
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
-        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/lockedSubmissions`, { observe: 'response' }).pipe(
+        return this.http.get<Submission[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/locked-submissions`, { observe: 'response' }).pipe(
             filter((res) => !!res.body),
             tap((res) => reconnectSubmissions(res.body!)),
         );

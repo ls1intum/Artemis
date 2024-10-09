@@ -1,5 +1,5 @@
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { UserCredentials, admin, studentOne, studentThree, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { Exercise, ExerciseType } from '../../../support/constants';
@@ -69,14 +69,17 @@ test.describe('Test Exam - student exams', () => {
 
             await studentExamManagement.checkExamStudent(studentOne.username);
             await studentExamManagement.checkExamStudent(studentTwo.username);
+            await studentExamManagement.checkExamStudent(studentThree.username);
 
-            await expect(studentExamManagement.getStudentExamRows()).toHaveCount(2);
+            await expect(studentExamManagement.getStudentExamRows()).toHaveCount(3);
 
             await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Started', 'Yes');
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Started', 'Yes');
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Started', 'No');
 
             await studentExamManagement.checkStudentExamProperty(studentOne.username, 'Submitted', 'Yes');
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Submitted', 'No');
+            await studentExamManagement.checkStudentExamProperty(studentThree.username, 'Submitted', 'No');
 
             await studentExamManagement.checkStudentExamProperty(studentTwo.username, 'Used working time', '0s');
         });
@@ -115,6 +118,7 @@ test.describe('Test Exam - student exams', () => {
     ) {
         if (!toStart) {
             await examParticipation.openExam(student, course, exam);
+            await examParticipation.almostStartExam();
         } else {
             await examParticipation.openExam(student, course, exam);
             await examParticipation.startExam();

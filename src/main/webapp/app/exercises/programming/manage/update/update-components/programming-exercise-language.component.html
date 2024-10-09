@@ -17,9 +17,7 @@
             [disabled]="programmingExerciseCreationConfig.isImportFromExistingExercise || !!programmingExercise.id || programmingExerciseCreationConfig.isImportFromFile"
         >
             @for (supportedLanguage of programmingExerciseCreationConfig.supportedLanguages; track supportedLanguage) {
-                <option [value]="supportedLanguage">
-                    {{ supportedLanguage.charAt(0).toUpperCase() + supportedLanguage.slice(1).toLowerCase() }}
-                </option>
+                <option [value]="supportedLanguage" [jhiTranslate]="'artemisApp.ProgrammingLanguage.' + supportedLanguage"></option>
             }
         </select>
     </div>
@@ -56,6 +54,28 @@
                     <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.withDependenciesTooltip" />
                 </div>
             }
+        </div>
+    }
+    @if (programmingExercise.programmingLanguage === ProgrammingLanguage.EMPTY) {
+        <div>
+            <p>
+                <fa-icon [icon]="faExclamationTriangle" size="xl" class="text-warning"></fa-icon>
+                <span jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.title" [translateValues]="{ documentationLink: DOCUMENTATION_LINK }"></span>
+            </p>
+            <ol>
+                <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.setImage" [translateValues]="DOCKER_REGISTRY_LINKS"></li>
+                <li>
+                    <p jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.buildScript.title" class="mb-0"></p>
+                    <ol>
+                        <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.buildScript.dependencies"></li>
+                        <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.buildScript.runTests"></li>
+                        <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.buildScript.moveResults" [translateValues]="{ resultsDirectory: './results/' }"></li>
+                    </ol>
+                </li>
+                <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.pushExercise" [translateValues]="{ checkoutDirectory: './assignment/' }"></li>
+                <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.pushSolution"></li>
+                <li jhiTranslate="artemisApp.programmingExercise.otherLanguageHints.pushTest" [translateValues]="{ checkoutDirectory: './' }"></li>
+            </ol>
         </div>
     }
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.packageNameRequired && programmingExercise.projectType !== ProjectType.XCODE) {
@@ -111,6 +131,13 @@
             }
         </div>
     }
+
+    <!-- Theia Image Selection -->
+    @if (programmingExercise.allowOnlineIde && programmingExercise.programmingLanguage) {
+        <label class="label-narrow" jhiTranslate="artemisApp.programmingExercise.theiaImage.title"></label>
+        <jhi-programming-exercise-theia [programmingExercise]="programmingExercise" [programmingExerciseCreationConfig]="programmingExerciseCreationConfig" />
+    }
+
     <!-- Static code analysis checkbox -->
     @if (programmingExercise.programmingLanguage && programmingExerciseCreationConfig.staticCodeAnalysisAllowed) {
         <div>

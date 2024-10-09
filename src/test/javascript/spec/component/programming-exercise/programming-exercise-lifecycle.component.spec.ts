@@ -4,7 +4,7 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-test-schedule-date-picker.component';
 import { NgModel } from '@angular/forms';
 import { AssessmentType } from 'app/entities/assessment-type.model';

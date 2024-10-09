@@ -2,7 +2,7 @@ import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextExerciseDetailComponent } from './text-exercise-detail.component';
 import { TextExerciseUpdateComponent } from './text-exercise-update.component';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { Injectable } from '@angular/core';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';

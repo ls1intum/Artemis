@@ -12,7 +12,7 @@ import { StructuredGradingCriterionModule } from 'app/exercises/shared/structure
 import { ArtemisIncludedInOverallScorePickerModule } from 'app/exercises/shared/included-in-overall-score-picker/included-in-overall-score-picker.module';
 import { ArtemisProgrammingExerciseLifecycleModule } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.module';
 import { AddAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/add-auxiliary-repository-button.component';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { ArtemisTableModule } from 'app/shared/table/table.module';
 import { RemoveAuxiliaryRepositoryButtonComponent } from 'app/exercises/programming/manage/update/remove-auxiliary-repository-button.component';
 import { SubmissionPolicyUpdateModule } from 'app/exercises/shared/submission-policy/submission-policy-update.module';
@@ -31,7 +31,8 @@ import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programmi
 import { FormsModule } from 'app/forms/forms.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
+import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @NgModule({
     imports: [
@@ -56,7 +57,8 @@ import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.modul
         FormsModule,
         ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent,
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
-        MonacoEditorModule,
+        MonacoEditorComponent,
+        ProgrammingExerciseTheiaComponent,
     ],
     declarations: [
         ProgrammingExerciseUpdateComponent,

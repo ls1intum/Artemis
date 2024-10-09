@@ -1,6 +1,6 @@
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, RouterModule, convertToParamMap } from '@angular/router';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTestModule } from '../../test.module';
@@ -8,7 +8,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockTextEditorService } from '../../helpers/mocks/service/mock-text-editor.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import { BehaviorSubject } from 'rxjs';
-import { RouterTestingModule } from '@angular/router/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -16,12 +15,12 @@ import { TextResultComponent } from 'app/exercises/text/participate/text-result/
 import { SubmissionResultStatusComponent } from 'app/overview/submission-result-status.component';
 import { TextEditorComponent } from 'app/exercises/text/participate/text-editor.component';
 import { textEditorRoute } from 'app/exercises/text/participate/text-editor.route';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { Result } from 'app/entities/result.model';
 import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { MockTextSubmissionService } from '../../helpers/mocks/service/mock-text-submission.service';
 import { Language } from 'app/entities/course.model';
@@ -65,7 +64,7 @@ describe('TextEditorComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([textEditorRoute[0]])],
+            imports: [ArtemisTestModule, RouterModule.forRoot([textEditorRoute[0]])],
             declarations: [
                 TextEditorComponent,
                 MockComponent(SubmissionResultStatusComponent),

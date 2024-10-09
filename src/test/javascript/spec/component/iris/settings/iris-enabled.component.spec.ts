@@ -4,14 +4,14 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { mockSettings } from './mock-settings';
-import { RouterTestingModule } from '@angular/router/testing';
 import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { HttpResponse } from '@angular/common/http';
 import { IrisEnabledComponent } from 'app/iris/settings/shared/iris-enabled.component';
 import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-settings.model';
+import { provideRouter } from '@angular/router';
 
 describe('IrisEnabledComponent', () => {
     let comp: IrisEnabledComponent;
@@ -26,9 +26,9 @@ describe('IrisEnabledComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [IrisEnabledComponent, TranslatePipeMock],
-            providers: [MockProvider(IrisSettingsService)],
+            providers: [provideRouter([]), MockProvider(IrisSettingsService)],
         })
             .compileComponents()
             .then(() => {

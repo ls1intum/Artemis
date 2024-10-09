@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { OrionFilterDirective } from 'app/shared/orion/orion-filter.directive';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -15,7 +14,7 @@ import { CourseExercisesComponent } from 'app/overview/course-exercises/course-e
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterModule } from '@angular/router';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { Exercise } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
@@ -29,6 +28,7 @@ import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { By } from '@angular/platform-browser';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CourseExercisesComponent', () => {
     let fixture: ComponentFixture<CourseExercisesComponent>;
@@ -44,7 +44,7 @@ describe('CourseExercisesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, RouterTestingModule.withRoutes([]), MockModule(ReactiveFormsModule)],
+            imports: [ArtemisTestModule, FormsModule, RouterModule.forRoot([]), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
             declarations: [
                 CourseExercisesComponent,
                 SidebarComponent,

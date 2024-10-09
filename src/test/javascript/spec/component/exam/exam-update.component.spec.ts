@@ -4,10 +4,9 @@ import { Component } from '@angular/core';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { RouterTestingModule } from '@angular/router/testing';
-import { ActivatedRoute, Router, UrlSegment } from '@angular/router';
+import { ActivatedRoute, Router, UrlSegment, provideRouter } from '@angular/router';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientModule, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 
 import { ExamUpdateComponent, prepareExamForImport } from 'app/exam/manage/exams/exam-update.component';
@@ -15,7 +14,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { Course, CourseInformationSharingConfiguration } from 'app/entities/course.model';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -41,8 +40,9 @@ import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 import { TitleChannelNameComponent } from 'app/shared/form/title-channel-name/title-channel-name.component';
 import { UMLDiagramType } from '@ls1intum/apollon';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { MarkdownEditorMonacoComponent } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 @Component({
     template: '',
@@ -73,7 +73,7 @@ describe('ExamUpdateComponent', () => {
     describe('create and edit exams', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
+                imports: [MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, ArtemisExamModePickerModule],
                 declarations: [
                     ExamUpdateComponent,
                     MockComponent(FormDateTimePickerComponent),
@@ -89,6 +89,9 @@ describe('ExamUpdateComponent', () => {
                     MockComponent(TitleChannelNameComponent),
                 ],
                 providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    provideRouter(routes),
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     MockDirective(TranslateDirective),
@@ -601,7 +604,7 @@ describe('ExamUpdateComponent', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [RouterTestingModule.withRoutes(routes), MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, HttpClientModule, ArtemisExamModePickerModule],
+                imports: [MockModule(NgbModule), TranslateModule.forRoot(), FormsModule, ArtemisExamModePickerModule],
                 declarations: [
                     ExamUpdateComponent,
                     ExamExerciseImportComponent,
@@ -621,6 +624,9 @@ describe('ExamUpdateComponent', () => {
                     MockComponent(TitleChannelNameComponent),
                 ],
                 providers: [
+                    provideHttpClient(),
+                    provideHttpClientTesting(),
+                    provideRouter(routes),
                     { provide: LocalStorageService, useClass: MockSyncStorage },
                     { provide: SessionStorageService, useClass: MockSyncStorage },
                     MockDirective(TranslateDirective),

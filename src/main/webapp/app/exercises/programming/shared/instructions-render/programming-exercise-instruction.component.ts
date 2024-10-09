@@ -14,12 +14,12 @@ import {
 } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ThemeService } from 'app/core/theme/theme.service';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming/programming-exercise-test-case.model';
 import { ProgrammingExerciseGradingService } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
 import { ShowdownExtension } from 'showdown';
 import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { Observable, Subscription, merge, of } from 'rxjs';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ProgrammingExerciseTaskExtensionWrapper, taskRegex } from './extensions/programming-exercise-task.extension';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
@@ -348,14 +348,14 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
                 // Insert anchor divs into the text so that injectable elements can be inserted into them.
                 // Without class="d-flex" the injected components height would be 0.
                 // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
-                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
+                acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-${this.exercise.id}-task-${id.toString()} d-flex">&#8203;</div>`),
             problemStatementHtml,
         );
     }
 
     private injectTasksIntoDocument = () => {
         this.tasks.forEach(({ id, taskName, testIds }) => {
-            const taskHtmlContainers = document.getElementsByClassName(`pe-task-${id}`);
+            const taskHtmlContainers = document.getElementsByClassName(`pe-${this.exercise.id}-task-${id}`);
 
             for (let i = 0; i < taskHtmlContainers.length; i++) {
                 const taskHtmlContainer = taskHtmlContainers[i];

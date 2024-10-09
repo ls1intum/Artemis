@@ -22,7 +22,7 @@
     }
     @if (isCodeOfConductAccepted && isServiceSetUp && course) {
         <div class="d-flex justify-content-between">
-            <div class="me-3" [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
+            <div [ngClass]="{ 'sidebar-collapsed': isCollapsed }">
                 <jhi-sidebar
                     (onSelectConversation)="onConversationSelected($event)"
                     (onUpdateSidebar)="prepareSidebarData()"
@@ -42,7 +42,7 @@
             }
             <div class="col flex-grow-1 module-bg rounded-3 scrollable-content" [ngClass]="{ 'content-height-dev': !isProduction || isTestServer }" style="min-width: 200px">
                 @if (activeConversation) {
-                    <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" />
+                    <jhi-conversation-header (collapseSearch)="toggleChannelSearch()" (onUpdateSidebar)="prepareSidebarData()" />
                     <jhi-conversation-messages
                         [contentHeightDev]="!isProduction || isTestServer"
                         (openThread)="postInThread = $event"

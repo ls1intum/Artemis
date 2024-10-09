@@ -9,7 +9,7 @@ import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { ExampleSubmission } from 'app/entities/example-submission.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { UMLModel } from '@ls1intum/apollon';
 import { ComplaintService } from 'app/complaints/complaint.service';
@@ -22,7 +22,7 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
@@ -31,8 +31,8 @@ import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exer
 import { TutorParticipation, TutorParticipationStatus } from 'app/entities/participation/tutor-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
-import { Exam } from 'app/entities/exam.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { Exam } from 'app/entities/exam/exam.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { SubmissionService, SubmissionWithComplaintDTO } from 'app/exercises/shared/submission/submission.service';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';

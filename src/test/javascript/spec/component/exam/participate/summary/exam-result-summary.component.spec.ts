@@ -1,28 +1,27 @@
-import { HttpClientModule, HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { User } from 'app/core/user/user.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { ExerciseResult, StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -56,6 +55,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import * as ExamUtils from 'app/exam/participate/exam.utils';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 let fixture: ComponentFixture<ExamResultSummaryComponent>;
 let component: ExamResultSummaryComponent;
@@ -172,7 +172,7 @@ const gradeInfo: StudentExamWithGradeDTO = {
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), HttpClientModule, NgbCollapseMocksModule],
+            imports: [NgbCollapseMocksModule],
             declarations: [
                 ExamResultSummaryComponent,
                 MockComponent(TestRunRibbonComponent),
@@ -197,6 +197,9 @@ function sharedSetup(url: string[]) {
                 MockComponent(CollapsibleCardComponent),
             ],
             providers: [
+                provideRouter([]),
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 {
                     provide: ActivatedRoute,
                     useValue: {

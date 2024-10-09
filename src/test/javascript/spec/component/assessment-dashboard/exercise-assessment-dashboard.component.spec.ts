@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
@@ -24,19 +24,19 @@ import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.mod
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextSubmission } from 'app/entities/text/text-submission.model';
+import { TextExercise } from 'app/entities/text/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Language } from 'app/entities/course.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { TutorParticipationService } from 'app/exercises/shared/dashboards/tutor/tutor-participation.service';
 import { Participation } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { SecondCorrectionEnableButtonComponent } from 'app/exercises/shared/dashboards/tutor/second-correction-button/second-correction-enable-button.component';
 import { LanguageTableCellComponent } from 'app/exercises/shared/dashboards/tutor/language-table-cell/language-table-cell.component';
@@ -57,7 +57,6 @@ import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { RouterTestingModule } from '@angular/router/testing';
 import { SortService } from 'app/shared/service/sort.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -211,7 +210,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             }),
         },
     } as any as ActivatedRoute;
-    const imports = [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(PieChartModule)];
+    const imports = [ArtemisTestModule, MockModule(PieChartModule), RouterModule.forRoot([])];
 
     const declarations = [
         ExerciseAssessmentDashboardComponent,

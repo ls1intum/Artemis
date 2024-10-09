@@ -15,6 +15,9 @@
             "copied": "Copied",
             "new": "New"
         },
+        "importTable": {
+            "searchPlaceholder": "Search"
+        },
         "menu": {
             "home": "Home",
             "overview": "Course Overview",
@@ -123,12 +126,13 @@
             "continueTutorial": "Continue tutorial"
         },
         "form": {
-            "username": "Username",
+            "username": "Login or email",
             "firstname": "First name",
-            "firstname.placeholder": "Your first name",
+            "firstname.placeholder": "First name",
             "lastname": "Last name",
-            "lastname.placeholder": "Your last name",
-            "username.placeholder": "Your Username",
+            "lastname.placeholder": "Last name",
+            "username.placeholder": "Login or email",
+            "username.tumPlaceholder": "e.g. go42tum / example@tum.de",
             "currentpassword": "Current password",
             "currentpassword.placeholder": "Current password",
             "newpassword": "New password",
@@ -267,7 +271,8 @@
             "goBack": "Go back",
             "search": "Search",
             "select": "Select",
-            "sendToIris": "Send To Iris"
+            "sendToIris": "Send To Iris",
+            "faq": "FAQ"
         },
         "detail": {
             "field": "Field",
@@ -346,7 +351,8 @@
         "exercises": "Exercises",
         "statistics": "Course statistics",
         "exams": "Exams",
-        "communication": "Communication"
+        "communication": "Communication",
+        "faq": "FAQ"
     },
     "connectionStatus": {
         "connected": "Connected",

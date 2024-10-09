@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { CourseScores } from 'app/course/course-scores/course-scores';
@@ -14,7 +13,7 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { CourseCompetenciesComponent } from 'app/overview/course-competencies/course-competencies.component';
@@ -329,7 +328,7 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule), MockModule(NgbTooltipModule)],
+            imports: [ArtemisTestModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule), MockModule(NgbTooltipModule)],
             declarations: [
                 CourseStatisticsComponent,
                 MockComponent(CourseCompetenciesComponent),
@@ -340,6 +339,7 @@ describe('CourseStatisticsComponent', () => {
                 TranslateDirective,
             ],
             providers: [
+                provideRouter([]),
                 MockProvider(ArtemisNavigationUtilService),
                 MockProvider(ChartCategoryFilter),
                 {

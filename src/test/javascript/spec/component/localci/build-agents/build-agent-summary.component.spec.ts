@@ -3,17 +3,17 @@ import { BuildAgentSummaryComponent } from 'app/localci/build-agents/build-agent
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { BuildAgentsService } from 'app/localci/build-agents/build-agents.service';
 import { of } from 'rxjs';
-import { BuildJob } from 'app/entities/build-job.model';
+import { BuildJob } from 'app/entities/programming/build-job.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { MockComponent, MockPipe } from 'ng-mocks';
-import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { BuildAgent } from 'app/entities/build-agent.model';
-import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/repository-info.model';
+import { NgxDatatableModule } from '@siemens/ngx-datatable';
+import { BuildAgent } from 'app/entities/programming/build-agent.model';
+import { RepositoryInfo, TriggeredByPushTo } from 'app/entities/programming/repository-info.model';
 import { JobTimingInfo } from 'app/entities/job-timing-info.model';
-import { BuildConfig } from 'app/entities/build-config.model';
+import { BuildConfig } from 'app/entities/programming/build-config.model';
 
 describe('BuildAgentSummaryComponent', () => {
     let component: BuildAgentSummaryComponent;

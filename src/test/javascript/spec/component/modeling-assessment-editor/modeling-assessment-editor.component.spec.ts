@@ -1,7 +1,6 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, ParamMap, Router, RouterModule, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
@@ -12,7 +11,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Complaint } from 'app/entities/complaint.model';
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -20,15 +19,14 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { getLatestSubmissionResult } from 'app/entities/submission.model';
 import { ModelingAssessmentEditorComponent } from 'app/exercises/modeling/assess/modeling-assessment-editor/modeling-assessment-editor.component';
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { of, throwError } from 'rxjs';
-import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -44,6 +42,7 @@ import dayjs from 'dayjs/esm';
 import { AssessmentAfterComplaint } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { AthenaService } from 'app/assessment/athena.service';
 
 describe('ModelingAssessmentEditorComponent', () => {
     let component: ModelingAssessmentEditorComponent;
@@ -51,16 +50,19 @@ describe('ModelingAssessmentEditorComponent', () => {
     let service: ModelingAssessmentService;
     let mockAuth: MockAccountService;
     let modelingSubmissionService: ModelingSubmissionService;
+    let athenaService: AthenaService;
     let complaintService: ComplaintService;
     let modelingSubmissionSpy: jest.SpyInstance;
     let complaintSpy: jest.SpyInstance;
     let router: Router;
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
+    let paramMapSubject: BehaviorSubject<ParamMap>;
 
     beforeEach(() => {
+        paramMapSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule, RouterModule.forRoot([])],
             declarations: [
                 ModelingAssessmentEditorComponent,
                 MockComponent(AssessmentLayoutComponent),
@@ -70,7 +72,22 @@ describe('ModelingAssessmentEditorComponent', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                mockedActivatedRoute({}, { showBackButton: 'false', submissionId: 'new', exerciseId: 1 }),
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        paramMap: paramMapSubject.asObservable(),
+                        queryParamMap: of(convertToParamMap({})),
+                        params: of({}),
+                        queryParams: of({}),
+                        snapshot: {
+                            paramMap: convertToParamMap({}),
+                            queryParamMap: convertToParamMap({}),
+                        },
+                        parent: {
+                            paramMap: of(convertToParamMap({})),
+                        },
+                    },
+                },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -82,6 +99,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 component = fixture.componentInstance;
                 service = TestBed.inject(ModelingAssessmentService);
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
+                athenaService = TestBed.inject(AthenaService);
                 complaintService = TestBed.inject(ComplaintService);
                 submissionService = TestBed.inject(SubmissionService);
                 mockAuth = fixture.debugElement.injector.get(AccountService) as any as MockAccountService;
@@ -183,6 +201,37 @@ describe('ModelingAssessmentEditorComponent', () => {
             tick(500);
             expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
             modelingSubmissionSpy.mockRestore();
+        }));
+        it('call ngOnInit with submissionId set to new', fakeAsync(() => {
+            paramMapSubject.next(
+                convertToParamMap({
+                    submissionId: 'new',
+                    courseId: '1',
+                    exerciseId: '1',
+                }),
+            );
+
+            const mockSubmission: ModelingSubmission = {
+                id: 123,
+                submitted: true,
+                participation: {
+                    exercise: {
+                        id: 1,
+                        type: 'modeling',
+                        feedbackSuggestionModule: 'modeling',
+                    } as unknown as Exercise,
+                },
+            } as ModelingSubmission;
+
+            const modelingSubmissionSpy = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(mockSubmission));
+            jest.spyOn(athenaService, 'getModelingFeedbackSuggestions').mockReturnValue(of([new Feedback(), new Feedback()]));
+
+            component.ngOnInit();
+            tick(500);
+
+            expect(modelingSubmissionSpy).toHaveBeenCalledOnce();
+            expect(component.submission).toBe(mockSubmission);
+            expect(component.assessmentsAreValid).toBeFalse();
         }));
     });
 

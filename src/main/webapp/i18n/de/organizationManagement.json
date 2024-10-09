@@ -9,7 +9,7 @@
             "logoUrl": "Logo URL",
             "Nutzer:innens": "Nutzer:innen",
             "courses": "Kurse",
-            "emailPattern": "Email-Muster",
+            "emailPattern": "E-Mail-Muster",
             "delete": {
                 "question": "Soll die Organisation <strong>{{ title }}</strong> wirklich gelöscht werden?"
             },
@@ -31,12 +31,12 @@
                 "select": "Auswählen",
                 "title": "Organisationen"
             },
-            "patternChangeWarning": "Beim Ändern des Email-Musters wird eine Neuzuweisung der Nutzer:innen zu dieser Organisation ausgeführt"
+            "patternChangeWarning": "Beim Ändern des E-Mail-Musters wird eine Neuzuweisung der Nutzer:innen zu dieser Organisation ausgeführt"
         },
         "organization": {
-            "updated": "Organization updated!",
-            "deleted": "Organization deleted!",
-            "created": "Organization created!"
+            "updated": "Organisation aktualisiert!",
+            "deleted": "Organisation gelöscht!",
+            "created": "Organisation angelegt!"
         }
     }
 }

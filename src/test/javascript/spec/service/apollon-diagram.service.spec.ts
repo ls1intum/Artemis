@@ -1,8 +1,8 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { ApollonDiagram } from 'app/entities/apollon-diagram.model';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { UMLDiagramType } from '@ls1intum/apollon';
 
 const resourceUrl = 'api';
@@ -14,8 +14,8 @@ describe('ApollonDiagramService', () => {
     let httpTestingController: HttpTestingController;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [ApollonDiagramService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), ApollonDiagramService],
         })
             .compileComponents()
             .then(() => {

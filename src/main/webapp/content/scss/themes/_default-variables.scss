@@ -51,8 +51,11 @@ $border-color: #dee2e6;
 $footer-bg: $white;
 $footer-height-dev: 3rem;
 $footer-height-prod: 2rem;
+
+// Sidebar
 $sidebar-footer-height-dev: 134px;
 $sidebar-footer-height-prod: 118px;
+$sidebar-width: 275px;
 
 //Module and Navigationbar
 $module-bg: $white;
@@ -241,6 +244,12 @@ $stat-av-sc-legend-background: whitesmoke;
 $stat-av-sc-legend-critical: rgba(204, 0, 0, 1);
 $stat-av-sc-legend-median: rgba(127, 127, 127, 255);
 $stat-av-sc-legend-best: rgba(40, 164, 40, 1);
+
+// Component: pdf-preview.component.scss
+$pdf-preview-pdf-container-shadow: scale-color($black, $alpha: -90%);
+$pdf-preview-canvas-shadow: scale-color($black, $alpha: -90%);
+$pdf-preview-container-overlay: scale-color($black, $alpha: -60%);
+$pdf-preview-enlarged-container-overlay: scale-color($black, $alpha: -80%);
 
 // Programming Exercise Update
 $update-programming-exercise-plan-preview-box-background: transparentize(black, 0.95);

@@ -6,7 +6,7 @@ import { Page, expect } from '@playwright/test';
 import javaPartiallySuccessful from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
 
 import { Course } from 'app/entities/course.model';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExamExerciseGroupCreationPage } from '../../support/pageobjects/exam/ExamExerciseGroupCreationPage';

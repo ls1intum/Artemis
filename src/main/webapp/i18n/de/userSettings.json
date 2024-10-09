@@ -5,13 +5,19 @@
             "saveChanges": "Änderungen speichern",
             "saveSettingsSuccessAlert": "Die Einstellungen wurden erfolgreich gespeichert.",
             "userSettings": "Benutzereinstellungen",
-            "sshSettings": "SSH Einstellungen",
+            "sshSettings": "SSH",
+            "vcsAccessTokenSettings": "VCS Token",
             "accountInformation": "Account Informationen",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
             "scienceSettings": "Forschung",
             "scienceSettingsFeatureDisabled": "Dieses Feature ist derzeit deaktiviert. Du kannst deine Einstellungen trotzdem bearbeiten, falls das Feature wieder aktiviert wird.",
             "scienceSettingsInfo": "Hilf Artemis dabei besser zu werden!",
+            "idePreferencesPage": {
+                "description": "Wähle die IDEs, die du für das Öffnen von Programmieraufgaben verwenden möchtest.",
+                "default": "Standard",
+                "jetbrainsHelp": "Um JetBrains IDEs zu verwenden, installiere bitte die JetBrains Toolbox."
+            },
             "sshSettingsPage": {
                 "sshSettingsInfoText": "Hier kannst du einen öffentlichen SSH-Schlüssel festlegen, um Git-Repositories über SSH zu klonen. Weitere Einzelheiten findest du in der Dokumentation.",
                 "deleteSshKeyQuestion": "Möchtest du deinen öffentlichen SSH-Schlüssel wirklich löschen?",
@@ -27,18 +33,37 @@
                 "sshKeyDisplayedInformation": "Das ist dein aktuell konfigurierter SSH-Schlüssel:",
                 "key": "SSH Schlüssel"
             },
+            "vcsAccessTokensSettingsPage": {
+                "addTokenTitle": "Neues Zugriffstoken erzeugen",
+                "infoText": "Du kannst ein persönliches Zugriffstoken generieren, um mit dem Artemis Local Version Control System zu interagieren. Verwende es um dich über HTTP bei Git zu authentifizieren.",
+                "deleteVcsAccessTokenQuestion": "Möchtest du dein Zugriffstoken für das Versionskontrollsystem wirklich löschen? Du kannst dich nicht mehr bei lokalen Repositories authentifizieren, die mit diesem Token geklont wurden.",
+                "createAccessToken": "Neues VCS Zugriffstoken generieren",
+                "noTokenSet": "Du hast kein Zugriffstoken",
+                "addToken": "Neues Token hinzufügen",
+                "deleteFailure": "Das Löschen des VCS-Zugriffstokens ist fehlgeschlagen",
+                "deleteSuccess": "Das VCS-Zugriffstoken wurde erfolgreich gelöscht",
+                "addFailure": "Neues VCS-Zugriffstoken konnte nicht gespeichert werden",
+                "addSuccess": "Neues VCS-Zugriffstoken erfolgreich erstellt",
+                "vcsAccessToken": "VCS-Zugriffstoken",
+                "expiryDate": "Ablaufdatum",
+                "actions": "Aktionen"
+            },
             "accountInformationPage": {
                 "registrationNumber": "Matrikelnummer",
                 "fullName": "Vollständiger Name",
                 "login": "Login",
-                "email": "Email",
+                "email": "E-Mail",
                 "joinedArtemis": "Artemis beigetreten am",
+                "profilePicture": "Profilbild",
+                "addProfilePicture": "Profilbild hinzufügen",
                 "sshKey": "Öffentlicher SSH Schlüssel"
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
-                "SSH_SETTINGS": "SSH"
+                "SSH_SETTINGS": "SSH Einstellungen",
+                "VCS_TOKEN_SETTINGS": "VCS Tokeneinstellungen",
+                "IDE_PREFERENCES": "IDE Präferenzen"
             },
             "settingGroupNames": {
                 "weeklySummary": "Wöchentliche Zusammenfassung",
@@ -82,7 +107,7 @@
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Erhalte jeden Freitag um 17:00 Uhr eine einfache wöchentliche Zusammenfassung (bsp. welche neuen Aufgaben diese Woche veröffentlicht wurden und noch bearbeitbar sind)",
-                "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung wenn eine neue Aufgabe veröffentlicht wurde",
+                "exerciseCreatedOrStartedDescription": "Erhalte eine Mitteilung, wenn eine neue Aufgabe veröffentlicht wurde",
                 "exerciseOpenForPracticeDescription": "Erhalte eine Mitteilung, wenn eine Aufgabe zum Üben freigeschaltet wurde (z.B. ein Quiz)",
                 "exerciseSubmissionAssessedDescription": "Erhalte eine Mitteilung, wenn deine eingereichten Aufgaben bewertet wurden",
                 "newExercisePostDescription": "Erhalte eine Mitteilung, wenn eine neue Nachricht zu einer Aufgabe erstellt wurde",

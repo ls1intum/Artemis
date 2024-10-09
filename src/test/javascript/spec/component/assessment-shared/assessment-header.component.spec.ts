@@ -6,7 +6,6 @@ import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/asse
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -14,7 +13,7 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
-import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
+import { TextAssessmentEventType } from 'app/entities/text/text-assesment-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -25,6 +24,7 @@ import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { AssessmentNote } from 'app/entities/assessment-note.model';
+import { RouterModule } from '@angular/router';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -49,7 +49,7 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, NgbTooltipMocksModule, NgbAlertsMocksModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule, NgbAlertsMocksModule, RouterModule.forRoot([])],
             declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, TranslateDirective, ArtemisTranslatePipe, MockTranslateValuesDirective],
             providers: [
                 {

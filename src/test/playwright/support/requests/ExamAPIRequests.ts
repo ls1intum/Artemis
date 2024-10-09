@@ -1,6 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs';
-import { Exam } from 'app/entities/exam.model';
+import { Exam } from 'app/entities/exam/exam.model';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
 import examTemplate from '../../fixtures/exam/template.json';
 import { Page } from '@playwright/test';
@@ -148,12 +148,12 @@ export class ExamAPIRequests {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exerciseGroups`, { data: exerciseGroup });
+        const response = await this.page.request.post(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exercise-groups`, { data: exerciseGroup });
         return response.json();
     }
 
     async deleteExerciseGroupForExam(exam: Exam, exerciseGroup: ExerciseGroup) {
-        await this.page.request.delete(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exerciseGroups/${exerciseGroup.id}`);
+        await this.page.request.delete(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/exercise-groups/${exerciseGroup.id}`);
     }
 
     /**

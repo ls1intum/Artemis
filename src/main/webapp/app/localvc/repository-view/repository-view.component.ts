@@ -3,7 +3,7 @@ import { Observable, Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
 import { ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -16,6 +16,8 @@ import { faClockRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { Feedback } from 'app/entities/feedback.model';
+import { PROFILE_LOCALVC } from 'app/app.constants';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Component({
     selector: 'jhi-repository-view',
@@ -40,12 +42,15 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
     participationCouldNotBeFetched = false;
     showEditorInstructions = true;
     routeCommitHistory: string;
+    vcsAccessLogRoute: string;
     repositoryUri: string;
     repositoryType: ProgrammingExerciseInstructorRepositoryType | 'USER';
-
+    enableVcsAccessLog = false;
+    allowVcsAccessLog = false;
     result: Result;
     resultHasInlineFeedback = false;
     showInlineFeedback = false;
+    localVcEnabled = false;
 
     faClockRotateLeft = faClockRotateLeft;
     participationWithLatestResultSub: Subscription;
@@ -55,6 +60,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         public domainService: DomainService,
         private route: ActivatedRoute,
+        private profileService: ProfileService,
         private programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
         private programmingExerciseService: ProgrammingExerciseService,
         private router: Router,
@@ -86,11 +92,16 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
             const exerciseId = Number(params['exerciseId']);
             const participationId = Number(params['participationId']);
             this.repositoryType = participationId ? 'USER' : params['repositoryType'];
+            this.vcsAccessLogRoute = this.router.url + '/vcs-access-log';
+            this.enableVcsAccessLog = this.router.url.includes('course-management') && params['repositoryType'] !== 'TESTS';
             if (this.repositoryType === 'USER') {
                 this.loadStudentParticipation(participationId);
             } else {
                 this.loadDifferentParticipation(this.repositoryType, exerciseId);
             }
+        });
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.localVcEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
     }
 
@@ -122,6 +133,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                         this.participationCouldNotBeFetched = true;
                         this.loadingParticipation = false;
                     }
+                    this.allowVcsAccessLog = this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(this.exercise));
                 }),
             )
             .subscribe({
@@ -146,6 +158,7 @@ export class RepositoryViewComponent implements OnInit, OnDestroy {
                     this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                     this.participation = participationWithResults;
                     this.exercise = this.participation.exercise as ProgrammingExercise;
+                    this.allowVcsAccessLog = this.accountService.isAtLeastInstructorInCourse(this.getCourseFromExercise(this.exercise));
                     this.repositoryUri = this.participation.repositoryUri!;
                 }),
             )
