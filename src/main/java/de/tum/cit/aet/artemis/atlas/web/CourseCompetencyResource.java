@@ -366,14 +366,8 @@ public class CourseCompetencyResource {
     public ResponseEntity<Void> updateCompetencyRelation(@PathVariable long courseId, @PathVariable long competencyRelationId,
             @RequestBody @Valid UpdateCourseCompetencyRelationDTO updateCourseCompetencyRelationDTO) {
         log.info("REST request to update a competency relation: {}", competencyRelationId);
-        var relation = competencyRelationRepository.findByIdElseThrow(competencyRelationId);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        checkCourseForCompetency(course, relation.getHeadCompetency());
-
-        relation.setType(updateCourseCompetencyRelationDTO.newRelationType());
-        competencyRelationRepository.save(relation);
-
-        return ResponseEntity.ok().build();
+        courseCompetencyService.updateCourseCompetencyRelation(courseId, competencyRelationId, updateCourseCompetencyRelationDTO);
+        return ResponseEntity.noContent().build();
     }
 
     /**

@@ -423,7 +423,7 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             assertThat(relation.getType()).isEqualTo(RelationType.EXTENDS);
 
             request.patch("/api/courses/" + course.getId() + "/course-competencies/relations/" + relation.getId(), new UpdateCourseCompetencyRelationDTO(RelationType.MATCHES),
-                    HttpStatus.OK);
+                    HttpStatus.NO_CONTENT);
 
             relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
             assertThat(relations).hasSize(1);
