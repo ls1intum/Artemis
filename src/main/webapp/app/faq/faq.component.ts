@@ -86,7 +86,7 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     toggleFilters(category: string) {
         this.activeFilters = this.faqService.toggleFilter(category, this.activeFilters);
-        this.applyFilters();
+        this.refreshFaqList(this.searchInput.getValue());
     }
 
     private applyFilters(): void {
