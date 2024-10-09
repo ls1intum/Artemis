@@ -16,6 +16,7 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
 import { ArtemisCategorySelectorModule } from 'app/shared/category-selector/category-selector.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
     selector: 'jhi-faq-update',
@@ -31,6 +32,7 @@ export class FaqUpdateComponent implements OnInit {
     existingCategories: FaqCategory[];
     faqCategories: FaqCategory[];
     courseId: number;
+    isAtleastInstructor: boolean = false;
     domainActionsDescription = [new FormulaAction()];
 
     // Icons
@@ -44,6 +46,7 @@ export class FaqUpdateComponent implements OnInit {
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private router = inject(Router);
     private translateService = inject(TranslateService);
+    private accountService = inject(AccountService);
 
     ngOnInit() {
         this.isSaving = false;
@@ -56,6 +59,7 @@ export class FaqUpdateComponent implements OnInit {
             if (course) {
                 this.faq.course = course;
                 this.loadCourseFaqCategories(course.id);
+                this.isAtleastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
             this.faqCategories = faq?.categories ? faq.categories : [];
         });
@@ -77,10 +81,10 @@ export class FaqUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
+        this.faq.faqState = this.isAtleastInstructor ? FaqState.ACCEPTED : FaqState.PROPOSED;
         if (this.faq.id !== undefined) {
             this.subscribeToSaveResponse(this.faqService.update(this.courseId, this.faq));
         } else {
-            this.faq.faqState = FaqState.ACCEPTED;
             this.subscribeToSaveResponse(this.faqService.create(this.courseId, this.faq));
         }
     }

@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { Faq } from 'app/entities/faq.model';
-import { faEdit, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { BehaviorSubject, Subject } from 'rxjs';
-import { debounceTime, map } from 'rxjs/operators';
+import { Faq, FaqState } from 'app/entities/faq.model';
+import { faCancel, faCheck, faEdit, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { Subject } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { FaqService } from 'app/faq/faq.service';
@@ -16,20 +16,26 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { Course } from 'app/entities/course.model';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-faq',
     templateUrl: './faq.component.html',
     styleUrls: [],
     standalone: true,
-    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule, SearchFilterComponent],
+    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule],
 })
 export class FaqComponent implements OnInit, OnDestroy {
+    protected readonly FaqState = FaqState;
     faqs: Faq[];
+    course: Course;
     filteredFaqs: Faq[];
     existingCategories: FaqCategory[];
     courseId: number;
     hasCategories: boolean = false;
+    isAtleastInstrucor: boolean = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -46,11 +52,15 @@ export class FaqComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     faFilter = faFilter;
     faSort = faSort;
+    faCancel = faCancel;
+    faCheck = faCheck;
 
     private faqService = inject(FaqService);
     private route = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private sortService = inject(SortService);
+    private accountService = inject(AccountService);
+    private translateService = inject(TranslateService);
 
     constructor() {
         this.predicate = 'id';
@@ -63,6 +73,14 @@ export class FaqComponent implements OnInit, OnDestroy {
         this.loadCourseFaqCategories(this.courseId);
         this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
             this.refreshFaqList(searchTerm);
+        });
+        this.route.data.subscribe((data) => {
+            const course = data['course'];
+            if (course) {
+                this.course = course;
+                this.isAtleastInstrucor = this.accountService.isAtLeastInstructorInCourse(course);
+                console.log(this.isAtleastInstrucor);
+            }
         });
     }
 
@@ -141,5 +159,23 @@ export class FaqComponent implements OnInit, OnDestroy {
     refreshFaqList(searchTerm: string) {
         this.applyFilters();
         this.applySearch(searchTerm);
+    }
+
+    rejectFaq(courseId: number, faq: Faq) {
+        faq.faqState = FaqState.REJECTED;
+        faq.course = this.course;
+        this.faqService.update(courseId, faq).subscribe({
+            next: () => this.alertService.success(this.translateService.instant('artemisApp.faq.rejected', { id: faq.id })),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    acceptProposedFaq(courseId: number, faq: Faq) {
+        faq.faqState = FaqState.ACCEPTED;
+        faq.course = this.course;
+        this.faqService.update(courseId, faq).subscribe({
+            next: () => this.alertService.success(this.translateService.instant('artemisApp.faq.accepted', { id: faq.id })),
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }
