@@ -5,7 +5,7 @@ import { MockAlertService } from '../../../helpers/mocks/service/mock-alert.serv
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/entities/competency.model';
+import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/entities/competency.model';
 
 describe('CourseCompetencyRelationFormComponent', () => {
     let component: CourseCompetencyRelationFormComponent;
@@ -200,11 +200,10 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
         await component['updateRelation']();
 
-        expect(updateCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, selectedRelationId, CompetencyRelationType.ASSUMES);
+        expect(updateCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, selectedRelationId, <UpdateCourseCompetencyRelationDTO>{
+            newRelationType: CompetencyRelationType.ASSUMES,
+        });
         expect(onRelationUpdateSpy).toHaveBeenCalledOnce();
-        expect(component.headCompetencyId()).toBeUndefined();
-        expect(component.tailCompetencyId()).toBeUndefined();
-        expect(component.relationType()).toBeUndefined();
     });
 
     it('should set isLoading correctly when updating a relation', async () => {

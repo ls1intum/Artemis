@@ -126,7 +126,6 @@ export class CourseCompetencyRelationFormComponent {
                 newRelationType: newRelationType,
             });
             this.onRelationUpdate.emit({ ...currentRelation, relationType: newRelationType });
-            this.resetForm();
         } catch (error) {
             this.alertService.error(error.message);
         } finally {
