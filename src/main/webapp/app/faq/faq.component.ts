@@ -68,6 +68,7 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.complete();
+        this.searchInput.complete();
     }
 
     deleteFaq(courseId: number, faqId: number) {
