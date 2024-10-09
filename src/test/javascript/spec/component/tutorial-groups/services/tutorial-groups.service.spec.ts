@@ -1,10 +1,11 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('TutorialGroupService', () => {
     let service: TutorialGroupsService;
@@ -13,7 +14,8 @@ describe('TutorialGroupService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         });
         service = TestBed.inject(TutorialGroupsService);
         httpMock = TestBed.inject(HttpTestingController);

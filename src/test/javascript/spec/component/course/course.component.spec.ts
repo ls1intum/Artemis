@@ -1,9 +1,8 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
-import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
@@ -93,7 +92,7 @@ describe('CoursesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
+            imports: [ArtemisTestModule, RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
             declarations: [
                 CoursesComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
