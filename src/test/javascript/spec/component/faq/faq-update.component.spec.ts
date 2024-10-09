@@ -11,7 +11,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import { FaqUpdateComponent } from 'app/faq/faq-update.component';
 import { FaqService } from 'app/faq/faq.service';
-import { Faq, FaqState } from 'app/entities/faq.model';
+import { Faq } from 'app/entities/faq.model';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AlertService } from 'app/core/util/alert.service';
 import { FaqCategory } from 'app/entities/faq-category.model';
@@ -111,7 +111,7 @@ describe('FaqUpdateComponent', () => {
         faqUpdateComponent.save();
         tick();
 
-        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { faqState: FaqState.ACCEPTED, questionTitle: 'test1' });
+        expect(createSpy).toHaveBeenCalledExactlyOnceWith(courseId, { questionTitle: 'test1', faqState: 'PROPOSED' });
         expect(faqUpdateComponent.isSaving).toBeFalse();
     }));
 
@@ -140,7 +140,7 @@ describe('FaqUpdateComponent', () => {
         tick();
         faqUpdateComponentFixture.detectChanges();
 
-        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated' });
+        expect(updateSpy).toHaveBeenCalledExactlyOnceWith(courseId, { id: 6, questionTitle: 'test1Updated', faqState: 'PROPOSED' });
     }));
 
     it('should navigate to previous state', fakeAsync(() => {
