@@ -38,10 +38,17 @@
                     }
                 </div>
                 <div class="d-flex-end justify-content-end">
-                    <a id="create-faq" class="btn btn-primary mb-1" [routerLink]="['new']">
-                        <fa-icon [icon]="faPlus" />
-                        <span jhiTranslate="artemisApp.faq.home.createLabel"></span>
-                    </a>
+                    @if (isAtleastInstrucor) {
+                        <a id="create-faq" class="btn btn-primary mb-1" [routerLink]="['new']">
+                            <fa-icon [icon]="faPlus" />
+                            <span jhiTranslate="artemisApp.faq.home.createLabel"></span>
+                        </a>
+                    } @else {
+                        <a id="propose-faq" class="btn btn-primary mb-1" [routerLink]="['new']">
+                            <fa-icon [icon]="faPlus" />
+                            <span jhiTranslate="artemisApp.faq.home.proposeLabel"></span>
+                        </a>
+                    }
                 </div>
             </div>
         </div>
@@ -64,6 +71,10 @@
                         <span jhiTranslate="artemisApp.faq.table.questionAnswer"></span>
                         <fa-icon [icon]="faSort" />
                     </th>
+                    <th jhiSortBy="faqState">
+                        <span jhiTranslate="artemisApp.faq.table.state"></span>
+                        <fa-icon [icon]="faSort" />
+                    </th>
                     <th jhiSortBy="categories">
                         <span jhiTranslate="artemisApp.faq.table.categories"></span>
                         <fa-icon [icon]="faSort" />
@@ -84,33 +95,48 @@
                             <p class="markdown-preview" [innerHTML]="faq.questionAnswer | htmlForMarkdown"></p>
                         </td>
                         <td>
+                            <p class="markdown-preview" [innerHTML]="faq.faqState | htmlForMarkdown"></p>
+                        </td>
+                        <td>
                             <div class="d-flex">
                                 @for (category of faq.categories; track category) {
                                     <jhi-custom-exercise-category-badge [category]="category" />
                                 }
                             </div>
                         </td>
-
                         <td class="text-end">
                             <div class="btn-group flex-btn-group-container">
+                                @if (faq.faqState == FaqState.PROPOSED && isAtleastInstrucor) {
+                                    <div class="btn-group-vertical me-1 mb-1">
+                                        <button class="btn btn-success btn-sm" (click)="acceptProposedFaq(courseId, faq)">
+                                            <fa-icon [icon]="faCheck" />
+                                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.faq.home.accept"></span>
+                                        </button>
+                                        <button type="button" class="mt-1 btn btn-warning" id="reject-faq-{{ faq.id }}" (click)="rejectFaq(courseId, faq)">
+                                            <fa-icon [icon]="faCancel" />
+                                            <span class="d-none d-md-inline" jhiTranslate="artemisApp.faq.home.reject"></span>
+                                        </button>
+                                    </div>
+                                }
                                 <div class="btn-group-vertical me-1 mb-1">
                                     <a [routerLink]="[faq.id, 'edit']" class="btn btn-primary btn-sm">
                                         <fa-icon [icon]="faPencilAlt" />
                                         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit"></span>
                                     </a>
-
-                                    <button
-                                        class="mt-1"
-                                        jhiDeleteButton
-                                        id="delete-faq-{{ faq.id }}"
-                                        [entityTitle]="faq.questionTitle || ''"
-                                        deleteQuestion="artemisApp.faq.delete.question"
-                                        deleteConfirmationText="artemisApp.faq.delete.typeNameToConfirm"
-                                        (delete)="deleteFaq(courseId, faq.id!)"
-                                        [dialogError]="dialogError$"
-                                    >
-                                        <fa-icon [icon]="faTrash" />
-                                    </button>
+                                    @if (isAtleastInstrucor) {
+                                        <button
+                                            class="mt-1"
+                                            jhiDeleteButton
+                                            id="delete-faq-{{ faq.id }}"
+                                            [entityTitle]="faq.questionTitle || ''"
+                                            deleteQuestion="artemisApp.faq.delete.question"
+                                            deleteConfirmationText="artemisApp.faq.delete.typeNameToConfirm"
+                                            (delete)="deleteFaq(courseId, faq.id!)"
+                                            [dialogError]="dialogError$"
+                                        >
+                                            <fa-icon [icon]="faTrash" />
+                                        </button>
+                                    }
                                 </div>
                             </div>
                         </td>

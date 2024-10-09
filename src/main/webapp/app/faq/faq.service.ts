@@ -24,7 +24,13 @@ export class FaqService {
         );
     }
 
+    proposeFaq(courseId: number, faq: Faq) {
+        faq.faqState = FaqState.PROPOSED;
+        this.create(courseId, faq);
+    }
+
     update(courseId: number, faq: Faq): Observable<EntityResponseType> {
+        console.log(faq);
         const copy = FaqService.convertFaqFromClient(faq);
         return this.http.put<Faq>(`${this.resourceUrl}/${courseId}/faqs/${faq.id}`, copy, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
@@ -42,6 +48,14 @@ export class FaqService {
     findAllByCourseId(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Faq[]>(`${this.resourceUrl}/${courseId}/faqs`, {
+                observe: 'response',
+            })
+            .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));
+    }
+
+    findAllByCourseIdAndState(courseId: number, faqState: FaqState): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Faq[]>(`${this.resourceUrl}/${courseId}/faq-state/${faqState}`, {
                 observe: 'response',
             })
             .pipe(map((res: EntityArrayResponseType) => FaqService.convertFaqCategoryArrayFromServer(res)));

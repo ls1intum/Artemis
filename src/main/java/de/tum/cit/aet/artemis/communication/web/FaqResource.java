@@ -23,12 +23,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.communication.domain.Faq;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.dto.FaqDTO;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -72,7 +74,7 @@ public class FaqResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses/{courseId}/faqs")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditor
     public ResponseEntity<FaqDTO> createFaq(@RequestBody Faq faq, @PathVariable Long courseId) throws URISyntaxException {
         log.debug("REST request to save Faq : {}", faq);
         if (faq.getId() != null) {
@@ -82,7 +84,7 @@ public class FaqResource {
         if (faq.getCourse() == null || !faq.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("Course ID in path and FAQ do not match", ENTITY_NAME, "courseIdMismatch");
         }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, faq.getCourse(), null);
 
         Faq savedFaq = faqRepository.save(faq);
         FaqDTO dto = new FaqDTO(savedFaq);
@@ -99,13 +101,14 @@ public class FaqResource {
      *         if the faq is not valid or if the faq course id does not match with the path variable
      */
     @PutMapping("courses/{courseId}/faqs/{faqId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditor
     public ResponseEntity<FaqDTO> updateFaq(@RequestBody Faq faq, @PathVariable Long faqId, @PathVariable Long courseId) {
         log.debug("REST request to update Faq : {}", faq);
         if (faqId == null || !faqId.equals(faq.getId())) {
             throw new BadRequestAlertException("Id of FAQ and path must match", ENTITY_NAME, "idNull");
         }
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, faq.getCourse(), null);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
         Faq existingFaq = faqRepository.findByIdElseThrow(faqId);
         if (!Objects.equals(existingFaq.getCourse().getId(), courseId)) {
             throw new BadRequestAlertException("Course ID of the FAQ provided courseID must match", ENTITY_NAME, "idNull");
@@ -172,6 +175,34 @@ public class FaqResource {
         Set<Faq> faqs = faqRepository.findAllByCourseId(courseId);
         Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
         return ResponseEntity.ok().body(faqDTOS);
+    }
+
+    /**
+     * GET /courses/:courseId/faq-status/:faqState : get all the faqs of a course in the specified status
+     *
+     * @param courseId the courseId of the course for which all faqs should be returned
+     * @param faqState the state of all returned FAQs
+     * @return the ResponseEntity with status 200 (OK) and the list of faqs in body
+     */
+    @GetMapping("courses/{courseId}/faq-state/{faqState}")
+    @EnforceAtLeastStudent
+    public ResponseEntity<Set<FaqDTO>> getAllFaqForCourseByStatus(@PathVariable Long courseId, @PathVariable String faqState) {
+        log.debug("REST request to get all Faqs for the course with id : {}", courseId);
+        FaqState retrivedState = defineState(faqState);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        Set<Faq> faqs = faqRepository.findAllByCourseIdAndFaqState(courseId, retrivedState);
+        Set<FaqDTO> faqDTOS = faqs.stream().map(FaqDTO::new).collect(Collectors.toSet());
+        return ResponseEntity.ok().body(faqDTOS);
+    }
+
+    private FaqState defineState(String faqState) {
+        return switch (faqState) {
+            case "ACCEPTED" -> FaqState.ACCEPTED;
+            case "REJECTED" -> FaqState.REJECTED;
+            case "PROPOSED" -> FaqState.PROPOSED;
+            default -> throw new IllegalArgumentException("Unknown state: " + faqState);
+        };
     }
 
     /**

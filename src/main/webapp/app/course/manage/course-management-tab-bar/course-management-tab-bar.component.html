@@ -72,7 +72,7 @@
                     <span class="tab-link-text" jhiTranslate="entity.action.scores"></span>
                 </a>
             }
-            @if (course.isAtLeastInstructor && course.faqEnabled) {
+            @if (course.isAtLeastEditor && course.faqEnabled) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'faqs']" routerLinkActive="active">
                     <fa-icon [icon]="faQuestion" />
                     <span class="tab-link-text" jhiTranslate="entity.action.faq"></span>

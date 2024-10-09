@@ -4,12 +4,17 @@
             "home": {
                 "title": "FAQ",
                 "createLabel": "FAQ erstellen",
+                "proposeLabel": "FAQ vorschlagen",
+                "accept": "FAQ aktzeptieren",
+                "reject": "FAQ ablehnen",
                 "filterLabel": "Filter",
                 "createOrEditLabel": "FAQ erstellen oder bearbeiten"
             },
-            "created": "Das FAQ wurde erfolgreich erstellt",
-            "updated": "Das FAQ wurde erfolgreich aktualisiert",
-            "deleted": "Das FAQ wurde erfolgreich gelöscht",
+            "created": "Das FAQ mit der ID {{ id }} wurde erfolgreich erstellt",
+            "updated": "Das FAQ mit der ID {{ id }} wurde erfolgreich aktualisiert",
+            "deleted": "Das FAQ mit der ID {{ param }} wurde erfolgreich gelöscht",
+            "accepted": "Das FAQ mit der ID {{ id }} wurde erfolgreich aktzeptiert",
+            "rejected": "Das FAQ mit der ID {{ id }} wurde erfolgreich abgelehnt",
             "delete": {
                 "question": "Soll die FAQ <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
                 "typeNameToConfirm": "Bitte gib den Namen des FAQ zur Bestätigung ein."
@@ -18,7 +23,8 @@
             "table": {
                 "questionTitle": "Fragentitel",
                 "questionAnswer": "Antwort auf die Frage",
-                "categories": "Kategorien"
+                "categories": "Kategorien",
+                "state": "Status"
             },
             "course": "Kurs"
         }
