@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faFloppyDisk, faListAlt } from '@fortawesome/free-solid-svg-icons';
+import { faFloppyDisk } from '@fortawesome/free-solid-svg-icons';
 import { facSaveSuccess } from '../../../../../content/icons/icons';
 import { Submission } from 'app/entities/submission.model';
 
@@ -17,7 +17,6 @@ export class ExerciseSaveButtonComponent {
 
     //Icons
     readonly faFloppyDisk = faFloppyDisk;
-    readonly faListAlt = faListAlt;
     readonly facSaveSuccess = facSaveSuccess;
 
     onSave() {
