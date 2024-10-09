@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.component';
 import { Exam } from 'app/entities/exam/exam.model';
@@ -15,7 +15,6 @@ import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
-import { RouterTestingModule } from '@angular/router/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { CourseOverviewService } from 'app/overview/course-overview.service';
@@ -101,7 +100,7 @@ describe('CourseExamsComponent', () => {
         router.navigate.mockImplementation(() => Promise.resolve(true));
 
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
+            imports: [ArtemisTestModule, RouterModule.forRoot([]), MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
             declarations: [CourseExamsComponent, SidebarComponent, MockComponent(SearchFilterComponent), MockPipe(ArtemisTranslatePipe), MockPipe(SearchFilterPipe)],
             providers: [
                 { provide: Router, useValue: router },

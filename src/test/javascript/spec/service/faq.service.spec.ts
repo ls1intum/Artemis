@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 import { ArtemisTestModule } from '../test.module';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -21,8 +21,10 @@ describe('Faq Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule],
+            imports: [ArtemisTestModule],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },

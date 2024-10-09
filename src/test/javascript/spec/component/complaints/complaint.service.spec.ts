@@ -6,13 +6,14 @@ import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintRequestDTO } from 'app/entities/complaint-request-dto.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ComplaintService', () => {
     let complaintService: ComplaintService;
@@ -57,8 +58,8 @@ describe('ComplaintService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: AccountService, useClass: MockAccountService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: AccountService, useClass: MockAccountService }],
         })
             .compileComponents()
             .then(() => {
