@@ -446,6 +446,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             return false;
         }
 
+        if (this.submission.text !== this.answer) {
+            const pendingChangesMessage = this.translateService.instant('artemisApp.exercise.feedbackRequestPendingChanges');
+            this.alertService.warning(pendingChangesMessage);
+            return false;
+        }
+
         if (this.participation.results) {
             const athenaResults = this.participation.results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA);
             const countOfSuccessfulRequests = athenaResults.length;

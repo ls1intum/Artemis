@@ -417,6 +417,30 @@ describe('TextEditorComponent', () => {
         expect(result).toBeFalse();
     });
 
+    it('assureConditionsSatisfied should alert and return false if there are pending changes', () => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'warning');
+        comp.textExercise = {
+            type: ExerciseType.TEXT,
+            dueDate: dayjs().add(5, 'minutes'),
+        } as TextExercise;
+        comp.participation = {
+            id: 2,
+            results: [
+                {
+                    assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                    score: 100,
+                },
+            ],
+        } as StudentParticipation;
+        comp.submission = { id: 1, text: 'the same text' };
+        comp.answer = 'the same text';
+        const result = comp.assureConditionsSatisfied();
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestPendingChanges');
+        expect(result).toBeFalse();
+    });
+
     it('assureConditionsSatisfied should alert and return false if the latest submission already has athena result', () => {
         const alertService = fixture.debugElement.injector.get(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'warning');
@@ -440,7 +464,8 @@ describe('TextEditorComponent', () => {
             ],
             submissions: [submission],
         } as StudentParticipation;
-
+        comp.submission = { id: 1, text: 'the same text' };
+        comp.answer = 'the same text';
         const result = comp.assureConditionsSatisfied();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.submissionAlreadyHasAthenaResult');
@@ -476,7 +501,8 @@ describe('TextEditorComponent', () => {
                 ...results,
             ],
         } as StudentParticipation;
-
+        comp.submission = { id: 1, text: 'the same text' };
+        comp.answer = 'the same text';
         const result = comp.assureConditionsSatisfied();
 
         expect(alertServiceSpy).toHaveBeenCalledOnce();
@@ -488,7 +514,8 @@ describe('TextEditorComponent', () => {
             type: ExerciseType.TEXT,
             dueDate: dayjs().add(5, 'minutes'),
         } as TextExercise;
-
+        comp.submission = { id: 1, text: 'the same text' };
+        comp.answer = 'the same text';
         comp.participation = {
             id: 2,
             results: [
