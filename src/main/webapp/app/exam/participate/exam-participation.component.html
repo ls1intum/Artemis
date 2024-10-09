@@ -59,6 +59,7 @@
                                                     <jhi-quiz-submission-exam
                                                         [quizConfiguration]="exercise"
                                                         [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                                        (saveCurrentExercise)="triggerSave(false)"
                                                     />
                                                 }
                                                 @case (FILEUPLOAD) {
@@ -75,7 +76,11 @@
                                                     />
                                                 }
                                                 @case (MODELING) {
-                                                    <jhi-modeling-submission-exam [exercise]="exercise" [studentSubmission]="exercise.studentParticipations[0].submissions![0]" />
+                                                    <jhi-modeling-submission-exam
+                                                        [exercise]="exercise"
+                                                        [studentSubmission]="exercise.studentParticipations[0].submissions![0]"
+                                                        (saveCurrentExercise)="triggerSave(false)"
+                                                    />
                                                 }
                                                 @case (PROGRAMMING) {
                                                     <jhi-programming-submission-exam

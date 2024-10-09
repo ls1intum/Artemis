@@ -1,14 +1,17 @@
-<h3 class="text-align-left fw-normal">
-    <span>
-        {{ quizConfiguration.exerciseGroup?.title }}
-    </span>
-    <span
-        >({{ quizConfiguration.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }})
-        @if (quizConfiguration.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration.includedInOverallScore" />
-        }
-    </span>
-</h3>
+<div class="d-flex justify-content-between align-items-center">
+    <h3 class="text-align-left fw-normal">
+        <span>
+            {{ quizConfiguration.exerciseGroup?.title }}
+        </span>
+        <span
+            >({{ quizConfiguration.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }})
+            @if (quizConfiguration.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                <jhi-included-in-score-badge [includedInOverallScore]="quizConfiguration.includedInOverallScore" />
+            }
+        </span>
+    </h3>
+    <jhi-exercise-save-button [submission]="studentSubmission" (save)="notifyTriggerSave()" />
+</div>
 <hr />
 
 <div class="w-auto m-0 pb-5">

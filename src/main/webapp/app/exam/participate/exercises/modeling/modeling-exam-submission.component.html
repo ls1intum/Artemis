@@ -1,17 +1,20 @@
 @if (exercise) {
-    <h3 class="text-align-left fw-normal">
-        <span>
-            {{ exercise.exerciseGroup?.title }}
-        </span>
-        <!-- prettier-ignore -->
-        <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
-            <span
-            >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
+    <div class="d-flex justify-content-between align-items-center">
+        <h3 class="text-align-left fw-normal">
+            <span>
+                {{ exercise.exerciseGroup?.title }}
+            </span>
+            <!-- prettier-ignore -->
+            <span left-header>&nbsp;({{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}@if (exercise.bonusPoints) {
+                <span
+                >, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>
             }) @if (exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY) {
-            <jhi-included-in-score-badge
-            [includedInOverallScore]="exercise.includedInOverallScore" />
-          }</span>
-    </h3>
+                <jhi-included-in-score-badge
+                [includedInOverallScore]="exercise.includedInOverallScore" />
+            }</span>
+        </h3>
+        <jhi-exercise-save-button [submission]="studentSubmission" (save)="notifyTriggerSave()" />
+    </div>
     <hr />
 
     <jhi-resizeable-container class="col-12" [examTimeline]="examTimeline">

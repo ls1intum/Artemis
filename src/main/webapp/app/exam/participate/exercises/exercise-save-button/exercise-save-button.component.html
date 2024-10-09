@@ -1,0 +1,6 @@
+<button id="save-exam" type="submit" [disabled]="submission?.isSynced" class="btn btn-primary" (click)="onSave()">
+    <fa-icon class="saved" [fixedWidth]="true" [icon]="submission?.submitted && submission?.isSynced ? facSaveSuccess : faFloppyDisk"> </fa-icon>
+    <span class="d-none d-sm-inline">
+        {{ submission?.submitted && submission?.isSynced ? 'Exercise Saved' : 'Save Exercise' }}
+    </span>
+</button>

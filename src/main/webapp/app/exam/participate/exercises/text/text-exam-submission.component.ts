@@ -6,7 +6,7 @@ import { StringCountService } from 'app/exercises/text/participate/string-count.
 import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
-import { faCheck, faFloppyDisk, faListAlt } from '@fortawesome/free-solid-svg-icons';
+import { faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { SubmissionVersion } from 'app/entities/submission-version.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
@@ -40,8 +40,6 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
 
     // Icons
     readonly farListAlt = faListAlt;
-    readonly faFloppyDisk = faFloppyDisk;
-    readonly faCheck = faCheck;
 
     constructor(
         private textService: TextEditorService,
@@ -130,10 +128,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
         this.updateViewFromSubmissionVersion();
     }
 
-    onSave() {
-        if (this.submission) {
-            this.submission.submitted = true;
-        }
+    notifyTriggerSave() {
         this.saveCurrentExercise.emit();
     }
 }
