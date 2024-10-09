@@ -1,4 +1,4 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -13,6 +13,7 @@ import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-ma
 import { QuizGroup } from 'app/entities/quiz/quiz-group.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('QuizPoolMappingComponent', () => {
     let fixture: ComponentFixture<QuizPoolMappingComponent>;
@@ -20,7 +21,7 @@ describe('QuizPoolMappingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [
                 QuizPoolMappingComponent,
                 ButtonComponent,
@@ -31,7 +32,7 @@ describe('QuizPoolMappingComponent', () => {
                 MockDirective(NgModel),
                 MockDirective(DeleteButtonDirective),
             ],
-            providers: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         })
             .compileComponents()
             .then(() => {
