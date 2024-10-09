@@ -73,6 +73,11 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
     private AtomicBoolean pipelineDone;
 
+    private IrisTextExerciseChatSession createSessionForUser(String userLogin) {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
+        return irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(exercise, user));
+    }
+
     @BeforeEach
     void initTestCase() {
         userUtilService.addUsers(TEST_PREFIX, 2, 0, 0, 0);
@@ -113,11 +118,6 @@ class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegration
 
         verifyWebsocketActivityWasExactly(irisSession.getUser().getLogin(), String.valueOf(irisSession.getId()), messageDTO(messageToSend.getContent()),
                 statusDTO(IN_PROGRESS, NOT_STARTED), statusDTO(DONE, IN_PROGRESS), messageDTO("Hello World"));
-    }
-
-    private IrisTextExerciseChatSession createSessionForUser(String userLogin) {
-        var user = userUtilService.getUserByLogin(TEST_PREFIX + userLogin);
-        return irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(exercise, user));
     }
 
     @Test
