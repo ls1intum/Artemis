@@ -20,8 +20,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.util.TestPropertyValues;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -49,9 +47,6 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
     @Autowired
     private ProfileService profileService;
 
-    @Autowired
-    private ConfigurableApplicationContext context;
-
     private MockRestServiceServer mockServer;
 
     private final ObjectMapper mapper = new ObjectMapper();
@@ -70,7 +65,6 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @BeforeEach
     void setUp() throws JsonProcessingException {
-        TestPropertyValues.of("artemis.telemetry.enabled=true").applyTo(context);
         try {
             var eurekaURI = new URI(eurekaDefaultZoneUrl);
             eurekaRequestUrl = eurekaURI.getScheme() + "://" + eurekaURI.getAuthority() + "/api/eureka/applications";
