@@ -5,7 +5,7 @@
         </div>
 
         @if (exerciseSelected) {
-            <div class="vw-100 module-bg rounded-3">
+            <div class="vw-100 module-bg rounded-3" [ngStyle]="isLti ? { height: '90vh', position: 'relative' } : {}">
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
