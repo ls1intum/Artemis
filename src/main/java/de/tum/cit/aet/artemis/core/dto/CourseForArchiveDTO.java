@@ -12,5 +12,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param icon     The icon of the course
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseForArchiveDTO(Long id, String title, String semester, String color, String icon) {
+public record CourseForArchiveDTO(long id, String title, String semester, String color, String icon) {
 }

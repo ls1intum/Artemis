@@ -575,7 +575,7 @@ public class CourseResource {
                 .map(course -> new CourseForArchiveDTO(course.getId(), course.getTitle(), course.getSemester(), course.getColor(), course.getCourseIcon()))
                 .collect(Collectors.toSet());
 
-        log.info("GET /courses/for-archive took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
+        log.debug("GET /courses/for-archive took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());
         return ResponseEntity.ok(dto);
     }
 
