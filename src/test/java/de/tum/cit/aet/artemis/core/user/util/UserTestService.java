@@ -217,7 +217,8 @@ public class UserTestService {
         var users = Set.of(userUtilService.getUserByLogin(TEST_PREFIX + "student1"), userUtilService.getUserByLogin(TEST_PREFIX + "tutor1"),
                 userUtilService.getUserByLogin(TEST_PREFIX + "editor1"), userUtilService.getUserByLogin(TEST_PREFIX + "instructor1"));
 
-        request.delete("/api/admin/users", HttpStatus.OK, users.stream().map(User::getLogin).collect(Collectors.toList()));
+        var logins = users.stream().map(User::getLogin).toList();
+        request.delete("/api/admin/users", HttpStatus.OK, logins);
 
         for (var user : users) {
             final var deletedUser = userTestRepository.findById(user.getId()).orElseThrow();
