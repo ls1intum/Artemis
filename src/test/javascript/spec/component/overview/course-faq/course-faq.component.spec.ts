@@ -16,7 +16,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
-import { Faq } from 'app/entities/faq.model';
+import { Faq, FaqState } from 'app/entities/faq.model';
 import { FaqCategory } from 'app/entities/faq-category.model';
 
 function createFaq(id: number, category: string, color: string): Faq {
@@ -62,7 +62,7 @@ describe('CourseFaqs', () => {
                     },
                 },
                 MockProvider(FaqService, {
-                    findAllByCourseId: () => {
+                    findAllByCourseIdAndState: () => {
                         return of(
                             new HttpResponse({
                                 body: [faq1, faq2, faq3],
@@ -108,10 +108,10 @@ describe('CourseFaqs', () => {
     });
 
     it('should fetch faqs when initialized', () => {
-        const findAllSpy = jest.spyOn(faqService, 'findAllByCourseId');
+        const findAllSpy = jest.spyOn(faqService, 'findAllByCourseIdAndState');
 
         courseFaqComponentFixture.detectChanges();
-        expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1);
+        expect(findAllSpy).toHaveBeenCalledExactlyOnceWith(1, FaqState.ACCEPTED);
         expect(courseFaqComponent.faqs).toHaveLength(3);
     });
 

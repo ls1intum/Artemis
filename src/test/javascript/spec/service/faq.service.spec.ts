@@ -132,6 +132,26 @@ describe('Faq Service', () => {
             expect(expectedResult.body).toEqual(expected);
         });
 
+        it('should find faqs by courseId and status', () => {
+            const category = {
+                color: '#6ae8ac',
+                category: 'category1',
+            } as FaqCategory;
+            const returnedFromService = [{ ...elemDefault, categories: [JSON.stringify(category)] }];
+            const expected = [{ ...elemDefault, categories: [new FaqCategory('category1', '#6ae8ac')] }];
+            const courseId = 1;
+            service
+                .findAllByCourseIdAndState(courseId, FaqState.ACCEPTED)
+                .pipe(take(1))
+                .subscribe((resp) => (expectedResult = resp));
+            const req = httpMock.expectOne({
+                url: `api/courses/${courseId}/faq-state/${FaqState.ACCEPTED}`,
+                method: 'GET',
+            });
+            req.flush(returnedFromService);
+            expect(expectedResult.body).toEqual(expected);
+        });
+
         it('should find all categories by courseId', () => {
             const category = {
                 color: '#6ae8ac',
