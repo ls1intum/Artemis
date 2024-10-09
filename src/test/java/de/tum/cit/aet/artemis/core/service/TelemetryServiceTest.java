@@ -20,6 +20,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -31,6 +33,7 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.core.service.telemetry.TelemetrySendingService;
 import de.tum.cit.aet.artemis.core.service.telemetry.TelemetryService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
@@ -41,7 +44,13 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
     private RestTemplate restTemplate;
 
     @Autowired
-    private TelemetryService telemetryService;
+    private TelemetrySendingService telemetrySendingService;
+
+    @Autowired
+    private ProfileService profileService;
+
+    @Autowired
+    private ConfigurableApplicationContext context;
 
     private MockRestServiceServer mockServer;
 
@@ -60,26 +69,25 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
     private byte[] applicationsBody;
 
     @BeforeEach
-    void init() throws JsonProcessingException {
+    void setUp() throws JsonProcessingException {
+        TestPropertyValues.of("artemis.telemetry.enabled=true").applyTo(context);
         try {
             var eurekaURI = new URI(eurekaDefaultZoneUrl);
             eurekaRequestUrl = eurekaURI.getScheme() + "://" + eurekaURI.getAuthority() + "/api/eureka/applications";
-
         }
         catch (Exception ignored) {
             // Exception can be ignored because defaultZoneUrl is guaranteed to be valid in the test environment
         }
-        telemetryServiceSpy = spy(telemetryService);
+
         applicationsBody = mapper.writeValueAsBytes(Map.of("applications", List.of(Map.of("name", "ARTEMIS", "instances", List.of(Map.of())))));
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).build();
-
-        telemetryServiceSpy.useTelemetry = true;
-        telemetryServiceSpy.eurekaEnabled = true;
-        telemetryServiceSpy.sendingDelay = 0;
     }
 
     @Test
     void testSendTelemetry_TelemetryEnabled() throws Exception {
+        TelemetryService telemetryService = new TelemetryService(profileService, telemetrySendingService, true, true, true, 0);
+        telemetryServiceSpy = spy(telemetryService);
+
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(eurekaRequestUrl))).andExpect(method(HttpMethod.GET))
                 .andExpect(header(HttpHeaders.AUTHORIZATION, "Basic YWRtaW46YWRtaW4="))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(applicationsBody));
@@ -94,7 +102,9 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testSendTelemetry_TelemetryEnabledWithoutPersonalData() throws Exception {
-        telemetryServiceSpy.sendAdminDetails = false;
+        TelemetryService telemetryService = new TelemetryService(profileService, telemetrySendingService, true, false, true, 0);
+        telemetryServiceSpy = spy(telemetryService);
+
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(eurekaRequestUrl))).andExpect(method(HttpMethod.GET))
                 .andExpect(header(HttpHeaders.AUTHORIZATION, "Basic YWRtaW46YWRtaW4="))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(applicationsBody));
@@ -109,15 +119,19 @@ class TelemetryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     void testSendTelemetry_TelemetryDisabled() throws Exception {
+        TelemetryService telemetryService = new TelemetryService(profileService, telemetrySendingService, false, true, true, 0);
+        telemetryServiceSpy = spy(telemetryService);
+
         mockServer.expect(ExpectedCount.never(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString("Success!")));
-        telemetryServiceSpy.useTelemetry = false;
         telemetryServiceSpy.scheduleTelemetryTask();
         await().atMost(2, SECONDS).untilAsserted(() -> mockServer.verify());
     }
 
     @Test
     void testSendTelemetry_ExceptionHandling() throws Exception {
+        TelemetryService telemetryService = new TelemetryService(profileService, telemetrySendingService, true, true, true, 0);
+        telemetryServiceSpy = spy(telemetryService);
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(eurekaRequestUrl))).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(applicationsBody));
         mockServer.expect(ExpectedCount.once(), requestTo(new URI(destination + "/api/telemetry"))).andExpect(method(HttpMethod.POST))

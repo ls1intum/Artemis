@@ -29,23 +29,27 @@ public class TelemetryService {
 
     private final TelemetrySendingService telemetrySendingService;
 
-    @Value("${artemis.telemetry.enabled}")
-    public boolean useTelemetry;
+    private final boolean useTelemetry;
 
-    @Value("${artemis.telemetry.sendAdminDetails}")
-    public boolean sendAdminDetails;
+    private final boolean sendAdminDetails;
 
-    @Value("${eureka.client.enabled:false}")
-    public boolean eurekaEnabled;
+    private final boolean eurekaEnabled;
 
-    @Value("${artemis.telemetry.sendingDelay:180}")
-    public long sendingDelay;
+    private final long sendingDelay;
 
-    public TelemetryService(ProfileService profileService, TelemetrySendingService telemetrySendingService) {
+    public TelemetryService(ProfileService profileService, TelemetrySendingService telemetrySendingService, @Value("${artemis.telemetry.enabled}") boolean useTelemetry,
+            @Value("${artemis.telemetry.sendAdminDetails}") boolean sendAdminDetails, @Value("${eureka.client.enabled:false}") boolean eurekaEnabled,
+            @Value("${artemis.telemetry.sendingDelay:180}") long sendingDelay) {
+
         this.profileService = profileService;
         this.telemetrySendingService = telemetrySendingService;
         this.taskScheduler = new ThreadPoolTaskScheduler();
         ((ThreadPoolTaskScheduler) this.taskScheduler).initialize();
+
+        this.useTelemetry = useTelemetry;
+        this.sendAdminDetails = sendAdminDetails;
+        this.eurekaEnabled = eurekaEnabled;
+        this.sendingDelay = sendingDelay;
     }
 
     /**
