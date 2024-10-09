@@ -6,9 +6,8 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { DetailOverviewSection, DetailType } from 'app/detail-overview-list/detail-overview-list.component';
 import { TranslateService } from '@ngx-translate/core';
-import { Detail } from 'app/detail-overview-list/detail.model';
+import { faCircle, faCircleXmark, faLocationDot, faPercent, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
 import { getInitialsFromString } from 'app/utils/text.utils';
@@ -32,12 +31,22 @@ export class TutorialGroupDetailComponent implements OnChanges {
     course: Course;
     formattedAdditionalInformation?: SafeHtml;
 
-    faQuestionCircle = faQuestionCircle;
     readonly Math = Math;
 
     sessions: TutorialGroupSession[] = [];
 
-    tutorialDetailSections: DetailOverviewSection[];
+    tutorInitials: string;
+    tutorDefaultProfilePictureHue: string;
+    isMessagingEnabled: boolean;
+    utilization: number | undefined;
+
+    // Icons
+    faUserCheck = faUserCheck;
+    faPercent = faPercent;
+    faLocationDot = faLocationDot;
+    faQuestionCircle = faQuestionCircle;
+    faCircle = faCircle;
+    faCircleXmark = faCircleXmark;
 
     constructor(
         private artemisMarkdownService: ArtemisMarkdownService,
@@ -60,7 +69,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
                 this.changeDetectorRef.detectChanges();
             }
         }
-        this.getTutorialDetailSections();
+        this.getTutorialDetail();
     }
 
     getTutorialTimeSlotString(): string | undefined {
@@ -79,80 +88,13 @@ export class TutorialGroupDetailComponent implements OnChanges {
         return `${day} ${start}-${end}, ${repetition}`;
     }
 
-    getTutorialDetailSections() {
+    getTutorialDetail() {
         const tutorialGroup = this.tutorialGroup;
-        const tutorialDetails: Detail[] = [
-            { type: DetailType.Link, title: 'artemisApp.entities.tutorialGroup.course', data: { text: tutorialGroup.courseTitle, routerLink: ['../..'] } },
-            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.title', data: { text: tutorialGroup.title } },
-            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.teachingAssistant', data: { text: tutorialGroup.teachingAssistantName } },
-            tutorialGroup.teachingAssistantImageUrl
-                ? {
-                      type: DetailType.Image,
-                      title: 'artemisApp.entities.tutorialGroup.profilePicture',
-                      data: { imageUrl: tutorialGroup.teachingAssistantImageUrl, altText: 'Profile picture of ' + tutorialGroup.teachingAssistantName },
-                  }
-                : {
-                      type: DetailType.DefaultProfilePicture,
-                      title: 'artemisApp.entities.tutorialGroup.profilePicture',
-                      data: {
-                          color: getBackgroundColorHue(tutorialGroup.teachingAssistantId ? tutorialGroup.teachingAssistantId.toString() : 'default'),
-                          initials: getInitialsFromString(tutorialGroup.teachingAssistantName ?? 'NA'),
-                      },
-                  },
-            {
-                type: DetailType.Text,
-                title: 'artemisApp.entities.tutorialGroup.utilization',
-                titleHelpText: 'artemisApp.entities.tutorialGroup.utilizationHelpDetail',
-                data: { text: tutorialGroup.averageAttendance && tutorialGroup.capacity && Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100) },
-            },
-            {
-                type: DetailType.Text,
-                title: 'artemisApp.entities.tutorialGroup.averageAttendanceDetail',
-                titleHelpText: 'artemisApp.entities.tutorialGroup.averageAttendanceHelpDetail',
-                data: { text: tutorialGroup.averageAttendance && Math.round(tutorialGroup.averageAttendance) },
-            },
-            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.capacity', data: { text: tutorialGroup.capacity } },
-            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.registrations', data: { text: tutorialGroup.numberOfRegisteredUsers } },
-            { type: DetailType.Boolean, title: 'artemisApp.entities.tutorialGroup.isOnline', data: { boolean: tutorialGroup.isOnline } },
-            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.language', data: { text: tutorialGroup.language } },
-            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.campus', data: { text: tutorialGroup.campus } },
-            { type: DetailType.Markdown, title: 'artemisApp.entities.tutorialGroup.additionalInformation', data: { innerHtml: this.formattedAdditionalInformation } },
-            { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.schedule', data: { text: this.getTutorialTimeSlotString() } },
-        ];
 
-        // inserting optional details in reversed order, so no index calculation is needed
-        if (tutorialGroup.isOnline) {
-            tutorialDetails.splice(12, 0, {
-                type: DetailType.Text,
-                title: 'artemisApp.forms.scheduleForm.locationInput.labelOnline',
-                data: { text: tutorialGroup.tutorialGroupSchedule?.location },
-            });
-        } else {
-            tutorialDetails.splice(12, 0, {
-                type: DetailType.Text,
-                title: 'artemisApp.forms.scheduleForm.locationInput.labelOffline',
-                data: { text: tutorialGroup.tutorialGroupSchedule?.location },
-            });
-        }
-
-        if (tutorialGroup.channel && isMessagingEnabled(this.course)) {
-            tutorialDetails.splice(2, 0, {
-                type: DetailType.Link,
-                title: 'artemisApp.entities.tutorialGroup.channel',
-                data: {
-                    text: tutorialGroup.channel.name,
-                    routerLink: tutorialGroup.channel.isMember ? ['/courses', this.course.id!, 'communication'] : undefined,
-                    queryParams: { conversationId: tutorialGroup.channel.id },
-                },
-            });
-        }
-
-        this.tutorialDetailSections = [
-            {
-                headline: 'artemisApp.pages.courseTutorialGroupDetail.sections.general',
-                details: tutorialDetails,
-            },
-        ];
+        this.tutorDefaultProfilePictureHue = getBackgroundColorHue(tutorialGroup.teachingAssistantId ? tutorialGroup.teachingAssistantId.toString() : 'default');
+        this.tutorInitials = getInitialsFromString(tutorialGroup.teachingAssistantName ?? 'NA');
+        this.isMessagingEnabled = isMessagingEnabled(this.course);
+        this.utilization = tutorialGroup.averageAttendance && tutorialGroup.capacity && Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
     }
 
     recalculateAttendanceDetails() {
@@ -166,6 +108,6 @@ export class TutorialGroupDetailComponent implements OnChanges {
             this.tutorialGroup.averageAttendance = Math.round(averageAttendance);
         }
 
-        this.getTutorialDetailSections();
+        this.getTutorialDetail();
     }
 }
