@@ -48,7 +48,6 @@ describe('CourseExercisesComponent', () => {
             declarations: [
                 CourseExercisesComponent,
                 SidebarComponent,
-                SearchFilterComponent,
                 MockDirective(OrionFilterDirective),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(SidePanelComponent),
@@ -60,6 +59,7 @@ describe('CourseExercisesComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockTranslateValuesDirective,
                 MockPipe(SearchFilterPipe),
+                MockComponent(SearchFilterComponent),
             ],
             providers: [
                 { provide: SessionStorageService, useClass: MockSyncStorage },

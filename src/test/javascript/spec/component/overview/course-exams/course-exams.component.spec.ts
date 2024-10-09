@@ -5,7 +5,7 @@ import { CourseExamsComponent } from 'app/overview/course-exams/course-exams.com
 import { Exam } from 'app/entities/exam/exam.model';
 import { ArtemisTestModule } from '../../../test.module';
 import dayjs from 'dayjs/esm';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -101,7 +101,7 @@ describe('CourseExamsComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterModule.forRoot([]), MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
-            declarations: [CourseExamsComponent, SidebarComponent, SearchFilterComponent, MockPipe(ArtemisTranslatePipe), MockPipe(SearchFilterPipe)],
+            declarations: [CourseExamsComponent, SidebarComponent, MockComponent(SearchFilterComponent), MockPipe(ArtemisTranslatePipe), MockPipe(SearchFilterPipe)],
             providers: [
                 { provide: Router, useValue: router },
                 {

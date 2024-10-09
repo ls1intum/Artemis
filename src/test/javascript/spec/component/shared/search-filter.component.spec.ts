@@ -1,11 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { MockModule, MockPipe } from 'ng-mocks';
+import { MockModule } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { By } from '@angular/platform-browser';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('SearchFilterComponent', () => {
     let component: SearchFilterComponent;
@@ -14,7 +13,7 @@ describe('SearchFilterComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), MockModule(FormsModule), MockModule(FontAwesomeModule)],
-            declarations: [SearchFilterComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [SearchFilterComponent],
         }).compileComponents();
     });
 

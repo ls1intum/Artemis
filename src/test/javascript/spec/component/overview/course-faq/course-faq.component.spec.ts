@@ -18,12 +18,13 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-catego
 import { CourseFaqAccordionComponent } from 'app/overview/course-faq/course-faq-accordion-component';
 import { Faq } from 'app/entities/faq.model';
 import { FaqCategory } from 'app/entities/faq-category.model';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
     faq.id = id;
-    faq.questionTitle = 'questionTitle';
-    faq.questionAnswer = 'questionAnswer';
+    faq.questionTitle = 'questionTitle ' + id;
+    faq.questionAnswer = 'questionAnswer ' + id;
     faq.categories = [new FaqCategory(category, color)];
     return faq;
 }
@@ -48,7 +49,13 @@ describe('CourseFaqs', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisSharedComponentModule, ArtemisSharedModule, MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent)],
-            declarations: [CourseFaqComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            declarations: [
+                CourseFaqComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
+                MockComponent(SearchFilterComponent),
+            ],
             providers: [
                 MockProvider(FaqService),
                 { provide: Router, useClass: MockRouter },
@@ -83,6 +90,9 @@ describe('CourseFaqs', () => {
                     },
                     applyFilters: () => {
                         return [faq2, faq3];
+                    },
+                    hasSearchTokens: () => {
+                        return true;
                     },
                 }),
             ],
@@ -120,6 +130,20 @@ describe('CourseFaqs', () => {
         courseFaqComponentFixture.detectChanges();
         courseFaqComponent.toggleFilters('category2');
         expect(toggleFilterSpy).toHaveBeenCalledOnce();
+        expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
+        expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
+        expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);
+    });
+
+    it('should search through already filtered array', () => {
+        const searchSpy = jest.spyOn(faqService, 'hasSearchTokens');
+        const applyFilterSpy = jest.spyOn(faqService, 'applyFilters');
+        courseFaqComponent.setSearchValue('questionTitle');
+        courseFaqComponent.refreshFaqList(courseFaqComponent.searchInput.getValue());
+        expect(applyFilterSpy).toHaveBeenCalledOnce();
+        expect(searchSpy).toHaveBeenCalledTimes(2);
+        expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');
+        expect(searchSpy).toHaveBeenCalledWith(faq3, 'questionTitle');
         expect(courseFaqComponent.filteredFaqs).toHaveLength(2);
         expect(courseFaqComponent.filteredFaqs).not.toContain(faq1);
         expect(courseFaqComponent.filteredFaqs).toEqual([faq2, faq3]);

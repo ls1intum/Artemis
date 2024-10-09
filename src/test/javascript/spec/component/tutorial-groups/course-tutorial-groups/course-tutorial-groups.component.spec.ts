@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router, RouterModule, convertToParamMap } from '@angular/router';
@@ -34,7 +34,7 @@ describe('CourseTutorialGroupsComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(TranslateDirective)],
-            declarations: [CourseTutorialGroupsComponent, MockPipe(ArtemisTranslatePipe), SidebarComponent, SearchFilterComponent, MockPipe(SearchFilterPipe)],
+            declarations: [CourseTutorialGroupsComponent, MockPipe(ArtemisTranslatePipe), SidebarComponent, MockComponent(SearchFilterComponent), MockPipe(SearchFilterPipe)],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseStorageService),
