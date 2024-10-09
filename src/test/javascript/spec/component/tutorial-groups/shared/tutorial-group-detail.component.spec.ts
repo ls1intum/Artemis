@@ -21,6 +21,7 @@ import { TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial
 import { provideHttpClient } from '@angular/common/http';
 import { RouterModule } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { IconCardComponent } from 'app/shared/icon-card/icon-card.component';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -62,6 +63,7 @@ describe('TutorialGroupDetailWrapperTest', () => {
                 TutorialGroupDetailComponent,
                 MockWrapperComponent,
                 MockHeaderComponent,
+                MockComponent(IconCardComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(RemoveSecondsPipe),
                 MockComponent(FaIconComponent),
@@ -113,6 +115,7 @@ describe('TutorialGroupDetailComponent', () => {
                 TutorialGroupDetailComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
+                MockComponent(IconCardComponent),
                 MockComponent(TutorialGroupUtilizationIndicatorComponent),
                 MockPipe(RemoveSecondsPipe),
                 MockDirective(TranslateDirective),

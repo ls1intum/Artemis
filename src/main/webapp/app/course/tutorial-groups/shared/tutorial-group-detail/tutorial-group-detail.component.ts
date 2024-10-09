@@ -5,9 +5,8 @@ import { SafeHtml } from '@angular/platform-browser';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { getDayTranslationKey } from '../weekdays';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
-import { faCircle, faCircleXmark, faLocationDot, faPercent, faUserCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCircle, faCircleInfo, faCircleXmark, faPercent, faQuestionCircle, faUserCheck } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
 import { getInitialsFromString } from 'app/utils/text.utils';
@@ -43,7 +42,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
     // Icons
     faUserCheck = faUserCheck;
     faPercent = faPercent;
-    faLocationDot = faLocationDot;
+    faCircleInfo = faCircleInfo;
     faQuestionCircle = faQuestionCircle;
     faCircle = faCircle;
     faCircleXmark = faCircleXmark;
