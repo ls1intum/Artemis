@@ -2,6 +2,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
+import { AuxiliaryRepository } from 'app/entities/programming/programming-exercise-auxiliary-repository-model';
 
 /**
  * Enumeration defining type of the exported file.
@@ -49,6 +50,7 @@ export type FileSubmission = { [fileName: string]: string | undefined };
 export enum DomainType {
     PARTICIPATION = 'PARTICIPATION',
     TEST_REPOSITORY = 'TEST_REPOSITORY',
+    AUXILIARY_REPOSITORY = 'AUXILIARY_REPOSITORY',
 }
 
 /**
@@ -94,7 +96,8 @@ export enum ResizeType {
 
 export type DomainParticipationChange = [DomainType.PARTICIPATION, StudentParticipation | TemplateProgrammingExerciseParticipation | SolutionProgrammingExerciseParticipation];
 export type DomainTestRepositoryChange = [DomainType.TEST_REPOSITORY, ProgrammingExercise];
-export type DomainChange = DomainParticipationChange | DomainTestRepositoryChange;
+export type DomainAuxiliaryRepositoryChange = [DomainType.AUXILIARY_REPOSITORY, AuxiliaryRepository];
+export type DomainChange = DomainParticipationChange | DomainTestRepositoryChange | DomainAuxiliaryRepositoryChange;
 
 /**
  * Enumeration defining the state of git.
