@@ -1,12 +1,11 @@
-package de.tum.in.www1.artemis.service.connectors.pyris.dto.data;
+package de.tum.cit.aet.artemis.iris.service.pyris.dto.data;
 
 import java.time.Instant;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisTextExerciseDTO(long id, String title, PyrisCourseDTO course, String problemStatement, Instant startDate, Instant endDate) {

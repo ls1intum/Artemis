@@ -11,6 +11,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.function.Function;
 
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTextExerciseChatSubSettingsDTO;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -25,8 +27,6 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
-import de.tum.in.www1.artemis.domain.iris.settings.IrisTextExerciseChatSubSettings;
-import de.tum.in.www1.artemis.service.iris.dto.IrisCombinedTextExerciseChatSubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
@@ -82,7 +82,7 @@ public class IrisSubSettingsService {
     }
 
     public IrisTextExerciseChatSubSettings update(IrisTextExerciseChatSubSettings currentSettings, IrisTextExerciseChatSubSettings newSettings,
-            IrisCombinedTextExerciseChatSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
+                                                  IrisCombinedTextExerciseChatSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
         if (newSettings == null) {
             if (parentSettings == null) {
                 throw new IllegalArgumentException("Cannot delete the chat settings");

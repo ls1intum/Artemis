@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.iris.settings;
+package de.tum.cit.aet.artemis.iris.domain.settings;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;

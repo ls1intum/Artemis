@@ -1,16 +1,15 @@
-package de.tum.in.www1.artemis.domain.iris.session;
+package de.tum.cit.aet.artemis.iris.domain.session;
 
 import java.util.Optional;
 
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 import jakarta.persistence.ManyToOne;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.User;
 
 /**
  * An IrisTextExerciseChatSession represents a conversation between a user and an LLM in the context of a text exercise.

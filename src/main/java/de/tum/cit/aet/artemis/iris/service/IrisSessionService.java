@@ -2,6 +2,8 @@ package de.tum.cit.aet.artemis.iris.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 import jakarta.annotation.Nullable;
 import jakarta.ws.rs.BadRequestException;
 
