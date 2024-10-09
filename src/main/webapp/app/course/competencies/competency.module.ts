@@ -3,7 +3,6 @@ import { RouterModule } from '@angular/router';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { CompetencyManagementComponent } from './competency-management/competency-management.component';
 import { CompetencyCardComponent } from 'app/course/competencies/competency-card/competency-card.component';
 import { CompetenciesPopoverComponent } from './competencies-popover/competencies-popover.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
@@ -49,7 +48,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         CompetencySearchComponent,
         CompetencyRecommendationDetailComponent,
         CourseDescriptionFormComponent,
-        CompetencyManagementComponent,
         CompetencyCardComponent,
         CompetencyAccordionComponent,
         CompetenciesPopoverComponent,
