@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -290,7 +289,7 @@ public class AdminUserResource {
      */
     @DeleteMapping("users")
     @EnforceAdmin
-    public ResponseEntity<List<String>> deleteUsers(@RequestParam(name = "login") List<String> logins) {
+    public ResponseEntity<List<String>> deleteUsers(@RequestBody List<String> logins) {
         log.debug("REST request to delete {} users", logins.size());
         List<String> deletedUsers = Collections.synchronizedList(new java.util.ArrayList<>());
 
