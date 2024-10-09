@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.in.www1.artemis.connector.IrisRequestMockProvider;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.iris.settings.IrisSubSettings;
 import de.tum.in.www1.artemis.exercise.programming.ProgrammingExerciseUtilService;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -61,6 +62,7 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
         activateSubSettings(globalSettings.getIrisChatSettings());
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());
+        activateSubSettings(globalSettings.getIrisTextExerciseChatSettings());
         irisSettingsRepository.save(globalSettings);
     }
 
@@ -84,12 +86,20 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
         activateSubSettings(courseSettings.getIrisLectureIngestionSettings());
 
+        activateSubSettings(courseSettings.getIrisTextExerciseChatSettings());
+
         irisSettingsRepository.save(courseSettings);
     }
 
     protected void activateIrisFor(ProgrammingExercise exercise) {
         var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
         activateSubSettings(exerciseSettings.getIrisChatSettings());
+        irisSettingsRepository.save(exerciseSettings);
+    }
+
+    protected void activateIrisFor(TextExercise exercise) {
+        var exerciseSettings = irisSettingsService.getDefaultSettingsFor(exercise);
+        activateSubSettings(exerciseSettings.getIrisTextExerciseChatSettings());
         irisSettingsRepository.save(exerciseSettings);
     }
 

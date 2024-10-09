@@ -110,7 +110,7 @@ describe('ExerciseChatbotButtonComponent', () => {
         fixture.whenStable();
         tick();
 
-        expect(spy).toHaveBeenCalledExactlyOnceWith(ChatServiceMode.EXERCISE, mockExerciseId);
+        expect(spy).toHaveBeenCalledExactlyOnceWith(undefined, mockExerciseId);
     }));
 
     it('should close the dialog when destroying the object', () => {
