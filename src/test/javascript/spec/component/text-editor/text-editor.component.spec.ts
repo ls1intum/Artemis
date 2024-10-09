@@ -434,7 +434,7 @@ describe('TextEditorComponent', () => {
             ],
         } as StudentParticipation;
         comp.submission = { id: 1, text: 'the same text' };
-        comp.answer = 'the same text';
+        comp.answer = 'not the same text';
         const result = comp.assureConditionsSatisfied();
         expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.feedbackRequestPendingChanges');
