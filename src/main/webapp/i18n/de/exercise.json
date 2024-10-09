@@ -171,6 +171,7 @@
             "notEnoughPoints": "Um eine Feedbackanfrage zu senden, brauchst du mindestens eine Abgabe.",
             "lockRepositoryWarning": "Dein Repository wird gesperrt. Du kannst erst weiterarbeiten, wenn deine Feedbackanfrage beantwortet wird.",
             "feedbackRequestAfterDueDate": "Du kannst nach der Abgabefrist keine weiteren Anfragen einreichen.",
+            "feedbackRequestPendingChanges": "Du hast nicht gespeicherte Änderungen. Bitte reiche eine neue Abgabe ein, bevor du erneut einreichst.",
             "maxAthenaResultsReached": "Du hast die maximale Anzahl an KI-Feedbackanfragen erreicht.",
             "athenaFeedbackSuccessful": "AI-Feedback erfolgreich generiert. Klicke auf das Ergebnis, um Details zu sehen.",
             "athenaFeedbackFailed": "Etwas ist schiefgelaufen... KI-Feedback konnte im Moment nicht generiert werden",

@@ -10,4 +10,6 @@ export class MockCourseExerciseService {
     resumeProgrammingExercise = () => of({} as StudentParticipation);
 
     findAllProgrammingExercisesForCourse = () => of([{ id: 456 } as ProgrammingExercise]);
+
+    requestFeedback = () => of({});
 }

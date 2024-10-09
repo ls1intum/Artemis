@@ -56,10 +56,10 @@ export class HeaderParticipationPageComponent implements OnInit, OnChanges {
             this.exerciseStatusBadge = hasExerciseDueDatePassed(this.exercise, this.participation) ? 'bg-danger' : 'bg-success';
             this.exerciseCategories = this.exercise.categories || [];
             this.dueDate = getExerciseDueDate(this.exercise, this.participation);
-            if (this.participation?.results?.[0]?.rated) {
+            if (this.participation?.results?.last()?.rated) {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings(
                     // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
-                    (this.participation.results?.[0].score! * this.exercise.maxPoints!) / 100,
+                    (this.participation.results?.last()?.score! * this.exercise.maxPoints!) / 100,
                     getCourseFromExercise(this.exercise),
                 );
             }

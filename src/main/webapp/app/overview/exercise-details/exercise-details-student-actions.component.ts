@@ -20,6 +20,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_ATHENA, PROFILE_LOCALVC, PROFILE_THEIA } from 'app/app.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { ButtonType } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -31,6 +32,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
+    protected readonly ButtonType = ButtonType;
 
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
@@ -353,7 +355,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             }
         }
 
-        const afterDueDate = !this.exercise.dueDate || dayjs().isSameOrAfter(this.exercise.dueDate);
+        const afterDueDate = !!this.exercise.dueDate && dayjs().isSameOrAfter(this.exercise.dueDate);
         const dueDateWarning = this.translateService.instant('artemisApp.exercise.feedbackRequestAfterDueDate');
         if (afterDueDate) {
             this.alertService.warning(dueDateWarning);
@@ -388,13 +390,10 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
 
     hasAthenaResultForlatestSubmission(): boolean {
         if (this.gradedParticipation?.submissions && this.gradedParticipation?.results) {
-            const sortedSubmissions = this.gradedParticipation.submissions.slice().sort((a, b) => {
-                const dateA = this.getDateValue(a.submissionDate) ?? -Infinity;
-                const dateB = this.getDateValue(b.submissionDate) ?? -Infinity;
-                return dateB - dateA;
-            });
-
-            return this.gradedParticipation.results.some((result) => result.submission?.id === sortedSubmissions[0]?.id);
+            return (
+                this.gradedParticipation.submissions.last()?.id ===
+                this.gradedParticipation?.results.filter((result) => result.assessmentType == AssessmentType.AUTOMATIC_ATHENA && !!result.successful).first()?.submission?.id
+            );
         }
         return false;
     }

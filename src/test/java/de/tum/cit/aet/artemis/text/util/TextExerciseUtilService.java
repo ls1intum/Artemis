@@ -11,6 +11,7 @@ import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -348,6 +349,45 @@ public class TextExerciseUtilService {
     }
 
     /**
+     * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves an Athena Result for the StudentParticipation
+     *
+     * @param exercise     The TextExercise the TextSubmission belongs to
+     * @param submission   The TextSubmission that belongs to the StudentParticipation
+     * @param studentLogin The login of the user the TextSubmission belongs to (for individual exercises)
+     * @param teamId       The id of the team the TextSubmission belongs to (for team exercises)
+     * @return The updated TextSubmission
+     */
+    private TextSubmission saveTextSubmissionWithAthenaResult(TextExercise exercise, TextSubmission submission, String studentLogin, Long teamId) {
+        StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> participationUtilService.createAndSaveParticipationForExercise(exercise, login))
+                .orElseGet(() -> participationUtilService.addTeamParticipationForExercise(exercise, teamId));
+
+        submissionRepository.save(submission);
+
+        participation.addSubmission(submission);
+        Result result = new Result();
+        result.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        result.setScore(100D);
+        result.setSuccessful(true);
+        if (exercise.getReleaseDate() != null) {
+            result.setCompletionDate(exercise.getReleaseDate());
+        }
+        else { // exam exercises do not have a release date
+            result.setCompletionDate(ZonedDateTime.now());
+        }
+        result = resultRepo.save(result);
+        result.setSubmission(submission);
+        submission.setParticipation(participation);
+        submission.addResult(result);
+        submission.getParticipation().addResult(result);
+        submission = textSubmissionRepo.save(submission);
+        resultRepo.save(result);
+        studentParticipationRepo.save(participation);
+
+        submission = textSubmissionRepo.save(submission);
+        return submission;
+    }
+
+    /**
      * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves a Result for the StudentParticipation given the
      * assessorLogin.
      *
@@ -359,6 +399,18 @@ public class TextExerciseUtilService {
      */
     public TextSubmission saveTextSubmissionWithResultAndAssessor(TextExercise exercise, TextSubmission submission, String login, String assessorLogin) {
         return saveTextSubmissionWithResultAndAssessor(exercise, submission, login, null, assessorLogin);
+    }
+
+    /**
+     * Creates and saves a StudentParticipation for the given TextExercise, TextSubmission, and login. Also creates and saves an Athena Result for the StudentParticipation.
+     *
+     * @param exercise   The TextExercise the TextSubmission belongs to
+     * @param submission The TextSubmission that belongs to the StudentParticipation
+     * @param login      The login of the user the TextSubmission belongs to
+     * @return The updated TextSubmission
+     */
+    public TextSubmission saveTextSubmissionWithAthenaResult(TextExercise exercise, TextSubmission submission, String login) {
+        return saveTextSubmissionWithAthenaResult(exercise, submission, login, null);
     }
 
     /**
