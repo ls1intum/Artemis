@@ -45,7 +45,6 @@ describe('GitDiffFileComponent', () => {
         fixture.componentRef.setInput('originalFilePath', fileName);
         fixture.componentRef.setInput('modifiedFileContent', modifiedContent);
         fixture.componentRef.setInput('modifiedFilePath', fileName);
-        jest.spyOn(comp.monacoDiffEditor(), 'setFileContents').mockImplementation();
         fixture.detectChanges();
         expect(setFileContentsStub).toHaveBeenCalledExactlyOnceWith(originalContent, fileName, modifiedContent, fileName);
         expect(comp.fileUnchanged()).toBeFalse();
