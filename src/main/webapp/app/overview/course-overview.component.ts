@@ -245,8 +245,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     /** Listen window resize event by height */
     @HostListener('window: resize', ['$event'])
     onResize() {
-        this.updateVisibleNavbarItems(window.innerHeight);
-        if (!this.anyItemHidden) this.itemsDrop.close();
+        if (this.itemsDrop) {
+            this.updateVisibleNavbarItems(window.innerHeight);
+            if (!this.anyItemHidden) this.itemsDrop.close();
+        }
     }
 
     /** Update sidebar item's hidden property based on the window height to display three-dots */
