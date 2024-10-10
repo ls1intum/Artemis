@@ -124,20 +124,11 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isCourseOverview = isPresent;
         });
 
-        // this.checkLtiParameter();
-
         this.ltiService.isLti$.subscribe((isLti) => {
             this.isLti = isLti;
         });
 
         this.themeService.initialize();
-    }
-
-    private checkLtiParameter() {
-        this.route.queryParams.subscribe((params) => {
-            this.ltiService.setLti(params['lti'] === 'true');
-            console.log(params);
-        });
     }
 
     /**
