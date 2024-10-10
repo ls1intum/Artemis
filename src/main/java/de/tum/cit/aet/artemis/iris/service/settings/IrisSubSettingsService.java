@@ -81,6 +81,15 @@ public class IrisSubSettingsService {
         return currentSettings;
     }
 
+    /**
+     * Updates a text exercise chat sub settings object.
+     *
+     * @param currentSettings Current chat sub settings.
+     * @param newSettings     Updated chat sub settings.
+     * @param parentSettings  Parent chat sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
+     * @return Updated chat sub settings.
+     */
     public IrisTextExerciseChatSubSettings update(IrisTextExerciseChatSubSettings currentSettings, IrisTextExerciseChatSubSettings newSettings,
             IrisCombinedTextExerciseChatSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
         if (newSettings == null) {

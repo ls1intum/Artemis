@@ -110,6 +110,12 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
         // @formatter:on
     }
 
+    /**
+     * Handles the status update of a text exercise chat job.
+     *
+     * @param job          The job that is updated
+     * @param statusUpdate The status update
+     */
     public void handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
         var session = (IrisTextExerciseChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
         if (statusUpdate.result() != null) {
