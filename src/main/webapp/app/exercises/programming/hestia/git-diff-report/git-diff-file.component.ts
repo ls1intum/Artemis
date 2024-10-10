@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, ViewEncapsulation, computed, effect, input, output, viewChild } from '@angular/core';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-editor.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-git-diff-file',
@@ -8,7 +9,7 @@ import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/monaco-diff-
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MonacoDiffEditorComponent],
+    imports: [MonacoDiffEditorComponent, TranslateDirective],
 })
 export class GitDiffFileComponent {
     readonly monacoDiffEditor = viewChild.required(MonacoDiffEditorComponent);
