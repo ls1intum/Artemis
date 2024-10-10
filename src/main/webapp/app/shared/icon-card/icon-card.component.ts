@@ -15,6 +15,4 @@ export class IconCardComponent {
     headerIcon = input<IconDefinition>(faCircleInfo);
 
     headline = input<string>('Title');
-
-    constructor() {}
 }

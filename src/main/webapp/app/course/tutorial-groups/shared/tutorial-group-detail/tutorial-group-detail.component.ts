@@ -93,7 +93,11 @@ export class TutorialGroupDetailComponent implements OnChanges {
         this.tutorDefaultProfilePictureHue = getBackgroundColorHue(tutorialGroup.teachingAssistantId ? tutorialGroup.teachingAssistantId.toString() : 'default');
         this.tutorInitials = getInitialsFromString(tutorialGroup.teachingAssistantName ?? 'NA');
         this.isMessagingEnabled = isMessagingEnabled(this.course);
-        this.utilization = tutorialGroup.averageAttendance && tutorialGroup.capacity && Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
+        if (tutorialGroup.averageAttendance && tutorialGroup.capacity) {
+            this.utilization = Math.round((tutorialGroup.averageAttendance / tutorialGroup.capacity) * 100);
+        } else {
+            this.utilization = undefined;
+        }
     }
 
     recalculateAttendanceDetails() {
