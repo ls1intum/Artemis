@@ -123,7 +123,7 @@ export class ProgrammingExerciseExamDiffComponent extends ExamPageComponent impl
      * Shows the git-diff in a modal.
      */
     showGitDiff(): void {
-        const modalRef = this.modalService.open(GitDiffReportModalComponent, { size: 'xl' });
+        const modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: 'diff-view-modal' });
         modalRef.componentInstance.report = signal(this.exercise.gitDiffReport);
         modalRef.componentInstance.diffForTemplateAndSolution = signal(false);
         modalRef.componentInstance.cachedRepositoryFiles = signal(this.cachedRepositoryFiles);
