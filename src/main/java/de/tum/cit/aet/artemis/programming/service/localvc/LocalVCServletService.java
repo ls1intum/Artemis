@@ -435,8 +435,7 @@ public class LocalVCServletService {
 
         ProgrammingExerciseParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(),
-                    false);
+            participation = programmingExerciseParticipationService.getParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(
@@ -732,11 +731,11 @@ public class LocalVCServletService {
      * @return the {@link ProgrammingExerciseParticipation} corresponding to the repository URI.
      */
     private ProgrammingExerciseParticipation getExerciseParticipationFromLocalVCRepositoryUri(LocalVCRepositoryUri localVCRepositoryUri) {
-        String projectKey = localVCRepositoryUri.getProjectKey();
+        // String projectKey = localVCRepositoryUri.getURI();
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
-        ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
-
-        return programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(), false);
+        // ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
+        return programmingExerciseParticipationService.getParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
+        // return programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(), false);
     }
 
     /**
@@ -842,8 +841,8 @@ public class LocalVCServletService {
                 return;
             }
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
-            var parti = getExerciseParticipationFromLocalVCRepositoryUri(getLocalVCRepositoryUri(rootDir));
-            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(parti, repositoryActionType));
+            var participation = getExerciseParticipationFromLocalVCRepositoryUri(getLocalVCRepositoryUri(rootDir));
+            vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
         }
         catch (Exception ignored) {
         }
