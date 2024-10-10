@@ -58,9 +58,6 @@ public abstract class AbstractIrisIntegrationTest extends AbstractSpringIntegrat
 
     protected void activateIrisGlobally() {
         var globalSettings = irisSettingsService.getGlobalSettings();
-        // if (globalSettings.getIrisTextExerciseChatSettings() == null) {
-        // globalSettings.setIrisTextExerciseChatSettings(new IrisTextExerciseChatSubSettings());
-        // }
         activateSubSettings(globalSettings.getIrisChatSettings());
         activateSubSettings(globalSettings.getIrisLectureIngestionSettings());
         activateSubSettings(globalSettings.getIrisCompetencyGenerationSettings());

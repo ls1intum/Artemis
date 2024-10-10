@@ -11,9 +11,9 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisTextExerciseDTO(long id, String title, PyrisCourseDTO course, String problemStatement, Instant startDate, Instant endDate) {
 
-    public PyrisTextExerciseDTO(TextExercise exercise) {
+    public static PyrisTextExerciseDTO of(TextExercise exercise) {
         // @formatter:off
-        this(
+       return new PyrisTextExerciseDTO(
                 exercise.getId(),
                 exercise.getTitle(),
                 new PyrisCourseDTO(exercise.getCourseViaExerciseGroupOrCourseMember()),
