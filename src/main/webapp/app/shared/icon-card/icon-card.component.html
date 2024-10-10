@@ -1,0 +1,12 @@
+<div class="icon-card card h-100">
+    <div class="card-body">
+        <div class="text-center d-flex align-items-center justify-content-center">
+            <fa-icon size="lg" class="text-secondary me-2" [icon]="headerIcon()" />
+            <strong class="icon-card-title text-secondary mb-0" [jhiTranslate]="headline()"></strong>
+        </div>
+
+        <hr />
+
+        <ng-content></ng-content>
+    </div>
+</div>

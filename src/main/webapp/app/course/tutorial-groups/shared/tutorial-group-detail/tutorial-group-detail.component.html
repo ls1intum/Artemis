@@ -5,10 +5,144 @@
         <ng-template [ngTemplateOutlet]="header" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }" />
         <hr />
     }
-    @if (tutorialDetailSections) {
-        <jhi-detail-overview-list [sections]="tutorialDetailSections" />
-    }
-    <div class="mt-1">
+    <div class="row align-items-stretch">
+        <div class="col-12 col-lg-4">
+            <jhi-icon-card [headerIcon]="faUserCheck" headline="artemisApp.entities.tutorialGroup.teachingAssistant">
+                <div class="text-center">
+                    <div class="mb-2">
+                        @if (tutorialGroup.teachingAssistantImageUrl) {
+                            <img class="tutorial-group-detail-tutor-image rounded-3" [alt]="tutorialGroup.teachingAssistantName" [src]="tutorialGroup.teachingAssistantImageUrl" />
+                        } @else {
+                            <strong class="tutorial-group-detail-tutor-default-image rounded-3" [ngStyle]="{ 'background-color': tutorDefaultProfilePictureHue }">{{
+                                tutorInitials
+                            }}</strong>
+                        }
+                    </div>
+
+                    <div>
+                        <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.name"></span><span class="text-secondary">:</span>
+                        {{ tutorialGroup.teachingAssistantName }}
+                    </div>
+
+                    @if (tutorialGroup.channel && isMessagingEnabled) {
+                        <div>
+                            <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.channel"></span><span class="text-secondary">:</span>
+                            @if (tutorialGroup.channel.isMember) {
+                                <a [routerLink]="['/courses', course.id!, 'communication']" [queryParams]="{ conversationId: tutorialGroup.channel.id }">
+                                    {{ tutorialGroup.channel.name }}
+                                </a>
+                            } @else {
+                                <span> {{ tutorialGroup.channel.name }} </span>
+                            }
+                        </div>
+                    }
+                </div>
+            </jhi-icon-card>
+        </div>
+
+        <div class="col-12 col-lg-4 mt-3 mt-lg-0">
+            <jhi-icon-card [headerIcon]="faPercent" headline="artemisApp.entities.tutorialGroup.utilization">
+                <div>
+                    <div>
+                        <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.averageAttendanceDetail"></span><span class="text-secondary">:</span>
+                        {{ (tutorialGroup.averageAttendance && Math.round(tutorialGroup.averageAttendance)) ?? '-' }}
+                        <fa-icon
+                            class="text-secondary"
+                            [icon]="faQuestionCircle"
+                            ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.averageAttendanceHelpDetail' | artemisTranslate }}"
+                        />
+                    </div>
+
+                    <div>
+                        <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.capacity"></span><span class="text-secondary">:</span>
+                        {{ tutorialGroup.capacity }}
+                    </div>
+
+                    <div>
+                        <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.registrations"></span><span class="text-secondary">:</span>
+                        {{ !tutorialGroup.numberOfRegisteredUsers || tutorialGroup.numberOfRegisteredUsers === 0 ? '-' : tutorialGroup.numberOfRegisteredUsers }}
+                    </div>
+
+                    <div class="mt-2">
+                        <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.utilization"></span><span class="text-secondary">:</span>
+                        <fa-icon class="text-secondary" [icon]="faQuestionCircle" ngbTooltip="{{ 'artemisApp.entities.tutorialGroup.utilizationHelpDetail' | artemisTranslate }}" />
+
+                        @if (utilization) {
+                            <div class="progress" role="progressbar" [attr.aria-valuenow]="utilization" aria-valuemin="0" aria-valuemax="100">
+                                <div
+                                    class="progress-bar"
+                                    [ngClass]="{ 'bg-warning': utilization >= 60 && utilization < 90, 'bg-danger': utilization >= 90 }"
+                                    [ngStyle]="{ width: utilization + '%' }"
+                                >
+                                    {{ utilization }}%
+                                </div>
+                            </div>
+                        } @else {
+                            <div class="progress" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100">
+                                <div class="progress-bar bg-secondary" style="width: 100%">-</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </jhi-icon-card>
+        </div>
+
+        <div class="col-12 col-lg-4 mt-3 mt-lg-0">
+            <jhi-icon-card [headerIcon]="faCircleInfo" headline="artemisApp.entities.tutorialGroup.information">
+                <div>
+                    <div>
+                        <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.language"></span><span class="text-secondary">:</span>
+                        {{ tutorialGroup.language }}
+                    </div>
+
+                    <div>
+                        <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.campus"></span><span class="text-secondary">:</span>
+                        {{ tutorialGroup.campus }}
+                    </div>
+
+                    <div>
+                        <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.schedule"></span><span class="text-secondary">:</span>
+                        {{ tutorialTimeslotString }}
+                    </div>
+
+                    <div class="mt-2">
+                        <span
+                            class="text-secondary"
+                            [jhiTranslate]="
+                                tutorialGroup.isOnline ? 'artemisApp.forms.scheduleForm.locationInput.labelOnline' : 'artemisApp.forms.scheduleForm.locationInput.labelOffline'
+                            "
+                        ></span
+                        ><span class="text-secondary">:</span>
+
+                        {{ tutorialGroup.tutorialGroupSchedule?.location }}
+                    </div>
+
+                    <div>
+                        @if (tutorialGroup.isOnline) {
+                            <fa-icon class="text-success" [icon]="faCircle" />
+                            <span class="text-success" jhiTranslate="artemisApp.entities.tutorialGroup.isOnline"></span>
+                        } @else {
+                            <fa-icon class="text-secondary" [icon]="faCircleXmark" />
+                            <span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.isNotOnline"></span>
+                        }
+                    </div>
+                </div>
+            </jhi-icon-card>
+        </div>
+
+        @if (formattedAdditionalInformation) {
+            <div class="col-12 mt-3">
+                <div class="card">
+                    <div class="card-body">
+                        <div><span class="text-secondary" jhiTranslate="artemisApp.entities.tutorialGroup.additionalInformation"></span><span class="text-secondary">:</span></div>
+
+                        <div class="markdown-preview" [innerHTML]="formattedAdditionalInformation"></div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+    <div class="mt-3">
         <strong jhiTranslate="artemisApp.entities.tutorialGroup.sessions"></strong>
     </div>
     @if (sessions && sessions.length) {
