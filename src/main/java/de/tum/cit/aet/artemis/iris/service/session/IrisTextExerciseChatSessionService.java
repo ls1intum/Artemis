@@ -2,6 +2,9 @@ package de.tum.cit.aet.artemis.iris.service.session;
 
 import java.util.Comparator;
 
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
+
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
@@ -19,6 +22,8 @@ import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
@@ -26,11 +31,6 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
-
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 
 @Service
 @Profile("iris")
@@ -112,10 +112,15 @@ public class IrisTextExerciseChatSessionService implements IrisChatBasedFeatureI
 
     public void handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
         var session = (IrisTextExerciseChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
-        var message = session.newMessage();
-        message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-        IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-        irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
+        if (statusUpdate.result() != null) {
+            var message = session.newMessage();
+            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
+            IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
+        }
+        else {
+            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages());
+        }
     }
 
     @Override

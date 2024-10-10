@@ -1,8 +1,8 @@
-package de.tum.in.www1.artemis.iris;
+package de.tum.cit.aet.artemis.iris;
 
-import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState.DONE;
-import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState.IN_PROGRESS;
-import static de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState.NOT_STARTED;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.DONE;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.IN_PROGRESS;
+import static de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.NOT_STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
@@ -27,25 +27,25 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.TextExercise;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessage;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageContent;
-import de.tum.in.www1.artemis.domain.iris.message.IrisMessageSender;
-import de.tum.in.www1.artemis.domain.iris.message.IrisTextMessageContent;
-import de.tum.in.www1.artemis.domain.iris.session.IrisSession;
-import de.tum.in.www1.artemis.domain.iris.session.IrisTextExerciseChatSession;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.exercise.text.TextExerciseUtilService;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisMessageRepository;
-import de.tum.in.www1.artemis.repository.iris.IrisSessionRepository;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageDTO;
-import de.tum.in.www1.artemis.service.connectors.pyris.dto.status.PyrisStageState;
-import de.tum.in.www1.artemis.service.iris.IrisMessageService;
-import de.tum.in.www1.artemis.service.iris.dto.IrisChatWebsocketDTO;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
+import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
+import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
+import de.tum.cit.aet.artemis.text.repository.TextExerciseRepository;
+import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
 class IrisTextExerciseChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 

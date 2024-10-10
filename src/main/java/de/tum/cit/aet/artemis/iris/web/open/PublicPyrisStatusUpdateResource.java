@@ -4,8 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.Objects;
 
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.springframework.context.annotation.Profile;
@@ -22,6 +20,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceNothing;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -29,6 +28,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 
 /**
  * REST controller for providing Pyris access to Artemis internal data and status updates.
@@ -125,6 +125,16 @@ public class PublicPyrisStatusUpdateResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * {@code POST /api/public/pyris/pipelines/text-exercise-chat/runs/{runId}/status} : Set the status of a Text Exercise Chat job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
     @PostMapping("pipelines/text-exercise-chat/runs/{runId}/status")
     @EnforceNothing
     public ResponseEntity<Void> respondInTextExerciseChat(@PathVariable String runId, @RequestBody PyrisTextExerciseChatStatusUpdateDTO statusUpdateDTO,
