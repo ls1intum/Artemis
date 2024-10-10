@@ -10,8 +10,8 @@ describe('IconCardComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [IconCardComponent],
-            declarations: [MockDirective(TranslateDirective)],
+            imports: [],
+            declarations: [IconCardComponent, MockDirective(TranslateDirective)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(IconCardComponent);
@@ -26,8 +26,6 @@ describe('IconCardComponent', () => {
     it('should display the default headerIcon and headline', () => {
         expect(component.headerIcon()).toBe(faCircleInfo);
         expect(component.headline()).toBe('Title');
-
-        fixture.detectChanges();
     });
 
     it('should display custom headerIcon and headline when inputs are set', () => {
