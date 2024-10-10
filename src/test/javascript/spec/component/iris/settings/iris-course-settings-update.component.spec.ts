@@ -8,8 +8,7 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { IrisCommonSubSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-common-sub-settings-update/iris-common-sub-settings-update.component';
 import { IrisGlobalAutoupdateSettingsUpdateComponent } from 'app/iris/settings/iris-settings-update/iris-global-autoupdate-settings-update/iris-global-autoupdate-settings-update.component';
 import { mockEmptySettings, mockSettings } from './mock-settings';
-import { ActivatedRoute, Params } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, Params, provideRouter } from '@angular/router';
 import { NgModel } from '@angular/forms';
 import { IrisCourseSettingsUpdateComponent } from 'app/iris/settings/iris-course-settings-update/iris-course-settings-update.component';
 import { By } from '@angular/platform-browser';
@@ -29,7 +28,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule],
             declarations: [
                 IrisCourseSettingsUpdateComponent,
                 IrisSettingsUpdateComponent,
@@ -38,7 +37,7 @@ describe('IrisCourseSettingsUpdateComponent Component', () => {
                 MockComponent(ButtonComponent),
                 MockDirective(NgModel),
             ],
-            providers: [MockProvider(IrisSettingsService), { provide: ActivatedRoute, useValue: route }],
+            providers: [provideRouter([]), MockProvider(IrisSettingsService), { provide: ActivatedRoute, useValue: route }],
         })
             .compileComponents()
             .then(() => {
