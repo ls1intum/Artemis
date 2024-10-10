@@ -22,34 +22,34 @@ describe('GitDiffFilePanelTitleComponent', () => {
 
     it.each([
         {
-            filePath: 'some-unchanged-file.java',
-            previousFilePath: 'some-unchanged-file.java',
+            modifiedFilePath: 'some-unchanged-file.java',
+            originalFilePath: 'some-unchanged-file.java',
             status: 'unchanged',
             title: 'some-unchanged-file.java',
         },
         {
-            filePath: undefined,
-            previousFilePath: 'some-deleted-file.java',
+            modifiedFilePath: undefined,
+            originalFilePath: 'some-deleted-file.java',
             status: 'deleted',
             title: 'some-deleted-file.java',
         },
         {
-            filePath: 'some-created-file.java',
-            previousFilePath: undefined,
+            modifiedFilePath: 'some-created-file.java',
+            originalFilePath: undefined,
             status: 'created',
             title: 'some-created-file.java',
         },
         {
-            filePath: 'some-renamed-file.java',
-            previousFilePath: 'some-file.java',
+            modifiedFilePath: 'some-renamed-file.java',
+            originalFilePath: 'some-file.java',
             status: 'renamed',
             title: 'some-file.java → some-renamed-file.java',
         },
-    ])('should correctly set title and status', ({ filePath, previousFilePath, status, title }) => {
-        comp.previousFilePath = previousFilePath;
-        comp.filePath = filePath;
+    ])('should correctly set title and status', ({ originalFilePath, modifiedFilePath, status, title }) => {
+        fixture.componentRef.setInput('originalFilePath', originalFilePath);
+        fixture.componentRef.setInput('modifiedFilePath', modifiedFilePath);
         fixture.detectChanges();
-        expect(comp.title).toBe(title);
-        expect(comp.fileStatus).toBe(status);
+        expect(comp.title()).toBe(title);
+        expect(comp.fileStatus()).toBe(status);
     });
 });

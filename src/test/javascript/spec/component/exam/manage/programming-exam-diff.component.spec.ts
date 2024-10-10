@@ -83,7 +83,7 @@ describe('ProgrammingExerciseExamDiffComponent', () => {
         const modalServiceSpy = jest.spyOn(modal, 'open');
         component.exercise = { id: 1 } as ProgrammingExercise;
         component.showGitDiff();
-        expect(modalServiceSpy).toHaveBeenCalledExactlyOnceWith(GitDiffReportModalComponent, { size: 'xl' });
+        expect(modalServiceSpy).toHaveBeenCalledExactlyOnceWith(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
     });
 
     it('should use reports from cache if available', fakeAsync(() => {

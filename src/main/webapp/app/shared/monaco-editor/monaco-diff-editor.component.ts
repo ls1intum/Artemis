@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, OnInit, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, OnDestroy, Renderer2, ViewEncapsulation, effect, inject, input, output } from '@angular/core';
 
 import * as monaco from 'monaco-editor';
 import { Disposable } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
@@ -13,7 +13,7 @@ export type MonacoEditorDiffText = { original: string; modified: string };
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })
-export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
+export class MonacoDiffEditorComponent implements OnDestroy {
     private _editor: monaco.editor.IStandaloneDiffEditor;
     monacoDiffEditorContainerElement: HTMLElement;
 
@@ -24,7 +24,6 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
      * Subscriptions and listeners that need to be disposed of when this component is destroyed.
      */
     listeners: Disposable[] = [];
-    resizeObserver?: ResizeObserver;
 
     /*
      * Injected services and elements.
@@ -42,6 +41,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         this.monacoDiffEditorContainerElement = this.renderer.createElement('div');
         this._editor = this.monacoEditorService.createStandaloneDiffEditor(this.monacoDiffEditorContainerElement);
         this.renderer.appendChild(this.elementRef.nativeElement, this.monacoDiffEditorContainerElement);
+        this.renderer.addClass(this.monacoDiffEditorContainerElement, 'diff-editor-container');
         this.setupDiffListener();
         this.setupContentHeightListeners();
 
@@ -52,15 +52,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
         });
     }
 
-    ngOnInit(): void {
-        this.resizeObserver = new ResizeObserver(() => {
-            this.layout();
-        });
-        this.resizeObserver.observe(this.monacoDiffEditorContainerElement);
-    }
-
     ngOnDestroy(): void {
-        this.resizeObserver?.disconnect();
         this.listeners.forEach((listener) => {
             listener.dispose();
         });
@@ -73,7 +65,7 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
      */
     setupDiffListener(): void {
         const diffListener = this._editor.onDidUpdateDiff(() => {
-            this.adjustHeightAndLayout(this.getMaximumContentHeight());
+            this.adjustContainerHeight(this.getMaximumContentHeight());
             this.onReadyForDisplayChange.emit(true);
         });
 
@@ -91,13 +83,13 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
             const contentSizeListener = editor.onDidContentSizeChange((e: monaco.editor.IContentSizeChangedEvent) => {
                 if (e.contentHeightChanged) {
                     // Using the content height of the larger editor here ensures that neither of the editors break out of the container.
-                    this.adjustHeightAndLayout(this.getMaximumContentHeight());
+                    this.adjustContainerHeight(this.getMaximumContentHeight());
                 }
             });
 
             // Called when the user reveals or collapses a hidden region.
             const hiddenAreaListener = editor.onDidChangeHiddenAreas(() => {
-                this.adjustHeightAndLayout(this.getContentHeightOfEditor(editor));
+                this.adjustContainerHeight(this.getContentHeightOfEditor(editor));
             });
 
             this.listeners.push(contentSizeListener, hiddenAreaListener);
@@ -105,21 +97,11 @@ export class MonacoDiffEditorComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Adjusts the height of the editor to fit the new content height.
+     * Adjusts the height of the editor's container to fit the new content height.
      * @param newContentHeight The new content height of the editor.
      */
-    adjustHeightAndLayout(newContentHeight: number) {
+    adjustContainerHeight(newContentHeight: number) {
         this.monacoDiffEditorContainerElement.style.height = newContentHeight + 'px';
-        this.layout();
-    }
-
-    /**
-     * Adjusts this editor to fit its container.
-     */
-    layout(): void {
-        const width = this.monacoDiffEditorContainerElement.clientWidth;
-        const height = this.monacoDiffEditorContainerElement.clientHeight;
-        this._editor.layout({ width, height });
     }
 
     /**

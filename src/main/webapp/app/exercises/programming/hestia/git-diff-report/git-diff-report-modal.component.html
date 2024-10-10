@@ -2,22 +2,22 @@
     <div class="modal-header">
         <h3
             class="modal-title"
-            jhiTranslate="{{ diffForTemplateAndSolution ? 'artemisApp.programmingExercise.diffReport.title' : 'artemisApp.programmingExercise.diffReport.titleForSubmissions' }}"
+            jhiTranslate="{{ diffForTemplateAndSolution() ? 'artemisApp.programmingExercise.diffReport.title' : 'artemisApp.programmingExercise.diffReport.titleForSubmissions' }}"
         ></h3>
         <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
     </div>
     <div class="modal-body">
-        @if (leftCommitFileContentByPath && rightCommitFileContentByPath) {
+        @if (leftCommitFileContentByPath() && rightCommitFileContentByPath()) {
             <div class="row mb-2">
                 <jhi-git-diff-report
-                    [report]="report"
-                    [diffForTemplateAndSolution]="diffForTemplateAndSolution"
-                    [templateFileContentByPath]="leftCommitFileContentByPath"
-                    [solutionFileContentByPath]="rightCommitFileContentByPath"
+                    [report]="report()"
+                    [diffForTemplateAndSolution]="diffForTemplateAndSolution()"
+                    [templateFileContentByPath]="leftCommitFileContentByPath()!"
+                    [solutionFileContentByPath]="rightCommitFileContentByPath()!"
                 />
             </div>
         } @else {
-            @if (!errorWhileFetchingRepos) {
+            @if (!errorWhileFetchingRepos()) {
                 <div class="text-center">
                     <span class="spinner-border spinner-border-lg" role="status" aria-hidden="true">
                         <span class="sr-only">Loading...</span>
@@ -25,16 +25,7 @@
                 </div>
             }
         }
-        <ng-template #spinner>
-            @if (!errorWhileFetchingRepos) {
-                <div class="text-center">
-                    <span class="spinner-border spinner-border-lg" role="status" aria-hidden="true">
-                        <span class="sr-only">Loading...</span>
-                    </span>
-                </div>
-            }
-        </ng-template>
-        @if (errorWhileFetchingRepos) {
+        @if (errorWhileFetchingRepos()) {
             <div>
                 <div class="alert alert-danger">
                     <div jhiTranslate="artemisApp.programmingExercise.diffReport.errorWhileFetchingRepos"></div>

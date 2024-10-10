@@ -4,7 +4,7 @@ import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-d
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 
-describe('Git-Diff line-stat Component', () => {
+describe('GitDiffLineStatComponent', () => {
     let comp: GitDiffLineStatComponent;
     let fixture: ComponentFixture<GitDiffLineStatComponent>;
 
@@ -29,10 +29,10 @@ describe('Git-Diff line-stat Component', () => {
     ];
 
     it.each(boxesTestTable)('Should show %s-%s boxes', (expectedAddedSquareCount, expectedRemovedSquareCount, addedLineCount, removedLineCount) => {
-        comp.addedLineCount = addedLineCount;
-        comp.removedLineCount = removedLineCount;
-        comp.ngOnInit();
-        expect(comp.addedSquareCount).toBe(expectedAddedSquareCount);
-        expect(comp.removedSquareCount).toBe(expectedRemovedSquareCount);
+        fixture.componentRef.setInput('addedLineCount', addedLineCount);
+        fixture.componentRef.setInput('removedLineCount', removedLineCount);
+        fixture.detectChanges();
+        expect(comp.squareCounts().addedSquareCount).toBe(expectedAddedSquareCount);
+        expect(comp.squareCounts().removedSquareCount).toBe(expectedRemovedSquareCount);
     });
 });
