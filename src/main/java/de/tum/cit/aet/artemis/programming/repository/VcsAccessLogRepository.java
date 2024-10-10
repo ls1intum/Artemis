@@ -33,14 +33,14 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
      * @return a log entry belonging to the participationId, which has no commit hash
      */
     @Query("""
+
             SELECT vcsAccessLog
-            FROM VcsAccessLog vcsAccessLog
-            WHERE vcsAccessLog.participation.id = :participationId
-                AND vcsAccessLog.commitHash IS NULL
-            ORDER BY vcsAccessLog.timestamp DESC
-            LIMIT 1
-            """)
-    Optional<VcsAccessLog> findNewestByParticipationIdWhereCommitHashIsNull(@Param("participationId") long participationId);
+                FROM VcsAccessLog vcsAccessLog
+                WHERE vcsAccessLog.participation.id = :participationId
+                ORDER BY vcsAccessLog.timestamp DESC
+                LIMIT 1
+                """)
+    Optional<VcsAccessLog> findNewestByParticipationId(@Param("participationId") long participationId);
 
     /**
      * Retrieves a list of {@link VcsAccessLog} entities associated with the specified participation ID.
@@ -62,7 +62,6 @@ public interface VcsAccessLogRepository extends ArtemisJpaRepository<VcsAccessLo
      * The results are ordered by the log ID in ascending order.
      *
      * @param date The date before which all log ids should be fetched
-     *
      * @return a list of ids of the access logs, which have a timestamp before the date
      */
     @Query("""

@@ -6,6 +6,7 @@ import jakarta.annotation.PostConstruct;
 
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.transport.ReceivePack;
+import org.eclipse.jgit.transport.UploadPack;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -54,6 +55,14 @@ public class ArtemisGitServletService extends GitServlet {
             // Add a hook that triggers the creation of a new submission after the push went through successfully.
             receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCServletService));
             return receivePack;
+        });
+
+        this.setUploadPackFactory((request, repository) -> {
+            UploadPack uploadPack = new UploadPack(repository);
+
+            // Add the custom pre-upload hook
+            uploadPack.setPreUploadHook(new LocalVCFetchPreUploadHook(localVCServletService, request));
+            return uploadPack;
         });
     }
 }
