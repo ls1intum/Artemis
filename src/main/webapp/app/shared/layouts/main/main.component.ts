@@ -3,7 +3,7 @@ import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, NavigationError,
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { SentryErrorHandler } from 'app/core/sentry/sentry.error-handler';
-import { ThemeService } from 'app/core/theme/theme.service';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
 import { Subscription } from 'rxjs';
@@ -130,7 +130,11 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isLti = isLti;
         });
 
-        this.themeService.initialize();
+        if (this.isLti) {
+            this.themeService.applyThemeExplicitly(Theme.LIGHT);
+        } else {
+            this.themeService.initialize();
+        }
     }
 
     private checkLtiParameter() {
