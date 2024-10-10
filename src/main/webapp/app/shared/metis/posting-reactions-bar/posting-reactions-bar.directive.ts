@@ -50,9 +50,13 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     @Input() posting: T;
     @Input() isThreadSidebar: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
+    @Output() reactionsUpdated = new EventEmitter<Reaction[]>();
 
     showReactionSelector = false;
     currentUserIsAtLeastTutor: boolean;
+    isAtLeastTutorInCourse: boolean;
+    isAuthorOfPosting: boolean;
+    @Output() isModalOpen = new EventEmitter<void>();
 
     /*
      * icons (as svg paths) to be used as category preview image in emoji mart selector
@@ -101,6 +105,12 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     ngOnInit(): void {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting);
+        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+    }
+
+    deletePosting(): void {
+        this.metisService.deletePost(this.posting);
     }
 
     /**
@@ -136,6 +146,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
      * i.e. when agree on an existing reaction (+1) or removing own reactions (-1)
      */
     updateReaction(emojiId: string): void {
+        console.log('update e girdi mii');
         if (emojiId != undefined) {
             this.addOrRemoveReaction(emojiId);
         }
@@ -153,12 +164,17 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
         if (this.posting.reactions && existingReactionIdx > -1) {
             const reactionToDelete = this.posting.reactions[existingReactionIdx];
             this.metisService.deleteReaction(reactionToDelete).subscribe(() => {
+                this.posting.reactions = this.posting.reactions?.filter((reaction) => reaction.id !== reactionToDelete.id);
+                this.updatePostingWithReactions();
                 this.showReactionSelector = false;
+                this.reactionsUpdated.emit(this.posting.reactions);
             });
         } else {
             const reactionToCreate = this.buildReaction(emojiId);
             this.metisService.createReaction(reactionToCreate).subscribe(() => {
+                this.updatePostingWithReactions();
                 this.showReactionSelector = false;
+                this.reactionsUpdated.emit(this.posting.reactions);
             });
         }
     }
