@@ -56,7 +56,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { LtiService } from 'app/shared/service/lti.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -202,7 +201,6 @@ describe('CourseOverviewComponent', () => {
                 MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(MetisConversationService),
                 MockProvider(CourseAccessStorageService),
-                MockProvider(LtiService),
                 { provide: Router, useValue: router },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
@@ -230,9 +228,6 @@ describe('CourseOverviewComponent', () => {
                 jhiWebsocketServiceReceiveStub = jest.spyOn(jhiWebsocketService, 'receive').mockReturnValue(of(quizExercise));
                 jhiWebsocketServiceSubscribeSpy = jest.spyOn(jhiWebsocketService, 'subscribe');
                 jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockResolvedValue(of(new TeamAssignmentPayload()));
-
-                const ltiService = TestBed.inject(LtiService);
-                jest.spyOn(ltiService, 'isLti$' as any).mockReturnValue(of(false));
 
                 // default for findOneForDashboardStub is to return the course
                 findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard').mockReturnValue(
@@ -647,6 +642,7 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
         window.dispatchEvent(new Event('resize'));
+
         expect(getUpdateVisibility).toHaveBeenCalled();
     });
 
@@ -655,7 +651,6 @@ describe('CourseOverviewComponent', () => {
         fixture.detectChanges();
         expect(component.itemsDrop.isOpen).toBeTrue();
     });
-
     it('should hide content of dropdown when dropdownOpen changes', () => {
         itemsDrop.close();
         fixture.detectChanges();
