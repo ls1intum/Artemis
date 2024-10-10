@@ -1,7 +1,8 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { BuildLogEntry, BuildLogType } from 'app/entities/programming/build-log.model';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Build Log Service', () => {
     let service: BuildLogService;
@@ -11,7 +12,8 @@ describe('Build Log Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         });
 
         service = TestBed.inject(BuildLogService);

@@ -7,7 +7,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AccountService } from 'app/core/auth/account.service';
 import { Subject, of } from 'rxjs';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute } from '@angular/router';
 import { mockServerSessionHttpResponseWithId, mockWebsocketServerMessage } from '../../../helpers/sample/iris-sample-data';
@@ -19,6 +19,7 @@ import { IrisWebsocketService } from 'app/iris/iris-websocket.service';
 import { IrisStatusService } from 'app/iris/iris-status.service';
 import { UserService } from 'app/core/user/user.service';
 import dayjs from 'dayjs/esm';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('ExerciseChatbotButtonComponent', () => {
     let component: IrisExerciseChatbotButtonComponent;
@@ -68,9 +69,11 @@ describe('ExerciseChatbotButtonComponent', () => {
         } as unknown as Overlay;
 
         await TestBed.configureTestingModule({
-            imports: [FormsModule, FontAwesomeModule, HttpClientTestingModule],
+            imports: [FormsModule, FontAwesomeModule],
             declarations: [IrisExerciseChatbotButtonComponent, MockComponent(IrisLogoComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 IrisChatService,
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
