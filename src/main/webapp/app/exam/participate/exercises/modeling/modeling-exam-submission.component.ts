@@ -158,6 +158,7 @@ export class ModelingExamSubmissionComponent extends ExamSubmissionComponent imp
     }
 
     notifyTriggerSave() {
+        this.studentSubmission.isSynced = true;
         this.saveCurrentExercise.emit();
     }
 }

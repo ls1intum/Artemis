@@ -20,9 +20,6 @@ export class ExerciseSaveButtonComponent {
     readonly facSaveSuccess = facSaveSuccess;
 
     onSave() {
-        if (this.submission) {
-            this.submission.submitted = true;
-        }
         this.save.emit();
     }
 }
