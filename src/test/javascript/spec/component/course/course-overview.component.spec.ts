@@ -56,7 +56,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { LtiService } from 'app/shared/service/lti.service';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -148,7 +147,6 @@ describe('CourseOverviewComponent', () => {
     let findOneForRegistrationStub: jest.SpyInstance;
     let findAllForDropdownSpy: jest.SpyInstance;
     let itemsDrop: NgbDropdown;
-    let ltiService: LtiService;
 
     let metisConversationService: MetisConversationService;
 
@@ -643,26 +641,19 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
         window.dispatchEvent(new Event('resize'));
-
-        if (!ltiService.isLti$) {
-            expect(getUpdateVisibility).toHaveBeenCalled();
-        }
+        expect(getUpdateVisibility).toHaveBeenCalled();
     });
 
     it('should display content of dropdown when dropdownOpen changes', () => {
         itemsDrop.open();
         fixture.detectChanges();
-        if (!ltiService.isLti$) {
-            expect(component.itemsDrop.isOpen).toBeTrue();
-        }
+        expect(component.itemsDrop.isOpen).toBeTrue();
     });
 
     it('should hide content of dropdown when dropdownOpen changes', () => {
         itemsDrop.close();
         fixture.detectChanges();
-        if (!ltiService.isLti$) {
-            expect(component.itemsDrop.isOpen).toBeFalse();
-        }
+        expect(component.itemsDrop.isOpen).toBeFalse();
     });
 
     it('should display more icon and label if at least one item gets hidden in the sidebar', () => {
@@ -680,9 +671,7 @@ describe('CourseOverviewComponent', () => {
         const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
         clickOnMoreItem.click();
 
-        if (!ltiService.isLti$) {
-            expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
-        }
+        expect(fixture.nativeElement.querySelector('.dropdown-content').hidden).toBeFalse();
     });
 
     it('should apply exam-wrapper and exam-is-active if exam is started', () => {

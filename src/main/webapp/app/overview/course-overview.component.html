@@ -199,14 +199,7 @@
         </div>
     </div>
 } @else {
-    <div
-        class="course-body-container"
-        [ngClass]="{
-            'module-bg p-3 rounded rounded-3 scrollable-content': !hasSidebar,
-            'content-height-dev': !isProduction || isTestServer,
-            'mx-3': !isExamStarted,
-        }"
-    >
+    <div class="course-body-container">
         @if (!hasSidebar) {
             <ng-container class="d-flex ms-auto" #controlsViewContainer />
         }
