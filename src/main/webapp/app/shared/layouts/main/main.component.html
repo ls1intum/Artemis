@@ -2,7 +2,7 @@
 <div
     id="page-wrapper"
     class="page-wrapper"
-    [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer }"
+    [ngClass]="{ 'footer-height-dev': !isProduction || isTestServer, 'no-padding': isLti }"
     [ngStyle]="{ 'overflow-y': !isTestRunExam && isExamStarted ? 'hidden' : 'auto' }"
     cdkScrollable
 >
