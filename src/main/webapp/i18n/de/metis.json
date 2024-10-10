@@ -90,7 +90,9 @@
                 "TECH_SUPPORT": "Technische Hilfe",
                 "ORGANIZATION": "Organisation",
                 "RANDOM": "Sonstiges",
-                "ANNOUNCEMENT": "Ankündigung"
+                "ANNOUNCEMENT": "Ankündigung",
+                "allPublicMessages": "Alle öffentlichen Nachrichten",
+                "searchResults": "Suchergebnisse für {{ search }}"
             },
             "post": {
                 "context": "Kontext",

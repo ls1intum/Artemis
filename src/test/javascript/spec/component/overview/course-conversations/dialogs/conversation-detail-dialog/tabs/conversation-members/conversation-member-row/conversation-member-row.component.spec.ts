@@ -22,6 +22,7 @@ import { of } from 'rxjs';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { By } from '@angular/platform-browser';
 import { NgbDropdownMocksModule } from '../../../../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { getElement } from '../../../../../../../../helpers/utils/general.utils';
 
 const memberTemplate = {
     id: 1,
@@ -166,6 +167,11 @@ examples.forEach((activeConversation) => {
                 checkGrantModeratorButton(true);
             }
         }));
+
+        it('should display default profile picture', () => {
+            fixture.detectChanges();
+            expect(getElement(fixture.debugElement, '.conversation-member-row-default-profile-picture')).not.toBeNull();
+        });
 
         function checkGrantModeratorButton(shouldExist: boolean) {
             const grantModeratorRoleButton = fixture.debugElement.query(By.css('.grant-moderator'));

@@ -90,7 +90,9 @@
                 "TECH_SUPPORT": "Tech Support",
                 "ORGANIZATION": "Organization",
                 "RANDOM": "Random",
-                "ANNOUNCEMENT": "Announcement"
+                "ANNOUNCEMENT": "Announcement",
+                "allPublicMessages": "All Public Messages",
+                "searchResults": "Search Results for '{{ search }}'"
             },
             "post": {
                 "context": "Context",
