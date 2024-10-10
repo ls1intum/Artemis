@@ -24,6 +24,12 @@ interface DiffInformation {
     imports: [GitDiffLineStatComponent, ArtemisSharedModule, ArtemisSharedComponentModule, GitDiffFilePanelComponent],
 })
 export class GitDiffReportComponent {
+    protected readonly faSpinner = faSpinner;
+    protected readonly faTableColumns = faTableColumns;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly ButtonType = ButtonType;
+    protected readonly TooltipPlacement = TooltipPlacement;
+
     readonly report = input.required<ProgrammingExerciseGitDiffReport>();
     readonly templateFileContentByPath = input.required<Map<string, string>>();
     readonly solutionFileContentByPath = input.required<Map<string, string>>();
@@ -111,12 +117,6 @@ export class GitDiffReportComponent {
     readonly nothingToDisplay = computed(() => this.diffInformationForPaths().length === 0);
     readonly allDiffsReady = computed(() => Object.values(this.diffInformationForPaths()).every((info) => info.diffReady));
     readonly allowSplitView = signal<boolean>(true);
-
-    protected readonly faSpinner = faSpinner;
-    protected readonly faTableColumns = faTableColumns;
-    protected readonly ButtonSize = ButtonSize;
-    protected readonly ButtonType = ButtonType;
-    protected readonly TooltipPlacement = TooltipPlacement;
 
     constructor() {
         effect(() => {
