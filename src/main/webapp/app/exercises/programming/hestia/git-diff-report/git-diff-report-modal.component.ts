@@ -16,6 +16,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     imports: [GitDiffReportComponent, TranslateDirective],
 })
 export class GitDiffReportModalComponent {
+    static readonly WINDOW_CLASS = 'diff-view-modal';
+
     private readonly activeModal = inject(NgbActiveModal);
     private readonly programmingExerciseService = inject(ProgrammingExerciseService);
     private readonly programmingExerciseParticipationService = inject(ProgrammingExerciseParticipationService);

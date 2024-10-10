@@ -38,7 +38,7 @@ export class ProgrammingDiffReportDetailComponent implements OnDestroy {
             return;
         }
 
-        this.modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: 'diff-view-modal' });
+        this.modalRef = this.modalService.open(GitDiffReportModalComponent, { windowClass: GitDiffReportModalComponent.WINDOW_CLASS });
         this.modalRef.componentInstance.report = signal(gitDiff);
     }
 }
