@@ -9,6 +9,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
+import { LtiService } from 'app/shared/service/lti.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -46,6 +47,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sidebarExercises: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    isLti: boolean = false;
 
     constructor(
         private courseStorageService: CourseStorageService,
@@ -54,6 +56,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         private programmingSubmissionService: ProgrammingSubmissionService,
         private router: Router,
         private courseOverviewService: CourseOverviewService,
+        private ltiService: LtiService,
     ) {}
 
     ngOnInit() {
@@ -73,6 +76,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         });
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
+
+        this.ltiService.isLti$.subscribe((isLti) => {
+            this.isLti = isLti;
+        });
 
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
         this.navigateToExercise();
