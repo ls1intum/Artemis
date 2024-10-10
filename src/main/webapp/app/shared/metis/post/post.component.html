@@ -1,5 +1,5 @@
-<div class="mb-3" [ngClass]="{ 'mx-0': !isThreadSidebar }">
-    <div>
+<div class="mb-1 message-container" [ngClass]="{ 'mx-0': !isThreadSidebar }">
+    @if (!isConsecutive) {
         <jhi-post-header
             [previewMode]="previewMode"
             [readOnlyMode]="readOnlyMode"
@@ -9,7 +9,7 @@
             (isModalOpen)="displayInlineInput = true"
             [lastReadDate]="lastReadDate"
         />
-    </div>
+    }
     <div class="align-items-center post-content-margin">
         <div class="col">
             <div class="mb-1">
@@ -50,16 +50,37 @@
                 }
             </div>
             @if (!displayInlineInput) {
-                <jhi-posting-content
-                    [previewMode]="previewMode"
-                    [content]="posting.content"
-                    [author]="posting.author"
-                    [isEdited]="!!posting.updatedDate"
-                    [posting]="posting"
-                    [isReply]="false"
-                    (userReferenceClicked)="onUserReferenceClicked($event)"
-                    (channelReferenceClicked)="onChannelReferenceClicked($event)"
-                />
+                <div [ngClass]="{ 'mx-0': !isThreadSidebar }">
+                    <div class="message-content">
+                        <jhi-posting-content
+                            [previewMode]="previewMode"
+                            [content]="posting.content"
+                            [author]="posting.author"
+                            [isEdited]="!!posting.updatedDate"
+                            [posting]="posting"
+                            [isReply]="false"
+                            (userReferenceClicked)="onUserReferenceClicked($event)"
+                            (channelReferenceClicked)="onChannelReferenceClicked($event)"
+                        ></jhi-posting-content>
+                        <div class="hover-actions post-content-margin me-0 mt-2 justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
+                            @if (!previewMode) {
+                                <jhi-post-reactions-bar
+                                    [lastReadDate]="lastReadDate"
+                                    [readOnlyMode]="readOnlyMode"
+                                    [previewMode]="previewMode"
+                                    [posting]="posting"
+                                    [(showAnswers)]="showAnswers"
+                                    [sortedAnswerPosts]="sortedAnswerPosts"
+                                    [isCommunicationPage]="isCommunicationPage"
+                                    [isThreadSidebar]="isThreadSidebar"
+                                    (openPostingCreateEditModal)="openCreateAnswerPostModal()"
+                                    (openThread)="openThread.emit()"
+                                    (isModalOpen)="displayInlineInput = true"
+                                />
+                            }
+                        </div>
+                    </div>
+                </div>
             }
         </div>
     </div>
@@ -74,6 +95,7 @@
             <jhi-post-reactions-bar
                 [lastReadDate]="lastReadDate"
                 [readOnlyMode]="readOnlyMode"
+                [previewMode]="previewMode"
                 [posting]="posting"
                 [(showAnswers)]="showAnswers"
                 [sortedAnswerPosts]="sortedAnswerPosts"
@@ -81,6 +103,8 @@
                 [isThreadSidebar]="isThreadSidebar"
                 (openPostingCreateEditModal)="openCreateAnswerPostModal()"
                 (openThread)="openThread.emit()"
+                (isModalOpen)="displayInlineInput = true"
+                [isEmojiCount]="true"
             />
         }
     </div>

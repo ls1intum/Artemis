@@ -4,7 +4,6 @@ import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-
 import { MetisService } from 'app/shared/metis/metis.service';
 import { faCheck, faCog, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -21,7 +20,6 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
 
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
-    mayEditOrDelete = false;
 
     // Icons
     faCheck = faCheck;
@@ -37,12 +35,10 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
 
     ngOnInit() {
         super.ngOnInit();
-        this.setMayEditOrDelete();
     }
 
     ngOnChanges() {
         this.setUserProperties();
-        this.setMayEditOrDelete();
         this.setUserAuthorityIconAndTooltip();
     }
 
@@ -62,16 +58,5 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
             this.posting.resolvesPost = !this.posting.resolvesPost;
             this.metisService.updateAnswerPost(this.posting).subscribe();
         }
-    }
-
-    setMayEditOrDelete(): void {
-        // determines if the current user is the author of the original post, that the answer belongs to
-        this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting.post!);
-        this.isAnswerOfAnnouncement = getAsChannelDTO(this.posting.post?.conversation)?.isAnnouncementChannel ?? false;
-        const isCourseWideChannel = getAsChannelDTO(this.posting.post?.conversation)?.isCourseWide ?? false;
-        const isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const mayEditOrDeleteOtherUsersAnswer =
-            (isCourseWideChannel && isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayEditOrDelete = !this.isReadOnlyMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 }

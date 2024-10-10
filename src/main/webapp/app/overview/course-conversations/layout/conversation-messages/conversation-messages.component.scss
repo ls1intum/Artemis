@@ -60,3 +60,25 @@
         padding-bottom: 100px;
     }
 }
+
+.message-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 10px;
+}
+
+.grouped-posts {
+    margin-left: 30px;
+    padding-left: 10px;
+}
+
+.grouped-posts,
+.grouped-post {
+    margin-top: 0;
+    margin-bottom: 0;
+    padding: 0;
+}
+
+jhi-posting-thread {
+    margin-bottom: 5px;
+}

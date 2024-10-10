@@ -1,36 +1,51 @@
 <div [id]="'item-' + posting.id" class="row" [ngClass]="isCommunicationPage ? 'module-bg mt-2 rounded-2' : 'answer-post m-1'">
-    <jhi-answer-post-header
-        [posting]="posting"
-        [isReadOnlyMode]="isReadOnlyMode"
-        (openPostingCreateEditModal)="createAnswerPostModal.open()"
-        [isCommunicationPage]="isCommunicationPage"
-        [lastReadDate]="lastReadDate"
-        [hasChannelModerationRights]="hasChannelModerationRights"
-    />
+    @if (!isConsecutive) {
+        <jhi-answer-post-header
+            [posting]="posting"
+            [isReadOnlyMode]="isReadOnlyMode"
+            [isCommunicationPage]="isCommunicationPage"
+            [lastReadDate]="lastReadDate"
+            [hasChannelModerationRights]="hasChannelModerationRights"
+        />
+    }
     @if (!createAnswerPostModal.isInputOpen) {
-        <div class="answer-post-content-margin">
-            <jhi-posting-content
-                [content]="posting.content"
-                [isEdited]="!!posting.updatedDate"
-                [author]="posting.author"
-                [posting]="posting"
-                [isReply]="true"
-                (userReferenceClicked)="userReferenceClicked.emit($event)"
-                (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-            />
+        <div class="answer-post-content-margin message-container">
+            <div class="message-content">
+                <jhi-posting-content
+                    [content]="posting.content"
+                    [isEdited]="!!posting.updatedDate"
+                    [author]="posting.author"
+                    [posting]="posting"
+                    [isReply]="true"
+                    (userReferenceClicked)="userReferenceClicked.emit($event)"
+                    (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+                />
+                <div class="answer-post-content-margin hover-actions">
+                    <jhi-answer-post-reactions-bar
+                        [isReadOnlyMode]="isReadOnlyMode"
+                        [posting]="posting"
+                        [isLastAnswer]="isLastAnswer"
+                        [isThreadSidebar]="isThreadSidebar"
+                        (openPostingCreateEditModal)="createAnswerPostModal.open()"
+                        (reactionsUpdated)="onReactionsUpdated($event)"
+                    />
+                </div>
+            </div>
         </div>
     }
     <div class="answer-post-content-margin">
         <ng-container #createEditAnswerPostContainer />
     </div>
     <div class="answer-post-content-margin">
-        <jhi-answer-post-footer
+        <jhi-answer-post-reactions-bar
             [isReadOnlyMode]="isReadOnlyMode"
             [posting]="posting"
             [isLastAnswer]="isLastAnswer"
             [isThreadSidebar]="isThreadSidebar"
-            (openPostingCreateEditModal)="openPostingCreateEditModal.emit()"
+            (openPostingCreateEditModal)="createAnswerPostModal.open()"
+            (reactionsUpdated)="onReactionsUpdated($event)"
+            [isEmojiCount]="true"
         />
     </div>
 </div>
-<jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting" [createEditAnswerPostContainerRef]="containerRef" />
+<jhi-answer-post-create-edit-modal #createAnswerPostModal [posting]="posting" (postingUpdated)="onPostingUpdated($event)" [createEditAnswerPostContainerRef]="containerRef" />

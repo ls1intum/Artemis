@@ -1,25 +1,26 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { Post } from 'app/entities/metis/post.model';
-import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.component';
+import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { faSmile } from '@fortawesome/free-regular-svg-icons';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faTrashAlt } from '@fortawesome/free-regular-svg-icons';
+import { faArrowRight, faPencilAlt, faSmile, faThumbTack } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import dayjs from 'dayjs/esm';
-import { isChannelDTO } from 'app/entities/metis/conversation/channel.model';
+import { getAsChannelDTO, isChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
     templateUrl: './post-reactions-bar.component.html',
     styleUrls: ['../posting-reactions-bar.component.scss'],
 })
-export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges {
+export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Post> implements OnInit, OnChanges, OnDestroy {
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
@@ -28,6 +29,9 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     // Icons
     farSmile = faSmile;
     faArrowRight = faArrowRight;
+    faPencilAlt = faPencilAlt;
+    faTrash = faTrashAlt;
+    faThumbTack = faThumbTack;
 
     @Input()
     readOnlyMode = false;
@@ -39,12 +43,21 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     @Output() openThread = new EventEmitter<void>();
+    @Input() previewMode: boolean;
+    isAtLeastInstructorInCourse: boolean;
+    mayEditOrDelete = false;
+    @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
+    @Input() isEmojiCount: boolean = false;
 
     constructor(
         metisService: MetisService,
         private accountService: AccountService,
     ) {
         super(metisService);
+    }
+
+    isAnyReactionCountAboveZero(): boolean {
+        return Object.values(this.reactionMetaDataMap).some((reaction) => reaction.count >= 1);
     }
 
     /**
@@ -56,6 +69,11 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
         const currentConversation = this.metisService.getCurrentConversation();
         this.setCanPin(currentConversation);
         this.resetTooltipsAndPriority();
+        this.setMayEditOrDelete();
+    }
+
+    ngOnDestroy() {
+        this.postCreateEditModal?.modalRef?.close();
     }
 
     /**
@@ -84,6 +102,7 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     ngOnChanges() {
         super.ngOnChanges();
         this.resetTooltipsAndPriority();
+        this.setMayEditOrDelete();
     }
 
     /**
@@ -141,5 +160,17 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
     private resetTooltipsAndPriority() {
         this.displayPriority = this.posting.displayPriority!;
         this.pinTooltip = this.getPinTooltip();
+    }
+
+    deletePosting(): void {
+        this.metisService.deletePost(this.posting);
+    }
+
+    setMayEditOrDelete(): void {
+        this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
+        const isCourseWideChannel = getAsChannelDTO(this.posting.conversation)?.isCourseWide ?? false;
+        const mayEditOrDeleteOtherUsersAnswer =
+            (isCourseWideChannel && this.isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
+        this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 }

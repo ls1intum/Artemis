@@ -55,24 +55,6 @@
     </div>
 
     <div class="d-flex gap-2">
-        @if (mayEditOrDelete) {
-            <fa-icon
-                size="xs"
-                class="editIcon clickable icon"
-                [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
-                [icon]="faPencilAlt"
-                (click)="openPostingCreateEditModal.emit()"
-            />
-        }
-        @if (mayEditOrDelete) {
-            <jhi-confirm-icon
-                iconSize="xs"
-                (confirmEvent)="deletePosting()"
-                [ngClass]="'deleteIcon clickable icon'"
-                [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
-                [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
-            />
-        }
         @if (!isAnswerOfAnnouncement) {
             <div id="toggleElement" class="resolve" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
                 @if (posting.resolvesPost) {

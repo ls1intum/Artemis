@@ -12,19 +12,22 @@
         </div>
     </div>
     <ng-container class="list-answer-post">
-        @for (answerPost of sortedAnswerPosts; track $index; let isLastAnswer = $last) {
-            <jhi-answer-post
-                [lastReadDate]="lastReadDate"
-                [isReadOnlyMode]="readOnlyMode"
-                [posting]="answerPost"
-                [isLastAnswer]="isLastAnswer"
-                [isCommunicationPage]="isCommunicationPage"
-                [isThreadSidebar]="isThreadSidebar"
-                (openPostingCreateEditModal)="createAnswerPostModal.open()"
-                (userReferenceClicked)="userReferenceClicked.emit($event)"
-                (channelReferenceClicked)="channelReferenceClicked.emit($event)"
-                [hasChannelModerationRights]="hasChannelModerationRights"
-            />
+        @for (group of groupedAnswerPosts; track trackGroupByFn($index, group)) {
+            @for (answerPost of group.posts; track trackPostByFn($index, answerPost)) {
+                <jhi-answer-post
+                    [lastReadDate]="lastReadDate"
+                    [isReadOnlyMode]="readOnlyMode"
+                    [posting]="answerPost"
+                    [isConsecutive]="answerPost.isConsecutive || false"
+                    [isLastAnswer]="isLastPost(group, answerPost)"
+                    [isCommunicationPage]="isCommunicationPage"
+                    [isThreadSidebar]="isThreadSidebar"
+                    (openPostingCreateEditModal)="createAnswerPostModal.open()"
+                    (userReferenceClicked)="userReferenceClicked.emit($event)"
+                    (channelReferenceClicked)="channelReferenceClicked.emit($event)"
+                    [hasChannelModerationRights]="hasChannelModerationRights"
+                />
+            }
         }
     </ng-container>
 }

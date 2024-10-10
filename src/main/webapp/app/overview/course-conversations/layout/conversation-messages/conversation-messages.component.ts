@@ -27,6 +27,22 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { OneToOneChat, isOneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
+import dayjs from 'dayjs/esm';
+import { User } from 'app/core/user/user.model';
+
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({ standalone: true, name: 'dayjsToDate' })
+export class DayjsToDatePipe implements PipeTransform {
+    transform(value: dayjs.Dayjs | undefined): Date | undefined {
+        return value ? value.toDate() : undefined;
+    }
+}
+
+interface PostGroup {
+    author: User | undefined;
+    posts: Post[];
+}
 
 @Component({
     selector: 'jhi-conversation-messages',
@@ -69,6 +85,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     newPost?: Post;
     posts: Post[] = [];
+    groupedPosts: PostGroup[] = [];
     totalNumberOfPosts = 0;
     page = 1;
     public isFetchingPosts = true;
@@ -159,11 +176,70 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         };
     }
 
-    setPosts(posts: Post[]): void {
+    toDate(dayjsDate: dayjs.Dayjs | undefined): Date | undefined {
+        return dayjsDate ? dayjsDate.toDate() : undefined;
+    }
+
+    private groupPosts(): void {
+        if (!this.posts || this.posts.length === 0) {
+            this.groupedPosts = [];
+            return;
+        }
+
+        const sortedPosts = this.posts.sort((a, b) => {
+            const aDate = (a as any).creationDateAsDate;
+            const bDate = (b as any).creationDateAsDate;
+            return (aDate?.getTime() || 0) - (bDate?.getTime() || 0);
+        });
+
+        const groups: PostGroup[] = [];
+        let currentGroup: PostGroup = {
+            author: sortedPosts[0].author,
+            posts: [{ ...sortedPosts[0], isConsecutive: false }],
+        };
+
+        for (let i = 1; i < sortedPosts.length; i++) {
+            const currentPost = sortedPosts[i];
+            const lastPostInGroup = currentGroup.posts[currentGroup.posts.length - 1];
+
+            const currentDate = (currentPost as any).creationDateAsDate;
+            const lastDate = (lastPostInGroup as any).creationDateAsDate;
+
+            let timeDiff = Number.MAX_SAFE_INTEGER;
+            if (currentDate && lastDate) {
+                timeDiff = Math.abs(currentDate.getTime() - lastDate.getTime()) / 60000;
+            }
+
+            if (currentPost.author?.id === currentGroup.author?.id && timeDiff <= 60) {
+                currentGroup.posts.push({ ...currentPost, isConsecutive: true }); // consecutive post
+            } else {
+                groups.push(currentGroup);
+                currentGroup = {
+                    author: currentPost.author,
+                    posts: [{ ...currentPost, isConsecutive: false }],
+                };
+            }
+        }
+
+        groups.push(currentGroup);
+        this.groupedPosts = groups;
+        this.cdr.detectChanges();
+    }
+
+    private setPosts(posts: Post[]): void {
         if (this.content) {
             this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         }
-        this.posts = posts.slice().reverse();
+
+        this.posts = posts
+            .slice()
+            .reverse()
+            .map((post) => {
+                (post as any).creationDateAsDate = post.creationDate ? dayjs(post.creationDate).toDate() : undefined;
+                return post;
+            });
+
+        this.groupPosts();
     }
 
     fetchNextPage() {

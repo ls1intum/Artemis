@@ -1,50 +1,68 @@
 <div class="d-flex gap-2 fs-xx-small">
     @for (reactionMetaData of reactionMetaDataMap | keyvalue; track reactionMetaData) {
-        <div>
-            <button
-                [disabled]="isReadOnlyMode"
-                class="reaction-button clickable"
-                [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
-                (click)="updateReaction(reactionMetaData.key)"
-                [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
-            >
-                <jhi-emoji [emoji]="reactionMetaData.key" />
-                <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">{{ reactionMetaData.value.count }}</span>
-            </button>
-        </div>
+        @if (isEmojiCount) {
+            <div>
+                <button
+                    [disabled]="isReadOnlyMode"
+                    class="reaction-button clickable"
+                    [class.reaction-button--reacted]="reactionMetaData.value.hasReacted"
+                    (click)="updateReaction(reactionMetaData.key)"
+                    [ngbTooltip]="reactionMetaData.value.reactingUsers | reactingUsersOnPosting | async"
+                >
+                    <div class="emoji-container">
+                        <jhi-emoji [emoji]="reactionMetaData.key" />
+                        <span class="emoji-count" [class.reaction-count--reacted]="reactionMetaData.value.hasReacted">{{ reactionMetaData.value.count }}</span>
+                    </div>
+                </button>
+            </div>
+        }
     }
     <div [hidden]="isReadOnlyMode">
-        <button class="reaction-button clickable px-2 fs-small">
-            <fa-icon
-                [icon]="farSmile"
-                [class.open-selector]="showReactionSelector"
-                class="reaction-button react text-secondary clickable"
-                (click)="showReactionSelector = !showReactionSelector"
-                cdkOverlayOrigin
-                #trigger="cdkOverlayOrigin"
-                [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
-            />
-        </button>
-    </div>
-    @if (!isReadOnlyMode) {
-        <ng-template
-            cdkConnectedOverlay
-            [cdkConnectedOverlayHasBackdrop]="true"
-            [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
-            [cdkConnectedOverlayOrigin]="trigger"
-            [cdkConnectedOverlayOpen]="showReactionSelector"
-            (backdropClick)="toggleEmojiSelect()"
-        >
-            @if (!isReadOnlyMode) {
-                <jhi-emoji-picker
-                    [emojisToShowFilter]="emojisToShowFilter"
-                    (emojiSelect)="selectReaction($event)"
-                    [categoriesIcons]="categoriesIcons"
-                    [recent]="selectedCourseEmojis"
+        @if ((isAnyReactionCountAboveZero() && isEmojiCount) || !isEmojiCount) {
+            <ng-container>
+                <button
+                    class="reaction-button clickable px-2 fs-small"
+                    (click)="showReactionSelector = !showReactionSelector"
+                    cdkOverlayOrigin
+                    #trigger="cdkOverlayOrigin"
+                    [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"
+                >
+                    <fa-icon [icon]="farSmile" [class.open-selector]="showReactionSelector" [title]="'artemisApp.metis.chooseReaction' | artemisTranslate"></fa-icon>
+                </button>
+                @if (!isReadOnlyMode) {
+                    <ng-template
+                        cdkConnectedOverlay
+                        [cdkConnectedOverlayHasBackdrop]="true"
+                        [cdkConnectedOverlayBackdropClass]="'cdk-overlay-transparent-backdrop'"
+                        [cdkConnectedOverlayOrigin]="trigger"
+                        [cdkConnectedOverlayOpen]="showReactionSelector"
+                        (backdropClick)="toggleEmojiSelect()"
+                    >
+                        <jhi-emoji-picker
+                            [emojisToShowFilter]="emojisToShowFilter"
+                            (emojiSelect)="selectReaction($event)"
+                            [categoriesIcons]="categoriesIcons"
+                            [recent]="selectedCourseEmojis"
+                        />
+                    </ng-template>
+                }
+            </ng-container>
+        }
+        @if (!isEmojiCount && mayEditOrDelete) {
+            <button class="reaction-button clickable px-2 fs-small" (click)="onEditPosting()" [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate">
+                <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin></fa-icon>
+            </button>
+
+            <button class="reaction-button clickable px-2 fs-small">
+                <jhi-confirm-icon
+                    iconSize="sm"
+                    (confirmEvent)="deletePosting()"
+                    [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
+                    [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
                 />
-            }
-        </ng-template>
-    }
+            </button>
+        }
+    </div>
     <!-- add new answer to expanded discussion -->
     @if (isLastAnswer && !isThreadSidebar) {
         <div>

@@ -1,10 +1,11 @@
-import { Component, Input, ViewContainerRef, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewContainerRef, ViewEncapsulation } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
+import { Posting } from 'app/entities/metis/posting.model';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
@@ -15,6 +16,7 @@ import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     @Input() createEditAnswerPostContainerRef: ViewContainerRef;
     isInputOpen = false;
+    @Output() postingUpdated = new EventEmitter<Posting>();
 
     constructor(
         protected metisService: MetisService,
@@ -78,7 +80,8 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     updatePosting(): void {
         this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.updateAnswerPost(this.posting).subscribe({
-            next: () => {
+            next: (updatedPost: AnswerPost) => {
+                this.postingUpdated.emit(updatedPost);
                 this.isLoading = false;
                 this.isInputOpen = false;
                 this.createEditAnswerPostContainerRef?.clear();

@@ -6,3 +6,52 @@
 .answer-post-content-margin {
     padding-left: 3.2rem;
 }
+
+.message-container {
+    position: relative;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.message-content {
+    padding-left: 0.3rem;
+}
+
+.message-container:hover {
+    background: var(--metis-selection-option-hover-background);
+}
+
+.hover-actions {
+    position: absolute;
+    top: 0;
+    right: 1%;
+    display: flex;
+    gap: 10px;
+    visibility: hidden;
+    transition:
+        opacity 0.2s ease-in-out,
+        visibility 0.2s ease-in-out;
+    background: var(--metis-selection-option-background);
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.message-container:hover .hover-actions {
+    opacity: 1;
+    visibility: visible;
+}
+
+.clickable {
+    cursor: pointer;
+}
+
+.reactionIcon,
+.editIcon,
+.deleteIcon {
+    font-size: 1rem;
+    color: var(--metis-blue);
+}
+
+.hover-actions .clickable:hover {
+    color: var(--bs-white);
+}

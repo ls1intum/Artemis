@@ -5,7 +5,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { faCheckSquare, faCog, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
-import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -37,7 +36,6 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
 
     ngOnInit() {
         super.ngOnInit();
-        this.setMayEditOrDelete();
     }
 
     /**
@@ -45,7 +43,6 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
      */
     ngOnChanges() {
         this.setUserProperties();
-        this.setMayEditOrDelete();
         this.setUserAuthorityIconAndTooltip();
     }
 
@@ -61,14 +58,6 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
      */
     deletePosting(): void {
         this.metisService.deletePost(this.posting);
-    }
-
-    setMayEditOrDelete(): void {
-        this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
-        const isCourseWideChannel = getAsChannelDTO(this.posting.conversation)?.isCourseWide ?? false;
-        const mayEditOrDeleteOtherUsersAnswer =
-            (isCourseWideChannel && this.isAtLeastInstructorInCourse) || (getAsChannelDTO(this.metisService.getCurrentConversation())?.hasChannelModerationRights ?? false);
-        this.mayEditOrDelete = !this.readOnlyMode && !this.previewMode && (this.isAuthorOfPosting || mayEditOrDeleteOtherUsersAnswer);
     }
 
     protected readonly CachingStrategy = CachingStrategy;

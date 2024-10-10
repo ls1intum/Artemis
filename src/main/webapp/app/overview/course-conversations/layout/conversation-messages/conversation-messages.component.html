@@ -74,19 +74,24 @@
                 >
                     <!-- list of all top level posts -->
                     <!-- answers are opened in the thread sidebar -->
-                    @for (post of posts; track postsTrackByFn($index, post)) {
-                        <div>
-                            <jhi-posting-thread
-                                #postingThread
-                                [lastReadDate]="_activeConversation?.lastReadDate"
-                                [hasChannelModerationRights]="!!getAsChannel(_activeConversation)?.hasChannelModerationRights"
-                                [id]="'item-' + post.id"
-                                [post]="post"
-                                [showAnswers]="false"
-                                [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
-                                [isCommunicationPage]="true"
-                                (openThread)="setPostForThread($event)"
-                            />
+                    @for (group of groupedPosts; track postsTrackByFn($index, group)) {
+                        <div class="message-group">
+                            @for (post of group.posts; track postsTrackByFn($index, post)) {
+                                <div class="post-item">
+                                    <jhi-posting-thread
+                                        #postingThread
+                                        [lastReadDate]="_activeConversation?.lastReadDate"
+                                        [hasChannelModerationRights]="!!getAsChannel(_activeConversation)?.hasChannelModerationRights"
+                                        [id]="'item-' + post.id"
+                                        [post]="post"
+                                        [showAnswers]="false"
+                                        [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"
+                                        [isCommunicationPage]="true"
+                                        (openThread)="setPostForThread($event)"
+                                        [isConsecutive]="post.isConsecutive || false"
+                                    ></jhi-posting-thread>
+                                </div>
+                            }
                         </div>
                     }
                 </div>
