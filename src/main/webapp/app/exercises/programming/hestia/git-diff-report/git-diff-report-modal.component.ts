@@ -33,14 +33,17 @@ export class GitDiffReportModalComponent {
 
     constructor() {
         effect(
-            async () => {
+            () => {
                 // We call the signal here to ensure the effect always runs when the report changes.
                 this.report();
-                if (this.diffForTemplateAndSolution()) {
-                    untracked(async () => await this.loadFilesForTemplateAndSolution());
-                } else {
-                    untracked(async () => await this.loadRepositoryFilesForParticipationsFromCacheIfAvailable());
-                }
+                const diffBetweenTemplateAndSolution = this.diffForTemplateAndSolution();
+                untracked(async () => {
+                    if (diffBetweenTemplateAndSolution) {
+                        await this.loadFilesForTemplateAndSolution();
+                    } else {
+                        await this.loadRepositoryFilesForParticipationsFromCacheIfAvailable();
+                    }
+                });
             },
             { allowSignalWrites: true },
         );
