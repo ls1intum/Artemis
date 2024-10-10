@@ -126,7 +126,6 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PutMapping("exercises/{exerciseId}/modeling-submissions")
     @EnforceAtLeastStudent
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @Valid @RequestBody ModelingSubmission modelingSubmission) {
-        log.debug("REST request to update modeling submission: {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(exerciseId, modelingSubmission);
         }
