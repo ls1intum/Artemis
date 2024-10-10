@@ -238,7 +238,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
-        this.loadCourseSubscription = this.ltiService.isLti$.subscribe((isLti) => {
+        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
             this.isLti = isLti;
         });
     }
