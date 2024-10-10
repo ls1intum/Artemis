@@ -162,12 +162,15 @@ export class CourseCompetencyRelationFormComponent {
         return this.courseCompetencies()
             .filter(({ id }) => id !== headCompetencyId) // Exclude the head itself
             .filter(({ id }) => {
-                // check if direct relation already exists
-                if (this.relationAlreadyExists()) {
-                    return true;
-                }
                 // check if indirect relation already exists
                 return !this.currentAdjacencyMap().get(headCompetencyId)?.includes(id!);
+            })
+            .filter(({ id }) => {
+                return !this.relations().some(
+                    (relation) =>
+                        (relation.headCompetencyId == headCompetencyId && relation.tailCompetencyId == id) ||
+                        (relation.headCompetencyId == id && relation.tailCompetencyId == headCompetencyId),
+                );
             })
             .filter(({ id }) => {
                 const potentialRelation: CompetencyRelationDTO = {
@@ -220,6 +223,7 @@ export class CourseCompetencyRelationFormComponent {
                 // push all neighbours of the next recursion steps to the existing neighbours of the current relation
                 existingNeighbours.push(...this.getMatchesRelationNeighbours(adjacencyMap, tailRelation, matchRelationIds));
             });
+            adjacencyMap.set(relation.tailCompetencyId!, existingNeighbours);
         }
         const headRelations = this.relations().filter(
             ({ tailCompetencyId, relationType }) => tailCompetencyId == relation.headCompetencyId && relationType != CompetencyRelationType.MATCHES,
