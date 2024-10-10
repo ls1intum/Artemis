@@ -226,7 +226,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.cdr.detectChanges();
     }
 
-    private setPosts(posts: Post[]): void {
+    setPosts(posts: Post[]): void {
         if (this.content) {
             this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         }

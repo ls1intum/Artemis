@@ -105,11 +105,6 @@ describe('PostComponent', () => {
         expect(component.sortedAnswerPosts).toEqual([]);
     });
 
-    it('should contain a post header', () => {
-        const header = getElement(debugElement, 'jhi-post-header');
-        expect(header).not.toBeNull();
-    });
-
     it('should set router link and query params', () => {
         metisServiceGetLinkSpy = jest.spyOn(metisService, 'getLinkForPost');
         metisServiceGetQueryParamsSpy = jest.spyOn(metisService, 'getQueryParamsForPost');

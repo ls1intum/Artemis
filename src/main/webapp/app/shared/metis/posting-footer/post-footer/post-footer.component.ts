@@ -59,12 +59,12 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         protected changeDetector: ChangeDetectorRef,
     ) {
         super();
-        this.createdAnswerPost = this.createEmptyAnswerPost();
     }
 
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+        this.createdAnswerPost = this.createEmptyAnswerPost();
         this.groupAnswerPosts();
     }
 
@@ -99,7 +99,7 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         return answerPost;
     }
 
-    private groupAnswerPosts(): void {
+    groupAnswerPosts(): void {
         if (!this.sortedAnswerPosts || this.sortedAnswerPosts.length === 0) {
             this.groupedAnswerPosts = [];
             return;
