@@ -1,6 +1,5 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { RouterTestingModule } from '@angular/router/testing';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { User } from 'app/core/user/user.model';
@@ -23,6 +22,7 @@ import { ExerciseResult, StudentExamWithGradeDTO } from 'app/exam/exam-scores/ex
 import { GradingKeyTableComponent } from 'app/grading-system/grading-key-overview/grading-key/grading-key-table.component';
 import { CollapsibleCardComponent } from 'app/exam/participate/summary/collapsible-card.component';
 import { provideHttpClient } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
 
 let fixture: ComponentFixture<ExamResultOverviewComponent>;
 let component: ExamResultOverviewComponent;
@@ -129,7 +129,7 @@ const textExerciseResult = {
 describe('ExamResultOverviewComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule)],
+            imports: [MockModule(NgbModule)],
             declarations: [
                 ExamResultOverviewComponent,
                 MockComponent(FaIconComponent),
@@ -137,7 +137,7 @@ describe('ExamResultOverviewComponent', () => {
                 MockComponent(GradingKeyTableComponent),
                 MockComponent(CollapsibleCardComponent),
             ],
-            providers: [provideHttpClient(), provideHttpClientTesting(), MockProvider(ExerciseService)],
+            providers: [provideRouter([]), provideHttpClient(), provideHttpClientTesting(), MockProvider(ExerciseService)],
         })
             .compileComponents()
             .then(() => {
