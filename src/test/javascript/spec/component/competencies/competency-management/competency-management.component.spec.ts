@@ -24,7 +24,6 @@ import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.serv
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { IrisCourseSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { PROFILE_IRIS } from 'app/app.constants';
-import { CompetencyRelationGraphStubComponent } from './competency-relation-graph-stub.component';
 import { Prerequisite } from 'app/entities/prerequisite.model';
 import { CompetencyManagementTableComponent } from 'app/course/competencies/competency-management/competency-management-table.component';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
@@ -49,7 +48,6 @@ describe('CompetencyManagementComponent', () => {
             declarations: [
                 CompetencyManagementComponent,
                 MockHasAnyAuthorityDirective,
-                CompetencyRelationGraphStubComponent,
                 MockComponent(DocumentationButtonComponent),
                 MockComponent(ImportAllCompetenciesComponent),
                 MockComponent(CompetencyManagementTableComponent),
