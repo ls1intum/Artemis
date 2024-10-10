@@ -116,7 +116,8 @@
                 "iris": "Iris Settings",
                 "jhipster-needle-menu-add-admin-element": "JHipster will add additional menu entries here (do not translate!)",
                 "lti": "LTI Configuration",
-                "standardizedCompetencies": "Standardized Competencies"
+                "standardizedCompetencies": "Standardized Competencies",
+                "cleanupService": "Cleanup Service"
             },
             "language": "Language",
             "settings": "Settings",
