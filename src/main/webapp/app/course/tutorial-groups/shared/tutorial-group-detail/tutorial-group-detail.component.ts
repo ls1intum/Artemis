@@ -35,17 +35,18 @@ export class TutorialGroupDetailComponent implements OnChanges {
     sessions: TutorialGroupSession[] = [];
 
     tutorInitials: string;
+    tutorialTimeslotString: string | undefined;
     tutorDefaultProfilePictureHue: string;
     isMessagingEnabled: boolean;
     utilization: number | undefined;
 
     // Icons
-    faUserCheck = faUserCheck;
-    faPercent = faPercent;
-    faCircleInfo = faCircleInfo;
-    faQuestionCircle = faQuestionCircle;
-    faCircle = faCircle;
-    faCircleXmark = faCircleXmark;
+    readonly faUserCheck = faUserCheck;
+    readonly faPercent = faPercent;
+    readonly faCircleInfo = faCircleInfo;
+    readonly faQuestionCircle = faQuestionCircle;
+    readonly faCircle = faCircle;
+    readonly faCircleXmark = faCircleXmark;
 
     constructor(
         private artemisMarkdownService: ArtemisMarkdownService,
@@ -98,6 +99,7 @@ export class TutorialGroupDetailComponent implements OnChanges {
         } else {
             this.utilization = undefined;
         }
+        this.tutorialTimeslotString = this.getTutorialTimeSlotString();
     }
 
     recalculateAttendanceDetails() {
