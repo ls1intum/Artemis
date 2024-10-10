@@ -35,6 +35,7 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
 export class CourseExercisesComponent implements OnInit, OnDestroy {
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
+    private ltiSubscription: Subscription;
 
     course?: Course;
     courseId: number;
@@ -77,7 +78,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
 
-        this.ltiService.isLti$.subscribe((isLti) => {
+        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
             this.isLti = isLti;
         });
 
@@ -150,5 +151,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
+        this.ltiSubscription?.unsubscribe();
     }
 }

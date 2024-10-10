@@ -126,6 +126,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
     isLti: boolean = false;
+    private ltiSubscription: Subscription;
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
@@ -237,7 +238,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
-        this.ltiService.isLti$.subscribe((isLti) => {
+        this.loadCourseSubscription = this.ltiService.isLti$.subscribe((isLti) => {
             this.isLti = isLti;
         });
     }
@@ -748,6 +749,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.dashboardSubscription?.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.ltiSubscription?.unsubscribe();
     }
 
     subscribeForQuizChanges() {
