@@ -45,7 +45,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
                 paramsSpy = jest.spyOn(route.parent!.params, 'subscribe');
 
                 const irisSettings = mockSettings();
-                getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedProgrammingExerciseSettings').mockReturnValue(of(irisSettings));
+                getSettingsSpy = jest.spyOn(irisSettingsService, 'getUncombinedExerciseSettings').mockReturnValue(of(irisSettings));
                 getParentSettingsSpy = jest.spyOn(irisSettingsService, 'getCombinedCourseSettings').mockReturnValue(of(irisSettings));
             });
         fixture = TestBed.createComponent(IrisExerciseSettingsUpdateComponent);
@@ -65,7 +65,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
         expect(getSettingsSpy).toHaveBeenCalledWith(2);
         expect(getParentSettingsSpy).toHaveBeenCalledWith(1);
 
-        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(1);
+        expect(fixture.debugElement.queryAll(By.directive(IrisCommonSubSettingsUpdateComponent))).toHaveLength(2);
     });
 
     it('Can deactivate correctly', () => {
@@ -82,7 +82,7 @@ describe('IrisExerciseSettingsUpdateComponent Component', () => {
         const irisSettings = mockSettings();
         irisSettings.id = undefined;
         const irisSettingsSaved = mockSettings();
-        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setProgrammingExerciseSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
+        const setSettingsSpy = jest.spyOn(irisSettingsService, 'setExerciseSettings').mockReturnValue(of(new HttpResponse<IrisSettings>({ body: irisSettingsSaved })));
         comp.settingsUpdateComponent!.irisSettings = irisSettings;
         comp.settingsUpdateComponent!.saveIrisSettings();
         expect(setSettingsSpy).toHaveBeenCalledWith(2, irisSettings);

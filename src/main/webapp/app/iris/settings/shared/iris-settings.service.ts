@@ -45,22 +45,22 @@ export class IrisSettingsService {
     }
 
     /**
-     * Get the uncombined Iris settings for a programming exercise
-     * @param exerciseId the id of the programming exercise
+     * Get the uncombined Iris settings for an exercise
+     * @param exerciseId the id of the exercise
      */
-    getUncombinedProgrammingExerciseSettings(exerciseId: number): Observable<IrisExerciseSettings | undefined> {
+    getUncombinedExerciseSettings(exerciseId: number): Observable<IrisExerciseSettings | undefined> {
         return this.http
-            .get<IrisExerciseSettings>(`${this.resourceUrl}/programming-exercises/${exerciseId}/raw-iris-settings`, { observe: 'response' })
+            .get<IrisExerciseSettings>(`${this.resourceUrl}/exercises/${exerciseId}/raw-iris-settings`, { observe: 'response' })
             .pipe(map((res: HttpResponse<IrisExerciseSettings>) => res.body ?? undefined));
     }
 
     /**
-     * Get the combined Iris settings for a programming exercise
-     * @param exerciseId the id of the programming exercise
+     * Get the combined Iris settings for an exercise
+     * @param exerciseId the id of the exercise
      */
-    getCombinedProgrammingExerciseSettings(exerciseId: number): Observable<IrisExerciseSettings | undefined> {
+    getCombinedExerciseSettings(exerciseId: number): Observable<IrisExerciseSettings | undefined> {
         return this.http
-            .get<IrisExerciseSettings>(`${this.resourceUrl}/programming-exercises/${exerciseId}/iris-settings`, { observe: 'response' })
+            .get<IrisExerciseSettings>(`${this.resourceUrl}/exercises/${exerciseId}/iris-settings`, { observe: 'response' })
             .pipe(map((res: HttpResponse<IrisExerciseSettings>) => res.body ?? undefined));
     }
 
@@ -82,12 +82,12 @@ export class IrisSettingsService {
     }
 
     /**
-     * Update the Iris settings for a programming exercise
-     * @param exerciseId the id of the programming exercise
+     * Update the Iris settings for an exercise
+     * @param exerciseId the id of the exercise
      * @param settings the settings to set
      */
-    setProgrammingExerciseSettings(exerciseId: number, settings: IrisExerciseSettings): Observable<HttpResponse<IrisExerciseSettings>> {
-        return this.http.put<IrisExerciseSettings>(`${this.resourceUrl}/programming-exercises/${exerciseId}/raw-iris-settings`, settings, { observe: 'response' });
+    setExerciseSettings(exerciseId: number, settings: IrisExerciseSettings): Observable<HttpResponse<IrisExerciseSettings>> {
+        return this.http.put<IrisExerciseSettings>(`${this.resourceUrl}/exercises/${exerciseId}/raw-iris-settings`, settings, { observe: 'response' });
     }
 
     /**

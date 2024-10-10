@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
@@ -19,8 +20,10 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisCourseChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
+import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
 
 @Service
 @Profile(PROFILE_IRIS)
@@ -30,6 +33,8 @@ public class PyrisStatusUpdateService {
 
     private final IrisExerciseChatSessionService irisExerciseChatSessionService;
 
+    private final IrisTextExerciseChatSessionService irisTextExerciseChatSessionService;
+
     private final IrisCourseChatSessionService courseChatSessionService;
 
     private final IrisCompetencyGenerationService competencyGenerationService;
@@ -37,9 +42,11 @@ public class PyrisStatusUpdateService {
     private static final Logger log = LoggerFactory.getLogger(PyrisStatusUpdateService.class);
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
-            IrisCourseChatSessionService courseChatSessionService, IrisCompetencyGenerationService competencyGenerationService) {
+            IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
+            IrisCompetencyGenerationService competencyGenerationService) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
+        this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.courseChatSessionService = courseChatSessionService;
         this.competencyGenerationService = competencyGenerationService;
     }
@@ -52,6 +59,19 @@ public class PyrisStatusUpdateService {
      */
     public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         irisExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
+
+        removeJobIfTerminated(statusUpdate.stages(), job.jobId());
+    }
+
+    /**
+     * Handles the status update of an exercise chat job and forwards it to
+     * {@link IrisTextExerciseChatSessionService#handleStatusUpdate(TextExerciseChatJob, PyrisTextExerciseChatStatusUpdateDTO)}
+     *
+     * @param job          the job that is updated
+     * @param statusUpdate the status update
+     */
+    public void handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
+        irisTextExerciseChatSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminated(statusUpdate.stages(), job.jobId());
     }

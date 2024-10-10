@@ -1,7 +1,8 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 
 export enum IrisSubSettingsType {
-    CHAT = 'chat',
+    TEXT_EXERCISE_CHAT = 'text-exercise-chat',
+    CHAT = 'chat', // TODO: Split into PROGRAMMING_EXERCISE_CHAT and COURSE_CHAT
     COMPETENCY_GENERATION = 'competency-generation',
     LECTURE_INGESTION = 'lecture-ingestion',
 }
@@ -14,8 +15,16 @@ export abstract class IrisSubSettings implements BaseEntity {
     selectedVariant?: string;
 }
 
+// TODO: Split into ProgrammingExerciseChatSubSettings and CourseChatSubSettings
+// TODO: Each feature should probably get its own rate limit instead of sharing one
 export class IrisChatSubSettings extends IrisSubSettings {
     type = IrisSubSettingsType.CHAT;
+    rateLimit?: number;
+    rateLimitTimeframeHours?: number;
+}
+
+export class IrisTextExerciseChatSubSettings extends IrisSubSettings {
+    type = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
     rateLimit?: number;
     rateLimitTimeframeHours?: number;
 }

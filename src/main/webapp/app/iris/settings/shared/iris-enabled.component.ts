@@ -22,7 +22,7 @@ export class IrisEnabledComponent implements OnInit {
 
     ngOnInit(): void {
         if (this.exercise) {
-            this.irisSettingsService.getUncombinedProgrammingExerciseSettings(this.exercise.id!).subscribe((settings) => {
+            this.irisSettingsService.getUncombinedExerciseSettings(this.exercise.id!).subscribe((settings) => {
                 this.irisSettings = settings;
                 this.setSubSettings();
             });
@@ -38,7 +38,7 @@ export class IrisEnabledComponent implements OnInit {
         if (!this.disabled && this.irisSubSettings) {
             this.irisSubSettings.enabled = enabled;
             if (this.exercise) {
-                this.irisSettingsService.setProgrammingExerciseSettings(this.exercise.id!, this.irisSettings!).subscribe((response) => {
+                this.irisSettingsService.setExerciseSettings(this.exercise.id!, this.irisSettings!).subscribe((response) => {
                     this.irisSettings = response.body ?? this.irisSettings;
                     this.setSubSettings();
                 });

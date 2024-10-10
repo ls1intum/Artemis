@@ -16,7 +16,8 @@ import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 export enum ChatServiceMode {
-    EXERCISE = 'exercise-chat',
+    TEXT_EXERCISE = 'text-exercise-chat',
+    EXERCISE = 'exercise-chat', // TODO: Rename to PROGRAMMING_EXERCISE
     COURSE = 'course-chat',
 }
 

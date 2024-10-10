@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisWebsocketService;
 
 /**
- * Service to handle the Competency generation subsytem of Iris.
+ * Service to handle the Competency generation subsystem of Iris.
  */
 @Service
 @Profile(PROFILE_IRIS)

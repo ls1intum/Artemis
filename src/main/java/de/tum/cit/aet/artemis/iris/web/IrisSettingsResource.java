@@ -22,12 +22,12 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastInstructorInExercise;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedSettingsDTO;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * REST controller for managing {@link IrisSettings}.
@@ -45,15 +45,15 @@ public class IrisSettingsResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final ExerciseRepository exerciseRepository;
 
     public IrisSettingsResource(UserRepository userRepository, CourseRepository courseRepository, IrisSettingsService irisSettingsService,
-            AuthorizationCheckService authCheckService, ProgrammingExerciseRepository programmingExerciseRepository) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.irisSettingsService = irisSettingsService;
         this.authCheckService = authCheckService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -83,15 +83,15 @@ public class IrisSettingsResource {
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/raw-iris-settings: Retrieve the raw iris settings for the programming exercise.
+     * GET exercises/{exerciseId}/raw-iris-settings: Retrieve the raw iris settings for the exercise.
      *
-     * @param exerciseId of the programming exercise
+     * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the exercise could not be found.
      */
-    @GetMapping("programming-exercises/{exerciseId}/raw-iris-settings")
+    @GetMapping("exercises/{exerciseId}/raw-iris-settings")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<IrisSettings> getRawProgrammingExerciseSettings(@PathVariable Long exerciseId) {
-        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+    public ResponseEntity<IrisSettings> getRawExerciseSettings(@PathVariable Long exerciseId) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
@@ -118,15 +118,15 @@ public class IrisSettingsResource {
     }
 
     /**
-     * GET programming-exercises/{exerciseId}/iris-settings: Retrieve the actual iris settings for the programming exercise.
+     * GET exercises/{exerciseId}/iris-settings: Retrieve the actual iris settings for the exercise.
      *
-     * @param exerciseId of the programming exercise
+     * @param exerciseId of the exercise
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the settings, or with status {@code 404 (Not Found)} if the exercise could not be found.
      */
-    @GetMapping("programming-exercises/{exerciseId}/iris-settings")
+    @GetMapping("exercises/{exerciseId}/iris-settings")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<IrisCombinedSettingsDTO> getProgrammingExerciseSettings(@PathVariable Long exerciseId) {
-        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+    public ResponseEntity<IrisCombinedSettingsDTO> getExerciseSettings(@PathVariable Long exerciseId) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var combinedIrisSettings = irisSettingsService.getCombinedIrisSettingsFor(exercise, irisSettingsService.shouldShowMinimalSettings(exercise, user));
@@ -150,17 +150,17 @@ public class IrisSettingsResource {
     }
 
     /**
-     * PUT programming-exercises/{exerciseId}/raw-iris-settings: Update the raw iris settings for the programming exercise.
+     * PUT exercises/{exerciseId}/raw-iris-settings: Update the raw iris settings for the exercise.
      *
-     * @param exerciseId of the programming exercise
+     * @param exerciseId of the exercise
      * @param settings   the settings to update
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the updated settings, or with status {@code 404 (Not Found)} if the exercise could not be
      *         found.
      */
-    @PutMapping("programming-exercises/{exerciseId}/raw-iris-settings")
+    @PutMapping("exercises/{exerciseId}/raw-iris-settings")
     @EnforceAtLeastInstructorInExercise
-    public ResponseEntity<IrisExerciseSettings> updateProgrammingExerciseSettings(@PathVariable Long exerciseId, @RequestBody IrisExerciseSettings settings) {
-        var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+    public ResponseEntity<IrisExerciseSettings> updateExerciseSettings(@PathVariable Long exerciseId, @RequestBody IrisExerciseSettings settings) {
+        var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         settings.setExercise(exercise);
         var updatedSettings = irisSettingsService.saveIrisSettings(settings);
         return ResponseEntity.ok(updatedSettings);

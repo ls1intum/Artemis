@@ -99,7 +99,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                 .getProfileInfo()
                 .pipe(
                     filter((profileInfo) => profileInfo?.activeProfiles?.includes(PROFILE_IRIS)),
-                    switchMap(() => this.irisSettingsService.getCombinedProgrammingExerciseSettings(this.exercise.id!)),
+                    switchMap(() => this.irisSettingsService.getCombinedExerciseSettings(this.exercise.id!)),
                 )
                 .subscribe((settings) => {
                     this.irisSettings = settings;
