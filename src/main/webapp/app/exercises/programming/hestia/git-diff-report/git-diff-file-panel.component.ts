@@ -16,6 +16,9 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
     imports: [GitDiffFilePanelTitleComponent, GitDiffLineStatComponent, GitDiffFileComponent, ArtemisSharedModule],
 })
 export class GitDiffFilePanelComponent {
+    protected readonly faAngleUp = faAngleUp;
+    protected readonly faAngleDown = faAngleDown;
+
     readonly diffEntries = input.required<ProgrammingExerciseGitDiffEntry[]>();
     readonly originalFileContent = input<string>();
     readonly modifiedFileContent = input<string>();
@@ -60,7 +63,4 @@ export class GitDiffFilePanelComponent {
                 })
                 .filter((line) => line && line.trim().length !== 0).length,
     );
-
-    protected readonly faAngleUp = faAngleUp;
-    protected readonly faAngleDown = faAngleDown;
 }
