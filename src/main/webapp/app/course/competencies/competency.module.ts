@@ -14,7 +14,6 @@ import { CourseDescriptionFormComponent } from 'app/course/competencies/generate
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { IrisModule } from 'app/iris/iris.module';
 import { TaxonomySelectComponent } from 'app/course/competencies/taxonomy-select/taxonomy-select.component';
-import { CompetencyRelationGraphComponent } from 'app/course/competencies/competency-management/competency-relation-graph.component';
 import { CompetencyAccordionComponent } from 'app/course/competencies/competency-accordion/competency-accordion.component';
 import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/course-exercise-row.module';
 import { RatingModule } from 'app/exercises/shared/rating/rating.module';
@@ -53,7 +52,6 @@ import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown
         CompetenciesPopoverComponent,
         ImportCompetenciesTableComponent,
         TaxonomySelectComponent,
-        CompetencyRelationGraphComponent,
     ],
     exports: [
         CompetencyCardComponent,
