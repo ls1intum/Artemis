@@ -90,13 +90,13 @@ export class GitDiffReportComponent {
 
     readonly entriesByPath = computed(() => {
         const entriesByPath = new Map<string, ProgrammingExerciseGitDiffEntry[]>();
-        this.filePaths().forEach((filePath) => {
+        [...this.templateFileContentByPath().keys()].forEach((filePath) => {
             entriesByPath.set(
                 filePath,
                 this.sortedEntries().filter((entry) => entry.previousFilePath === filePath && !entry.filePath),
             );
         });
-        this.filePaths().forEach((filePath) => {
+        [...this.solutionFileContentByPath().keys()].forEach((filePath) => {
             entriesByPath.set(
                 filePath,
                 this.sortedEntries().filter((entry) => entry.filePath === filePath),
