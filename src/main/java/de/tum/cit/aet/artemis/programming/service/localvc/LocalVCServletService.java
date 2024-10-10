@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -448,7 +449,29 @@ public class LocalVCServletService {
         catch (AccessForbiddenException e) {
             throw new LocalVCForbiddenException(e);
         }
-        // TODO: retrieving the git commit hash should be done ASYNC together with storing the log in the database to avoid long waiting times during permission check
+
+        // Asynchronously store an VCS access log entry
+        CompletableFuture.runAsync(() -> storeAccessLogAsync(user, participation, repositoryActionType, authenticationMechanism, ipAddress, localVCRepositoryUri))
+                .exceptionally(ex -> {
+                    log.warn("Failed to asynchronously obtain commit hash or store access log for repository {}. Error: {}",
+                            localVCRepositoryUri.getRelativeRepositoryPath().toString(), ex.getMessage());
+                    return null;
+                });
+    }
+
+    /**
+     * Asynchronously retrieves the latest commit hash from the specified repository and logs the access to the repository.
+     * This method runs without blocking the user during repository access checks.
+     *
+     * @param user                    the user accessing the repository
+     * @param participation           the participation associated with the repository
+     * @param repositoryActionType    the action performed on the repository (READ or WRITE)
+     * @param authenticationMechanism the mechanism used for authentication (e.g., token, basic auth)
+     * @param ipAddress               the IP address of the user accessing the repository
+     * @param localVCRepositoryUri    the URI of the localVC repository
+     */
+    private void storeAccessLogAsync(User user, ProgrammingExerciseParticipation participation, RepositoryActionType repositoryActionType,
+            AuthenticationMechanism authenticationMechanism, String ipAddress, LocalVCRepositoryUri localVCRepositoryUri) {
         try {
             String commitHash;
             String relativeRepositoryPath = localVCRepositoryUri.getRelativeRepositoryPath().toString();
@@ -456,12 +479,10 @@ public class LocalVCServletService {
                 commitHash = getLatestCommitHash(repository);
             }
 
-            // Write a access log entry to the database
             RepositoryActionType finalRepositoryActionType = repositoryActionType == RepositoryActionType.READ ? RepositoryActionType.PULL : RepositoryActionType.PUSH;
-            String finalCommitHash = commitHash;
-            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, finalRepositoryActionType, authenticationMechanism, finalCommitHash, ipAddress));
+            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, finalRepositoryActionType, authenticationMechanism, commitHash, ipAddress));
+
         }
-        // NOTE: we intentionally catch all issues here to avoid that the user is blocked from accessing the repository
         catch (Exception e) {
             log.warn("Failed to obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(), e.getMessage());
         }
@@ -532,16 +553,9 @@ public class LocalVCServletService {
             // Process push to any repository other than the test repository.
             processNewPushToRepository(participation, commit);
 
-            try {
-                // For push the correct commitHash is only available here, therefore the preliminary null value is overwritten
-                String finalCommitHash = commitHash;
-                vcsAccessLogService.ifPresent(service -> service.updateCommitHash(participation, finalCommitHash));
-            }
-            // NOTE: we intentionally catch all issues here to avoid that the user is blocked from accessing the repository
-            catch (Exception e) {
-                log.warn("Failed to obtain commit hash or store access log for repository {}. Error: {}", localVCRepositoryUri.getRelativeRepositoryPath().toString(),
-                        e.getMessage());
-            }
+            // For push the correct commitHash is only available here, therefore the preliminary null value is overwritten
+            String finalCommitHash = commitHash;
+            vcsAccessLogService.ifPresent(service -> service.updateCommitHash(participation, finalCommitHash));
         }
         catch (GitAPIException | IOException e) {
             // This catch clause does not catch exceptions that happen during runBuildJob() as that method is called asynchronously.
@@ -731,7 +745,8 @@ public class LocalVCServletService {
      */
     private ProgrammingExerciseParticipation retrieveParticipationFromLocalVCRepositoryUri(LocalVCRepositoryUri localVCRepositoryUri) {
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
-        return programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
+        var repositoryURL = localVCRepositoryUri.toString().replace("/git-upload-pack", "").replace("/git-receive-pack", "");
+        return programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, repositoryURL);
     }
 
     /**
