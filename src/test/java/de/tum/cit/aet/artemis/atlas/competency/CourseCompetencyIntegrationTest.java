@@ -407,31 +407,6 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void shouldUpdateForInstructor() throws Exception {
-            var headCompetency = competencyUtilService.createCompetency(course);
-            var relationToCreate = new CompetencyRelation();
-            relationToCreate.setTailCompetency(courseCompetency);
-            relationToCreate.setHeadCompetency(headCompetency);
-            relationToCreate.setType(RelationType.EXTENDS);
-
-            request.postWithResponseBody("/api/courses/" + course.getId() + "/course-competencies/relations", CompetencyRelationDTO.of(relationToCreate), CompetencyRelation.class,
-                    HttpStatus.OK);
-
-            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
-            assertThat(relations).hasSize(1);
-            var relation = relations.stream().findFirst().get();
-            assertThat(relation.getType()).isEqualTo(RelationType.EXTENDS);
-
-            request.patch("/api/courses/" + course.getId() + "/course-competencies/relations/" + relation.getId(), new UpdateCourseCompetencyRelationDTO(RelationType.MATCHES),
-                    HttpStatus.NO_CONTENT);
-
-            relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
-            assertThat(relations).hasSize(1);
-            assertThat(relations.stream().findFirst().get().getType()).isEqualTo(RelationType.MATCHES);
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void shouldCreateForInstructor() throws Exception {
             var headCompetency = competencyUtilService.createCompetency(course);
             var relationToCreate = new CompetencyRelation();
@@ -494,6 +469,31 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             relation.setType(RelationType.ASSUMES);
 
             request.post("/api/courses/" + course.getId() + "/course-competencies/relations", CompetencyRelationDTO.of(relation), HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void shouldUpdateForInstructor() throws Exception {
+            var headCompetency = competencyUtilService.createCompetency(course);
+            var relationToCreate = new CompetencyRelation();
+            relationToCreate.setTailCompetency(courseCompetency);
+            relationToCreate.setHeadCompetency(headCompetency);
+            relationToCreate.setType(RelationType.EXTENDS);
+
+            request.postWithResponseBody("/api/courses/" + course.getId() + "/course-competencies/relations", CompetencyRelationDTO.of(relationToCreate), CompetencyRelation.class,
+                    HttpStatus.OK);
+
+            var relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
+            assertThat(relations).hasSize(1);
+            var relation = relations.stream().findFirst().get();
+            assertThat(relation.getType()).isEqualTo(RelationType.EXTENDS);
+
+            request.patch("/api/courses/" + course.getId() + "/course-competencies/relations/" + relation.getId(), new UpdateCourseCompetencyRelationDTO(RelationType.MATCHES),
+                    HttpStatus.NO_CONTENT);
+
+            relations = competencyRelationRepository.findAllWithHeadAndTailByCourseId(course.getId());
+            assertThat(relations).hasSize(1);
+            assertThat(relations.stream().findFirst().get().getType()).isEqualTo(RelationType.MATCHES);
         }
     }
 
