@@ -435,7 +435,7 @@ public class LocalVCServletService {
 
         ProgrammingExerciseParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
+            participation = programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
         }
         catch (EntityNotFoundException e) {
             throw new LocalVCInternalException(
@@ -558,8 +558,8 @@ public class LocalVCServletService {
             ProgrammingExercise exercise) {
         ProgrammingExerciseParticipation participation;
         try {
-            participation = programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(),
-                    true);
+            participation = programmingExerciseParticipationService.retrieveParticipationForRepository(exercise, repositoryTypeOrUserName,
+                    localVCRepositoryUri.isPracticeRepository(), true);
         }
         catch (EntityNotFoundException e) {
             throw new VersionControlException("Could not find participation for repository " + repositoryTypeOrUserName + " of exercise " + exercise, e);
@@ -719,7 +719,6 @@ public class LocalVCServletService {
      */
     private User getUserFromRequest(HttpServletRequest request) throws LocalVCAuthException {
         String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
-
         UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
         return userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
     }
@@ -730,12 +729,9 @@ public class LocalVCServletService {
      * @param localVCRepositoryUri the {@link LocalVCRepositoryUri} containing details about the repository.
      * @return the {@link ProgrammingExerciseParticipation} corresponding to the repository URI.
      */
-    private ProgrammingExerciseParticipation getExerciseParticipationFromLocalVCRepositoryUri(LocalVCRepositoryUri localVCRepositoryUri) {
-        // String projectKey = localVCRepositoryUri.getURI();
+    private ProgrammingExerciseParticipation retrieveParticipationFromLocalVCRepositoryUri(LocalVCRepositoryUri localVCRepositoryUri) {
         String repositoryTypeOrUserName = localVCRepositoryUri.getRepositoryTypeOrUserName();
-        // ProgrammingExercise exercise = getProgrammingExerciseOrThrow(projectKey);
-        return programmingExerciseParticipationService.getParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
-        // return programmingExerciseParticipationService.getParticipationForRepository(exercise, repositoryTypeOrUserName, localVCRepositoryUri.isPracticeRepository(), false);
+        return programmingExerciseParticipationService.retrieveParticipationForRepository(repositoryTypeOrUserName, localVCRepositoryUri.toString());
     }
 
     /**
@@ -746,7 +742,7 @@ public class LocalVCServletService {
      */
     private ProgrammingExerciseParticipation getExerciseParticipationFromRequest(HttpServletRequest request) {
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
-        return getExerciseParticipationFromLocalVCRepositoryUri(localVCRepositoryUri);
+        return retrieveParticipationFromLocalVCRepositoryUri(localVCRepositoryUri);
     }
 
     /**
@@ -774,7 +770,7 @@ public class LocalVCServletService {
     @Async
     public void updateVCSAccessLogForCloneAndPullHTTPS(HttpServletRequest request, int clientOffered) {
         try {
-            String authorizationHeader = request.getHeader("Authorization");
+            String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             String userName = usernameAndPassword.username();
             if (userName.equals(BUILD_USER_NAME)) {
@@ -841,7 +837,7 @@ public class LocalVCServletService {
                 return;
             }
             RepositoryActionType repositoryActionType = getRepositoryActionReadType(clientOffered);
-            var participation = getExerciseParticipationFromLocalVCRepositoryUri(getLocalVCRepositoryUri(rootDir));
+            var participation = retrieveParticipationFromLocalVCRepositoryUri(getLocalVCRepositoryUri(rootDir));
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
         }
         catch (Exception ignored) {

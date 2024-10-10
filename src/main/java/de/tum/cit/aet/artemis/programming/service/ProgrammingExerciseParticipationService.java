@@ -452,7 +452,7 @@ public class ProgrammingExerciseParticipationService {
      * @return the participation.
      * @throws EntityNotFoundException if the participation could not be found.
      */
-    public ProgrammingExerciseParticipation getParticipationForRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, boolean isPracticeRepository,
+    public ProgrammingExerciseParticipation retrieveParticipationForRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, boolean isPracticeRepository,
             boolean withSubmissions) {
 
         boolean isAuxiliaryRepository = auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise);
@@ -509,7 +509,7 @@ public class ProgrammingExerciseParticipationService {
      * @param repositoryURI            the participation's repository URL
      * @return the participation belonging to the provided repositoryURI and repository type or username
      */
-    public ProgrammingExerciseParticipation getParticipationForRepository(String repositoryTypeOrUserName, String repositoryURI) {
+    public ProgrammingExerciseParticipation retrieveParticipationForRepository(String repositoryTypeOrUserName, String repositoryURI) {
         if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString()) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
             return solutionParticipationRepository.findByRepositoryUriElseThrow(repositoryURI);
         }
