@@ -74,6 +74,7 @@ import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code
 import { AlertService } from 'app/core/util/alert.service';
 import { MockResizeObserver } from '../../helpers/mocks/service/mock-resize-observer';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
+import { RequestFeedbackButtonComponent } from 'app/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { MonacoEditorComponent } from '../../../../../main/webapp/app/shared/monaco-editor/monaco-editor.component';
 
 describe('CodeEditorContainerIntegration', () => {
@@ -123,6 +124,7 @@ describe('CodeEditorContainerIntegration', () => {
                 TreeviewItemComponent,
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CodeEditorTutorAssessmentInlineFeedbackComponent),
+                MockComponent(RequestFeedbackButtonComponent),
             ],
             providers: [
                 CodeEditorConflictStateService,

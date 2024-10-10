@@ -15,6 +15,7 @@ import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/fre
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
+import dayjs from 'dayjs/esm';
 
 describe('ResultUtils', () => {
     it('should filter out all non unreferenced feedbacks', () => {
@@ -69,7 +70,7 @@ describe('ResultUtils', () => {
         {
             result: { score: 0, successful: undefined, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
             templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
-            expected: 'text-primary',
+            expected: 'text-secondary',
         },
         {
             result: { score: 0, successful: true, assessmentType: AssessmentType.AUTOMATIC_ATHENA },
@@ -128,7 +129,12 @@ describe('ResultUtils', () => {
             expected: faTimesCircle,
         },
         {
-            result: { feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result being generated test case' }], assessmentType: AssessmentType.AUTOMATIC_ATHENA },
+            result: {
+                feedbacks: [{ type: FeedbackType.AUTOMATIC, text: 'AI result being generated test case' }],
+                assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                successful: undefined,
+                completionDate: dayjs().add(5, 'minutes'),
+            },
             templateStatus: ResultTemplateStatus.IS_GENERATING_FEEDBACK,
             expected: faCircleNotch,
         },
@@ -138,9 +144,10 @@ describe('ResultUtils', () => {
                 participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
                 successful: true,
                 assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                completionDate: dayjs().subtract(5, 'minutes'),
             } as Result,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faQuestionCircle,
+            expected: faCheckCircle,
         },
         {
             result: {
@@ -148,9 +155,10 @@ describe('ResultUtils', () => {
                 participation: { type: ParticipationType.STUDENT, exercise: { type: ExerciseType.TEXT } },
                 successful: false,
                 assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+                completionDate: dayjs().subtract(5, 'minutes'),
             } as Result,
             templateStatus: ResultTemplateStatus.HAS_RESULT,
-            expected: faQuestionCircle,
+            expected: faTimesCircle,
         },
     ])('should correctly determine result icon', ({ result, templateStatus, expected }) => {
         expect(getResultIconClass(result, templateStatus!)).toBe(expected);

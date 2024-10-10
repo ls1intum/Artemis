@@ -92,7 +92,8 @@
             "preliminary": "vorläufig",
             "preliminaryTooltip": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden.",
             "preliminaryTooltipSemiAutomatic": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden oder eine manuelle Bewertung aussteht.",
-            "codeIssuesTooltip": "Die automatische Codeanalyse hat Code-Issues gefunden.",
+            "preliminaryTooltipAthena": "Dies ist eine KI-Bewertung. Das tatsächliche Ergebnis kann abweichen.",
+            "codeIssuesTooltip": "Die automatische Codeanalyse hat Codeissues gefunden.",
             "noResultDetails": "Keine weiteren Informationen verfügbar für dieses Ergebnis.",
             "onlyCompilationTested": "Dein Code kompiliert erfolgreich. Derzeit sind keine Testfälle sichtbar.",
             "chart": {
