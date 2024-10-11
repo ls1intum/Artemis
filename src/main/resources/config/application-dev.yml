@@ -74,8 +74,8 @@ jhipster:
         allowed-origin-patterns: "*"
         allowed-methods: "*"
         allowed-headers: "*"
-        exposed-headers: "Authorization,Link,X-Total-Count"
-        allow-credentials: true
+        exposed-headers: "Authorization,Link,X-Total-Count,Set-Cookie"
+        allow-credentials: false
         max-age: 1800
     security:
         authentication:

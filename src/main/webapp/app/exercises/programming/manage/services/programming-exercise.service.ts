@@ -27,6 +27,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { PlagiarismResultDTO } from 'app/exercises/shared/plagiarism/types/PlagiarismResultDTO';
 import { ImportOptions } from 'app/types/programming-exercises';
 import { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
+import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -658,6 +659,10 @@ export class ProgrammingExerciseService {
 
     getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {
         return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
+    }
+
+    getBuildConfig(exerciseId: number): Observable<ProgrammingExerciseBuildConfig> {
+        return this.http.get<ProgrammingExerciseBuildConfig>(`${this.resourceUrl}/${exerciseId}/build-config`);
     }
 
     /** Imports a programming exercise from a given zip file **/
