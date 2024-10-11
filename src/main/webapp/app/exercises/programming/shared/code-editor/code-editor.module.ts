@@ -21,9 +21,9 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/treeview/treeview.module';
 import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
 import { CodeEditorFileBrowserBadgeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-badge.component';
-import { MonacoEditorModule } from 'app/shared/monaco-editor/monaco-editor.module';
 import { CodeEditorMonacoComponent } from 'app/exercises/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 
 @NgModule({
     imports: [
@@ -33,7 +33,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         TreeviewModule.forRoot(),
         ArtemisProgrammingExerciseInstructionsEditorModule,
         ArtemisProgrammingManualAssessmentModule,
-        MonacoEditorModule,
+        MonacoEditorComponent,
         ArtemisSharedComponentModule,
     ],
     declarations: [

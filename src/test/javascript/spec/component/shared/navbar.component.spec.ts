@@ -1,4 +1,4 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -37,7 +37,7 @@ import { SystemNotificationComponent } from 'app/shared/notification/system-noti
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 class MockBreadcrumb {
@@ -93,7 +93,7 @@ describe('NavbarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, NgbTooltipMocksModule, NgbCollapseMocksModule, NgbDropdownMocksModule],
+            imports: [NgbTooltipMocksModule, NgbCollapseMocksModule, NgbDropdownMocksModule],
             declarations: [
                 NavbarComponent,
                 MockDirective(HasAnyAuthorityDirective),
@@ -112,6 +112,8 @@ describe('NavbarComponent', () => {
                 MockComponent(FaIconComponent),
             ],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(UrlSerializer),
                 {
                     provide: AccountService,
