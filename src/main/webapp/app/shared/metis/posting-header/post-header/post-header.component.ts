@@ -20,7 +20,6 @@ export class PostHeaderComponent extends PostingHeaderDirective<Post> implements
     @Input() previewMode: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     isAtLeastInstructorInCourse: boolean;
-    mayEditOrDelete = false;
 
     // Icons
     faPencilAlt = faPencilAlt;
