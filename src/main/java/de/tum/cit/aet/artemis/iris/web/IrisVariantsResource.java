@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.iris;
+package de.tum.cit.aet.artemis.iris.web;
 
 import java.util.List;
 
