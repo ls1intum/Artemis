@@ -5,7 +5,7 @@ The build agent view consists of two parts: the *Build Agent Summary View* and t
 The **Build Agent Summary View** shows a list of all build agents in the system, along with their status (idle and running), maximum number of concurrent builds, and running builds.
 The running builds can be canceled individually by clicking the red cancellation button next to the build. An Administrator can also cancel all running builds on a build agent by clicking the '*Cancel All*' button.
 
-.. figure:: programming/build-agent-summary.png
+.. figure:: local-ci/build-agent-summary.png
    :alt: Build Agent Summary View
    :align: center
 
@@ -20,7 +20,7 @@ the submission time, start time, end time, the duration of the build job, the co
 The administrator can click on the participation ID to navigate to the participation's submission page.
 The administrator can also click on the commit hash to navigate to the commits details page and the course ID to navigate to the course management page.
 
-.. figure:: programming/build-agent-details.png
+.. figure:: local-ci/build-agent-details.png
    :alt: Build Agent Details
    :align: center
 

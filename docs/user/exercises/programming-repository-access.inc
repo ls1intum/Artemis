@@ -1,3 +1,5 @@
+If you are a student, and want to know how to use the Artemis Version Control for checking out repositories locally, :ref:`checkout this guide.<local-vc>`
+
 The following tables lists the different types of repositories and gives an overview of the access rights different users have.
 To gain these access rights, a user must assume the indicated role in the course the repository belongs to.
 
