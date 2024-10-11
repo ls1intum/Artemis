@@ -19,6 +19,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -43,6 +44,8 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final IrisMessageService irisMessageService;
 
+    private final LLMTokenUsageService llmTokenUsageService;
+
     private final IrisSettingsService irisSettingsService;
 
     private final IrisChatWebsocketService irisChatWebsocketService;
@@ -57,11 +60,13 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    public IrisCourseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
-            AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository, IrisRateLimitService rateLimitService,
-            IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService, ObjectMapper objectMapper) {
+    public IrisCourseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
+            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
+            IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService,
+            ObjectMapper objectMapper, LLMTokenUsageService lLMTokenUsageService) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
+        this.llmTokenUsageService = llmTokenUsageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -137,9 +142,11 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+            var tokenUsages = llmTokenUsageService.saveTokenUsage(savedMessage, null, session.getUser(), session.getCourse(), statusUpdate.tokens());
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
+            var tokenUsages = llmTokenUsageService.saveTokenUsage(null, null, session.getUser(), session.getCourse(), statusUpdate.tokens());
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
         }
         updateLatestSuggestions(session, statusUpdate.suggestions());

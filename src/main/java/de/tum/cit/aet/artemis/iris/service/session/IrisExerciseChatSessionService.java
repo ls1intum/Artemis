@@ -45,7 +45,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final IrisMessageService irisMessageService;
 
-    private final LLMTokenUsageService LLMTokenUsageService;
+    private final LLMTokenUsageService llmTokenUsageService;
 
     private final IrisSettingsService irisSettingsService;
 
@@ -72,7 +72,7 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             ObjectMapper objectMapper) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
-        this.LLMTokenUsageService = LLMTokenUsageService;
+        this.llmTokenUsageService = LLMTokenUsageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -176,12 +176,12 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            var tokenUsages = LLMTokenUsageService.saveTokenUsage(savedMessage, session.getExercise(), session.getUser(),
+            var tokenUsages = llmTokenUsageService.saveTokenUsage(savedMessage, session.getExercise(), session.getUser(),
                     session.getExercise().getCourseViaExerciseGroupOrCourseMember(), statusUpdate.tokens());
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
-            var tokenUsages = LLMTokenUsageService.saveTokenUsage(null, session.getExercise(), session.getUser(), session.getExercise().getCourseViaExerciseGroupOrCourseMember(),
+            var tokenUsages = llmTokenUsageService.saveTokenUsage(null, session.getExercise(), session.getUser(), session.getExercise().getCourseViaExerciseGroupOrCourseMember(),
                     statusUpdate.tokens());
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
         }

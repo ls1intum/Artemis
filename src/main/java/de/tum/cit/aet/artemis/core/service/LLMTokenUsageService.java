@@ -39,7 +39,9 @@ public class LLMTokenUsageService {
             }
             llmTokenUsage.setServiceType(cost.pipeline());
             llmTokenUsage.setExercise(exercise);
-            llmTokenUsage.setUserId(user.getId());
+            if (user != null) {
+                llmTokenUsage.setUserId(user.getId());
+            }
             llmTokenUsage.setCourse(course);
             llmTokenUsage.setNum_input_tokens(cost.num_input_tokens());
             llmTokenUsage.setNum_output_tokens(cost.num_output_tokens());
