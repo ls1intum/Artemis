@@ -11,6 +11,7 @@ import { of } from 'rxjs';
 import { Authority } from 'app/shared/constants/authority.constants';
 
 import { LocalVCGuard } from 'app/localvc/localvc-guard.service';
+import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseResolve implements Resolve<ProgrammingExercise> {
@@ -34,6 +35,19 @@ export const routes: Routes = [
         },
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/import-sharing',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.programmingExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
@@ -65,6 +79,18 @@ export const routes: Routes = [
     {
         path: ':courseId/programming-exercises/import-from-file',
         loadComponent: () => import('app/exercises/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/import-from-sharing',
+        component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
         },

@@ -52,10 +52,12 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { ProgrammingAssessmentRepoExportButtonComponent } from '../assess/repo-export/programming-assessment-repo-export-button.component';
 import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SharingInfo } from 'app/sharing/sharing.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
+    providers: [SharingInfo],
     imports: [
         SortDirective,
         FormsModule,
@@ -74,8 +76,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
         ExerciseScoresExportButtonComponent,
         SlicePipe,
         ArtemisDatePipe,
-        // TODO: the extension point for Orion does not work with Angular 19, we need to find a different solution
-        // ExtensionPointDirective,
     ],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {

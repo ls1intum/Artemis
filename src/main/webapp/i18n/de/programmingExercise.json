@@ -633,7 +633,7 @@
                         "tooltip": "Das System zieht für jede Abgabe, die das Abgabelimit überschreitet, Punkte vom Gesamtergebnis ab. Der Punktabzug für diese Aufgabe ist -{{points}} Punkte."
                     }
                 },
-                "submissionLimitTitle": "Abgaben",
+                "submissionLimitTitle": "Abgabelimit",
                 "submissionLimitDescription": "Die Anzahl von erlaubten Abgaben, bis das System die ausgewählte Abgaberichtlinie durchsetzt.",
                 "editInGradingInformation": "Das Abgabelimit kann nur in der Bewertungssicht der Programmieraufgabe bearbeitet und (de)aktiviert werden.",
                 "goToGradingToEditInformation": "Gehe zur Bewertungsseite, um die Abgaberichtlinie zu bearbeiten.",
@@ -745,6 +745,10 @@
                 }
             }
         },
+        "sharing": {
+            "import": "Programmieraufgabe aus Sharing importieren",
+            "export": "Exportieren nach Sharing"
+        }        },
         "error": {
             "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
             "shortNameGenerationFailed": "Der Kurzname konnte nicht generiert werden, bitte wechsle zum erweiterten Modus und setze den Kurznamen manuell."

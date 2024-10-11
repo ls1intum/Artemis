@@ -12,6 +12,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-repo-download.component';
+import { ProgrammingExerciseInstructorExerciseSharingComponent } from './programming-exercise-instructor-exercise-sharing.component';
 
 @NgModule({
     imports: [
@@ -25,6 +26,7 @@ import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/exercises/p
         ProgrammingExerciseReEvaluateButtonComponent,
         ProgrammingExerciseInstructorRepoDownloadComponent,
         ProgrammingExerciseStudentRepoDownloadComponent,
+        ProgrammingExerciseInstructorExerciseSharingComponent,
     ],
     exports: [
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
@@ -34,6 +36,7 @@ import { ProgrammingExerciseStudentRepoDownloadComponent } from 'app/exercises/p
         ProgrammingExerciseReEvaluateButtonComponent,
         ProgrammingExerciseInstructorRepoDownloadComponent,
         ProgrammingExerciseStudentRepoDownloadComponent,
+        ProgrammingExerciseInstructorExerciseSharingComponent,
     ],
 })
 export class ArtemisProgrammingExerciseActionsModule {}
