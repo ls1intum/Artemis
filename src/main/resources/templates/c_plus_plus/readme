@@ -71,10 +71,10 @@ sorting may not add or remove elements. This is usually achieved by swapping ele
 
 7. [task][Explicit Heapsort](sorting_algorithms/heapsort_explicit,sorting_algorithms/all_elements_equal/heapsort_explicit,sorting_algorithms/reverse-sorted_values/heapsort_explicit,sorting_algorithms/single_values/heapsort_explicit,sorting_algorithms/empty_input/heapsort_explicit,sorting_algorithms/large_input/heapsort_explicit)
     Implement Heapsort without using `sort_heap`.
-    You do not need to understand the details of the algorithm, you should only look at the
-    documentation for heap algorightms, e.g.
-    [cppreference.com: `sort_heap`](https://en.cppreference.com/w/cpp/algorithm/sort_heap), and figure out which algorithms
-    need to be called.
+    You do not need to understand the details of the algorithm. You should only look at the
+    documentation for heap algorithms. For example, refer to
+    [cppreference.com: `sort_heap`](https://en.cppreference.com/w/cpp/algorithm/sort_heap)
+    and figure out which algorithms need to be called.
 
     ```c++
     void heapsort_explicit(std::vector<int>::iterator begin,
