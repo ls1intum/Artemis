@@ -6,7 +6,6 @@ import { AssessmentHeaderComponent } from 'app/assessment/assessment-header/asse
 import { ArtemisTestModule } from '../../test.module';
 import { Result } from 'app/entities/result.model';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
@@ -25,6 +24,7 @@ import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock
 import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
 import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
 import { AssessmentNote } from 'app/entities/assessment-note.model';
+import { RouterModule } from '@angular/router';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -49,7 +49,7 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, NgbTooltipMocksModule, NgbAlertsMocksModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule, NgbAlertsMocksModule, RouterModule.forRoot([])],
             declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, TranslateDirective, ArtemisTranslatePipe, MockTranslateValuesDirective],
             providers: [
                 {
