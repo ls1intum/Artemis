@@ -65,6 +65,7 @@ spotless {
                     "src/test/java/**/*.java",
                 )
                 exclude(
+                        "**/src/main/java/de/tum/cit/aet/artemis/iris/service/settings/IrisSettingsService.java",
                         "**/src/test/resources/test-data/repository-export/EncodingISO_8559_1.java",
                         "**/node_modules/**",
                         "**/out/**",
@@ -217,6 +218,7 @@ repositories {
 
 dependencies {
 
+    implementation group: 'org.codeability', name: 'SharingPluginPlatformAPI', version: '1.0.2'
     // Note: jenkins-client is not well maintained and includes dependencies to libraries with critical security issues (e.g. CVE-2020-10683 for dom4j@1.6.1)
     //    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation files("libs/jenkins-client-0.4.1.jar")
