@@ -16,6 +16,7 @@ export class User extends Account {
     public vcsAccessToken?: string;
     public vcsAccessTokenExpiryDate?: string;
     public sshPublicKey?: string;
+    public sshKeyHash?: string;
     public irisAccepted?: dayjs.Dayjs;
 
     constructor(

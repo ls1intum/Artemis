@@ -4,7 +4,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { Subject, Subscription, tap } from 'rxjs';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { PROFILE_LOCALVC } from 'app/app.constants';
-import { faEdit, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,13 +19,17 @@ export class SshUserSettingsComponent implements OnInit {
     currentUser?: User;
     localVCEnabled = false;
     sshKey = '';
+    sshKeyHash = '';
     storedSshKey = '';
-    editSshKey = false;
+    showSshKey = false;
     keyCount = 0;
+    isKeyReadonly = true;
 
     readonly faEdit = faEdit;
     readonly faSave = faSave;
     readonly faTrash = faTrash;
+    readonly faEllipsis = faEllipsis;
+
     private authStateSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
 
@@ -48,9 +52,11 @@ export class SshUserSettingsComponent implements OnInit {
                 tap((user: User) => {
                     this.storedSshKey = user.sshPublicKey || '';
                     this.sshKey = this.storedSshKey;
+                    this.sshKeyHash = user.sshKeyHash || '';
                     this.currentUser = user;
                     // currently only 0 or 1 key are supported
                     this.keyCount = this.sshKey ? 1 : 0;
+                    this.isKeyReadonly = !!this.sshKey;
                     return this.currentUser;
                 }),
             )
@@ -61,8 +67,10 @@ export class SshUserSettingsComponent implements OnInit {
         this.accountService.addSshPublicKey(this.sshKey).subscribe({
             next: () => {
                 this.alertService.success('artemisApp.userSettings.sshSettingsPage.saveSuccess');
-                this.editSshKey = false;
+                this.showSshKey = false;
                 this.storedSshKey = this.sshKey;
+                this.keyCount = this.keyCount + 1;
+                this.isKeyReadonly = true;
             },
             error: () => {
                 this.alertService.error('artemisApp.userSettings.sshSettingsPage.saveFailure');
@@ -71,12 +79,14 @@ export class SshUserSettingsComponent implements OnInit {
     }
 
     deleteSshKey() {
-        this.editSshKey = false;
+        this.showSshKey = false;
         this.accountService.deleteSshPublicKey().subscribe({
             next: () => {
                 this.alertService.success('artemisApp.userSettings.sshSettingsPage.deleteSuccess');
                 this.sshKey = '';
                 this.storedSshKey = '';
+                this.keyCount = this.keyCount - 1;
+                this.isKeyReadonly = false;
             },
             error: () => {
                 this.alertService.error('artemisApp.userSettings.sshSettingsPage.deleteFailure');
@@ -86,7 +96,7 @@ export class SshUserSettingsComponent implements OnInit {
     }
 
     cancelEditingSshKey() {
-        this.editSshKey = !this.editSshKey;
+        this.showSshKey = !this.showSshKey;
         this.sshKey = this.storedSshKey;
     }
 

@@ -1,0 +1,123 @@
+textarea {
+    width: 600px;
+    height: 150px;
+    font-size: small;
+    font-family:
+        Bitstream Vera Sans Mono,
+        Courier New,
+        monospace;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 16px;
+    text-align: left;
+}
+
+th,
+td {
+    padding: 15px 15px;
+}
+
+/* Button styling */
+
+.btn {
+    border-radius: 0;
+}
+
+.container {
+    position: relative;
+}
+
+.icon-column {
+    width: auto;
+    margin-right: 15px;
+}
+
+.vertical-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+tbody tr:hover {
+    background-color: var(--ssh-key-table-hover-background);
+}
+
+/* dd container */
+.dropdown {
+    display: inline-block;
+    position: relative;
+    outline: none;
+    margin: 0px;
+}
+
+/* button */
+.dropbtn {
+    padding: 0px 0px;
+    color: grey;
+    cursor: pointer;
+    transition: 0.35s ease-out;
+}
+
+/* dd content */
+.dropdown .dropdown-content {
+    position: absolute;
+    top: 50%;
+    min-width: 120%;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 100000;
+    visibility: hidden;
+    opacity: 1;
+    transition: 0.35s ease-out;
+    width: 80px;
+}
+
+/* show dd content */
+.dropdown:focus .dropdown-content {
+    outline: none;
+    transform: translateY(20px);
+    visibility: visible;
+    opacity: 1;
+    background-color: var(--light);
+}
+
+/* mask to close menu by clicking on the button */
+.dropdown .db2 {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 10;
+    display: none;
+}
+.dropdown:focus .db2 {
+    display: inline-block;
+}
+.dropdown .db2:focus .dropdown-content {
+    outline: none;
+    visibility: hidden;
+    margin-right: 15px;
+    opacity: 0;
+}
+
+.dropdown-button {
+    margin: auto;
+    color: var(--ssh-key-settings-text-color);
+    background-color: var(--dropdown-bg);
+    border-color: var(--dropdown-bg);
+    width: 80px;
+}
+
+.dropdown-button:hover {
+    background-color: var(--ssh-key-settings-dropdown-buttons-hover);
+    border-color: var(--ssh-key-settings-dropdown-buttons-hover);
+}

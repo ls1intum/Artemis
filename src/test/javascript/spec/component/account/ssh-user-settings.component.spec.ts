@@ -76,10 +76,10 @@ describe('SshUserSettingsComponent', () => {
         accountServiceMock.addSshPublicKey.mockReturnValue(of(new HttpResponse({ status: 200 })));
         comp.ngOnInit();
         comp.sshKey = 'new-key';
-        comp.editSshKey = true;
+        comp.showSshKey = true;
         comp.saveSshKey();
         expect(accountServiceMock.addSshPublicKey).toHaveBeenCalledWith('new-key');
-        expect(comp.editSshKey).toBeFalse();
+        expect(comp.showSshKey).toBeFalse();
     });
 
     it('should delete SSH key and disable edit mode', () => {
@@ -87,10 +87,10 @@ describe('SshUserSettingsComponent', () => {
         comp.ngOnInit();
         const empty = '';
         comp.sshKey = 'new-key';
-        comp.editSshKey = true;
+        comp.showSshKey = true;
         comp.deleteSshKey();
         expect(accountServiceMock.deleteSshPublicKey).toHaveBeenCalled();
-        expect(comp.editSshKey).toBeFalse();
+        expect(comp.showSshKey).toBeFalse();
         expect(comp.storedSshKey).toEqual(empty);
     });
 
@@ -113,10 +113,10 @@ describe('SshUserSettingsComponent', () => {
         const oldKey = 'old-key';
         const newKey = 'new-key';
         comp.sshKey = oldKey;
-        comp.editSshKey = true;
+        comp.showSshKey = true;
         comp.saveSshKey();
         expect(comp.storedSshKey).toEqual(oldKey);
-        comp.editSshKey = true;
+        comp.showSshKey = true;
         comp.sshKey = newKey;
         comp.cancelEditingSshKey();
         expect(comp.storedSshKey).toEqual(oldKey);

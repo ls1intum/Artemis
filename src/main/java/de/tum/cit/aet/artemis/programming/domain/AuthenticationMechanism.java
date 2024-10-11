@@ -20,5 +20,9 @@ public enum AuthenticationMechanism {
     /**
      * The user used the artemis client code editor to authenticate to the LocalVC
      */
-    CODE_EDITOR
+    CODE_EDITOR,
+    /**
+     * If it is unclear if the user used password or token (e.g. when the authentication failed)
+     */
+    PASSWORD_OR_TOKEN,
 }
