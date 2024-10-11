@@ -12,11 +12,11 @@
 
 .monaco-editor {
     // Prevents the editor from highlighting the entire line with char-insert when the line is new.
-    .cdr.line-insert[style*='width:100%;'] + .cdr.char-insert[style*='width:100%;'] {
+    .cdr.line-insert[style*='width:100%;'] ~ .cdr.char-insert[style*='width:100%;'] {
         background-color: transparent;
     }
     // Prevents the editor from highlighting the entire line with char-delete when the line is removed.
-    .cdr.line-delete[style*='width:100%;'] + .cdr.char-delete[style*='width:100%;'] {
+    .cdr.line-delete[style*='width:100%;'] ~ .cdr.char-delete[style*='width:100%;'] {
         background-color: transparent;
     }
 }
