@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.programming;
 import static de.tum.in.www1.artemis.config.Constants.PROFILE_CORE;
 import static de.tum.in.www1.artemis.service.export.ProgrammingExerciseExportService.BUILD_PLAN_FILE_NAME;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -11,6 +12,9 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+
+import javax.json.JsonObject;
+import javax.json.JsonString;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -89,8 +93,8 @@ public class ProgrammingExerciseImportFromFileService {
      * @param user                        the user initiating the import
      * @return the imported programming exercise
      **/
-    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user)
-            throws IOException, GitAPIException, URISyntaxException {
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise originalProgrammingExercise, MultipartFile zipFile, Course course, User user,
+            boolean isImportFromSharing) throws IOException, GitAPIException, URISyntaxException {
         if (!"zip".equals(FilenameUtils.getExtension(zipFile.getOriginalFilename()))) {
             throw new BadRequestAlertException("The file is not a zip file", "programmingExercise", "fileNotZip");
         }
@@ -100,9 +104,34 @@ public class ProgrammingExerciseImportFromFileService {
             importExerciseDir = Files.createTempDirectory("imported-exercise-dir");
             Path exerciseFilePath = Files.createTempFile(importExerciseDir, "exercise-for-import", ".zip");
 
+            if (isImportFromSharing) {
+                // Exercises from Sharing are currently exported in a different zip structure containing an additional dir
+                try (Stream<Path> walk = Files.walk(importExerciseDir)) {
+                    importExerciseDir = walk.filter(Files::isDirectory).toList().get(0);
+                }
+            }
+
             zipFile.transferTo(exerciseFilePath);
             zipFileService.extractZipFileRecursively(exerciseFilePath);
             checkRepositoriesExist(importExerciseDir);
+
+            if (isImportFromSharing) {
+                // ACL
+                ObjectMapper mapper = new ObjectMapper();
+                var exerciseJsonPath = retrieveExerciseJsonPath(importExerciseDir);
+
+                JsonObject json = mapper.readValue(exerciseJsonPath.toFile(), JsonObject.class);
+
+                if (json.get("type").toString().contains("programming")) {
+                    json.put("type", new JsonStringImpl("programming"));
+                }
+
+                // Write back into the file
+                try (FileWriter file = new FileWriter(exerciseJsonPath.toFile())) {
+                    file.write(json.toString());
+                }
+            }
+
             var oldShortName = getProgrammingExerciseFromDetailsFile(importExerciseDir).getShortName();
             programmingExerciseService.validateNewProgrammingExerciseSettings(originalProgrammingExercise, course);
             // TODO: creating the whole exercise (from template) is a bad solution in this case, we do not want the template content, instead we want the file content of the zip
@@ -144,6 +173,14 @@ public class ProgrammingExerciseImportFromFileService {
                 log.warn("Could not read build plan file. Continue importing the exercise but skipping the build plan.", e);
             }
         }
+    }
+
+    /**
+     * Overloaded method setting the isImportFromSharing flag to false as default
+     */
+    public ProgrammingExercise importProgrammingExerciseFromFile(ProgrammingExercise programmingExerciseForImport, MultipartFile zipFile, Course course, User user)
+            throws IOException, GitAPIException, URISyntaxException {
+        return this.importProgrammingExerciseFromFile(programmingExerciseForImport, zipFile, course, user, false);
     }
 
     /**
@@ -274,5 +311,29 @@ public class ProgrammingExerciseImportFromFileService {
             throw new BadRequestAlertException("There are either no JSON files or more than one JSON file in the directory!", "programmingExercise", "exerciseJsonNotValidOrFound");
         }
         return result.getFirst();
+    }
+
+    private static class JsonStringImpl implements JsonString {
+
+        final String s;
+
+        private JsonStringImpl(String s) {
+            this.s = s;
+        }
+
+        @Override
+        public String getString() {
+            return s;
+        }
+
+        @Override
+        public CharSequence getChars() {
+            return s;
+        }
+
+        @Override
+        public ValueType getValueType() {
+            return ValueType.STRING;
+        }
     }
 }

@@ -334,6 +334,17 @@ public final class Constants {
     public static final int PUSH_NOTIFICATION_VERSION = 1;
 
     /**
+     * sharing configution
+     */
+    public static final String SHARINGCONFIG_RESOURCE_PATH = "/sharing/config";
+
+    public static final String SHARINGIMPORT_RESOURCE_PATH = "/sharing/import";
+
+    public static final String SHARINGEXPORT_RESOURCE_PATH = "/sharing/export";
+
+    public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/is-enabled";
+
+    /**
      * The directory in the docker container in which the build script is executed
      */
     public static final String LOCALCI_WORKING_DIRECTORY = "/var/tmp";

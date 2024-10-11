@@ -631,6 +631,10 @@
                 "template": "Vorlage",
                 "history": "Commit-Historie",
                 "result": "Ergebnis"
+            },
+            "sharing": {
+                "import": "Programmieraufgabe aus Sharing importieren",
+                "export": "Exportieren nach Sharing"
             }
         },
         "error": {

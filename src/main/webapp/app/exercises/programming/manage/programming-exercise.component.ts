@@ -40,10 +40,12 @@ import {
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { PROFILE_LOCALCI, PROFILE_LOCALVC } from 'app/app.constants';
+import { SharingInfo } from 'app/sharing/sharing.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
+    providers: [SharingInfo],
 })
 export class ProgrammingExerciseComponent extends ExerciseComponent implements OnInit, OnDestroy {
     @Input() programmingExercises: ProgrammingExercise[];
@@ -89,6 +91,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private alertService: AlertService,
         private modalService: NgbModal,
         private sortService: SortService,
+        public sharingInfo: SharingInfo,
         private profileService: ProfileService,
         courseService: CourseManagementService,
         translateService: TranslateService,

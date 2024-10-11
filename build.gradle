@@ -9,6 +9,9 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven {
+            url 'https://sharing-codeability.uibk.ac.at/api/v4/projects/26/packages/maven'
+        }
     }
 }
 
@@ -214,6 +217,9 @@ repositories {
         url "https://repo.gradle.org/gradle/libs-releases/"
     }
     maven {
+        url 'https://sharing-codeability.uibk.ac.at/api/v4/projects/26/packages/maven'
+    }
+    maven {
         url "https://build.shibboleth.net/maven/releases/"
     }
 }
@@ -225,6 +231,9 @@ ext { qDoxVersionReusable = "com.thoughtworks.qdox:qdox:2.1.0" }
 ext { springBootStarterWeb = "org.springframework.boot:spring-boot-starter-web:${spring_boot_version}" }
 
 dependencies {
+
+    implementation "org.codeability.sharing:SharingPluginPlatformAPI:0.5.1"
+//    implementation group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: '2.33'
 
     // Note: jenkins-client is not well maintained and includes dependencies to libraries with critical security issues (e.g. CVE-2020-10683 for dom4j@1.6.1)
     //    implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"

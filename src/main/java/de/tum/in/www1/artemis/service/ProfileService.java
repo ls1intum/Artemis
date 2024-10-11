@@ -130,4 +130,8 @@ public class ProfileService {
     public boolean isProductionActive() {
         return isProfileActive(JHipsterConstants.SPRING_PROFILE_PRODUCTION);
     }
+
+    public boolean isSharing() {
+        return isProfileActive("sharing");
+    }
 }

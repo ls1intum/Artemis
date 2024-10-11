@@ -632,6 +632,10 @@
                 "template": "Template",
                 "history": "Commit History",
                 "result": "Result"
+            },
+            "sharing": {
+                "import": "Import Programming Exercise from Sharing Platform",
+                "export": "Export to Sharing"
             }
         },
         "error": {

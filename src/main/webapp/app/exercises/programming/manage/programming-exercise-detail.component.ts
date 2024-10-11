@@ -15,6 +15,7 @@ import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.mode
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal.component';
 import { TranslateService } from '@ngx-translate/core';
+import { ProgrammingExerciseSharingService } from 'app/exercises/programming/manage/services/programming-exercise-sharing.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercises/shared/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
@@ -94,6 +95,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     irisChatEnabled = false;
 
+    isExportToSharingEnabled = false;
+
     isAdmin = false;
     addedLineCount: number;
     removedLineCount: number;
@@ -151,6 +154,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         private consistencyCheckService: ConsistencyCheckService,
         private irisSettingsService: IrisSettingsService,
         private aeolusService: AeolusService,
+        private sharingService: ProgrammingExerciseSharingService,
     ) {}
 
     ngOnInit() {
@@ -249,6 +253,11 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             this.exerciseStatisticsSubscription = this.statisticsService.getExerciseStatistics(exerciseId!).subscribe((statistics: ExerciseManagementStatisticsDto) => {
                 this.doughnutStats = statistics;
             });
+        });
+        this.sharingService.isSharingEnabled().subscribe((isEnabled) => {
+            if (isEnabled.body) {
+                this.isExportToSharingEnabled = true;
+            }
         });
     }
 
