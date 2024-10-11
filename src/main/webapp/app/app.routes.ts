@@ -180,6 +180,12 @@ const routes: Routes = [
             pageTitle: 'artemisApp.exerciseChatbot.title',
         },
     },
+    // ===== SHARING =====
+    {
+        path: 'sharing/import/:basketToken',
+        loadChildren: () => import('./sharing/sharing.module').then((m) => m.SharingModule),
+    },
+
 ];
 
 export default routes;

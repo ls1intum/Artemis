@@ -39,6 +39,19 @@ export const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':courseId/programming-exercises/importSharing',
+        component: ProgrammingExerciseUpdateComponent,
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.TA, Authority.INSTRUCTOR, Authority.ADMIN],
+            usePathForBreadcrumbs: true,
+            pageTitle: 'artemisApp.programmingExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':courseId/programming-exercises/:exerciseId/edit',
         loadComponent: () => import('app/exercises/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
         resolve: {
@@ -65,6 +78,18 @@ export const routes: Routes = [
     {
         path: ':courseId/programming-exercises/import-from-file',
         loadComponent: () => import('app/exercises/programming/manage/update/programming-exercise-update.component').then((m) => m.ProgrammingExerciseUpdateComponent),
+        resolve: {
+            programmingExercise: ProgrammingExerciseResolve,
+        },
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.programmingExercise.home.importLabel',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/programming-exercises/import-from-sharing',
+        component: ProgrammingExerciseUpdateComponent,
         resolve: {
             programmingExercise: ProgrammingExerciseResolve,
         },

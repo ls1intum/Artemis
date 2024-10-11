@@ -98,6 +98,7 @@
                     <div>
                         @if (programmingExercise.isAtLeastInstructor) {
                             <jhi-programming-exercise-instructor-exercise-download [exerciseId]="programmingExercise.id!" class="me-1" />
+                            <jhi-programming-exercise-instructor-exercise-sharing [exerciseId]="programmingExercise.id!" class="me-1" />
                         }
                         @if (programmingExercise.isAtLeastEditor) {
                             <span class="me-1">
