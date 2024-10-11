@@ -17,7 +17,6 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
@@ -26,9 +25,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class PresentationPointsCalculationServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "ppcservicetest";
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
