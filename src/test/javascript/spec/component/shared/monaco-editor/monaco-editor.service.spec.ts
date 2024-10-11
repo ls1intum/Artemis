@@ -6,6 +6,8 @@ import { ArtemisTestModule } from '../../../test.module';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { BehaviorSubject } from 'rxjs';
 import { MockResizeObserver } from '../../../helpers/mocks/service/mock-resize-observer';
+import { MONACO_LIGHT_THEME } from '../../../../../../main/webapp/app/shared/monaco-editor/model/themes/monaco-light.theme';
+import { MONACO_DARK_THEME } from '../../../../../../main/webapp/app/shared/monaco-editor/model/themes/monaco-dark.theme';
 
 describe('MonacoEditorService', () => {
     let monacoEditorService: MonacoEditorService;
@@ -40,17 +42,17 @@ describe('MonacoEditorService', () => {
 
     it('should correctly handle themes', () => {
         // Initialization: The editor should be in light mode since that is what we initialized the themeSubject with
-        expect(setThemeSpy).toHaveBeenCalledExactlyOnceWith(MonacoEditorService.LIGHT_THEME_ID);
+        expect(setThemeSpy).toHaveBeenCalledExactlyOnceWith(MONACO_LIGHT_THEME.getId());
         // Switch to dark theme
         themeSubject.next(Theme.DARK);
         TestBed.flushEffects();
         expect(setThemeSpy).toHaveBeenCalledTimes(2);
-        expect(setThemeSpy).toHaveBeenNthCalledWith(2, MonacoEditorService.DARK_THEME_ID);
+        expect(setThemeSpy).toHaveBeenNthCalledWith(2, MONACO_DARK_THEME.getId());
         // Switch back to light theme
         themeSubject.next(Theme.LIGHT);
         TestBed.flushEffects();
         expect(setThemeSpy).toHaveBeenCalledTimes(3);
-        expect(setThemeSpy).toHaveBeenNthCalledWith(3, MonacoEditorService.LIGHT_THEME_ID);
+        expect(setThemeSpy).toHaveBeenNthCalledWith(3, MONACO_LIGHT_THEME.getId());
     });
 
     it.each([

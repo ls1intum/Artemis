@@ -13,9 +13,6 @@ import { MONACO_LIGHT_THEME } from 'app/shared/monaco-editor/model/themes/monaco
  */
 @Injectable({ providedIn: 'root' })
 export class MonacoEditorService {
-    static readonly LIGHT_THEME_ID = 'custom-light';
-    static readonly DARK_THEME_ID = 'custom-dark';
-
     private readonly themeService: ThemeService = inject(ThemeService);
     private readonly currentTheme = toSignal(this.themeService.getCurrentThemeObservable(), { requireSync: true });
 
@@ -45,7 +42,7 @@ export class MonacoEditorService {
      * @private
      */
     private applyTheme(artemisTheme: Theme): void {
-        monaco.editor.setTheme(artemisTheme === Theme.LIGHT ? MonacoEditorService.LIGHT_THEME_ID : MonacoEditorService.DARK_THEME_ID);
+        monaco.editor.setTheme(artemisTheme === Theme.LIGHT ? MONACO_LIGHT_THEME.getId() : MONACO_DARK_THEME.getId());
     }
 
     /**

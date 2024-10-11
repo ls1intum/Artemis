@@ -7,6 +7,10 @@ export class MonacoEditorTheme {
         private readonly themeDefinition: MonacoThemeDefinition,
     ) {}
 
+    getId(): string {
+        return this.id;
+    }
+
     register(): void {
         monaco.editor.defineTheme(this.id, {
             base: this.themeDefinition.baseTheme,
