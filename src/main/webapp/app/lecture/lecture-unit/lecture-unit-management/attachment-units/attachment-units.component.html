@@ -99,7 +99,7 @@
             />
         </div>
     </div>
-    @if (units && units.length < 1) {
+    @if (!units || (units && units.length < 1)) {
         <div class="alert alert-danger mt-3">
             <fa-icon [icon]="faExclamationTriangle" />
             {{ 'artemisApp.attachmentUnit.createAttachmentUnits.noUnitDetected' | artemisTranslate }}
@@ -109,7 +109,7 @@
         [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.processTimeInfo' | artemisTranslate"
         type="button"
         (click)="createAttachmentUnits()"
-        [disabled]="units.length < 1"
+        [disabled]="!units || units.length < 1"
         class="btn btn-primary"
     >
         <span jhiTranslate="entity.action.submit"></span>
