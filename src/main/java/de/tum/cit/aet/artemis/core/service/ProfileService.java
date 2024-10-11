@@ -114,4 +114,22 @@ public class ProfileService {
     public boolean isProductionActive() {
         return isProfileActive(JHipsterConstants.SPRING_PROFILE_PRODUCTION);
     }
+
+    /**
+     * Checks if the docker profile is active
+     *
+     * @return true if the docker profile is active, false otherwise
+     */
+    public boolean isDockerActive() {
+        return isProfileActive(Constants.PROFILE_DOCKER);
+    }
+
+    /**
+     * Checks if the sharing profile is active
+     *
+     * @return true if the sharing profile is active, false otherwise
+     */
+    public boolean isSharingActive() {
+        return isProfileActive(Constants.PROFILE_SHARING);
+    }
 }
