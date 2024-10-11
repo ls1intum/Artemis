@@ -86,8 +86,8 @@ describe('CourseArchiveComponent', () => {
 
             component.ngOnInit();
 
-            expect(component.coursesDTO).toEqual(courses);
-            expect(component.coursesDTO).toHaveLength(7);
+            expect(component.courses).toEqual(courses);
+            expect(component.courses).toHaveLength(7);
         });
 
         it('should handle an empty response body correctly when fetching all courses for archive', () => {
@@ -99,7 +99,7 @@ describe('CourseArchiveComponent', () => {
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             req.flush(null);
-            expect(component.coursesDTO).toStrictEqual(emptyCourses);
+            expect(component.courses).toStrictEqual(emptyCourses);
         });
 
         it('should sort the name of the semesters uniquely', () => {
@@ -205,8 +205,8 @@ describe('CourseArchiveComponent', () => {
 
             expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
             expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
-            expect(component.coursesDTO).toBeDefined();
-            expect(component.coursesDTO).toHaveLength(7);
+            expect(component.courses).toBeDefined();
+            expect(component.courses).toHaveLength(7);
 
             const onSortSpy = jest.spyOn(component, 'onSort');
             const button = fixture.debugElement.nativeElement.querySelector('#sort-test');
@@ -223,7 +223,7 @@ describe('CourseArchiveComponent', () => {
             expect(component.semesters[1]).toBe('WS21/22');
             expect(component.semesters[0]).toBe('SS19');
 
-            const iconComponent = fixture.debugElement.query(By.css('#icon-test-up')).componentInstance;
+            const iconComponent = fixture.debugElement.query(By.css('#icon-test-down')).componentInstance;
 
             expect(iconComponent).not.toBeNull();
             expect(iconComponent.icon).toBe(component.faArrowUp19);
