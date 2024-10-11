@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLLMCostDTO;
 
 /**
- * Service for managing Iris messages.
+ * Service for managing the LLMTokenUsage by all LLMs in Artemis
  */
 @Service
 @Profile(PROFILE_IRIS)
@@ -28,6 +28,19 @@ public class LLMTokenUsageService {
     public LLMTokenUsageService(LLMTokenUsageRepository llmTokenUsageRepository) {
         this.llmTokenUsageRepository = llmTokenUsageRepository;
     }
+
+    /**
+     * saves the tokens used for a specific IrisMessage or Athena call
+     * in case of an Athena call IrisMessage can be null and the
+     * LLMServiceType in tokens has to by Athena
+     *
+     * @param message  IrisMessage related to the TokenUsage
+     * @param exercise Exercise in which the request was made
+     * @param user     User that made the request
+     * @param course   Course in which the request was made
+     * @param tokens   List with Tokens of the PyrisLLMCostDTO Mdel
+     * @return List of the created LLMTokenUsage entries
+     */
 
     public List<LLMTokenUsage> saveTokenUsage(IrisMessage message, Exercise exercise, User user, Course course, List<PyrisLLMCostDTO> tokens) {
         List<LLMTokenUsage> tokenUsages = new ArrayList<>();
