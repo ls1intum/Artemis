@@ -1,4 +1,4 @@
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DataExportService } from 'app/core/legal/data-export/data-export.service';
 import { DataExport } from 'app/entities/data-export.model';
@@ -6,6 +6,7 @@ import { User } from 'app/core/user/user.model';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('DataExportService', () => {
     let service: DataExportService;
@@ -13,8 +14,8 @@ describe('DataExportService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TranslateService, useClass: MockTranslateService }],
         });
         service = TestBed.inject(DataExportService);
         httpMock = TestBed.inject(HttpTestingController);

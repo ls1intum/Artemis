@@ -123,8 +123,12 @@
                 },
                 "messagingEnabled": {
                     "label": "Direct Messages / Group Chats Enabled",
-                    "tooltip": "Enables messaging between course users in group chats or direct messages. Every user can start a direct message, private group chat and add other users. A group chat is limited to 10 members. The chats happens in the communication space of the course.",
+                    "tooltip": "Enables messaging between course users in group chats or direct messages. Every user can start a direct message, private group chat and add other users. A group chat is limited to 10 members. The chats happen in the communication space of the course.",
                     "codeOfConduct": "Messaging Code of Conduct"
+                },
+                "faqEnabled": {
+                    "label": "FAQ enabled",
+                    "tooltip": "Enables the creation of FAQ entries where instructors can compile frequently asked questions in an organized manner. Students can access this knowledge base to independently review topics and resolve their questions on their own."
                 }
             },
             "enrollmentEnabled": {

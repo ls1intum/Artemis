@@ -72,6 +72,12 @@
                     <span class="tab-link-text" jhiTranslate="entity.action.scores"></span>
                 </a>
             }
+            @if (course.isAtLeastInstructor && course.faqEnabled) {
+                <a class="tab-link" [routerLink]="['/course-management', course.id, 'faqs']" routerLinkActive="active">
+                    <fa-icon [icon]="faQuestion" />
+                    <span class="tab-link-text" jhiTranslate="entity.action.faq"></span>
+                </a>
+            }
             @if (course.isAtLeastInstructor && localCIActive) {
                 <a class="tab-link" [routerLink]="['/course-management', course.id, 'build-queue']" routerLinkActive="active">
                     <fa-icon [icon]="faList" />

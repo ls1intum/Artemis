@@ -20,6 +20,7 @@ import {
     faNetworkWired,
     faPersonChalkboard,
     faPuzzlePiece,
+    faQuestion,
     faRobot,
     faTable,
     faTrash,
@@ -75,6 +76,7 @@ export class CourseManagementTabBarComponent implements OnInit, OnDestroy, After
     faRobot = faRobot;
     faPuzzlePiece = faPuzzlePiece;
     faList = faList;
+    faQuestion = faQuestion;
 
     isCommunicationEnabled = false;
 

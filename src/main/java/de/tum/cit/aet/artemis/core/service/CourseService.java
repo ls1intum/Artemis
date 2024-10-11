@@ -61,6 +61,7 @@ import de.tum.cit.aet.artemis.communication.domain.NotificationType;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.notification.GroupNotification;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
+import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.communication.repository.GroupNotificationRepository;
 import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ConversationRepository;
@@ -121,6 +122,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupChannelManageme
 public class CourseService {
 
     private static final Logger log = LoggerFactory.getLogger(CourseService.class);
+
+    private final FaqRepository faqRepository;
 
     @Value("${artemis.course-archives-path}")
     private Path courseArchivesDirPath;
@@ -222,7 +225,7 @@ public class CourseService {
             LearningPathService learningPathService, Optional<IrisSettingsService> irisSettingsService, LectureRepository lectureRepository,
             TutorialGroupNotificationRepository tutorialGroupNotificationRepository, TutorialGroupChannelManagementService tutorialGroupChannelManagementService,
             PrerequisiteRepository prerequisiteRepository, CompetencyRelationRepository competencyRelationRepository, PostRepository postRepository,
-            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository) {
+            AnswerPostRepository answerPostRepository, BuildJobRepository buildJobRepository, FaqRepository faqRepository) {
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.exerciseDeletionService = exerciseDeletionService;
@@ -265,6 +268,7 @@ public class CourseService {
         this.buildJobRepository = buildJobRepository;
         this.postRepository = postRepository;
         this.answerPostRepository = answerPostRepository;
+        this.faqRepository = faqRepository;
     }
 
     /**
@@ -498,6 +502,7 @@ public class CourseService {
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
+        deleteFaqsOfCourse(course);
         irisSettingsService.ifPresent(iss -> iss.deleteSettingsFor(course));
         courseRepository.deleteById(course.getId());
         log.debug("Successfully deleted course {}.", course.getTitle());
@@ -571,6 +576,10 @@ public class CourseService {
         competencyRelationRepository.deleteAllByCourseId(course.getId());
         prerequisiteRepository.deleteAll(course.getPrerequisites());
         competencyRepository.deleteAll(course.getCompetencies());
+    }
+
+    private void deleteFaqsOfCourse(Course course) {
+        faqRepository.deleteAllByCourseId(course.getId());
     }
 
     /**

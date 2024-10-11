@@ -12,24 +12,24 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.course.CourseFactory;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
+import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.modeling.ModelingExerciseFactory;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
-import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
-import de.tum.cit.aet.artemis.exercise.text.TextExerciseFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
+import de.tum.cit.aet.artemis.exercise.team.TeamUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
-import de.tum.cit.aet.artemis.participation.ParticipationFactory;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
-import de.tum.cit.aet.artemis.team.TeamUtilService;
+import de.tum.cit.aet.artemis.modeling.util.ModelingExerciseFactory;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
-import de.tum.cit.aet.artemis.user.UserUtilService;
+import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
 /**
  * Service responsible for initializing the database with specific testdata related to plagiarisms for use in integration tests.
@@ -44,16 +44,16 @@ public class PlagiarismUtilService {
     private static final ZonedDateTime FUTURE_FUTURE_TIMESTAMP = ZonedDateTime.now().plusDays(2);
 
     @Autowired
-    private CourseRepository courseRepo;
+    private CourseTestRepository courseRepo;
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepository;
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepo;
+    private StudentParticipationTestRepository studentParticipationRepo;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
+    private SubmissionTestRepository submissionRepository;
 
     @Autowired
     private UserUtilService userUtilService;
@@ -76,7 +76,7 @@ public class PlagiarismUtilService {
         exercise.setMode(mode);
         course.addExercises(exercise);
         courseRepo.save(course);
-        return exerciseRepo.save(exercise);
+        return exerciseRepository.save(exercise);
     }
 
     private ModelingExercise createModelingExercise(String userPrefix, int studentsAmount, ExerciseMode mode) {
@@ -85,7 +85,7 @@ public class PlagiarismUtilService {
         exercise.setMode(mode);
         course.addExercises(exercise);
         courseRepo.save(course);
-        return exerciseRepo.save(exercise);
+        return exerciseRepository.save(exercise);
     }
 
     private StudentParticipation saveParticipationAndAddSubmission(StudentParticipation participation, Submission submission) {
@@ -115,7 +115,7 @@ public class PlagiarismUtilService {
             saveParticipationAndAddSubmission(participation, submission);
             exercise.addParticipation(participation);
         }
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         return exercise.getId();
     }
 
@@ -137,7 +137,7 @@ public class PlagiarismUtilService {
             saveParticipationAndAddSubmission(participation, submission);
             exercise.addParticipation(participation);
         }
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         return exercise.getId();
     }
 
@@ -159,7 +159,7 @@ public class PlagiarismUtilService {
             saveParticipationAndAddSubmission(participation, submission);
             exercise.addParticipation(participation);
         }
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         return exercise.getId();
     }
 
@@ -181,7 +181,7 @@ public class PlagiarismUtilService {
             saveParticipationAndAddSubmission(participation, submission);
             exercise.addParticipation(participation);
         }
-        exerciseRepo.save(exercise);
+        exerciseRepository.save(exercise);
         return exercise.getId();
     }
 
