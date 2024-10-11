@@ -204,6 +204,16 @@ const routes: Routes = [
             pageTitle: 'artemisApp.exerciseChatbot.title',
         },
     },
+    // ===== SHARING =====
+    {
+        path: 'sharing/import/:basketToken',
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.sharing.title',
+        },
+        // canActivate: [UserRouteAccessService],
+        loadComponent: () => import('./sharing/sharing.component').then((m) => m.SharingComponent),
+    },
 ];
 
 export default routes;

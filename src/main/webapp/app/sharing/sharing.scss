@@ -1,0 +1,158 @@
+:host {
+    margin: 0;
+    padding: 0;
+    font-family: 'Ubuntu', sans-serif;
+    display: flex;
+}
+
+.header {
+    position: relative;
+    text-align: center;
+    background: var(--fo-blue-font-color);
+}
+
+.header h1 {
+    color: #fff;
+    margin: 0;
+    padding: 1em 2em;
+    font-size: 5em;
+    text-shadow: 1px 1px 40px #333;
+    box-sizing: border-box;
+}
+
+.content {
+    padding: 20px;
+}
+
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    align-items: center;
+    box-sizing: border-box;
+    width: 100%;
+    background: #fff;
+}
+
+.features-overview {
+    margin: 0;
+    padding: 0 max(20px, 20%);
+    text-align: center;
+    color: #3070b3;
+}
+
+@media (max-width: 768px) {
+    .content h2 {
+        font-size: 2em;
+        padding: 0.5em 20px;
+    }
+}
+
+.content h2 {
+    margin: 0;
+    padding-left: 20%;
+    padding-right: 20%;
+    text-align: center;
+    color: #3070b3;
+    font-size: 3em;
+    padding-bottom: 1em;
+    box-sizing: border-box;
+}
+
+.container {
+    width: min(1200px, 100%);
+    height: auto;
+    margin: 0 auto;
+    display: grid;
+    align-items: center;
+    align-self: center;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-gap: 15px;
+    padding: 10px;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+@media (hover: hover) {
+    .container .box:hover .icon,
+    .container .box:focus-within .icon {
+        top: 20px;
+        left: calc(50% - 40px);
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        cursor: pointer;
+    }
+}
+
+@media (hover: none) {
+    .container .box .icon {
+        position: relative;
+        height: 80px;
+        border-radius: 50%;
+        margin: 0 auto;
+    }
+}
+
+.container .box {
+    position: relative;
+    height: 250px;
+    background: #3070b3;
+    padding: 15px 15px 15px;
+    text-align: left;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 10px;
+}
+
+.container .box .icon {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f2f2f2;
+    transition: 0.5s;
+    z-index: 1;
+}
+
+.container .box:hover .icon {
+    top: 20px;
+    left: calc(50% - 40px);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.container .box .icon .title {
+    position: absolute;
+    margin-left: 20px;
+    display: inline-block;
+    top: calc(50% + 10px);
+    padding: 20px 10px;
+    color: #3070b3;
+    font-size: 22px;
+    width: calc(100% - 40px);
+    text-align: center;
+    opacity: 1;
+}
+
+.container .box .icon .fa {
+    position: absolute;
+    top: calc(50% - 20px);
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 80px;
+    transition: 0.5s;
+    color: #3070b3;
+}
+
+.container .box:hover .icon .fa {
+    top: 50%;
+    font-size: 40px;
+}
+
+.container .box:hover .icon .title {
+    opacity: 0;
+}

@@ -241,12 +241,16 @@ public class SecurityConfiguration {
                     .requestMatchers("/.well-known/jwks.json").permitAll()
                     .requestMatchers("/.well-known/assetlinks.json").permitAll()
                     .requestMatchers("/.well-known/apple-app-site-association").permitAll()
+                    // sharing export (to Sharing plattform) is protected by explicit security tokens, thus we can permitAll here
+                    .requestMatchers("/api/programming/sharing/export/**").permitAll()
+                    // sharing is protected by explicit security tokens, (or are non-critical) thus we can permitAll here
+                    .requestMatchers("/api/core/sharing/**").permitAll()
                     // Prometheus endpoint protected by IP address.
                     .requestMatchers("/management/prometheus/**").access((authentication, context) -> new AuthorizationDecision(monitoringIpAddresses.contains(context.getRequest().getRemoteAddr())))
                     .requestMatchers(("/api-docs")).permitAll()
                     .requestMatchers(("/api-docs.yaml")).permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll();
-                    // LocalVC related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
+                    // LocalVCS related URLs: LocalVCPushFilter and LocalVCFetchFilter handle authentication on their own
                     if (profileService.isLocalVCActive()) {
                         requests.requestMatchers("/git/**").permitAll();
                     }
