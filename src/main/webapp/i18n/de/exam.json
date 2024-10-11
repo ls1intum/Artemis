@@ -150,6 +150,7 @@
             "falseName": "Der angegebene Name ist nicht korrekt. Bitte versuche es erneut!",
             "notSet": "Nicht gesetzt",
             "startExamToolTip": "Button wird 5 Minuten vor der Klausur aktiviert.",
+            "yourSolution": "Deine Lösung",
             "cleanup": {
                 "title": "Aufräumen",
                 "question": "Möchtest du die Prüfung <strong>{{title}}</strong> wirklich bereinigen? Dadurch werden alle Studierenden-Repositories in der Prüfung gelöscht. Diese Aktion kann <strong class='text-danger'>NICHT</strong> rückgängig gemacht werden!"
