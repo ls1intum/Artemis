@@ -3,6 +3,8 @@ import * as monaco from 'monaco-editor';
 import { CUSTOM_MARKDOWN_CONFIG, CUSTOM_MARKDOWN_LANGUAGE, CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { MONACO_DARK_THEME } from 'app/shared/monaco-editor/model/themes/monaco-dark.theme';
+import { MONACO_LIGHT_THEME } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';
 
 /**
  * Service providing shared functionality for the Monaco editor.
@@ -11,20 +13,30 @@ import { toSignal } from '@angular/core/rxjs-interop';
  */
 @Injectable({ providedIn: 'root' })
 export class MonacoEditorService {
-    static readonly LIGHT_THEME_ID = 'vs';
-    static readonly DARK_THEME_ID = 'vs-dark';
+    static readonly LIGHT_THEME_ID = 'custom-light';
+    static readonly DARK_THEME_ID = 'custom-dark';
 
     private readonly themeService: ThemeService = inject(ThemeService);
     private readonly currentTheme = toSignal(this.themeService.getCurrentThemeObservable(), { requireSync: true });
 
     constructor() {
-        monaco.languages.register({ id: CUSTOM_MARKDOWN_LANGUAGE_ID });
-        monaco.languages.setLanguageConfiguration(CUSTOM_MARKDOWN_LANGUAGE_ID, CUSTOM_MARKDOWN_CONFIG);
-        monaco.languages.setMonarchTokensProvider(CUSTOM_MARKDOWN_LANGUAGE_ID, CUSTOM_MARKDOWN_LANGUAGE);
+        this.registerCustomThemes();
+        this.registerCustomMarkdownLanguage();
 
         effect(() => {
             this.applyTheme(this.currentTheme());
         });
+    }
+
+    private registerCustomThemes(): void {
+        MONACO_LIGHT_THEME.register();
+        MONACO_DARK_THEME.register();
+    }
+
+    private registerCustomMarkdownLanguage(): void {
+        monaco.languages.register({ id: CUSTOM_MARKDOWN_LANGUAGE_ID });
+        monaco.languages.setLanguageConfiguration(CUSTOM_MARKDOWN_LANGUAGE_ID, CUSTOM_MARKDOWN_CONFIG);
+        monaco.languages.setMonarchTokensProvider(CUSTOM_MARKDOWN_LANGUAGE_ID, CUSTOM_MARKDOWN_LANGUAGE);
     }
 
     /**
