@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise_;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseNamesDTO;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository.ProgrammingExerciseFetchOptions;
 
 /**
  * Spring Data JPA repository for the ProgrammingExercise entity.

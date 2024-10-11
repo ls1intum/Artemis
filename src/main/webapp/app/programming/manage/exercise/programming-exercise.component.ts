@@ -36,10 +36,11 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
-
+import { SharingInfo } from 'app/sharing/sharing.model';
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
+    providers: [SharingInfo],
     imports: [
         SortDirective,
         FormsModule,
