@@ -12,7 +12,7 @@ import { AlertService } from 'app/core/util/alert.service';
 @Component({
     selector: 'jhi-account-information',
     templateUrl: './ssh-user-settings.component.html',
-    styleUrls: ['../user-settings.scss'],
+    styleUrls: ['../user-settings.scss', './ssh-user-settings.component.scss'],
 })
 export class SshUserSettingsComponent implements OnInit {
     readonly documentationType: DocumentationType = 'SshSetup';
@@ -21,6 +21,7 @@ export class SshUserSettingsComponent implements OnInit {
     sshKey = '';
     storedSshKey = '';
     editSshKey = false;
+    keyCount = 0;
 
     readonly faEdit = faEdit;
     readonly faSave = faSave;
@@ -48,6 +49,8 @@ export class SshUserSettingsComponent implements OnInit {
                     this.storedSshKey = user.sshPublicKey || '';
                     this.sshKey = this.storedSshKey;
                     this.currentUser = user;
+                    // currently only 0 or 1 key are supported
+                    this.keyCount = this.sshKey ? 1 : 0;
                     return this.currentUser;
                 }),
             )

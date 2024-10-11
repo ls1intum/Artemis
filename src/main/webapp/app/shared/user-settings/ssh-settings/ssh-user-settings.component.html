@@ -3,23 +3,31 @@
 </h1>
 @if (currentUser) {
     <div class="list-group d-block">
-        <div class="list-group-item">
-            <dt>
-                <span jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshSettingsInfoText"> </span>
-                <jhi-documentation-button [type]="documentationType" />
-            </dt>
-        </div>
-        @if (storedSshKey === '' && !editSshKey) {
-            <div class="list-group-item">
-                <jhi-button
-                    [btnType]="ButtonType.PRIMARY"
-                    [btnSize]="ButtonSize.SMALL"
-                    [title]="'artemisApp.userSettings.sshSettingsPage.addNewSshKey'"
-                    (onClick)="editSshKey = !editSshKey"
-                />
+        <!-- Initial state: There are no keys -->
+        @if (keyCount === 0 && !editSshKey) {
+            <div class="list-group-item px-4 py-4">
+                <div class="mt-4"></div>
+                <h4 class="text-center mb-4 mt-8" jhiTranslate="artemisApp.userSettings.sshSettingsPage.noKeysHaveBeenAdded">No SSH keys have been added</h4>
+                <div class="text-center mt-4 d-flex justify-content-center align-items-center flex-wrap" style="max-width: 500px; margin: 0 auto">
+                    <p>
+                        <span style="font-size: medium" jhiTranslate="artemisApp.userSettings.sshSettingsPage.whatToUseSSHForInfo"> </span>
+                        <jhi-documentation-link [documentationType]="documentationType" [displayString]="'artemisApp.userSettings.sshSettingsPage.learnMore'">
+                        </jhi-documentation-link>
+                    </p>
+                </div>
+
+                <div class="d-flex justify-content-center mb-4">
+                    <jhi-button
+                        [btnType]="ButtonType.PRIMARY"
+                        [btnSize]="ButtonSize.MEDIUM"
+                        [title]="'artemisApp.userSettings.sshSettingsPage.addNewSshKey'"
+                        (onClick)="editSshKey = !editSshKey"
+                    />
+                </div>
             </div>
         }
-        @if (storedSshKey !== '' && !editSshKey) {
+        <!-- Initial state: There are keys -->
+        @if (keyCount > 0 && !editSshKey) {
             <dt class="list-group-item" jhiTranslate="artemisApp.userSettings.sshSettingsPage.sshKeyDisplayedInformation"></dt>
             <div class="list-group-item">
                 {{ sshKey }}
@@ -50,6 +58,7 @@
                 </div>
             </div>
         }
+        <!-- Editing existing key -->
         @if (editSshKey) {
             <div class="list-group-item">
                 <div jhiTranslate="artemisApp.userSettings.sshSettingsPage.key"></div>

@@ -28,10 +28,13 @@
                 "deleteSuccess": "Successfully deleted SSH key.",
                 "cancelSavingSshKey": "Cancel",
                 "editExistingSshKey": "Edit SSH key",
-                "addNewSshKey": "New SSH key",
+                "addNewSshKey": "Add key",
                 "deleteSshKey": "Delete",
                 "sshKeyDisplayedInformation": "This is your currently configured SSH key:",
-                "key": "SSH Key"
+                "key": "SSH Key",
+                "noKeysHaveBeenAdded": "No SSH keys have been added",
+                "whatToUseSSHForInfo": "Use SSH keys to connect simply and safely to repositories.",
+                "learnMore": "Learn more about SSH keys"
             },
             "vcsAccessTokensSettingsPage": {
                 "addTokenTitle": "Add personal access token",

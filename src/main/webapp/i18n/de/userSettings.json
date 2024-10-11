@@ -28,10 +28,13 @@
                 "deleteSuccess": "SSH-Schlüssel erfolgreich gelöscht.",
                 "cancelSavingSshKey": "Abbrechen",
                 "editExistingSshKey": "SSH-Schlüssel bearbeiten",
-                "addNewSshKey": "Neuer SSH-Schlüssel",
+                "addNewSshKey": "Schlüssel hinzufügen",
                 "deleteSshKey": "Löschen",
                 "sshKeyDisplayedInformation": "Das ist dein aktuell konfigurierter SSH-Schlüssel:",
-                "key": "SSH Schlüssel"
+                "key": "SSH Schlüssel",
+                "noKeysHaveBeenAdded": "Es wurden noch keine SSH-Schlüssel hinzugefügt",
+                "whatToUseSSHForInfo": "Verwende SSH-Schlüssel, um einfach und sicher eine Verbindung zu Repositories herzustellen.",
+                "learnMore": "Erfahre mehr über SSH-Schlüssel"
             },
             "vcsAccessTokensSettingsPage": {
                 "addTokenTitle": "Neues Zugriffstoken erzeugen",
