@@ -1,6 +1,7 @@
 /**
  * Interface for the colors of the editor.
  * See https://code.visualstudio.com/api/references/theme-color
+ * All colors must be in the format '#RRGGBB' or '#RRGGBBAA'.
  */
 export interface EditorColors {
     backgroundColor?: string; // editor.background
