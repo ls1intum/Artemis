@@ -52,7 +52,7 @@ import { IrisSubSettingsType } from 'app/iris/shared/entities/settings/iris-sub-
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Competency } from 'app/atlas/shared/entities/competency.model';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/programming/shared/entities/programming-exercise-git-diff-report.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -66,6 +66,8 @@ import { RepositoryType } from '../../shared/code-editor/model/code-editor.model
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckComponent } from 'app/programming/manage/consistency-check/consistency-check.component';
 import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/feature-overlay.component';
+import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../../shared/actions/programming-exercise-instructor-exercise-sharing.component';
+import { ProgrammingExerciseSharingService } from '../services/programming-exercise-sharing.service';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -87,6 +89,7 @@ import { FeatureOverlayComponent } from 'app/shared/components/feature-overlay/f
         DetailOverviewListComponent,
         ArtemisTranslatePipe,
         FeatureOverlayComponent,
+        ProgrammingExerciseInstructorExerciseSharingComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -153,6 +156,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     irisChatEnabled = false;
     plagiarismEnabled = false;
 
+    isExportToSharingEnabled = false;
+
     isAdmin = false;
     addedLineCount: number;
     removedLineCount: number;
@@ -165,11 +170,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private templateAndSolutionParticipationSubscription: Subscription;
     private irisSettingsSubscription: Subscription;
     private exerciseStatisticsSubscription: Subscription;
-
+    private sharingEnabledSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     exerciseDetailSections: DetailOverviewSection[];
+
+    constructor(private sharingService: ProgrammingExerciseSharingService) {}
 
     ngOnInit() {
         this.isBuildPlanEditable = this.profileService.isProfileActive('jenkins');
@@ -265,6 +272,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.doughnutStats = statistics;
             });
         });
+        this.sharingEnabledSubscription = this.sharingService
+            .isSharingEnabled()
+            .pipe(
+                map((response) => response.body ?? false),
+                catchError(() => {
+                    return of(false);
+                }),
+            )
+            .subscribe((isEnabled) => {
+                this.isExportToSharingEnabled = isEnabled;
+            });
     }
 
     ngOnDestroy(): void {
@@ -273,6 +291,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
         this.irisSettingsSubscription?.unsubscribe();
         this.exerciseStatisticsSubscription?.unsubscribe();
+        this.sharingEnabledSubscription?.unsubscribe();
     }
 
     /**
