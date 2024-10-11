@@ -3,11 +3,11 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { RouterTestingModule } from '@angular/router/testing';
 import { CompetenciesPopoverComponent } from 'app/course/competencies/competencies-popover/competencies-popover.component';
 import { By } from '@angular/platform-browser';
 import { Component } from '@angular/core';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import { RouterModule } from '@angular/router';
 
 @Component({
     selector: 'jhi-statistics',
@@ -29,7 +29,7 @@ describe('CompetencyPopoverComponent', () => {
         TestBed.configureTestingModule({
             imports: [
                 NgbPopoverModule,
-                RouterTestingModule.withRoutes([
+                RouterModule.forRoot([
                     { path: 'courses/:courseId/competencies', component: DummyStatisticsComponent },
                     { path: 'course-management/:courseId/competency-management', component: DummyManagementComponent },
                 ]),

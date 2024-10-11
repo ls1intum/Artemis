@@ -4,6 +4,7 @@
             "title": "Deine aktuellen Kurse",
             "recentlyAccessed": "Zuletzt besuchte Kurse",
             "otherCourses": "Andere Kurse",
+            "sort": "Sortieren",
             "noCourses": "Du bist in keinem Kurs eingeschrieben. Schreibe dich manuell ein oder kontaktiere die Lehrenden.",
             "exerciseTitle": "Aktuelle aktive Übung von \"{{ course }}\"",
             "exerciseTitleWithoutDueDate": "Aktuelle Übung von \"{{ course }}\":",
@@ -19,6 +20,7 @@
                 "oldCourses": "Suchst du nach alten Kursen? Klicke",
                 "here": "hier"
             },
+            "noCoursesFound": "Keine Kurse gefunden",
             "enroll": {
                 "title": "Kurseinschreibung",
                 "enrollSuccessful": "Einschreibung erfolgreich",
@@ -72,7 +74,7 @@
                 "examChannels": "Klausuren",
                 "createChannel": "Kanal erstellen",
                 "browseChannels": "Kanäle durchsuchen",
-                "groupChats": "Gruppen-Chats",
+                "groupChats": "Gruppenchats",
                 "directMessages": "Direktnachrichten",
                 "filterConversationPlaceholder": "Konversationen filtern"
             },

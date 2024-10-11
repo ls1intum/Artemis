@@ -1,4 +1,4 @@
-@if (coursesDTO) {
+@if (courses) {
     <div class="module-bg p-3 rounded-3 mb-3">
         <div class="d-flex justify-content-between align-items-center">
             <div class="d-flex justify-content-start gap-1">
@@ -10,15 +10,11 @@
                     ngbTooltip="{{ 'artemisApp.course.archive.tip' | artemisTranslate }}"
                 />
             </div>
-            @if (coursesDTO.length) {
+            @if (courses.length) {
                 <div class="d-flex justify-content-between gap-3 align-items-center ms-1">
                     <div class="text-primary d-inline-flex">
                         <a id="sort-test" (click)="onSort()" class="d-inline-flex align-items-center">
-                            @if (isSortAscending) {
-                                <fa-icon id="icon-test-down" [icon]="faArrowDown19" />
-                            } @else {
-                                <fa-icon id="icon-test-up" [icon]="faArrowUp19" />
-                            }
+                            <fa-icon id="icon-test-down" [icon]="isSortAscending ? faArrowDown19 : faArrowUp19" />
                             <span class="ms-1" jhiTranslate="artemisApp.course.archive.sort"></span>
                         </a>
                     </div>
@@ -28,7 +24,7 @@
         </div>
     </div>
     <div class="module-bg py-3 rounded-3">
-        @if (coursesDTO.length) {
+        @if (courses.length) {
             <div class="mb-0">
                 @for (semester of semesters; track semester; let last = $last) {
                     <div
@@ -36,7 +32,7 @@
                         (click)="isCourseFoundInSemester(semester) && toggleCollapseState(semester)"
                         tabindex="0"
                         role="button"
-                        [ngClass]="{ 'text-secondary': (coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText).length <= 0 }"
+                        [ngClass]="{ 'text-secondary': !(coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText).length }"
                     >
                         <span class="fw-bold" jhiTranslate="{{ fullFormOfSemesterStrings[semester] }}" [translateValues]="{ param: semester.slice(2) }"></span>
                         <fa-icon [icon]="semesterCollapsed[semester] ? faAngleDown : faAngleUp" />

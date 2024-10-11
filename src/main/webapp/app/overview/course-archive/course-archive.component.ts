@@ -23,7 +23,7 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
     private courseService = inject(CourseManagementService);
     private alertService = inject(AlertService);
 
-    coursesDTO: CourseForArchiveDTO[] = [];
+    courses: CourseForArchiveDTO[] = [];
     semesters: string[];
     fullFormOfSemesterStrings: { [key: string]: string } = {};
     semesterCollapsed: { [key: string]: boolean } = {};
@@ -51,9 +51,9 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
         this.archiveCourseSubscription = this.courseService.getCoursesForArchive().subscribe({
             next: (res: HttpResponse<CourseForArchiveDTO[]>) => {
                 if (res.body) {
-                    this.coursesDTO = res.body || [];
-                    this.coursesDTO = this.sortCoursesByTitle(this.coursesDTO);
-                    this.semesters = this.getUniqueSemesterNamesSorted(this.coursesDTO);
+                    this.courses = res.body || [];
+                    this.courses = this.sortCoursesByTitle(this.courses);
+                    this.semesters = this.getUniqueSemesterNamesSorted(this.courses);
                     this.mapCoursesIntoSemesters();
                 }
             },
@@ -65,12 +65,12 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
      * maps existing courses to each semester
      */
     mapCoursesIntoSemesters(): void {
-        for (const semester of this.semesters) {
+        this.semesters.forEach((semester) => {
             this.semesterCollapsed[semester] = false;
             this.courseService.setSemesterCollapseState(semester, false);
-            this.coursesBySemester[semester] = this.coursesDTO.filter((course) => course.semester === semester);
+            this.coursesBySemester[semester] = this.courses.filter((course) => course.semester === semester);
             this.fullFormOfSemesterStrings[semester] = semester.startsWith('WS') ? 'artemisApp.course.archive.winterSemester' : 'artemisApp.course.archive.summerSemester';
-        }
+        });
     }
 
     ngOnDestroy(): void {

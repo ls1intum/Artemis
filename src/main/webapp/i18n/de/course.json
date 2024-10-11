@@ -78,7 +78,7 @@
             "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
                 "title": "Maximale Punktzahl",
-                "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mit Hilfe der im Kurs erreichbaren Punkte berechnet."
+                "info": "Dieser Wert wird für die Berechnung von Beispielen (z.B. im Notenschlüssel) verwendet und hat keinen Einfluss auf die Noten der Studierenden. Die Noten werden mithilfe der im Kurs erreichbaren Punkte berechnet."
             },
             "accuracyOfScores": "Anzahl der Nachkommastellen bei der Berechnung von Punktzahlen",
             "defaultProgrammingLanguage": "Standard-Programmiersprache",
@@ -111,8 +111,8 @@
                     "tooltip": "Ermöglicht die Kommunikation zwischen Nutzer:innen in privaten oder öffentlichen Kanälen, die nur von Lehrenden und Tutor:innen erstellt werden können. Die Studierenden können mit anderen Studierenden interagieren und Fragen stellen, während Moderator:innen Kursinformationen bereitstellen und inhaltliche Fragen beantworten können. Die Kommunikation kann direkt auf der Seite der jeweiligen Übung oder Vorlesung oder im speziellen Kommunikationsbereich des Kurses erfolgen."
                 },
                 "messagingEnabled": {
-                    "label": "Direktnachrichten / Gruppen-Chats aktiviert",
-                    "tooltip": "Ermöglicht den Nachrichtenaustausch in Gruppenchats oder Direktnachrichten. Alle Nutzer:innen können Direktnachrichten oder einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder:innen begrenzt. Die Chats finden im Kommunikationbereich des Kurses statt.",
+                    "label": "Direktnachrichten / Gruppenchats aktiviert",
+                    "tooltip": "Ermöglicht den Nachrichtenaustausch in Gruppenchats oder Direktnachrichten. Alle Nutzer:innen können Direktnachrichten oder einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder begrenzt. Die Chats finden im Kommunikationbereich des Kurses statt.",
                     "codeOfConduct": "Nachrichten: Code of Conduct"
                 },
                 "faqEnabled": {
@@ -122,10 +122,10 @@
             },
             "enrollmentEnabled": {
                 "title": "Kurseinschreibung für Studierende aktiviert",
-                "description": "Aktiviere diese Checkbox, damit sich Studierende selbständig im Kurs einschreiben können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Einschreibung bestätigen müssen."
+                "description": "Aktiviere diese Checkbox, damit sich Studierende selbstständig im Kurs einschreiben können, sofern dieser aktiv ist (zwischen Start und Ende des Kurses). Du kannst optional eine Nachricht eingeben, die Studierende bei der Einschreibung bestätigen müssen."
             },
-            "enrollmentStartDate": "Einschreibungs Start",
-            "enrollmentEndDate": "Einschreibungs Ende",
+            "enrollmentStartDate": "Einschreibungsstart",
+            "enrollmentEndDate": "Einschreibungsende",
             "enrollmentConfirmationMessage": "Nachricht zur Bestätigung der Einschreibung",
             "unenrollmentEnabled": {
                 "title": "Austragen aus dem Kurs für Studierende aktiviert",

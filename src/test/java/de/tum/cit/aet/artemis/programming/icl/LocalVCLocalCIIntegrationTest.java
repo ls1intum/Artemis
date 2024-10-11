@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 import javax.naming.InvalidNameException;
 import javax.naming.ldap.LdapName;
@@ -32,15 +31,24 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import com.hazelcast.collection.IQueue;
+import com.hazelcast.core.HazelcastInstance;
+
+import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -55,19 +63,45 @@ import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService;
+import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
 /**
  * This class contains integration tests for the base repositories (template, solution, tests) and the different types of assignment repositories (student assignment, teaching
  * assistant assignment, instructor assignment).
  */
+
+// TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.
+// This reduces the overhead of repeatedly creating and tearing down a new Spring application context for each test method.
+// This is especially useful when the test setup is expensive or when we want to share resources, such as database connections or mock objects, across multiple tests.
+// In this case, we want to share the same GitService and UsernamePasswordCredentialsProvider.
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+
+// ExecutionMode.SAME_THREAD ensures that all tests within this class are executed sequentially in the same thread, rather than in parallel or in a different thread.
+// This is important in the context of LocalCI because it avoids potential race conditions or inconsistencies that could arise if multiple test methods are executed
+// concurrently. For example, it prevents overloading the LocalCI's result processing system with too many build job results at the same time, which could lead to flaky tests
+// or timeouts. By keeping everything in the same thread, we maintain more predictable and stable test behavior, while not increasing the test execution time significantly.
+@Execution(ExecutionMode.SAME_THREAD)
 class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private BuildJobTestRepository buildJobRepository;
+
+    @Autowired
+    protected LocalCITriggerService localCITriggerService;
+
+    @Autowired
+    private SharedQueueProcessingService sharedQueueProcessingService;
+
+    @Autowired
+    @Qualifier("hazelcastInstance")
+    private HazelcastInstance hazelcastInstance;
 
     @Value("${artemis.user-management.internal-admin.username}")
     private String localVCUsername;
@@ -87,6 +121,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private String teamShortName;
 
     private String teamRepositorySlug;
+
+    protected IQueue<BuildJobQueueItem> queuedJobs;
 
     @BeforeAll
     void setupAll() {
@@ -137,6 +173,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         doReturn(true).when(ldapTemplate).compare(anyString(), anyString(), any());
 
         localVCLocalCITestService.mockInspectImage(dockerClient);
+
+        queuedJobs = hazelcastInstance.getQueue("buildJobQueue");
     }
 
     @AfterEach
@@ -925,75 +963,93 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         practiceRepository.resetLocalRepo();
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildPriorityAfterDueDate() throws Exception {
-        // Set dueDate before now
-        programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
-        programmingExerciseRepository.save(programmingExercise);
+    @Nested
+    class BuildJobPriorityTest {
 
-        testPriority(instructor1Login, PRIORITY_OPTIONAL_EXERCISE);
-    }
+        @BeforeEach
+        void setUp() {
+            sharedQueueProcessingService.removeListener();
+        }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testBuildPriorityBeforeDueDate() throws Exception {
-        testPriority(student1Login, PRIORITY_NORMAL);
-    }
+        @AfterEach
+        void tearDown() {
+            queuedJobs.clear();
+            log.info("Clear queued jobs done");
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testPriorityRunningExam() throws Exception {
-        Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
-        ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
+            sharedQueueProcessingService.init();
+            log.info("Cleanup queue processing service done");
+        }
 
-        programmingExercise.setCourse(null);
-        programmingExercise.setExerciseGroup(exerciseGroup);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testBuildPriorityBeforeDueDate() throws Exception {
+            testPriority(student1Login, PRIORITY_NORMAL);
+        }
 
-        // Exam is running
-        var now = ZonedDateTime.now();
-        exam.setStartDate(now.minusHours(1));
-        exam.setEndDate(now.plusHours(1));
-        exam.setWorkingTime(2 * 60 * 60);
-        exam = examRepository.save(exam);
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testBuildPriorityAfterDueDate() throws Exception {
+            // Set dueDate before now
+            programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
+            programmingExerciseRepository.save(programmingExercise);
 
-        // Create StudentExam.
-        StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student1);
-        studentExam.setExercises(List.of(programmingExercise));
-        studentExam.setWorkingTime(exam.getWorkingTime());
-        studentExam.setStartedAndStartDate(now.minusHours(1));
-        studentExamRepository.save(studentExam);
+            testPriority(instructor1Login, PRIORITY_OPTIONAL_EXERCISE);
+        }
 
-        testPriority(student1Login, PRIORITY_EXAM_CONDUCTION);
-    }
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testPriorityRunningExam() throws Exception {
+            Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
+            ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
-    private void testPriority(String login, int expectedPriority) throws Exception {
-        ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            programmingExercise.setCourse(null);
+            programmingExercise.setExerciseGroup(exerciseGroup);
+            programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
-        String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit);
-        localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
-                Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
-        localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
-        localVCLocalCITestService.testPushSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
+            // Exam is running
+            var now = ZonedDateTime.now();
+            exam.setStartDate(now.minusHours(1));
+            exam.setEndDate(now.plusHours(1));
+            exam.setWorkingTime(2 * 60 * 60);
+            exam = examRepository.save(exam);
 
-        log.info("Push done");
+            // Create StudentExam.
+            StudentExam studentExam = examUtilService.addStudentExamWithUser(exam, student1);
+            studentExam.setExercises(List.of(programmingExercise));
+            studentExam.setWorkingTime(exam.getWorkingTime());
+            studentExam.setStartedAndStartDate(now.minusHours(1));
+            studentExamRepository.save(studentExam);
 
-        await().atMost(15, TimeUnit.SECONDS).until(() -> {
-            log.info("Search for a build job for participation id: {}", studentParticipation.getId());
-            Optional<BuildJob> buildJobOptional = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId());
-            if (buildJobOptional.isPresent()) {
-                return true;
-            }
-            else {
-                var allBuildJobs = buildJobRepository.findAll();
-                log.info("All found build jobs: {}", allBuildJobs);
-                return false;
-            }
-        });
+            testPriority(student1Login, PRIORITY_EXAM_CONDUCTION);
+        }
 
-        BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(studentParticipation.getId()).orElseThrow();
-        assertThat(buildJob.getPriority()).isEqualTo(expectedPriority);
+        private void testPriority(String login, int expectedPriority) throws Exception {
+            log.info("Creating participation");
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+            localVCLocalCITestService.testFetchSuccessful(assignmentRepository.localGit, login, projectKey1, assignmentRepositorySlug);
+            String commitHash = localVCLocalCITestService.commitFile(assignmentRepository.localRepoFile.toPath(), assignmentRepository.localGit);
+            localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
+                    Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
+            localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+
+            localCITriggerService.triggerBuild(studentParticipation, false);
+            log.info("Trigger build done");
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                log.info("Poll queue jobs: is null %s".formatted(buildJobQueueItem == null ? "true" : "false"));
+                if (buildJobQueueItem == null) {
+                    queuedJobs.forEach(item -> log.info("Item in Queue: %s".formatted(item.toString())));
+                }
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+            log.info("Polled queue item");
+
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.priority()).isEqualTo(expectedPriority);
+            log.info("Assertions done");
+        }
     }
 }

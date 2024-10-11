@@ -1,8 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -121,7 +120,7 @@ describe('Exercise Scores Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), MockModule(NgxDatatableModule)],
+            imports: [ArtemisTestModule, MockModule(NgxDatatableModule)],
             declarations: [
                 ExerciseScoresComponent,
                 MockComponent(ExerciseScoresExportButtonComponent),
@@ -137,6 +136,7 @@ describe('Exercise Scores Component', () => {
                 MockDirective(NgModel),
             ],
             providers: [
+                provideRouter([]),
                 { provide: ExerciseService, useClass: MockExerciseService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: ResultService, useClass: MockResultService },
