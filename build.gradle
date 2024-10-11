@@ -154,6 +154,8 @@ configurations.configureEach {
 
 dependencies {
 
+    // Required by Sharing Platform
+    implementation group: 'org.codeability', name: 'SharingPluginPlatformAPI', version: '1.0.2'
     // Required by Spring cloud
     implementation "org.apache.httpcomponents.client5:httpclient5:5.4.2"
     implementation "org.apache.httpcomponents.core5:httpcore5:5.3.4"
@@ -307,7 +309,7 @@ dependencies {
 
     implementation "org.springframework.data:spring-data-ldap:${spring_boot_version}"
     implementation "org.springframework.ldap:spring-ldap-core:3.2.11"
-    
+
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-commons:${spring_cloud_version}"

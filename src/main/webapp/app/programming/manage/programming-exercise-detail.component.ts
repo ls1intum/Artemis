@@ -16,6 +16,7 @@ import { ExerciseService } from 'app/exercise/exercise.service';
 import { ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { ProgrammingExerciseSharingService } from 'app/exercises/programming/manage/services/programming-exercise-sharing.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseManagementStatisticsDto } from 'app/exercise/statistics/exercise-management-statistics-dto';
 import { StatisticsService } from 'app/shared/statistics-graph/statistics.service';
@@ -55,7 +56,7 @@ import { IrisSubSettingsType } from 'app/entities/iris/settings/iris-sub-setting
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
 import { Competency } from 'app/entities/competency.model';
 import { AeolusService } from 'app/programming/service/aeolus.service';
-import { catchError, mergeMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/programming-exercise-git-diff-report.model';
 import { BuildLogStatisticsDTO } from 'app/entities/programming/build-log-statistics-dto';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -67,6 +68,7 @@ import { ProgrammingExerciseResetButtonDirective } from 'app/programming/manage/
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
+import { ProgrammingExerciseInstructorExerciseSharingComponent } from '../shared/actions/programming-exercise-instructor-exercise-sharing.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -87,6 +89,7 @@ import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
         ExerciseDetailStatisticsComponent,
         DetailOverviewListComponent,
         ArtemisTranslatePipe,
+        ProgrammingExerciseInstructorExerciseSharingComponent,
     ],
 })
 export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
@@ -153,6 +156,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     irisChatEnabled = false;
 
+    isExportToSharingEnabled = false;
+
     isAdmin = false;
     addedLineCount: number;
     removedLineCount: number;
@@ -165,11 +170,13 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     private templateAndSolutionParticipationSubscription: Subscription;
     private irisSettingsSubscription: Subscription;
     private exerciseStatisticsSubscription: Subscription;
-
+    private sharingEnabledSubscription: Subscription;
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
     exerciseDetailSections: DetailOverviewSection[];
+
+    constructor(private sharingService: ProgrammingExerciseSharingService) {}
 
     ngOnInit() {
         this.checkBuildPlanEditable();
@@ -278,6 +285,19 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                 this.doughnutStats = statistics;
             });
         });
+        this.sharingEnabledSubscription = this.sharingService
+            .isSharingEnabled()
+            .pipe(
+                map((response) => response.body ?? false),
+                catchError(() => {
+                    // TODO: should be silent in future
+                    this.alertService.info('artemisApp.sharing.error.loadingStatus');
+                    return of(false);
+                }),
+            )
+            .subscribe((isEnabled) => {
+                this.isExportToSharingEnabled = isEnabled;
+            });
     }
 
     ngOnDestroy(): void {
@@ -286,6 +306,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.templateAndSolutionParticipationSubscription?.unsubscribe();
         this.irisSettingsSubscription?.unsubscribe();
         this.exerciseStatisticsSubscription?.unsubscribe();
+        this.sharingEnabledSubscription?.unsubscribe();
     }
 
     /**

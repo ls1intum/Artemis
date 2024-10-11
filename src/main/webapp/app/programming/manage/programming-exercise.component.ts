@@ -53,10 +53,12 @@ import { SlicePipe } from '@angular/common';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { RepositoryType } from '../shared/code-editor/model/code-editor.model';
+import { SharingInfo } from 'app/sharing/sharing.model';
 
 @Component({
     selector: 'jhi-programming-exercise',
     templateUrl: './programming-exercise.component.html',
+    providers: [SharingInfo],
     imports: [
         SortDirective,
         FormsModule,

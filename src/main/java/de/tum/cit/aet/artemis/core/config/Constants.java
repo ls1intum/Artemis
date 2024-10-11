@@ -312,7 +312,7 @@ public final class Constants {
     public static final String PROFILE_LOCALVC = "localvc";
 
     /**
-     * The name of the Spring profile used to choose the local CI system.
+     * The name of the Spring profile used to choose the local CI system instead of Jenkins, or GitLabCI.
      */
     public static final String PROFILE_LOCALCI = "localci";
 
@@ -383,6 +383,11 @@ public final class Constants {
     public static final String PROFILE_THEIA = "theia";
 
     /**
+     * the sharing profile
+     */
+    public static final String PROFILE_SHARING = "sharing";
+
+    /**
      * The name of the profile for integration independent tests
      */
     public static final String PROFILE_TEST_INDEPENDENT = "test-independent-integration";
@@ -411,6 +416,21 @@ public final class Constants {
      * The value of the version field we send with each push notification to the native clients (Android & iOS).
      */
     public static final int PUSH_NOTIFICATION_MINOR_VERSION = 2;
+
+    /**
+     * sharing configuration resource path for sharing config import request
+     */
+    public static final String SHARINGIMPORT_RESOURCE_PATH = "/sharing/import";
+
+    /**
+     * sharing configuration resource path for sharing config export request
+     */
+    public static final String SHARINGEXPORT_RESOURCE_PATH = "/sharing/export";
+
+    /**
+     * sharing configuration resource path for rest request, iff sharing profile is enabled
+     */
+    public static final String SHARINGCONFIG_RESOURCE_IS_ENABLED = SHARINGCONFIG_RESOURCE_PATH + "/is-enabled";
 
     /**
      * The directory in the docker container in which the build script is executed
