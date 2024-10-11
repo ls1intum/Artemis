@@ -117,7 +117,7 @@ export class AttachmentUnitsComponent implements OnInit {
             )
             .subscribe({
                 next: (res) => {
-                    this.units = res.body!.units;
+                    this.units = res.body?.units || this.units;
                     this.numberOfPages = res.body!.numberOfPages;
                     this.isLoading = false;
                 },
