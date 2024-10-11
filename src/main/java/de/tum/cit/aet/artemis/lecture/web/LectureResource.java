@@ -255,8 +255,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, sourceLecture, user);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
-        final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse);
-        channelService.createLectureChannel(savedLecture, Optional.empty());
+        final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse, true);
         return ResponseEntity.created(new URI("/api/lectures/" + savedLecture.getId())).body(savedLecture);
     }
 

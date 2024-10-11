@@ -36,8 +36,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupNotificationRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupRegistrationTestRepository;
-import de.tum.cit.aet.artemis.tutorialgroups.test_repository.TutorialGroupTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 
 class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationIndependentTest {
 

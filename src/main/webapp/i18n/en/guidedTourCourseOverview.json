@@ -24,7 +24,7 @@
             },
             "accountMenuClick": {
                 "headline": "Personal settings",
-                "content": "Click on your user name to view your account menu."
+                "content": "Click on your username to view your account menu."
             },
             "accountMenu": {
                 "headline": "Personal settings",
@@ -45,7 +45,7 @@
             "contact": {
                 "headline": "Contact the Artemis team",
                 "content": "Feel free to contact us to leave us some feedback, request features or to report bugs in the application.",
-                "hint": "If want to contribute to Artemis, then head over to our <a href='https://github.com/ls1intum/Artemis' target='_blank'>Github page</a> and submit your first Pull Request."
+                "hint": "If you want to contribute to Artemis, then head over to our <a href='https://github.com/ls1intum/Artemis' target='_blank'>GitHub page</a> and submit your first Pull Request."
             }
         }
     }

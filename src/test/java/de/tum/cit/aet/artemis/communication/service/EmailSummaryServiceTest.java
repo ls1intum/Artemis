@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
@@ -38,9 +37,6 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private EmailSummaryService weeklyEmailSummaryService;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;

@@ -9,12 +9,12 @@
             "examUsers": {
                 "uploadImage": "Upload images",
                 "uploadImageTooltip": "Upload images for the registered students",
-                "introText": "This dialog can be used to upload pdf file and extract images for registered students.",
+                "introText": "This dialog can be used to upload PDF file and extract images for registered students.",
                 "dialogText": "Each entry in the input file must contain a value for either matriculation number, login or email.\nValues for last and first name are optional.",
                 "pdfExampleText": "Example of a valid PDF file format:",
                 "pdfFile": {
-                    "label": "Select .pdf file",
-                    "tooltip": "Please select a .pdf file containing registered students image and matriculation number."
+                    "label": "Select PDF file",
+                    "tooltip": "Please select a PDF file containing registered students image and matriculation number."
                 },
                 "dialogTitle": "Upload images",
                 "allImagesSaved": "All images were saved successfully.",
@@ -150,6 +150,7 @@
             "falseName": "Entered name is incorrect. Please try again!",
             "notSet": "Not set",
             "startExamToolTip": "Button will be activated 5 minutes before the exam start.",
+            "yourSolution": "Your Solution",
             "cleanup": {
                 "title": "Cleanup",
                 "question": "Are you sure you want to clean up the exam <strong>{{ title }}</strong>? This will delete all student programming exercise repositories in the exam. This action can <strong class='text-danger'>NOT</strong> be undone!"
@@ -493,7 +494,7 @@
                 "realExam": "Exam",
                 "testExam": "Test Exam",
                 "examMode": "Mode",
-                "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students recieve automated feedback after submitting. NOTE: This cannot be changed later on!",
+                "examModeTooltip": "Students can start working on a Test Exam once within the working window, the selected working time will be available during the conduction. Students receive automated feedback after submitting. NOTE: This cannot be changed later on!",
                 "startDate": "Start of working window",
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"
@@ -641,7 +642,7 @@
                     "suspiciousBehavior": "Check for suspicious behaviour"
                 },
                 "descriptionItem": {
-                    "register": "You can register students for the exam in three different ways: via a .csv file, manually, or by importing all students registered in the course.",
+                    "register": "You can register students for the exam in three different ways: via a CSV file, manually, or by importing all students registered in the course.",
                     "exerciseGroups": "You can create exercise groups with multiple exercise variants to make cheating for students more difficult. The points in all exercises within a given exercise group must be identical, and the number of exercise groups must equal the exam's number of exercises.",
                     "generateStudentExams": "You need to generate exams for all registered students before starting the exam. Their working time can be adjusted individually.\nAdditionally, the commits of the templates in programming exercises will be combined into one commit.",
                     "prepareExerciseStart": "You need to prepare the exercises before the exam starts.",
@@ -652,7 +653,7 @@
                     "examReview": "Make sure to have all dates specified correctly.",
                     "resolveComplaints": "Complaints can be resolved from the Assessment Dashboard.",
                     "testRun": "Try out different combinations of exercise variants from the student perspective.",
-                    "exportResults": "Exports the exam results as a .csv file.",
+                    "exportResults": "Exports the exam results as a CSV file.",
                     "editWorkingTime": "Until one minute before the end of the exam, you can extend its duration.",
                     "createAnnouncement": "To communicate important information to all students working on the exam right now, you can make an announcement. It will be distributed and displayed to all students immediately.",
                     "suspiciousBehavior": "Check for suspicious behaviour and plagiarism in the suspicious behavior dashboard."

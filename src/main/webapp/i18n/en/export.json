@@ -2,7 +2,7 @@
     "export": {
         "dialogTitle": "Export Options",
         "csvFile": {
-            "introText": "Select the options used for generating the .csv file.",
+            "introText": "Select the options used for generating the CSV file.",
             "buttonText": "Export as CSV",
             "fieldSeparator": {
                 "label": "Field Separator",

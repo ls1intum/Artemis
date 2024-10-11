@@ -23,11 +23,10 @@ import {
     unsortedAnswerArray,
 } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
-import { RouterTestingModule } from '@angular/router/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { OneToOneChatService } from 'app/shared/metis/conversations/one-to-one-chat.service';
-import { Router, RouterState } from '@angular/router';
+import { Router, RouterState, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { HttpResponse } from '@angular/common/http';
@@ -47,8 +46,9 @@ describe('PostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule, MockDirective(NgbTooltip)],
+            imports: [MockDirective(NgbTooltip)],
             providers: [
+                provideRouter([]),
                 { provide: MetisService, useClass: MockMetisService },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(MetisConversationService),
