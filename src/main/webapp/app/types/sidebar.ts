@@ -33,6 +33,7 @@ export interface SidebarData {
     ungroupedData?: SidebarCardElement[];
     storageId?: string;
     showAccordionLeadingIcon?: boolean;
+    messagingEnabled?: boolean;
 }
 
 export interface SidebarCardElement {

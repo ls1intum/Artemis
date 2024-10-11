@@ -305,6 +305,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             groupedData: this.accordionConversationGroups,
             ungroupedData: this.sidebarConversations,
             showAccordionLeadingIcon: true,
+            messagingEnabled: isMessagingEnabled(this.course),
         };
     }
 
