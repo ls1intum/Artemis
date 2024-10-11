@@ -11,6 +11,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLLMCostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @Service
@@ -41,7 +42,7 @@ public class IrisChatWebsocketService {
         var user = session.getUser();
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null);
+        var payload = new IrisChatWebsocketDTO(irisMessage, rateLimitInfo, stages, null, null);
         websocketService.send(user.getLogin(), topic, payload);
     }
 
@@ -52,7 +53,7 @@ public class IrisChatWebsocketService {
      * @param stages  the stages to send
      */
     public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages) {
-        this.sendStatusUpdate(session, stages, null);
+        this.sendStatusUpdate(session, stages, null, null);
     }
 
     /**
@@ -62,11 +63,11 @@ public class IrisChatWebsocketService {
      * @param stages      the stages to send
      * @param suggestions the suggestions to send
      */
-    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions) {
+    public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions, List<PyrisLLMCostDTO> tokens) {
         var user = session.getUser();
         var rateLimitInfo = rateLimitService.getRateLimitInformation(user);
         var topic = "" + session.getId(); // Todo: add more specific topic
-        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, suggestions);
+        var payload = new IrisChatWebsocketDTO(null, rateLimitInfo, stages, suggestions, tokens);
         websocketService.send(user.getLogin(), topic, payload);
     }
 }

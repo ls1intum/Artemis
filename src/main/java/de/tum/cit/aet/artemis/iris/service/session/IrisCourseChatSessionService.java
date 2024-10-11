@@ -140,7 +140,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
         }
         updateLatestSuggestions(session, statusUpdate.suggestions());
     }

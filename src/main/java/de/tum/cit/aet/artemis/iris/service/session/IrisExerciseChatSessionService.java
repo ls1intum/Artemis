@@ -15,6 +15,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
@@ -44,6 +45,8 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final IrisMessageService irisMessageService;
 
+    private final LLMTokenUsageService LLMTokenUsageService;
+
     private final IrisSettingsService irisSettingsService;
 
     private final IrisChatWebsocketService irisChatWebsocketService;
@@ -62,13 +65,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService,
-            AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
+    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService LLMTokenUsageService, IrisSettingsService irisSettingsService,
+            IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
             ObjectMapper objectMapper) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
+        this.LLMTokenUsageService = LLMTokenUsageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -172,10 +176,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
+            var tokenUsages = LLMTokenUsageService.saveTokenUsage(savedMessage, session.getExercise(), session.getUser(),
+                    session.getExercise().getCourseViaExerciseGroupOrCourseMember(), statusUpdate.tokens());
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
-            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions());
+            var tokenUsages = LLMTokenUsageService.saveTokenUsage(null, session.getExercise(), session.getUser(), session.getExercise().getCourseViaExerciseGroupOrCourseMember(),
+                    statusUpdate.tokens());
+            irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
         }
 
         updateLatestSuggestions(session, statusUpdate.suggestions());

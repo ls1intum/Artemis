@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLLMCostDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 /**
@@ -21,7 +22,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
-        List<String> suggestions) {
+        List<String> suggestions, List<PyrisLLMCostDTO> tokens) {
 
     /**
      * Creates a new IrisWebsocketDTO instance with the given parameters
@@ -31,8 +32,9 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessage me
      * @param rateLimitInfo the rate limit information
      * @param stages        the stages of the Pyris pipeline
      */
-    public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, List<String> suggestions) {
-        this(determineType(message), message, rateLimitInfo, stages, suggestions);
+    public IrisChatWebsocketDTO(@Nullable IrisMessage message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages, List<String> suggestions,
+            List<PyrisLLMCostDTO> tokens) {
+        this(determineType(message), message, rateLimitInfo, stages, suggestions, tokens);
     }
 
     /**
