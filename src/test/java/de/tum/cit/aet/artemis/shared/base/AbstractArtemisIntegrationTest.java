@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.core.util.QueryCountAssert;
 import de.tum.cit.aet.artemis.core.util.RequestUtilService;
 import de.tum.cit.aet.artemis.core.util.ThrowingProducer;
 import de.tum.cit.aet.artemis.exam.service.ExamAccessService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.lti.service.Lti13Service;
 import de.tum.cit.aet.artemis.modeling.service.ModelingSubmissionService;
@@ -186,7 +186,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected UserTestRepository userTestRepository;
 
     @Autowired
-    protected ExerciseRepository exerciseRepository;
+    protected ExerciseTestRepository exerciseRepository;
 
     @Autowired
     protected ResultTestRepository resultRepository;

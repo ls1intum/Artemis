@@ -224,19 +224,5 @@ Each one represents a single test case feedback and should have the format:
 Integrated Code Lifecycle
 -------------------------
 
-The following sections describe programming exercise features that are part of the integrated code lifecycle system.
-
-Repository View
-^^^^^^^^^^^^^^^
-
-.. include:: programming-integrated-code-lifecycle-repository-view.inc
-
-Build Agent View
-^^^^^^^^^^^^^^^^
-
-.. include:: programming-integrated-code-lifecycle-build-agent-view.inc
-
-Build Overview View
-^^^^^^^^^^^^^^^^^^^
-
-.. include:: programming-integrated-code-lifecycle-build-queue-view.inc
+The Artemis Integrated Code Lifecycle system allows you to use programming exercises fully integrated within Artemis, without the need of any external tools.
+Find more information on it :ref:`here<integrated code lifecycle>`.

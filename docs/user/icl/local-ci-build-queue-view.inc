@@ -1,7 +1,7 @@
 Artemis provides a build overview view that displays all queued, running, and finished build jobs. Access to the system-wide build overview is
 exclusively available to **Administrators** through the *System Administration* menu.
 
-.. figure:: programming/buildQueueSystemAdministration.png
+.. figure:: local-ci/buildQueueSystemAdministration.png
    :alt: Build Overview System Administration
    :align: center
 
@@ -10,7 +10,7 @@ exclusively available to **Administrators** through the *System Administration* 
 **Instructors** can access the build overview for a specific course through the *Build Overview* button located in *Course Management*.
 This view displays only the queued, running, and finished build jobs associated with the selected course.
 
-.. figure:: programming/buildQueueCourseManagement.png
+.. figure:: local-ci/buildQueueCourseManagement.png
    :alt: Build Overview Course Management
    :align: center
 
@@ -27,7 +27,7 @@ Jobs are dynamically added to and removed from the queue in real-time.
 Users have the ability to cancel any job in progress. The table provides the following information:
 
 
-.. figure:: programming/running-build-jobs.png
+.. figure:: local-ci/running-build-jobs.png
    :alt: Running Build Jobs
    :align: center
 
@@ -43,7 +43,7 @@ Users also have the option to cancel any job that is queued.
 The table below displays the following information:
 
 
-.. figure:: programming/queued-build-jobs.png
+.. figure:: local-ci/queued-build-jobs.png
    :alt: Queued Build Jobs
    :align: center
 
@@ -59,7 +59,7 @@ Instructors can also access build logs with detailed information about the build
 The table provides the following information:
 
 
-.. figure:: programming/finished-build-jobs.png
+.. figure:: local-ci/finished-build-jobs.png
    :alt: Finished Build Jobs
    :align: center
 

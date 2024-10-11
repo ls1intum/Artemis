@@ -36,7 +36,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -61,9 +61,6 @@ public class ModelingExerciseUtilService {
 
     @Autowired
     private CourseTestRepository courseRepo;
-
-    @Autowired
-    private ExerciseRepository exerciseRepo;
 
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
@@ -98,6 +95,9 @@ public class ModelingExerciseUtilService {
     @Autowired
     private ModelingSubmissionService modelSubmissionService;
 
+    @Autowired
+    private ExerciseTestRepository exerciseRepository;
+
     /**
      * Creates and saves a Course with a ModelingExercise. The ModelingExercise's DiagramType is set to ClassDiagram.
      *
@@ -112,7 +112,7 @@ public class ModelingExerciseUtilService {
         course.addExercises(modelingExercise);
         course.setMaxComplaintTimeDays(14);
         course = courseRepo.save(course);
-        modelingExercise = exerciseRepo.save(modelingExercise);
+        modelingExercise = exerciseRepository.save(modelingExercise);
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return course;
@@ -219,17 +219,17 @@ public class ModelingExerciseUtilService {
         course.addExercises(finishedExercise);
 
         course = courseRepo.save(course);
-        exerciseRepo.save(classExercise);
-        exerciseRepo.save(activityExercise);
-        exerciseRepo.save(objectExercise);
-        exerciseRepo.save(useCaseExercise);
-        exerciseRepo.save(communicationExercise);
-        exerciseRepo.save(componentExercise);
-        exerciseRepo.save(deploymentExercise);
-        exerciseRepo.save(petriNetExercise);
-        exerciseRepo.save(syntaxTreeExercise);
-        exerciseRepo.save(flowchartExercise);
-        exerciseRepo.save(finishedExercise);
+        exerciseRepository.save(classExercise);
+        exerciseRepository.save(activityExercise);
+        exerciseRepository.save(objectExercise);
+        exerciseRepository.save(useCaseExercise);
+        exerciseRepository.save(communicationExercise);
+        exerciseRepository.save(componentExercise);
+        exerciseRepository.save(deploymentExercise);
+        exerciseRepository.save(petriNetExercise);
+        exerciseRepository.save(syntaxTreeExercise);
+        exerciseRepository.save(flowchartExercise);
+        exerciseRepository.save(finishedExercise);
         Course storedCourse = courseRepo.findByIdWithExercisesAndExerciseDetailsAndLecturesElseThrow(course.getId());
         Set<Exercise> exercises = storedCourse.getExercises();
         assertThat(exercises).as("eleven exercises got stored").hasSize(11);
