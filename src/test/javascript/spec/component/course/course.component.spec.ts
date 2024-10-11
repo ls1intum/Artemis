@@ -33,6 +33,8 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam/exam.model';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -100,10 +102,12 @@ describe('CoursesComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
                 MockPipe(ArtemisDatePipe),
+                MockPipe(SearchFilterPipe),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
+                MockComponent(SearchFilterComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
