@@ -17,11 +17,25 @@ const themeDefinition: MonacoThemeDefinition = {
             token: 'comment',
             foregroundColor: '#9198a1',
         },
+        {
+            token: 'string',
+            foregroundColor: '#a5d6ff',
+        },
+        {
+            token: 'number',
+            foregroundColor: '#79c0ff',
+        },
     ], // TODO
     editorColors: {
         backgroundColor: '#181a18',
         lineHighlight: {
             borderColor: '#00000000', // TODO bg color
+            backgroundColor: '#282a2e',
+        },
+        lineNumbers: {
+            foregroundColor: '#ffffff',
+            activeForegroundColor: '#ffffff',
+            dimmedForegroundColor: '#ffffff',
         },
         diff: {
             insertedLineBackgroundColor: '#2ea04326',
