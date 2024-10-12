@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute } from '@angular/router';
 import { Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -19,6 +19,7 @@ import { ArtemisProgrammingExerciseUpdateModule } from 'app/exercises/programmin
 import { CustomNotIncludedInValidatorDirective } from '../../../../../../main/webapp/app/shared/validators/custom-not-included-in-validator.directive';
 import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
 import { MockExerciseService } from '../../../helpers/mocks/service/mock-exercise.service';
+import { AlertService } from '../../../../../../main/webapp/app/core/util/alert.service';
 
 describe('ProgrammingExerciseInformationComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseInformationComponent>;
@@ -42,6 +43,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 MockDirective(CustomNotIncludedInValidatorDirective),
             ],
             providers: [
+                MockProvider(AlertService),
                 {
                     provide: ActivatedRoute,
                     useValue: { queryParams: of({}) },
