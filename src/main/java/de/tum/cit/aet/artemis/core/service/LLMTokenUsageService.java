@@ -4,7 +4,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -16,6 +15,7 @@ import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLLMCostDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 
 /**
  * Service for managing the LLMTokenUsage by all LLMs in Artemis
@@ -31,31 +31,25 @@ public class LLMTokenUsageService {
     }
 
     /**
-     * saves the tokens used for a specific IrisMessage or Athena call
-     * in case of an Athena call IrisMessage can be null and the
-     * LLMServiceType in tokens has to by Athena
+     * method saves the token usage to the database with a link to the IrisMessage
+     * messages of the same job are grouped together by saving the job id as a trace id
      *
-     * @param message  IrisMessage related to the TokenUsage
-     * @param exercise Exercise in which the request was made
-     * @param user     User that made the request
-     * @param course   Course in which the request was made
-     * @param tokens   List with Tokens of the PyrisLLMCostDTO Mdel
-     * @return List of the created LLMTokenUsage entries
+     * @param job      used to create a unique traceId to group multiple LLM calls
+     * @param message  IrisMessage to map the usage to an IrisMessage
+     * @param exercise to map the token cost to an exercise
+     * @param user     to map the token cost to a user
+     * @param course   to map the token to a course
+     * @param tokens   token cost lsit of type PyrisLLMCostDTO
+     * @return list of the saved data
      */
-
-    public List<LLMTokenUsage> saveTokenUsage(IrisMessage message, Exercise exercise, User user, Course course, List<PyrisLLMCostDTO> tokens) {
+    public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, IrisMessage message, Exercise exercise, User user, Course course, List<PyrisLLMCostDTO> tokens) {
         List<LLMTokenUsage> tokenUsages = new ArrayList<>();
-
-        // Combine current time and UUID to create a unique traceId
-        long timestamp = System.currentTimeMillis();
-        long uuidComponent = UUID.randomUUID().getLeastSignificantBits() & Long.MAX_VALUE;
-        Long traceId = timestamp + uuidComponent;
 
         for (PyrisLLMCostDTO cost : tokens) {
             LLMTokenUsage llmTokenUsage = new LLMTokenUsage();
             if (message != null) {
                 llmTokenUsage.setIrisMessage(message);
-                llmTokenUsage.setTimestamp(message.getSentAt());
+                llmTokenUsage.setTime(message.getSentAt());
             }
             llmTokenUsage.setServiceType(cost.pipeline());
             llmTokenUsage.setExercise(exercise);
@@ -63,12 +57,12 @@ public class LLMTokenUsageService {
                 llmTokenUsage.setUserId(user.getId());
             }
             llmTokenUsage.setCourse(course);
-            llmTokenUsage.setNum_input_tokens(cost.num_input_tokens());
-            llmTokenUsage.setCost_per_input_token(cost.cost_per_input_token());
-            llmTokenUsage.setNum_output_tokens(cost.num_output_tokens());
-            llmTokenUsage.setCost_per_output_token(cost.cost_per_output_token());
-            llmTokenUsage.setModel(cost.model_info());
-            llmTokenUsage.setTraceId(traceId);
+            llmTokenUsage.setNumInputTokens(cost.numInputTokens());
+            llmTokenUsage.setCostPerMillionInputTokens(cost.costPerInputToken());
+            llmTokenUsage.setNumOutputTokens(cost.numOutputTokens());
+            llmTokenUsage.setCostPerMillionOutputTokens(cost.costPerOutputToken());
+            llmTokenUsage.setModel(cost.modelInfo());
+            llmTokenUsage.setTraceId(job.jobId());
             tokenUsages.add(llmTokenUsageRepository.save(llmTokenUsage));
         }
         return tokenUsages;

@@ -142,11 +142,11 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            var tokenUsages = llmTokenUsageService.saveTokenUsage(savedMessage, null, session.getUser(), session.getCourse(), statusUpdate.tokens());
+            var tokenUsages = llmTokenUsageService.saveIrisTokenUsage(job, savedMessage, null, session.getUser(), session.getCourse(), statusUpdate.tokens());
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
-            var tokenUsages = llmTokenUsageService.saveTokenUsage(null, null, session.getUser(), session.getCourse(), statusUpdate.tokens());
+            var tokenUsages = llmTokenUsageService.saveIrisTokenUsage(job, null, null, session.getUser(), session.getCourse(), statusUpdate.tokens());
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
         }
         updateLatestSuggestions(session, statusUpdate.suggestions());

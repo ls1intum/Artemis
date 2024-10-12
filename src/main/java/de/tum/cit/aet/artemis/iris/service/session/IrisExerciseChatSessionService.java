@@ -65,14 +65,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService LLMTokenUsageService, IrisSettingsService irisSettingsService,
+    public IrisExerciseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
             ObjectMapper objectMapper) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
-        this.llmTokenUsageService = LLMTokenUsageService;
+        this.llmTokenUsageService = llmTokenUsageService;
         this.irisSettingsService = irisSettingsService;
         this.irisChatWebsocketService = irisChatWebsocketService;
         this.authCheckService = authCheckService;
@@ -177,14 +177,14 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             if (statusUpdate.tokens() != null) {
-                var tokenUsages = llmTokenUsageService.saveTokenUsage(savedMessage, session.getExercise(), session.getUser(),
+                var tokenUsages = llmTokenUsageService.saveIrisTokenUsage(job, savedMessage, session.getExercise(), session.getUser(),
                         session.getExercise().getCourseViaExerciseGroupOrCourseMember(), statusUpdate.tokens());
             }
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
             if (statusUpdate.tokens() != null) {
-                var tokenUsages = llmTokenUsageService.saveTokenUsage(null, session.getExercise(), session.getUser(),
+                var tokenUsages = llmTokenUsageService.saveIrisTokenUsage(job, null, session.getExercise(), session.getUser(),
                         session.getExercise().getCourseViaExerciseGroupOrCourseMember(), statusUpdate.tokens());
             }
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());

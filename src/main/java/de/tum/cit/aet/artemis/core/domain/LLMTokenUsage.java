@@ -7,8 +7,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -18,16 +16,13 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 
 @Entity
 @Table(name = "llm_token_usage")
-@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LLMTokenUsage extends DomainObject {
 
@@ -39,16 +34,16 @@ public class LLMTokenUsage extends DomainObject {
     private String model;
 
     @Column(name = "num_input_tokens")
-    private int num_input_tokens;
+    private int numInputTokens;
 
-    @Column(name = "cost_per_input_token")
-    private float cost_per_input_token;
+    @Column(name = "cost_per_million_input_tokens")
+    private float costPerMillionInputTokens;
 
     @Column(name = "num_output_tokens")
-    private int num_output_tokens;
+    private int numOutputTokens;
 
-    @Column(name = "cost_per_output_token")
-    private float cost_per_output_token;
+    @Column(name = "cost_per_million_output_tokens")
+    private float costPerMillionOutputTokens;
 
     @Nullable
     @ManyToOne
@@ -66,11 +61,11 @@ public class LLMTokenUsage extends DomainObject {
     private long userId;
 
     @Nullable
-    @Column(name = "timestamp")
-    private ZonedDateTime timestamp = ZonedDateTime.now();
+    @Column(name = "time")
+    private ZonedDateTime time = ZonedDateTime.now();
 
     @Column(name = "trace_id")
-    private Long traceId;
+    private String traceId;
 
     @Nullable
     @ManyToOne
@@ -94,36 +89,36 @@ public class LLMTokenUsage extends DomainObject {
         this.model = model;
     }
 
-    public float getCost_per_input_token() {
-        return cost_per_input_token;
+    public float getCostPerMillionInputTokens() {
+        return costPerMillionInputTokens;
     }
 
-    public void setCost_per_input_token(float cost_per_input_token) {
-        this.cost_per_input_token = cost_per_input_token;
+    public void setCostPerMillionInputTokens(float costPerMillionInputToken) {
+        this.costPerMillionInputTokens = costPerMillionInputToken;
     }
 
-    public float getCost_per_output_token() {
-        return cost_per_output_token;
+    public float getCostPerMillionOutputTokens() {
+        return costPerMillionOutputTokens;
     }
 
-    public void setCost_per_output_token(float cost_per_output_token) {
-        this.cost_per_output_token = cost_per_output_token;
+    public void setCostPerMillionOutputTokens(float costPerMillionOutputToken) {
+        this.costPerMillionOutputTokens = costPerMillionOutputToken;
     }
 
-    public int getNum_input_tokens() {
-        return num_input_tokens;
+    public int getNumInputTokens() {
+        return numInputTokens;
     }
 
-    public void setNum_input_tokens(int num_input_tokens) {
-        this.num_input_tokens = num_input_tokens;
+    public void setNumInputTokens(int numInputTokens) {
+        this.numInputTokens = numInputTokens;
     }
 
-    public int getNum_output_tokens() {
-        return num_output_tokens;
+    public int getNumOutputTokens() {
+        return numOutputTokens;
     }
 
-    public void setNum_output_tokens(int num_output_tokens) {
-        this.num_output_tokens = num_output_tokens;
+    public void setNumOutputTokens(int numOutputTokens) {
+        this.numOutputTokens = numOutputTokens;
     }
 
     public Course getCourse() {
@@ -150,19 +145,19 @@ public class LLMTokenUsage extends DomainObject {
         this.userId = userId;
     }
 
-    public ZonedDateTime getTimestamp() {
-        return timestamp;
+    public ZonedDateTime getTime() {
+        return time;
     }
 
-    public void setTimestamp(ZonedDateTime timestamp) {
-        this.timestamp = timestamp;
+    public void setTime(ZonedDateTime time) {
+        this.time = time;
     }
 
-    public Long getTraceId() {
+    public String getTraceId() {
         return traceId;
     }
 
-    public void setTraceId(Long traceId) {
+    public void setTraceId(String traceId) {
         this.traceId = traceId;
     }
 
@@ -176,8 +171,8 @@ public class LLMTokenUsage extends DomainObject {
 
     @Override
     public String toString() {
-        return "LLMTokenUsage{" + "serviceType=" + serviceType + ", model=" + model + ", num_input_tokens=" + num_input_tokens + ", cost_per_input_token=" + cost_per_input_token
-                + ", num_output_tokens=" + num_output_tokens + ", cost_per_output_token=" + cost_per_output_token + ", course=" + course + ", exercise=" + exercise + ", userId="
-                + userId + ", timestamp=" + timestamp + ", trace_id=" + traceId + ", irisMessage=" + irisMessage + '}';
+        return "LLMTokenUsage{" + "serviceType=" + serviceType + ", model=" + model + ", num_input_tokens=" + numInputTokens + ", cost_per_input_token=" + costPerMillionInputTokens
+                + ", num_output_tokens=" + numOutputTokens + ", cost_per_output_token=" + costPerMillionOutputTokens + ", course=" + course + ", exercise=" + exercise + ", userId="
+                + userId + ", timestamp=" + time + ", trace_id=" + traceId + ", irisMessage=" + irisMessage + '}';
     }
 }

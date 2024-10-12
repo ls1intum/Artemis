@@ -71,13 +71,13 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a competency extraction job and forwards it to
-     * {@link IrisCompetencyGenerationService#handleStatusUpdate(String, long, PyrisCompetencyStatusUpdateDTO)}
+     * {@link IrisCompetencyGenerationService#handleStatusUpdate(CompetencyExtractionJob, PyrisCompetencyStatusUpdateDTO)}
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(CompetencyExtractionJob job, PyrisCompetencyStatusUpdateDTO statusUpdate) {
-        competencyGenerationService.handleStatusUpdate(job.userLogin(), job.courseId(), statusUpdate);
+        competencyGenerationService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminated(statusUpdate.stages(), job.jobId());
     }
