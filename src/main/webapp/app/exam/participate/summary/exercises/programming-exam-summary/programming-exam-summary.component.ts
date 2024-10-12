@@ -39,6 +39,8 @@ export class ProgrammingExamSummaryComponent implements OnInit {
 
     @Input() isAfterResultsArePublished?: boolean = false;
 
+    @Input() instructorView?: boolean = false;
+
     readonly PROGRAMMING: ExerciseType = ExerciseType.PROGRAMMING;
 
     protected readonly AssessmentType = AssessmentType;

@@ -32,18 +32,9 @@ public class IrisCourseSettings extends IrisSettings {
     @JoinColumn(name = "iris_lecture_ingestion_settings_id")
     private IrisLectureIngestionSubSettings irisLectureIngestionSettings;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "iris_hestia_settings_id")
-    private IrisHestiaSubSettings irisHestiaSettings;
-
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "iris_competency_generation_settings_id")
     private IrisCompetencyGenerationSubSettings irisCompetencyGenerationSettings;
-
-    @Override
-    public boolean isValid() {
-        return course != null;
-    }
 
     public Course getCourse() {
         return course;
@@ -71,16 +62,6 @@ public class IrisCourseSettings extends IrisSettings {
     @Override
     public void setIrisChatSettings(IrisChatSubSettings irisChatSettings) {
         this.irisChatSettings = irisChatSettings;
-    }
-
-    @Override
-    public IrisHestiaSubSettings getIrisHestiaSettings() {
-        return irisHestiaSettings;
-    }
-
-    @Override
-    public void setIrisHestiaSettings(IrisHestiaSubSettings irisHestiaSettings) {
-        this.irisHestiaSettings = irisHestiaSettings;
     }
 
     @Override

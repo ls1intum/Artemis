@@ -1,3 +1,6 @@
+@if (!!participation()?.exercise) {
+    <jhi-request-feedback-button class="me-3" [exercise]="participation()!.exercise!"></jhi-request-feedback-button>
+}
 @if (commitState === CommitState.CONFLICT) {
     <div>
         <button

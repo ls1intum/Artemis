@@ -9,7 +9,7 @@ import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
 @Converter
-public class IrisModelListConverter implements AttributeConverter<SortedSet<String>, String> {
+public class IrisListConverter implements AttributeConverter<SortedSet<String>, String> {
 
     @Override
     public String convertToDatabaseColumn(SortedSet<String> type) {
