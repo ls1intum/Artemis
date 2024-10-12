@@ -536,7 +536,7 @@ dependencies {
     testImplementation "org.awaitility:awaitility:4.2.2"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:8.10.2"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.0"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.1"
     testImplementation "com.opencsv:opencsv:5.9"
     testImplementation("io.zonky.test:embedded-database-spring-test:2.5.1") {
         exclude group: "org.testcontainers", module: "mariadb"

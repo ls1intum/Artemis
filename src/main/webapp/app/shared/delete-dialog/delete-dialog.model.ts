@@ -16,6 +16,14 @@ export enum ActionType {
 }
 
 /**
+ * Summary of the entity that will be deleted.
+ * Key is i18n key, value is the value that will be displayed
+ */
+export interface EntitySummary {
+    [key: string]: number | boolean | undefined;
+}
+
+/**
  * Data that will be passed to the delete dialog component
  */
 export class DeleteDialogData {
@@ -28,6 +36,12 @@ export class DeleteDialogData {
 
     // i18n key, that will be translated
     deleteQuestion: string;
+
+    // i18n key, that will be translated
+    entitySummaryTitle?: string;
+
+    // observable that will fetch the entity summary
+    fetchEntitySummary?: Observable<EntitySummary>;
 
     // parameters used for the delete question
     translateValues: { [key: string]: unknown };
