@@ -21,7 +21,7 @@ import { TextSubmission } from 'app/entities/text/text-submission.model';
 import { StringCountService } from 'app/exercises/text/participate/string-count.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
-import { getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
+import { getUnreferencedFeedback, isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
@@ -30,7 +30,6 @@ import { faChevronDown, faCircleNotch, faEye, faPenSquare, faTimeline } from '@f
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 @Component({
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
@@ -481,4 +480,5 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const bValue = dayjs(b.submissionDate!).valueOf();
         return aValue - bValue;
     };
+    protected readonly isAthenaAIResult = isAthenaAIResult;
 }
