@@ -39,6 +39,7 @@ import org.junit.jupiter.api.parallel.ExecutionMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -86,6 +87,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
+    private static final String TEST_PREFIX = "localvcciint";
+
     @Autowired
     private ExamUtilService examUtilService;
 
@@ -99,6 +102,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private SharedQueueProcessingService sharedQueueProcessingService;
 
     @Autowired
+    @Qualifier("hazelcastInstance")
     private HazelcastInstance hazelcastInstance;
 
     @Value("${artemis.user-management.internal-admin.username}")
@@ -121,6 +125,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private String teamRepositorySlug;
 
     protected IQueue<BuildJobQueueItem> queuedJobs;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @BeforeAll
     void setupAll() {

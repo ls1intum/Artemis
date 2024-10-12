@@ -56,7 +56,7 @@ library submission
   -- by setting it to a non-existent program called `nonExistentCPP`. See
   -- https://downloads.haskell.org/~ghc/latest/docs/html/users_guide/phases.html
   ghc-options: -fpackage-trust -trust base -pgmP nonExistentCPP
-  hs-source-dirs: assignment/src
+  hs-source-dirs: ${studentParentWorkingDirectoryName}/src
   exposed-modules: Exercise
 
 -- build the local template
@@ -74,7 +74,7 @@ library template
 -- build the solution
 library solution
   import: common-all
-  hs-source-dirs: solution/src
+  hs-source-dirs: ${solutionWorkingDirectory}/src
   exposed-modules: Exercise
 
 -- run tests for a submission
