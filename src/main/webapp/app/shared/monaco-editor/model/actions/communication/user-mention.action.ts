@@ -45,11 +45,12 @@ export class UserMentionAction extends TextEditorAction {
     }
 
     /**
-     * Types the text '@' into the editor and focuses it. This will trigger the completion provider to show the available users.
-     * @param editor The editor to type the text into.
+     * Inserts the text '@' into the editor and focuses it. This method will trigger the completion provider to show the available users.
+     * @param editor The editor to insert the text into.
      */
     run(editor: TextEditor) {
-        this.typeText(editor, UserMentionAction.DEFAULT_INSERT_TEXT);
+        this.replaceTextAtCurrentSelection(editor, UserMentionAction.DEFAULT_INSERT_TEXT);
+        editor.triggerCompletion();
         editor.focus();
     }
 
