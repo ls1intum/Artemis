@@ -74,7 +74,7 @@ describe('ProgrammingExerciseInformationComponent', () => {
                 fixture.componentRef.setInput('isExamMode', false);
                 fixture.componentRef.setInput('isImport', false);
 
-                comp.programmingExercise.buildConfig = new ProgrammingExerciseBuildConfig();
+                comp.programmingExercise().buildConfig = new ProgrammingExerciseBuildConfig();
             });
     });
 
@@ -112,11 +112,11 @@ describe('ProgrammingExerciseInformationComponent', () => {
 
     it('should update checkout directories', () => {
         comp.onTestRepositoryCheckoutPathChange('test');
-        expect(comp.programmingExercise.buildConfig?.testCheckoutPath).toBe('test');
+        expect(comp.programmingExercise().buildConfig?.testCheckoutPath).toBe('test');
         comp.onSolutionRepositoryCheckoutPathChange('solution');
-        expect(comp.programmingExercise.buildConfig?.solutionCheckoutPath).toBe('solution');
+        expect(comp.programmingExercise().buildConfig?.solutionCheckoutPath).toBe('solution');
         comp.onAssigmentRepositoryCheckoutPathChange('assignment');
-        expect(comp.programmingExercise.buildConfig?.assignmentCheckoutPath).toBe('assignment');
+        expect(comp.programmingExercise().buildConfig?.assignmentCheckoutPath).toBe('assignment');
     });
 
     describe('shortName generation effect', () => {
