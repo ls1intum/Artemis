@@ -14,7 +14,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/p,rogramming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
+import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
