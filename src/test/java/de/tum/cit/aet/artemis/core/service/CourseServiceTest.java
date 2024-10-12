@@ -38,7 +38,7 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
-import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
+import de.tum.cit.aet.artemis.programming.test_repository.BuildJobTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
@@ -61,7 +61,7 @@ class CourseServiceTest extends AbstractSpringIntegrationLocalCILocalVCTest {
     private StudentParticipationTestRepository studentParticipationRepo;
 
     @Autowired
-    private BuildJobRepository buildJobRepo;
+    private BuildJobTestRepository buildJobRepo;
 
     @Autowired
     private UserUtilService userUtilService;

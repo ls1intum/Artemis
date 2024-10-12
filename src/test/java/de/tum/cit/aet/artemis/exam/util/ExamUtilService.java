@@ -19,8 +19,8 @@ import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.AnswerPostRepository;
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationTestRepository;
+import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationFactory;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
@@ -137,7 +137,7 @@ public class ExamUtilService {
     private ConversationTestRepository conversationRepository;
 
     @Autowired
-    private PostRepository postRepository;
+    private PostTestRepository postRepository;
 
     @Autowired
     private AnswerPostRepository answerPostRepository;

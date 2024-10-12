@@ -22,9 +22,11 @@ import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettin
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettingsType;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisTextExerciseChatSubSettings;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedChatSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedCompetencyGenerationSubSettingsDTO;
 import de.tum.cit.aet.artemis.iris.dto.IrisCombinedLectureIngestionSubSettingsDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisCombinedTextExerciseChatSubSettingsDTO;
 
 /**
  * Service for handling {@link IrisSubSettings} objects.
@@ -65,6 +67,39 @@ public class IrisSubSettingsService {
         }
         if (currentSettings == null) {
             currentSettings = new IrisChatSubSettings();
+        }
+        if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
+            currentSettings.setEnabled(newSettings.isEnabled());
+        }
+        if (authCheckService.isAdmin()) {
+            currentSettings.setRateLimit(newSettings.getRateLimit());
+            currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
+        }
+        currentSettings.setAllowedVariants(selectAllowedVariants(currentSettings.getAllowedVariants(), newSettings.getAllowedVariants()));
+        currentSettings.setSelectedVariant(validateSelectedVariant(currentSettings.getSelectedVariant(), newSettings.getSelectedVariant(), currentSettings.getAllowedVariants(),
+                parentSettings != null ? parentSettings.allowedVariants() : null));
+        return currentSettings;
+    }
+
+    /**
+     * Updates a text exercise chat sub settings object.
+     *
+     * @param currentSettings Current chat sub settings.
+     * @param newSettings     Updated chat sub settings.
+     * @param parentSettings  Parent chat sub settings.
+     * @param settingsType    Type of the settings the sub settings belong to.
+     * @return Updated chat sub settings.
+     */
+    public IrisTextExerciseChatSubSettings update(IrisTextExerciseChatSubSettings currentSettings, IrisTextExerciseChatSubSettings newSettings,
+            IrisCombinedTextExerciseChatSubSettingsDTO parentSettings, IrisSettingsType settingsType) {
+        if (newSettings == null) {
+            if (parentSettings == null) {
+                throw new IllegalArgumentException("Cannot delete the chat settings");
+            }
+            return null;
+        }
+        if (currentSettings == null) {
+            currentSettings = new IrisTextExerciseChatSubSettings();
         }
         if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
             currentSettings.setEnabled(newSettings.isEnabled());
@@ -178,6 +213,23 @@ public class IrisSubSettingsService {
         }
 
         return selectedVariant;
+    }
+
+    /**
+     * Combines the chat settings of multiple {@link IrisSettings} objects.
+     * If minimal is true, the returned object will only contain the enabled and rateLimit fields.
+     * The minimal version can safely be sent to students.
+     *
+     * @param settingsList List of {@link IrisSettings} objects to combine.
+     * @param minimal      Whether to return a minimal version of the combined settings.
+     * @return Combined chat settings.
+     */
+    public IrisCombinedTextExerciseChatSubSettingsDTO combineTextExerciseChatSettings(ArrayList<IrisSettings> settingsList, boolean minimal) {
+        var enabled = getCombinedEnabled(settingsList, IrisSettings::getIrisTextExerciseChatSettings);
+        var rateLimit = getCombinedRateLimit(settingsList);
+        var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
+        var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
+        return new IrisCombinedTextExerciseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
     }
 
     /**

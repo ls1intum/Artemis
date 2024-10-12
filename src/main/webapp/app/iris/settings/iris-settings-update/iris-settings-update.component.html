@@ -20,6 +20,16 @@
                 (onChanges)="isDirty = true"
             />
         </div>
+        <hr class="hr" />
+        <h3 jhiTranslate="artemisApp.iris.settings.subSettings.textExerciseChatSettings"></h3>
+        <div>
+            <jhi-iris-common-sub-settings-update
+                [subSettings]="irisSettings?.irisTextExerciseChatSettings"
+                [parentSubSettings]="parentIrisSettings?.irisTextExerciseChatSettings"
+                [settingsType]="settingsType"
+                (onChanges)="isDirty = true"
+            />
+        </div>
         @if (settingsType !== EXERCISE) {
             <div>
                 <hr class="hr" />
