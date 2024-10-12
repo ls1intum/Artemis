@@ -3,11 +3,9 @@ assessment:
   - bonus
   - complaint
   - submission
-  - feedback
   - grading
   - grade
   - score
-  -
   - caseSensitive: false
 
 athena:
@@ -18,14 +16,11 @@ atlas:
   - atlas
   - competency
   - competencies
-  - relation
-  - source
   - knowledge area
-  - competency catalog
   - learning path
   - learner profile
-  - competency catalog
   - science event
+  - adaptive learning
   - caseSensitive: false
 
 buildagent:
@@ -44,11 +39,12 @@ communication:
   - faq
   - post
   - reaction
+  - chat
+  - message
   - caseSensitive: false
 
 core:
   - user-management
-  - course
   - authority
   - data export
   - migration
@@ -60,7 +56,8 @@ exam:
   - exam
   - exercisegroup
   - student exam
-  - suspicious
+  - suspicious behavior
+  - suspicious behaviour
   - caseSensitive: false
 
 exercise:
@@ -69,7 +66,6 @@ exercise:
   - participant
   - difficulty
   - lifecycle
-  - submission
   - team
   - assignment
   - caseSensitive: false
@@ -82,6 +78,8 @@ fileupload:
 iris:
   - iris
   - llm
+  - chatbot
+  - ai
   - caseSensitive: false
 
 lecture:
@@ -90,6 +88,7 @@ lecture:
   - online
   - slide
   - video
+  - text unit
   - caseSensitive: false
 
 lti:
@@ -110,7 +109,6 @@ plagiarism:
 programming:
   - programming
   - build
-  - build job
   - build plan
   - code hint
   - git
