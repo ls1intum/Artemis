@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
+import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.core.service.ResourceLoaderService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -46,13 +47,16 @@ public class AeolusTemplateService {
 
     private final BuildScriptProviderService buildScriptProviderService;
 
+    private final ProfileService profileService;
+
     private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
     public AeolusTemplateService(ProgrammingLanguageConfiguration programmingLanguageConfiguration, ResourceLoaderService resourceLoaderService,
-            BuildScriptProviderService buildScriptProviderService) {
+            BuildScriptProviderService buildScriptProviderService, ProfileService profileService) {
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
         this.resourceLoaderService = resourceLoaderService;
         this.buildScriptProviderService = buildScriptProviderService;
+        this.profileService = profileService;
     }
 
     /**
@@ -76,6 +80,9 @@ public class AeolusTemplateService {
                 String uniqueKey = directory + "_" + filename;
                 byte[] fileContent = IOUtils.toByteArray(resource.getInputStream());
                 String script = new String(fileContent, StandardCharsets.UTF_8);
+                if (!profileService.isLocalCiActive()) {
+                    script = buildScriptProviderService.replacePlaceholders(script, null, null, null);
+                }
                 Windfile windfile = readWindfile(script);
                 this.addInstanceVariablesToWindfile(windfile, ProgrammingLanguage.valueOf(directory.toUpperCase()), optionalProjectType);
                 templateCache.put(uniqueKey, windfile);
@@ -139,6 +146,9 @@ public class AeolusTemplateService {
         if (scriptCache == null) {
             log.error("No windfile found for key {}", uniqueKey);
             return null;
+        }
+        if (!profileService.isLocalCiActive()) {
+            scriptCache = buildScriptProviderService.replacePlaceholders(scriptCache, null, null, null);
         }
         Windfile windfile = readWindfile(scriptCache);
         this.addInstanceVariablesToWindfile(windfile, programmingLanguage, projectType);
