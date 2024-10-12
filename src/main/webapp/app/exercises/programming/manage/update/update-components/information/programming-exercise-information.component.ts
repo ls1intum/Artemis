@@ -12,6 +12,10 @@ import { removeSpecialCharacters } from 'app/shared/util/utils';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/p,rogramming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
+import { BuildPlanCheckoutDirectoriesDTO } from 'app/entities/programming/build-plan-checkout-directories-dto';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 
@@ -22,6 +26,9 @@ const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 })
 export class ProgrammingExerciseInformationComponent implements AfterViewInit, OnChanges, OnDestroy {
     protected readonly ProjectType = ProjectType;
+    protected readonly ButtonType = ButtonType;
+    protected readonly ButtonSize = ButtonSize;
+    protected readonly faPlus = faPlus;
 
     @Input({ required: true }) programmingExerciseCreationConfig: ProgrammingExerciseCreationConfig;
     isImport = input.required<boolean>();
@@ -41,6 +48,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild('recreateBuildPlans') recreateBuildPlansField?: NgModel;
     @ViewChild('updateTemplateFiles') updateTemplateFilesField?: NgModel;
     @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
+    @ViewChild(ProgrammingExerciseEditCheckoutDirectoriesComponent) programmingExerciseEditCheckoutDirectories?: ProgrammingExerciseEditCheckoutDirectoriesComponent;
 
     private readonly exerciseService: ExerciseService = inject(ExerciseService);
     private readonly alertService: AlertService = inject(AlertService);
@@ -57,6 +65,9 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     alreadyUsedShortNames = signal<string[]>([]);
 
     exerciseTitle = signal<string | undefined>(undefined);
+
+    editRepositoryCheckoutPath: boolean = false;
+    submissionBuildPlanCheckoutRepositories: BuildPlanCheckoutDirectoriesDTO;
 
     constructor() {
         effect(
@@ -106,6 +117,22 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         );
     }
 
+    ngAfterViewInit() {
+        this.registerInputFields();
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        if (changes.programmingExercise) {
+            this.exerciseTitle.set(this.programmingExercise().title);
+        }
+    }
+
+    ngOnDestroy(): void {
+        for (const subscription of this.inputFieldSubscriptions) {
+            subscription?.unsubscribe();
+        }
+    }
+
     registerInputFields() {
         this.inputFieldSubscriptions.forEach((subscription) => subscription?.unsubscribe());
 
@@ -114,6 +141,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         this.inputFieldSubscriptions.push(this.checkoutSolutionRepositoryField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.recreateBuildPlansField?.valueChanges?.subscribe(() => this.calculateFormValid()));
         this.inputFieldSubscriptions.push(this.updateTemplateFilesField?.valueChanges?.subscribe(() => this.calculateFormValid()));
+        this.inputFieldSubscriptions.push(this.programmingExerciseEditCheckoutDirectories?.formValidChanges.subscribe(() => this.calculateFormValid()));
         this.tableEditableFields?.changes.subscribe((fields: QueryList<TableEditableFieldComponent>) => {
             fields.toArray().forEach((field) => this.inputFieldSubscriptions.push(field.editingInput.valueChanges?.subscribe(() => this.calculateFormValid())));
         });
@@ -129,24 +157,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         });
     }
 
-    ngAfterViewInit() {
-        this.registerInputFields();
-    }
-
     updateShortName(newTitle: string) {
         this.exerciseTitle.set(newTitle);
-    }
-
-    ngOnChanges(changes: SimpleChanges) {
-        if (changes.programmingExercise) {
-            this.exerciseTitle.set(this.programmingExercise().title);
-        }
-    }
-
-    ngOnDestroy(): void {
-        for (const subscription of this.inputFieldSubscriptions) {
-            subscription?.unsubscribe();
-        }
     }
 
     calculateFormValid() {
@@ -154,13 +166,15 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         const isRecreateBuildPlansValid = this.isRecreateBuildPlansValid();
         const isUpdateTemplateFilesValid = this.isUpdateTemplateFilesValid();
         const areAuxiliaryRepositoriesValid = this.areAuxiliaryRepositoriesValid();
+        const areCheckoutPathsValid = this.areCheckoutPathsValid();
         this.formValid = Boolean(
             this.exerciseTitleChannelComponent()?.titleChannelNameComponent?.formValidSignal() &&
                 this.getIsShortNameFieldValid() &&
                 isCheckoutSolutionRepositoryValid &&
                 isRecreateBuildPlansValid &&
                 isUpdateTemplateFilesValid &&
-                areAuxiliaryRepositoriesValid,
+                areAuxiliaryRepositoriesValid &&
+                areCheckoutPathsValid,
         );
         this.formValidChanges.next(this.formValid);
     }
@@ -197,6 +211,44 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 !this.programmingExercise().programmingLanguage ||
                 !this.programmingExerciseCreationConfig.checkoutSolutionRepositoryAllowed,
         );
+    }
+
+    areCheckoutPathsValid(): boolean {
+        return Boolean(
+            !this.programmingExerciseEditCheckoutDirectories ||
+                (this.programmingExerciseEditCheckoutDirectories.formValid &&
+                    this.programmingExerciseEditCheckoutDirectories.areValuesUnique([
+                        this.programmingExercise().buildConfig?.assignmentCheckoutPath,
+                        this.programmingExercise().buildConfig?.testCheckoutPath,
+                        this.programmingExercise().buildConfig?.solutionCheckoutPath,
+                    ])),
+        );
+    }
+
+    toggleEditRepositoryCheckoutPath() {
+        this.editRepositoryCheckoutPath = !this.editRepositoryCheckoutPath;
+    }
+
+    updateSubmissionBuildPlanCheckoutDirectories(buildPlanCheckoutDirectoriesDTO: BuildPlanCheckoutDirectoriesDTO) {
+        this.submissionBuildPlanCheckoutRepositories = buildPlanCheckoutDirectoriesDTO;
+    }
+
+    onAssigmentRepositoryCheckoutPathChange(event: string) {
+        this.programmingExercise().buildConfig!.assignmentCheckoutPath = event;
+        // We need to create a new object to trigger the change detection
+        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig };
+    }
+
+    onTestRepositoryCheckoutPathChange(event: string) {
+        this.programmingExercise().buildConfig!.testCheckoutPath = event;
+        // We need to create a new object to trigger the change detection
+        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig };
+    }
+
+    onSolutionRepositoryCheckoutPathChange(event: string) {
+        this.programmingExercise().buildConfig!.solutionCheckoutPath = event;
+        // We need to create a new object to trigger the change detection
+        this.programmingExercise().buildConfig = { ...this.programmingExercise().buildConfig };
     }
 
     private updateIsShortNameValid() {
