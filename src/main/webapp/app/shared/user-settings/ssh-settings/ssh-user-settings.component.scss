@@ -70,8 +70,8 @@ tbody tr:hover {
     position: absolute;
     top: 50%;
     min-width: 120%;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-    z-index: 100000;
+    box-shadow: 0 8px 16px var(--ssh-key-settings-shadow);
+    z-index: 100000; // makes sure the drop down menu is always shown at the highest view plane
     visibility: hidden;
     opacity: 1;
     transition: 0.35s ease-out;

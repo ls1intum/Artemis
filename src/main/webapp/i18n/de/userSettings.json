@@ -29,8 +29,8 @@
                 "cancelSavingSshKey": "Abbrechen",
                 "editExistingSshKey": "Bearbeiten",
                 "viewExistingSshKey": "Ansehen",
-                "addNewSshKey": "SSH Schlüssel hinzufügen",
-                "sshKeyDetails": "SSH Schlüssel Informationen",
+                "addNewSshKey": "SSH-Schlüssel hinzufügen",
+                "sshKeyDetails": "SSH-Schlüssel Informationen",
                 "deleteSshKey": "Löschen",
                 "sshKeyDisplayedInformation": "Das ist dein aktuell konfigurierter SSH-Schlüssel:",
                 "key": "Schlüssel",
@@ -39,7 +39,7 @@
                 "learnMore": "Erfahre mehr über SSH-Schlüssel",
                 "alreadyHaveKey": "Du hast bereits einen Schlüssel? Kopiere deinen Schlüssel in die Zwischenablage:",
                 "back": "Zurück",
-                "keysTablePageTitle": "SSH Schlüssel",
+                "keysTablePageTitle": "SSH-Schlüssel",
                 "keys": "Schlüssel",
                 "actions": "Aktionen",
                 "keyName": "Key 1 (Aktuell wird nur ein Schlüssel unterstützt)"
@@ -67,7 +67,7 @@
                 "joinedArtemis": "Artemis beigetreten am",
                 "profilePicture": "Profilbild",
                 "addProfilePicture": "Profilbild hinzufügen",
-                "sshKey": "Öffentlicher SSH Schlüssel"
+                "sshKey": "Öffentlicher SSH-Schlüssel"
             },
             "categories": {
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
