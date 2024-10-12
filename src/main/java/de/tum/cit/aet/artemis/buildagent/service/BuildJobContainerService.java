@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -275,11 +276,22 @@ public class BuildJobContainerService {
      * @param auxiliaryRepositoriesPaths             An array of paths for auxiliary repositories to be included in the build process.
      * @param auxiliaryRepositoryCheckoutDirectories An array of directory names within the container where each auxiliary repository should be checked out.
      * @param programmingLanguage                    The programming language of the repositories, which influences directory naming conventions.
+     * @param assignmentCheckoutPath                 The directory within the container where the assignment repository should be checked out; can be null if not applicable,
+     *                                                   default would be used.
+     * @param testCheckoutPath                       The directory within the container where the test repository should be checked out; can be null if not applicable, default
+     *                                                   would be used.
+     * @param solutionCheckoutPath                   The directory within the container where the solution repository should be checked out; can be null if not applicable, default
+     *                                                   would be used.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
-            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage) {
-        String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
-        String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, String assignmentCheckoutPath,
+            String testCheckoutPath, String solutionCheckoutPath) {
+
+        assignmentCheckoutPath = (!StringUtils.isBlank(assignmentCheckoutPath)) ? assignmentCheckoutPath
+                : RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
+
+        String defaultTestCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
+        testCheckoutPath = (!StringUtils.isBlank(defaultTestCheckoutPath) && !StringUtils.isBlank(testCheckoutPath)) ? testCheckoutPath : defaultTestCheckoutPath;
 
         // Make sure to create the working directory in case it does not exist.
         // In case the test checkout path is the working directory, we only create up to the parent, as the working directory is created below.
@@ -292,7 +304,8 @@ public class BuildJobContainerService {
         // Copy the assignment repository to the container and move it to the assignment checkout path
         addAndPrepareDirectory(buildJobContainerId, assignmentRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + assignmentCheckoutPath);
         if (solutionRepositoryPath != null) {
-            String solutionCheckoutPath = RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
+            solutionCheckoutPath = (!StringUtils.isBlank(solutionCheckoutPath)) ? solutionCheckoutPath
+                    : RepositoryCheckoutPath.SOLUTION.forProgrammingLanguage(programmingLanguage);
             addAndPrepareDirectory(buildJobContainerId, solutionRepositoryPath, LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + solutionCheckoutPath);
         }
         for (int i = 0; i < auxiliaryRepositoriesPaths.length; i++) {
@@ -309,6 +322,7 @@ public class BuildJobContainerService {
 
     private void addAndPrepareDirectory(String containerId, Path repositoryPath, String newDirectoryName) {
         copyToContainer(repositoryPath.toString(), containerId);
+        addDirectory(containerId, getParentFolderPath(newDirectoryName), true);
         renameDirectoryOrFile(containerId, LOCALCI_WORKING_DIRECTORY + "/" + repositoryPath.getFileName().toString(), newDirectoryName);
     }
 
@@ -427,5 +441,10 @@ public class BuildJobContainerService {
     private Container getContainerForName(String containerName) {
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         return containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst().orElse(null);
+    }
+
+    private String getParentFolderPath(String path) {
+        Path parentPath = Paths.get(path).normalize().getParent();
+        return parentPath != null ? parentPath.toString() : "";
     }
 }

@@ -115,7 +115,9 @@ export function resetProgrammingForImport(exercise: ProgrammingExercise) {
 export function copyBuildConfigFromExerciseJson(exerciseJson: ProgrammingExerciseBuildConfig): ProgrammingExerciseBuildConfig {
     const buildConfig = new ProgrammingExerciseBuildConfig();
     buildConfig.sequentialTestRuns = exerciseJson.sequentialTestRuns ?? false;
-    buildConfig.checkoutPath = exerciseJson.checkoutPath ?? '';
+    buildConfig.assignmentCheckoutPath = exerciseJson.assignmentCheckoutPath ?? '';
+    buildConfig.solutionCheckoutPath = exerciseJson.solutionCheckoutPath ?? '';
+    buildConfig.testCheckoutPath = exerciseJson.testCheckoutPath ?? '';
     buildConfig.buildPlanConfiguration = exerciseJson.buildPlanConfiguration ?? '';
     buildConfig.checkoutSolutionRepository = exerciseJson.checkoutSolutionRepository ?? false;
     buildConfig.timeoutSeconds = exerciseJson.timeoutSeconds ?? 0;

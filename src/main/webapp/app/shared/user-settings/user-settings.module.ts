@@ -1,5 +1,4 @@
 import { NgModule } from '@angular/core';
-import { UserSettingsContainerComponent } from 'app/shared/user-settings/user-settings-container/user-settings-container.component';
 import { AccountInformationComponent } from 'app/shared/user-settings/account-information/account-information.component';
 import { NotificationSettingsComponent } from 'app/shared/user-settings/notification-settings/notification-settings.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -17,7 +16,6 @@ import { DocumentationLinkComponent } from 'app/shared/components/documentation-
 @NgModule({
     imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule, ArtemisSharedComponentModule, ClipboardModule, FormDateTimePickerModule, DocumentationLinkComponent],
     declarations: [
-        UserSettingsContainerComponent,
         AccountInformationComponent,
         NotificationSettingsComponent,
         ScienceSettingsComponent,
