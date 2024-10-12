@@ -53,6 +53,7 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
 
         // Add caching for course icons, user profile pictures, and drag and drop quiz pictures
         // Add resource handlers for dynamic image paths based on fileUploadPath
+        // TODO: those paths have to be the same as in FilePathService, ideally we reuse the constants and define them only once
         registry.addResourceHandler("/images/course/icons/**").addResourceLocations("file:" + fileUploadPath + "/images/course/icons/").setCacheControl(defaultCacheControl);
 
         registry.addResourceHandler("/images/user/profile-pictures/**").addResourceLocations("file:" + fileUploadPath + "/images/user/profile-pictures/")
