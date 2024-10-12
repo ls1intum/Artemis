@@ -227,5 +227,14 @@ describe('Faq Service', () => {
             const convertedCategory = FaqService.stringifyFaqCategories(faq2);
             expect(convertedCategory).toEqual(['{"color":"red","category":"testing"}']);
         });
+
+        it('should return if all tokens exist in FAQ title or answer', () => {
+            const faq1 = new Faq();
+            faq1.questionTitle = 'Title';
+            faq1.questionAnswer = 'Answer';
+
+            expect(service.hasSearchTokens(faq1, 'title answer')).toBeTrue();
+            expect(service.hasSearchTokens(faq1, 'title answer missing')).toBeFalse();
+        });
     });
 });

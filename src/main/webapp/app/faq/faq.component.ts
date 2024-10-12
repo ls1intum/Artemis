@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { faCancel, faCheck, faEdit, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { FaqService } from 'app/faq/faq.service';
@@ -15,6 +15,7 @@ import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-catego
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,7 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
     templateUrl: './faq.component.html',
     styleUrls: [],
     standalone: true,
-    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule],
+    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule, SearchFilterComponent],
 })
 export class FaqComponent implements OnInit, OnDestroy {
     protected readonly FaqState = FaqState;
@@ -40,6 +41,7 @@ export class FaqComponent implements OnInit, OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     activeFilters = new Set<string>();
+    searchInput = new BehaviorSubject<string>('');
     predicate: string;
     ascending: boolean;
 
@@ -69,6 +71,9 @@ export class FaqComponent implements OnInit, OnDestroy {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
         this.loadCourseFaqCategories(this.courseId);
+        this.searchInput.pipe(debounceTime(300)).subscribe((searchTerm: string) => {
+            this.refreshFaqList(searchTerm);
+        });
         this.route.data.subscribe((data) => {
             const course = data['course'];
             if (course) {
@@ -80,6 +85,7 @@ export class FaqComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.complete();
+        this.searchInput.complete();
     }
 
     deleteFaq(courseId: number, faqId: number) {
@@ -137,6 +143,21 @@ export class FaqComponent implements OnInit, OnDestroy {
             }
         });
         this.applyFilters();
+    }
+
+    private applySearch(searchTerm: string) {
+        this.filteredFaqs = this.filteredFaqs.filter((faq) => {
+            return this.faqService.hasSearchTokens(faq, searchTerm);
+        });
+    }
+
+    setSearchValue(searchValue: string) {
+        this.searchInput.next(searchValue);
+    }
+
+    refreshFaqList(searchTerm: string) {
+        this.applyFilters();
+        this.applySearch(searchTerm);
     }
 
     rejectFaq(courseId: number, faq: Faq) {
