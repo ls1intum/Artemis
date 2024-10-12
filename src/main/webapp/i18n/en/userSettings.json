@@ -37,7 +37,7 @@
                 "noKeysHaveBeenAdded": "No SSH keys have been added",
                 "whatToUseSSHForInfo": "Use SSH keys to connect simply and safely to repositories.",
                 "learnMore": "Learn more about SSH keys",
-                "alreadyHaveKey": "Already have a key? Copy your key to clipboard:",
+                "alreadyHaveKey": "Already have a key? Copy your key to the clipboard:",
                 "back": "Back",
                 "keysTablePageTitle": "SSH keys",
                 "keys": "Keys",

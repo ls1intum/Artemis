@@ -8,6 +8,7 @@ import { faEdit, faEllipsis, faSave, faTrash } from '@fortawesome/free-solid-svg
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AlertService } from 'app/core/util/alert.service';
+import { getOS } from 'app/shared/util/os-detector.util';
 
 @Component({
     selector: 'jhi-account-information',
@@ -24,6 +25,7 @@ export class SshUserSettingsComponent implements OnInit {
     showSshKey = false;
     keyCount = 0;
     isKeyReadonly = true;
+    copyInstructions = '';
 
     readonly faEdit = faEdit;
     readonly faSave = faSave;
@@ -45,7 +47,7 @@ export class SshUserSettingsComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             this.localVCEnabled = profileInfo.activeProfiles.includes(PROFILE_LOCALVC);
         });
-
+        this.setMessageBasedOnOS(getOS());
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
@@ -102,4 +104,23 @@ export class SshUserSettingsComponent implements OnInit {
 
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
+
+    setMessageBasedOnOS(os: string): void {
+        switch (os) {
+            case 'Windows':
+                this.copyInstructions = 'clip < ~/.ssh/id_ed25519.pub | clip';
+                break;
+            case 'MacOS':
+                this.copyInstructions = 'pbcopy < ~/.ssh/id_ed25519.pub';
+                break;
+            case 'Linux':
+                this.copyInstructions = 'xclip -selection clipboard < ~/.ssh/id_ed25519.pub';
+                break;
+            case 'Android':
+                this.copyInstructions = 'termux-clipboard-set < ~/.ssh/id_ed25519.pub';
+                break;
+            default:
+                this.copyInstructions = 'Ctrl + c';
+        }
+    }
 }
