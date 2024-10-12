@@ -50,7 +50,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     communicationEnabled: boolean;
     irisEnabled = false;
     irisChatEnabled = false;
-    irisHestiaEnabled = false;
     ltiEnabled = false;
     isAthenaEnabled = false;
     tutorialEnabled = false;
@@ -96,7 +95,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         if (this.irisEnabled) {
             const irisSettings = await firstValueFrom(this.irisSettingsService.getGlobalSettings());
             this.irisChatEnabled = irisSettings?.irisChatSettings?.enabled ?? false;
-            this.irisHestiaEnabled = irisSettings?.irisHestiaSettings?.enabled ?? false;
         }
         this.route.data.subscribe(({ course }) => {
             if (course) {
