@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <!-- Settings related changes -->
+    <changeSet id="20240825191919" author="morrien">
+        <!-- Drop legacy columns from settings -->
+        <dropColumn tableName="iris_settings" columnName="enable_auto_update_chat"/>
+        <dropColumn tableName="iris_settings" columnName="enable_auto_update_hestia"/>
+        <dropColumn tableName="iris_settings" columnName="enable_auto_update_competency_generation"/>
+        <dropColumn tableName="iris_settings" columnName="enable_auto_update_lecture_ingestion"/>
+        <dropColumn tableName="iris_settings" columnName="current_version"/>
+
+        <dropColumn tableName="iris_sub_settings" columnName="allowed_models"/>
+        <dropColumn tableName="iris_sub_settings" columnName="preferred_model"/>
+
+        <!-- Drop hestia settings -->
+        <dropForeignKeyConstraint baseTableName="iris_settings" constraintName="fk_iris_settings_on_iris_hestia_settings"/>
+        <dropColumn tableName="iris_settings" columnName="iris_hestia_settings_id"/>
+        <sql>
+            DELETE FROM iris_sub_settings WHERE discriminator = 'HESTIA';
+        </sql>
+
+        <!-- Add new columns to settings -->
+        <addColumn tableName="iris_sub_settings">
+            <column name="allowed_variants" type="varchar(2000)"/>
+            <column name="selected_variant" type="varchar(100)"/>
+        </addColumn>
+
+        <!-- Set the new columns to 'default' for global settings -->
+        <sql>
+            UPDATE iris_sub_settings
+            SET allowed_variants = 'default', selected_variant = 'default'
+            WHERE id IN (
+                SELECT iris_chat_settings_id FROM iris_settings WHERE discriminator = 'GLOBAL'
+                UNION
+                SELECT iris_competency_generation_settings_id FROM iris_settings WHERE discriminator = 'GLOBAL'
+                UNION
+                SELECT iris_lecture_ingestion_settings_id FROM iris_settings WHERE discriminator = 'GLOBAL'
+            );
+        </sql>
+
+        <!-- Drop legacy template table -->
+        <dropForeignKeyConstraint baseTableName="iris_sub_settings" constraintName="fk_iris_sub_settings_on_template"/>
+        <dropColumn tableName="iris_sub_settings" columnName="template_id"/>
+
+        <dropTable tableName="iris_template"/>
+    </changeSet>
+
+    <!-- Hestia specific changes -->
+    <changeSet id="20240825191919-HESTIA" author="morrien">
+        <!-- Delete all Hestia related data -->
+        <sql>
+            DELETE FROM iris_json_message_content WHERE id IN (
+                SELECT iris_message_content.id FROM iris_message_content
+                    JOIN iris_message ON iris_message_content.message_id = iris_message.id
+                    JOIN iris_session ON iris_message.session_id = iris_session.id
+                WHERE iris_session.discriminator = 'HESTIA'
+            );
+            DELETE FROM iris_text_message_content WHERE id IN (
+                SELECT iris_message_content.id FROM iris_message_content
+                    JOIN iris_message ON iris_message_content.message_id = iris_message.id
+                    JOIN iris_session ON iris_message.session_id = iris_session.id
+                WHERE iris_session.discriminator = 'HESTIA'
+            );
+            DELETE FROM iris_message_content WHERE message_id IN (
+                SELECT iris_message.id FROM iris_message
+                    JOIN iris_session ON iris_message.session_id = iris_session.id
+                WHERE iris_session.discriminator = 'HESTIA'
+            );
+            DELETE FROM iris_message WHERE session_id IN (
+                SELECT id FROM iris_session WHERE discriminator = 'HESTIA'
+            );
+            DELETE FROM iris_session WHERE discriminator = 'HESTIA';
+        </sql>
+
+        <!-- Remove code hint relation -->
+        <dropForeignKeyConstraint baseTableName="iris_session" constraintName="fk_iris_session_code_hint_id"/>
+        <dropColumn tableName="iris_session" columnName="code_hint_id"/>
+    </changeSet>
+</databaseChangeLog>

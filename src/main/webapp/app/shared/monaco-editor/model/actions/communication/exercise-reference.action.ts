@@ -52,11 +52,12 @@ export class ExerciseReferenceAction extends TextEditorDomainActionWithOptions {
     }
 
     /**
-     * Types the text '/exercise' into the editor and focuses it. This will trigger the completion provider to show the available exercises.
-     * @param editor The editor to type the text into.
+     * Inserts the text '/exercise' into the editor and focuses it. This method will trigger the completion provider to show the available exercises.
+     * @param editor The editor to insert the text into.
      */
     run(editor: TextEditor): void {
-        this.typeText(editor, ExerciseReferenceAction.DEFAULT_INSERT_TEXT);
+        this.replaceTextAtCurrentSelection(editor, ExerciseReferenceAction.DEFAULT_INSERT_TEXT);
+        editor.triggerCompletion();
         editor.focus();
     }
 
