@@ -12,6 +12,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -20,6 +21,7 @@ import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.AuthorizedKeyEntry;
 import org.apache.sshd.common.config.keys.writer.openssh.OpenSSHKeyPairResourceWriter;
+import org.apache.sshd.common.session.helpers.AbstractSession;
 import org.apache.sshd.server.SshServer;
 import org.apache.sshd.server.session.ServerSession;
 import org.junit.jupiter.api.Test;
@@ -35,8 +37,15 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 @Profile(PROFILE_LOCALVC)
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "localvcsshint";
+
     @Autowired
     private SshServer sshServer;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     private final String hostname = "localhost";
 
@@ -111,8 +120,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
     void testConnectOverSshAndReceivePack() throws IOException, GeneralSecurityException {
         try (var client = clientConnectToArtemisSshServer()) {
             assertThat(client).isNotNull();
-            var serverSessions = sshServer.getActiveSessions();
-            var serverSession = serverSessions.getFirst();
+            var user = userTestRepository.getUser();
+            var serverSession = getCurrentServerSession(user);
 
             final var uploadCommandString = "git-upload-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'";
 
@@ -144,9 +153,13 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         return command;
     }
 
+    /**
+     * Note: Don't count unattached sessions as a potential result from previous tests.
+     * See {@link org.apache.sshd.server.SshServer#getActiveSessions}
+     * and {@link org.apache.sshd.common.session.helpers.AbstractSession#getSession}.
+     */
     private SshClient clientConnectToArtemisSshServer() throws GeneralSecurityException, IOException {
         var serverSessions = sshServer.getActiveSessions();
-        var numberOfSessions = serverSessions.size();
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
         User user = userTestRepository.getUser();
@@ -155,6 +168,7 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         client.start();
 
         ClientSession clientSession;
+        int numberOfSessions = serverSessions.size();
         try {
             ConnectFuture connectFuture = client.connect(user.getName(), hostname, port);
             connectFuture.await(10, TimeUnit.SECONDS);
@@ -169,9 +183,18 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
         }
 
         serverSessions = sshServer.getActiveSessions();
+        var attachedServerSessions = serverSessions.stream().filter(Objects::nonNull).count();
         assertThat(clientSession.isAuthenticated()).isTrue();
-        assertThat(serverSessions.size()).isEqualTo(numberOfSessions + 1);
+        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(numberOfSessions + 1);
         return client;
+    }
+
+    private AbstractSession getCurrentServerSession(User user) {
+        var serverSessions = sshServer.getActiveSessions();
+        // parallel tests might create additional sessions, we need to be specific
+        var serverSession = serverSessions.stream().filter(session -> user.getName().equals(session.getUsername())).findFirst();
+
+        return serverSession.orElseThrow(() -> new IllegalStateException("No server session found for user " + user.getName()));
     }
 
     private KeyPair setupKeyPairAndAddToUser() throws GeneralSecurityException, IOException {
