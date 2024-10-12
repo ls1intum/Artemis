@@ -660,6 +660,7 @@ public class ConversationUtilService {
         message.setAuthor(userUtilService.getUserByLogin(login));
         message.setContent(messageText);
         message.setCreationDate(ZonedDateTime.now());
+        message.setCourse(conversation.getCourse());
         conversation.setCreator(message.getAuthor());
         addReactionForUserToPost(login, message);
         conversationRepository.save(conversation);
