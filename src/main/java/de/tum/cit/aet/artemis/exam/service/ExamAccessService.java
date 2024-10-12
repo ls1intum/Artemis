@@ -84,17 +84,26 @@ public class ExamAccessService {
             studentExam = optionalStudentExam.get();
         }
         else {
-            // Only Test Exams can be self-created by the user.
             Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+            // An exam can be started 5 minutes before the start time, which is when programming exercises are unlocked
+            boolean canExamBeStarted = ZonedDateTime.now().isAfter(ExamDateService.getExamProgrammingExerciseUnlockDate(examWithExerciseGroupsAndExercises));
+            boolean isExamEnded = ZonedDateTime.now().isAfter(examWithExerciseGroupsAndExercises.getEndDate());
+            // Generate a student exam if the following conditions are met:
+            // 1. The exam has not ended.
+            // 2. The exam is either a test exam, OR it is a normal exam where the user is registered and can click the start button.
+            // Allowing student exams to be generated only when students can click the start button prevents inconsistencies.
+            // For example, this avoids a scenario where a student generates an exam and an instructor adds an exercise group afterward.
+            if (!isExamEnded
+                    && (examWithExerciseGroupsAndExercises.isTestExam() || (examRegistrationService.isUserRegisteredForExam(examId, currentUser.getId()) && canExamBeStarted))) {
+                studentExam = studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, currentUser);
+                // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
+                studentExam.setExercises(null);
 
-            if (!examWithExerciseGroupsAndExercises.isTestExam()) {
-                // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
-                throw new BadRequestAlertException("The requested Exam is no test exam and thus no student exam can be created", ENTITY_NAME,
-                        "StudentExamGenerationOnlyForTestExams", true);
             }
-            studentExam = studentExamService.generateTestExam(examWithExerciseGroupsAndExercises, currentUser);
-            // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
-            studentExam.setExercises(null);
+            else {
+                // We skip the alert since this can happen when a tutor sees the exam card or the user did not participate yet is registered for the exam
+                throw new BadRequestAlertException("Cannot generate student exam for exam ID " + examId + ".", ENTITY_NAME, "cannotGenerateStudentExam", true);
+            }
         }
 
         Exam exam = studentExam.getExam();
