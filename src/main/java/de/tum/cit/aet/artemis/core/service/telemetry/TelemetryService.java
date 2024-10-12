@@ -35,12 +35,10 @@ public class TelemetryService {
     }
 
     /**
-     * Schedules the sending of telemetry data to the server after the application is ready, after enough time for other instances to start has passed.
+     * Sends telemetry data to the server after the application is ready.
      * This method is triggered automatically when the application context is fully initialized.
      * <p>
-     * The task will be scheduled to run after a delay, specified by the {@code sendingDelay} variable.
-     * This is 180 seconds by default, but can be changed in the configs (Three minutes)
-     * If telemetry is disabled (as specified by the {@code useTelemetry} flag), the task will not be scheduled.
+     * If telemetry is disabled (as specified by the {@code useTelemetry} flag), the task will not be executed.
      */
     @EventListener(ApplicationReadyEvent.class)
     public void sendTelemetry() {
