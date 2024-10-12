@@ -1467,17 +1467,17 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/existing-exercise-details")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam ExerciseType exerciseType) {
+    public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam String exerciseType) {
         log.debug("REST request to get details of existing exercises in course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
 
         Set<String> alreadyTakenExerciseNames = new HashSet<>();
         Set<String> alreadyTakenShortNames = new HashSet<>();
 
-        boolean includeShortNames = exerciseType == ExerciseType.PROGRAMMING;
+        boolean includeShortNames = exerciseType.equals(ExerciseType.PROGRAMMING.toString());
 
         course.getExercises().forEach((exercise -> {
-            if (exercise.getType().equals(exerciseType.toString())) {
+            if (exercise.getType().equals(exerciseType)) {
                 alreadyTakenExerciseNames.add(exercise.getTitle());
                 if (includeShortNames && exercise.getShortName() != null) {
                     alreadyTakenShortNames.add(exercise.getShortName());

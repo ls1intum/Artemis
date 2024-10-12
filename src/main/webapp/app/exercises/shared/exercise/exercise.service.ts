@@ -43,8 +43,8 @@ export type ExerciseDetailsType = {
 };
 
 export type CourseExistingExerciseDetailsType = {
-    exerciseTitles: string[];
-    shortNames: string[];
+    exerciseTitles?: string[];
+    shortNames?: string[];
 };
 
 export interface ExerciseServicable<T extends Exercise> {
@@ -254,7 +254,7 @@ export class ExerciseService {
 
     getExistingExerciseDetailsInCourse(courseId: number, exerciseType: ExerciseType): Observable<CourseExistingExerciseDetailsType> {
         return this.http
-            .get<CourseExistingExerciseDetailsType>(`${this.courseResourceUrl}/${courseId}/existing-exercise-details$?exerciseType=${exerciseType}`, {
+            .get<CourseExistingExerciseDetailsType>(`${this.courseResourceUrl}/${courseId}/existing-exercise-details?exerciseType=${exerciseType}`, {
                 observe: 'response',
             })
             .pipe(map((response) => response.body!));

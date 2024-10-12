@@ -98,8 +98,8 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
                 const courseId = this.courseId() ?? this.programmingExercise().course?.id;
                 if (courseId) {
                     this.exerciseService.getExistingExerciseDetailsInCourse(courseId, ExerciseType.PROGRAMMING).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
-                        this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles);
-                        this.alreadyUsedShortNames.set(exerciseDetails.shortNames);
+                        this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles ?? []);
+                        this.alreadyUsedShortNames.set(exerciseDetails.shortNames ?? []);
                     });
                 }
             }.bind(this),
