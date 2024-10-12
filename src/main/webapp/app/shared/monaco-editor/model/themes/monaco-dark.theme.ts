@@ -41,7 +41,7 @@ const themeDefinition: MonacoThemeDefinition = {
             insertedLineBackgroundColor: '#2ea04326',
             insertedTextBackgroundColor: '#2ea04366',
             removedLineBackgroundColor: '#f8514926',
-            removedTextBackgroundColor: '#f8514966',
+            removedTextBackgroundColor: '#f8514946',
             diagonalFillColor: '#00000000',
             gutter: {
                 insertedLineBackgroundColor: '#3fb9504d',

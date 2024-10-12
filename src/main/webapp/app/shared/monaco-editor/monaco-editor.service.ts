@@ -87,6 +87,9 @@ export class MonacoEditorService {
             hideUnchangedRegions: {
                 enabled: true,
             },
+            guides: {
+                indentation: false,
+            },
             fontSize: 12,
         });
     }
