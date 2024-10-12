@@ -3395,7 +3395,6 @@ public class CourseTestService {
     // Test
     public void testGetExistingExerciseDetails_asEditor(String username) throws Exception {
         Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
-        CourseExistingExerciseDetails result = request.get("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK,
-                CourseExistingExerciseDetails.class);
+        request.get("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK, CourseExistingExerciseDetails.class);
     }
 }
