@@ -370,7 +370,6 @@ describe('ResultComponent', () => {
 
     it('should use special handling if result is an automatic AI result', () => {
         comp.result = { ...mockResult, score: 90, assessmentType: AssessmentType.AUTOMATIC_ATHENA };
-        jest.spyOn(Result, 'isAthenaAIResult').mockReturnValue(true);
 
         comp.evaluate();
 

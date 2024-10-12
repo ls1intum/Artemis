@@ -12,11 +12,11 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.atlas.AbstractAtlasIntegrationTest;
 import de.tum.cit.aet.artemis.atlas.competency.util.StandardizedCompetencyUtilService;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyTaxonomy;
@@ -29,13 +29,8 @@ import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.SourceDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyCatalogDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.repository.KnowledgeAreaRepository;
-import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
-import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
-import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
-class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
+class StandardizedCompetencyIntegrationTest extends AbstractAtlasIntegrationTest {
 
     private static final String TEST_PREFIX = "stdcompetencyintegrationtest";
 
@@ -46,21 +41,6 @@ class StandardizedCompetencyIntegrationTest extends AbstractSpringIntegrationInd
     private StandardizedCompetency standardizedCompetency;
 
     private Source source;
-
-    @Autowired
-    private KnowledgeAreaRepository knowledgeAreaRepository;
-
-    @Autowired
-    private StandardizedCompetencyRepository standardizedCompetencyRepository;
-
-    @Autowired
-    private SourceRepository sourceRepository;
-
-    @Autowired
-    private StandardizedCompetencyUtilService standardizedCompetencyUtilService;
-
-    @Autowired
-    private CompetencyRepository competencyRepository;
 
     @BeforeEach
     void setupTestScenario() {

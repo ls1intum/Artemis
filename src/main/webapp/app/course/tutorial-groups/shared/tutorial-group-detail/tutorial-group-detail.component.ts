@@ -11,6 +11,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { Detail } from 'app/detail-overview-list/detail.model';
 import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
+import { getInitialsFromString } from 'app/utils/text.utils';
+import { getBackgroundColorHue } from 'app/utils/color.utils';
 
 @Component({
     selector: 'jhi-tutorial-group-detail',
@@ -83,6 +85,20 @@ export class TutorialGroupDetailComponent implements OnChanges {
             { type: DetailType.Link, title: 'artemisApp.entities.tutorialGroup.course', data: { text: tutorialGroup.courseTitle, routerLink: ['../..'] } },
             { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.title', data: { text: tutorialGroup.title } },
             { type: DetailType.Text, title: 'artemisApp.entities.tutorialGroup.teachingAssistant', data: { text: tutorialGroup.teachingAssistantName } },
+            tutorialGroup.teachingAssistantImageUrl
+                ? {
+                      type: DetailType.Image,
+                      title: 'artemisApp.entities.tutorialGroup.profilePicture',
+                      data: { imageUrl: tutorialGroup.teachingAssistantImageUrl, altText: 'Profile picture of ' + tutorialGroup.teachingAssistantName },
+                  }
+                : {
+                      type: DetailType.DefaultProfilePicture,
+                      title: 'artemisApp.entities.tutorialGroup.profilePicture',
+                      data: {
+                          color: getBackgroundColorHue(tutorialGroup.teachingAssistantId ? tutorialGroup.teachingAssistantId.toString() : 'default'),
+                          initials: getInitialsFromString(tutorialGroup.teachingAssistantName ?? 'NA'),
+                      },
+                  },
             {
                 type: DetailType.Text,
                 title: 'artemisApp.entities.tutorialGroup.utilization',
