@@ -23,6 +23,7 @@ export enum ProgrammingLanguage {
     KOTLIN = 'KOTLIN',
     OCAML = 'OCAML',
     PYTHON = 'PYTHON',
+    R = 'R',
     RUST = 'RUST',
     SWIFT = 'SWIFT',
     VHDL = 'VHDL',

@@ -47,6 +47,7 @@ public enum ProgrammingLanguage {
         KOTLIN,
         OCAML,
         PYTHON,
+        R,
         RUST,
         SWIFT,
         VHDL,

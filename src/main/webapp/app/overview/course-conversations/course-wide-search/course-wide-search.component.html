@@ -3,9 +3,9 @@
         <div>
             <h4 class="d-inline-block rounded p-1 info">
                 @if (!courseWideSearchConfig.searchTerm) {
-                    All Messages
+                    <span jhiTranslate="artemisApp.metis.overview.allPublicMessages"></span>
                 } @else {
-                    Search Results for "{{ courseWideSearchConfig.searchTerm }}"
+                    <span jhiTranslate="artemisApp.metis.overview.searchResults" [translateValues]="{ search: courseWideSearchConfig.searchTerm }"></span>
                 }
             </h4>
         </div>
