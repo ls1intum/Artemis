@@ -54,12 +54,12 @@ tbody tr:hover {
     display: inline-block;
     position: relative;
     outline: none;
-    margin: 0px;
+    margin: 0;
 }
 
 /* button */
 .dropbtn {
-    padding: 0px 0px;
+    padding: 0 0;
     color: grey;
     cursor: pointer;
     transition: 0.35s ease-out;
@@ -70,7 +70,7 @@ tbody tr:hover {
     position: absolute;
     top: 50%;
     min-width: 120%;
-    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
     z-index: 100000;
     visibility: hidden;
     opacity: 1;
@@ -99,9 +99,11 @@ tbody tr:hover {
     z-index: 10;
     display: none;
 }
+
 .dropdown:focus .db2 {
     display: inline-block;
 }
+
 .dropdown .db2:focus .dropdown-content {
     outline: none;
     visibility: hidden;
