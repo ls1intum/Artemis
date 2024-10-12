@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -179,6 +180,21 @@ public class AdminCourseResource {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create(course.getCourseIcon())), 0);
         }
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
+    }
+
+    /**
+     * GET /courses/:courseId/deletion-summary : get the deletion summary for the course with the given id.
+     *
+     * @param courseId the id of the course
+     * @return the ResponseEntity with status 200 (OK) and the deletion summary in the body
+     */
+    @GetMapping("courses/{courseId}/deletion-summary")
+    @EnforceAdmin
+    public ResponseEntity<CourseDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId) {
+        log.debug("REST request to get deletion summary course: {}", courseId);
+        final Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
+
+        return ResponseEntity.ok().body(courseService.getDeletionSummary(course));
     }
 
     /**
