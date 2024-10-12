@@ -1462,7 +1462,7 @@ public class CourseResource {
      * of all exercises with the given type in the given course.
      *
      * @param courseId     of the course for which all exercise names should be fetched
-     * @param exerciseType the type of exercise for which the details should be fetched, as the name of an exercise only needs to be unique for each exercise type
+     * @param exerciseType for which the details should be fetched, as the name of an exercise only needs to be unique for each exercise type
      * @return {@link CourseExistingExerciseDetails} with the exerciseNames (and already used shortNames if a {@link ExerciseType#PROGRAMMING} exercise is requested)
      */
     @GetMapping("courses/{courseId}/existing-exercise-details")
