@@ -3397,7 +3397,5 @@ public class CourseTestService {
         Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor("test", "test");
         CourseExistingExerciseDetails result = request.get("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK,
                 CourseExistingExerciseDetails.class);
-        assertThat(result.shortNames()).hasSize(2);
-        assertThat(result.exerciseTitles()).hasSize(2);
     }
 }

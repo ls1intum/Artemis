@@ -1067,10 +1067,10 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         courseTestService.testGetExistingExerciseDetails_asTutor();
     }
 
-    // @Test
-    // @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    // void testGetExistingExerciseDetails_asEditor() throws Exception {
-    // String username = TEST_PREFIX + "tutor1";
-    // courseTestService.testGetExistingExerciseDetails_asEditor(username);
-    // }
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetExistingExerciseDetails_asEditor() throws Exception {
+        String username = TEST_PREFIX + "tutor1";
+        courseTestService.testGetExistingExerciseDetails_asEditor(username);
+    }
 }
