@@ -28,8 +28,11 @@ private void runTestSteps() {
  * Run unit tests
  */
 private void test() {
-    stage('Build') {
+    stage('Install Dependencies') {
         sh 'npm ci --prefer-offline --no-audit'
+    }
+    stage('Build') {
+        sh 'npm run build'
     }
     stage('Test') {
         sh 'npm run test:ci'
