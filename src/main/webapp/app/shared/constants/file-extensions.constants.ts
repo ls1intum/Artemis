@@ -53,6 +53,7 @@ export const UPLOAD_FILE_EXTENSIONS = [
  */
 export const TEXT_FILE_EXTENSIONS = [
     'Makefile',
+    'R',
     'Rakefile',
     'ada',
     'adb',
