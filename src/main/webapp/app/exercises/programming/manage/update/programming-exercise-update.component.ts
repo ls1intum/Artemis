@@ -83,7 +83,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         const isEditFieldDisplayedMapping: Record<ProgrammingExerciseInputField, boolean> = {} as Record<ProgrammingExerciseInputField, boolean>;
         Object.keys(inputFieldEditModeMapping).forEach((key) => {
             let isDisplayed = true;
-            if (this.isSimpleMode()) {
+            if (this.isSimpleMode() && !(this.isImportFromFile || this.isImportFromExistingExercise)) {
                 isDisplayed = inputFieldEditModeMapping[key as ProgrammingExerciseInputField];
             }
 
