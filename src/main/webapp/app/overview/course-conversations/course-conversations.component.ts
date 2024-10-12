@@ -21,6 +21,8 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { ChannelsOverviewDialogComponent } from 'app/overview/course-conversations/dialogs/channels-overview-dialog/channels-overview-dialog.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
+import isMobile from 'ismobilejs-es5';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -73,6 +75,9 @@ const DEFAULT_COLLAPSE_STATE: CollapseState = {
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
+    private closeSidebarEventSubscription: Subscription;
+    private openSidebarEventSubscription: Subscription;
+    private toggleSidebarEventSubscription: Subscription;
     course?: Course;
     isLoading = false;
     isServiceSetUp = false;
@@ -90,6 +95,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     isCollapsed = false;
     isProduction = true;
     isTestServer = false;
+    isMobile = false;
 
     readonly CHANNEL_TYPE_SHOW_ADD_OPTION = CHANNEL_TYPE_SHOW_ADD_OPTION;
     readonly CHANNEL_TYPE_ICON = CHANNEL_TYPE_ICON;
@@ -123,6 +129,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         private courseOverviewService: CourseOverviewService,
         private modalService: NgbModal,
         private profileService: ProfileService,
+        private courseSidebarService: CourseSidebarService,
     ) {}
 
     getAsChannel = getAsChannelDTO;
@@ -141,8 +148,31 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.isMobile = isMobile(window.navigator.userAgent).any;
+
+        this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
+            this.setIsCollapsed(true);
+        });
+
+        this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
+            this.setIsCollapsed(false);
+        });
+
+        this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
+            this.toggleSidebar();
+        });
+
+        if (!this.isMobile) {
+            if (this.courseOverviewService.getSidebarCollapseStateFromStorage('conversation')) {
+                this.courseSidebarService.openSidebar();
+            } else {
+                this.courseSidebarService.closeSidebar();
+            }
+        } else {
+            this.courseSidebarService.openSidebar();
+        }
+
         this.isLoading = true;
-        this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('conversation');
         this.metisConversationService.isServiceSetup$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
                 this.course = this.metisConversationService.course;
@@ -174,9 +204,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.activatedRoute.queryParams.pipe(take(1), takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             if (queryParams.conversationId) {
                 this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
+
+                this.closeSidebarOnMobile();
             }
             if (queryParams.messageId) {
                 this.postInThread = { id: Number(queryParams.messageId) } as Post;
+
+                this.closeSidebarOnMobile();
             } else {
                 this.postInThread = undefined;
             }
@@ -196,12 +230,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.openSidebarEventSubscription.unsubscribe();
+        this.closeSidebarEventSubscription.unsubscribe();
+        this.toggleSidebarEventSubscription.unsubscribe();
         this.profileSubscription?.unsubscribe();
     }
 
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDTO) => {
             this.activeConversation = conversation;
+            if (this.isMobile && conversation) {
+                this.courseSidebarService.closeSidebar();
+            }
             this.updateQueryParameters();
         });
     }
@@ -252,7 +292,18 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
             : DEFAULT_CHANNEL_GROUPS;
     }
 
+    hideSearchTerm() {
+        this.courseWideSearchTerm = '';
+    }
+
     onSearch() {
+        if (this.isMobile) {
+            if (this.courseWideSearchTerm) {
+                this.courseSidebarService.closeSidebar();
+            } else {
+                this.courseSidebarService.openSidebar();
+            }
+        }
         this.metisConversationService.setActiveConversation(undefined);
         this.updateQueryParameters();
         this.courseWideSearchConfig.searchTerm = this.courseWideSearchTerm;
@@ -282,11 +333,22 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     onConversationSelected(conversationId: number) {
+        this.closeSidebarOnMobile();
         this.metisConversationService.setActiveConversation(conversationId);
     }
 
     toggleSidebar() {
-        this.isCollapsed = !this.isCollapsed;
+        this.setIsCollapsed(!this.isCollapsed);
+    }
+
+    closeSidebarOnMobile() {
+        if (this.isMobile) {
+            this.courseSidebarService.closeSidebar();
+        }
+    }
+
+    setIsCollapsed(value: boolean) {
+        this.isCollapsed = value;
         this.courseOverviewService.setSidebarCollapseState('conversation', this.isCollapsed);
     }
 
@@ -357,12 +419,14 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                         complete: () => {
                             if (newActiveConversation) {
                                 this.metisConversationService.setActiveConversation(newActiveConversation);
+                                this.closeSidebarOnMobile();
                             }
                         },
                     });
                 } else {
                     if (newActiveConversation) {
                         this.metisConversationService.setActiveConversation(newActiveConversation);
+                        this.closeSidebarOnMobile();
                     }
                 }
                 this.prepareSidebarData();

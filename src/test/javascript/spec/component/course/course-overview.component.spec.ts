@@ -213,7 +213,6 @@ describe('CourseOverviewComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(CourseOverviewComponent);
-
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
                 courseStorageService = TestBed.inject(CourseStorageService);
@@ -287,6 +286,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar item for student course analytics dashboard if the feature is active', () => {
+        fixture.detectChanges();
         component.course = { id: 123, lectures: [], exams: [], studentCourseAnalyticsDashboardEnabled: true };
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
@@ -296,6 +296,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should create sidebar items with default items', () => {
+        fixture.detectChanges();
         component.course = { id: 123, lectures: [], exams: [] };
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.length).toBeGreaterThan(0);
@@ -346,6 +347,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should not try to load message related data when not activated for course', () => {
+        fixture.detectChanges();
         const unreadMessagesSpy = jest.spyOn(metisConversationService, 'checkForUnreadMessages');
         const setUpConversationServiceSpy = jest.spyOn(metisConversationService, 'setUpConversationService');
 
@@ -403,6 +405,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should show an alert when loading the course fails', async () => {
+        fixture.detectChanges();
         findOneForDashboardStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
         const alertService = TestBed.inject(AlertService);
         const alertServiceSpy = jest.spyOn(alertService, 'addAlert');
@@ -420,6 +423,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should return false for canRegisterForCourse if the server returns 403', fakeAsync(() => {
+        fixture.detectChanges();
         findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 403 })));
 
         // test that canRegisterForCourse subscribe gives false
@@ -428,10 +432,11 @@ describe('CourseOverviewComponent', () => {
         });
 
         // wait for the observable to complete
-        tick();
+        tick(500);
     }));
 
     it('should throw for unexpected registration responses from the server', fakeAsync(() => {
+        fixture.detectChanges();
         findOneForRegistrationStub.mockReturnValue(throwError(() => new HttpResponse({ status: 404 })));
 
         // test that canRegisterForCourse throws
@@ -444,11 +449,11 @@ describe('CourseOverviewComponent', () => {
             },
         );
 
-        // wait for the observable to complete
-        tick();
+        tick(500);
     }));
 
     it('should load the course, even when just calling loadCourse by itself (for refreshing)', () => {
+        fixture.detectChanges();
         // check that loadCourse already subscribes to the course itself
 
         // create observable httpResponse with course1, where we detect whether it was called
@@ -613,6 +618,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should toggle isNavbarCollapsed when toggleCollapseState is called', () => {
+        fixture.detectChanges();
         component.toggleCollapseState();
         expect(component.isNavbarCollapsed).toBeTrue();
 
@@ -667,6 +673,7 @@ describe('CourseOverviewComponent', () => {
     });
 
     it('should change dropdownOpen when clicking on More', () => {
+        fixture.detectChanges();
         itemsDrop.close();
         const clickOnMoreItem = fixture.nativeElement.querySelector('.three-dots');
         clickOnMoreItem.click();

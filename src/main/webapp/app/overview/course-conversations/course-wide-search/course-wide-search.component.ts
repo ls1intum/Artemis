@@ -23,6 +23,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 @Component({
     selector: 'jhi-course-wide-search',
@@ -74,6 +75,7 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
         public metisConversationService: MetisConversationService, // instance from course-conversations.component
         private formBuilder: FormBuilder,
         public cdr: ChangeDetectorRef,
+        private courseSidebarService: CourseSidebarService,
     ) {}
 
     ngOnInit() {
@@ -90,6 +92,10 @@ export class CourseWideSearchComponent implements OnInit, AfterViewInit, OnDestr
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+    }
+
+    openSidebar() {
+        this.courseSidebarService.openSidebar();
     }
 
     private subscribeToMetis() {

@@ -90,7 +90,9 @@
                 "TECH_SUPPORT": "Technische Hilfe",
                 "ORGANIZATION": "Organisation",
                 "RANDOM": "Sonstiges",
-                "ANNOUNCEMENT": "Ankündigung"
+                "ANNOUNCEMENT": "Ankündigung",
+                "mobileDisclaimer": "Bitte wähle erst eine Konversation aus.",
+                "mobileDisclaimerCallToAction": "Konversation wählen"
             },
             "post": {
                 "context": "Kontext",

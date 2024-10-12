@@ -66,6 +66,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
+import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 interface CourseActionItem {
     title: string;
@@ -95,6 +96,9 @@ interface SidebarItem {
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngUnsubscribe = new Subject<void>();
+    private closeSidebarEventSubscription: Subscription;
+    private openSidebarEventSubscription: Subscription;
+    private toggleSidebarEventSubscription: Subscription;
 
     // course id of the course that is currently displayed
     private courseId: number;
@@ -199,9 +203,21 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private profileService: ProfileService,
         private modalService: NgbModal,
         private examParticipationService: ExamParticipationService,
+        private courseSidebarService: CourseSidebarService,
     ) {}
 
     async ngOnInit() {
+        this.openSidebarEventSubscription = this.courseSidebarService.openSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = true;
+        });
+
+        this.closeSidebarEventSubscription = this.courseSidebarService.closeSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = false;
+        });
+
+        this.toggleSidebarEventSubscription = this.courseSidebarService.toggleSidebar$.subscribe(() => {
+            this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? !this.isSidebarCollapsed;
+        });
         this.subscription = this.route.params.subscribe((params) => {
             this.courseId = Number(params.courseId);
         });
@@ -738,6 +754,9 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.dashboardSubscription?.unsubscribe();
+        this.closeSidebarEventSubscription.unsubscribe();
+        this.openSidebarEventSubscription.unsubscribe();
+        this.toggleSidebarEventSubscription.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
