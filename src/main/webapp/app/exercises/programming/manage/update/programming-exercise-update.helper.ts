@@ -59,8 +59,7 @@ export const IS_DISPLAYED_IN_SIMPLE_MODE: InputFieldEditModeMapping = {
     participationMode: false,
     allowOfflineIde: false,
     allowOnlineCodeEditor: false,
-    allowOnlineIde: false,
-    // TODO THEIA
+    allowOnlineIde: false, // refers to theia
     // Language section
     programmingLanguage: true,
     projectType: false,
