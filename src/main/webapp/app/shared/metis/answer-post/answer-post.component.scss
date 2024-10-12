@@ -34,6 +34,7 @@
     background: var(--metis-selection-option-background);
     padding: 5px;
     border-radius: 5px;
+    border: 0.01rem solid var(--metis-gray);
 }
 
 .message-container:hover .hover-actions {
