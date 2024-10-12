@@ -95,7 +95,7 @@
                         >
                         </span>
                     </div>
-                    @if ((!result || isAutomaticResult) && !isReadOnlyWithShowResult) {
+                    @if (!((result && !isAutomaticResult) || isReadOnlyWithShowResult)) {
                         <textarea
                             id="text-editor"
                             #textEditor
