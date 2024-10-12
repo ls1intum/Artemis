@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
  * REST controller for managing Course.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminCourseResource {
@@ -91,7 +92,6 @@ public class AdminCourseResource {
      * @return the list of groups (the user has access to)
      */
     @GetMapping("courses/groups")
-    @EnforceAdmin
     public ResponseEntity<Set<String>> getAllGroupsForAllCourses() {
         log.debug("REST request to get all Groups for all Courses");
         List<Course> courses = courseRepository.findAll();
@@ -114,7 +114,6 @@ public class AdminCourseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @EnforceAdmin
     public ResponseEntity<Course> createCourse(@RequestPart Course course, @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
@@ -168,7 +167,6 @@ public class AdminCourseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}")
-    @EnforceAdmin
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
         Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndCompetenciesElseThrow(courseId);

@@ -42,10 +42,9 @@ export interface TextEditor {
     getDomNode(): HTMLElement | undefined;
 
     /**
-     * Types the given text into the editor as if the user had typed it, e.g. to trigger a completer registered in the editor.
-     * @param text The text to type into the editor.
+     * Triggers the completion in the editor, e.g. by showing a widget.
      */
-    typeText(text: string): void;
+    triggerCompletion(): void;
 
     /**
      * Retrieves the text at the given range in the editor.
