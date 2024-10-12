@@ -1,0 +1,14 @@
+name: Validate PR Title
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited]
+
+jobs:
+  validate-pr-title:
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - uses: Slashgear/action-check-pr-title@v4.3.0
+        with:
+          regexp: '^`(Programming exercises|Integrated code lifecycle|Quiz exercises|Modeling exercises|Text exercises|File upload exercises|Exam mode|Grading|Assessment|Communication|Notifications|Team exercises|Lectures|Integrated markdown editor|Plagiarism checks|Learning analytics|Adaptive learning|Learning path|Tutorial groups|Iris|Scalability|Usability|Performance|Infrastructure|Mobile apps|Development|General)`:\s[A-Z].*$'

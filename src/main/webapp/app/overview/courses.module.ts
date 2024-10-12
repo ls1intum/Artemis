@@ -19,6 +19,7 @@ import { ArtemisCourseExerciseRowModule } from 'app/overview/course-exercises/co
 import { NgxChartsModule, PieChartModule } from '@swimlane/ngx-charts';
 import { CourseUnenrollmentModalComponent } from 'app/overview/course-unenrollment-modal.component';
 import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 @NgModule({
     imports: [
@@ -37,6 +38,7 @@ import { ArtemisSidebarModule } from 'app/shared/sidebar/sidebar.module';
         PieChartModule,
         ArtemisSidebarModule,
         CourseCardComponent,
+        SearchFilterComponent,
     ],
     declarations: [CoursesComponent, CourseOverviewComponent, CourseExercisesComponent, CourseLecturesComponent, CourseLectureRowComponent, CourseUnenrollmentModalComponent],
 })

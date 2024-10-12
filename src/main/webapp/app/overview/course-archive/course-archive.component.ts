@@ -10,13 +10,14 @@ import { SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { CourseCardHeaderComponent } from '../course-card-header/course-card-header.component';
 import { CourseForArchiveDTO } from 'app/course/manage/course-for-archive-dto';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 @Component({
     selector: 'jhi-course-archive',
     templateUrl: './course-archive.component.html',
     styleUrls: ['./course-archive.component.scss'],
     standalone: true,
-    imports: [ArtemisSharedModule, CourseCardHeaderComponent],
+    imports: [ArtemisSharedModule, CourseCardHeaderComponent, SearchFilterComponent],
 })
 export class CourseArchiveComponent implements OnInit, OnDestroy {
     private archiveCourseSubscription: Subscription;

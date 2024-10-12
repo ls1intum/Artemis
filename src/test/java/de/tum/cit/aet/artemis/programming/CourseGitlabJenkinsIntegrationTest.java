@@ -46,7 +46,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @BeforeEach
     void setup() {
-        participantScoreScheduleService.activate();
         courseTestService.setup(TEST_PREFIX, this);
         gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
