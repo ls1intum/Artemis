@@ -68,7 +68,9 @@ public class IrisCompetencyGenerationService {
      * @param statusUpdate the status update containing the new competency recommendations
      */
     public void handleStatusUpdate(String userLogin, long courseId, PyrisCompetencyStatusUpdateDTO statusUpdate) {
-        var tokenUsages = llmTokenUsageService.saveTokenUsage(null, null, null, null, statusUpdate.tokens());
+        if (statusUpdate.tokens() != null) {
+            var tokenUsages = llmTokenUsageService.saveTokenUsage(null, null, null, null, statusUpdate.tokens());
+        }
         websocketService.send(userLogin, websocketTopic(courseId), statusUpdate);
     }
 
