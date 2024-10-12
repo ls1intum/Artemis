@@ -90,6 +90,7 @@ export class MonacoEditorService {
             guides: {
                 indentation: false,
             },
+            renderLineHighlight: 'none',
             fontSize: 12,
         });
     }
