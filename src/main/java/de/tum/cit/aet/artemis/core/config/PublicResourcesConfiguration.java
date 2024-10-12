@@ -52,14 +52,13 @@ public class PublicResourcesConfiguration implements WebMvcConfigurer {
         addResourceHandlerForPath(registry, "emoji").setCacheControl(defaultCacheControl);
 
         // Add caching for course icons, user profile pictures, and drag and drop quiz pictures
-        registry.addResourceHandler(fileUploadPath, "images", "course", "icons", "**").addResourceLocations("file:", fileUploadPath, "images", "course", "icons")
+        // Add resource handlers for dynamic image paths based on fileUploadPath
+        registry.addResourceHandler("/images/course/icons/**").addResourceLocations("file:" + fileUploadPath + "/images/course/icons/").setCacheControl(defaultCacheControl);
+
+        registry.addResourceHandler("/images/user/profile-pictures/**").addResourceLocations("file:" + fileUploadPath + "/images/user/profile-pictures/")
                 .setCacheControl(defaultCacheControl);
 
-        registry.addResourceHandler(fileUploadPath, "images", "user", "profile-pictures", "**").addResourceLocations("file:", fileUploadPath, "images", "user", "profile-pictures")
-                .setCacheControl(defaultCacheControl);
-
-        registry.addResourceHandler(fileUploadPath, "images", "drag-and-drop", "**").addResourceLocations("file:", fileUploadPath, "images", "drag-and-drop")
-                .setCacheControl(defaultCacheControl);
+        registry.addResourceHandler("/images/drag-and-drop/**").addResourceLocations("file:" + fileUploadPath + "/images/drag-and-drop/").setCacheControl(defaultCacheControl);
     }
 
     /**
