@@ -30,6 +30,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -307,12 +308,17 @@ public class ParticipationTeamWebsocketService {
      */
     public void unsubscribe(String sessionId) {
         // check if Hazelcast is still active, before invoking this
-        if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-            Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
-                destinationTracker.remove(sessionId);
-                Long participationId = getParticipationIdFromDestination(destination);
-                sendOnlineTeamStudents(participationId, sessionId);
-            });
+        try {
+            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
+                Optional.ofNullable(destinationTracker.get(sessionId)).ifPresent(destination -> {
+                    destinationTracker.remove(sessionId);
+                    Long participationId = getParticipationIdFromDestination(destination);
+                    sendOnlineTeamStudents(participationId, sessionId);
+                });
+            }
+        }
+        catch (HazelcastInstanceNotActiveException e) {
+            log.error("Failed to unsubscribe as Hazelcast is no longer active");
         }
     }
 

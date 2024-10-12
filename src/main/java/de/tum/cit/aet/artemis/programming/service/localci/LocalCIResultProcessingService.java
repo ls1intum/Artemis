@@ -21,6 +21,7 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -101,8 +102,13 @@ public class LocalCIResultProcessingService {
     @PreDestroy
     public void removeListener() {
         // check if Hazelcast is still active, before invoking this
-        if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-            this.resultQueue.removeItemListener(this.listenerId);
+        try {
+            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
+                this.resultQueue.removeItemListener(this.listenerId);
+            }
+        }
+        catch (HazelcastInstanceNotActiveException e) {
+            log.error("Could not remove listener as hazelcast instance is not active.");
         }
     }
 

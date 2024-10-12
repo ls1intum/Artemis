@@ -33,6 +33,7 @@ import com.hazelcast.collection.IQueue;
 import com.hazelcast.collection.ItemEvent;
 import com.hazelcast.collection.ItemListener;
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.map.IMap;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
@@ -107,8 +108,13 @@ public class SharedQueueProcessingService {
     @PreDestroy
     public void removeListener() {
         // check if Hazelcast is still active, before invoking this
-        if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
-            this.queue.removeItemListener(this.listenerId);
+        try {
+            if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning()) {
+                this.queue.removeItemListener(this.listenerId);
+            }
+        }
+        catch (HazelcastInstanceNotActiveException e) {
+            log.error("Failed to remove listener from SharedQueueProcessingService as Hazelcast instance is not active any more.");
         }
     }
 
