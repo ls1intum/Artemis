@@ -5,10 +5,10 @@ export function getOS(): string {
         return 'Windows';
     } else if (userAgent.indexOf('Mac') !== -1) {
         return 'MacOS';
-    } else if (userAgent.indexOf('Linux') !== -1) {
-        return 'Linux';
     } else if (/Android/.test(userAgent)) {
         return 'Android';
+    } else if (userAgent.indexOf('Linux') !== -1) {
+        return 'Linux';
     } else if (/iPhone|iPad|iPod/.test(userAgent)) {
         return 'iOS';
     } else {

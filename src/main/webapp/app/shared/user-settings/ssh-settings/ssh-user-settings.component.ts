@@ -105,10 +105,10 @@ export class SshUserSettingsComponent implements OnInit {
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
 
-    setMessageBasedOnOS(os: string): void {
+    private setMessageBasedOnOS(os: string): void {
         switch (os) {
             case 'Windows':
-                this.copyInstructions = 'clip < ~/.ssh/id_ed25519.pub | clip';
+                this.copyInstructions = 'cat ~/.ssh/id_ed25519.pub | clip';
                 break;
             case 'MacOS':
                 this.copyInstructions = 'pbcopy < ~/.ssh/id_ed25519.pub';
@@ -120,7 +120,7 @@ export class SshUserSettingsComponent implements OnInit {
                 this.copyInstructions = 'termux-clipboard-set < ~/.ssh/id_ed25519.pub';
                 break;
             default:
-                this.copyInstructions = 'Ctrl + c';
+                this.copyInstructions = 'Ctrl + C';
         }
     }
 }

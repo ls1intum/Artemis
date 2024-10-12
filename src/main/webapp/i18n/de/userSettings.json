@@ -30,7 +30,7 @@
                 "editExistingSshKey": "Bearbeiten",
                 "viewExistingSshKey": "Ansehen",
                 "addNewSshKey": "SSH Schlüssel hinzufügen",
-                "sshKeyDetails": "SSH Key Informationen",
+                "sshKeyDetails": "SSH Schlüssel Informationen",
                 "deleteSshKey": "Löschen",
                 "sshKeyDisplayedInformation": "Das ist dein aktuell konfigurierter SSH-Schlüssel:",
                 "key": "Schlüssel",

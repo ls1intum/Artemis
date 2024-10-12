@@ -35,7 +35,7 @@
                 "sshKeyDisplayedInformation": "This is your currently configured SSH key:",
                 "key": "Key",
                 "noKeysHaveBeenAdded": "No SSH keys have been added",
-                "whatToUseSSHForInfo": "Use SSH keys to connect simply and safely to repositories.",
+                "whatToUseSSHForInfo": "Use SSH keys to connect simply and securely to repositories.",
                 "learnMore": "Learn more about SSH keys",
                 "alreadyHaveKey": "Already have a key? Copy your key to the clipboard:",
                 "back": "Back",
