@@ -315,7 +315,7 @@ export const getResultIconClass = (result: Result | undefined, templateStatus: R
         }
         // result done successfuly
         if (result.successful) {
-            return faQuestionCircle;
+            return faCheckCircle;
         }
         // generating failed
         return faTimesCircle;
