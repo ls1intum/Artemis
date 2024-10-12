@@ -13,6 +13,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -30,7 +31,7 @@ public class TelemetrySendingService {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TelemetryData(String version, String serverUrl, String operator, List<String> profiles, boolean isProductionInstance, boolean isTestServer, String dataSource,
-            boolean isMultiNode, long numberOfNodes, long buildAgentCount, String contact, String adminName) {
+            String contact, String adminName) {
     }
 
     private final Environment env;
@@ -39,13 +40,10 @@ public class TelemetrySendingService {
 
     private final ProfileService profileService;
 
-    private final EurekaClientService eurekaClientService;
-
-    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService, EurekaClientService eurekaClientService) {
+    public TelemetrySendingService(Environment env, RestTemplate restTemplate, ProfileService profileService) {
         this.env = env;
         this.restTemplate = restTemplate;
         this.profileService = profileService;
-        this.eurekaClientService = eurekaClientService;
     }
 
     @Value("${artemis.version}")
@@ -69,9 +67,6 @@ public class TelemetrySendingService {
     @Value("${spring.datasource.url}")
     private String datasourceUrl;
 
-    @Value("${artemis.continuous-integration.concurrent-build-size:0}")
-    private long buildAgentCount;
-
     @Value("${info.test-server:false}")
     private boolean isTestServer;
 
@@ -85,22 +80,14 @@ public class TelemetrySendingService {
      * The method constructs the telemetry data object, converts it to JSON, and sends it to a
      * telemetry collection server. The request is sent asynchronously due to the {@code @Async} annotation.
      *
-     * @param eurekaEnabled    a flag indicating whether Eureka is enabled. If {@code true},
-     *                             the method retrieves the number of instances registered with Eureka.
      * @param sendAdminDetails a flag indicating whether to include administrator details in the
      *                             telemetry data (such as contact information and admin name).
      */
-    public void sendTelemetryByPostRequest(boolean eurekaEnabled, boolean sendAdminDetails) {
-
-        long numberOfNodes = 1;
-
-        if (eurekaEnabled) {
-            log.info("Querying other instances from Eureka...");
-            numberOfNodes = eurekaClientService.getNumberOfReplicas();
-        }
+    @Async
+    public void sendTelemetryByPostRequest(boolean sendAdminDetails) {
 
         try {
-            String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(buildTelemetryData(sendAdminDetails, eurekaEnabled, numberOfNodes));
+            String telemetryJson = new ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(buildTelemetryData(sendAdminDetails));
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<String> requestEntity = new HttpEntity<>(telemetryJson, headers);
@@ -122,11 +109,9 @@ public class TelemetrySendingService {
      * about the active profiles, data source type, and optionally admin contact details.
      *
      * @param sendAdminDetails whether to include admin contact information in the telemetry data
-     * @param isMultiNode      whether the application runs in multi node or single node mode
-     * @param numberOfNodes    the number of nodes which are part of the cluster
      * @return an instance of {@link TelemetryData} containing the gathered telemetry information
      */
-    private TelemetryData buildTelemetryData(boolean sendAdminDetails, boolean isMultiNode, long numberOfNodes) {
+    private TelemetryData buildTelemetryData(boolean sendAdminDetails) {
         TelemetryData telemetryData;
         var dataSource = datasourceUrl.startsWith("jdbc:mysql") ? "mysql" : "postgresql";
         List<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
@@ -137,8 +122,7 @@ public class TelemetrySendingService {
             contact = operatorContact;
             adminName = operatorAdminName;
         }
-        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, isMultiNode, numberOfNodes,
-                buildAgentCount, contact, adminName);
+        telemetryData = new TelemetryData(version, serverUrl, operator, activeProfiles, profileService.isProductionActive(), isTestServer, dataSource, contact, adminName);
         return telemetryData;
     }
 }
