@@ -16,7 +16,7 @@
     <!--resizable container-->
     <jhi-resizeable-container class="col-12" [examTimeline]="examTimeline">
         <!--region Left Panel-->
-        <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : (exercise?.exerciseGroup?.title ?? '-') }}</span>
+        <span class="exercise-title" left-header>{{ examTimeline ? exercise.title : ('artemisApp.exam.yourSolution' | artemisTranslate) }}</span>
         <div left-body class="text-editor-grid mt-4 ps-2 pb-2 w-100">
             <div class="grid-area-main">
                 <div>
