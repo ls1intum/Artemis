@@ -27,12 +27,13 @@ import { ExerciseUpdateNotificationModule } from 'app/exercises/shared/exercise-
 import { ExerciseUpdatePlagiarismModule } from 'app/exercises/shared/plagiarism/exercise-update-plagiarism/exercise-update-plagiarism.module';
 import { ProgrammingExerciseCustomAeolusBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-aeolus-build-plan.component';
 import { ProgrammingExerciseCustomBuildPlanComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-custom-build-plan.component';
-import { ProgrammingExerciseDockerImageComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-docker-image/programming-exercise-docker-image.component';
+import { ProgrammingExerciseBuildConfigurationComponent } from 'app/exercises/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { FormsModule } from 'app/forms/forms.module';
 import { ProgrammingExerciseBuildPlanCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-build-plan-checkout-directories.component';
 import { ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-repository-and-build-plan-details.component';
 import { ProgrammingExerciseTheiaComponent } from 'app/exercises/programming/manage/update/update-components/theia/programming-exercise-theia.component';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { ProgrammingExerciseEditCheckoutDirectoriesComponent } from 'app/exercises/programming/shared/build-details/programming-exercise-edit-checkout-directories/programming-exercise-edit-checkout-directories.component';
 import { ProgrammingExerciseDifficultyComponent } from 'app/exercises/programming/manage/update/update-components/difficulty/programming-exercise-difficulty.component';
 import { SwitchEditModeButtonComponent } from 'app/exercises/programming/manage/update/switch-edit-mode-button/switch-edit-mode-button.component';
 import { TitleChannelNameModule } from 'app/shared/form/title-channel-name/title-channel-name.module';
@@ -63,6 +64,7 @@ import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/cus
         ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent,
         MonacoEditorComponent,
         ProgrammingExerciseTheiaComponent,
+        ProgrammingExerciseEditCheckoutDirectoriesComponent,
         ProgrammingExerciseDifficultyComponent,
         SwitchEditModeButtonComponent,
         TitleChannelNameModule,
@@ -74,7 +76,7 @@ import { CustomNotIncludedInValidatorDirective } from 'app/shared/validators/cus
         ProgrammingExerciseModeComponent,
         ProgrammingExerciseCustomAeolusBuildPlanComponent,
         ProgrammingExerciseCustomBuildPlanComponent,
-        ProgrammingExerciseDockerImageComponent,
+        ProgrammingExerciseBuildConfigurationComponent,
         ProgrammingExerciseLanguageComponent,
         ProgrammingExerciseGradingComponent,
         ProgrammingExerciseProblemComponent,

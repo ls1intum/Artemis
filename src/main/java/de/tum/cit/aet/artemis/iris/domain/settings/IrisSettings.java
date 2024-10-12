@@ -45,6 +45,10 @@ public abstract class IrisSettings extends DomainObject {
 
     public abstract void setIrisChatSettings(IrisChatSubSettings irisChatSettings);
 
+    public abstract IrisTextExerciseChatSubSettings getIrisTextExerciseChatSettings();
+
+    public abstract void setIrisTextExerciseChatSettings(IrisTextExerciseChatSubSettings irisTextExerciseChatSettings);
+
     public abstract IrisLectureIngestionSubSettings getIrisLectureIngestionSettings();
 
     public abstract void setIrisLectureIngestionSettings(IrisLectureIngestionSubSettings irisLectureIngestionSettings);

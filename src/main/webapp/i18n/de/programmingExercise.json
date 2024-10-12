@@ -116,6 +116,23 @@
             "customizeDockerImage": "Du kannst das Docker-Image anpassen. Stelle sicher, dass du es in amd64 und arm64 bereitstellst und alle Build Abhängigkeiten enthalten sind, um eine kurze Build Dauer zu gewährleisten.",
             "parameters": "Parameter",
             "dockerImage": "Docker Image",
+            "checkoutPath": {
+                "title": "Checkout-Pfad",
+                "customize": "Sie können den Checkout-Pfad anpassen, in dem die Repositories im Docker-Container geklont werden. Stellen Sie sicher, dass Sie einen gültigen absoluten UNIX-Pfad angeben. Der Standardpfad ist /var/tmp.",
+                "alert": "Checkout-Pfade dürfen nur Wörter, '_', '-', und '/' enthalten, dürfen jedoch nicht mit einem '/' beginnen oder enden. Die Pfade müssen für jedes Repository unterschiedlich sein.",
+                "edit": "Checkout-Pfad der Repositories bearbeiten",
+                "assignment": "Checkout-Pfad für das Aufgaben-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
+                "solution": "Checkout-Pfad für das Lösungs-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
+                "tests": "Checkout-Pfad für das Tests-Repository. Das kann nach der Erstellung nicht bearbeitet werden.",
+                "invalid": "Ungültige Checkout-Pfade",
+                "warning": "Das Ändern der Checkout-Pfade kann zu Build-Fehlern führen. Einige Programmiersprachen verlassen sich auf Docker-Images, die bestimmte Verzeichnisstrukturen für den Code voraussetzen.",
+                "warningBuildScript": "Stellen Sie sicher, dass Sie das Build-Skript und die Repositories entsprechend anpassen."
+            },
+            "timeout": {
+                "title": "Maximale Build-Dauer in Sekunden ",
+                "customize": "Setze den Wert auf 0, um den Standardwert zu verwenden. Stelle sicher, dass du einen gültigen ganzzahligen Wert angibst. Die Einheit ist Sekunden. Beachte, dass dieser Wert durch das von den Administratoren festgelegte maximale Limit (Standard ist 240s) überschrieben werden kann.",
+                "alert": "Das Timeout muss ein gültiger ganzzahliger Wert sein."
+            },
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",

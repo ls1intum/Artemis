@@ -33,7 +33,7 @@ describe('IrisSettingsUpdateComponent', () => {
                 MockProvider(IrisSettingsService, {
                     getGlobalSettings: () => of(mockSettings()),
                     getUncombinedCourseSettings: () => of(mockSettings()),
-                    getUncombinedProgrammingExerciseSettings: () => of(mockSettings()),
+                    getUncombinedExerciseSettings: () => of(mockSettings()),
                 }),
             ],
         })

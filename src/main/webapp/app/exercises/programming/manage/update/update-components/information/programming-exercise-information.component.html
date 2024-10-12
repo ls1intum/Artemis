@@ -63,7 +63,21 @@
                 [programmingLanguage]="programmingExerciseCreationConfig.selectedProgrammingLanguage"
                 [isLocal]="isLocal()"
                 [checkoutSolutionRepository]="programmingExercise().buildConfig?.checkoutSolutionRepository"
+                (submissionBuildPlanEvent)="updateSubmissionBuildPlanCheckoutDirectories($event)"
+                [isCreateOrEdit]="true"
+                [isEditMode]="programmingExerciseCreationConfig.isEdit"
+                [programmingExerciseBuildConfig]="programmingExercise.buildConfig"
             />
+            @if (editRepositoryCheckoutPath && isLocal && !isImport && !programmingExerciseCreationConfig.isEdit) {
+                <jhi-programming-exercise-edit-checkout-directories
+                    [programmingExercise]="programmingExercise"
+                    [submissionBuildPlanCheckoutRepositories]="submissionBuildPlanCheckoutRepositories"
+                    (assignmentCheckoutPathEvent)="onAssigmentRepositoryCheckoutPathChange($event)"
+                    (testCheckoutPathEvent)="onTestRepositoryCheckoutPathChange($event)"
+                    (solutionCheckoutPathEvent)="onSolutionRepositoryCheckoutPathChange($event)"
+                    [pattern]="programmingExerciseCreationConfig.invalidDirectoryNamePattern"
+                />
+            }
             @if (!programmingExerciseCreationConfig.isImportFromExistingExercise && programmingExerciseCreationConfig.auxiliaryRepositoriesSupported) {
                 <div class="form-group">
                     @if (programmingExercise().auxiliaryRepositories && programmingExercise().auxiliaryRepositories!.length > 0) {
@@ -133,6 +147,15 @@
                         <ngb-alert [dismissible]="false" [type]="'info'">
                             <span jhiTranslate="artemisApp.programmingExercise.auxiliaryRepository.warning"></span>
                         </ngb-alert>
+                    }
+                    @if (isLocal && !isImport && !programmingExerciseCreationConfig.isEdit) {
+                        <jhi-button
+                            [btnType]="ButtonType.WARNING"
+                            [btnSize]="ButtonSize.SMALL"
+                            [icon]="faPlus"
+                            [title]="'artemisApp.programmingExercise.checkoutPath.edit'"
+                            (onClick)="toggleEditRepositoryCheckoutPath()"
+                        />
                     }
                     <jhi-add-auxiliary-repository-button
                         [programmingExercise]="programmingExercise()"

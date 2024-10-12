@@ -67,11 +67,11 @@ import { ArtemisExamNavigationBarModule } from 'app/exam/participate/exam-naviga
 import { ArtemisExamSubmissionComponentsModule } from 'app/exam/participate/exercises/exam-submission-components.module';
 import { MatSliderModule } from '@angular/material/slider';
 import { ProgrammingExerciseExamDiffComponent } from './student-exams/student-exam-timeline/programming-exam-diff/programming-exercise-exam-diff.component';
-import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { ArtemisProgrammingExerciseModule } from 'app/exercises/programming/shared/programming-exercise.module';
 import { DetailModule } from 'app/detail-overview-list/detail.module';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { NoDataComponent } from 'app/shared/no-data-component';
+import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -109,10 +109,10 @@ const ENTITY_STATES = [...examManagementState];
         ArtemisExamNavigationBarModule,
         ArtemisExamSubmissionComponentsModule,
         MatSliderModule,
-        GitDiffReportModule,
         ArtemisProgrammingExerciseModule,
         DetailModule,
         NoDataComponent,
+        GitDiffLineStatComponent,
     ],
     declarations: [
         ExamManagementComponent,

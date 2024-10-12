@@ -10,6 +10,10 @@
                 "button": {
                     "reload": "Einstellungen neu laden",
                     "save": "Einstellungen speichern",
+                    "textExercise": {
+                        "title": "Iris",
+                        "tooltip": "Bearbeite die Iris Einstellungen für diese Textaufgabe"
+                    },
                     "programmingExercise": {
                         "title": "Iris",
                         "tooltip": "Bearbeite die Iris Einstellungen für diese Programmieraufgabe"
@@ -21,6 +25,7 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
+                    "textExerciseChatSettings": "Textaufgaben Chat Einstellungen",
                     "lectureIngestionSettings": {
                         "title": "Vorlesungen Erfassung Einstellungen",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
@@ -62,7 +67,7 @@
                     "breadcrumb": "Iris Einstellungen",
                     "global": "Globale Iris Einstellungen",
                     "course": "Kurs Iris Einstellungen",
-                    "programmingExercise": "Programmieraufgabe Iris Einstellungen"
+                    "exercise": "Programmieraufgabe Iris Einstellungen"
                 }
             },
             "error": {
