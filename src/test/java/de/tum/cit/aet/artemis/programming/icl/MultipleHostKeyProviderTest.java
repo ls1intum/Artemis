@@ -13,6 +13,13 @@ import de.tum.cit.aet.artemis.programming.service.localvc.ssh.MultipleHostKeyPro
 @Profile(PROFILE_LOCALVC)
 class MultipleHostKeyProviderTest extends AbstractLocalCILocalVCIntegrationTest {
 
+    private static final String TEST_PREFIX = "multiplehostkeyprovider";
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @Test
     void testMultipleHostKeyProvider() {
         MultipleHostKeyProvider multipleHostKeyProvider = new MultipleHostKeyProvider(Path.of("./"));

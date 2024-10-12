@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.service.LegalDocumentService;
  * REST controller for editing the Privacy Statement as an admin.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminPrivacyStatementResource {
@@ -39,7 +40,6 @@ public class AdminPrivacyStatementResource {
      * @param language the language of the privacy statement
      * @return the ResponseEntity with status 200 (OK) and with body the privacy statement
      */
-    @EnforceAdmin
     @GetMapping("privacy-statement-for-update")
     public ResponseEntity<PrivacyStatementDTO> getPrivacyStatementForUpdate(@RequestParam("language") String language) {
         if (!Language.isValidShortName(language)) {
@@ -54,7 +54,6 @@ public class AdminPrivacyStatementResource {
      * @param privacyStatement the privacy statement to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated privacy statement
      */
-    @EnforceAdmin
     @PutMapping("privacy-statement")
     public ResponseEntity<PrivacyStatementDTO> updatePrivacyStatement(@RequestBody PrivacyStatementDTO privacyStatement) {
         return ResponseEntity.ok(legalDocumentService.updatePrivacyStatement(privacyStatement));

@@ -198,7 +198,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.exerciseCategories = this.exercise.categories ?? [];
         this.allowComplaintsForAutomaticAssessments = false;
         this.plagiarismCaseInfo = newExerciseDetails.plagiarismCaseInfo;
-
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
             const isAfterDateForComplaint =
@@ -243,7 +242,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private filterUnfinishedResults(participations?: StudentParticipation[]) {
         participations?.forEach((participation: Participation) => {
             if (participation.results) {
-                participation.results = participation.results.filter((result: Result) => result.completionDate && result.successful !== undefined);
+                participation.results = participation.results.filter((result: Result) => result.completionDate);
             }
         });
     }

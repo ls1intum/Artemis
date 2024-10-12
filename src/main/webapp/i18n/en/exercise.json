@@ -168,7 +168,7 @@
             "resumeProgrammingExercise": "The exercise has been resumed. You can now continue working on the exercise!",
             "feedbackRequestSent": "Your feedback request has been sent.",
             "feedbackRequestAlreadySent": "Your feedback request has already been sent.",
-            "notEnoughPoints": "You have to submit your work at least once.",
+            "noSubmissionExists": "You have to submit your work at least once.",
             "lockRepositoryWarning": "Your repository will be locked. You can only continue working after you receive an answer.",
             "feedbackRequestAfterDueDate": "You cannot submit feedback requests after the due date.",
             "feedbackRequestPendingChanges": "You have pending changes. Please submit them first before requesting Feedback.",
