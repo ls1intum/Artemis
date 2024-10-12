@@ -3,9 +3,15 @@ import BubbleSort from 'artemis-exercise/bubblesort';
 import Context from 'artemis-exercise/context';
 import Policy from 'artemis-exercise/policy';
 
+// incorrect type structure should fail with runtime errors
+const _MergeSort: any = MergeSort;
+const _BubbleSort: any = BubbleSort;
+const _Context: any = Context;
+const _Policy: any = Policy;
+
 describe('structural', () => {
     describe('Context', () => {
-        const context = new Context();
+        const context = new _Context();
 
         it('has_properties', () => {
             expect(context).toHaveProperty('dates');
@@ -18,8 +24,8 @@ describe('structural', () => {
     });
 
     describe('Policy', () => {
-        const context = new Context();
-        const policy = new Policy(context);
+        const context = new _Context();
+        const policy = new _Policy(context);
 
         it('has_properties', () => {
             expect(policy).toHaveProperty('context');
@@ -32,13 +38,13 @@ describe('structural', () => {
 
     describe('BubbleSort', () => {
         it('has_method', () => {
-            expect(BubbleSort.prototype).toHaveProperty('performSort', expect.any(Function));
+            expect(_BubbleSort.prototype).toHaveProperty('performSort', expect.any(Function));
         });
     });
 
     describe('MergeSort', () => {
         it('has_method', () => {
-            expect(MergeSort.prototype).toHaveProperty('performSort', expect.any(Function));
+            expect(_MergeSort.prototype).toHaveProperty('performSort', expect.any(Function));
         });
     });
 });

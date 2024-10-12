@@ -3,6 +3,12 @@ import BubbleSort from 'artemis-exercise/bubblesort';
 import Context from 'artemis-exercise/context';
 import Policy from 'artemis-exercise/policy';
 
+// incorrect type structure should fail with runtime errors
+const _MergeSort: any = MergeSort;
+const _BubbleSort: any = BubbleSort;
+const _Context: any = Context;
+const _Policy: any = Policy;
+
 // prettier-ignore
 const datesWithCorrectOrder = [
     new Date('2016-02-15'),
@@ -25,7 +31,7 @@ describe('behavior', () => {
 
     describe('BubbleSort', () => {
         it('should_sort_correctly', () => {
-            const bubbleSort = new BubbleSort();
+            const bubbleSort = new _BubbleSort();
             bubbleSort.performSort(dates);
             expect(dates).toEqual(datesWithCorrectOrder);
         });
@@ -33,7 +39,7 @@ describe('behavior', () => {
 
     describe('MergeSort', () => {
         it('should_sort_correctly', () => {
-            const mergeSort = new MergeSort();
+            const mergeSort = new _MergeSort();
             mergeSort.performSort(dates);
             expect(dates).toEqual(datesWithCorrectOrder);
         });
@@ -46,12 +52,12 @@ describe('behavior', () => {
                 bigList.push(new Date());
             }
 
-            const context = new Context();
+            const context = new _Context();
             context.dates = bigList;
-            const policy = new Policy(context);
+            const policy = new _Policy(context);
             policy.configure();
             const chosenSortStrategy = context.sortAlgorithm;
-            expect(chosenSortStrategy).toBeInstanceOf(MergeSort);
+            expect(chosenSortStrategy).toBeInstanceOf(_MergeSort);
         });
 
         it('uses_BubbleSort_for_small_list', () => {
@@ -60,12 +66,12 @@ describe('behavior', () => {
                 smallList.push(new Date());
             }
 
-            const context = new Context();
+            const context = new _Context();
             context.dates = smallList;
-            const policy = new Policy(context);
+            const policy = new _Policy(context);
             policy.configure();
             const chosenSortStrategy = context.sortAlgorithm;
-            expect(chosenSortStrategy).toBeInstanceOf(BubbleSort);
+            expect(chosenSortStrategy).toBeInstanceOf(_BubbleSort);
         });
     });
 });
