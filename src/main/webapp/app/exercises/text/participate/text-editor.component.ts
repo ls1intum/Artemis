@@ -30,7 +30,7 @@ import { faChevronDown, faCircleNotch, faEye, faPenSquare, faTimeline } from '@f
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-
+import { isAthenaAIResult } from 'app/exercises/shared/result/result.utils';
 @Component({
     selector: 'jhi-text-editor',
     templateUrl: './text-editor.component.html',
@@ -218,7 +218,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             if (
                 this.submission?.results &&
                 participation.results &&
-                (this.isAfterAssessmentDueDate || this.isAfterPublishDate || Result.isAthenaAIResult(this.submission.latestResult!))
+                (this.isAfterAssessmentDueDate || this.isAfterPublishDate || isAthenaAIResult(this.submission.latestResult!))
             ) {
                 this.result = this.submission.latestResult!;
                 this.result.participation = participation;
@@ -453,7 +453,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         }
 
         if (this.participation.results) {
-            const athenaResults = this.participation.results.filter((result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA);
+            const athenaResults = this.participation.results.filter((result) => isAthenaAIResult(result));
             const countOfSuccessfulRequests = athenaResults.length;
             if (countOfSuccessfulRequests >= 10) {
                 const rateLimitExceededWarning = this.translateService.instant('artemisApp.exercise.maxAthenaResultsReached');
