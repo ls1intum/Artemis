@@ -1,10 +1,11 @@
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of } from 'rxjs';
 
 import { LogsComponent } from 'app/admin/logs/logs.component';
 import { LogsService } from 'app/admin/logs/logs.service';
 import { Log, LoggersResponse } from 'app/admin/logs/log.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Component Tests', () => {
     describe('LogsComponent', () => {
@@ -14,9 +15,9 @@ describe('Component Tests', () => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule],
+                imports: [],
                 declarations: [LogsComponent],
-                providers: [LogsService],
+                providers: [provideHttpClient(), provideHttpClientTesting(), LogsService],
             }).compileComponents();
         }));
 

@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseGitDiffReport;
 import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
-import de.tum.cit.aet.artemis.programming.localvcci.AbstractLocalCILocalVCIntegrationTest;
+import de.tum.cit.aet.artemis.programming.icl.AbstractLocalCILocalVCIntegrationTest;
 import de.tum.cit.aet.artemis.programming.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.cit.aet.artemis.programming.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
@@ -57,6 +57,11 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractLocalCILocalVC
 
     @Autowired
     private ProgrammingExerciseGitDiffReportRepository reportRepository;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @BeforeEach
     void initTestCase() {

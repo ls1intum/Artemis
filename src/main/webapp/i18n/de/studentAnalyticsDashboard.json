@@ -10,7 +10,7 @@
                 "progress": "Fortschritt: {{ progress }}%",
                 "lectureProgress": "Vorlesungsfortschritt: {{ progress }}%",
                 "exerciseProgress": "Aufgabenfortschritt: {{ progress }}%",
-                "congratulations": "Herzlichen Glückwunsch! Du hast alle freigegebenen Aktivitäten in dieser Kompetenz zu mindestens 80% abgeschlossen 🎉"
+                "congratulations": "Herzlichen Glückwunsch! Du hast alle freigegebenen Aktivitäten in dieser Kompetenz zu mindestens 80 % abgeschlossen 🎉."
             },
             "button": {
                 "showLearningPath": "Lernpfad anzeigen",

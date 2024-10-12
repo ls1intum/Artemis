@@ -19,8 +19,8 @@
             "average": "Durchschnitt",
             "students": "Studierende",
             "courseScoreChart": {
-                "noGradingScaleExplanation": "Eine Leistung gilt als bedenklich falls sie unter 40% der maximal zu erreichenden Punktzahl erzielt und somit in den meisten Fällen zum Nichtbestehen eines Kurses führen würde. Andernfalls gilt eine Leistung als unbedenklich.",
-                "gradingScaleExplanationNotBonus": "Eine Leistung gilt als ungenügend falls sie nicht zum Bestehen des Kurses genügt. Andernfalls gilt eine Leistung als ausreichend.",
+                "noGradingScaleExplanation": "Eine Leistung gilt als bedenklich, falls sie unter 40 % der maximal zu erreichenden Punktzahl erzielt und somit in den meisten Fällen zum Nichtbestehen eines Kurses führen würde. Andernfalls gilt eine Leistung als unbedenklich.",
+                "gradingScaleExplanationNotBonus": "Eine Leistung gilt als ungenügend, falls sie nicht zum Bestehen des Kurses genügt. Andernfalls gilt eine Leistung als ausreichend.",
                 "scoreDistribution": "Verteilung des Kursergebnisses"
             },
             "statisticsTable": {

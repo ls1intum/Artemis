@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseSolut
 import de.tum.cit.aet.artemis.programming.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.cit.aet.artemis.programming.domain.hestia.TestwiseCoverageReportEntry;
 import de.tum.cit.aet.artemis.programming.hestia.util.HestiaUtilTestService;
-import de.tum.cit.aet.artemis.programming.localvcci.AbstractLocalCILocalVCIntegrationTest;
+import de.tum.cit.aet.artemis.programming.icl.AbstractLocalCILocalVCIntegrationTest;
 import de.tum.cit.aet.artemis.programming.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageFileReportRepository;
 import de.tum.cit.aet.artemis.programming.repository.hestia.CoverageReportRepository;
@@ -77,6 +77,11 @@ class BehavioralTestCaseServiceTest extends AbstractLocalCILocalVCIntegrationTes
     private ExerciseUtilService exerciseUtilService;
 
     private ProgrammingExercise exercise;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @BeforeEach
     void initTestCase() {

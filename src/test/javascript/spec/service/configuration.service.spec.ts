@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
 import { ConfigurationService } from 'app/admin/configuration/configuration.service';
 import { Bean, ConfigProps, Env, PropertySource } from 'app/admin/configuration/configuration.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Service Tests', () => {
     describe('Logs Service', () => {
@@ -12,7 +13,8 @@ describe('Service Tests', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule],
+                imports: [],
+                providers: [provideHttpClient(), provideHttpClientTesting()],
             });
 
             expectedResult = null;

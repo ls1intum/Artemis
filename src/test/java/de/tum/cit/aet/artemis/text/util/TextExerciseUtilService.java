@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
@@ -62,7 +62,7 @@ public class TextExerciseUtilService {
     private static final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(2);
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepository;
 
     @Autowired
     private CourseTestRepository courseRepo;
@@ -194,7 +194,7 @@ public class TextExerciseUtilService {
         TextExercise textExercise = TextExerciseFactory.generateTextExercise(releaseDate, dueDate, assessmentDueDate, course);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        return exerciseRepo.save(textExercise);
+        return exerciseRepository.save(textExercise);
     }
 
     /**
@@ -211,7 +211,7 @@ public class TextExerciseUtilService {
         teamTextExercise.setMaxPoints(10.0);
         teamTextExercise.setBonusPoints(0.0);
         teamTextExercise.setMode(ExerciseMode.TEAM);
-        return exerciseRepo.save(teamTextExercise);
+        return exerciseRepository.save(teamTextExercise);
     }
 
     /**
@@ -226,7 +226,7 @@ public class TextExerciseUtilService {
         textExercise.setTitle(title);
         course.addExercises(textExercise);
         course = courseRepo.save(course);
-        textExercise = exerciseRepo.save(textExercise);
+        textExercise = exerciseRepository.save(textExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
@@ -268,7 +268,7 @@ public class TextExerciseUtilService {
         if (title != null) {
             textExercise.setTitle(title);
         }
-        return exerciseRepo.save(textExercise);
+        return exerciseRepository.save(textExercise);
     }
 
     /**
@@ -288,7 +288,7 @@ public class TextExerciseUtilService {
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
         ExerciseGroup exerciseGroup = examUtilService.addExerciseGroupWithExamWithReviewDatesAndCourse(true);
         TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exerciseGroup);
-        return exerciseRepo.save(textExercise);
+        return exerciseRepository.save(textExercise);
     }
 
     /**
@@ -493,7 +493,7 @@ public class TextExerciseUtilService {
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);
         course = courseRepo.save(course);
-        exerciseRepo.save(finishedTextExercise);
+        exerciseRepository.save(finishedTextExercise);
         return course;
     }
 

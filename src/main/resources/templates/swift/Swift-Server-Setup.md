@@ -55,7 +55,7 @@ Append following to ~/.bashrc:
 # Bamboo Build Plan 
 ## Create Tasks 
 Go to Plan Configuration > Default Job > Tasks  
-- Create default task to checkout repos "tests and assignment"
+- Create default task to checkout repos "tests and ${studentParentWorkingDirectoryName}"
 - Create a task to build the swift project
   - Name the task `Build swift`.
   - Interpreter: `Shell`
