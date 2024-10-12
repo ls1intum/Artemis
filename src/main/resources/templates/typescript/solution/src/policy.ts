@@ -5,11 +5,7 @@ import Context from './context';
 const DATES_LENGTH_THRESHOLD = 10;
 
 export default class Policy {
-    private _context: Context;
-
-    constructor(context: Context) {
-        this._context = context;
-    }
+    constructor(private _context: Context) {}
 
     /**
      * Chooses a strategy depending on the number of date objects.
