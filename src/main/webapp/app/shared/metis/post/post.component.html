@@ -1,4 +1,4 @@
-<div class="mb-1 message-container" [ngClass]="{ 'mx-0': !isThreadSidebar }">
+<div class="mb-1" [ngClass]="{ 'mx-0': !isThreadSidebar }">
     @if (!isConsecutive) {
         <jhi-post-header
             [previewMode]="previewMode"
@@ -50,8 +50,8 @@
                 }
             </div>
             @if (!displayInlineInput) {
-                <div [ngClass]="{ 'mx-0': !isThreadSidebar }">
-                    <div class="message-content">
+                <div class="message-container">
+                    <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar }">
                         <jhi-posting-content
                             [previewMode]="previewMode"
                             [content]="posting.content"
@@ -89,7 +89,7 @@
             <jhi-message-inline-input [posting]="posting" (isModalOpen)="displayInlineInput = false" />
         </div>
     }
-    <div class="post-content-margin me-0 mt-2 justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
+    <div class="post-content-margin justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
         <!-- Post reactions -->
         @if (!previewMode) {
             <jhi-post-reactions-bar

@@ -25,7 +25,7 @@
     padding-left: 0.3rem;
 }
 
-.message-container:hover {
+.message-content:hover {
     background: var(--metis-selection-option-hover-background);
 }
 
@@ -44,16 +44,11 @@
     border-radius: 5px;
 }
 
-.message-container:hover .hover-actions {
+.message-content:hover .hover-actions {
     opacity: 1;
     visibility: visible;
 }
 
 .clickable {
     cursor: pointer;
-}
-
-/* Optional: Additional styling for icons on hover */
-.hover-actions .clickable:hover {
-    color: var(--bs-white);
 }
