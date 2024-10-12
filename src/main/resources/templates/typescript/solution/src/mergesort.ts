@@ -22,7 +22,7 @@ export default class MergeSort<T extends Comparable> implements SortStrategy<T> 
  * @param high {number}
  */
 function mergesort<T extends Comparable>(input: Array<T>, low: number, high: number) {
-    if (high - low < 1) {
+    if (low >= high) {
         return;
     }
     const mid = Math.floor((low + high) / 2);
@@ -56,14 +56,11 @@ function merge<T extends Comparable>(input: Array<T>, low: number, middle: numbe
         wholeIndex++;
     }
 
-    if (leftIndex <= middle && rightIndex > high) {
-        while (leftIndex <= middle) {
-            temp[wholeIndex++] = input[leftIndex++];
-        }
-    } else {
-        while (rightIndex <= high) {
-            temp[wholeIndex++] = input[rightIndex++];
-        }
+    while (leftIndex <= middle) {
+        temp[wholeIndex++] = input[leftIndex++];
+    }
+    while (rightIndex <= high) {
+        temp[wholeIndex++] = input[rightIndex++];
     }
 
     for (wholeIndex = 0; wholeIndex < temp.length; wholeIndex++) {
