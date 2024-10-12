@@ -1,8 +1,11 @@
 package de.tum.cit.aet.artemis.core.service.feature;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.security.annotations.AnnotationUtils.getAnnotations;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Stream;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -26,25 +29,24 @@ public class FeatureToggleAspect {
 
     /**
      * Pointcut around all methods or classes annotated with {@link FeatureToggle}.
-     *
-     * @param featureToggle The feature toggle annotation containing the relevant features
      */
-    @Pointcut("@within(featureToggle) || @annotation(featureToggle)")
-    public void callAt(FeatureToggle featureToggle) {
+    @Pointcut("@within(de.tum.cit.aet.artemis.core.service.feature.FeatureToggle) || @annotation(de.tum.cit.aet.artemis.core.service.feature.FeatureToggle) || execution(@(@de.tum.cit.aet.artemis.core.service.feature.FeatureToggle *) * *(..))")
+    protected void callAt() {
     }
 
     /**
      * Aspect around all methods for which a feature toggle has been activated. Will check all specified features and only
      * execute the underlying method if all features are enabled. Will otherwise return forbidden (as response entity)
      *
-     * @param joinPoint     Proceeding join point of the aspect
-     * @param featureToggle The feature toggle annotation containing all features that should get checked
+     * @param joinPoint Proceeding join point of the aspect
      * @return The original return value of the called method, if all features are enabled, a forbidden response entity otherwise
      * @throws Throwable If there was any error during method execution (both the aspect or the actual called method)
      */
-    @Around(value = "callAt(featureToggle)", argNames = "joinPoint,featureToggle")
-    public Object around(ProceedingJoinPoint joinPoint, FeatureToggle featureToggle) throws Throwable {
-        if (Arrays.stream(featureToggle.value()).allMatch(featureToggleService::isFeatureEnabled)) {
+    @Around(value = "callAt()", argNames = "joinPoint")
+    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+        List<FeatureToggle> featureToggleAnnotations = getAnnotations(FeatureToggle.class, joinPoint);
+        Stream<Feature> features = featureToggleAnnotations.stream().flatMap(featureToggle -> Arrays.stream(featureToggle.value()));
+        if (features.allMatch(featureToggleService::isFeatureEnabled)) {
             return joinPoint.proceed();
         }
         else {
