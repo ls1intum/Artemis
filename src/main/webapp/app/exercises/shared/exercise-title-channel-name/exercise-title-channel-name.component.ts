@@ -34,8 +34,8 @@ export class ExerciseTitleChannelNameComponent implements OnChanges {
     constructor() {
         effect(() => {
             const courseId = this.courseId() ?? this.course()?.id;
-            if (courseId) {
-                this.exerciseService.getExistingExerciseDetailsInCourse(courseId).subscribe((exerciseDetails) => {
+            if (courseId && this.exercise.type) {
+                this.exerciseService.getExistingExerciseDetailsInCourse(courseId, this.exercise.type).subscribe((exerciseDetails) => {
                     this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles);
                 });
             }

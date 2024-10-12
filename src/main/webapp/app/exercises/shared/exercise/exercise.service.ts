@@ -252,9 +252,9 @@ export class ExerciseService {
             });
     }
 
-    getExistingExerciseDetailsInCourse(courseId: number, includeShortNames?: boolean): Observable<CourseExistingExerciseDetailsType> {
+    getExistingExerciseDetailsInCourse(courseId: number, exerciseType: ExerciseType): Observable<CourseExistingExerciseDetailsType> {
         return this.http
-            .get<CourseExistingExerciseDetailsType>(`${this.courseResourceUrl}/${courseId}/existing-exercise-details${includeShortNames ? '?includeShortNames=true' : ''}`, {
+            .get<CourseExistingExerciseDetailsType>(`${this.courseResourceUrl}/${courseId}/existing-exercise-details$?exerciseType=${exerciseType}`, {
                 observe: 'response',
             })
             .pipe(map((response) => response.body!));

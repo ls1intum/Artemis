@@ -11,6 +11,7 @@ import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/
 import { removeSpecialCharacters } from 'app/shared/util/utils';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AlertService } from 'app/core/util/alert.service';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 
@@ -96,7 +97,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
             function fetchAndInitializeTakenTitlesAndShortNames() {
                 const courseId = this.courseId() ?? this.programmingExercise().course?.id;
                 if (courseId) {
-                    this.exerciseService.getExistingExerciseDetailsInCourse(courseId, true).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
+                    this.exerciseService.getExistingExerciseDetailsInCourse(courseId, ExerciseType.PROGRAMMING).subscribe((exerciseDetails: CourseExistingExerciseDetailsType) => {
                         this.alreadyUsedExerciseNames.set(exerciseDetails.exerciseTitles);
                         this.alreadyUsedShortNames.set(exerciseDetails.shortNames);
                     });

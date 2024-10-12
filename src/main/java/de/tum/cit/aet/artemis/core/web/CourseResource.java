@@ -108,6 +108,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
+import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
@@ -1457,25 +1458,30 @@ public class CourseResource {
     }
 
     /**
-     * GET courses/{courseId}/existing-exercise-details: Get the exercise names and shortNames of all exercises in the given course.
+     * GET courses/{courseId}/existing-exercise-details: Get the exercise names (and shortNames for {@link ExerciseType#PROGRAMMING} exercises)
+     * of all exercises with the given type in the given course.
      *
-     * @param courseId          of the course for which all exercise names (and optionally shortNames) should be fetched
-     * @param includeShortNames should be true for programming exercises and false for other exercise types as the shortName is not used there
-     * @return {@link CourseExistingExerciseDetails} with the exerciseNames and optionally shortNames of the course
+     * @param courseId     of the course for which all exercise names should be fetched
+     * @param exerciseType the type of exercise for which the details should be fetched, as the name of an exercise only needs to be unique for each exercise type
+     * @return {@link CourseExistingExerciseDetails} with the exerciseNames (and already used shortNames if a {@link ExerciseType#PROGRAMMING} exercise is requested)
      */
     @GetMapping("courses/{courseId}/existing-exercise-details")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam(defaultValue = "false") Boolean includeShortNames) {
+    public ResponseEntity<CourseExistingExerciseDetails> getExistingExerciseDetails(@PathVariable Long courseId, @RequestParam ExerciseType exerciseType) {
         log.debug("REST request to get details of existing exercises in course : {}", courseId);
         Course course = courseRepository.findByIdWithEagerExercisesElseThrow(courseId);
 
         Set<String> alreadyTakenExerciseNames = new HashSet<>();
         Set<String> alreadyTakenShortNames = new HashSet<>();
 
+        boolean includeShortNames = exerciseType == ExerciseType.PROGRAMMING;
+
         course.getExercises().forEach((exercise -> {
-            alreadyTakenExerciseNames.add(exercise.getTitle());
-            if (includeShortNames && exercise.getShortName() != null) {
-                alreadyTakenShortNames.add(exercise.getShortName());
+            if (exercise.getType().equals(exerciseType.toString())) {
+                alreadyTakenExerciseNames.add(exercise.getTitle());
+                if (includeShortNames && exercise.getShortName() != null) {
+                    alreadyTakenShortNames.add(exercise.getShortName());
+                }
             }
         }));
 
