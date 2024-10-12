@@ -38,14 +38,17 @@ public class LLMTokenUsage extends DomainObject {
     @Column(name = "model")
     private String model;
 
-    @Column(name = "cost_per_token")
-    private double cost_per_token;
-
     @Column(name = "num_input_tokens")
     private int num_input_tokens;
 
+    @Column(name = "cost_per_input_token")
+    private float cost_per_input_token;
+
     @Column(name = "num_output_tokens")
     private int num_output_tokens;
+
+    @Column(name = "cost_per_output_token")
+    private float cost_per_output_token;
 
     @Nullable
     @ManyToOne
@@ -65,6 +68,9 @@ public class LLMTokenUsage extends DomainObject {
     @Nullable
     @Column(name = "timestamp")
     private ZonedDateTime timestamp = ZonedDateTime.now();
+
+    @Column(name = "trace_id")
+    private Long traceId;
 
     @Nullable
     @ManyToOne
@@ -88,12 +94,20 @@ public class LLMTokenUsage extends DomainObject {
         this.model = model;
     }
 
-    public double getCost_per_token() {
-        return cost_per_token;
+    public float getCost_per_input_token() {
+        return cost_per_input_token;
     }
 
-    public void setCost_per_token(double cost_per_token) {
-        this.cost_per_token = cost_per_token;
+    public void setCost_per_input_token(float cost_per_input_token) {
+        this.cost_per_input_token = cost_per_input_token;
+    }
+
+    public float getCost_per_output_token() {
+        return cost_per_output_token;
+    }
+
+    public void setCost_per_output_token(float cost_per_output_token) {
+        this.cost_per_output_token = cost_per_output_token;
     }
 
     public int getNum_input_tokens() {
@@ -144,11 +158,26 @@ public class LLMTokenUsage extends DomainObject {
         this.timestamp = timestamp;
     }
 
+    public Long getTraceId() {
+        return traceId;
+    }
+
+    public void setTraceId(Long traceId) {
+        this.traceId = traceId;
+    }
+
     public IrisMessage getIrisMessage() {
         return irisMessage;
     }
 
     public void setIrisMessage(IrisMessage message) {
         this.irisMessage = message;
+    }
+
+    @Override
+    public String toString() {
+        return "LLMTokenUsage{" + "serviceType=" + serviceType + ", model=" + model + ", num_input_tokens=" + num_input_tokens + ", cost_per_input_token=" + cost_per_input_token
+                + ", num_output_tokens=" + num_output_tokens + ", cost_per_output_token=" + cost_per_output_token + ", course=" + course + ", exercise=" + exercise + ", userId="
+                + userId + ", timestamp=" + timestamp + ", trace_id=" + traceId + ", irisMessage=" + irisMessage + '}';
     }
 }

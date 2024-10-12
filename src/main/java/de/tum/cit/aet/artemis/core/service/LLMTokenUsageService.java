@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,12 @@ public class LLMTokenUsageService {
 
     public List<LLMTokenUsage> saveTokenUsage(IrisMessage message, Exercise exercise, User user, Course course, List<PyrisLLMCostDTO> tokens) {
         List<LLMTokenUsage> tokenUsages = new ArrayList<>();
+
+        // Combine current time and UUID to create a unique traceId
+        long timestamp = System.currentTimeMillis();
+        long uuidComponent = UUID.randomUUID().getLeastSignificantBits() & Long.MAX_VALUE;
+        Long traceId = timestamp + uuidComponent;
+
         for (PyrisLLMCostDTO cost : tokens) {
             LLMTokenUsage llmTokenUsage = new LLMTokenUsage();
             if (message != null) {
@@ -57,8 +64,11 @@ public class LLMTokenUsageService {
             }
             llmTokenUsage.setCourse(course);
             llmTokenUsage.setNum_input_tokens(cost.num_input_tokens());
+            llmTokenUsage.setCost_per_input_token(cost.cost_per_input_token());
             llmTokenUsage.setNum_output_tokens(cost.num_output_tokens());
+            llmTokenUsage.setCost_per_output_token(cost.cost_per_output_token());
             llmTokenUsage.setModel(cost.model_info());
+            llmTokenUsage.setTraceId(traceId);
             tokenUsages.add(llmTokenUsageRepository.save(llmTokenUsage));
         }
         return tokenUsages;
