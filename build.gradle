@@ -246,14 +246,15 @@ dependencies {
     implementation "org.gitlab4j:gitlab4j-api:6.0.0-rc.5"
 
     implementation "de.jplag:jplag:${jplag_version}"
-    implementation "de.jplag:java:${jplag_version}"
-    implementation "de.jplag:kotlin:${jplag_version}"
+
     implementation "de.jplag:c:${jplag_version}"
-    implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
-    implementation "de.jplag:python-3:${jplag_version}"
-    implementation "de.jplag:rust:${jplag_version}"
     implementation "de.jplag:javascript:${jplag_version}"
+    implementation "de.jplag:kotlin:${jplag_version}"
+    implementation "de.jplag:python-3:${jplag_version}"
+    implementation "de.jplag:rlang:${jplag_version}"
+    implementation "de.jplag:rust:${jplag_version}"
+    implementation "de.jplag:swift:${jplag_version}"
     implementation "de.jplag:text:${jplag_version}"
 
     // those are transitive dependencies of JPlag Text --> Stanford NLP
