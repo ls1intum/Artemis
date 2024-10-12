@@ -66,6 +66,7 @@ export class UserPublicInfoDTO {
     public firstName?: string;
     public lastName?: string;
     public email?: string;
+    public imageUrl?: string;
     public isInstructor?: boolean;
     public isEditor?: boolean;
     public isTeachingAssistant?: boolean;

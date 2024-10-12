@@ -41,7 +41,6 @@ import de.tum.cit.aet.artemis.core.util.CourseFactory;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureUnitRepository;
@@ -79,9 +78,6 @@ class LearningPathServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private CompetencyProgressUtilService competencyProgressUtilService;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private StudentScoreUtilService studentScoreUtilService;
