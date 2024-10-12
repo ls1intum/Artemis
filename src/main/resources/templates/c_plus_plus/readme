@@ -82,7 +82,8 @@ sorting may not add or remove elements. This is usually achieved by swapping ele
     ```
 
 8. [task][Bogosort](bogosort,bogosort/empty_input,bogosort/single_value)
-    As long as the vector is not sorted, (randomly or deterministically) shuffle the entire vector.
+    As long as the vector is not sorted, randomly shuffle the entire vector.
+    Alternatively, you can deterministically try all permutations until the vector is sorted.
 
     ```c++
     void bogosort(std::vector<int>::iterator begin,
