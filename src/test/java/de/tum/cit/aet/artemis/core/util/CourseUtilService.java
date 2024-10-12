@@ -1246,6 +1246,19 @@ public class CourseUtilService {
         return course;
     }
 
+    public Course createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor(String tutorLogin, String editorLogin) {
+        Course course = this.createCourse();
+        TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
+        ProgrammingExercise programmingExercise1 = programmingExerciseUtilService.createSampleProgrammingExercise();
+        ProgrammingExercise programmingExercise2 = programmingExerciseUtilService.createSampleProgrammingExercise("Title1", "shortnameone");
+
+        course.addExercises(textExercise);
+        course.addExercises(programmingExercise1);
+        course.addExercises(programmingExercise2);
+
+        return course;
+    }
+
     /**
      * Updates the max complaint text limit of the course.
      *

@@ -168,15 +168,19 @@ public class ProgrammingExerciseUtilService {
     @Autowired
     private GitService gitService;
 
+    public ProgrammingExercise createSampleProgrammingExercise() {
+        return createSampleProgrammingExercise("Title", "Shortname");
+    }
+
     /**
      * Create an example programming exercise
      *
      * @return the created programming exercise
      */
-    public ProgrammingExercise createSampleProgrammingExercise() {
+    public ProgrammingExercise createSampleProgrammingExercise(String title, String shortName) {
         var programmingExercise = new ProgrammingExercise();
-        programmingExercise.setTitle("Title");
-        programmingExercise.setShortName("Shortname");
+        programmingExercise.setTitle(title);
+        programmingExercise.setShortName(shortName);
         programmingExercise.setProgrammingLanguage(ProgrammingLanguage.JAVA);
         programmingExercise.setMaxPoints(10.0);
         programmingExercise.setBonusPoints(0.0);

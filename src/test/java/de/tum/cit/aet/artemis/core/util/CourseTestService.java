@@ -90,6 +90,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.domain.Organization;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseExistingExerciseDetails;
 import de.tum.cit.aet.artemis.core.dto.CourseForDashboardDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseForImportDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseManagementDetailViewDTO;
@@ -3383,5 +3384,20 @@ public class CourseTestService {
             Optional<CourseForImportDTO> found = courses.stream().filter(c -> Objects.equals(c.id(), course.getId())).findFirst();
             assertThat(found).as("Course is available").isPresent();
         }
+    }
+
+    // Test
+    public void testGetExistingExerciseDetails_asTutor() throws Exception {
+        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor("taNotRegistered", userPrefix);
+        request.getList("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.FORBIDDEN, CourseExistingExerciseDetails.class);
+    }
+
+    // Test
+    public void testGetExistingExerciseDetails_asEditor(String username) throws Exception {
+        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor("test", "test");
+        CourseExistingExerciseDetails result = request.get("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK,
+                CourseExistingExerciseDetails.class);
+        assertThat(result.shortNames()).hasSize(2);
+        assertThat(result.exerciseTitles()).hasSize(2);
     }
 }
