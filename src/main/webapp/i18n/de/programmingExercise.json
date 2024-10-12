@@ -674,7 +674,8 @@
             }
         },
         "error": {
-            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben."
+            "noparticipations": "Nutzer:in existiert nicht oder es gibt keine Abgaben.",
+            "shortNameGenerationFailed": "Der Kurzname konnte nicht generiert werden, bitte wechsle zum erweiterten Modus und setze den Kurznamen manuell."
         }
     }
 }

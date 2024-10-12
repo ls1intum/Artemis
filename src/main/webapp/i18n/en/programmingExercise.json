@@ -675,7 +675,8 @@
             }
         },
         "error": {
-            "noparticipations": "No existing user was specified or no submission exists."
+            "noparticipations": "No existing user was specified or no submission exists.",
+            "shortNameGenerationFailed": "The short name could not be generated, please switch to the advanced mode and set the short name manually."
         }
     }
 }

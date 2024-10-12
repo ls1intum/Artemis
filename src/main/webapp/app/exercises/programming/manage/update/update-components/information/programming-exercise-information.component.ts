@@ -10,6 +10,7 @@ import { ImportOptions } from 'app/types/programming-exercises';
 import { ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 import { removeSpecialCharacters } from 'app/shared/util/utils';
 import { CourseExistingExerciseDetailsType, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 const MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME = 200;
 
@@ -41,6 +42,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
     @ViewChild('titleChannelNameComponent') titleComponent?: ExerciseTitleChannelNameComponent;
 
     private readonly exerciseService: ExerciseService = inject(ExerciseService);
+    private readonly alertService: AlertService = inject(AlertService);
 
     isShortNameFieldValid = signal<boolean>(false);
     isShortNameFromAdvancedMode = signal<boolean>(false);
@@ -209,6 +211,7 @@ export class ProgrammingExerciseInformationComponent implements AfterViewInit, O
         let counter = 1;
         while (this.alreadyUsedShortNames().includes(newShortName)) {
             if (counter > MAXIMUM_TRIES_TO_GENERATE_UNIQUE_SHORT_NAME) {
+                this.alertService.error('artemisApp.error.shortNameGenerationFailed');
                 break;
             }
             newShortName = `${shortName}${counter}`;
