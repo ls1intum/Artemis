@@ -1246,7 +1246,7 @@ public class CourseUtilService {
         return course;
     }
 
-    public Course createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor(String tutorLogin, String editorLogin) {
+    public Course createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor() {
         Course course = this.createCourse();
         TextExercise textExercise = textExerciseUtilService.createIndividualTextExercise(course, PAST_TIMESTAMP, PAST_TIMESTAMP, PAST_TIMESTAMP);
         ProgrammingExercise programmingExercise1 = programmingExerciseUtilService.createSampleProgrammingExercise();

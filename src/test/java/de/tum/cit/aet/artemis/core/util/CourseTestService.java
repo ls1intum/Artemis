@@ -3388,13 +3388,13 @@ public class CourseTestService {
 
     // Test
     public void testGetExistingExerciseDetails_asTutor() throws Exception {
-        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor("taNotRegistered", userPrefix);
+        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
         request.getList("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.FORBIDDEN, CourseExistingExerciseDetails.class);
     }
 
     // Test
     public void testGetExistingExerciseDetails_asEditor(String username) throws Exception {
-        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor("test", "test");
+        Course course = courseUtilService.createCourseWith2ProgrammingExercisesTextExerciseTutorAndEditor();
         CourseExistingExerciseDetails result = request.get("/api/courses/" + course.getId() + "/existing-exercise-details?exerciseType=programming", HttpStatus.OK,
                 CourseExistingExerciseDetails.class);
     }
