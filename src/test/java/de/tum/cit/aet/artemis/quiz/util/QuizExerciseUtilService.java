@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.TeamAssignmentConfig;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
@@ -70,7 +70,7 @@ public class QuizExerciseUtilService {
     private CourseTestRepository courseRepo;
 
     @Autowired
-    private ExerciseRepository exerciseRepo;
+    private ExerciseTestRepository exerciseRepository;
 
     @Autowired
     private QuizSubmissionTestRepository quizSubmissionRepository;
@@ -137,7 +137,7 @@ public class QuizExerciseUtilService {
         assertThat(quizExercise.isValid()).isTrue();
         course.addExercises(quizExercise);
         course = courseRepo.save(course);
-        quizExercise = exerciseRepo.save(quizExercise);
+        quizExercise = exerciseRepository.save(quizExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
         return course;
     }

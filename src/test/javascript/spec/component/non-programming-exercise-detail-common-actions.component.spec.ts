@@ -22,6 +22,7 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { MockRouterLinkDirective } from '../helpers/mocks/directive/mock-router-link.directive';
 import { UMLDiagramType } from '@ls1intum/apollon';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 describe('Exercise detail common actions Component', () => {
     let comp: NonProgrammingExerciseDetailCommonActionsComponent;
@@ -44,8 +45,10 @@ describe('Exercise detail common actions Component', () => {
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 MockProvider(ModelingExerciseService),
                 { provide: Router, useClass: MockRouter },
+                MockProvider(ProfileService),
             ],
         }).compileComponents();
+        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of());
         fixture = TestBed.createComponent(NonProgrammingExerciseDetailCommonActionsComponent);
         comp = fixture.componentInstance;
     });

@@ -20,7 +20,6 @@ import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTest {
@@ -38,9 +37,6 @@ class CourseExamExportServiceTest extends AbstractSpringIntegrationIndependentTe
 
     @Autowired
     private UserUtilService userUtilService;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private UserTestRepository userRepository;

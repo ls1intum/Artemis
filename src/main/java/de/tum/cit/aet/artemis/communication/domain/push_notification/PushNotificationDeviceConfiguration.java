@@ -106,7 +106,9 @@ public class PushNotificationDeviceConfiguration {
             return false;
         }
         PushNotificationDeviceConfiguration that = (PushNotificationDeviceConfiguration) object;
-        return token.equals(that.token) && deviceType == that.deviceType && expirationDate.equals(that.expirationDate) && Arrays.equals(secretKey, that.secretKey)
+        // Use compareTo rather than equals for dates to ensure timestamps and dates with the same time are considered equal
+        // This is caused by Java internal design having different classes for Date (java.util) and Timestamp (java.sql)
+        return token.equals(that.token) && deviceType == that.deviceType && expirationDate.compareTo(that.expirationDate) == 0 && Arrays.equals(secretKey, that.secretKey)
                 && owner.equals(that.owner);
     }
 
