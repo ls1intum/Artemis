@@ -1,30 +1,30 @@
 import type SortStrategy from './sortstrategy';
 
 export default class Context {
-    #sortAlgorithm: SortStrategy | null = null;
+    private _sortAlgorithm: SortStrategy | null = null;
 
-    #dates: Date[] = [];
+    private _dates: Date[] = [];
 
     /**
      * Runs the configured sort algorithm.
      */
     sort() {
-        this.#sortAlgorithm?.performSort(this.#dates);
+        this._sortAlgorithm?.performSort(this._dates);
     }
 
     get sortAlgorithm(): SortStrategy | null {
-        return this.#sortAlgorithm;
+        return this._sortAlgorithm;
     }
 
     set sortAlgorithm(sortAlgorithm: SortStrategy) {
-        this.#sortAlgorithm = sortAlgorithm;
+        this._sortAlgorithm = sortAlgorithm;
     }
 
     get dates(): Date[] {
-        return this.#dates;
+        return this._dates;
     }
 
     set dates(dates: Date[]) {
-        this.#dates = dates;
+        this._dates = dates;
     }
 }
