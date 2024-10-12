@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.plagiarism.domain.PlagiarismCase;
@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
 class ContinuousPlagiarismControlServiceTest {
 
-    private final ExerciseRepository exerciseRepository = mock();
+    private final ExerciseTestRepository exerciseRepository = mock();
 
     private final PlagiarismDetectionService plagiarismChecksService = mock();
 
