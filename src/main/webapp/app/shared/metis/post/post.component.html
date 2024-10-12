@@ -62,7 +62,7 @@
                             (userReferenceClicked)="onUserReferenceClicked($event)"
                             (channelReferenceClicked)="onChannelReferenceClicked($event)"
                         ></jhi-posting-content>
-                        <div class="hover-actions post-content-margin me-0 mt-2 justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
+                        <div class="hover-actions post-content-margin justify-content-between" [ngClass]="{ 'mb-2': previewMode }">
                             @if (!previewMode) {
                                 <jhi-post-reactions-bar
                                     [lastReadDate]="lastReadDate"

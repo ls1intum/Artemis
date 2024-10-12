@@ -23,7 +23,7 @@
 
 .hover-actions {
     position: absolute;
-    top: 0;
+    top: -1.8rem;
     right: 1%;
     display: flex;
     gap: 10px;
@@ -43,13 +43,6 @@
 
 .clickable {
     cursor: pointer;
-}
-
-.reactionIcon,
-.editIcon,
-.deleteIcon {
-    font-size: 1rem;
-    color: var(--metis-blue);
 }
 
 .hover-actions .clickable:hover {
