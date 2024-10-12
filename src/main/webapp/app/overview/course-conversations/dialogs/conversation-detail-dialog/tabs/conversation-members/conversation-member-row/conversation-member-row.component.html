@@ -1,11 +1,23 @@
 @if (activeConversation && course) {
     <div class="d-flex justify-content-between align-items-center conversation-member-row" (mouseleave)="$event.stopPropagation(); userDropdown.close()">
         <span class="d-inline-block">
-            <fa-icon [icon]="userIcon" [ngbTooltip]="userTooltip" />
+            @if (userImageUrl) {
+                <img
+                    [alt]="userLabel"
+                    class="conversation-member-row-profile-picture rounded-3 me-1"
+                    [src]="userImageUrl"
+                    [ngStyle]="{ 'background-color': userDefaultPictureHue }"
+                />
+            } @else {
+                <strong class="conversation-member-row-default-profile-picture rounded-3 me-1" [ngStyle]="{ 'background-color': userDefaultPictureHue }">{{ userInitials }}</strong>
+            }
             @if (isChannel(activeConversation) && conversationMember?.isChannelModerator) {
                 <fa-icon [icon]="faUserGear" [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate" />
             }
             {{ userLabel }}
+            @if (!conversationMember.isStudent) {
+                <fa-icon class="ms-1 text-secondary" [icon]="userIcon" [ngbTooltip]="userTooltip" />
+            }
         </span>
         <div ngbDropdown class="d-inline-block" #userDropdown="ngbDropdown">
             @if (canBeRemovedFromConversation || canBeGrantedChannelModeratorRole || canBeRevokedChannelModeratorRole) {

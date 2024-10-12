@@ -167,6 +167,7 @@ public class PublicAccountResource {
         userDTO.setVcsAccessToken(user.getVcsAccessToken());
         userDTO.setVcsAccessTokenExpiryDate(user.getVcsAccessTokenExpiryDate());
         userDTO.setSshPublicKey(user.getSshPublicKey());
+        userDTO.setSshKeyHash(user.getSshPublicKeyHash());
         log.info("GET /account {} took {}ms", user.getLogin(), System.currentTimeMillis() - start);
         return ResponseEntity.ok(userDTO);
     }

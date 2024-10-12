@@ -107,6 +107,8 @@
                         [buttonSize]="ButtonSize.MEDIUM"
                         jhiDeleteButton
                         [entityTitle]="course.title || ''"
+                        entitySummaryTitle="artemisApp.course.delete.summary.title"
+                        [fetchEntitySummary]="fetchCourseDeletionSummary()"
                         deleteQuestion="artemisApp.course.delete.question"
                         deleteConfirmationText="artemisApp.course.delete.typeNameToConfirm"
                         (delete)="deleteCourse(course.id!)"
