@@ -12,9 +12,10 @@ import { VcsAccessTokensSettingsComponent } from 'app/shared/user-settings/vcs-a
 import { ClipboardModule } from '@angular/cdk/clipboard';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
 import { IdeSettingsComponent } from 'app/shared/user-settings/ide-preferences/ide-settings.component';
+import { DocumentationLinkComponent } from 'app/shared/components/documentation-link/documentation-link.component';
 
 @NgModule({
-    imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule, ArtemisSharedComponentModule, ClipboardModule, FormDateTimePickerModule],
+    imports: [RouterModule.forChild(userSettingsState), ArtemisSharedModule, ArtemisSharedComponentModule, ClipboardModule, FormDateTimePickerModule, DocumentationLinkComponent],
     declarations: [
         UserSettingsContainerComponent,
         AccountInformationComponent,
