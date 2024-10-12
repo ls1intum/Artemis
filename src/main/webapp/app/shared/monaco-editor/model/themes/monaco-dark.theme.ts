@@ -39,7 +39,7 @@ const themeDefinition: MonacoThemeDefinition = {
         },
         diff: {
             insertedLineBackgroundColor: '#2ea04326',
-            insertedTextBackgroundColor: '#2ea04366',
+            insertedTextBackgroundColor: '#2ea04346',
             removedLineBackgroundColor: '#f8514926',
             removedTextBackgroundColor: '#f8514946',
             diagonalFillColor: '#00000000',
