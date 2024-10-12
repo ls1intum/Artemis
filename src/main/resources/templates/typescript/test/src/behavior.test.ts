@@ -12,7 +12,7 @@ const datesWithCorrectOrder = [
 ];
 
 describe('behavior', () => {
-    let dates: Date[];
+    let dates: Array<Date>;
     beforeEach(() => {
         // prettier-ignore
         dates = [
@@ -41,7 +41,7 @@ describe('behavior', () => {
 
     describe('Policy', () => {
         it('uses_MergeSort_for_big_list', () => {
-            const bigList: Date[] = [];
+            const bigList: Array<Date> = [];
             for (let i = 0; i < 11; i++) {
                 bigList.push(new Date());
             }
@@ -55,7 +55,7 @@ describe('behavior', () => {
         });
 
         it('uses_BubbleSort_for_small_list', () => {
-            const smallList: Date[] = [];
+            const smallList: Array<Date> = [];
             for (let i = 0; i < 3; i++) {
                 smallList.push(new Date());
             }

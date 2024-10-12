@@ -9,10 +9,10 @@ First, we need to implement two sorting algorithms, in this case `MergeSort` and
 **You have the following tasks:**
 
 1. [task][Implement Bubble Sort](structural_BubbleSort_has_method,behavior_BubbleSort_should_sort_correctly)
-Implement the method `performSort(Date[])` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
+Implement the method `performSort(Array<Date>)` in the class `BubbleSort`. Make sure to follow the Bubble Sort algorithm exactly.
 
 2. [task][Implement Merge Sort](structural_MergeSort_has_method,behavior_MergeSort_should_sort_correctly)
-Implement the method `performSort(Date[])` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
+Implement the method `performSort(Array<Date>)` in the class `MergeSort`. Make sure to follow the Merge Sort algorithm exactly.
 
 ### Part 2: Strategy Pattern
 
@@ -49,20 +49,20 @@ class Policy {
 }
 
 class Context {
-  <color:testsColor(structural_Context_has_properties)>-dates: Date[]</color>
+  <color:testsColor(structural_Context_has_properties)>-dates: Array<Date></color>
   <color:testsColor(structural_Context_has_methods)>+sort()</color>
 }
 
 interface SortStrategy {
-  +performSort(Date[])
+  +performSort(Array<Date>)
 }
 
 class BubbleSort {
-  <color:testsColor(behavior_BubbleSort_should_sort_correctly)>+performSort(Date[])</color>
+  <color:testsColor(behavior_BubbleSort_should_sort_correctly)>+performSort(Array<Date>)</color>
 }
 
 class MergeSort {
-  <color:testsColor(behavior_MergeSort_should_sort_correctly)>+performSort(Date[])</color>
+  <color:testsColor(behavior_MergeSort_should_sort_correctly)>+performSort(Array<Date>)</color>
 }
 
 MergeSort -up-|> SortStrategy #testsColor(structural_MergeSort_has_method)
@@ -81,5 +81,6 @@ hide empty methods
 (These are not tested)
 
 1. Create a new class `QuickSort` that implements `SortStrategy` and implement the Quick Sort algorithm.
-
-2. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.
+2. Make the method `performSort(List<Dates>)` generic, so that other objects can also be sorted by the same method.
+   **Hint:** Create a `Comparable` interface.
+3. Think about a useful decision in `Policy` when to use the new `QuickSort` algorithm.

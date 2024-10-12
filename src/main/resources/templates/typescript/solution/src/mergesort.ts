@@ -1,10 +1,14 @@
-export default class MergeSort {
+import SortStrategy from './sortstrategy';
+import Comparable from './comparable';
+
+export default class MergeSort<T extends Comparable> implements SortStrategy<T> {
     /**
      * Wrapper method for the real MergeSort algorithm.
      *
-     * @param input {Date[]} the array of Dates to be sorted
+     * @template T
+     * @param input {Array<T>} the array of objects to be sorted
      */
-    performSort(input: Date[]) {
+    performSort(input: Array<T>) {
         mergesort(input, 0, input.length - 1);
     }
 }
@@ -12,11 +16,12 @@ export default class MergeSort {
 /**
  * Recursive merge sort function
  *
- * @param input {Date[]}
+ * @template T
+ * @param input {Array<T>}
  * @param low {number}
  * @param high {number}
  */
-function mergesort(input: Date[], low: number, high: number) {
+function mergesort<T extends Comparable>(input: Array<T>, low: number, high: number) {
     if (high - low < 1) {
         return;
     }
@@ -29,20 +34,21 @@ function mergesort(input: Date[], low: number, high: number) {
 /**
  * Merge function
  *
- * @param input {Date[]}
+ * @template T
+ * @param input {Array<T>}
  * @param low {number}
  * @param middle {number}
  * @param high {number}
  */
-function merge(input: Date[], low: number, middle: number, high: number) {
-    const temp = new Array<Date>(high - low + 1);
+function merge<T extends Comparable>(input: Array<T>, low: number, middle: number, high: number) {
+    const temp = new Array<T>(high - low + 1);
 
     let leftIndex = low;
     let rightIndex = middle + 1;
     let wholeIndex = 0;
 
     while (leftIndex <= middle && rightIndex <= high) {
-        if (input[leftIndex] <= input[rightIndex]) {
+        if (input[leftIndex].valueOf() <= input[rightIndex].valueOf()) {
             temp[wholeIndex] = input[leftIndex++];
         } else {
             temp[wholeIndex] = input[rightIndex++];

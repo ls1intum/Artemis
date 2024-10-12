@@ -1,3 +1,3 @@
 export default class BubbleSort {
-    // TODO: implement in performSort(Date[])
+    // TODO: implement in performSort(Array<Date>)
 }

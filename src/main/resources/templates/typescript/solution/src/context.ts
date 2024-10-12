@@ -3,7 +3,7 @@ import type SortStrategy from './sortstrategy';
 export default class Context {
     private _sortAlgorithm: SortStrategy | null = null;
 
-    private _dates: Date[] = [];
+    private _dates: Array<Date> = [];
 
     /**
      * Runs the configured sort algorithm.
@@ -20,11 +20,11 @@ export default class Context {
         this._sortAlgorithm = sortAlgorithm;
     }
 
-    get dates(): Date[] {
+    get dates(): Array<Date> {
         return this._dates;
     }
 
-    set dates(dates: Date[]) {
+    set dates(dates: Array<Date>) {
         this._dates = dates;
     }
 }
