@@ -48,15 +48,4 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
     deletePosting(): void {
         this.metisService.deleteAnswerPost(this.posting);
     }
-
-    /**
-     * toggles the resolvesPost property of an answer post if the user is at least tutor in a course or the user is the author of the original post,
-     * delegates the update to the metis service
-     */
-    toggleResolvesPost(): void {
-        if (this.isAtLeastTutorInCourse || this.isAuthorOfOriginalPost) {
-            this.posting.resolvesPost = !this.posting.resolvesPost;
-            this.metisService.updateAnswerPost(this.posting).subscribe();
-        }
-    }
 }

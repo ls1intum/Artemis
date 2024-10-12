@@ -49,6 +49,30 @@
             </ng-container>
         }
         @if (!isEmojiCount && mayEditOrDelete) {
+            @if (!isAnswerOfAnnouncement) {
+                <button
+                    class="reaction-button clickable px-2 fs-small resolve"
+                    id="toggleElement"
+                    [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''"
+                    (click)="toggleResolvesPost()"
+                >
+                    @if (posting.resolvesPost) {
+                        <fa-icon
+                            class="resolved"
+                            [icon]="faCheck"
+                            [ngbTooltip]="
+                                isAtLeastTutorInCourse || isAuthorOfOriginalPost
+                                    ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
+                                    : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
+                            "
+                        />
+                    } @else {
+                        @if (isAtLeastTutorInCourse || isAuthorOfOriginalPost) {
+                            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate" />
+                        }
+                    }
+                </button>
+            }
             <button class="reaction-button clickable px-2 fs-small edit" (click)="onEditPosting()" [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate">
                 <fa-icon [icon]="faPencilAlt" cdkOverlayOrigin></fa-icon>
             </button>

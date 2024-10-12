@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angu
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PostingsReactionsBarDirective } from 'app/shared/metis/posting-reactions-bar/posting-reactions-bar.directive';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faPencilAlt, faSmile } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { getAsChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
@@ -18,6 +18,7 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
     @Input() isLastAnswer = false;
     // Icons
     readonly farSmile = faSmile;
+    readonly faCheck = faCheck;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     isAuthorOfOriginalPost: boolean;
     isAnswerOfAnnouncement: boolean;
@@ -72,5 +73,16 @@ export class AnswerPostReactionsBarComponent extends PostingsReactionsBarDirecti
 
     onEditPosting() {
         this.openPostingCreateEditModal.emit();
+    }
+
+    /**
+     * toggles the resolvesPost property of an answer post if the user is at least tutor in a course or the user is the author of the original post,
+     * delegates the update to the metis service
+     */
+    toggleResolvesPost(): void {
+        if (this.isAtLeastTutorInCourse || this.isAuthorOfOriginalPost) {
+            this.posting.resolvesPost = !this.posting.resolvesPost;
+            this.metisService.updateAnswerPost(this.posting).subscribe();
+        }
     }
 }

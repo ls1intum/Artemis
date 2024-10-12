@@ -29,7 +29,6 @@ describe('AnswerPostHeaderComponent', () => {
     let metisService: MetisService;
     let metisServiceUserIsAtLeastTutorMock: jest.SpyInstance;
     let metisServiceUserPostingAuthorMock: jest.SpyInstance;
-    let metisServiceUpdateAnswerPostMock: jest.SpyInstance;
 
     const yesterday: dayjs.Dayjs = dayjs().subtract(1, 'day');
 
@@ -64,7 +63,6 @@ describe('AnswerPostHeaderComponent', () => {
                 metisService = TestBed.inject(MetisService);
                 metisServiceUserIsAtLeastTutorMock = jest.spyOn(metisService, 'metisUserIsAtLeastTutorInCourse');
                 metisServiceUserPostingAuthorMock = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
-                metisServiceUpdateAnswerPostMock = jest.spyOn(metisService, 'updateAnswerPost');
                 debugElement = fixture.debugElement;
                 component.posting = metisResolvingAnswerPostUser1;
                 component.posting.creationDate = yesterday;
@@ -97,25 +95,6 @@ describe('AnswerPostHeaderComponent', () => {
         expect(getElement(debugElement, '#today-flag')).toBeNull();
     });
 
-    it('should initialize answer post as marked as resolved', () => {
-        metisServiceUserIsAtLeastTutorMock.mockReturnValue(false);
-        fixture.detectChanges();
-        expect(component.posting.resolvesPost).toBeTruthy();
-        expect(getElement(debugElement, '.resolved')).not.toBeNull();
-        expect(getElement(debugElement, '.notResolved')).toBeNull();
-    });
-
-    it('should initialize answer post not marked as resolved but show the check to mark it as such', () => {
-        // tutors should see the check to mark an answer post as resolving
-        metisServiceUserIsAtLeastTutorMock.mockReturnValue(true);
-        // answer post that is not resolving original post
-        component.posting = metisAnswerPostUser2;
-        component.ngOnInit();
-        fixture.detectChanges();
-        expect(getElement(debugElement, '.resolved')).toBeNull();
-        expect(getElement(debugElement, '.notResolved')).not.toBeNull();
-    });
-
     it('should initialize answer post not marked as resolved and not show the check to mark it as such', () => {
         // user, that is not author of original post, should not see the check to mark an answer post as resolving
         metisServiceUserIsAtLeastTutorMock.mockReturnValue(false);
@@ -126,16 +105,5 @@ describe('AnswerPostHeaderComponent', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.resolved')).toBeNull();
         expect(getElement(debugElement, '.notResolved')).toBeNull();
-    });
-
-    it('should invoke metis service when toggle resolve is clicked as tutor', () => {
-        metisServiceUserIsAtLeastTutorMock.mockReturnValue(true);
-        fixture.detectChanges();
-        const resolveIcon = getElement(debugElement, '.resolved');
-        expect(resolveIcon).not.toBeNull();
-        const previousState = component.posting.resolvesPost;
-        component.toggleResolvesPost();
-        expect(component.posting.resolvesPost).toEqual(!previousState);
-        expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
     });
 });

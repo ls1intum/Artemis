@@ -53,30 +53,4 @@
             <span jhiTranslate="global.generic.new" class="badge bg-secondary hideAfter5Seconds"></span>
         }
     </div>
-
-    <div class="d-flex gap-2">
-        @if (!isAnswerOfAnnouncement) {
-            <div id="toggleElement" class="resolve" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
-                @if (posting.resolvesPost) {
-                    <div>
-                        <fa-icon
-                            class="resolved"
-                            [icon]="faCheck"
-                            [ngbTooltip]="
-                                isAtLeastTutorInCourse || isAuthorOfOriginalPost
-                                    ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
-                                    : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
-                            "
-                        />
-                    </div>
-                } @else {
-                    @if (isAtLeastTutorInCourse || isAuthorOfOriginalPost) {
-                        <div>
-                            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate" />
-                        </div>
-                    }
-                }
-            </div>
-        }
-    </div>
 </div>

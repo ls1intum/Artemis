@@ -44,6 +44,7 @@ describe('AnswerPostReactionsBarComponent', () => {
     let metisServiceUserIsAtLeastInstructorMock: jest.SpyInstance;
     let metisServiceUserPostingAuthorMock: jest.SpyInstance;
     let metisServiceDeleteAnswerPostMock: jest.SpyInstance;
+    let metisServiceUpdateAnswerPostMock: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -78,6 +79,7 @@ describe('AnswerPostReactionsBarComponent', () => {
                 metisServiceUserIsAtLeastInstructorMock = jest.spyOn(metisService, 'metisUserIsAtLeastInstructorInCourse');
                 metisServiceUserPostingAuthorMock = jest.spyOn(metisService, 'metisUserIsAuthorOfPosting');
                 metisServiceDeleteAnswerPostMock = jest.spyOn(metisService, 'deleteAnswerPost');
+                metisServiceUpdateAnswerPostMock = jest.spyOn(metisService, 'updateAnswerPost');
                 component = fixture.componentInstance;
                 answerPost = new AnswerPost();
                 answerPost.id = 1;
@@ -103,6 +105,10 @@ describe('AnswerPostReactionsBarComponent', () => {
 
     function getDeleteButton(): DebugElement | null {
         return debugElement.query(By.css('.delete'));
+    }
+
+    function getResolveButton(): DebugElement | null {
+        return debugElement.query(By.css('#toggleElement'));
     }
 
     it('should invoke metis service method with correctly built reaction to create it', () => {
@@ -212,5 +218,15 @@ describe('AnswerPostReactionsBarComponent', () => {
         fixture.detectChanges();
         const answerNowButton = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('reply');
+    });
+
+    it('should invoke metis service when toggle resolve is clicked', () => {
+        metisServiceUserPostingAuthorMock.mockReturnValue(true);
+        fixture.detectChanges();
+        expect(getResolveButton()).not.toBeNull();
+        const previousState = component.posting.resolvesPost;
+        component.toggleResolvesPost();
+        expect(component.posting.resolvesPost).toEqual(!previousState);
+        expect(metisServiceUpdateAnswerPostMock).toHaveBeenCalledOnce();
     });
 });
