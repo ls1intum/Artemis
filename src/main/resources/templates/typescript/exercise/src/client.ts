@@ -1,6 +1,3 @@
-import Context from './context';
-import Policy from './policy';
-
 const ITERATIONS = 10;
 const DATES_LENGTH_MIN = 5;
 const DATES_LENGTH_MAX = 15;
