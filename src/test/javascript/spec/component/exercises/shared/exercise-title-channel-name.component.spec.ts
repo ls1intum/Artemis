@@ -11,10 +11,13 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { SessionStorageService } from 'ngx-webstorage';
 import { MockHttpService } from '../../../helpers/mocks/service/mock-http.service';
 import { HttpClient } from '@angular/common/http';
+import { ExerciseService } from '../../../../../../main/webapp/app/exercises/shared/exercise/exercise.service';
+import { ExerciseType } from '../../../../../../main/webapp/app/entities/exercise.model';
 
 describe('ExerciseTitleChannelNameComponent', () => {
     let component: ExerciseTitleChannelNameComponent;
     let fixture: ComponentFixture<ExerciseTitleChannelNameComponent>;
+    let exerciseService: ExerciseService;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -35,6 +38,22 @@ describe('ExerciseTitleChannelNameComponent', () => {
         fixture.componentRef.setInput('course', new Course());
         fixture.componentRef.setInput('isEditFieldDisplayedRecord', true);
         component = fixture.componentInstance;
+
+        exerciseService = TestBed.inject(ExerciseService);
+    });
+
+    it('should call getExistingExerciseDetailsInCourse on init', () => {
+        const courseId = 123;
+        const exerciseType = ExerciseType.PROGRAMMING;
+        component.exercise = new TextExercise(new Course(), undefined);
+        component.exercise.type = exerciseType;
+        component.exercise.course!.id = courseId;
+
+        fixture.componentRef.setInput('courseId', courseId);
+        const exerciseServiceSpy = jest.spyOn(exerciseService, 'getExistingExerciseDetailsInCourse');
+        fixture.detectChanges();
+
+        expect(exerciseServiceSpy).toHaveBeenCalledWith(courseId, exerciseType);
     });
 
     it('should hide channel name input if messaging and communication disabled', () => {

@@ -67,7 +67,7 @@ export class TitleChannelNameComponent implements AfterViewInit, OnDestroy, OnIn
     }
 
     private registerChangeListeners() {
-        this.fieldTitleSubscription = this.field_title.valueChanges?.subscribe(() => this.calculateFormValid());
+        this.fieldTitleSubscription = this.field_title?.valueChanges?.subscribe(() => this.calculateFormValid());
         this.fieldChannelNameSubscription = this.field_channel_name()?.valueChanges?.subscribe(() => this.calculateFormValid());
     }
 
