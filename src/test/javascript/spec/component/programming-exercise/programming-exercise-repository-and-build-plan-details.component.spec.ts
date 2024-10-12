@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { CheckoutDirectoriesDto } from 'app/entities/programming/checkout-directories-dto';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming/programming-exercise.model';
+import { ProgrammingExerciseBuildConfig } from 'app/entities/programming/programming-exercise-build.config';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { MockComponent } from 'ng-mocks';
 import { Subscription, of } from 'rxjs';
@@ -73,7 +74,7 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
                 programmingExerciseService = TestBed.inject(ProgrammingExerciseService);
 
                 component.programmingLanguage = ProgrammingLanguage.C;
-                component.programmingExercise = { id: 1, shortName: 'shortName' } as ProgrammingExercise;
+                component.programmingExercise = { id: 1, shortName: 'shortName', buildConfig: new ProgrammingExerciseBuildConfig() } as ProgrammingExercise;
                 component.isLocal = true;
 
                 jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage').mockImplementation(
@@ -177,6 +178,11 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         // assertion to check if ngOnChanges was executed properly and updated the checkout directories
         expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalledWith(ProgrammingLanguage.OCAML, true);
         expect(component.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory).toBe('/solution'); // was null before with JAVA as programming language
+
+        // should also reset build config
+        expect(component.programmingExercise?.buildConfig?.solutionCheckoutPath).toBeUndefined();
+        expect(component.programmingExercise?.buildConfig?.testCheckoutPath).toBeUndefined();
+        expect(component.programmingExercise?.buildConfig?.assignmentCheckoutPath).toBeUndefined();
     });
 
     it('should update checkout directories when checkoutSolution flag changes', () => {
@@ -195,6 +201,58 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
         // solution checkout directory was /solution before with OCaml as programming language and solution checkout allowed
         expect(component.checkoutDirectories?.submissionBuildPlanCheckoutDirectories?.solutionCheckoutDirectory).toBeUndefined();
+
+        // should also reset build config
+        expect(component.programmingExercise?.buildConfig?.solutionCheckoutPath).toBeUndefined();
+        expect(component.programmingExercise?.buildConfig?.testCheckoutPath).toBeUndefined();
+        expect(component.programmingExercise?.buildConfig?.assignmentCheckoutPath).toBeUndefined();
+    });
+
+    it('should not call service without language', () => {
+        jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
+
+        component.programmingLanguage = undefined;
+        component.checkoutSolutionRepository = false;
+        component.ngOnChanges({
+            checkoutSolutionRepository: {
+                previousValue: true,
+                currentValue: false,
+            },
+        } as unknown as SimpleChanges);
+
+        // assertion to check if ngOnChanges was executed properly and updated the checkout directories
+        expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).not.toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
+    });
+
+    it('should not call service when inEdit and build config is available', () => {
+        jest.spyOn(programmingExerciseService, 'getCheckoutDirectoriesForProgrammingLanguage');
+
+        component.isCreateOrEdit = true;
+        component.programmingExercise!.buildConfig = new ProgrammingExerciseBuildConfig();
+        component.programmingExercise!.buildConfig.solutionCheckoutPath = 'solution';
+        component.programmingExercise!.buildConfig.testCheckoutPath = 'tests';
+        component.programmingExercise!.buildConfig.assignmentCheckoutPath = 'assignment';
+
+        component.ngOnChanges({
+            checkoutSolutionRepository: {
+                previousValue: true,
+                currentValue: true,
+            },
+        } as unknown as SimpleChanges);
+
+        // assertion to check if ngOnChanges was executed properly and updated the checkout directories
+        expect(programmingExerciseService.getCheckoutDirectoriesForProgrammingLanguage).not.toHaveBeenCalledWith(ProgrammingLanguage.OCAML, false);
+        expect(component.checkoutDirectories).toEqual({
+            submissionBuildPlanCheckoutDirectories: {
+                exerciseCheckoutDirectory: '/assignment',
+                testCheckoutDirectory: '/tests',
+                solutionCheckoutDirectory: '/solution',
+            },
+            solutionBuildPlanCheckoutDirectories: {
+                solutionCheckoutDirectory: '/assignment',
+                testCheckoutDirectory: '/tests',
+            },
+        });
     });
 
     it('should update auxiliary repository directories on changes', () => {
@@ -213,5 +271,28 @@ describe('ProgrammingExerciseRepositoryAndBuildPlanDetailsComponent', () => {
         const submissionPreviewElement = fixture.debugElement.nativeElement.querySelector(CHECKOUT_DIRECTORY_PREVIEW_SUBMISSION_BUILD_PLAN);
         expect(submissionPreviewElement).toBeTruthy();
         expect(submissionPreviewElement.textContent).toContain('/assignment/src');
+    });
+
+    it('should update component when buildconfig was changed', () => {
+        component.isCreateOrEdit = true;
+        component.programmingExercise!.buildConfig = new ProgrammingExerciseBuildConfig();
+        component.programmingExercise!.buildConfig.solutionCheckoutPath = 'solution';
+
+        component.ngOnChanges({
+            programmingExercise: {
+                previousValue: { buildConfig: new ProgrammingExerciseBuildConfig() },
+                currentValue: { buildConfig: component.programmingExercise!.buildConfig },
+            },
+        } as unknown as SimpleChanges);
+
+        expect(component.checkoutDirectories).toEqual({
+            solutionBuildPlanCheckoutDirectories: {
+                testCheckoutDirectory: '/',
+            },
+            submissionBuildPlanCheckoutDirectories: {
+                solutionCheckoutDirectory: '/solution',
+                testCheckoutDirectory: '/',
+            },
+        });
     });
 });

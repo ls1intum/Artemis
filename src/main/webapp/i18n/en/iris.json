@@ -10,6 +10,10 @@
                 "button": {
                     "reload": "Reload Settings",
                     "save": "Save Settings",
+                    "textExercise": {
+                        "title": "Iris",
+                        "tooltip": "Edit the Iris settings for this text exercise"
+                    },
                     "programmingExercise": {
                         "title": "Iris",
                         "tooltip": "Edit the Iris settings for this programming exercise"
@@ -21,6 +25,7 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Settings",
+                    "textExerciseChatSettings": "Text Exercise Chat Settings",
                     "lectureIngestionSettings": {
                         "title": "Lecture Ingestion Settings",
                         "autoIngestOnAttachmentUpload": "Send Lectures To Pyris Automatically"

@@ -1,3 +1,5 @@
+$tutor-image-size: 4.5rem;
+
 .tutorial-group-detail {
     .scrollbar {
         position: relative;
@@ -8,4 +10,25 @@
     .table-wrapper-scroll-y {
         display: block;
     }
+
+    .markdown-preview {
+        margin-bottom: -1rem;
+    }
+}
+
+.tutorial-group-detail-tutor-image {
+    width: $tutor-image-size;
+    height: $tutor-image-size;
+    object-fit: cover;
+}
+
+.tutorial-group-detail-tutor-default-image {
+    width: $tutor-image-size;
+    height: $tutor-image-size;
+    font-size: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gray-400);
+    color: var(--white);
 }
