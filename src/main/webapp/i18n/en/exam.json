@@ -150,6 +150,7 @@
             "falseName": "Entered name is incorrect. Please try again!",
             "notSet": "Not set",
             "startExamToolTip": "Button will be activated 5 minutes before the exam start.",
+            "yourSolution": "Your Solution",
             "cleanup": {
                 "title": "Cleanup",
                 "question": "Are you sure you want to clean up the exam <strong>{{ title }}</strong>? This will delete all student programming exercise repositories in the exam. This action can <strong class='text-danger'>NOT</strong> be undone!"
