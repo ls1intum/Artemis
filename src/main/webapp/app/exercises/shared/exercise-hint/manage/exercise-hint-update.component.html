@@ -45,21 +45,6 @@
                         [(ngModel)]="exerciseHint.displayThreshold"
                     />
                 </div>
-                @if (exerciseHint.type === HintType.CODE && irisSettings?.irisHestiaSettings?.enabled) {
-                    <div class="d-flex justify-content-end">
-                        <jhi-iris-logo-button
-                            id="generateDescriptionButton"
-                            (click)="generateDescriptionForCodeHint()"
-                            [btnType]="ButtonType.PRIMARY_OUTLINE"
-                            [shouldSubmit]="false"
-                            [isLoading]="isGeneratingDescription"
-                            [title]="'artemisApp.codeHint.management.step4.iris.generateDescription.label'"
-                            [tooltip]="'artemisApp.codeHint.management.step4.iris.generateDescription.tooltip'"
-                            [disabled]="((exerciseHint | castToCodeHint).solutionEntries?.length ?? 0) === 0"
-                            >Generate description
-                        </jhi-iris-logo-button>
-                    </div>
-                }
                 <div class="form-group hint-form__editor-wrapper mb-3">
                     <jhi-markdown-editor-monaco [markdown]="exerciseHint.content" (markdownChange)="updateHintContent($event)" [domainActions]="domainActions" />
                 </div>
