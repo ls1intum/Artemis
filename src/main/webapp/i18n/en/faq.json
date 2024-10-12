@@ -12,6 +12,8 @@
             },
             "created": "The FAQ with ID {{ id }} was successfully created",
             "updated": "The FAQ with ID {{ id }} was successfully updated",
+            "proposed": "The FAQ with ID {{ id }} was successfully proposed",
+            "proposedChange": "The changes to the FAQ with the ID {{ id }} have been successfully proposed",
             "deleted": "The FAQ with ID {{ param }} was successfully deleted",
             "accepted": "The FAQ with ID {{ id }} was successfully accepted",
             "rejected": "The FAQ with ID {{ id }} was successfully rejected",

@@ -32,7 +32,7 @@ export class FaqUpdateComponent implements OnInit {
     existingCategories: FaqCategory[];
     faqCategories: FaqCategory[];
     courseId: number;
-    isAtleastInstructor: boolean = false;
+    isAtLeastInstructor: boolean = false;
     domainActionsDescription = [new FormulaAction()];
 
     // Icons
@@ -59,7 +59,7 @@ export class FaqUpdateComponent implements OnInit {
             if (course) {
                 this.faq.course = course;
                 this.loadCourseFaqCategories(course.id);
-                this.isAtleastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
+                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(course);
             }
             this.faqCategories = faq?.categories ? faq.categories : [];
         });
@@ -81,7 +81,7 @@ export class FaqUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
-        this.faq.faqState = this.isAtleastInstructor ? FaqState.ACCEPTED : FaqState.PROPOSED;
+        this.faq.faqState = this.isAtLeastInstructor ? FaqState.ACCEPTED : FaqState.PROPOSED;
         if (this.faq.id !== undefined) {
             this.subscribeToSaveResponse(this.faqService.update(this.courseId, this.faq));
         } else {
@@ -111,13 +111,21 @@ export class FaqUpdateComponent implements OnInit {
                     if (faqBody) {
                         this.faq = faqBody;
                     }
-                    this.alertService.success(this.translateService.instant('artemisApp.faq.created', { id: faq.id }));
+                    if (this.isAtLeastInstructor) {
+                        this.alertService.success(this.translateService.instant('artemisApp.faq.created', { id: faq.id }));
+                    } else {
+                        this.alertService.success(this.translateService.instant('artemisApp.faq.proposed', { id: faq.id }));
+                    }
                     this.router.navigate(['course-management', this.courseId, 'faqs']);
                 },
             });
         } else {
             this.isSaving = false;
-            this.alertService.success(this.translateService.instant('artemisApp.faq.updated', { id: faq.id }));
+            if (this.isAtLeastInstructor) {
+                this.alertService.success(this.translateService.instant('artemisApp.faq.updated', { id: faq.id }));
+            } else {
+                this.alertService.success(this.translateService.instant('artemisApp.faq.proposedChange', { id: faq.id }));
+            }
             this.router.navigate(['course-management', this.courseId, 'faqs']);
         }
     }
