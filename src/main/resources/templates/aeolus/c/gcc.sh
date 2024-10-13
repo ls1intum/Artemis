@@ -10,7 +10,7 @@ setup_the_build_environment () {
   # Build and run all tests
   # ------------------------------
 
-  # Updating assignment and test-reports ownership...
+  # Updating ${studentParentWorkingDirectoryName} and test-reports ownership...
   sudo chown artemis_user:artemis_user ${studentParentWorkingDirectoryName}/ -R
   mkdir test-reports
   chown artemis_user:artemis_user test-reports/ -R
