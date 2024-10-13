@@ -116,7 +116,7 @@ export class MetisConversationService implements OnDestroy {
 
     public setActiveConversation(conversationIdentifier: ConversationDTO | number | undefined) {
         this.updateLastReadDateAndNumberOfUnreadMessages();
-        let cachedConversation = undefined;
+        let cachedConversation: ConversationDTO | undefined = undefined;
         if (conversationIdentifier) {
             const parameterJustId = typeof conversationIdentifier === 'number';
             cachedConversation = this.conversationsOfUser.find(

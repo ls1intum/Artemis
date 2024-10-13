@@ -78,6 +78,8 @@ public class UserDTO extends AuditingEntityDTO {
 
     private String sshPublicKey;
 
+    private String sshKeyHash;
+
     private ZonedDateTime irisAccepted;
 
     public UserDTO() {
@@ -290,5 +292,13 @@ public class UserDTO extends AuditingEntityDTO {
 
     public void setIrisAccepted(ZonedDateTime irisAccepted) {
         this.irisAccepted = irisAccepted;
+    }
+
+    public String getSshKeyHash() {
+        return sshKeyHash;
+    }
+
+    public void setSshKeyHash(String sshKeyHash) {
+        this.sshKeyHash = sshKeyHash;
     }
 }

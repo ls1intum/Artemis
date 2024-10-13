@@ -1,9 +1,8 @@
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { Location } from '@angular/common';
-import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
@@ -34,6 +33,8 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam/exam.model';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
+import { SearchFilterPipe } from 'app/shared/pipes/search-filter.pipe';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -93,7 +94,7 @@ describe('CoursesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
+            imports: [ArtemisTestModule, RouterModule.forRoot([{ path: 'courses/:courseId/exams/:examId', component: DummyComponent }])],
             declarations: [
                 CoursesComponent,
                 MockDirective(MockHasAnyAuthorityDirective),
@@ -101,10 +102,12 @@ describe('CoursesComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
                 MockPipe(ArtemisDatePipe),
+                MockPipe(SearchFilterPipe),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
+                MockComponent(SearchFilterComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },

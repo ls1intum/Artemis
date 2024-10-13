@@ -15,7 +15,6 @@ import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.core.util.Tuple;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 import de.tum.cit.aet.artemis.lecture.util.LectureUtilService;
 import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
@@ -38,9 +37,6 @@ class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationIndependent
 
     @Autowired
     private CacheManager cacheManager;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private LectureRepository lectureRepository;

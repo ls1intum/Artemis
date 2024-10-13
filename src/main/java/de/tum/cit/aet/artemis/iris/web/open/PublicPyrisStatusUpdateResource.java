@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisConnectorService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisStatusUpdateService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
@@ -34,6 +35,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.IngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 
 /**
  * REST controller for providing Pyris access to Artemis internal data and status updates.
@@ -71,7 +73,7 @@ public class PublicPyrisStatusUpdateResource {
      * @throws AccessForbiddenException if the token is invalid
      * @return a {@link ResponseEntity} with status {@code 200 (OK)}
      */
-    @PostMapping("pipelines/tutor-chat/runs/{runId}/status") // TODO: Rename this to 'exercise-chat' with next breaking Pyris version
+    @PostMapping("pipelines/tutor-chat/runs/{runId}/status") // TODO: Rename this to 'programming-exercise-chat' with next breaking Pyris version
     @EnforceNothing
     public ResponseEntity<Void> setStatusOfJob(@PathVariable String runId, @RequestBody PyrisChatStatusUpdateDTO statusUpdateDTO, HttpServletRequest request) {
         var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, ExerciseChatJob.class);
@@ -136,6 +138,30 @@ public class PublicPyrisStatusUpdateResource {
     }
 
     /**
+     * {@code POST /api/public/pyris/pipelines/text-exercise-chat/runs/{runId}/status} : Set the status of a Text Exercise Chat job.
+     *
+     * @param runId           the ID of the job
+     * @param statusUpdateDTO the status update
+     * @param request         the HTTP request
+     * @return a {@link ResponseEntity} with status {@code 200 (OK)}
+     * @throws ConflictException        if the run ID in the URL does not match the run ID in the request body
+     * @throws AccessForbiddenException if the token is invalid
+     */
+    @PostMapping("pipelines/text-exercise-chat/runs/{runId}/status")
+    @EnforceNothing
+    public ResponseEntity<Void> respondInTextExerciseChat(@PathVariable String runId, @RequestBody PyrisTextExerciseChatStatusUpdateDTO statusUpdateDTO,
+            HttpServletRequest request) {
+        var job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, TextExerciseChatJob.class);
+        if (!Objects.equals(job.jobId(), runId)) {
+            throw new ConflictException("Run ID in URL does not match run ID in request body", "Job", "runIdMismatch");
+        }
+
+        pyrisStatusUpdateService.handleStatusUpdate(job, statusUpdateDTO);
+
+        return ResponseEntity.ok().build();
+    }
+
+    /**
      * {@code POST /api/public/pyris/webhooks/ingestion/runs/{runId}/status} : Set the status of an Ingestion job.
      *
      * @param runId           the ID of the job
@@ -165,29 +191,27 @@ public class PublicPyrisStatusUpdateResource {
      *
      * <p>
      * This method sends a GET request to the external Pyris service to fetch the current ingestion
-     * state of a lecture, identified by its `lectureId`. The ingestion state can be aggregated from
+     * state of all lectures in a course, identified by its `lectureId`. The ingestion state can be aggregated from
      * multiple lecture units or can reflect the overall status of the lecture ingestion process.
      * </p>
      *
-     * @param lectureId the ID of the lecture for which the ingestion state is being requested
-     * @param courseId  the ID of the lecture for which the ingestion state is being requested
+     * @param courseId the ID of the lecture for which the ingestion state is being requested
      * @return a {@link ResponseEntity} containing the {@link IngestionState} of the lecture,
      */
-    @GetMapping("courses/{courseId}/lectures/{lectureId}/ingestion-state")
+    @GetMapping("courses/{courseId}/lectures/ingestion-state")
     @EnforceNothing
-    public ResponseEntity<IngestionState> getStatusOfLectureIngestion(@PathVariable long courseId, @PathVariable long lectureId) {
+    public ResponseEntity<Map<Long, IngestionState>> getStatusOfLectureIngestion(@PathVariable long courseId) {
         try {
-            IngestionState state = pyrisConnectorService.getLectureIngestionState(courseId, lectureId);
-            return ResponseEntity.ok(state);
+            return ResponseEntity.ok(pyrisConnectorService.getLecturesIngestionState(courseId));
         }
         catch (Exception e) {
-            log.error("Error fetching ingestion state for lecture {}", lectureId, e);
+            log.error("Error fetching ingestion state for course {}", courseId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 
     /**
-     * Retrieves the ingestion state of a specific lecture unit by communicating with Pyris.
+     * Retrieves the ingestion state of all lecture unit in a lecture by communicating with Pyris.
      *
      * <p>
      * This method sends a GET request to the external Pyris service to fetch the current ingestion

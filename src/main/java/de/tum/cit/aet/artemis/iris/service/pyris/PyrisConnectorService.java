@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -24,15 +25,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisSubSettingsType;
 import de.tum.cit.aet.artemis.iris.dto.IngestionState;
 import de.tum.cit.aet.artemis.iris.exception.IrisException;
 import de.tum.cit.aet.artemis.iris.exception.IrisForbiddenException;
 import de.tum.cit.aet.artemis.iris.exception.IrisInternalPyrisErrorException;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisModelDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisVariantDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureDeletionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisWebhookLectureIngestionExecutionDTO;
 import de.tum.cit.aet.artemis.iris.web.open.PublicPyrisStatusUpdateResource;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentUnit;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.lecture.repository.LectureRepository;
 
@@ -70,13 +73,14 @@ public class PyrisConnectorService {
     }
 
     /**
-     * Requests all available models from Pyris
+     * Requests all available variants from Pyris for a feature
      *
-     * @return A list of available Models as IrisModelDTO
+     * @param feature The feature to get the variants for
+     * @return A list of available Models as IrisVariantDTO
      */
-    public List<PyrisModelDTO> getOfferedModels() throws PyrisConnectorException {
+    public List<PyrisVariantDTO> getOfferedVariants(IrisSubSettingsType feature) throws PyrisConnectorException {
         try {
-            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/models", PyrisModelDTO[].class);
+            var response = restTemplate.getForEntity(pyrisUrl + "/api/v1/pipelines/" + feature.name() + "/variants", PyrisVariantDTO[].class);
             if (!response.getStatusCode().is2xxSuccessful() || !response.hasBody()) {
                 throw new PyrisConnectorException("Could not fetch offered models");
             }
@@ -133,12 +137,25 @@ public class PyrisConnectorService {
     /**
      * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
      *
+     * @param courseId id of the course
+     * @return The ingestion state of the lecture
+     *
+     */
+    public Map<Long, IngestionState> getLecturesIngestionState(long courseId) {
+        Set<Lecture> lectures = lectureRepository.findAllByCourseId(courseId);
+        return lectures.stream().collect(Collectors.toMap(DomainObject::getId, lecture -> getLectureIngestionState(courseId, lecture.getId())));
+
+    }
+
+    /**
+     * uses getLectureUnitIngestionState for all lecture units and then determines the IngestionState of the lecture
+     *
      * @param courseId  id of the course
      * @param lectureId id of the lecture
      * @return The ingestion state of the lecture
      *
      */
-    public IngestionState getLectureIngestionState(long courseId, long lectureId) {
+    private IngestionState getLectureIngestionState(long courseId, long lectureId) {
         Map<Long, IngestionState> states = getLectureUnitsIngestionState(courseId, lectureId);
 
         if (states.values().stream().allMatch(state -> state == IngestionState.DONE)) {

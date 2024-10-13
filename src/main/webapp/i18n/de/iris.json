@@ -10,6 +10,10 @@
                 "button": {
                     "reload": "Einstellungen neu laden",
                     "save": "Einstellungen speichern",
+                    "textExercise": {
+                        "title": "Iris",
+                        "tooltip": "Bearbeite die Iris Einstellungen für diese Textaufgabe"
+                    },
                     "programmingExercise": {
                         "title": "Iris",
                         "tooltip": "Bearbeite die Iris Einstellungen für diese Programmieraufgabe"
@@ -21,6 +25,7 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Einstellungen",
+                    "textExerciseChatSettings": "Textaufgaben Chat Einstellungen",
                     "lectureIngestionSettings": {
                         "title": "Vorlesungen Erfassung Einstellungen",
                         "autoIngestOnAttachmentUpload": "Vorlesungen automatisch an Pyris senden"
@@ -28,14 +33,14 @@
                     "hestiaSettings": "Hestia Einstellungen",
                     "competencyGenerationSettings": "Kompetenzgenerierung Einstellungen",
                     "enabled-disabled": "Aktiviert/Deaktiviert",
-                    "models": {
-                        "title": "Modelle",
-                        "allowedModels": {
-                            "title": "Erlaubte Modelle",
-                            "inheritSwitch": "Erbe erlaubte Modelle"
+                    "variants": {
+                        "title": "Varianten",
+                        "allowedVariants": {
+                            "title": "Erlaubte Varianten",
+                            "inheritSwitch": "Erbe erlaubte Varianten"
                         },
-                        "preferredModel": {
-                            "title": "Präferiertes Modell",
+                        "selectedVariant": {
+                            "title": "Genuzte Variante",
                             "inherit": "Erben"
                         }
                     },
@@ -62,22 +67,14 @@
                     "breadcrumb": "Iris Einstellungen",
                     "global": "Globale Iris Einstellungen",
                     "course": "Kurs Iris Einstellungen",
-                    "programmingExercise": "Programmieraufgabe Iris Einstellungen"
-                },
-                "autoUpdate": {
-                    "title": "Auto Update Einstellungen",
-                    "tooltip": "Wenn aktiviert, werden die spezifischen globalen Iris Einstellungen automatisch aktualisiert, wenn eine neue Version von Artemis neue Iris Einstellungen bereitstellt.",
-                    "chatLabel": "Auto Update der Chat Einstellungen",
-                    "hestiaLabel": "Auto Update der Hestia Einstellungen",
-                    "lectureIngestionLabel": "Auto Update der Vorlesungen Erfassung Einstellungen",
-                    "competencyGenerationLabel": "Auto Update der Kompetenzgenerierung Einstellungen"
+                    "exercise": "Programmieraufgabe Iris Einstellungen"
                 }
             },
             "error": {
                 "forbidden": "Artemis ist nicht konfiguriert, um Iris zu verwenden. (Ungültiges Token)",
                 "internalPyrisError": "Ein interner Fehler beim Kommunizieren mit dem LLM ist aufgetreten. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
                 "invalidTemplate": "Die Vorlage ist ungültig. Die Fehlermeldung lautet: {{ pyrisErrorMessage }}.",
-                "noModelAvailable": "Das Modell {{ model }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
+                "noVariantAvailable": "Die Variante {{ variant }} steht nicht zur Verfügung. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
                 "noResponse": "Es wurde keine Antwort von Iris empfangen. Bitte kontaktiere einen Administrator, wenn das Problem weiterhin besteht.",
                 "parseResponse": "Ein Fehler ist beim Parsen der Antwort von Iris aufgetreten. Ursache: {{ cause }}"
             },

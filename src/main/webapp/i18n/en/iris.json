@@ -10,6 +10,10 @@
                 "button": {
                     "reload": "Reload Settings",
                     "save": "Save Settings",
+                    "textExercise": {
+                        "title": "Iris",
+                        "tooltip": "Edit the Iris settings for this text exercise"
+                    },
                     "programmingExercise": {
                         "title": "Iris",
                         "tooltip": "Edit the Iris settings for this programming exercise"
@@ -21,6 +25,7 @@
                 },
                 "subSettings": {
                     "chatSettings": "Chat Settings",
+                    "textExerciseChatSettings": "Text Exercise Chat Settings",
                     "lectureIngestionSettings": {
                         "title": "Lecture Ingestion Settings",
                         "autoIngestOnAttachmentUpload": "Send Lectures To Pyris Automatically"
@@ -28,14 +33,14 @@
                     "hestiaSettings": "Hestia Settings",
                     "competencyGenerationSettings": "Competency Generation Settings",
                     "enabled-disabled": "Enabled/Disabled",
-                    "models": {
-                        "title": "Models",
-                        "allowedModels": {
-                            "title": "Allowed Models",
-                            "inheritSwitch": "Inherit Allowed Models"
+                    "variants": {
+                        "title": "Variants",
+                        "allowedVariants": {
+                            "title": "Allowed Variants",
+                            "inheritSwitch": "Inherit Allowed Variants"
                         },
-                        "preferredModel": {
-                            "title": "Preferred Model",
+                        "selectedVariant": {
+                            "title": "Selected Variant",
                             "inherit": "Inherit"
                         }
                     },
@@ -63,21 +68,13 @@
                     "global": "Global Iris Settings",
                     "course": "Course Iris Settings",
                     "exercise": "Exercise Iris Settings"
-                },
-                "autoUpdate": {
-                    "title": "Auto Update Settings",
-                    "tooltip": "If enabled, the specific global Iris settings will be automatically updated when a new release of Artemis provides new Iris settings.",
-                    "chatLabel": "Auto Update Chat Settings",
-                    "hestiaLabel": "Auto Update Hestia Settings",
-                    "lectureIngestionLabel": "Auto Update Lecture Ingestion Settings",
-                    "competencyGenerationLabel": "Auto Update Competency Generation Settings"
                 }
             },
             "error": {
                 "forbidden": "Artemis is not configured to use Iris. (Invalid token)",
                 "internalPyrisError": "An internal error when communicating with the LLM occurred. Error message is: {{ pyrisErrorMessage }}.",
                 "invalidTemplate": "The template is invalid. Error message is: {{ pyrisErrorMessage }}.",
-                "noModelAvailable": "Model {{ model }} is not available to use. Please contact your administrator if this problem persists.",
+                "noVariantAvailable": "Variant {{ variant }} is not available to use. Please contact your administrator if this problem persists.",
                 "noResponse": "No response from Iris was received.",
                 "parseResponse": "An error occurred while parsing the response from Iris. Cause: {{ cause }}"
             },
