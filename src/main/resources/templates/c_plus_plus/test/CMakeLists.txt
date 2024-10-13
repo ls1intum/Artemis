@@ -7,7 +7,7 @@ include(CTest)
 
 find_package(Catch2 REQUIRED)
 
-add_subdirectory(assignment)
+add_subdirectory("${studentParentWorkingDirectoryName}")
 
 add_executable(sort-test src/sort-test.cpp)
 target_link_libraries(sort-test assignment Catch2::Catch2WithMain)
