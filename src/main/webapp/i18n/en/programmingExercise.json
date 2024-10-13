@@ -130,18 +130,21 @@
             "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
             "allowOnlineEditor": {
                 "title": "Allow Online Editor",
+                "description": "An online text editor featuring a file explorer, coding window, and code highlighting features but without the ability to compile or run code.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Allow Offline IDE",
+                "description": "Check this option to allow students to download the exercise and work on it locally using their preferred IDE.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Allow Online IDE",
+                "description": "An online coding environment based on VisualStudioCode featuring code highlighting and formatting features. Pre-configured to your exercise's language and with the ability to compile or run code online.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },

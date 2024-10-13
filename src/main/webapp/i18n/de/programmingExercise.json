@@ -118,18 +118,21 @@
             "workdir": "Verzeichnis",
             "allowOnlineEditor": {
                 "title": "Online-Editor erlauben",
+                "description": "Ein Online-Texteditor mit Datei-Explorer und Code-Hervorhebungsfunktionen, jedoch ohne die Möglichkeit, Code zu kompilieren oder auszuführen.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
+                "description": "Aktivieren Sie diese Option, um es zu erlauben, die Übung herunterzuladen und lokal mit der bevorzugten IDE daran zu arbeiten.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Online-IDE erlauben",
+                "description": "Eine auf VisualStudioCode basierende Online-Entwicklungsumgebung mit Code-Hervorhebungs- und Formatierungsfunktionen. Vorkonfiguriert für die Sprache der Übung und mit der Möglichkeit, Code online zu kompilieren oder auszuführen.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein.",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
