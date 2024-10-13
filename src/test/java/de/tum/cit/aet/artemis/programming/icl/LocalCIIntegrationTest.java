@@ -502,6 +502,18 @@ class LocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testCustomCheckoutPaths() {
+        var buildConfig = programmingExercise.getBuildConfig();
+        buildConfig.setAssignmentCheckoutPath("customAssignmentPath");
+        ProgrammingExerciseStudentParticipation participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        programmingExerciseBuildConfigRepository.save(programmingExercise.getBuildConfig());
+
+        localVCServletService.processNewPush(commitHash, studentAssignmentRepository.originGit.getRepository());
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), commitHash, 1, false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPauseAndResumeBuildAgent() {
         String memberAddress = hazelcastInstance.getCluster().getLocalMember().getAddress().toString();
         hazelcastInstance.getTopic("pauseBuildAgentTopic").publish(memberAddress);

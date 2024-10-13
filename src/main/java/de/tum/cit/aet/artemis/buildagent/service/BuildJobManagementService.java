@@ -58,7 +58,7 @@ public class BuildJobManagementService {
 
     private final ReentrantLock lock = new ReentrantLock();
 
-    @Value("${artemis.continuous-integration.timeout-seconds:240}")
+    @Value("${artemis.continuous-integration.timeout-seconds:120}")
     private int timeoutSeconds;
 
     @Value("${artemis.continuous-integration.asynchronous:true}")
@@ -151,9 +151,17 @@ public class BuildJobManagementService {
             lock.unlock();
         }
 
+        int buildJobTimeoutSeconds;
+        if (buildJobItem.buildConfig().timeoutSeconds() != 0 && buildJobItem.buildConfig().timeoutSeconds() < this.timeoutSeconds) {
+            buildJobTimeoutSeconds = buildJobItem.buildConfig().timeoutSeconds();
+        }
+        else {
+            buildJobTimeoutSeconds = this.timeoutSeconds;
+        }
+
         CompletableFuture<BuildResult> futureResult = createCompletableFuture(() -> {
             try {
-                return future.get(timeoutSeconds, TimeUnit.SECONDS);
+                return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
             catch (Exception e) {
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.

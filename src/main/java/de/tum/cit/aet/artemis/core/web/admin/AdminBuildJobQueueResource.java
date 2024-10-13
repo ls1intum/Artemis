@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementS
 import tech.jhipster.web.util.PaginationUtil;
 
 @Profile(PROFILE_LOCALCI)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminBuildJobQueueResource {
@@ -55,7 +56,6 @@ public class AdminBuildJobQueueResource {
      * @return the queued build jobs
      */
     @GetMapping("queued-jobs")
-    @EnforceAdmin
     public ResponseEntity<List<BuildJobQueueItem>> getQueuedBuildJobs() {
         log.debug("REST request to get the queued build jobs");
         List<BuildJobQueueItem> buildJobQueue = localCIBuildJobQueueService.getQueuedJobs();
@@ -68,7 +68,6 @@ public class AdminBuildJobQueueResource {
      * @return the running build jobs
      */
     @GetMapping("running-jobs")
-    @EnforceAdmin
     public ResponseEntity<List<BuildJobQueueItem>> getRunningBuildJobs() {
         log.debug("REST request to get the running build jobs");
         List<BuildJobQueueItem> runningBuildJobs = localCIBuildJobQueueService.getProcessingJobs();
@@ -81,7 +80,6 @@ public class AdminBuildJobQueueResource {
      * @return list of build agents information
      */
     @GetMapping("build-agents")
-    @EnforceAdmin
     public ResponseEntity<List<BuildAgentInformation>> getBuildAgentSummary() {
         log.debug("REST request to get information on available build agents");
         List<BuildAgentInformation> buildAgentSummary = localCIBuildJobQueueService.getBuildAgentInformationWithoutRecentBuildJobs();
@@ -95,7 +93,6 @@ public class AdminBuildJobQueueResource {
      * @return the build agent information
      */
     @GetMapping("build-agent")
-    @EnforceAdmin
     public ResponseEntity<BuildAgentInformation> getBuildAgentDetails(@RequestParam String agentName) {
         log.debug("REST request to get information on build agent {}", agentName);
         BuildAgentInformation buildAgentDetails = localCIBuildJobQueueService.getBuildAgentInformation().stream().filter(agent -> agent.name().equals(agentName)).findFirst()
@@ -110,7 +107,6 @@ public class AdminBuildJobQueueResource {
      * @return the ResponseEntity with the result of the cancellation
      */
     @DeleteMapping("cancel-job/{buildJobId}")
-    @EnforceAdmin
     public ResponseEntity<Void> cancelBuildJob(@PathVariable String buildJobId) {
         log.debug("REST request to cancel the build job with id {}", buildJobId);
         // Call the cancelBuildJob method in LocalCIBuildJobManagementService
@@ -125,7 +121,6 @@ public class AdminBuildJobQueueResource {
      * @return the ResponseEntity with the result of the cancellation
      */
     @DeleteMapping("cancel-all-queued-jobs")
-    @EnforceAdmin
     public ResponseEntity<Void> cancelAllQueuedBuildJobs() {
         log.debug("REST request to cancel all queued build jobs");
         // Call the cancelAllQueuedBuildJobs method in LocalCIBuildJobManagementService
@@ -140,7 +135,6 @@ public class AdminBuildJobQueueResource {
      * @return the ResponseEntity with the result of the cancellation
      */
     @DeleteMapping("cancel-all-running-jobs")
-    @EnforceAdmin
     public ResponseEntity<Void> cancelAllRunningBuildJobs() {
         log.debug("REST request to cancel all running build jobs");
         // Call the cancelAllRunningBuildJobs method in LocalCIBuildJobManagementService
@@ -156,7 +150,6 @@ public class AdminBuildJobQueueResource {
      * @return the ResponseEntity with the result of the cancellation
      */
     @DeleteMapping("cancel-all-running-jobs-for-agent")
-    @EnforceAdmin
     public ResponseEntity<Void> cancelAllRunningBuildJobsForAgent(@RequestParam String agentName) {
         log.debug("REST request to cancel all running build jobs for agent {}", agentName);
         // Call the cancelAllRunningBuildJobsForAgent method in LocalCIBuildJobManagementService
@@ -172,7 +165,6 @@ public class AdminBuildJobQueueResource {
      * @return the page of finished build jobs
      */
     @GetMapping("finished-jobs")
-    @EnforceAdmin
     public ResponseEntity<List<FinishedBuildJobDTO>> getFinishedBuildJobs(FinishedBuildJobPageableSearchDTO search) {
         log.debug("REST request to get a page of finished build jobs with build status {}, build agent address {}, start date {} and end date {}", search.buildStatus(),
                 search.buildAgentAddress(), search.startDate(), search.endDate());
@@ -191,7 +183,6 @@ public class AdminBuildJobQueueResource {
      * @return the build job statistics
      */
     @GetMapping("build-job-statistics")
-    @EnforceAdmin
     public ResponseEntity<BuildJobsStatisticsDTO> getBuildJobStatistics(@RequestParam(required = false, defaultValue = "7") int span) {
         log.debug("REST request to get the build job statistics");
         List<BuildJobResultCountDTO> buildJobResultCountDtos = buildJobRepository.getBuildJobsResultsStatistics(ZonedDateTime.now().minusDays(span), null);
