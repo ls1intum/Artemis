@@ -845,6 +845,14 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        it('validateExercisePoints', () => {
+            comp.programmingExercise.maxPoints = 10_000;
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.points.customMax',
+                translateValues: {},
+            });
+        });
+
         it('Check that no package name related validation error occurs for language C', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.C;
             expect(comp.getInvalidReasons()).not.toContainEqual({
