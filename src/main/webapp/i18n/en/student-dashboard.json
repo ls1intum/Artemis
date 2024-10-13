@@ -101,6 +101,7 @@
                 "achievedScore": "Achieved Score",
                 "achievablePoints": "Achievable Points",
                 "applyFilter": "Apply filter",
+                "resetFilter": "Reset filter",
                 "clearFilter": "Clear filter",
                 "noFilterAvailable": "There are no distinguishing filter options for the existing exercises",
                 "noMoreOptions": "No more options"

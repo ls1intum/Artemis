@@ -212,6 +212,7 @@
         "examScores": {
             "xAxes": "Ergebnis in %",
             "xAxesSuffix": " + {Notenname}",
+            "xAxesSuffixNoBonus": " + {Notenname}",
             "xAxesSuffixBonus": " + {Bonuspunkte}",
             "yAxes": "Anzahl Teilnehmende",
             "highlightPassedMedian": "Hebe Median aller bestandenen Klausuren im Diagramm hervor: {{ median }}%",

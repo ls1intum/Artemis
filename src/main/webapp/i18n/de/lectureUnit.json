@@ -86,7 +86,7 @@
             "description": "Beschreibung",
             "notReleasedTooltip": "Onlineeinheit nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "doOpen": "Link öffnen",
-            "createVideoUnit": {
+            "createOnlineUnit": {
                 "title": "Erstelle Onlineeinheit",
                 "name": "Name",
                 "namePlaceHolder": "Gib der Onlineeinheit einen Namen",

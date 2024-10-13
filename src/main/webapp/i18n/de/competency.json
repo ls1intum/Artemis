@@ -225,6 +225,7 @@
                 "titleUniqueValidationError": "Es gibt bereits eine Kompetenz/Voraussetzung mit diesem Titel in dem Kurs",
                 "suggestedTaxonomy": "Vorschlag",
                 "averageMastery": "Durchschnittliche Kompetenzbeherrschung der Studierenden",
+                "averageStudentScore": "Durchschnittliche Bewertung der Studierenden",
                 "selectLecture": "Wähle eine Vorlesung aus",
                 "noLectures": "Dieser Kurs hat keine Vorlesungen",
                 "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
