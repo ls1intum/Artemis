@@ -973,12 +973,6 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     @Nested
     class BuildJobPriorityTest {
 
-        @BeforeEach
-        void setUp() {
-            queuedJobs.clear();
-            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
-        }
-
         @AfterEach
         void tearDown() {
             queuedJobs.clear();
@@ -991,12 +985,16 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testBuildPriorityBeforeDueDate() throws Exception {
+            queuedJobs.clear();
+            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
             testPriority(student1Login, PRIORITY_NORMAL);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testBuildPriorityAfterDueDate() throws Exception {
+            queuedJobs.clear();
+            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
             // Set dueDate before now
             programmingExercise.setDueDate(ZonedDateTime.now().minusMinutes(1));
             programmingExerciseRepository.save(programmingExercise);
