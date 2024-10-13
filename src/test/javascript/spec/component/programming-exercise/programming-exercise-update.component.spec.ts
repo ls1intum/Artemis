@@ -829,6 +829,22 @@ describe('ProgrammingExerciseUpdateComponent', () => {
             });
         });
 
+        it('validateExerciseChannelName', () => {
+            comp.programmingExercise.channelName = '';
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.channelName.empty',
+                translateValues: {},
+            });
+        });
+
+        it('validateExerciseShortName', () => {
+            comp.programmingExercise.shortName = 'ab';
+            expect(comp.getInvalidReasons()).toContainEqual({
+                translateKey: 'artemisApp.exercise.form.shortName.minlength',
+                translateValues: {},
+            });
+        });
+
         it('Check that no package name related validation error occurs for language C', () => {
             comp.programmingExercise.programmingLanguage = ProgrammingLanguage.C;
             expect(comp.getInvalidReasons()).not.toContainEqual({
