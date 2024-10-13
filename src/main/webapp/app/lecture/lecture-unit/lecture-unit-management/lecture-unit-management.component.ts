@@ -59,7 +59,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     // Icons
     readonly faTrash = faTrash;
     readonly faPencilAlt = faPencilAlt;
-    faEye = faEye;
+    readonly faEye = faEye;
     readonly faFileExport = faFileExport;
     readonly faRepeat = faRepeat;
     readonly faCheckCircle = faCheckCircle;
@@ -144,6 +144,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
+
     initializeProfileInfo() {
         this.profileInfoSubscription = this.profileService.getProfileInfo().subscribe(async (profileInfo) => {
             this.irisEnabled = profileInfo.activeProfiles.includes(PROFILE_IRIS);
@@ -265,21 +266,28 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
      * Fetches the ingestion state for each lecture unit asynchronously and updates the lecture unit object.
      */
     private updateIngestionStates() {
-        this.lectureUnits.forEach((lectureUnit) => {
-            if (lectureUnit.id) {
-                this.lectureUnitService.getIngestionState(this.lecture.course!.id!, this.lecture.id!, lectureUnit.id).subscribe({
-                    next: (res: HttpResponse<IngestionState>) => {
-                        if (res.body) {
-                            (<AttachmentUnit>lectureUnit).pyrisIngestionState = res.body;
+        this.lectureUnitService.getIngestionState(this.lecture.course!.id!, this.lecture.id!).subscribe({
+            next: (res: HttpResponse<Record<number, IngestionState>>) => {
+                if (res.body) {
+                    const ingestionStatesMap = res.body; // Now it's a plain object
+                    console.log(ingestionStatesMap);
+                    this.lectureUnits.forEach((lectureUnit) => {
+                        if (lectureUnit.id) {
+                            const ingestionState = ingestionStatesMap[lectureUnit.id]; // Use bracket notation
+                            console.log(ingestionState);
+                            if (ingestionState !== undefined) {
+                                (<AttachmentUnit>lectureUnit).pyrisIngestionState = ingestionState;
+                            }
                         }
-                    },
-                    error: (err: HttpErrorResponse) => {
-                        console.error(`Error fetching ingestion state for lecture unit ${lectureUnit.id}`, err);
-                    },
-                });
-            }
+                    });
+                }
+            },
+            error: (err: HttpErrorResponse) => {
+                console.error(`Error fetching ingestion states for lecture ${this.lecture.id}`, err);
+            },
         });
     }
+
     onIngestButtonClicked(lectureUnitId: number) {
         const unitIndex: number = this.lectureUnits.findIndex((unit) => unit.id === lectureUnitId);
         if (unitIndex > -1) {

@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.web.open;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
+import java.util.Map;
 import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -44,13 +45,13 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 @RequestMapping("api/public/pyris/")
 public class PublicPyrisStatusUpdateResource {
 
+    private static final Logger log = LoggerFactory.getLogger(PublicPyrisStatusUpdateResource.class);
+
     private final PyrisJobService pyrisJobService;
 
     private final PyrisStatusUpdateService pyrisStatusUpdateService;
 
     private final PyrisConnectorService pyrisConnectorService;
-
-    private static final Logger log = LoggerFactory.getLogger(PublicPyrisStatusUpdateResource.class);
 
     public PublicPyrisStatusUpdateResource(PyrisJobService pyrisJobService, PyrisStatusUpdateService pyrisStatusUpdateService, PyrisConnectorService pyrisConnectorService) {
         this.pyrisJobService = pyrisJobService;
@@ -195,20 +196,19 @@ public class PublicPyrisStatusUpdateResource {
      * IN_PROGRESS, DONE, ERROR).
      * </p>
      *
-     * @param courseId      the ID of the lecture the unit belongs to
-     * @param lectureId     the ID of the lecture the unit belongs to
-     * @param lectureUnitId the ID of the lecture unit for which the ingestion state is being requested
+     * @param courseId  the ID of the lecture the unit belongs to
+     * @param lectureId the ID of the lecture the unit belongs to
      * @return a {@link ResponseEntity} containing the {@link IngestionState} of the lecture unit,
      */
-    @GetMapping("courses/{courseId}/lectures/{lectureId}/lecture-units/{lectureUnitId}/ingestion-state")
+    @GetMapping("courses/{courseId}/lectures/{lectureId}/lecture-units/ingestion-state")
     @EnforceNothing
-    public ResponseEntity<IngestionState> getStatusOfLectureUnitIngestion(@PathVariable long courseId, @PathVariable long lectureId, @PathVariable long lectureUnitId) {
+    public ResponseEntity<Map<Long, IngestionState>> getStatusOfLectureUnitsIngestion(@PathVariable long courseId, @PathVariable long lectureId) {
+
         try {
-            IngestionState state = pyrisConnectorService.getLectureUnitIngestionState(courseId, lectureId, lectureUnitId);
-            return ResponseEntity.ok(state);
+            return ResponseEntity.ok(pyrisConnectorService.getLectureUnitsIngestionState(courseId, lectureId));
         }
         catch (Exception e) {
-            log.error("Error fetching ingestion state for lecture unit {} in lecture {}", lectureUnitId, lectureId, e);
+            log.error("Error fetching ingestion state for lecture {}", lectureId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

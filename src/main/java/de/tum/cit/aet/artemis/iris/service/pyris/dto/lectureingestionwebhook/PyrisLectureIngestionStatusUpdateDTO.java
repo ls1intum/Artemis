@@ -7,5 +7,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisLectureIngestionStatusUpdateDTO(String result, List<PyrisStageDTO> stages, Long id) {
+public record PyrisLectureIngestionStatusUpdateDTO(String result, List<PyrisStageDTO> stages, long id) {
 }

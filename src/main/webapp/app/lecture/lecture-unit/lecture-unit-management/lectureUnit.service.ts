@@ -168,17 +168,17 @@ export class LectureUnitService {
         return this.httpClient.get<LectureUnit>(`${this.resourceURL}/lecture-units/${lectureUnitId}`);
     }
     /**
-     * Fetch the actual ingestion state for a lecture unit from an external service (e.g., Pyris).
+     * Fetch the actual ingestion state for all lecture units from an external service (e.g., Pyris).
      * @param courseId
-     * @param lectureUnitId ID of the lecture unit
      * @param lectureId ID of the lecture
      * @returns Observable with the ingestion state
      */
-    getIngestionState(courseId: number, lectureId: number, lectureUnitId: number): Observable<HttpResponse<IngestionState>> {
-        return this.httpClient.get<IngestionState>(`${this.resourceURL}/public/pyris/courses/${courseId}/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingestion-state`, {
+    getIngestionState(courseId: number, lectureId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
+        return this.httpClient.get<Record<number, IngestionState>>(`${this.resourceURL}/public/pyris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`, {
             observe: 'response',
         });
     }
+
     /**
      * Triggers the ingestion of one lecture unit.
      *
