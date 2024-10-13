@@ -5,7 +5,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import dayjs from 'dayjs/esm';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { VideoUnit } from 'app/entities/lecture-unit/videoUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
@@ -154,4 +154,44 @@ describe('LectureUnitService', () => {
         expect(convertDateFromServerEntitySpy).not.toHaveBeenCalled();
         expect(result).toBe(emptyResponse);
     }));
+
+    it('should fetch the ingestion state for lecture units and return an OK response', () => {
+        const courseId = 123;
+        const lectureId = 456;
+        const expectedUrl = `api/public/pyris/courses/${courseId}/lectures/${lectureId}/lecture-units/ingestion-state`;
+
+        const expectedResponse: Record<number, IngestionState> = {
+            1: IngestionState.DONE,
+            2: IngestionState.NOT_STARTED,
+        };
+
+        service.getIngestionState(courseId, lectureId).subscribe((response) => {
+            expect(response.body).toEqual(expectedResponse); // Check if the response body matches the expected response
+        });
+
+        const req = httpMock.expectOne({
+            url: expectedUrl,
+            method: 'GET',
+        });
+
+        req.flush(expectedResponse, { status: 200, statusText: 'OK' });
+
+        expect(req.request.method).toBe('GET');
+    });
+
+    it('should send a POST request to ingest a lecture unit and return an OK response', () => {
+        const lectureUnitId = 123;
+        const lectureId = 456;
+        const expectedUrl = `api/lectures/${lectureId}/lecture-units/${lectureUnitId}/ingest`;
+
+        service.ingestLectureUnitInPyris(lectureUnitId, lectureId).subscribe((response) => {
+            expect(response.status).toBe(200);
+        });
+        const req = httpMock.expectOne({
+            url: expectedUrl,
+            method: 'POST',
+        });
+        req.flush(null, { status: 200, statusText: 'OK' });
+        expect(req.request.method).toBe('POST');
+    });
 });

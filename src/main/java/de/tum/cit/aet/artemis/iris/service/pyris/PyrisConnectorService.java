@@ -205,9 +205,12 @@ public class PyrisConnectorService {
             String url = String.format("%s/api/v1/courses/%d/lectures/%d/lectureUnits/%d/ingestion-state?base_url=%s", pyrisUrl, courseId, lectureId, lectureUnitId,
                     encodedBaseUrl);
 
-            IngestionState state = restTemplate.getForObject(url, IngestionState.class);
+            Map<String, String> response = restTemplate.getForObject(url, Map.class);
 
-            if (state != null && state != IngestionState.DONE) {
+            String stateString = response.get("state");
+            IngestionState state = IngestionState.valueOf(stateString);
+
+            if (state != IngestionState.DONE) {
                 if (pyrisJobService.jobExists(courseId, lectureId, lectureUnitId)) {
                     return IngestionState.IN_PROGRESS;
                 }

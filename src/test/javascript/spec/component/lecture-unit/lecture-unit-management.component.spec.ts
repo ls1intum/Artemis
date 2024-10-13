@@ -243,6 +243,7 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.irisEnabled).toBeTrue();
         expect(lectureUnitManagementComponent.lectureIngestionEnabled).toBeTrue();
     });
+
     it('should handle error when ingestLectureUnitInPyris fails', () => {
         const ingestLectureUnitInPyris = jest.spyOn(lectureUnitService, 'ingestLectureUnitInPyris');
         const lectureUnitId = 1;
