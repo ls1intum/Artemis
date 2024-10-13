@@ -111,7 +111,7 @@
               },
               {
                 "glob": "**/*",
-                "input": "./node_modules/monaco-editor/min/vs",
+                "input": "./node_modules/monaco-editor/bundles/vs",
                 "output": "vs"
               }
             ],

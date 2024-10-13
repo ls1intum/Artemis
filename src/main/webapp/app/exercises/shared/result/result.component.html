@@ -12,6 +12,9 @@
         }
         @case (ResultTemplateStatus.FEEDBACK_GENERATION_FAILED) {
             @if (result) {
+                @if (showIcon) {
+                    <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" size="lg" />
+                }
                 <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
                     <span [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}
@@ -20,17 +23,16 @@
             }
         }
         @case (ResultTemplateStatus.IS_GENERATING_FEEDBACK) {
-            @if (result) {
-                <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" animation="spin" size="lg" />
-                <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
-                    <span [ngbTooltip]="resultTooltip | artemisTranslate">
-                        {{ resultString }}
-                    </span>
-                </span>
-            }
+            <span class="text-primary">
+                <fa-icon [icon]="faCircleNotch" size="lg" animation="spin" class="me-2" />
+                <span id="preliminary-feedback-generating" jhiTranslate="artemisApp.result.resultString.automaticAIFeedbackInProgressTooltip"></span>
+            </span>
         }
         @case (ResultTemplateStatus.FEEDBACK_GENERATION_TIMED_OUT) {
             @if (result) {
+                @if (showIcon) {
+                    <fa-icon class="result-score-icon" [class]="textColorClass" [icon]="resultIconClass" size="lg" />
+                }
                 <span [ngClass]="textColorClass" class="guided-tour result" [class.clickable-result]="false" id="result-score">
                     <span [ngbTooltip]="resultTooltip | artemisTranslate">
                         {{ resultString }}
@@ -59,7 +61,7 @@
                         </span>
                     }
                     @if (!isInSidebarCard) {
-                        <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
+                        <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }} ) </span>
                     }
                 </span>
                 @if (hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING) {
