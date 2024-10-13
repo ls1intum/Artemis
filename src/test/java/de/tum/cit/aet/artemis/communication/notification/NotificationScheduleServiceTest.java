@@ -6,7 +6,6 @@ import static java.time.ZonedDateTime.now;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
@@ -81,7 +80,6 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationLocalCILo
         exercise.setMaxPoints(5.0);
         exerciseRepository.saveAndFlush(exercise);
 
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
         sizeBefore = notificationRepository.count();
     }
 

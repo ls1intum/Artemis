@@ -76,6 +76,7 @@ export class MonacoEditorService {
      */
     createStandaloneDiffEditor(domElement: HTMLElement): monaco.editor.IStandaloneDiffEditor {
         return monaco.editor.createDiffEditor(domElement, {
+            automaticLayout: true,
             glyphMargin: true,
             minimap: { enabled: false },
             readOnly: true,

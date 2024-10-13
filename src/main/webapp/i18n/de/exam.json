@@ -600,7 +600,26 @@
             "quizPool": "Quiz Pool",
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
+                "summary": {
+                    "title": "Klausur-Zusammenfassung",
+                    "numberExerciseGroups": "Anzahl der Aufgabengruppen",
+                    "numberProgrammingExercises": "Anzahl der Programmieraufgaben",
+                    "numberModelingExercises": "Anzahl der Modellierungsaufgaben",
+                    "numberTextExercises": "Anzahl der Textaufgaben",
+                    "numberFileUploadExercises": "Anzahl der Datei-Upload-Aufgaben",
+                    "numberQuizExercises": "Anzahl der Quiz-Aufgaben",
+                    "numberRepositories": "Anzahl der Repositories",
+                    "numberBuilds": "Anzahl der Builds",
+                    "numberRegisteredStudents": "Anzahl der angemeldeten Studierenden",
+                    "numberNotStartedExams": "Anzahl der Klausuren (nicht gestartet)",
+                    "numberStartedExams": "Anzahl der Klausuren",
+                    "numberSubmittedExams": "Anzahl der Klausuren (abgegeben)",
+                    "numberCommunicationPosts": "Anzahl der Kommunikationsbeiträge",
+                    "numberAnswerPosts": "Anzahl der Antwortbeiträge",
+                    "isTestExam": "Testklausur",
+                    "isTestCourse": "Testkurs"
+                }
             },
             "reset": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht. Teilnehmende an der Klausur und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",
