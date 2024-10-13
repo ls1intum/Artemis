@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(CTest)
 
-find_package(Catch2 REQUIRED)
+find_package(Catch2 3.0 REQUIRED)
 
 add_subdirectory("${studentParentWorkingDirectoryName}")
 
