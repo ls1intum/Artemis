@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LectureUnitManagementComponent } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.component';
-import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
+import { AttachmentUnit, IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
@@ -70,6 +70,7 @@ describe('LectureUnitManagementComponent', () => {
     let textUnit: TextUnit;
     let videoUnit: VideoUnit;
     let lecture: Lecture;
+    let course: Course;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -136,9 +137,12 @@ describe('LectureUnitManagementComponent', () => {
                 exerciseUnit.id = 2;
                 attachmentUnit = new AttachmentUnit();
                 attachmentUnit.id = 3;
+                course = new Course();
+                course.id = 99;
 
                 lecture = new Lecture();
                 lecture.id = 0;
+                lecture.course = course;
                 lecture.lectureUnits = [textUnit, videoUnit, exerciseUnit, attachmentUnit];
 
                 const returnValue = of(new HttpResponse({ body: lecture, status: 200 }));
@@ -235,13 +239,28 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should initialize profile info and check for Iris settings', () => {
-        const mockCourse: Course = { id: 1, title: 'Test Course' };
-        lectureUnitManagementComponent.lecture = { id: 2, course: mockCourse } as Lecture;
+        lectureUnitManagementComponent.lecture = lecture;
         lectureUnitManagementComponent.initializeProfileInfo();
         expect(profileService.getProfileInfo).toHaveBeenCalled();
-        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(lectureUnitManagementComponent.lecture!.course!.id);
+        expect(irisSettingsService.getCombinedCourseSettings).toHaveBeenCalledWith(lecture.course!.id);
         expect(lectureUnitManagementComponent.irisEnabled).toBeTrue();
         expect(lectureUnitManagementComponent.lectureIngestionEnabled).toBeTrue();
+    });
+
+    it('should update ingestion states correctly when getIngestionState returns data', () => {
+        lectureUnitManagementComponent.lecture = lecture;
+        const mockIngestionStates = {
+            3: IngestionState.DONE,
+        };
+
+        jest.spyOn(lectureUnitService, 'getIngestionState').mockReturnValue(
+            of({
+                body: mockIngestionStates,
+            }),
+        );
+        lectureUnitManagementComponent.updateIngestionStates();
+        expect(lectureUnitService.getIngestionState).toHaveBeenCalledWith(lecture.course!.id!, lecture.id);
+        expect(attachmentUnit.pyrisIngestionState).toBe(IngestionState.DONE);
     });
 
     it('should handle error when ingestLectureUnitInPyris fails', () => {

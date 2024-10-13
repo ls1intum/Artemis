@@ -225,7 +225,7 @@ export class LectureComponent implements OnInit, OnDestroy {
     /**
      * Fetches the ingestion state for all lecture asynchronously and updates all the lectures ingestion state.
      */
-    private updateIngestionStates() {
+    updateIngestionStates() {
         this.lectureService.getIngestionState(this.courseId).subscribe({
             next: (res: HttpResponse<Record<number, IngestionState>>) => {
                 if (res.body) {

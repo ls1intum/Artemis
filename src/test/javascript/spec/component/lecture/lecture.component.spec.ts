@@ -25,6 +25,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { Course } from 'app/entities/course.model';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { IngestionState } from 'app/entities/lecture-unit/attachmentUnit.model';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -96,6 +97,7 @@ describe('Lecture', () => {
         lectureToIngest.id = 1;
         lectureToIngest.title = 'machine Learning';
         lectureToIngest.course = new Course();
+        lectureToIngest.course.id = 99;
         consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
         const profileInfo = {
@@ -265,6 +267,26 @@ describe('Lecture', () => {
         lectureComponent.ingestLecturesInPyris();
         expect(ingestSpy).toHaveBeenCalledWith(lectureToIngest.course?.id);
         expect(ingestSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should update ingestion states correctly when getIngestionState returns data', () => {
+        lectureComponent.courseId = 99;
+        lectureComponent.lectures = [lectureToIngest, pastLecture];
+        const mockIngestionStates = {
+            1: IngestionState.DONE,
+            6: IngestionState.PARTIALLY_INGESTED,
+        };
+
+        jest.spyOn(lectureService, 'getIngestionState').mockReturnValue(
+            of({
+                body: mockIngestionStates,
+            }),
+        );
+        lectureComponent.updateIngestionStates();
+
+        expect(lectureService.getIngestionState).toHaveBeenCalledWith(lectureToIngest.course!.id!);
+        expect(lectureToIngest.ingested).toBe(IngestionState.DONE);
+        expect(pastLecture.ingested).toBe(IngestionState.PARTIALLY_INGESTED);
     });
 
     it('should not call the service if the first lecture does not exist', () => {

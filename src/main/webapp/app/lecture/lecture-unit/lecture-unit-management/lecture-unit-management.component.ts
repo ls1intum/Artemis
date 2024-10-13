@@ -265,7 +265,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     /**
      * Fetches the ingestion state for each lecture unit asynchronously and updates the lecture unit object.
      */
-    private updateIngestionStates() {
+    updateIngestionStates() {
         this.lectureUnitService.getIngestionState(this.lecture.course!.id!, this.lecture.id!).subscribe({
             next: (res: HttpResponse<Record<number, IngestionState>>) => {
                 if (res.body) {
