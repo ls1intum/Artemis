@@ -1,8 +1,8 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { Faq, FaqState } from 'app/entities/faq.model';
 import { faCancel, faCheck, faEdit, faFilter, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { Subject } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { BehaviorSubject, Subject } from 'rxjs';
+import { debounceTime, map } from 'rxjs/operators';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { FaqService } from 'app/faq/faq.service';
@@ -25,7 +25,7 @@ import { TranslateService } from '@ngx-translate/core';
     templateUrl: './faq.component.html',
     styleUrls: [],
     standalone: true,
-    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule],
+    imports: [ArtemisSharedModule, CustomExerciseCategoryBadgeComponent, ArtemisSharedComponentModule, ArtemisMarkdownModule, SearchFilterComponent],
 })
 export class FaqComponent implements OnInit, OnDestroy {
     protected readonly FaqState = FaqState;
