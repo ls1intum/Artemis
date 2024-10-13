@@ -181,50 +181,62 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                 getProfileInfoSub.mockReturnValue(of(newProfileInfo));
 
                 comp.isSimpleMode.set(false);
+
+                const route = TestBed.inject(ActivatedRoute);
+                const programmingExercise = new ProgrammingExercise(undefined, undefined);
+                programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                route.data = of({ programmingExercise });
+                jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
+                    programmingLanguage: ProgrammingLanguage.JAVA,
+                    sequentialTestRuns: true,
+                    staticCodeAnalysis: true,
+                    plagiarismCheckSupported: true,
+                    packageNameRequired: true,
+                    checkoutSolutionRepositoryAllowed: true,
+                    projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
+                    testwiseCoverageAnalysisSupported: true,
+                    auxiliaryRepositoriesSupported: true,
+                } as ProgrammingLanguageFeature);
             });
     });
 
     describe('initializeEditMode', () => {
-        beforeEach(() => {
-            const route = TestBed.inject(ActivatedRoute);
-            const programmingExercise = new ProgrammingExercise(undefined, undefined);
-            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-            route.data = of({ programmingExercise });
-            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
-                programmingLanguage: ProgrammingLanguage.JAVA,
-                sequentialTestRuns: true,
-                staticCodeAnalysis: true,
-                plagiarismCheckSupported: true,
-                packageNameRequired: true,
-                checkoutSolutionRepositoryAllowed: true,
-                projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
-                testwiseCoverageAnalysisSupported: true,
-                auxiliaryRepositoriesSupported: true,
-            } as ProgrammingLanguageFeature);
-        });
-
         it('should set isSimpleMode to true if localStorage has value "true"', () => {
             localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, 'true');
-            comp.ngOnInit();
+
             fixture.detectChanges();
+
             expect(comp.isSimpleMode()).toBeTruthy();
             expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe('true');
         });
 
         it('should set isSimpleMode to false if localStorage has value "false"', () => {
             localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, 'false');
-            comp.ngOnInit();
+
             fixture.detectChanges();
+
             expect(comp.isSimpleMode()).toBeFalsy();
             expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe('false');
         });
 
         it('should set isSimpleMode to true if not present in local storage', () => {
             localStorage.removeItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
-            comp.ngOnInit();
+
             fixture.detectChanges();
+
             expect(comp.isSimpleMode()).toBeTruthy();
         });
+    });
+
+    it('switchEditMode should toggle isSimpleMode and update local storage', () => {
+        localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, JSON.stringify(true));
+        fixture.detectChanges();
+        expect(comp.isSimpleMode()).toBeTruthy(); // ensure the assumed initial state isSimpleMode = true holds
+
+        comp.switchEditMode();
+
+        expect(comp.isSimpleMode()).toBeFalsy();
+        expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe(JSON.stringify(false));
     });
 
     describe('save', () => {

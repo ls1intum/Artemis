@@ -38,7 +38,7 @@ import { ExerciseUpdatePlagiarismComponent } from 'app/exercises/shared/plagiari
 import { ImportOptions } from 'app/types/programming-exercises';
 import { IS_DISPLAYED_IN_SIMPLE_MODE, ProgrammingExerciseInputField } from 'app/exercises/programming/manage/update/programming-exercise-update.helper';
 
-const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
+export const LOCAL_STORAGE_KEY_IS_SIMPLE_MODE = 'isSimpleMode';
 
 @Component({
     selector: 'jhi-programming-exercise-update',
