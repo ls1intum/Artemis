@@ -7,7 +7,7 @@ build_and_test_the_code () {
   cp -R Tests ${studentParentWorkingDirectoryName}
   cp Package.swift ${studentParentWorkingDirectoryName}
 
-  # In order to get the correct console output we need to execute the command within the ${studentParentWorkingDirectoryName} directory
+  # In order to get the correct console output we need to execute the command within the assignment directory
   # swift build
   cd ${studentParentWorkingDirectoryName}
   swift build || error=true
