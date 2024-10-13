@@ -7,7 +7,7 @@ import { Subject, of, throwError } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
-import { ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
+import { LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, ProgrammingExerciseUpdateComponent } from 'app/exercises/programming/manage/update/programming-exercise-update.component';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/entities/programming/programming-exercise.model';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -182,6 +182,49 @@ describe('ProgrammingExerciseUpdateComponent', () => {
 
                 comp.isSimpleMode.set(false);
             });
+    });
+
+    describe('initializeEditMode', () => {
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            const programmingExercise = new ProgrammingExercise(undefined, undefined);
+            programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+            route.data = of({ programmingExercise });
+            jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature').mockReturnValue({
+                programmingLanguage: ProgrammingLanguage.JAVA,
+                sequentialTestRuns: true,
+                staticCodeAnalysis: true,
+                plagiarismCheckSupported: true,
+                packageNameRequired: true,
+                checkoutSolutionRepositoryAllowed: true,
+                projectTypes: [ProjectType.PLAIN_MAVEN, ProjectType.MAVEN_MAVEN],
+                testwiseCoverageAnalysisSupported: true,
+                auxiliaryRepositoriesSupported: true,
+            } as ProgrammingLanguageFeature);
+        });
+
+        it('should set isSimpleMode to true if localStorage has value "true"', () => {
+            localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, 'true');
+            comp.ngOnInit();
+            fixture.detectChanges();
+            expect(comp.isSimpleMode()).toBeTruthy();
+            expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe('true');
+        });
+
+        it('should set isSimpleMode to false if localStorage has value "false"', () => {
+            localStorage.setItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE, 'false');
+            comp.ngOnInit();
+            fixture.detectChanges();
+            expect(comp.isSimpleMode()).toBeFalsy();
+            expect(localStorage.getItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE)).toBe('false');
+        });
+
+        it('should set isSimpleMode to true if not present in local storage', () => {
+            localStorage.removeItem(LOCAL_STORAGE_KEY_IS_SIMPLE_MODE);
+            comp.ngOnInit();
+            fixture.detectChanges();
+            expect(comp.isSimpleMode()).toBeTruthy();
+        });
     });
 
     describe('save', () => {
