@@ -169,7 +169,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         expect(loadAeolusTemplateSpy).toHaveBeenCalled();
     });
 
-    it('should update windfile', () => {
+    it('should update programming exercise values', () => {
         comp.programmingExercise.buildConfig!.windfile = undefined;
         programmingExerciseCreationConfigMock.customBuildPlansSupported = PROFILE_LOCALCI;
         comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
@@ -177,6 +177,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
         comp.loadAeolusTemplate();
         expect(comp.programmingExercise.buildConfig?.windfile).toBeDefined();
+        expect(comp.programmingExercise.buildConfig?.timeoutSeconds).toBe(0);
     });
 
     it('should call this.resetCustomBuildPlan', () => {
@@ -263,5 +264,11 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         expect(mockAeolusService.getAeolusTemplateScript).not.toHaveBeenCalled();
         expect(mockAeolusService.getAeolusTemplateFile).not.toHaveBeenCalled();
         expect(comp.programmingExercise.buildConfig?.buildScript).toBe('echo "test"');
+    });
+
+    it('should set timeout correctly', () => {
+        comp.programmingExercise.buildConfig!.timeoutSeconds = 100;
+        comp.setTimeout(10);
+        expect(comp.programmingExercise.buildConfig?.timeoutSeconds).toBe(10);
     });
 });

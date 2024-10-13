@@ -91,6 +91,8 @@
                 "ORGANIZATION": "Organization",
                 "RANDOM": "Random",
                 "ANNOUNCEMENT": "Announcement",
+                "allPublicMessages": "All Public Messages",
+                "searchResults": "Search Results for '{{ search }}'",
                 "mobileDisclaimer": "Please select a conversation first.",
                 "mobileDisclaimerCallToAction": "Select conversation"
             },

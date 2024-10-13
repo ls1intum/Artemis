@@ -66,6 +66,7 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
 import { sortCourses } from 'app/shared/util/course.util';
 import { CourseUnenrollmentModalComponent } from './course-unenrollment-modal.component';
+import { LtiService } from 'app/shared/service/lti.service';
 import { CourseSidebarService } from 'app/overview/course-sidebar.service';
 
 interface CourseActionItem {
@@ -128,6 +129,8 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isExamStarted = false;
     private examStartedSubscription: Subscription;
     readonly MIN_DISPLAYED_COURSES: number = 6;
+    isLti: boolean = false;
+    private ltiSubscription: Subscription;
 
     // Properties to track hidden items for dropdown menu
     dropdownOpen: boolean = false;
@@ -204,6 +207,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private modalService: NgbModal,
         private examParticipationService: ExamParticipationService,
         private courseSidebarService: CourseSidebarService,
+        private ltiService: LtiService,
     ) {}
 
     async ngOnInit() {
@@ -250,13 +254,18 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.updateVisibleNavbarItems(window.innerHeight);
         await this.updateRecentlyAccessedCourses();
         this.isSidebarCollapsed = this.activatedComponentReference?.isCollapsed ?? false;
+        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
+            this.isLti = isLti;
+        });
     }
 
     /** Listen window resize event by height */
     @HostListener('window: resize', ['$event'])
     onResize() {
-        this.updateVisibleNavbarItems(window.innerHeight);
-        if (!this.anyItemHidden) this.itemsDrop.close();
+        if (this.itemsDrop) {
+            this.updateVisibleNavbarItems(window.innerHeight);
+            if (!this.anyItemHidden) this.itemsDrop.close();
+        }
     }
 
     /** Update sidebar item's hidden property based on the window height to display three-dots */
@@ -759,6 +768,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.toggleSidebarEventSubscription.unsubscribe();
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
+        this.ltiSubscription?.unsubscribe();
     }
 
     subscribeForQuizChanges() {

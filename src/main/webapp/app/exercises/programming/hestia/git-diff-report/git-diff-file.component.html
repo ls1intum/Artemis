@@ -1,9 +1,9 @@
 <div class="ph-1">
-    @if (fileUnchanged) {
+    @if (fileUnchanged()) {
         <div class="w-100 d-flex justify-content-center">
             <span class="p-2" jhiTranslate="artemisApp.repository.commitHistory.commitDetails.fileUnchanged"></span>
         </div>
     }
     <!-- The editor is only hidden, not removed, as we still want it to report its readiness. -->
-    <jhi-monaco-diff-editor [hidden]="fileUnchanged" [allowSplitView]="allowSplitView" (onReadyForDisplayChange)="onDiffReady.emit($event)" />
+    <jhi-monaco-diff-editor [hidden]="fileUnchanged()" [allowSplitView]="allowSplitView()" (onReadyForDisplayChange)="onDiffReady.emit($event)" />
 </div>

@@ -1,19 +1,13 @@
-<div class="course-wide-search-mobile-disclaimer" [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig.searchTerm }">
-    <span class="mb-2" jhiTranslate="artemisApp.metis.overview.mobileDisclaimer"></span>
-    <button class="btn btn-outline-secondary" jhiTranslate="artemisApp.metis.overview.mobileDisclaimerCallToAction" (click)="openSidebar()"></button>
-</div>
-<div [ngClass]="{ 'is-not-in-active-search': !courseWideSearchConfig.searchTerm }">
-    <div class="mt-2 ms-2">
-        <div class="d-flex justify-content-between">
-            <div>
-                <h4 class="d-inline-block rounded p-1 info">
-                    @if (!courseWideSearchConfig.searchTerm) {
-                        All Messages
-                    } @else {
-                        Search Results for "{{ courseWideSearchConfig.searchTerm }}"
-                    }
-                </h4>
-            </div>
+<div class="mt-2 ms-2">
+    <div class="d-flex justify-content-between">
+        <div>
+            <h4 class="d-inline-block rounded p-1 info">
+                @if (!courseWideSearchConfig.searchTerm) {
+                    <span jhiTranslate="artemisApp.metis.overview.allPublicMessages"></span>
+                } @else {
+                    <span jhiTranslate="artemisApp.metis.overview.searchResults" [translateValues]="{ search: courseWideSearchConfig.searchTerm }"></span>
+                }
+            </h4>
         </div>
         @if (formGroup) {
             <div class="mb-1">
