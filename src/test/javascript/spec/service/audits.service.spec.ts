@@ -2,7 +2,8 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { AuditsService } from 'app/admin/audits/audits.service';
 import { Audit } from 'app/admin/audits/audit.model';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('Audits Service', () => {
     let service: AuditsService;
@@ -10,7 +11,8 @@ describe('Audits Service', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting()],
         });
 
         service = TestBed.inject(AuditsService);
