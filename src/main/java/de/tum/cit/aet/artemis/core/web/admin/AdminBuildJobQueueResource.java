@@ -204,7 +204,6 @@ public class AdminBuildJobQueueResource {
      *         or an appropriate error response if something went wrong
      */
     @PutMapping("agent/{agentName}/pause")
-    @EnforceAdmin
     public ResponseEntity<Void> pauseBuildAgent(@PathVariable String agentName) {
         log.debug("REST request to pause agent {}", agentName);
         localCIBuildJobQueueService.pauseBuildAgent(agentName);
@@ -225,7 +224,6 @@ public class AdminBuildJobQueueResource {
      *         or an appropriate error response if something went wrong
      */
     @PutMapping("agent/{agentName}/resume")
-    @EnforceAdmin
     public ResponseEntity<Void> resumeBuildAgent(@PathVariable String agentName) {
         log.debug("REST request to resume agent {}", agentName);
         localCIBuildJobQueueService.resumeBuildAgent(agentName);
