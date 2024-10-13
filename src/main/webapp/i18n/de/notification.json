@@ -14,6 +14,7 @@
             "showAllSavedNotifications": "Zeige alle gespeicherten Benachrichtigungen",
             "hideAllCurrentlyDisplayedNotifications": "Verstecke alle aktuell dargestellten Benachrichtigungen",
             "target": {
+                "newAnswer": "Antwort ansehen",
                 "newAnswerPost": "Antwort ansehen",
                 "newPost": "Beitrag ansehen",
                 "newQuestion": "Frage ansehen",

@@ -56,6 +56,7 @@
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
                     "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build Pläne",
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
                     "problemStepTitle": "Problem",
@@ -65,6 +66,7 @@
                     "generalInfoStepTitle": "Allgemein",
                     "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
                     "difficultyStepTitle": "Modus",
+                    "buildPlansTitle": "Build Pläne",
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
@@ -504,10 +506,12 @@
                 "repositoryName": "Name des Repositorys",
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "description": "Beschreibung",
+                "invalidRepositoryName": "Es existiert bereits ein Repository mit diesem Namen in der Aufgabe.",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
                 "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Editierungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "editedWarning": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
+                "editedWarningLocalCI": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "repositoryNameRequired": {
                     "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
                 },

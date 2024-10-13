@@ -282,6 +282,11 @@
             "edit": {
                 "title": "Bearbeite eine Voraussetzung"
             },
+            "importAll": {
+                "title": "Alle Kompetenzen eines Kurses importieren",
+                "success": "{{ noOfCompetencies }} Kompetenzen aus dem Kurs \"{{ courseTitle }}\" importiert.",
+                "warning": "Es wurden keine Kompetenzen für den Kurs \"{{ courseTitle }}\" gefunden."
+            },
             "competencyCard": {
                 "delete": {
                     "question": "Willst du wirklich die Voraussetzung <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
