@@ -86,6 +86,7 @@ import de.tum.cit.aet.artemis.programming.service.SubmissionPolicyService;
  * REST controller for managing ProgrammingExercise.
  */
 @Profile(PROFILE_CORE)
+@FeatureToggle(Feature.ProgrammingExercises)
 @RestController
 @RequestMapping("api/")
 public class ProgrammingExerciseExportImportResource {
@@ -184,7 +185,6 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping("programming-exercises/import/{sourceExerciseId}")
     @EnforceAtLeastEditor
-    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExercise(@PathVariable long sourceExerciseId, @RequestBody ProgrammingExercise newExercise,
             @RequestParam(defaultValue = "false") boolean recreateBuildPlans, @RequestParam(defaultValue = "false") boolean updateTemplate,
             @RequestParam(defaultValue = "false") boolean setTestCaseVisibilityToAfterDueDate) throws JsonProcessingException {
@@ -291,7 +291,6 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping("courses/{courseId}/programming-exercises/import-from-file")
     @EnforceAtLeastEditor
-    @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<ProgrammingExercise> importProgrammingExerciseFromFile(@PathVariable long courseId,
             @RequestPart("programmingExercise") ProgrammingExercise programmingExercise, @RequestPart("file") MultipartFile zipFile) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -318,7 +317,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/export-instructor-exercise")
     @EnforceAtLeastInstructor
-    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithPlagiarismDetectionConfigTeamConfigAndBuildConfigElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -352,7 +351,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/export-instructor-repository/{repositoryType}")
     @EnforceAtLeastTutor
-    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
@@ -373,7 +372,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/export-instructor-auxiliary-repository/{repositoryId}")
     @EnforceAtLeastTutor
-    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
@@ -419,7 +418,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participant-identifiers/{participantIdentifiers}")
     @EnforceAtLeastTutor
-    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
@@ -464,7 +463,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping("programming-exercises/{exerciseId}/export-repos-by-participation-ids/{participationIds}")
     @EnforceAtLeastTutor
-    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
@@ -523,7 +522,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/export-student-requested-repository")
     @EnforceAtLeastStudent
-    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportStudentRequestedRepository(@PathVariable long exerciseId, @RequestParam() boolean includeTests) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         if (programmingExercise.isExamExercise()) {
@@ -550,7 +549,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping("programming-exercises/{exerciseId}/export-student-repository/{participationId}")
     @EnforceAtLeastStudent
-    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportStudentRepository(@PathVariable long exerciseId, @PathVariable long participationId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
         var studentParticipation = programmingExercise.getStudentParticipations().stream().filter(p -> p.getId().equals(participationId))

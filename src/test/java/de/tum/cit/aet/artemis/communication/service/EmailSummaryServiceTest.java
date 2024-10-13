@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.communication.service;
 import static de.tum.cit.aet.artemis.communication.service.notifications.NotificationSettingsService.NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -29,7 +28,6 @@ import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.core.util.CourseUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
 
@@ -39,9 +37,6 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private EmailSummaryService weeklyEmailSummaryService;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
@@ -122,8 +117,6 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         exerciseRepository.saveAll(allTestExercises);
         weeklyEmailSummaryService.setScheduleInterval(Duration.ofDays(7));
-
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     /**

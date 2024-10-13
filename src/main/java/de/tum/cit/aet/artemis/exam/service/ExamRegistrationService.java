@@ -72,9 +72,12 @@ public class ExamRegistrationService {
 
     private static final boolean IS_TEST_RUN = false;
 
+    private final StudentExamService studentExamService;
+
     public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
-            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExamUserService examUserService) {
+            StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExamUserService examUserService,
+            StudentExamService studentExamService) {
         this.examRepository = examRepository;
         this.userService = userService;
         this.userRepository = userRepository;
@@ -86,6 +89,7 @@ public class ExamRegistrationService {
         this.authorizationCheckService = authorizationCheckService;
         this.examUserRepository = examUserRepository;
         this.examUserService = examUserService;
+        this.studentExamService = studentExamService;
     }
 
     /**
@@ -193,6 +197,7 @@ public class ExamRegistrationService {
      * Registers student to the exam. In order to do this, we add the user to the course group, because the user only has access to the exam of a course if the student also has
      * access to the course of the exam.
      * We only need to add the user to the course group, if the student is not yet part of it, otherwise the student cannot access the exam (within the course).
+     * If the exam has already started, a student exam is additionally generated.
      *
      * @param course  the course containing the exam
      * @param exam    the exam for which we want to register a student
@@ -216,6 +221,11 @@ public class ExamRegistrationService {
             registeredExamUser = examUserRepository.save(registeredExamUser);
             exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
+            // Generate a student exam for the registered student if the exam has already started
+            if (exam.isStarted()) {
+                Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+                studentExamService.generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
+            }
         }
         else {
             log.warn("Student {} is already registered for the exam {}", student.getLogin(), exam.getId());
