@@ -161,8 +161,19 @@ public class SharedQueueProcessingService {
     }
 
     @PreDestroy
-    public void removeListener() {
+    public void removeListenerAndCancelScheduledFuture() {
+        removeListener();
+        cancelCheckAvailabilityAndProcessNextBuildScheduledFuture();
+    }
+
+    private void removeListener() {
         this.queue.removeItemListener(this.listenerId);
+    }
+
+    private void cancelCheckAvailabilityAndProcessNextBuildScheduledFuture() {
+        if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
+            scheduledFuture.cancel(false);
+        }
     }
 
     /**
@@ -422,10 +433,7 @@ public class SharedQueueProcessingService {
             log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
 
             isPaused = true;
-            removeListener();
-            if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
-                scheduledFuture.cancel(false);
-            }
+            removeListenerAndCancelScheduledFuture();
             updateLocalBuildAgentInformation();
 
             log.info("Gracefully cancelling running build jobs");
@@ -487,11 +495,8 @@ public class SharedQueueProcessingService {
             isPaused = false;
             processResults = true;
             // We remove the listener and scheduledTask first to avoid race conditions
-            removeListener();
+            removeListenerAndCancelScheduledFuture();
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
-            if (scheduledFuture != null && !scheduledFuture.isCancelled()) {
-                scheduledFuture.cancel(false);
-            }
             scheduledFuture = taskScheduler.scheduleAtFixedRate(this::checkAvailabilityAndProcessNextBuild, Duration.ofSeconds(10));
             checkAvailabilityAndProcessNextBuild();
             updateLocalBuildAgentInformation();

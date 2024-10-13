@@ -88,7 +88,7 @@ class LocalCIResourceIntegrationTest extends AbstractLocalCILocalVCIntegrationTe
     @BeforeEach
     void createJobs() {
         // temporarily remove listener to avoid triggering build job processing
-        sharedQueueProcessingService.removeListener();
+        sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
 
         JobTimingInfo jobTimingInfo1 = new JobTimingInfo(ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(3));
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2));
