@@ -1007,6 +1007,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testPriorityRunningExam() throws Exception {
+            queuedJobs.clear();
+            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
             Exam exam = examUtilService.addExamWithExerciseGroup(course, true);
             ExerciseGroup exerciseGroup = exam.getExerciseGroups().getFirst();
 
