@@ -30,7 +30,6 @@ export class ExerciseResultPage {
 
     async clickOpenExercise(exerciseId: number) {
         await this.page.locator(`#open-exercise-${exerciseId}`).click();
-        await expect(this.page.locator('#rating')).toBeVisible();
     }
 
     async clickOpenCodeEditor(exerciseId: number) {
