@@ -166,7 +166,6 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
             this.conversationService.updateIsMuted(this.course.id, this.conversation.id, isMuted).subscribe({
                 next: () => {
                     this.conversation.isMuted = isMuted;
-
                     this.onUpdateSidebar.emit();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
