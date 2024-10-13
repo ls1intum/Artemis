@@ -278,10 +278,14 @@ describe('Lecture', () => {
         };
 
         jest.spyOn(lectureService, 'getIngestionState').mockReturnValue(
-            of({
-                body: mockIngestionStates,
-            }),
+            of(
+                new HttpResponse({
+                    body: mockIngestionStates,
+                    status: 200,
+                }),
+            ),
         );
+
         lectureComponent.updateIngestionStates();
 
         expect(lectureService.getIngestionState).toHaveBeenCalledWith(lectureToIngest.course!.id!);
