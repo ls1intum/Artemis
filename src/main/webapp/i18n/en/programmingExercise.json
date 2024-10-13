@@ -144,7 +144,7 @@
             "offlineIde": "IDE",
             "allowOnlineIde": {
                 "title": "Allow Online IDE",
-                "description": "An online coding environment based on VisualStudioCode featuring code highlighting and formatting features. Pre-configured to your exercise's language and with the ability to compile or run code online.",
+                "description": "An online coding environment based on Visual Studio Code featuring code highlighting and formatting features. Pre-configured to your exercise's language and with the ability to compile or run code online.",
                 "alert": "At least one option (Offline IDE, Online Editor, or Online IDE) must be selected.",
                 "alertNoTheia": "At least one option (Offline IDE or Online Editor) must be selected"
             },
