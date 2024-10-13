@@ -85,7 +85,8 @@ describe('Guided tour integration', () => {
                 MockComponent(CoursesComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(SystemNotificationComponent),
-                MockComponent(ThemeSwitchComponent),
+                // Component can not be mocked at the moment https://github.com/help-me-mom/ng-mocks/issues/8634
+                ThemeSwitchComponent,
                 MockComponent(DocumentationButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),

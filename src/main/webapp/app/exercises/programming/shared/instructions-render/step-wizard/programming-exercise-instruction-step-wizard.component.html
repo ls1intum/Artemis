@@ -2,7 +2,7 @@
     <div class="stepwizard">
         <div class="stepwizard-title" jhiTranslate="artemisApp.programmingExercise.problemStatement.tasksOfExercise"></div>
         <div class="stepwizard-row">
-            @for (step of steps; track step; let i = $index) {
+            @for (step of steps; let i = $index; track i) {
                 <div class="stepwizard-step">
                     <!--The css class test-passing removes the cursor icon and the hover effects from passing test circles-->
                     <div

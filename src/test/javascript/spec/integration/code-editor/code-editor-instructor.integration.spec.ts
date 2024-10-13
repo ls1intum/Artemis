@@ -3,7 +3,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateModule } from '@ngx-translate/core';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
-import { ChangeDetectorRef, DebugElement } from '@angular/core';
+import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -116,7 +116,6 @@ describe('CodeEditorInstructorIntegration', () => {
             ],
             providers: [
                 JhiLanguageHelper,
-                ChangeDetectorRef,
                 { provide: Router, useClass: MockRouter },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
