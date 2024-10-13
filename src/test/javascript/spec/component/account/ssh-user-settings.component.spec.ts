@@ -76,10 +76,10 @@ describe('SshUserSettingsComponent', () => {
         accountServiceMock.addSshPublicKey.mockReturnValue(of(new HttpResponse({ status: 200 })));
         comp.ngOnInit();
         comp.sshKey = 'new-key';
-        comp.editSshKey = true;
+        comp.showSshKey = true;
         comp.saveSshKey();
         expect(accountServiceMock.addSshPublicKey).toHaveBeenCalledWith('new-key');
-        expect(comp.editSshKey).toBeFalse();
+        expect(comp.showSshKey).toBeFalse();
     });
 
     it('should delete SSH key and disable edit mode', () => {
@@ -87,10 +87,10 @@ describe('SshUserSettingsComponent', () => {
         comp.ngOnInit();
         const empty = '';
         comp.sshKey = 'new-key';
-        comp.editSshKey = true;
+        comp.showSshKey = true;
         comp.deleteSshKey();
         expect(accountServiceMock.deleteSshPublicKey).toHaveBeenCalled();
-        expect(comp.editSshKey).toBeFalse();
+        expect(comp.showSshKey).toBeFalse();
         expect(comp.storedSshKey).toEqual(empty);
     });
 
@@ -113,12 +113,48 @@ describe('SshUserSettingsComponent', () => {
         const oldKey = 'old-key';
         const newKey = 'new-key';
         comp.sshKey = oldKey;
-        comp.editSshKey = true;
+        comp.showSshKey = true;
         comp.saveSshKey();
         expect(comp.storedSshKey).toEqual(oldKey);
-        comp.editSshKey = true;
+        comp.showSshKey = true;
         comp.sshKey = newKey;
         comp.cancelEditingSshKey();
         expect(comp.storedSshKey).toEqual(oldKey);
+    });
+
+    it('should detect Windows', () => {
+        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+        comp.ngOnInit();
+        expect(comp.copyInstructions).toBe('cat ~/.ssh/id_ed25519.pub | clip');
+    });
+
+    it('should detect MacOS', () => {
+        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
+        comp.ngOnInit();
+        expect(comp.copyInstructions).toBe('pbcopy < ~/.ssh/id_ed25519.pub');
+    });
+
+    it('should detect Linux', () => {
+        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (X11; Linux x86_64)');
+        comp.ngOnInit();
+        expect(comp.copyInstructions).toBe('xclip -selection clipboard < ~/.ssh/id_ed25519.pub');
+    });
+
+    it('should detect Android', () => {
+        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 10; Pixel 3)');
+        comp.ngOnInit();
+        expect(comp.copyInstructions).toBe('termux-clipboard-set < ~/.ssh/id_ed25519.pub');
+    });
+
+    it('should detect iOS', () => {
+        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (iPhone; CPU iPhone OS 13_5)');
+        comp.ngOnInit();
+        expect(comp.copyInstructions).toBe('Ctrl + C');
+    });
+
+    it('should return Unknown for unrecognized OS', () => {
+        jest.spyOn(window.navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Unknown OS)');
+        comp.ngOnInit();
+        expect(comp.copyInstructions).toBe('Ctrl + C');
     });
 });
