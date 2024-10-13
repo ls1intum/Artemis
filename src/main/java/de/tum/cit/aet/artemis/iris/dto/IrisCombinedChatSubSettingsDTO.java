@@ -8,6 +8,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record IrisCombinedChatSubSettingsDTO(boolean enabled, Integer rateLimit, Integer rateLimitTimeframeHours, @Nullable Set<String> allowedVariants,
-        @Nullable String selectedVariant) {
+        @Nullable String selectedVariant, @Nullable Set<String> enabledForCategories) {
 
 }

@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisChatSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCompetencyGenerationSubSettings;
+import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisExerciseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisLectureIngestionSubSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisSettings;
@@ -71,6 +72,10 @@ public class IrisSubSettingsService {
         if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
             currentSettings.setEnabled(newSettings.isEnabled());
         }
+        if (settingsType == IrisSettingsType.COURSE) {
+            var enabledForCategories = newSettings.getEnabledForCategories();
+            currentSettings.setEnabledForCategories(enabledForCategories);
+        }
         if (authCheckService.isAdmin()) {
             currentSettings.setRateLimit(newSettings.getRateLimit());
             currentSettings.setRateLimitTimeframeHours(newSettings.getRateLimitTimeframeHours());
@@ -103,6 +108,10 @@ public class IrisSubSettingsService {
         }
         if (settingsType == IrisSettingsType.EXERCISE || authCheckService.isAdmin()) {
             currentSettings.setEnabled(newSettings.isEnabled());
+        }
+        if (settingsType == IrisSettingsType.COURSE) {
+            var enabledForCategories = newSettings.getEnabledForCategories();
+            currentSettings.setEnabledForCategories(enabledForCategories);
         }
         if (authCheckService.isAdmin()) {
             currentSettings.setRateLimit(newSettings.getRateLimit());
@@ -229,7 +238,8 @@ public class IrisSubSettingsService {
         var rateLimit = getCombinedRateLimit(settingsList);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
         var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
-        return new IrisCombinedTextExerciseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
+        var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
+        return new IrisCombinedTextExerciseChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories);
     }
 
     /**
@@ -246,7 +256,8 @@ public class IrisSubSettingsService {
         var rateLimit = getCombinedRateLimit(settingsList);
         var allowedVariants = !minimal ? getCombinedAllowedVariants(settingsList, IrisSettings::getIrisChatSettings) : null;
         var selectedVariant = !minimal ? getCombinedSelectedVariant(settingsList, IrisSettings::getIrisChatSettings) : null;
-        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant);
+        var enabledForCategories = !minimal ? getCombinedEnabledForCategories(settingsList, IrisSettings::getIrisChatSettings) : null;
+        return new IrisCombinedChatSubSettingsDTO(enabled, rateLimit, null, allowedVariants, selectedVariant, enabledForCategories);
     }
 
     /**
@@ -337,5 +348,11 @@ public class IrisSubSettingsService {
     private String getCombinedSelectedVariant(List<IrisSettings> settingsList, Function<IrisSettings, IrisSubSettings> subSettingsFunction) {
         return settingsList.stream().filter(Objects::nonNull).map(subSettingsFunction).filter(Objects::nonNull).map(IrisSubSettings::getSelectedVariant)
                 .filter(model -> model != null && !model.isBlank()).reduce((first, second) -> second).orElse(null);
+    }
+
+    private Set<String> getCombinedEnabledForCategories(List<IrisSettings> settingsList, Function<IrisSettings, IrisChatSubSettings> subSettingsFunction) {
+        return settingsList.stream().filter(Objects::nonNull).filter(settings -> settings instanceof IrisCourseSettings).map(subSettingsFunction).filter(Objects::nonNull)
+                .map(IrisChatSubSettings::getEnabledForCategories).filter(Objects::nonNull).filter(models -> !models.isEmpty()).reduce((first, second) -> second)
+                .orElse(new TreeSet<>());
     }
 }

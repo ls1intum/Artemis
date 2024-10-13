@@ -6,6 +6,11 @@ import { ButtonType } from 'app/shared/components/button.component';
 import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { IrisSettingsType } from 'app/entities/iris/settings/iris-settings.model';
 import { IrisSettingsService } from 'app/iris/settings/shared/iris-settings.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { onError } from 'app/shared/util/global.utils';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-iris-common-sub-settings-update',
@@ -21,6 +26,9 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
     @Input()
     settingsType: IrisSettingsType;
 
+    @Input()
+    courseId?: number;
+
     @Output()
     onChanges = new EventEmitter<IrisSubSettings>();
 
@@ -34,23 +42,34 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
 
     enabled: boolean;
 
+    categories: string[] = [];
+
     // Settings types
     EXERCISE = IrisSettingsType.EXERCISE;
     COURSE = IrisSettingsType.COURSE;
+    TEXT_EXERCISE_CHAT = IrisSubSettingsType.TEXT_EXERCISE_CHAT;
+    CHAT = IrisSubSettingsType.CHAT;
     // Button types
     WARNING = ButtonType.WARNING;
     // Icons
     faTrash = faTrash;
 
+    protected readonly IrisSubSettings = IrisSubSettings;
+    protected readonly IrisSubSettingsType = IrisSubSettingsType;
+
     constructor(
         accountService: AccountService,
         private irisSettingsService: IrisSettingsService,
+        private courseManagementService: CourseManagementService,
+        private exerciseService: ExerciseService,
+        private alertService: AlertService,
     ) {
         this.isAdmin = accountService.isAdmin();
     }
 
     ngOnInit() {
         this.enabled = this.subSettings?.enabled ?? false;
+        this.loadCategories();
         this.loadVariants();
         this.inheritAllowedVariants = !!(!this.subSettings?.allowedVariants && this.parentSubSettings);
     }
@@ -61,6 +80,23 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         }
         if (changes.subSettings) {
             this.enabled = this.subSettings?.enabled ?? false;
+        }
+    }
+
+    loadCategories() {
+        if (this.settingsType === this.COURSE) {
+            this.courseManagementService.findAllCategoriesOfCourse(this.courseId!).subscribe({
+                next: (response: HttpResponse<string[]>) => {
+                    this.categories = this.exerciseService
+                        .convertExerciseCategoriesAsStringFromServer(response.body!)
+                        .map((category) => category.category)
+                        .filter((category) => category !== undefined)
+                        .map((category) => category!);
+                    // Remove duplicate categories
+                    this.categories = Array.from(new Set(this.categories));
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
         }
     }
 
@@ -123,15 +159,28 @@ export class IrisCommonSubSettingsUpdateComponent implements OnInit, OnChanges {
         }
     }
 
+    onCategorySelectionChange(category: string) {
+        if (!this.subSettings) {
+            return;
+        }
+        if (!this.subSettings.enabledForCategories) {
+            this.subSettings.enabledForCategories = [];
+        }
+        if (this.subSettings.enabledForCategories?.includes(category)) {
+            this.subSettings.enabledForCategories = this.subSettings.enabledForCategories!.filter((c) => c !== category);
+        } else {
+            this.subSettings.enabledForCategories = [...(this.subSettings.enabledForCategories ?? []), category];
+        }
+    }
+
     get inheritDisabled() {
         if (this.parentSubSettings) {
             return !this.parentSubSettings.enabled;
         }
         return false;
     }
+
     get isSettingsSwitchDisabled() {
         return this.inheritDisabled || (!this.isAdmin && this.settingsType !== this.EXERCISE);
     }
-    protected readonly IrisSubSettings = IrisSubSettings;
-    protected readonly IrisSubSettingsType = IrisSubSettingsType;
 }
