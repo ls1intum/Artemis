@@ -99,7 +99,6 @@ class ProgrammingExamIntegrationTest extends AbstractSpringIntegrationJenkinsGit
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-        participantScoreScheduleService.activate();
     }
 
     @AfterEach

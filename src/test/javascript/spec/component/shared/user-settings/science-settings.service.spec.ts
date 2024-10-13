@@ -1,9 +1,9 @@
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { of } from 'rxjs';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { Setting } from 'app/shared/user-settings/user-settings.model';
 import { ScienceSetting } from 'app/shared/user-settings/science-settings/science-settings-structure';
 import { ScienceSettingsService } from 'app/shared/user-settings/science-settings/science-settings.service';
@@ -26,8 +26,8 @@ describe('ScienceSettingsService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: LocalStorageService, useClass: MockLocalStorageService }],
         })
             .compileComponents()
             .then(() => {

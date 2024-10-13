@@ -129,6 +129,9 @@ $neutral-dark-l-20: lighten($neutral-dark, 20%);
 $footer-bg: $neutral-dark;
 $footer-height-dev: 3rem;
 $footer-height-prod: 2rem;
+
+// Sidebar
+$sidebar-width: 275px;
 $sidebar-footer-height-dev: 134px;
 $sidebar-footer-height-prod: 118px;
 
@@ -659,3 +662,10 @@ $iris-rate-background: var(--neutral-dark-l-15);
 
 // Image Cropper
 $cropper-overlay-color: transparent;
+
+// Settings
+$ssh-key-table-hover-background: $gray-900;
+$ssh-key-settings-dropdown-buttons: $gray-800;
+$ssh-key-settings-dropdown-buttons-hover: $gray-700;
+$ssh-key-settings-text-color: $white;
+$ssh-key-settings-shadow: rgba(0, 0, 0, 0.5);

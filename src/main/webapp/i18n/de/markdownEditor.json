@@ -5,7 +5,7 @@
                 "katex": "Formel",
                 "fullscreen": "Vollbild"
             },
-            "fileUpload": "Füge Dateien durch Drag & Drop oder durch Auswählen hinzu.",
+            "fileUpload": "Füge Dateien durch Drag-and-Drop oder durch Auswählen hinzu.",
             "guide": "Formatierungen mit Markdown sind möglich",
             "color": "Farbe",
             "preview": {

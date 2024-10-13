@@ -68,9 +68,9 @@ test.describe('Exam date verification', () => {
                 endDate: dayjs().add(3, 'days'),
             };
             const exam = await examAPIRequests.createExam(examConfig);
-            await examAPIRequests.registerStudentForExam(exam, studentOne);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+            await examAPIRequests.registerStudentForExam(exam, studentOne);
             await examAPIRequests.generateMissingIndividualExams(exam);
 
             await login(studentOne);
@@ -105,9 +105,9 @@ test.describe('Exam date verification', () => {
                 endDate: examEnd,
             };
             const exam = await examAPIRequests.createExam(examConfig);
-            await examAPIRequests.registerStudentForExam(exam, studentOne);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
+            await examAPIRequests.registerStudentForExam(exam, studentOne);
             await examAPIRequests.generateMissingIndividualExams(exam);
 
             await login(studentOne);

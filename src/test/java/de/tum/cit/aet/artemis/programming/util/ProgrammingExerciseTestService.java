@@ -2116,7 +2116,7 @@ public class ProgrammingExerciseTestService {
         mockDelegate.resetMockProvider();
         mockDelegate.mockRetrieveArtifacts(participation);
 
-        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/buildArtifact", HttpStatus.OK, byte[].class);
+        var artifact = request.get(PARTICIPATION_BASE_URL + participation.getId() + "/build-artifact", HttpStatus.OK, byte[].class);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(artifact).as("No build artifact available for this plan").isEmpty();
@@ -2387,7 +2387,7 @@ public class ProgrammingExerciseTestService {
         createProgrammingParticipationWithSubmissionAndResult(examExercise, "student3", 100D, ZonedDateTime.now().minusDays(2L), false);
         createProgrammingParticipationWithSubmissionAndResult(examExercise, "student4", 80D, ZonedDateTime.now().minusDays(6L), false);
 
-        automaticProgrammingExerciseCleanupService.cleanupGitRepositoriesOnArtemisServer();
+        automaticProgrammingExerciseCleanupService.cleanupGitWorkingCopiesOnArtemisServer();
         // Note: at the moment, we cannot easily assert something here, it might be possible to verify mocks on gitService, in case we could define it as SpyBean
     }
 
