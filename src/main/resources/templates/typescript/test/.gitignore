@@ -1,4 +1,4 @@
-/assignment
+/${studentParentWorkingDirectoryName}
 /junit.xml
 
 # NodeJS .gitignore from https://github.com/github/gitignore/blob/main/Node.gitignore

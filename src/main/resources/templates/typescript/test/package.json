@@ -7,7 +7,7 @@
         "test:ci": "jest --ci --reporters=default --reporters=jest-junit"
     },
     "workspaces": [
-        "assignment"
+        "${studentParentWorkingDirectoryName}"
     ],
     "devDependencies": {
         "@tsconfig/node20": "^20.1.4",
