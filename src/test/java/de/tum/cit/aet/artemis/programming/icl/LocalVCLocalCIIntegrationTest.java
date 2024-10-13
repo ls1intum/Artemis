@@ -975,6 +975,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
         @BeforeEach
         void setUp() {
+            queuedJobs.clear();
             sharedQueueProcessingService.removeListener();
         }
 
