@@ -234,15 +234,22 @@ export class ExerciseAPIRequests {
      *
      * @param body - An object containing either the course or exercise group the exercise will be added to.
      * @param title - The title for the text exercise (optional, default: auto-generated).
+     * @param releaseDate
+     * @param dueDate
+     * @param assessmentDueDate
      */
-    async createTextExerciseWithDates(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text ' + generateUUID()): Promise<TextExercise> {
-        const dueDate = dayjs().add(15, 'seconds');
-        const assessmentDueDate = dueDate.add(20, 'seconds');
+    async createTextExerciseWithDates(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        releaseDate: dayjs.Dayjs,
+        dueDate: dayjs.Dayjs,
+        assessmentDueDate: dayjs.Dayjs,
+        title = 'Text ' + generateUUID(),
+    ): Promise<TextExercise> {
         const template = {
             ...textExerciseTemplate,
             title,
             channelName: 'exercise-' + titleLowercase(title),
-            releaseDate: dayjs(),
+            releaseDate: releaseDate,
             dueDate: dueDate,
             assessmentDueDate: assessmentDueDate,
         };
