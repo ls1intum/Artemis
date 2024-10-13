@@ -4,26 +4,83 @@
  * All colors must be in the format '#RRGGBB' or '#RRGGBBAA'.
  */
 export interface EditorColors {
-    backgroundColor?: string; // editor.background
-    foregroundColor?: string; // editor.foreground
+    /**
+     * The background color of the editor.
+     */
+    backgroundColor?: string;
+    /**
+     * The default color of all text in the editor, not including syntax highlighting.
+     */
+    foregroundColor?: string;
+    /**
+     * Colors for line numbers in the editor.
+     */
     lineNumbers?: {
-        foregroundColor?: string; // editorLineNumber.foreground
-        activeForegroundColor?: string; // editorLineNumber.activeForeground
-        dimmedForegroundColor?: string; // editorLineNumber.dimmedForeground
+        /**
+         * The color of the line numbers.
+         */
+        foregroundColor?: string;
+        /**
+         * The color of the line number of the line that the cursor is on.
+         */
+        activeForegroundColor?: string;
+        /**
+         * The color of the line numbers for dimmed lines. This is used for the final newline of the code.
+         */
+        dimmedForegroundColor?: string;
     };
+    /**
+     * Colors for the active line highlight in the editor.
+     */
     lineHighlight?: {
-        backgroundColor?: string; // editor.lineHighlightBackground
-        borderColor?: string; // editor.lineHighlightBorder
+        /**
+         * The color used as the background color for the cursor's current line.
+         */
+        backgroundColor?: string;
+        /**
+         * The color used for the border of the cursor's current line.
+         */
+        borderColor?: string;
     };
+    /**
+     * Colors for the diff editor.
+     */
     diff?: {
-        insertedLineBackgroundColor?: string; // diffEditor.insertedLineBackground
-        insertedTextBackgroundColor?: string; // diffEditor.insertedTextBackground
-        removedTextBackgroundColor?: string; // diffEditor.removedTextBackground
-        removedLineBackgroundColor?: string; // diffEditor.removedLineBackground
-        diagonalFillColor?: string; // diffEditor.diagonalFill
+        /**
+         * The background color for inserted lines in the diff editor.
+         */
+        insertedLineBackgroundColor?: string;
+        /**
+         * The background color for inserted text in the diff editor.
+         * This will overlap with the `insertedLineBackgroundColor`.
+         */
+        insertedTextBackgroundColor?: string;
+        /**
+         * The background color for removed lines in the diff editor.
+         */
+        removedTextBackgroundColor?: string;
+        /**
+         * The background color for removed text in the diff editor.
+         * This will overlap with the `removedLineBackgroundColor`.
+         */
+        removedLineBackgroundColor?: string;
+        /**
+         * The color used for the diagonal fill in the diff editor.
+         * This is used when the diff editor pads the length of the files to align the lines of the original and modified files.
+         */
+        diagonalFillColor?: string;
+        /**
+         * Colors for the diff editor gutter. This is the area to the left of the editor that shows the line numbers.
+         */
         gutter?: {
-            insertedLineBackgroundColor?: string; // diffEditorGutter.insertedLineBackground
-            removedLineBackgroundColor?: string; // diffEditorGutter.removedLineBackground
+            /**
+             * The background color for inserted lines in the diff editor gutter.
+             */
+            insertedLineBackgroundColor?: string;
+            /**
+             * The background color for removed lines in the diff editor gutter.
+             */
+            removedLineBackgroundColor?: string;
         };
     };
 }
