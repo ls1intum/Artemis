@@ -8,9 +8,15 @@ export class MonacoEditorTheme {
         return this.themeDefinition.id;
     }
 
-    private removeKeysWithUndefinedValues(obj: Record<string, string | undefined>): Record<string, string> {
+    /**
+     * Creates a new record without any entries that have a value of `undefined`.
+     * @param record The record whose keys to filter.
+     * @returns The new record, only containing keys with defined values.
+     * @private
+     */
+    private getRecordWithoutUndefinedEntries(record: Record<string, string | undefined>): Record<string, string> {
         const result: Record<string, string> = {};
-        for (const [key, value] of Object.entries(obj)) {
+        for (const [key, value] of Object.entries(record)) {
             if (value !== undefined) {
                 result[key] = value;
             }
@@ -49,11 +55,12 @@ export class MonacoEditorTheme {
             };
         });
 
+        // We cannot pass undefined colors to Monaco, so we filter them out to preserve the default values.
         monaco.editor.defineTheme(this.getId(), {
             base: this.themeDefinition.baseTheme,
             inherit: true,
             rules: rules,
-            colors: this.removeKeysWithUndefinedValues(colors),
+            colors: this.getRecordWithoutUndefinedEntries(colors),
         });
     }
 }
