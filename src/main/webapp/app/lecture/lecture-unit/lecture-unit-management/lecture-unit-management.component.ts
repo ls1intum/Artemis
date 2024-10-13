@@ -269,12 +269,10 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         this.lectureUnitService.getIngestionState(this.lecture.course!.id!, this.lecture.id!).subscribe({
             next: (res: HttpResponse<Record<number, IngestionState>>) => {
                 if (res.body) {
-                    const ingestionStatesMap = res.body; // Now it's a plain object
-                    console.log(ingestionStatesMap);
+                    const ingestionStatesMap = res.body;
                     this.lectureUnits.forEach((lectureUnit) => {
                         if (lectureUnit.id) {
-                            const ingestionState = ingestionStatesMap[lectureUnit.id]; // Use bracket notation
-                            console.log(ingestionState);
+                            const ingestionState = ingestionStatesMap[lectureUnit.id];
                             if (ingestionState !== undefined) {
                                 (<AttachmentUnit>lectureUnit).pyrisIngestionState = ingestionState;
                             }

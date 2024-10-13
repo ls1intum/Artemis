@@ -59,6 +59,8 @@ export class LectureComponent implements OnInit, OnDestroy {
     faSort = faSort;
     lectureIngestionEnabled = false;
 
+    protected readonly IngestionState = IngestionState;
+
     private profileInfoSubscription: Subscription;
 
     constructor(
@@ -221,20 +223,24 @@ export class LectureComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Fetches the ingestion state for each lecture asynchronously and updates the lecture object.
+     * Fetches the ingestion state for all lecture asynchronously and updates all the lectures ingestion state.
      */
     private updateIngestionStates() {
-        this.lectures.forEach((lecture) => {
-            this.lectureService.getIngestionState(lecture.course!.id!, lecture.id!).subscribe({
-                next: (res: HttpResponse<IngestionState>) => {
-                    if (res.body) {
-                        lecture.ingested = res.body;
-                    }
-                },
-                error: (err: HttpErrorResponse) => console.error(`Error fetching ingestion state for lecture ${lecture.id}`, err),
-            });
+        this.lectureService.getIngestionState(this.courseId).subscribe({
+            next: (res: HttpResponse<Record<number, IngestionState>>) => {
+                if (res.body) {
+                    const ingestionStatesMap = res.body;
+                    this.lectures.forEach((lecture) => {
+                        if (lecture.id) {
+                            const ingestionState = ingestionStatesMap[lecture.id];
+                            if (ingestionState !== undefined) {
+                                lecture.ingested = ingestionState;
+                            }
+                        }
+                    });
+                }
+            },
+            error: (err: HttpErrorResponse) => console.error(`Error fetching ingestion state for lecture in course ${this.courseId}`, err),
         });
     }
-
-    protected readonly IngestionState = IngestionState;
 }

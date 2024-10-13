@@ -134,8 +134,8 @@ export class LectureService {
      * @param courseId
      * @param lectureId ID of the lecture
      */
-    getIngestionState(courseId: number, lectureId: number): Observable<HttpResponse<IngestionState>> {
-        return this.http.get<IngestionState>(`api/public/pyris/courses/${courseId}/lectures/${lectureId}/ingestion-state`, { observe: 'response' });
+    getIngestionState(courseId: number): Observable<HttpResponse<Record<number, IngestionState>>> {
+        return this.http.get<Record<number, IngestionState>>(`api/public/pyris/courses/${courseId}/lectures/ingestion-state`, { observe: 'response' });
     }
     /**
      * Clones and imports the lecture to the course
