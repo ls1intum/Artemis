@@ -87,6 +87,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCLocalCIIntegrationTest.class);
 
+    private static final String TEST_PREFIX = "localvcciint";
+
     @Autowired
     private ExamUtilService examUtilService;
 
@@ -123,6 +125,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
     private String teamRepositorySlug;
 
     protected IQueue<BuildJobQueueItem> queuedJobs;
+
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
 
     @BeforeAll
     void setupAll() {

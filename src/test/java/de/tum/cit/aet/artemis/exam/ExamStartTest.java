@@ -112,7 +112,6 @@ class ExamStartTest extends AbstractSpringIntegrationLocalCILocalVCTest {
         exam = examUtilService.addExamWithExerciseGroup(course1, true);
 
         ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-        participantScoreScheduleService.activate();
 
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 

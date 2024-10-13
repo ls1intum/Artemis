@@ -1,0 +1,6 @@
+# Matrix Columns
+
+Write a function `matrix_to_column_list` in R that takes a matrix of any shape and converts it into a list of
+column-vectors. Each element of the list should represent a column of the matrix.
+
+1. [task][Convert to column-vectors](converts_3x3_matrix_to_vectors,converts_4x2_matrix_to_vectors,converts_1x5_matrix_to_scalars,converts_5x1_matrix_to_vector)
