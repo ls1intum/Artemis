@@ -38,7 +38,6 @@ describe('RequestFeedbackButtonComponent', () => {
                 exerciseService = debugElement.injector.get(ExerciseService);
                 profileService = debugElement.injector.get(ProfileService);
                 alertService = debugElement.injector.get(AlertService);
-                component.requestFeedbackEnabled = true;
             });
     });
 
