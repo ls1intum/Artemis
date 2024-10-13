@@ -25,11 +25,11 @@ const themeDefinition: MonacoThemeDefinition = {
             token: 'number',
             foregroundColor: '#79c0ff',
         },
-    ], // TODO
+    ],
     editorColors: {
         backgroundColor: '#181a18',
         lineHighlight: {
-            borderColor: '#00000000', // TODO bg color
+            borderColor: '#00000000',
             backgroundColor: '#282a2e',
         },
         lineNumbers: {
@@ -39,7 +39,7 @@ const themeDefinition: MonacoThemeDefinition = {
         },
         diff: {
             insertedLineBackgroundColor: '#2ea04326',
-            insertedTextBackgroundColor: '#2ea04346',
+            insertedTextBackgroundColor: '#2ea04326',
             removedLineBackgroundColor: '#f8514926',
             removedTextBackgroundColor: '#f8514946',
             diagonalFillColor: '#00000000',
