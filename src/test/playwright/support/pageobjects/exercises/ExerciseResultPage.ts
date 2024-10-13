@@ -1,5 +1,4 @@
 import { Page } from 'playwright';
-import { BASE_API } from '../../constants';
 import { expect } from '@playwright/test';
 import { Commands } from '../../commands';
 
@@ -30,7 +29,8 @@ export class ExerciseResultPage {
     }
 
     async clickOpenExercise(exerciseId: number) {
-        await Promise.all([this.page.waitForResponse(`${BASE_API}/results/*/rating`), this.page.locator(`#open-exercise-${exerciseId}`).click()]);
+        await this.page.locator(`#open-exercise-${exerciseId}`).click();
+        await expect(this.page.locator('#rating').toBeVisible());
     }
 
     async clickOpenCodeEditor(exerciseId: number) {
