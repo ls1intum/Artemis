@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exam.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -24,8 +25,7 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.repository.ExerciseGroupRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
-import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.test_repository.ParticipationTestRepository;
 import de.tum.cit.aet.artemis.exercise.test_repository.StudentParticipationTestRepository;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.MultipleChoiceQuestion;
@@ -74,6 +74,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ExamUtilService examUtilService;
+
+    @Autowired
+    private ParticipationTestRepository participationTestRepository;
 
     private QuizExercise quizExercise;
 
@@ -171,7 +174,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
-        assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == NUMBER_OF_STUDENTS);
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
@@ -217,17 +220,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
 
-        // add participations with no submissions
-        for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
-            final var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
-            var participation = new StudentParticipation();
-            participation.setExercise(quizExercise);
-            participation.setParticipant(user);
-            participation.setInitializationDate(ZonedDateTime.now());
-            participation.setInitializationState(InitializationState.INITIALIZED);
-            studentParticipationRepository.save(participation);
-        }
-
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
@@ -267,7 +259,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
-        assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == NUMBER_OF_STUDENTS);
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             final var user = userUtilService.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
@@ -319,7 +311,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(studentExamService.generateStudentExams(exam)).hasSize(NUMBER_OF_STUDENTS);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(NUMBER_OF_STUDENTS);
-        assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(NUMBER_OF_STUDENTS);
+        await().timeout(Duration.ofSeconds(5)).until(() -> participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId()).size() == NUMBER_OF_STUDENTS);
 
         for (int i = 0; i < NUMBER_OF_STUDENTS; i++) {
             userUtilService.changeUser(TEST_PREFIX + "student" + (i + 1));
