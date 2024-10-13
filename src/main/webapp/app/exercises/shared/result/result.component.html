@@ -61,7 +61,7 @@
                         </span>
                     }
                     @if (!isInSidebarCard) {
-                        <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }} ) </span>
+                        <span [ngbTooltip]="result!.completionDate | artemisDate"> ({{ result!.completionDate | artemisTimeAgo }}) </span>
                     }
                 </span>
                 @if (hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING) {
