@@ -20,6 +20,7 @@ export class MonacoEditorTheme {
 
     register(): void {
         const colorDefinitions = this.themeDefinition.editorColors;
+        // The color keys are available here: https://code.visualstudio.com/api/references/theme-color
         const colors = {
             'editor.background': colorDefinitions.backgroundColor,
             'editor.foreground': colorDefinitions.foregroundColor,
@@ -37,13 +38,14 @@ export class MonacoEditorTheme {
             'diffEditorGutter.removedLineBackground': colorDefinitions.diff?.gutter?.removedLineBackgroundColor,
         };
 
-        const ruleDefinitions = this.themeDefinition.tokenStyles;
-        const rules = ruleDefinitions.map((rule) => {
+        const tokenStyleDefinitions = this.themeDefinition.tokenStyles;
+        const rules = tokenStyleDefinitions.map((tokenDefinition) => {
+            // Language-specific tokens have the key `token.languageId`, e.g. keyword.custom-md
             return {
-                token: `${rule.token}${rule.languageId ? '.' + rule.languageId : ''}`,
-                foreground: rule.foregroundColor,
-                background: rule.backgroundColor,
-                fontStyle: rule.fontStyle,
+                token: `${tokenDefinition.token}${tokenDefinition.languageId ? '.' + tokenDefinition.languageId : ''}`,
+                foreground: tokenDefinition.foregroundColor,
+                background: tokenDefinition.backgroundColor,
+                fontStyle: tokenDefinition.fontStyle,
             };
         });
 
