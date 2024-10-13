@@ -2,6 +2,7 @@
 
 $draggable-width: 15px;
 $thread-section-card-min-width: 420px;
+$thread-section-card-max-width: 540px;
 
 .postings-container {
     display: flex;
@@ -37,6 +38,7 @@ $thread-section-card-min-width: 420px;
     .card {
         width: inherit;
         min-width: $thread-section-card-min-width;
+        max-width: $thread-section-card-max-width;
 
         .card-header {
             justify-content: space-between;
