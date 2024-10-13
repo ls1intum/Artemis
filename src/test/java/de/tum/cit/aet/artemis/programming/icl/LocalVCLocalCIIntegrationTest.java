@@ -1040,6 +1040,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractLocalCILocalVCIntegrationTes
             localVCLocalCITestService.mockInputStreamReturnedFromContainer(dockerClient, LOCALCI_WORKING_DIRECTORY + "/testing-dir/assignment/.git/refs/heads/[^/]+",
                     Map.of("commitHash", commitHash), Map.of("commitHash", commitHash));
             localVCLocalCITestService.mockTestResults(dockerClient, PARTLY_SUCCESSFUL_TEST_RESULTS_PATH, LOCALCI_WORKING_DIRECTORY + LOCALCI_RESULTS_DIRECTORY);
+            sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
 
             localCITriggerService.triggerBuild(studentParticipation, false);
             log.info("Trigger build done");

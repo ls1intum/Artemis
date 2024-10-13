@@ -18,6 +18,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -105,13 +106,13 @@ public class SharedQueueProcessingService {
     /**
      * Flag to indicate whether the build agent is paused.
      */
-    private volatile boolean isPaused = false;
+    private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
     /**
      * Flag to indicate whether the build agent should process build results. This is necessary to differentiate between when the build agent is paused and grace period is not over
      * yet.
      */
-    private volatile boolean processResults = true;
+    private final AtomicBoolean processResults = new AtomicBoolean(true);
 
     @Value("${artemis.continuous-integration.pause-grace-period-seconds:15}")
     private int pauseGracePeriodSeconds;
@@ -215,14 +216,14 @@ public class SharedQueueProcessingService {
             return;
         }
 
-        if (queue.isEmpty() || isPaused) {
+        if (queue.isEmpty() || isPaused.get()) {
             return;
         }
         BuildJobQueueItem buildJob = null;
         instanceLock.lock();
         try {
             // Recheck conditions after acquiring the lock to ensure they are still valid
-            if (!nodeIsAvailable() || queue.isEmpty() || isPaused) {
+            if (!nodeIsAvailable() || queue.isEmpty() || isPaused.get()) {
                 return;
             }
 
@@ -299,7 +300,7 @@ public class SharedQueueProcessingService {
         int numberOfCurrentBuildJobs = processingJobsOfMember.size();
         int maxNumberOfConcurrentBuilds = localCIBuildExecutorService.getMaximumPoolSize();
         boolean hasJobs = numberOfCurrentBuildJobs > 0;
-        BuildAgentInformation.BuildAgentStatus status = isPaused ? BuildAgentInformation.BuildAgentStatus.PAUSED
+        BuildAgentInformation.BuildAgentStatus status = isPaused.get() ? BuildAgentInformation.BuildAgentStatus.PAUSED
                 : hasJobs ? BuildAgentInformation.BuildAgentStatus.ACTIVE : BuildAgentInformation.BuildAgentStatus.IDLE;
         BuildAgentInformation agent = buildAgentInformation.get(memberAddress);
         List<BuildJobQueueItem> recentBuildJobs;
@@ -364,7 +365,7 @@ public class SharedQueueProcessingService {
             buildLogsMap.removeBuildLogs(buildJob.id());
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(buildResult, finishedJob, buildLogs, null);
-            if (processResults) {
+            if (processResults.get()) {
                 resultQueue.add(resultQueueItem);
             }
             else {
@@ -406,7 +407,7 @@ public class SharedQueueProcessingService {
             failedResult.setBuildLogEntries(buildLogs);
 
             ResultQueueItem resultQueueItem = new ResultQueueItem(failedResult, job, buildLogs, ex);
-            if (processResults) {
+            if (processResults.get()) {
                 resultQueue.add(resultQueueItem);
             }
             else {
@@ -423,7 +424,7 @@ public class SharedQueueProcessingService {
     }
 
     private void pauseBuildAgent() {
-        if (isPaused) {
+        if (isPaused.get()) {
             log.info("Build agent is already paused");
             return;
         }
@@ -432,7 +433,7 @@ public class SharedQueueProcessingService {
         try {
             log.info("Pausing build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
 
-            isPaused = true;
+            isPaused.set(true);
             removeListenerAndCancelScheduledFuture();
             updateLocalBuildAgentInformation();
 
@@ -468,13 +469,13 @@ public class SharedQueueProcessingService {
     }
 
     private void handleTimeoutAndCancelRunningJobs() {
-        if (!isPaused) {
+        if (!isPaused.get()) {
             log.info("Build agent was resumed before the build jobs could be cancelled");
             return;
         }
         log.info("Grace period exceeded. Cancelling running build jobs.");
 
-        processResults = false;
+        processResults.set(false);
         Set<String> runningBuildJobIdsAfterGracePeriod = buildJobManagementService.getRunningBuildJobIds();
         List<BuildJobQueueItem> runningBuildJobsAfterGracePeriod = processingJobs.getAll(runningBuildJobIdsAfterGracePeriod).values().stream().toList();
         runningBuildJobIdsAfterGracePeriod.forEach(buildJobManagementService::cancelBuildJob);
@@ -484,7 +485,7 @@ public class SharedQueueProcessingService {
     }
 
     private void resumeBuildAgent() {
-        if (!isPaused) {
+        if (!isPaused.get()) {
             log.info("Build agent is already running");
             return;
         }
@@ -492,8 +493,8 @@ public class SharedQueueProcessingService {
         pauseResumeLock.lock();
         try {
             log.info("Resuming build agent with address {}", hazelcastInstance.getCluster().getLocalMember().getAddress().toString());
-            isPaused = false;
-            processResults = true;
+            isPaused.set(false);
+            processResults.set(true);
             // We remove the listener and scheduledTask first to avoid race conditions
             removeListenerAndCancelScheduledFuture();
             listenerId = queue.addItemListener(new QueuedBuildJobItemListener(), true);
