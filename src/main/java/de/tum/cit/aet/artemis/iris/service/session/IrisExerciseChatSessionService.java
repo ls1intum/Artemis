@@ -177,15 +177,15 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             if (statusUpdate.tokens() != null) {
-                var tokenUsages = llmTokenUsageService.saveIrisTokenUsage(job, savedMessage, session.getExercise(), session.getUser(),
+                llmTokenUsageService.saveIrisTokenUsage(job, savedMessage, session.getExercise(), session.getUser(),
                         session.getExercise().getCourseViaExerciseGroupOrCourseMember(), statusUpdate.tokens());
             }
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
             if (statusUpdate.tokens() != null) {
-                var tokenUsages = llmTokenUsageService.saveIrisTokenUsage(job, null, session.getExercise(), session.getUser(),
-                        session.getExercise().getCourseViaExerciseGroupOrCourseMember(), statusUpdate.tokens());
+                llmTokenUsageService.saveIrisTokenUsage(job, null, session.getExercise(), session.getUser(), session.getExercise().getCourseViaExerciseGroupOrCourseMember(),
+                        statusUpdate.tokens());
             }
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
         }
