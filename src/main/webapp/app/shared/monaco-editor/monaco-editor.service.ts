@@ -4,7 +4,7 @@ import { CUSTOM_MARKDOWN_CONFIG, CUSTOM_MARKDOWN_LANGUAGE, CUSTOM_MARKDOWN_LANGU
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MONACO_LIGHT_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';
-import { MonacoEditorTheme } from 'app/shared/monaco-editor/model/themes/monaco-theme.model';
+import { MonacoEditorTheme } from 'app/shared/monaco-editor/model/themes/monaco-editor-theme.model';
 import { MONACO_DARK_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-dark.theme';
 
 /**

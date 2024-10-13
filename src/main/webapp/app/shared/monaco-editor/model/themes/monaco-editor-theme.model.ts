@@ -8,7 +8,7 @@ export class MonacoEditorTheme {
         return this.themeDefinition.id;
     }
 
-    private stripUndefinedValues(obj: Record<string, string | undefined>): Record<string, string> {
+    private removeKeysWithUndefinedValues(obj: Record<string, string | undefined>): Record<string, string> {
         const result: Record<string, string> = {};
         for (const [key, value] of Object.entries(obj)) {
             if (value !== undefined) {
@@ -51,7 +51,7 @@ export class MonacoEditorTheme {
             base: this.themeDefinition.baseTheme,
             inherit: true,
             rules: rules,
-            colors: this.stripUndefinedValues(colors),
+            colors: this.removeKeysWithUndefinedValues(colors),
         });
     }
 }
