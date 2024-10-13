@@ -35,7 +35,7 @@
             <jhi-course-faq-accordion [faq]="faq"></jhi-course-faq-accordion>
         }
     </div>
-    @if (filteredFaqs.length === 0 && faqs.length > 0) {
+    @if (filteredFaqs.length === 0 && faqs.length != 0) {
         <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noMatching"></h2>
     }
 </div>
