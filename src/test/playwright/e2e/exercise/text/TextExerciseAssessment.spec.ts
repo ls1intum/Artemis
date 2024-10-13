@@ -20,32 +20,24 @@ const complaint = "That feedback wasn't very useful!";
 test.describe('Text exercise assessment', () => {
     let course: Course;
     let exercise: TextExercise;
-    let dueDate: dayjs.Dayjs;
-    let assessmentDueDate: dayjs.Dayjs;
-
     test.beforeAll('Create course and make a submission', async ({ browser }) => {
         const context = await browser.newContext();
         const page = await context.newPage();
         const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
-        dueDate = dayjs().add(15, 'seconds');
-        assessmentDueDate = dueDate.add(20, 'seconds');
         await Commands.login(page, admin);
         course = await courseManagementAPIRequests.createCourse();
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addTutorToCourse(course, tutor);
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        exercise = await exerciseAPIRequests.createTextExercise({ course });
-        exercise.releaseDate = dayjs();
-        exercise.dueDate = dueDate;
-        exercise.assessmentDueDate = assessmentDueDate;
-
+        exercise = await exerciseAPIRequests.createTextExerciseWithDates({ course });
         await Commands.login(page, studentOne);
         await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
         const submission = await Fixtures.get('loremIpsum-short.txt');
         await exerciseAPIRequests.makeTextExerciseSubmission(exercise.id!, submission!);
         //exercise = await exerciseAPIRequests.createTextExercise({ course });
         const now = dayjs();
+        const dueDate: dayjs.Dayjs = exercise.dueDate as dayjs.Dayjs;
         if (now.isBefore(dueDate)) {
             await page.waitForTimeout(dueDate.diff(now, 'ms'));
         }
@@ -73,6 +65,7 @@ test.describe('Text exercise assessment', () => {
 
         test('Student sees feedback after assessment due date and complains', async ({ login, page, exerciseResult, textExerciseFeedback }) => {
             const now = dayjs();
+            const assessmentDueDate: dayjs.Dayjs = exercise.assessmentDueDate as dayjs.Dayjs;
             if (now.isBefore(assessmentDueDate)) {
                 await page.waitForTimeout(assessmentDueDate.diff(now, 'ms'));
             }
