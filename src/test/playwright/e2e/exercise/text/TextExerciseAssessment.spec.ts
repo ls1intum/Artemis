@@ -1,5 +1,6 @@
 import { Course } from 'app/entities/course.model';
 import { TextExercise } from 'app/entities/text/text-exercise.model';
+import dayjs from 'dayjs';
 
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
@@ -19,23 +20,35 @@ const complaint = "That feedback wasn't very useful!";
 test.describe('Text exercise assessment', () => {
     let course: Course;
     let exercise: TextExercise;
+    let dueDate: dayjs.Dayjs;
+    let assessmentDueDate: dayjs.Dayjs;
 
     test.beforeAll('Create course and make a submission', async ({ browser }) => {
         const context = await browser.newContext();
         const page = await context.newPage();
         const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
-
+        dueDate = dayjs().add(15, 'seconds');
+        assessmentDueDate = dueDate.add(20, 'seconds');
         await Commands.login(page, admin);
         course = await courseManagementAPIRequests.createCourse();
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addTutorToCourse(course, tutor);
         await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         exercise = await exerciseAPIRequests.createTextExercise({ course });
+        exercise.releaseDate = dayjs();
+        exercise.dueDate = dueDate;
+        exercise.assessmentDueDate = assessmentDueDate;
+
         await Commands.login(page, studentOne);
         await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
         const submission = await Fixtures.get('loremIpsum-short.txt');
         await exerciseAPIRequests.makeTextExerciseSubmission(exercise.id!, submission!);
+        //exercise = await exerciseAPIRequests.createTextExercise({ course });
+        const now = dayjs();
+        if (now.isBefore(dueDate)) {
+            await page.waitForTimeout(dueDate.diff(now, 'ms'));
+        }
     });
 
     test.describe.serial('Feedback', () => {
@@ -58,7 +71,11 @@ test.describe('Text exercise assessment', () => {
             expect(response.status()).toBe(200);
         });
 
-        test('Student sees feedback after assessment due date and complains', async ({ login, exerciseResult, textExerciseFeedback }) => {
+        test('Student sees feedback after assessment due date and complains', async ({ login, page, exerciseResult, textExerciseFeedback }) => {
+            const now = dayjs();
+            if (now.isBefore(assessmentDueDate)) {
+                await page.waitForTimeout(assessmentDueDate.diff(now, 'ms'));
+            }
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             const totalPoints = tutorFeedbackPoints + tutorTextFeedbackPoints;
             const percentage = totalPoints * 10;
