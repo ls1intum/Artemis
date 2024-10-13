@@ -1,7 +1,11 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
@@ -10,6 +14,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Size;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,7 +22,10 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.programming.service.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.vcs.AbstractVersionControlService;
@@ -290,6 +298,83 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
 
     public void setSolutionCheckoutPath(String solutionCheckoutPath) {
         this.solutionCheckoutPath = solutionCheckoutPath;
+    }
+
+    /**
+     * Converts a JSON string representing Docker flags (in the form of a list of key-value pairs)
+     * into a {@link DockerRunConfig} instance.
+     *
+     * <p>
+     * The JSON string is expected to represent a list of key-value pairs where each
+     * entry is a list containing two strings: the first being the key and the second being the value.
+     * Example JSON input:
+     *
+     * <pre>
+     * [["network", "none"], ["env", "TEST"]]
+     * </pre>
+     *
+     * @return a {@link DockerRunConfig} object initialized with the parsed flags, or {@code null} if an error occurs
+     */
+    public DockerRunConfig getDockerRunConfigFromString() {
+        if (StringUtils.isBlank(dockerFlags)) {
+            return null;
+        }
+
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+
+            List<List<String>> list = objectMapper.readValue(dockerFlags, new TypeReference<>() {
+            });
+
+            DockerRunConfig dockerRunConfig = new DockerRunConfig();
+            for (List<String> entry : list) {
+                if (entry.size() != 2 || entry.get(0) == null || entry.get(1) == null || entry.get(0).isBlank() || entry.get(1).isBlank()
+                        || !DockerRunConfig.AllowedDockerFlags.isAllowed(entry.get(0))) {
+                    log.error("Invalid Docker flag entry: {}. Skipping.", entry);
+                    continue;
+                }
+                switch (entry.get(0)) {
+                    case "network":
+                        dockerRunConfig.setNetworkDisabled(entry.get(1).equals("none"));
+                        break;
+                    case "env":
+                        dockerRunConfig.setEnv(parseEnvVariableString(entry.get(1)));
+                        break;
+                    default:
+                        log.error("Invalid Docker flag entry: {}. Skipping.", entry);
+                        break;
+                }
+
+            }
+            return dockerRunConfig;
+        }
+        catch (Exception e) {
+            log.error("Failed to parse DockerRunConfig from JSON string: {}. Using default settings.", dockerFlags, e);
+        }
+
+        return null;
+    }
+
+    private List<String> parseEnvVariableString(String envVariableString) {
+        Pattern pattern = Pattern.compile(
+                // match key-value pairs, where the key can be a single word or a string in single or double quotes
+                // key-value pairs are separated by commas
+                "(?:'([^']+)'|\"([^\"]+)\"|(\\w+))=(?:'([^']*)'|\"([^\"]*)\"|([^,]+))");
+
+        Matcher matcher = pattern.matcher(envVariableString);
+
+        List<String> envVars = new ArrayList<>();
+        while (matcher.find()) {
+            // Determine which group matched for value
+            String key = matcher.group(1) != null ? matcher.group(1) : matcher.group(2) != null ? matcher.group(2) : matcher.group(3);
+
+            // Determine which group matched for value
+            String value = matcher.group(4) != null ? matcher.group(4) : matcher.group(5) != null ? matcher.group(5) : matcher.group(6);
+
+            envVars.add(key + "=" + value);
+        }
+
+        return envVars;
     }
 
     @Override

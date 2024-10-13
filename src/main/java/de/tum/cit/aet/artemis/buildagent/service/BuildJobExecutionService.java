@@ -192,10 +192,18 @@ public class BuildJobExecutionService {
             index++;
         }
 
-        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript());
+        List<String> envVars = new ArrayList<>();
+        boolean isNetworkDisabled = false;
+        if (buildJob.buildConfig().dockerRunConfig() != null) {
+            envVars = buildJob.buildConfig().dockerRunConfig().getEnv();
+            isNetworkDisabled = buildJob.buildConfig().dockerRunConfig().isNetworkDisabled();
+        }
+
+        CreateContainerResponse container = buildJobContainerService.configureContainer(containerName, buildJob.buildConfig().dockerImage(), buildJob.buildConfig().buildScript(),
+                envVars);
 
         return runScriptAndParseResults(buildJob, containerName, container.getId(), assignmentRepoUri, testsRepoUri, solutionRepoUri, auxiliaryRepositoriesUris,
-                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash);
+                assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths, assignmentCommitHash, testCommitHash, isNetworkDisabled);
     }
 
     /**
@@ -230,7 +238,7 @@ public class BuildJobExecutionService {
     private BuildResult runScriptAndParseResults(BuildJobQueueItem buildJob, String containerName, String containerId, VcsRepositoryUri assignmentRepositoryUri,
             VcsRepositoryUri testRepositoryUri, VcsRepositoryUri solutionRepositoryUri, VcsRepositoryUri[] auxiliaryRepositoriesUris, Path assignmentRepositoryPath,
             Path testsRepositoryPath, Path solutionRepositoryPath, Path[] auxiliaryRepositoriesPaths, @Nullable String assignmentRepoCommitHash,
-            @Nullable String testRepoCommitHash) {
+            @Nullable String testRepoCommitHash, boolean isNetworkDisabled) {
 
         long timeNanoStart = System.nanoTime();
 
@@ -246,13 +254,13 @@ public class BuildJobExecutionService {
         log.debug(msg);
         buildJobContainerService.populateBuildJobContainer(containerId, assignmentRepositoryPath, testsRepositoryPath, solutionRepositoryPath, auxiliaryRepositoriesPaths,
                 buildJob.repositoryInfo().auxiliaryRepositoryCheckoutDirectories(), buildJob.buildConfig().programmingLanguage(), buildJob.buildConfig().assignmentCheckoutPath(),
-                buildJob.buildConfig().testCheckoutPath(), buildJob.buildConfig().solutionCheckoutPath());
+                buildJob.buildConfig().testCheckoutPath(), buildJob.buildConfig().solutionCheckoutPath(), buildJob.buildConfig().projectType(), isNetworkDisabled);
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
         log.debug(msg);
 
-        buildJobContainerService.runScriptInContainer(containerId, buildJob.id());
+        buildJobContainerService.runScriptInContainer(containerId, buildJob.id(), isNetworkDisabled);
 
         msg = "~~~~~~~~~~~~~~~~~~~~ Finished Executing Build Script for Build job " + buildJob.id() + " ~~~~~~~~~~~~~~~~~~~~";
         buildLogsMap.appendBuildLogEntry(buildJob.id(), msg);
