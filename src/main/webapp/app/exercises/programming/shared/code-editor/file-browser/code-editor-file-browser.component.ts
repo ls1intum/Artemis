@@ -22,11 +22,11 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'ap
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { CodeEditorFileBrowserDeleteComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-delete';
 import { IFileDeleteDelegate } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-on-file-delete-delegate';
-import { supportedTextFileExtensions } from 'app/exercises/programming/shared/code-editor/file-browser/supported-file-extensions';
 import { faAngleDoubleDown, faAngleDoubleUp, faChevronLeft, faChevronRight, faCircleNotch, faFile, faFolder, faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { TreeItem, TreeviewItem } from 'app/exercises/programming/shared/code-editor/treeview/models/treeview-item';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { findItemInList } from 'app/exercises/programming/shared/code-editor/treeview/helpers/treeview-helper';
+import { TEXT_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -580,7 +580,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
      */
     private static shouldDisplayFileBasedOnExtension(fileName: string): boolean {
         const fileSplit = fileName.split('.');
-        return fileSplit.length === 1 || supportedTextFileExtensions.includes(fileSplit.pop()!);
+        return fileSplit.length === 1 || TEXT_FILE_EXTENSIONS.includes(fileSplit.pop()!);
     }
 
     /**

@@ -35,6 +35,7 @@ import { faExclamationTriangle, faGripLines } from '@fortawesome/free-solid-svg-
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { onError } from 'app/shared/util/global.utils';
 import { SubmissionPatch } from 'app/entities/submission-patch.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -296,7 +297,9 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                 this.assessmentResult = newResult;
                 this.assessmentResult = this.modelingAssessmentService.convertResult(newResult);
                 this.prepareAssessmentData();
-                this.alertService.info('artemisApp.modelingEditor.newAssessment');
+                if (this.assessmentResult.assessmentType !== AssessmentType.AUTOMATIC_ATHENA) {
+                    this.alertService.info('artemisApp.modelingEditor.newAssessment');
+                }
             }
         });
     }

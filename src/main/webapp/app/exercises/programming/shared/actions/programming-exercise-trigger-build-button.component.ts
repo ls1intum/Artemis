@@ -13,6 +13,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
+import { isManualResult } from 'app/exercises/shared/result/result.utils';
 
 /**
  * Component for triggering a build for the CURRENT submission of the student (does not create a new commit!).
@@ -58,7 +59,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             if (hasDueDatePassed(this.exercise)) {
                 // If the last result was manual, the instructor might not want to override it with a new automatic result.
                 const newestResult = !!this.participation.results && head(orderBy(this.participation.results, ['id'], ['desc']));
-                this.lastResultIsManual = !!newestResult && Result.isManualResult(newestResult);
+                this.lastResultIsManual = !!newestResult && isManualResult(newestResult);
             }
             // We can trigger the build only if the participation is active (has build plan), if the build plan was archived (new build plan will be created)
             // or the due date is over.
@@ -124,7 +125,7 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
             .pipe(
                 filter((result) => !!result),
                 tap((result: Result) => {
-                    this.lastResultIsManual = !!result && Result.isManualResult(result);
+                    this.lastResultIsManual = !!result && isManualResult(result);
                 }),
             )
             .subscribe();

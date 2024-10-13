@@ -10,7 +10,7 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam/exam.model';
 import { Router } from '@angular/router';
-import { faPenAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDownAZ, faArrowUpAZ, faDoorOpen, faPenAlt } from '@fortawesome/free-solid-svg-icons';
 import { CourseAccessStorageService } from 'app/course/course-access-storage.service';
 import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
 import { sortCourses } from 'app/shared/util/course.util';
@@ -28,6 +28,11 @@ export class CoursesComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private courseAccessStorageService = inject(CourseAccessStorageService);
 
+    protected readonly faPenAlt = faPenAlt;
+    protected readonly faArrowDownAZ = faArrowDownAZ;
+    protected readonly faArrowUpAZ = faArrowUpAZ;
+    protected readonly faDoorOpen = faDoorOpen;
+
     courses: Course[];
     public nextRelevantCourse?: Course;
     nextRelevantCourseForExam?: Course;
@@ -38,11 +43,10 @@ export class CoursesComponent implements OnInit, OnDestroy {
 
     courseForGuidedTour?: Course;
     quizExercisesChannels: string[] = [];
-
-    // Icons
-    faPenAlt = faPenAlt;
+    searchCourseText = '';
 
     coursesLoaded = false;
+    isSortAscending = true;
 
     async ngOnInit() {
         this.loadAndFilterCourses();
@@ -122,5 +126,20 @@ export class CoursesComponent implements OnInit, OnDestroy {
      */
     openExam(): void {
         this.router.navigate(['courses', this.nextRelevantCourseForExam?.id, 'exams', this.nextRelevantExam!.id]);
+    }
+
+    setSearchValue(searchValue: string): void {
+        this.searchCourseText = searchValue;
+    }
+
+    /**
+     * Sorts the courses in alphabetical order
+     */
+    onSort(): void {
+        if (this.courses) {
+            this.isSortAscending = !this.isSortAscending;
+            this.regularCourses = [...sortCourses(this.regularCourses, this.isSortAscending)];
+            this.recentlyAccessedCourses = [...sortCourses(this.recentlyAccessedCourses, this.isSortAscending)];
+        }
     }
 }

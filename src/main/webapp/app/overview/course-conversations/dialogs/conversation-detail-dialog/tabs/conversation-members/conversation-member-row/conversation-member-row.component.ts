@@ -1,5 +1,5 @@
 import { Component, EventEmitter, HostBinding, Input, OnDestroy, OnInit, Output, inject } from '@angular/core';
-import { faChalkboardTeacher, faEllipsis, faUser, faUserCheck, faUserGear } from '@fortawesome/free-solid-svg-icons';
+import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/entities/metis/conversation/conversation.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -20,6 +20,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { getAsGroupChatDTO, isGroupChatDTO } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import { catchError } from 'rxjs/operators';
+import { getBackgroundColorHue } from 'app/utils/color.utils';
+import { getInitialsFromString } from 'app/utils/text.utils';
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
@@ -37,32 +39,23 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     private ngUnsubscribe = new Subject<void>();
 
-    @Input()
-    activeConversation: ConversationDTO;
+    @Input() activeConversation: ConversationDTO;
+    @Input() course: Course;
+    @Input() conversationMember: ConversationUserDTO;
+    @Output() changePerformed: EventEmitter<void> = new EventEmitter<void>();
 
-    @Input()
-    course: Course;
-
-    @Output()
-    changePerformed: EventEmitter<void> = new EventEmitter<void>();
-
-    @Input()
-    conversationMember: ConversationUserDTO;
+    @HostBinding('class.active') isCurrentUser = false;
 
     idOfLoggedInUser: number;
-
-    @HostBinding('class.active')
-    isCurrentUser = false;
-
     isCreator = false;
-
     canBeRemovedFromConversation = false;
-
     canBeGrantedChannelModeratorRole = false;
-
     canBeRevokedChannelModeratorRole = false;
-
     userLabel: string;
+    userImageUrl: string | undefined;
+    userDefaultPictureHue: string;
+    userInitials: string;
+
     // icons
     userIcon: IconProp = faUser;
     userTooltip = '';
@@ -87,7 +80,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                     this.isCreator = true;
                 }
 
+                this.userImageUrl = this.conversationMember.imageUrl;
                 this.userLabel = getUserLabel(this.conversationMember);
+                this.userInitials = getInitialsFromString(this.conversationMember.name ?? 'NA');
+                this.userDefaultPictureHue = getBackgroundColorHue(this.conversationMember.id ? this.conversationMember.id.toString() : 'default');
                 this.setUserAuthorityIconAndTooltip();
                 // the creator of a channel can not be removed from the channel
                 this.canBeRemovedFromConversation = !this.isCurrentUser && this.canRemoveUsersFromConversation(this.activeConversation);
@@ -241,7 +237,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         const toolTipTranslationPath = 'artemisApp.metis.userAuthorityTooltips.';
         // highest authority is displayed
         if (this.conversationMember.isInstructor) {
-            this.userIcon = faChalkboardTeacher;
+            this.userIcon = faUserGraduate;
             this.userTooltip = this.translateService.instant(toolTipTranslationPath + 'instructor');
         } else if (this.conversationMember.isEditor || this.conversationMember.isTeachingAssistant) {
             this.userIcon = faUserCheck;

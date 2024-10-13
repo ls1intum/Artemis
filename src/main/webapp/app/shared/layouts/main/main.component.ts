@@ -10,6 +10,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
 import { NotificationPopupComponent } from 'app/shared/notification/notification-popup/notification-popup.component';
+import { LtiService } from 'app/shared/service/lti.service';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { ArtemisSharedLibsModule } from 'app/shared/shared-libs.module';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
@@ -46,6 +47,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     private document = inject<Document>(DOCUMENT);
     private renderer = inject(Renderer2);
     private courseService = inject(CourseManagementService);
+    private ltiService = inject(LtiService);
 
     /**
      * If the footer and header should be shown.
@@ -57,11 +59,13 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     examStartedSubscription: Subscription;
     courseOverviewSubscription: Subscription;
     testRunSubscription: Subscription;
+    ltiSubscription: Subscription;
     isProduction: boolean = true;
     isTestServer: boolean = false;
     isExamStarted: boolean = false;
     isTestRunExam: boolean = false;
     isCourseOverview: boolean = false;
+    isLti: boolean = false;
 
     constructor() {
         this.setupErrorHandling().then(undefined);
@@ -139,6 +143,10 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isCourseOverview = isPresent;
         });
 
+        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
+            this.isLti = isLti;
+        });
+
         this.themeService.initialize();
     }
 
@@ -157,5 +165,6 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         this.examStartedSubscription?.unsubscribe();
         this.testRunSubscription?.unsubscribe();
         this.courseOverviewSubscription?.unsubscribe();
+        this.ltiSubscription?.unsubscribe();
     }
 }

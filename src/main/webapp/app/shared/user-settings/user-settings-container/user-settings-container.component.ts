@@ -5,6 +5,9 @@ import { PROFILE_LOCALVC } from 'app/app.constants';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { RouterModule } from '@angular/router';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
 /**
  * UserSettingsContainerComponent serves as the common ground for different settings
@@ -12,17 +15,20 @@ import { tap } from 'rxjs';
 @Component({
     selector: 'jhi-user-settings',
     templateUrl: 'user-settings-container.component.html',
+    standalone: true,
     styleUrls: ['user-settings-container.component.scss'],
+    imports: [TranslateDirective, RouterModule, FontAwesomeModule],
 })
 export class UserSettingsContainerComponent implements OnInit {
-    private profileService = inject(ProfileService);
-    private accountService = inject(AccountService);
+    private readonly profileService = inject(ProfileService);
+    private readonly accountService = inject(AccountService);
 
     // Icons
     faUser = faUser;
 
     currentUser?: User;
     localVCEnabled = false;
+    isAtLeastTutor = false;
 
     ngOnInit() {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -31,7 +37,12 @@ export class UserSettingsContainerComponent implements OnInit {
 
         this.accountService
             .getAuthenticationState()
-            .pipe(tap((user: User) => (this.currentUser = user)))
+            .pipe(
+                tap((user: User) => {
+                    this.currentUser = user;
+                    this.isAtLeastTutor = this.accountService.isAtLeastTutor();
+                }),
+            )
             .subscribe();
     }
 }

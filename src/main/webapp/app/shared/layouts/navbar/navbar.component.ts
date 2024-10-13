@@ -77,7 +77,7 @@ import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/f
     standalone: true,
 })
 export class NavbarComponent implements OnInit, OnDestroy {
-    guidedTourService = inject(GuidedTourService);
+    protected guidedTourService = inject(GuidedTourService);
     private accountService = inject(AccountService);
     private loginService = inject(LoginService);
     private translateService = inject(TranslateService);

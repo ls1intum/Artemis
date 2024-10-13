@@ -34,7 +34,6 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/e
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/entities/course.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
@@ -42,6 +41,7 @@ import { IrisSettings } from 'app/entities/iris/settings/iris-settings.model';
 import { AbstractScienceComponent } from 'app/shared/science/science.component';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { PROFILE_IRIS } from 'app/app.constants';
+import { ChatServiceMode } from 'app/iris/iris-chat.service';
 
 @Component({
     selector: 'jhi-course-exercise-details',
@@ -72,8 +72,8 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly evaluateBadge = ResultService.evaluateBadge;
     readonly dayjs = dayjs;
+    readonly ChatServiceMode = ChatServiceMode;
 
     readonly isCommunicationEnabled = isCommunicationEnabled;
     readonly isMessagingEnabled = isMessagingEnabled;
@@ -196,7 +196,6 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
         this.exerciseCategories = this.exercise.categories ?? [];
         this.allowComplaintsForAutomaticAssessments = false;
         this.plagiarismCaseInfo = newExerciseDetails.plagiarismCaseInfo;
-
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
             const isAfterDateForComplaint =
@@ -241,7 +240,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     private filterUnfinishedResults(participations?: StudentParticipation[]) {
         participations?.forEach((participation: Participation) => {
             if (participation.results) {
-                participation.results = participation.results.filter((result: Result) => result.completionDate && result.successful !== undefined);
+                participation.results = participation.results.filter((result: Result) => result.completionDate);
             }
         });
     }
@@ -252,7 +251,7 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
             this.sortedHistoryResults = this.studentParticipations
                 .flatMap((participation) => participation.results ?? [])
                 .sort(this.resultSortFunction)
-                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful == undefined));
+                .filter((result) => !(result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && dayjs().isBefore(result.completionDate)));
         }
     }
 
@@ -434,6 +433,4 @@ export class CourseExerciseDetailsComponent extends AbstractScienceComponent imp
     changeExampleSolution() {
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
-
-    setIsGeneratingFeedback() {}
 }

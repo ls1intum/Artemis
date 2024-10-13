@@ -9,6 +9,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { AccordionGroups, CollapseState, SidebarCardElement, SidebarData } from 'app/types/sidebar';
 import { CourseOverviewService } from '../course-overview.service';
+import { LtiService } from 'app/shared/service/lti.service';
 
 const DEFAULT_UNIT_GROUPS: AccordionGroups = {
     future: { entityData: [] },
@@ -38,9 +39,11 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     private programmingSubmissionService = inject(ProgrammingSubmissionService);
     private router = inject(Router);
     private courseOverviewService = inject(CourseOverviewService);
+    private ltiService = inject(LtiService);
 
     private parentParamSubscription: Subscription;
     private courseUpdatesSubscription: Subscription;
+    private ltiSubscription: Subscription;
 
     course?: Course;
     courseId: number;
@@ -53,6 +56,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     sidebarExercises: SidebarCardElement[] = [];
     isCollapsed: boolean = false;
     readonly DEFAULT_COLLAPSE_STATE = DEFAULT_COLLAPSE_STATE;
+    isLti: boolean = false;
 
     ngOnInit() {
         this.isCollapsed = this.courseOverviewService.getSidebarCollapseStateFromStorage('exercise');
@@ -71,6 +75,10 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         });
 
         this.exerciseForGuidedTour = this.guidedTourService.enableTourForCourseExerciseComponent(this.course, courseExerciseOverviewTour, true);
+
+        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
+            this.isLti = isLti;
+        });
 
         // If no exercise is selected navigate to the lastSelected or upcoming exercise
         this.navigateToExercise();
@@ -95,7 +103,7 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
         } else if (!exerciseId && upcomingExercise) {
             this.router.navigate([upcomingExercise.id], { relativeTo: this.route, replaceUrl: true });
         } else {
-            this.exerciseSelected = exerciseId ? true : false;
+            this.exerciseSelected = !!exerciseId;
         }
     }
 
@@ -141,5 +149,6 @@ export class CourseExercisesComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.courseUpdatesSubscription?.unsubscribe();
         this.parentParamSubscription?.unsubscribe();
+        this.ltiSubscription?.unsubscribe();
     }
 }

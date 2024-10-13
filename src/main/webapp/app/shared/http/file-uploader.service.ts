@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { lastValueFrom } from 'rxjs';
-import { MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { UPLOAD_MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 export interface FileUploadResponse {
     path?: string;
@@ -16,7 +16,7 @@ type Options = {
 export class FileUploaderService {
     private http = inject(HttpClient);
 
-    readonly acceptedMarkdownFileExtensions = MARKDOWN_FILE_EXTENSIONS;
+    readonly acceptedMarkdownFileExtensions = UPLOAD_MARKDOWN_FILE_EXTENSIONS;
 
     /**
      * Uploads a file for the markdown editor to the server.

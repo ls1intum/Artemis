@@ -26,6 +26,7 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { isManualResult as isManualResultFunction } from 'app/exercises/shared/result/result.utils';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -146,7 +147,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
         let hasTutorFeedback = false;
         if (this.latestResult) {
             // latest result is the first element of results, see loadParticipationWithLatestResult
-            isManualResult = Result.isManualResult(this.latestResult);
+            isManualResult = isManualResultFunction(this.latestResult);
             if (isManualResult) {
                 hasTutorFeedback = this.latestResult.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL);
             }

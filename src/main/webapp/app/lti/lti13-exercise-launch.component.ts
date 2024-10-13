@@ -4,6 +4,8 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { captureException } from '@sentry/angular';
 import { SessionStorageService } from 'ngx-webstorage';
+import { LtiService } from 'app/shared/service/lti.service';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 type LtiLaunchResponse = {
     targetLinkUri: string;
@@ -21,6 +23,8 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     private accountService = inject(AccountService);
     private router = inject(Router);
     private sessionStorageService = inject(SessionStorageService);
+    private ltiService = inject(LtiService);
+    private themeService = inject(ThemeService);
 
     isLaunching: boolean;
 
@@ -142,6 +146,10 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
     }
 
     replaceWindowLocationWrapper(url: string): void {
-        window.location.replace(url);
+        this.ltiService.setLti(true);
+        this.themeService.applyThemeExplicitly(Theme.LIGHT);
+        const path = new URL(url).pathname;
+
+        this.router.navigate([path], { replaceUrl: true });
     }
 }

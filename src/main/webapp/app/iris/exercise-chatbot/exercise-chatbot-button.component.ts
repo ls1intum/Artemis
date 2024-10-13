@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, inject } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute } from '@angular/router';
@@ -19,6 +19,8 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
     protected readonly chatService = inject(IrisChatService);
     private route = inject(ActivatedRoute);
 
+    @Input() mode: ChatServiceMode;
+
     dialogRef: MatDialogRef<IrisChatbotWidgetComponent> | null = null;
     chatOpen = false;
     hasNewMessages = false;
@@ -36,7 +38,7 @@ export class IrisExerciseChatbotButtonComponent implements OnInit, OnDestroy {
         // Subscribes to route params and gets the exerciseId from the route
         this.paramsSubscription = this.route.params.subscribe((params) => {
             const exerciseId = parseInt(params['exerciseId'], 10);
-            this.chatService.switchTo(ChatServiceMode.EXERCISE, exerciseId);
+            this.chatService.switchTo(this.mode, exerciseId);
         });
 
         // Subscribes to check for new messages

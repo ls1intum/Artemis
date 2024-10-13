@@ -12,7 +12,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faBan, faHandshakeAngle, faPuzzlePiece, faQuestionCircle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
-import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { UPLOAD_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 import { FormulaAction } from 'app/shared/monaco-editor/model/actions/formula.action';
 
 @Component({
@@ -53,9 +53,9 @@ export class LectureUpdateComponent implements OnInit {
     faHandShakeAngle = faHandshakeAngle;
 
     // A human-readable list of allowed file extensions
-    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    readonly allowedFileExtensions = UPLOAD_FILE_EXTENSIONS.join(', ');
     // The list of file extensions for the "accept" attribute of the file input field
-    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+    readonly acceptedFileExtensionsFileBrowser = UPLOAD_FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
     toggleModeFunction = () => this.toggleWizardMode();
     saveLectureFunction = () => this.save();

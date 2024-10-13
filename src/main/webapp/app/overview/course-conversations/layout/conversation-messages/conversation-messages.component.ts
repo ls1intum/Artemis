@@ -135,6 +135,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.createEmptyPost();
         }
     }
+
     private subscribeToMetis() {
         this.metisService.posts.pipe(takeUntil(this.ngUnsubscribe)).subscribe((posts: Post[]) => {
             this.setPosts(posts);

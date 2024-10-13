@@ -137,4 +137,13 @@ export class FaqService {
             return categories.some((category) => filteredCategory.has(category!));
         }
     }
+
+    hasSearchTokens(faq: Faq, searchTerm: string): boolean {
+        if (searchTerm === '') {
+            return true;
+        }
+        const tokens = searchTerm.toLowerCase().split(' ');
+        const faqText = `${faq.questionTitle ?? ''} ${faq.questionAnswer ?? ''}`.toLowerCase();
+        return tokens.every((token) => faqText.includes(token));
+    }
 }

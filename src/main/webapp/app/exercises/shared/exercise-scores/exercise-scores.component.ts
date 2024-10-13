@@ -13,7 +13,6 @@ import { areManualResultsAllowed } from 'app/exercises/shared/exercise/exercise.
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { Result } from 'app/entities/result.model';
 import { ProgrammingSubmission } from 'app/entities/programming/programming-submission.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -27,6 +26,7 @@ import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { PROFILE_LOCALVC } from 'app/app.constants';
+import { isManualResult } from 'app/exercises/shared/result/result.utils';
 
 /**
  * Filter properties for a result
@@ -227,7 +227,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             case FilterProp.BUILD_FAILED:
                 return !!(participation.submissions?.[0] && (participation.submissions?.[0] as ProgrammingSubmission).buildFailed);
             case FilterProp.MANUAL:
-                return !!latestResult && Result.isManualResult(latestResult);
+                return !!latestResult && isManualResult(latestResult);
             case FilterProp.AUTOMATIC:
                 return latestResult?.assessmentType === AssessmentType.AUTOMATIC;
             case FilterProp.LOCKED:
