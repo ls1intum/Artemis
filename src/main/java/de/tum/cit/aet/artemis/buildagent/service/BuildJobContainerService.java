@@ -24,7 +24,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,10 +43,11 @@ import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Frame;
 import com.github.dockerjava.api.model.HostConfig;
 
-import de.tum.cit.aet.artemis.buildagent.dto.DockerRunConfig;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
+import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildLogEntry;
+import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.DependencyDownloadScript;
 import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationService.RepositoryCheckoutPath;
 
 /**
@@ -90,10 +90,10 @@ public class BuildJobContainerService {
      * @param containerName   the name of the container to be created
      * @param image           the Docker image to use for the container
      * @param buildScript     the build script to be executed in the container
-     * @param dockerRunConfig the configuration for the container
+     * @param exerciseEnvVars the environment variables provided by the instructor
      * @return {@link CreateContainerResponse} that can be used to start the container
      */
-    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, DockerRunConfig dockerRunConfig) {
+    public CreateContainerResponse configureContainer(String containerName, String image, String buildScript, List<String> exerciseEnvVars) {
         List<String> envVars = new ArrayList<>();
         if (useSystemProxy) {
             envVars.add("HTTP_PROXY=" + httpProxy);
@@ -101,8 +101,7 @@ public class BuildJobContainerService {
             envVars.add("NO_PROXY=" + noProxy);
         }
         envVars.add("SCRIPT=" + buildScript);
-        HostConfig containerHostConfig = dockerRunConfig != null ? cloneHostConfigWithDisabledNetwork(hostConfig, dockerRunConfig) : hostConfig;
-        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(containerHostConfig).withEnv(envVars)
+        CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(image).withName(containerName).withHostConfig(hostConfig).withEnv(envVars)
                 // Command to run when the container starts. This is the command that will be executed in the container's main process, which runs in the foreground and blocks the
                 // container from exiting until it finishes.
                 // It waits until the script that is running the tests (see below execCreateCmdResponse) is completed, and until the result files are extracted which is indicated
@@ -111,46 +110,13 @@ public class BuildJobContainerService {
                 .withCmd("tail", "-f", "/dev/null"); // Activate for debugging purposes instead of the above command to get a running container that you can peek into using
         // "docker exec -it <container-id> /bin/bash".
 
-        if (dockerRunConfig != null && dockerRunConfig.getEnv() != null && !dockerRunConfig.getEnv().isEmpty()) {
-            envVars.addAll(dockerRunConfig.getEnv());
+        if (exerciseEnvVars != null && !exerciseEnvVars.isEmpty()) {
+            envVars.addAll(exerciseEnvVars);
             createContainerCmd.withEnv(envVars);
-        }
-        if (dockerRunConfig != null && StringUtils.isNotBlank(dockerRunConfig.getHostname())) {
-            createContainerCmd.withHostName(dockerRunConfig.getHostname());
-        }
-        if (dockerRunConfig != null && StringUtils.isNotBlank(dockerRunConfig.getUser())) {
-            createContainerCmd.withUser(dockerRunConfig.getUser());
-        }
-        if (dockerRunConfig != null && StringUtils.isNotBlank(dockerRunConfig.getIpv6())) {
-            createContainerCmd.withIpv6Address(dockerRunConfig.getIpv6());
-        }
-        if (dockerRunConfig != null && StringUtils.isNotBlank(dockerRunConfig.getIp())) {
-            createContainerCmd.withIpv4Address(dockerRunConfig.getIp());
         }
 
         return createContainerCmd.exec();
 
-    }
-
-    private HostConfig cloneHostConfigWithDisabledNetwork(HostConfig originalConfig, DockerRunConfig dockerRunConfig) {
-        HostConfig hostConfig = HostConfig.newHostConfig().withCpuQuota(originalConfig.getCpuQuota()).withCpuPeriod(originalConfig.getCpuPeriod())
-                .withMemory(originalConfig.getMemory()).withMemorySwap(originalConfig.getMemorySwap()).withPidsLimit(originalConfig.getPidsLimit()).withAutoRemove(true);
-
-        if (dockerRunConfig.isNetworkDisabled()) {
-            // we only allow disabling the network, as we do not want to expose other options to the user
-            hostConfig.withNetworkMode("none");
-        }
-        if (StringUtils.isNotBlank(dockerRunConfig.getDns())) {
-            hostConfig.withDns(dockerRunConfig.getDns());
-        }
-        if (StringUtils.isNotBlank(dockerRunConfig.getDnsSearch())) {
-            hostConfig.withDnsSearch(dockerRunConfig.getDnsSearch());
-        }
-        if (dockerRunConfig.getDnsOption() != null && !dockerRunConfig.getDnsOption().isEmpty()) {
-            hostConfig.withDnsOptions(dockerRunConfig.getDnsOption());
-        }
-
-        return hostConfig;
     }
 
     /**
@@ -169,7 +135,14 @@ public class BuildJobContainerService {
      * @param buildJobId  the id of the build job that is currently being executed
      */
 
-    public void runScriptInContainer(String containerId, String buildJobId) {
+    public void runScriptInContainer(String containerId, String buildJobId, boolean isNetworkDisabled) {
+        if (isNetworkDisabled) {
+            // The "sh preScript.sh" execution command specified here is need to install dependencies and prepare the environment for the build script.
+            log.info("Started running the pre-script for build job in container with id {}", containerId);
+            executeDockerCommand(containerId, buildJobId, true, true, false, "bash", LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
+            dockerClient.disconnectFromNetworkCmd().withContainerId(containerId).withNetworkId("bridge").exec();
+        }
+
         log.info("Started running the build script for build job in container with id {}", containerId);
         // The "sh script.sh" execution command specified here is run inside the container as an additional process. This command runs in the background, independent of the
         // container's
@@ -322,7 +295,8 @@ public class BuildJobContainerService {
      * @param programmingLanguage                    The programming language of the repositories, which influences directory naming conventions.
      */
     public void populateBuildJobContainer(String buildJobContainerId, Path assignmentRepositoryPath, Path testRepositoryPath, Path solutionRepositoryPath,
-            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage) {
+            Path[] auxiliaryRepositoriesPaths, String[] auxiliaryRepositoryCheckoutDirectories, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+            boolean isNetworkDisabled) {
         String testCheckoutPath = RepositoryCheckoutPath.TEST.forProgrammingLanguage(programmingLanguage);
         String assignmentCheckoutPath = RepositoryCheckoutPath.ASSIGNMENT.forProgrammingLanguage(programmingLanguage);
 
@@ -344,10 +318,17 @@ public class BuildJobContainerService {
             addAndPrepareDirectory(buildJobContainerId, auxiliaryRepositoriesPaths[i], LOCALCI_WORKING_DIRECTORY + "/testing-dir/" + auxiliaryRepositoryCheckoutDirectories[i]);
         }
 
-        createScriptFile(buildJobContainerId);
+        createScriptFile(buildJobContainerId, isNetworkDisabled, programmingLanguage, projectType);
     }
 
-    private void createScriptFile(String buildJobContainerId) {
+    private void createScriptFile(String buildJobContainerId, boolean isNetworkDisabled, ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+        if (isNetworkDisabled) {
+            String preScript = getDependencyDownloadScript(programmingLanguage, projectType);
+
+            executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo '" + preScript + "' > " + LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
+            executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/preScript.sh");
+        }
+
         executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "echo \"$SCRIPT\" > " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
         executeDockerCommand(buildJobContainerId, null, false, false, true, "bash", "-c", "chmod +x " + LOCALCI_WORKING_DIRECTORY + "/script.sh");
     }
@@ -472,5 +453,18 @@ public class BuildJobContainerService {
     private Container getContainerForName(String containerName) {
         List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
         return containers.stream().filter(container -> container.getNames()[0].equals("/" + containerName)).findFirst().orElse(null);
+    }
+
+    private String getDependencyDownloadScript(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
+        return switch (programmingLanguage) {
+            case JAVA -> switch (projectType) {
+                case PLAIN_MAVEN, MAVEN_BLACKBOX, MAVEN_MAVEN -> DependencyDownloadScript.MAVEN.getScript();
+                case PLAIN_GRADLE, GRADLE_GRADLE -> DependencyDownloadScript.GRADLE.getScript();
+                default -> DependencyDownloadScript.OTHER.getScript();
+            };
+            case RUST -> DependencyDownloadScript.RUST.getScript();
+            case JAVASCRIPT -> DependencyDownloadScript.JAVASCRIPT.getScript();
+            default -> DependencyDownloadScript.OTHER.getScript();
+        };
     }
 }

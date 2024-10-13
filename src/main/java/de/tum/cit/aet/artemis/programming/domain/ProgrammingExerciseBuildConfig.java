@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -314,29 +313,8 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
                     case "network":
                         dockerRunConfig.setNetworkDisabled(entry.get(1).equals("none"));
                         break;
-                    case "dns":
-                        dockerRunConfig.setDns(entry.get(1));
-                        break;
-                    case "dns-search":
-                        dockerRunConfig.setDnsSearch(entry.get(1));
-                        break;
-                    case "dns-option":
-                        dockerRunConfig.setDnsOption(Arrays.stream(entry.get(1).split(",")).toList());
-                        break;
                     case "env":
                         dockerRunConfig.setEnv(parseEnvVariableString(entry.get(1)));
-                        break;
-                    case "hostname":
-                        dockerRunConfig.setHostname(entry.get(1));
-                        break;
-                    case "ip":
-                        dockerRunConfig.setIp(entry.get(1));
-                        break;
-                    case "ipv6":
-                        dockerRunConfig.setIpv6(entry.get(1));
-                        break;
-                    case "user":
-                        dockerRunConfig.setUser(entry.get(1));
                         break;
                     default:
                         log.error("Invalid Docker flag entry: {}. Skipping.", entry);
