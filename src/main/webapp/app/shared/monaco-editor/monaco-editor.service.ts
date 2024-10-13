@@ -3,8 +3,9 @@ import * as monaco from 'monaco-editor';
 import { CUSTOM_MARKDOWN_CONFIG, CUSTOM_MARKDOWN_LANGUAGE, CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { MONACO_DARK_THEME } from 'app/shared/monaco-editor/model/themes/monaco-dark.theme';
-import { MONACO_LIGHT_THEME } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';
+import { MONACO_LIGHT_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-light.theme';
+import { MonacoEditorTheme } from 'app/shared/monaco-editor/model/themes/monaco-theme.model';
+import { MONACO_DARK_THEME_DEFINITION } from 'app/shared/monaco-editor/model/themes/monaco-dark.theme';
 
 /**
  * Service providing shared functionality for the Monaco editor.
@@ -16,6 +17,9 @@ export class MonacoEditorService {
     private readonly themeService: ThemeService = inject(ThemeService);
     private readonly currentTheme = toSignal(this.themeService.getCurrentThemeObservable(), { requireSync: true });
 
+    private lightTheme: MonacoEditorTheme;
+    private darkTheme: MonacoEditorTheme;
+
     constructor() {
         this.registerCustomThemes();
         this.registerCustomMarkdownLanguage();
@@ -26,8 +30,10 @@ export class MonacoEditorService {
     }
 
     private registerCustomThemes(): void {
-        MONACO_LIGHT_THEME.register();
-        MONACO_DARK_THEME.register();
+        this.lightTheme = new MonacoEditorTheme(MONACO_LIGHT_THEME_DEFINITION);
+        this.darkTheme = new MonacoEditorTheme(MONACO_DARK_THEME_DEFINITION);
+        this.lightTheme.register();
+        this.darkTheme.register();
     }
 
     private registerCustomMarkdownLanguage(): void {
@@ -42,7 +48,7 @@ export class MonacoEditorService {
      * @private
      */
     private applyTheme(artemisTheme: Theme): void {
-        monaco.editor.setTheme(artemisTheme === Theme.LIGHT ? MONACO_LIGHT_THEME.getId() : MONACO_DARK_THEME.getId());
+        monaco.editor.setTheme(artemisTheme === Theme.LIGHT ? this.lightTheme.getId() : this.darkTheme.getId());
     }
 
     /**

@@ -2,13 +2,10 @@ import { MonacoThemeDefinition } from 'app/shared/monaco-editor/model/themes/mon
 import * as monaco from 'monaco-editor';
 
 export class MonacoEditorTheme {
-    constructor(
-        private readonly id: string,
-        private readonly themeDefinition: MonacoThemeDefinition,
-    ) {}
+    constructor(private readonly themeDefinition: MonacoThemeDefinition) {}
 
     getId(): string {
-        return this.id;
+        return this.themeDefinition.id;
     }
 
     private stripUndefinedValues(obj: Record<string, string | undefined>): Record<string, string> {
@@ -50,7 +47,7 @@ export class MonacoEditorTheme {
             };
         });
 
-        monaco.editor.defineTheme(this.id, {
+        monaco.editor.defineTheme(this.getId(), {
             base: this.themeDefinition.baseTheme,
             inherit: true,
             rules: rules,

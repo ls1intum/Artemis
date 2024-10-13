@@ -2,6 +2,7 @@ import { LanguageTokenStyleDefinition } from 'app/shared/monaco-editor/model/the
 import { EditorColors } from 'app/shared/monaco-editor/model/themes/editor-colors.interface';
 
 export interface MonacoThemeDefinition {
+    id: string;
     baseTheme: 'vs' | 'vs-dark' | 'hc-light' | 'hc-black';
     tokenStyles: LanguageTokenStyleDefinition[];
     editorColors: EditorColors;
