@@ -38,10 +38,10 @@ public class IrisCompetencyGenerationService {
     public IrisCompetencyGenerationService(PyrisPipelineService pyrisPipelineService, LLMTokenUsageService llmTokenUsageService, CourseRepository courseRepository,
             IrisWebsocketService websocketService, PyrisJobService pyrisJobService) {
         this.pyrisPipelineService = pyrisPipelineService;
+        this.llmTokenUsageService = llmTokenUsageService;
         this.courseRepository = courseRepository;
         this.websocketService = websocketService;
         this.pyrisJobService = pyrisJobService;
-        this.llmTokenUsageService = llmTokenUsageService;
     }
 
     /**

@@ -51,18 +51,20 @@ public class LLMTokenUsageService {
                 llmTokenUsage.setIrisMessage(message);
                 llmTokenUsage.setTime(message.getSentAt());
             }
-            llmTokenUsage.setServiceType(cost.pipeline());
-            llmTokenUsage.setExercise(exercise);
             if (user != null) {
                 llmTokenUsage.setUserId(user.getId());
             }
+            if (job != null) {
+                llmTokenUsage.setTraceId(job.jobId());
+            }
+            llmTokenUsage.setServiceType(cost.pipeline());
+            llmTokenUsage.setExercise(exercise);
             llmTokenUsage.setCourse(course);
             llmTokenUsage.setNumInputTokens(cost.numInputTokens());
             llmTokenUsage.setCostPerMillionInputTokens(cost.costPerInputToken());
             llmTokenUsage.setNumOutputTokens(cost.numOutputTokens());
             llmTokenUsage.setCostPerMillionOutputTokens(cost.costPerOutputToken());
             llmTokenUsage.setModel(cost.modelInfo());
-            llmTokenUsage.setTraceId(job.jobId());
             tokenUsages.add(llmTokenUsage);
         }
         llmTokenUsageRepository.saveAll(tokenUsages);
