@@ -5,8 +5,6 @@ import java.time.ZonedDateTime;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -27,8 +25,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 public class LLMTokenUsage extends DomainObject {
 
     @Column(name = "service")
-    @Enumerated(EnumType.STRING)
-    private LLMServiceType serviceType;
+    private String serviceType;
 
     @Column(name = "model")
     private String model;
@@ -72,11 +69,11 @@ public class LLMTokenUsage extends DomainObject {
     @JoinColumn(name = "iris_message_id")
     private IrisMessage irisMessage;
 
-    public LLMServiceType getServiceType() {
+    public String getServiceType() {
         return serviceType;
     }
 
-    public void setServiceType(LLMServiceType serviceType) {
+    public void setServiceType(String serviceType) {
         this.serviceType = serviceType;
     }
 

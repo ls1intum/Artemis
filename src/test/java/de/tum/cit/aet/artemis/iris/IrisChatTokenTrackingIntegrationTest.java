@@ -239,7 +239,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     private List<PyrisLLMCostDTO> getMockLLMCosts() {
         List<PyrisLLMCostDTO> costs = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            costs.add(new PyrisLLMCostDTO("test-llm", i * 10 + 5, i * 0.5f, i * 3 + 5, i * 0.12f, LLMServiceType.IRIS_CHAT_EXERCISE_MESSAGE));
+            costs.add(new PyrisLLMCostDTO("test-llm", i * 10 + 5, i * 0.5f, i * 3 + 5, i * 0.12f, LLMServiceType.IRIS_CHAT_EXERCISE_MESSAGE.toString()));
         }
         return costs;
     }
