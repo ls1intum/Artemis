@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
 import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
-import de.tum.cit.aet.artemis.atlas.service.LearningMetricsService;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 
@@ -23,12 +23,12 @@ public class MetricsResource {
 
     private static final Logger log = LoggerFactory.getLogger(MetricsResource.class);
 
-    private final LearningMetricsService learningMetricsService;
+    private final LearningMetricsApi learningMetricsApi;
 
     private final UserRepository userRepository;
 
-    public MetricsResource(LearningMetricsService learningMetricsService, UserRepository userRepository) {
-        this.learningMetricsService = learningMetricsService;
+    public MetricsResource(LearningMetricsApi learningMetricsApi, UserRepository userRepository) {
+        this.learningMetricsApi = learningMetricsApi;
         this.userRepository = userRepository;
     }
 
@@ -43,7 +43,7 @@ public class MetricsResource {
     public ResponseEntity<StudentMetricsDTO> getCourseMetricsForUser(@PathVariable long courseId) {
         final var userId = userRepository.getUserIdElseThrow(); // won't throw exception since EnforceRoleInResource checks existence of user
         log.debug("REST request to get the metrics for the user with id {} in the course with id {}", userId, courseId);
-        final var studentMetrics = learningMetricsService.getStudentCourseMetrics(userId, courseId);
+        final var studentMetrics = learningMetricsApi.getStudentCourseMetrics(userId, courseId);
         return ResponseEntity.ok(studentMetrics);
     }
 }
