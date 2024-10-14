@@ -18,7 +18,7 @@ artemis:
         specify-concurrent-builds: false
         concurrent-build-size: 1
         asynchronous: true
-        timeout-seconds: 240
+        timeout-seconds: 120
         build-container-prefix: local-ci-
         proxies:
             use-system-proxy: false

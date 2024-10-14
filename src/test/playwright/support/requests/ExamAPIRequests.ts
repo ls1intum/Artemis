@@ -166,6 +166,15 @@ export class ExamAPIRequests {
     }
 
     /**
+     * Get all student-exams of an exam
+     * @param exam the exam for which the student-exams are fetched
+     */
+    async getAllStudentExams(exam: Exam) {
+        const response = await this.page.request.get(`${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams`);
+        return await response.json();
+    }
+
+    /**
      * Prepares individual exercises for exam start
      * @param exam the exam for which the exercises are prepared
      */

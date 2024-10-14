@@ -108,7 +108,6 @@ public abstract class AbstractAtlasIntegrationTest extends AbstractSpringIntegra
     protected ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository;
 
     // Services
-
     @Autowired
     protected CompetencyProgressService competencyProgressService;
 

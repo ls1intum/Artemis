@@ -1,4 +1,6 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { CommonModule } from '@angular/common';
 
 enum FileStatus {
     CREATED = 'created',
@@ -10,35 +12,33 @@ enum FileStatus {
     selector: 'jhi-git-diff-file-panel-title',
     templateUrl: './git-diff-file-panel-title.component.html',
     styleUrls: ['./git-diff-file-panel-title.component.scss'],
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [TranslateDirective, CommonModule],
 })
-export class GitDiffFilePanelTitleComponent implements OnInit {
-    @Input()
-    previousFilePath?: string;
+export class GitDiffFilePanelTitleComponent {
+    readonly originalFilePath = input<string>();
+    readonly modifiedFilePath = input<string>();
 
-    @Input()
-    filePath?: string;
+    readonly titleAndFileStatus = computed(() => this.getTitleAndFileStatus());
+    readonly title = computed(() => this.titleAndFileStatus().title);
+    readonly fileStatus = computed(() => this.titleAndFileStatus().fileStatus);
 
-    title?: string;
-    fileStatus: FileStatus = FileStatus.UNCHANGED;
-
-    // Expose to template
     protected readonly FileStatus = FileStatus;
 
-    ngOnInit(): void {
-        if (this.filePath && this.previousFilePath) {
-            if (this.filePath !== this.previousFilePath) {
-                this.title = `${this.previousFilePath} → ${this.filePath}`;
-                this.fileStatus = FileStatus.RENAMED;
+    private getTitleAndFileStatus(): { title?: string; fileStatus: FileStatus } {
+        const originalFilePath = this.originalFilePath();
+        const modifiedFilePath = this.modifiedFilePath();
+        if (modifiedFilePath && originalFilePath) {
+            if (modifiedFilePath !== originalFilePath) {
+                return { title: `${originalFilePath} → ${modifiedFilePath}`, fileStatus: FileStatus.RENAMED };
             } else {
-                this.title = this.filePath;
-                this.fileStatus = FileStatus.UNCHANGED;
+                return { title: modifiedFilePath, fileStatus: FileStatus.UNCHANGED };
             }
-        } else if (this.filePath) {
-            this.title = this.filePath;
-            this.fileStatus = FileStatus.CREATED;
+        } else if (modifiedFilePath) {
+            return { title: modifiedFilePath, fileStatus: FileStatus.CREATED };
         } else {
-            this.title = this.previousFilePath;
-            this.fileStatus = FileStatus.DELETED;
+            return { title: originalFilePath, fileStatus: FileStatus.DELETED };
         }
     }
 }

@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { LtiPlatformConfiguration } from 'app/admin/lti-configuration/lti-configuration.model';
 import { LtiConfigurationService } from 'app/admin/lti-configuration/lti-configuration.service';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 
 describe('LtiConfigurationService', () => {
     let service: LtiConfigurationService;
@@ -11,8 +11,8 @@ describe('LtiConfigurationService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
-            providers: [LtiConfigurationService],
+            imports: [],
+            providers: [provideHttpClient(), provideHttpClientTesting(), LtiConfigurationService],
         });
         service = TestBed.inject(LtiConfigurationService);
         httpMock = TestBed.inject(HttpTestingController);
