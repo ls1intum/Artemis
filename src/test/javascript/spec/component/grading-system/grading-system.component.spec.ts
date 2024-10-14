@@ -6,10 +6,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradingSystemInfoModalComponent } from 'app/grading-system/grading-system-info-modal/grading-system-info-modal.component';
 import { NgModel } from '@angular/forms';
 import { BehaviorSubject } from 'rxjs';
-import { ActivatedRoute, Params } from '@angular/router';
+import { ActivatedRoute, Params, RouterModule } from '@angular/router';
 import { GradingSystemComponent } from 'app/grading-system/grading-system.component';
 import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
-import { RouterTestingModule } from '@angular/router/testing';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 describe('Grading System Component', () => {
@@ -21,7 +20,7 @@ describe('Grading System Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule, RouterModule.forRoot([])],
             declarations: [
                 GradingSystemComponent,
                 MockDirective(NgModel),

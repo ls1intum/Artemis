@@ -30,6 +30,7 @@ public class PrerequisiteUtilService {
         prerequisite.setTitle("Example Prerequisite");
         prerequisite.setDescription("Magna pars studiorum, prodita quaerimus.");
         prerequisite.setCourse(course);
+        prerequisite.setMasteryThreshold(42);
         return prerequisiteRepository.save(prerequisite);
     }
 

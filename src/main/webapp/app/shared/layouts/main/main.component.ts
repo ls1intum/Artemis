@@ -8,10 +8,13 @@ import { DOCUMENT } from '@angular/common';
 import { AnalyticsService } from 'app/core/posthog/analytics.service';
 import { Subscription } from 'rxjs';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { LtiService } from 'app/shared/service/lti.service';
 
 @Component({
     selector: 'jhi-main',
     templateUrl: './main.component.html',
+    styleUrls: ['./main.component.scss'],
 })
 export class JhiMainComponent implements OnInit, OnDestroy {
     /**
@@ -22,11 +25,15 @@ export class JhiMainComponent implements OnInit, OnDestroy {
     public showSkeleton = true;
     profileSubscription: Subscription;
     examStartedSubscription: Subscription;
+    courseOverviewSubscription: Subscription;
     testRunSubscription: Subscription;
+    ltiSubscription: Subscription;
     isProduction: boolean = true;
     isTestServer: boolean = false;
     isExamStarted: boolean = false;
     isTestRunExam: boolean = false;
+    isCourseOverview: boolean = false;
+    isLti: boolean = false;
 
     constructor(
         private jhiLanguageHelper: JhiLanguageHelper,
@@ -39,6 +46,8 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         @Inject(DOCUMENT)
         private document: Document,
         private renderer: Renderer2,
+        private courseService: CourseManagementService,
+        private ltiService: LtiService,
     ) {
         this.setupErrorHandling().then(undefined);
         this.setupAnalytics().then(undefined);
@@ -111,6 +120,14 @@ export class JhiMainComponent implements OnInit, OnDestroy {
             this.isTestRunExam = isStarted;
         });
 
+        this.courseOverviewSubscription = this.courseService.isCourseOverview$.subscribe((isPresent) => {
+            this.isCourseOverview = isPresent;
+        });
+
+        this.ltiSubscription = this.ltiService.isLti$.subscribe((isLti) => {
+            this.isLti = isLti;
+        });
+
         this.themeService.initialize();
     }
 
@@ -128,5 +145,7 @@ export class JhiMainComponent implements OnInit, OnDestroy {
         this.profileSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
         this.testRunSubscription?.unsubscribe();
+        this.courseOverviewSubscription?.unsubscribe();
+        this.ltiSubscription?.unsubscribe();
     }
 }

@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.service.export.DataExportService;
  * REST controller for requesting data exports for another user as admin.
  */
 @Profile(PROFILE_CORE)
+@EnforceAdmin
 @RestController
 @RequestMapping("api/admin/")
 public class AdminDataExportResource {
@@ -34,7 +35,6 @@ public class AdminDataExportResource {
      * @return the ResponseEntity with status 200 (OK) and with body a DTO containing the id, the state and the request date of the data export
      */
     @PostMapping("data-exports/{login}")
-    @EnforceAdmin
     public ResponseEntity<RequestDataExportDTO> requestDataExportForUser(@PathVariable String login) {
         return ResponseEntity.ok(dataExportService.requestDataExportForUserAsAdmin(login));
     }

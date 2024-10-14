@@ -59,4 +59,8 @@
         padding-top: 100px;
         padding-bottom: 100px;
     }
+
+    .conversation-messages-message-list.is-fetching-posts {
+        display: none;
+    }
 }

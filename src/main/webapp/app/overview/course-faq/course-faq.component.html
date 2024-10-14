@@ -1,0 +1,41 @@
+<div>
+    <div class="input-group mb-2 rounded-3 p-2 me-2 module-bg d-flex justify-content-between">
+        <jhi-search-filter class="flex-grow-1" (newSearchEvent)="setSearchValue($event)" />
+        <div class="ms-2 me-2" aria-label="Filter Dropdown" ngbDropdown>
+            <button class="btn" [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }" ngbDropdownToggle id="filter-dropdown-button">
+                <fa-icon [icon]="faFilter" />
+                <span class="d-s-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseList.filter" [translateValues]="{ num: activeFilters.size }"></span>
+            </button>
+            @if (hasCategories) {
+                <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                    @for (category of existingCategories; track category) {
+                        <li>
+                            <label class="d-flex align-items-center">
+                                <input
+                                    id="filter-{{ category.category }}"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters(category.category!)"
+                                    [checked]="activeFilters.has(category.category!)"
+                                    type="checkbox"
+                                />
+                                <jhi-custom-exercise-category-badge [category]="category" class="mt-2 ms-1" />
+                            </label>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+    <hr class="" />
+    @if (faqs.length === 0) {
+        <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noExisting"></h2>
+    }
+    <div>
+        @for (faq of this.filteredFaqs; track faq) {
+            <jhi-course-faq-accordion [faq]="faq"></jhi-course-faq-accordion>
+        }
+    </div>
+    @if (filteredFaqs.length === 0 && faqs.length > 0) {
+        <h2 class="markdown-preview" jhiTranslate="artemisApp.faq.noMatching"></h2>
+    }
+</div>

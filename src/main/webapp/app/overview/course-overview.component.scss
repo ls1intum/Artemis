@@ -2,6 +2,13 @@ $menu-width-closed: 64px;
 $menu-width-open: 220px;
 $breadcrumb-height: 45px; // needed to make the exam fullscreen
 
+// Sidebar Button Transition Variables
+$transition-delay: 0.3s;
+$transition-in-between-delay: 0.2s;
+$transition-chevron-rotate-length: 0.2s;
+$transition-chevron-max-width-length: 0.2s;
+$transition-color-length: 0.2s;
+
 .sidebar-container {
     width: $menu-width-open;
     &.collapsed {
@@ -189,17 +196,27 @@ jhi-secured-image {
 }
 
 .double-arrow.menu-closed {
-    transform: translate(16px) rotate(0deg);
+    transform: translate(16px);
 }
 
 .double-arrow {
-    transform: translate(180px) rotate(180deg);
-    transition: all ease 0.3s;
+    transform: translate(180px);
+    transition: transform ease 0.3s;
     cursor: pointer;
     width: 30px;
     align-items: center;
     justify-content: center;
     display: flex;
+}
+
+.menu-closed .double-arrow-icon {
+    transform: rotate(0deg);
+}
+
+.double-arrow-icon {
+    transform: rotate(180deg);
+
+    transition: transform ease 0.3s 0.3s;
 }
 
 .me-negative {
@@ -242,14 +259,87 @@ jhi-secured-image {
 }
 
 .btn-sidebar-collapse {
-    background-color: var(--link-item-bg);
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: start;
+    background-color: transparent;
     &:hover {
-        background-color: var(--sidebar-card-selected-bg);
         color: var(--primary);
     }
     &:focus {
         border-color: transparent;
     }
+
+    transition: border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
+}
+
+.btn-sidebar-collapse::after,
+.btn-sidebar-collapse::before {
+    content: '';
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -2;
+    position: absolute;
+
+    transition: background-color $transition-color-length ease-in-out;
+}
+
+.btn-sidebar-collapse::after {
+    background-color: var(--link-item-bg);
+}
+
+.btn-sidebar-collapse::before {
+    opacity: 0;
+    z-index: -1;
+    background-color: var(--module-bg);
+
+    transition: opacity $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
+}
+
+.btn-sidebar-collapse:hover::after {
+    background-color: var(--sidebar-card-selected-bg);
+}
+
+.btn-sidebar-collapse:hover::before {
+    background-color: var(--link-item-bg);
+}
+
+.btn-sidebar-collapse:active::after {
+    background-color: var(--link-item-bg);
+}
+
+.btn-sidebar-collapse:active::before {
+    background-color: var(--sidebar-card-selected-bg);
+}
+
+.btn-sidebar-collapse.is-collapsed {
+    border-color: var(--bs-secondary);
+}
+
+.is-collapsed.btn-sidebar-collapse::before {
+    opacity: 1;
+}
+
+.btn-sidebar-collapse-chevron-start {
+    margin-right: -0.7rem;
+}
+
+.btn-sidebar-collapse-chevron {
+    transform: rotateZ(-180deg);
+    display: inline-block;
+    overflow: hidden;
+    margin-left: 0.3rem;
+
+    transition: transform $transition-chevron-rotate-length $transition-delay ease-in-out;
+}
+
+.is-collapsed .btn-sidebar-collapse-chevron {
+    transform: rotateZ(0deg);
+    transition: transform $transition-chevron-rotate-length $transition-delay ease-in-out;
 }
 
 .three-dots {
