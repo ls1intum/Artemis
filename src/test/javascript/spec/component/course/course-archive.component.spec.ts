@@ -228,5 +228,50 @@ describe('CourseArchiveComponent', () => {
             expect(iconComponent).not.toBeNull();
             expect(iconComponent.icon).toBe(component.faArrowUp19);
         }));
+
+        it('should find the correct course and call toggle', fakeAsync(() => {
+            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
+            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+
+            component.ngOnInit();
+            tick();
+            fixture.detectChanges();
+            expect(component.courses).toHaveLength(7);
+            expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
+            expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
+
+            // iPraktikum is in semester-group-3 : WS21/22
+            const button = fixture.debugElement.nativeElement.querySelector('#semester-group-3');
+            const toggleCollapseStateSpy = jest.spyOn(component, 'toggleCollapseState');
+            component.setSearchValue('iPraktikum');
+            const courseFound = component.isCourseFoundInSemester('WS21/22');
+            expect(courseFound).toBeTrue();
+            expect(button).not.toBeNull();
+            button.click();
+            expect(toggleCollapseStateSpy).toHaveBeenCalledOnce();
+        }));
+
+        it('should initialize collapse state correctly', () => {
+            const getCoursesForArchiveSpy = jest.spyOn(courseService, 'getCoursesForArchive');
+            getCoursesForArchiveSpy.mockReturnValue(of(new HttpResponse({ body: courses, headers: new HttpHeaders() })));
+            const mapCoursesIntoSemestersSpy = jest.spyOn(component, 'mapCoursesIntoSemesters');
+
+            component.ngOnInit();
+            expect(component.courses).toHaveLength(7);
+            expect(getCoursesForArchiveSpy).toHaveBeenCalledOnce();
+            expect(mapCoursesIntoSemestersSpy).toHaveBeenCalledOnce();
+            const getCollapseStateForSemestersSpy = jest.spyOn(component, 'getCollapseStateForSemesters');
+            component.setSearchValue('');
+            expect(getCollapseStateForSemestersSpy).toHaveBeenCalledOnce();
+
+            expect(component.semesterCollapsed).toStrictEqual({
+                'WS23/24': false,
+                'WS22/23': false,
+                SS22: false,
+                'WS21/22': false,
+                SS19: false,
+            });
+        });
     });
 });

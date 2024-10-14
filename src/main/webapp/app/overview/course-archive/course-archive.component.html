@@ -26,12 +26,13 @@
     <div class="module-bg py-3 rounded-3">
         @if (courses.length) {
             <div class="mb-0">
-                @for (semester of semesters; track semester; let last = $last) {
+                @for (semester of semesters; track semester; let last = $last; let i = $index) {
                     <div
                         class="d-flex justify-content-between align-items-center px-3"
                         (click)="isCourseFoundInSemester(semester) && toggleCollapseState(semester)"
                         tabindex="0"
                         role="button"
+                        id="semester-group-{{ i }}"
                         [ngClass]="{ 'text-secondary': !(coursesBySemester[semester] | searchFilter: ['title'] : searchCourseText).length }"
                     >
                         <span class="fw-bold" jhiTranslate="{{ fullFormOfSemesterStrings[semester] }}" [translateValues]="{ param: semester.slice(2) }"></span>
