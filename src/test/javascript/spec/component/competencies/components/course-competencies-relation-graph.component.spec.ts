@@ -90,10 +90,4 @@ describe('CourseCompetenciesRelationGraphComponent', () => {
         component['setNodeDimension']({ id: '1', dimension: { width: 0, height: 45.59 } });
         expect(component.nodes().find((node) => node.id === '1')?.dimension).toEqual({ width: 0, height: 45.59 });
     });
-
-    it('should emit on relation selection', () => {
-        const emitSpy = jest.spyOn(component.onRelationSelection, 'emit');
-        component['selectRelation'](1);
-        expect(emitSpy).toHaveBeenCalledExactlyOnceWith(1);
-    });
 });

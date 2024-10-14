@@ -249,15 +249,16 @@
                     "MATCHES": "Matches"
                 },
                 "form": {
-                    "headCourseCompetencyLabel": "Head course Competency",
+                    "headCourseCompetencyLabel": "Head course competency",
                     "headCourseCompetencyDefaultOption": "Select head course competency",
-                    "tailCourseCompetencyLabel": "Tail course Competency",
+                    "tailCourseCompetencyLabel": "Tail course competency",
                     "tailCourseCompetencyDefaultOption": "Select tail course competency",
                     "relationTypeLabel": "Relation Type",
                     "relationTypeDefaultOption": "Select relation type",
                     "deleteRelationButtonLabel": "Delete Relation",
                     "updateRelationButtonLabel": "Update Relation",
-                    "createRelationButtonLabel": "Create Relation"
+                    "createRelationButtonLabel": "Create Relation",
+                    "cyclicDependencyError": "The selected relation can not be created as it would create a circular dependency"
                 },
                 "graph": {
                     "nodeTypes": {

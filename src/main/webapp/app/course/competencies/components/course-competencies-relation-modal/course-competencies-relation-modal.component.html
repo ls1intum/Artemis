@@ -23,11 +23,10 @@
                 />
             </div>
             <jhi-course-competencies-relation-graph
-                [selectedRelationId]="selectedRelationId()"
+                [(selectedRelationId)]="selectedRelationId"
                 [relations]="relations()"
                 [courseCompetencies]="courseCompetencies()"
                 (onCourseCompetencySelection)="selectCourseCompetency($event)"
-                (onRelationSelection)="selectRelation($event)"
             />
         }
     </div>

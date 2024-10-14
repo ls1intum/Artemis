@@ -257,7 +257,8 @@
                     "relationTypeDefaultOption": "Wähle Beziehungstyp",
                     "deleteRelationButtonLabel": "Beziehung löschen",
                     "updateRelationButtonLabel": "Beziehung aktualisieren",
-                    "createRelationButtonLabel": "Beziehung erstellen"
+                    "createRelationButtonLabel": "Beziehung erstellen",
+                    "cyclicDependencyError": "Du kannst keine zyklischen Beziehungen zwischen Kurskompetenzen erstellen."
                 },
                 "graph": {
                     "nodeTypes": {

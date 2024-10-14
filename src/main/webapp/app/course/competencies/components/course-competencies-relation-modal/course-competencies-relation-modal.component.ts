@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, model, signal, viewChild } from '@angular/core';
+import { Component, effect, inject, input, signal, viewChild } from '@angular/core';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { CompetencyRelationDTO, CourseCompetency } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -26,10 +26,10 @@ export class CourseCompetenciesRelationModalComponent {
     readonly courseId = input.required<number>();
     readonly courseCompetencies = input.required<CourseCompetency[]>();
 
-    readonly selectedRelationId = model<number | undefined>(undefined);
+    readonly selectedRelationId = signal<number | undefined>(undefined);
 
     readonly isLoading = signal<boolean>(false);
-    readonly relations = model<CompetencyRelationDTO[]>([]);
+    readonly relations = signal<CompetencyRelationDTO[]>([]);
 
     constructor() {
         effect(() => this.loadRelations(this.courseId()), { allowSignalWrites: true });
@@ -45,26 +45,6 @@ export class CourseCompetenciesRelationModalComponent {
         } finally {
             this.isLoading.set(false);
         }
-    }
-
-    protected addRelation(newRelation: CompetencyRelationDTO): void {
-        this.relations.update((relations) => [...relations, newRelation]);
-    }
-
-    protected updateRelation(updatedRelation: CompetencyRelationDTO): void {
-        this.relations.update((relations) => relations.map((relation) => (relation.id === updatedRelation.id ? updatedRelation : relation)));
-    }
-
-    protected deleteRelation(deletedRelationId: number): void {
-        this.relations.update((relations) => relations.filter((relation) => relation.id !== deletedRelationId));
-    }
-
-    protected selectRelation(relationId: number): void {
-        this.selectedRelationId.set(relationId);
-    }
-
-    protected deselectRelation() {
-        this.selectedRelationId.set(undefined);
     }
 
     protected selectCourseCompetency(courseCompetencyId: number) {

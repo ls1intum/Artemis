@@ -65,7 +65,6 @@
         }
     </div>
     @if (showCircularDependencyError()) {
-        <!--        TODO: Translation-->
-        <small class="p-0 mt-2 text-danger">The selected relation can not be created as it would create a circular dependency</small>
+        <small class="p-0 mt-2 text-danger" jhiTranslate="artemisApp.courseCompetency.relations.form.cyclicDependencyError"></small>
     }
 </div>

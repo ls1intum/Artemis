@@ -83,10 +83,6 @@ describe('CourseCompetencyRelationFormComponent', () => {
         jest.clearAllMocks();
     });
 
-    it('should initialize', () => {
-        expect(component).toBeDefined();
-    });
-
     it('should set relationAlreadyExists correctly', () => {
         component.headCompetencyId.set(2);
         component.tailCompetencyId.set(1);
@@ -94,10 +90,10 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component['relationAlreadyExists']()).toBeTrue();
+        expect(component.relationAlreadyExists()).toBeTrue();
     });
 
-    it('should set relationTypeAlreadyExists correctly', () => {
+    it('should set exactRelationAlreadyExists correctly', () => {
         component.headCompetencyId.set(2);
         component.tailCompetencyId.set(1);
         component.relationType.set(CompetencyRelationType.EXTENDS);
@@ -117,50 +113,29 @@ describe('CourseCompetencyRelationFormComponent', () => {
         expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
     });
 
-    it('should set possible tail competencies correctly if nothing is selected', () => {
-        expect(component.selectableTailCourseCompetencyIds()).toEqual(courseCompetencies);
-    });
-
     it('should set head competency on selection if undefined', () => {
         component.selectCourseCompetency(1);
 
         expect(component.headCompetencyId()).toBe(1);
     });
 
-    it('should reset form', () => {
-        fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
-
-        component['resetForm']();
-
-        expect(component.headCompetencyId()).toBeUndefined();
-        expect(component.tailCompetencyId()).toBeUndefined();
-        expect(component.relationType()).toBeUndefined();
-    });
-
     it('should create relation', async () => {
-        const newRelation = <CompetencyRelationDTO>{
-            id: 2,
-            headCompetencyId: 2,
-            tailCompetencyId: 3,
-            relationType: CompetencyRelationType.EXTENDS,
-        };
-        const onRelationCreationSpy = jest.spyOn(component.onRelationCreation, 'emit');
-
         component.headCompetencyId.set(2);
         component.tailCompetencyId.set(3);
         component.relationType.set(CompetencyRelationType.EXTENDS);
 
         await component['createRelation']();
 
-        expect(createCourseCompetencyRelationSpy).toHaveBeenCalledWith(courseId, {
+        expect(createCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, {
             headCompetencyId: 2,
             tailCompetencyId: 3,
             relationType: CompetencyRelationType.EXTENDS,
         });
-        expect(onRelationCreationSpy).toHaveBeenCalledExactlyOnceWith(newRelation);
-        expect(component.headCompetencyId()).toBeUndefined();
-        expect(component.tailCompetencyId()).toBeUndefined();
-        expect(component.relationType()).toBeUndefined();
+        expect(component.headCompetencyId()).toBe(2);
+        expect(component.tailCompetencyId()).toBe(3);
+        expect(component.relationType()).toBe(CompetencyRelationType.EXTENDS);
+        expect(component.selectedRelationId()).toBe(2);
+        expect(component.relations()).toEqual([...relations, newRelation]);
     });
 
     it('should set isLoading correctly when creating a relation', async () => {
@@ -191,7 +166,6 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should update relation', async () => {
-        const onRelationUpdateSpy = jest.spyOn(component.onRelationUpdate, 'emit');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -203,7 +177,13 @@ describe('CourseCompetencyRelationFormComponent', () => {
         expect(updateCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, selectedRelationId, <UpdateCourseCompetencyRelationDTO>{
             newRelationType: CompetencyRelationType.ASSUMES,
         });
-        expect(onRelationUpdateSpy).toHaveBeenCalledOnce();
+        const newRelations = [...relations].map((relation) => {
+            if (relation.id === selectedRelationId) {
+                return { ...relation, relationType: CompetencyRelationType.ASSUMES };
+            }
+            return relation;
+        });
+        expect(component.relations()).toEqual(newRelations);
     });
 
     it('should set isLoading correctly when updating a relation', async () => {
@@ -235,7 +215,6 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should delete relation', async () => {
-        const onRelationDeleteSpy = jest.spyOn(component.onRelationDeletion, 'emit');
         fixture.componentRef.setInput('selectedRelationId', selectedRelationId);
 
         fixture.detectChanges();
@@ -243,10 +222,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
         await component['deleteRelation']();
 
         expect(deleteCourseCompetencyRelationSpy).toHaveBeenCalledExactlyOnceWith(courseId, selectedRelationId);
-        expect(onRelationDeleteSpy).toHaveBeenCalledOnce();
-        expect(component.headCompetencyId()).toBeUndefined();
-        expect(component.tailCompetencyId()).toBeUndefined();
-        expect(component.relationType()).toBeUndefined();
+        expect(component.relations()).toHaveLength(relations.length - 1);
     });
 
     it('should set isLoading correctly when deleting a relation', async () => {

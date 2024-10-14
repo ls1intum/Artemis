@@ -1,10 +1,10 @@
-import { Component, computed, effect, input, output, signal } from '@angular/core';
+import { Component, computed, effect, input, model, output, signal } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faFileImport } from '@fortawesome/free-solid-svg-icons';
 import { NgbAccordionModule } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRelationDTO, CourseCompetency } from 'app/entities/competency.model';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { Edge, NgxGraphModule, NgxGraphZoomOptions, Node } from '@swimlane/ngx-graph';
+import { Edge, NgxGraphModule, Node } from '@swimlane/ngx-graph';
 import { Subject } from 'rxjs';
 import { SizeUpdate } from 'app/course/learning-paths/components/competency-node/competency-node.component';
 import { CourseCompetencyRelationNodeComponent } from 'app/course/competencies/components/course-competency-relation-node/course-competency-relation-node.component';
@@ -22,14 +22,12 @@ export class CourseCompetenciesRelationGraphComponent {
     readonly courseCompetencies = input.required<CourseCompetency[]>();
     readonly relations = input.required<CompetencyRelationDTO[]>();
 
-    readonly selectedRelationId = input.required<number | undefined>();
-    readonly onRelationSelection = output<number>();
+    readonly selectedRelationId = model.required<number | undefined>();
 
     readonly onCourseCompetencySelection = output<number>();
 
     readonly update$ = new Subject<boolean>();
     readonly center$ = new Subject<boolean>();
-    readonly zoomToFit$ = new Subject<NgxGraphZoomOptions>();
 
     readonly nodes = signal<Node[]>([]);
 
@@ -44,10 +42,6 @@ export class CourseCompetenciesRelationGraphComponent {
             },
         }));
     });
-
-    protected selectRelation(relationId: number): void {
-        this.onRelationSelection.emit(relationId);
-    }
 
     constructor() {
         effect(
@@ -69,7 +63,11 @@ export class CourseCompetenciesRelationGraphComponent {
         );
     }
 
-    setNodeDimension(sizeUpdate: SizeUpdate): void {
+    protected selectRelation(relationId: number): void {
+        this.selectedRelationId.set(relationId);
+    }
+
+    protected setNodeDimension(sizeUpdate: SizeUpdate): void {
         this.nodes.update((nodes) =>
             nodes.map((node) => {
                 if (node.id === sizeUpdate.id) {

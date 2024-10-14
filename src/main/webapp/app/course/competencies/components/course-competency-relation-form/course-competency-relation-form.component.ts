@@ -34,7 +34,7 @@ export class CourseCompetencyRelationFormComponent {
     readonly relationAlreadyExists = computed(() => this.getRelation(this.headCompetencyId(), this.tailCompetencyId()) !== undefined);
     readonly exactRelationAlreadyExists = computed(() => this.getExactRelation(this.headCompetencyId(), this.tailCompetencyId(), this.relationType()) !== undefined);
 
-    readonly selectableTailCourseCompetencyIds = computed(() => {
+    private readonly selectableTailCourseCompetencyIds = computed(() => {
         if (this.headCompetencyId() && this.relationType()) {
             return this.getSelectableTailCompetencyIds(this.headCompetencyId()!, this.relationType()!);
         }
@@ -51,7 +51,7 @@ export class CourseCompetencyRelationFormComponent {
         return this.selectableTailCourseCompetencyIds().includes(courseCompetencyId);
     }
 
-    public selectRelation(relationId?: number): void {
+    private selectRelation(relationId?: number): void {
         const relation = this.relations().find(({ id }) => id === relationId);
         if (relation) {
             this.headCompetencyId.set(relation?.headCompetencyId);
@@ -155,12 +155,14 @@ export class CourseCompetencyRelationFormComponent {
     }
 
     /**
-     * Function to get the selectable tail competencies for the given head competency and relation type
+     * Function to get the selectable tail competency ids for the given head
+     * competency and relation type without creating a cyclic dependency
+     *
      * @param headCompetencyId The selected head competency id
      * @param relationType The selected relation type
      * @private
      *
-     * @returns The selectable tail competencies
+     * @returns The selectable tail competency ids
      */
     private getSelectableTailCompetencyIds(headCompetencyId: number, relationType: CompetencyRelationType): number[] {
         return this.courseCompetencies()
@@ -177,15 +179,24 @@ export class CourseCompetencyRelationFormComponent {
                     tailCompetencyId: id,
                     relationType: relationType,
                 };
-                return !this.detectCycleInCompetencyRelations(relations.concat(potentialRelation), this.courseCompetencies().length);
+                return !this.detectCycleInRelations(relations.concat(potentialRelation), this.courseCompetencies().length);
             });
     }
 
-    private detectCycleInCompetencyRelations(relations: CompetencyRelationDTO[], numOfCompetencies: number): boolean {
-        // Step 1: Create a map to store the unique IDs and map them to incremental indices
+    /**
+     * Function to detect cycles in the competency relations
+     * @param relations The list of competency relations
+     * @param numOfCompetencies The total number of competencies
+     * @private
+     *
+     * @returns True if a cycle is detected, false otherwise
+     */
+    private detectCycleInRelations(relations: CompetencyRelationDTO[], numOfCompetencies: number): boolean {
+        // Create a map to store the competency IDs and map them to incremental indices
         const idToIndexMap = new Map<number, number>();
         let currentIndex = 0;
 
+        // map the competency IDs to incremental indices
         relations.forEach((relation) => {
             const tail = relation.tailCompetencyId!;
             const head = relation.headCompetencyId!;
@@ -198,24 +209,23 @@ export class CourseCompetencyRelationFormComponent {
             }
         });
 
-        const numCompetencies = currentIndex; // Total unique competencies
-        const unionFind = new UnionFind(numCompetencies);
+        const unionFind = new UnionFind(numOfCompetencies);
 
-        // Step 2: Apply Union-Find based on the MATCHES relations
+        // Apply Union-Find based on the MATCHES relations
         relations.forEach((relation) => {
             if (relation.relationType === CompetencyRelationType.MATCHES) {
                 const tailIndex = idToIndexMap.get(relation.tailCompetencyId!);
                 const headIndex = idToIndexMap.get(relation.headCompetencyId!);
 
                 if (tailIndex !== undefined && headIndex !== undefined) {
-                    // Perform union operation to group competencies
+                    // Perform union operation to group matching course competencies into sets
                     unionFind.union(tailIndex, headIndex);
                 }
             }
         });
 
-        // Step 2: Build the reduced graph for EXTENDS and ASSUMES relations
-        const reducedGraph: number[][] = Array.from({ length: numCompetencies }, () => []);
+        // Build the reduced graph for EXTENDS and ASSUMES relations
+        const reducedGraph: number[][] = Array.from({ length: numOfCompetencies }, () => []);
 
         relations.forEach((relation) => {
             const tail = unionFind.find(idToIndexMap.get(relation.tailCompetencyId!)!);
@@ -226,7 +236,6 @@ export class CourseCompetencyRelationFormComponent {
             }
         });
 
-        // Step 3: Detect cycles in the reduced graph
         return this.hasCycle(reducedGraph, numOfCompetencies);
     }
 
@@ -262,7 +271,7 @@ export class CourseCompetencyRelationFormComponent {
     }
 }
 
-// Union-Find (Disjoint Set) class
+// Union-Find (Disjoint Set) class (https://en.wikipedia.org/wiki/Disjoint-set_data_structure -> union by rank)
 class UnionFind {
     parent: number[];
     rank: number[];
@@ -273,7 +282,7 @@ class UnionFind {
     }
 
     // Find the representative of the set that contains the `competencyId`
-    find(competencyId: number): number {
+    public find(competencyId: number): number {
         if (this.parent[competencyId] !== competencyId) {
             this.parent[competencyId] = this.find(this.parent[competencyId]); // Path compression
         }
@@ -281,7 +290,7 @@ class UnionFind {
     }
 
     // Union the sets containing `tailCompetencyId` and `headCompetencyId`
-    union(tailCompetencyId: number, headCompetencyId: number) {
+    public union(tailCompetencyId: number, headCompetencyId: number) {
         const rootU = this.find(tailCompetencyId);
         const rootV = this.find(headCompetencyId);
         if (rootU !== rootV) {
