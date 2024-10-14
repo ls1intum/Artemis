@@ -22,7 +22,7 @@ public enum AuthenticationMechanism {
      */
     CODE_EDITOR,
     /**
-     * The user used some token to try to authenticate to the LocalVC, either a user token, or a participation token
+     * The user attempted to authenticate to the LocalVC using either a user token or a participation token
      */
     VCS_ACCESS_TOKEN,
 }

@@ -782,8 +782,6 @@ public class LocalVCServletService {
             var participation = getExerciseParticipationFromRequest(request);
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(participation, repositoryActionType));
-
-            log.info("username {} int {}", usernameAndPassword.username(), clientOffered);
         }
         catch (Exception ignored) {
         }
@@ -805,7 +803,7 @@ public class LocalVCServletService {
             return;
         }
         try {
-            String authorizationHeader = request.getHeader("Authorization");
+            String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
             UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
             String userName = usernameAndPassword.username();
             if (userName.equals(BUILD_USER_NAME)) {
@@ -877,7 +875,7 @@ public class LocalVCServletService {
      * @param clientOffered the number of objects offered to the client in the operation.
      * @return the {@link RepositoryActionType} based on the number of objects offered (clone if 0, pull if greater than 0).
      */
-    public RepositoryActionType getRepositoryActionReadType(int clientOffered) {
+    private RepositoryActionType getRepositoryActionReadType(int clientOffered) {
         return clientOffered == 0 ? RepositoryActionType.CLONE : RepositoryActionType.PULL;
     }
 
