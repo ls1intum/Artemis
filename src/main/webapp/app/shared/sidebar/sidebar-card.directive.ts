@@ -43,15 +43,32 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
 
     private assignAttributes() {
         if (this.componentRef) {
-            this.componentRef.instance.itemSelected = this.itemSelected;
-            this.componentRef.instance.sidebarType = this.sidebarType;
-            this.componentRef.instance.sidebarItem = this.sidebarItem;
             if (this.groupKey !== undefined) {
                 this.componentRef.instance.groupKey = this.groupKey;
             }
+
+            this.componentRef.instance.itemSelected = this.itemSelected;
+            this.componentRef.instance.sidebarType = this.sidebarType;
+            this.componentRef.instance.sidebarItem = this.sidebarItem;
+            this.componentRef.instance.sidebarItem.title = this.removeChannelPrefix(this.sidebarItem.title);
+
             if (this.size == 'S') {
                 this.componentRef.instance.onUpdateSidebar = this.onUpdateSidebar;
             }
         }
+    }
+
+    private removeChannelPrefix(name: string): string {
+        const prefixes = ['exercise-', 'lecture-', 'exam-'];
+        const channelTypes = ['exerciseChannels', 'lectureChannels', 'examChannels'];
+
+        if (channelTypes.includes(<string>this.groupKey)) {
+            prefixes.forEach((prefix) => {
+                if (name?.startsWith(prefix)) {
+                    name = name.substring(prefix.length);
+                }
+            });
+        }
+        return name;
     }
 }

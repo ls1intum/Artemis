@@ -123,6 +123,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
 
     onInputChange(event: Event): void {
         const value = (event.target as HTMLInputElement).value;
+        // If the input value has fewer than 3 characters, close the suggestion popup
         if (value.length < 3) {
             this.typeAheadInstance.dismissPopup();
         }
