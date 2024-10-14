@@ -305,6 +305,11 @@ public final class Constants {
     public static final String PROFILE_ARTEMIS = "artemis";
 
     /**
+     * The name of the Spring profile used for Artemis atlas functionality.
+     */
+    public static final String PROFILE_ATLAS = "atlas";
+
+    /**
      * The name of the Spring profile used for Artemis core functionality.
      */
     public static final String PROFILE_CORE = "core";
