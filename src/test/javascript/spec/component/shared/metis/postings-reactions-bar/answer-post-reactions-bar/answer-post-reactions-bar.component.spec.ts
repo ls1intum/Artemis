@@ -4,7 +4,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { OverlayModule } from '@angular/cdk/overlay';
 import { Reaction } from 'app/entities/metis/reaction.model';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../../../../helpers/mocks/service/mock-reaction.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -26,6 +26,7 @@ import { metisCourse, metisUser1, post } from '../../../../../helpers/sample/met
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockNotificationService } from '../../../../../helpers/mocks/service/mock-notification.service';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('AnswerPostReactionsBarComponent', () => {
     let component: AnswerPostReactionsBarComponent;
@@ -37,9 +38,11 @@ describe('AnswerPostReactionsBarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule), MockModule(NgbTooltipModule)],
+            imports: [MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule), MockModule(NgbTooltipModule)],
             declarations: [AnswerPostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockComponent(FaIconComponent), MockComponent(EmojiComponent)],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 MockProvider(SessionStorageService),
                 { provide: NotificationService, useClass: MockNotificationService },
                 { provide: MetisService, useClass: MetisService },

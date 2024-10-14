@@ -6,14 +6,13 @@ import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ButtonType } from 'app/shared/components/button.component';
 import { faRotate, faSave } from '@fortawesome/free-solid-svg-icons';
-import { IrisModel } from 'app/entities/iris/settings/iris-model';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { cloneDeep, isEqual } from 'lodash-es';
 import {
     IrisChatSubSettings,
     IrisCompetencyGenerationSubSettings,
-    IrisHestiaSubSettings,
     IrisLectureIngestionSubSettings,
+    IrisTextExerciseChatSubSettings,
 } from 'app/entities/iris/settings/iris-sub-settings.model';
 import { AccountService } from 'app/core/auth/account.service';
 
@@ -30,7 +29,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
     public exerciseId?: number;
     public irisSettings?: IrisSettings;
     public parentIrisSettings?: IrisSettings;
-    public allIrisModels?: IrisModel[];
 
     originalIrisSettings?: IrisSettings;
 
@@ -77,13 +75,6 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         return !this.isDirty;
     }
 
-    loadIrisModels(): void {
-        this.irisSettingsService.getIrisModels().subscribe((models) => {
-            this.allIrisModels = models;
-            this.isLoading = false;
-        });
-    }
-
     loadIrisSettings(): void {
         this.isLoading = true;
         this.loadIrisSettingsObservable().subscribe((settings) => {
@@ -113,11 +104,11 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
         if (!this.irisSettings.irisChatSettings) {
             this.irisSettings.irisChatSettings = new IrisChatSubSettings();
         }
+        if (!this.irisSettings.irisTextExerciseChatSettings) {
+            this.irisSettings.irisTextExerciseChatSettings = new IrisTextExerciseChatSubSettings();
+        }
         if (!this.irisSettings.irisLectureIngestionSettings) {
             this.irisSettings.irisLectureIngestionSettings = new IrisLectureIngestionSubSettings();
-        }
-        if (!this.irisSettings.irisHestiaSettings) {
-            this.irisSettings.irisHestiaSettings = new IrisHestiaSubSettings();
         }
         if (!this.irisSettings.irisCompetencyGenerationSettings) {
             this.irisSettings.irisCompetencyGenerationSettings = new IrisCompetencyGenerationSubSettings();
@@ -169,7 +160,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.getUncombinedCourseSettings(this.courseId!);
             case IrisSettingsType.EXERCISE:
-                return this.irisSettingsService.getUncombinedProgrammingExerciseSettings(this.exerciseId!);
+                return this.irisSettingsService.getUncombinedExerciseSettings(this.exerciseId!);
         }
     }
 
@@ -180,7 +171,7 @@ export class IrisSettingsUpdateComponent implements OnInit, DoCheck, ComponentCa
             case IrisSettingsType.COURSE:
                 return this.irisSettingsService.setCourseSettings(this.courseId!, this.irisSettings!);
             case IrisSettingsType.EXERCISE:
-                return this.irisSettingsService.setProgrammingExerciseSettings(this.exerciseId!, this.irisSettings!);
+                return this.irisSettingsService.setExerciseSettings(this.exerciseId!, this.irisSettings!);
         }
     }
 }

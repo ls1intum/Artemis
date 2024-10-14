@@ -20,6 +20,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { facSaveSuccess, facSaveWarning } from 'src/main/webapp/content/icons/icons';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { ExamLiveEventsButtonComponent } from 'app/exam/participate/events/exam-live-events-button.component';
+import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 describe('ExamNavigationSidebarComponent', () => {
     let fixture: ComponentFixture<ExamNavigationSidebarComponent>;
@@ -33,8 +35,8 @@ describe('ExamNavigationSidebarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule, MockModule(NgbTooltipModule)],
-            declarations: [ExamNavigationSidebarComponent, MockComponent(ExamTimerComponent), MockComponent(ExamLiveEventsButtonComponent)],
+            imports: [ArtemisTestModule, TranslateTestingModule, MockModule(NgbTooltipModule), MockModule(ArtemisSharedCommonModule)],
+            declarations: [ExamNavigationSidebarComponent, MockComponent(ExamTimerComponent), MockComponent(ExamLiveEventsButtonComponent), MockComponent(SearchFilterComponent)],
             providers: [
                 ExamParticipationService,
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
