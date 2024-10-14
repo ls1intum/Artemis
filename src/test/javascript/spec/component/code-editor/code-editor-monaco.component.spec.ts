@@ -125,7 +125,6 @@ describe('CodeEditorMonacoComponent', () => {
         };
         fixture.detectChanges();
         setup();
-        comp.ngOnChanges({});
         expect(comp.editorLocked()).toBe(shouldLock);
     });
 
@@ -180,7 +179,8 @@ describe('CodeEditorMonacoComponent', () => {
         loadFileFromRepositoryStub.mockReturnValue(loadedFileSubject);
         comp.fileSession = fileSession;
         fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
-        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, fileToLoad, false) });
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(comp.fileSession).toEqual({ [fileToLoad.fileName]: { code: fileToLoad.fileContent, loadingError: false, cursor: { lineNumber: 0, column: 0 } } });
     });
@@ -210,7 +210,8 @@ describe('CodeEditorMonacoComponent', () => {
         comp.fileSession = {};
         fixture.componentRef.setInput('selectedFile', fileToLoad.fileName);
         comp.onError.subscribe(errorCallbackStub);
-        await comp.ngOnChanges({ selectedFile: new SimpleChange(undefined, fileToLoad.fileName, false) });
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
         expect(loadFileFromRepositoryStub).toHaveBeenCalledOnce();
         expect(errorCallbackStub).toHaveBeenCalledExactlyOnceWith(errorCode);
         expect(comp.fileSession).toEqual({ [fileToLoad.fileName]: { code: '', loadingError: true, cursor: { lineNumber: 0, column: 0 } } });
