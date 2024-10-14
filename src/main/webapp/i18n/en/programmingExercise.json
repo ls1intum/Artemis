@@ -688,6 +688,16 @@
                 "pushExercise": "Push the exercise code to its repository. It will be checked out at <code>{{checkoutDirectory}}</code>.",
                 "pushSolution": "Push the solution code to its repository. It will not be checked out.",
                 "pushTest": "Push the test code to its repository. It will be checked out in <code>{{checkoutDirectory}}</code>."
+            },
+            "dockerFlags": {
+                "disableNetworkAccess": {
+                    "title": "Disable Network Access",
+                    "description": "Activate this option to disable network access for containers. This is done by providing the '--network none' option to the Docker container."
+                },
+                "envVars": {
+                    "title": "Environment Variables",
+                    "description": "Add environment variables to the Docker container. Please follow the following format KEY_1=\"value_1\",KEY_2=\"value_2\""
+                }
             }
         },
         "error": {

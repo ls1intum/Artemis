@@ -16,7 +16,29 @@
         />
     </div>
     @if (!isAeolus()) {
-        <div class="d-flex align-items-center justify-content-start gap-4 mb-3">
+        <div class="form-check mb-2">
+            <label class="form-check-label" for="field_disableNetworkAccess">
+                <input
+                    class="form-check-input"
+                    type="checkbox"
+                    name="disableNetworkAccess"
+                    id="field_disableNetworkAccess"
+                    [checked]="isNetworkDisabled"
+                    (change)="onDisableNetworkAccessChange($event)"
+                />
+                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.title"></span>
+                <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.disableNetworkAccess.description" />
+            </label>
+        </div>
+
+        <div class="mb-2">
+            <label>
+                <span jhiTranslate="artemisApp.programmingExercise.dockerFlags.envVars.title"></span>
+            </label>
+            <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.dockerFlags.envVars.description" />
+            <input type="text" class="form-control" name="envVars" id="field_envVars" maxlength="192" [ngModel]="envVars" (ngModelChange)="onEnvVarsChange($event)" />
+        </div>
+        <div class="d-flex align-items-center justify-content-start gap-4 mb-2">
             <div>
                 <label>
                     <span jhiTranslate="artemisApp.programmingExercise.timeout.title"></span>
