@@ -725,19 +725,6 @@ public class LocalVCServletService {
     }
 
     /**
-     * Retrieves the user from the HTTP request's authorization header.
-     *
-     * @param request the {@link HttpServletRequest} containing the authorization header.
-     * @return the {@link User} associated with the login found in the authorization header.
-     * @throws LocalVCAuthException if the user cannot be found or authorization fails.
-     */
-    private User getUserFromRequest(HttpServletRequest request) throws LocalVCAuthException {
-        String authorizationHeader = request.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
-        UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
-        return userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
-    }
-
-    /**
      * Retrieves the participation for a programming exercise based on the repository URI.
      *
      * @param localVCRepositoryUri the {@link LocalVCRepositoryUri} containing details about the repository.
@@ -869,9 +856,13 @@ public class LocalVCServletService {
      */
     public void createVCSAccessLogForFailedAuthenticationAttempt(HttpServletRequest servletRequest) {
         try {
-            User user = getUserFromRequest(servletRequest);
+            String authorizationHeader = servletRequest.getHeader(LocalVCServletService.AUTHORIZATION_HEADER);
+            UsernameAndPassword usernameAndPassword = extractUsernameAndPassword(authorizationHeader);
+            User user = userRepository.findOneByLogin(usernameAndPassword.username()).orElseThrow(LocalVCAuthException::new);
+            AuthenticationMechanism mechanism = usernameAndPassword.password().startsWith("vcpat-") ? AuthenticationMechanism.VCS_ACCESS_TOKEN : AuthenticationMechanism.PASSWORD;
             var participation = getExerciseParticipationFromRequest(servletRequest);
-            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, AuthenticationMechanism.PASSWORD, "", ""));
+            var ipAddress = servletRequest.getRemoteAddr();
+            vcsAccessLogService.ifPresent(service -> service.storeAccessLog(user, participation, RepositoryActionType.CLONE_FAIL, mechanism, "", ipAddress));
         }
         catch (LocalVCAuthException ignored) {
         }

@@ -21,4 +21,8 @@ public enum AuthenticationMechanism {
      * The user used the artemis client code editor to authenticate to the LocalVC
      */
     CODE_EDITOR,
+    /**
+     * The user used some token to try to authenticate to the LocalVC, either a user token, or a participation token
+     */
+    VCS_ACCESS_TOKEN,
 }
