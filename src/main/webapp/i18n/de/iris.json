@@ -62,7 +62,7 @@
                     "breadcrumb": "Iris Einstellungen",
                     "global": "Globale Iris Einstellungen",
                     "course": "Kurs Iris Einstellungen",
-                    "programmingExercise": "Programmieraufgabe Iris Einstellungen"
+                    "exercise": "Programmieraufgabe Iris Einstellungen"
                 },
                 "autoUpdate": {
                     "title": "Auto Update Einstellungen",
