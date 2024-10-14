@@ -102,7 +102,7 @@
                 "achievablePoints": "Erreichbare Punktzahl",
                 "applyFilter": "Filter anwenden",
                 "resetFilter": "Filter zurücksetzen",
-                "clearFilter": "Filter leeren",
+                "clearFilter": "Filter entfernen",
                 "noFilterAvailable": "Für die bisherigen Aufgaben gibt es keine unterscheidenden Filteroptionen",
                 "noMoreOptions": "Keine weiteren Auswahlmöglichkeiten"
             },

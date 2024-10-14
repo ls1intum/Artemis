@@ -56,7 +56,7 @@
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
                     "difficultyStepTitle": "Modus",
-                    "buildPlansTitle": "Build Pläne",
+                    "buildPlansTitle": "Build-Pläne",
                     "languageStepTitle": "Sprache",
                     "gradingStepTitle": "Benotung",
                     "problemStepTitle": "Problem",
@@ -66,7 +66,7 @@
                     "generalInfoStepTitle": "Allgemein",
                     "generalInfoStepMessage": "Eingabe von Informationen, die die Grundlage für die Programmieraufgabe bilden",
                     "difficultyStepTitle": "Modus",
-                    "buildPlansTitle": "Build Pläne",
+                    "buildPlansTitle": "Build-Pläne",
                     "difficultyStepMessage": "Konfiguration der Einstellungen bezüglich der Bearbeitung und Kollaboration der Aufgabe",
                     "languageStepTitle": "Sprache",
                     "languageStepMessage": "Wähle die gewünschte Programmiersprache aus und konfiguriere zusätzliche Funktionen bezüglich der Build Umgebung",
@@ -127,7 +127,7 @@
             "onlineEditor": "Online",
             "allowOfflineIde": {
                 "title": "Offline-IDE erlauben",
-                "description": "Aktiviere diese Option, um es zu erlauben, die Übung herunterzuladen und lokal mit der bevorzugten IDE daran zu arbeiten.",
+                "description": "Aktiviere diese Option, um den Studierenden zu erlauben, die Übung herunterzuladen und lokal mit der bevorzugten IDE daran zu arbeiten.",
                 "alert": "Es muss mindestens eine Option (Offline-IDE, Online-Editor oder Online-IDE) ausgewählt sein",
                 "alertNoTheia": "Es muss mindestens eine Option (Offline-IDE oder Online-Editor) ausgewählt sein"
             },
