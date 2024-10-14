@@ -69,15 +69,41 @@ public class LLMTokenUsageService {
         return tokenUsages;
     }
 
-    // Overloaded methods without optional parameters
+    /**
+     * Overloaded method to save token usage without message and exercise.
+     *
+     * @param job    used to create a unique traceId to group multiple LLM calls
+     * @param user   to map the token cost to a user
+     * @param course to map the token to a course
+     * @param tokens token cost list of type PyrisLLMCostDTO
+     * @return list of the saved data
+     */
     public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, User user, Course course, List<PyrisLLMCostDTO> tokens) {
         return saveIrisTokenUsage(job, null, null, user, course, tokens);
     }
 
+    /**
+     * Overloaded method to save token usage without exercise.
+     *
+     * @param job     used to create a unique traceId to group multiple LLM calls
+     * @param message IrisMessage to map the usage to an IrisMessage
+     * @param user    to map the token cost to a user
+     * @param course  to map the token to a course
+     * @param tokens  token cost list of type PyrisLLMCostDTO
+     * @return list of the saved data
+     */
     public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, IrisMessage message, User user, Course course, List<PyrisLLMCostDTO> tokens) {
         return saveIrisTokenUsage(job, message, null, user, course, tokens);
     }
 
+    /**
+     * Overloaded method to save token usage without message, exercise and user.
+     *
+     * @param job    used to create a unique traceId to group multiple LLM calls
+     * @param course to map the token to a course
+     * @param tokens token cost list of type PyrisLLMCostDTO
+     * @return list of the saved data
+     */
     public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, Course course, List<PyrisLLMCostDTO> tokens) {
         return saveIrisTokenUsage(job, null, null, null, course, tokens);
     }

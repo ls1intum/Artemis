@@ -13,8 +13,6 @@ export class IrisAssistantMessage implements BaseEntity {
     sentAt: dayjs.Dayjs;
     sender: IrisSender.LLM;
     helpful?: boolean;
-    num_input_tokens?: number;
-    num_output_tokens?: number;
 }
 
 export class IrisUserMessage implements BaseEntity {
@@ -23,8 +21,6 @@ export class IrisUserMessage implements BaseEntity {
     sentAt?: dayjs.Dayjs;
     sender: IrisSender.USER;
     messageDifferentiator?: number;
-    num_input_tokens?: number;
-    num_output_tokens?: number;
 }
 
 export type IrisMessage = IrisAssistantMessage | IrisUserMessage;
