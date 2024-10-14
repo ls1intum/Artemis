@@ -118,7 +118,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
     });
 
     it('should set possible tail competencies correctly if nothing is selected', () => {
-        expect(component.selectableTailCourseCompetencies()).toEqual(courseCompetencies);
+        expect(component.selectableTailCourseCompetencyIds()).toEqual(courseCompetencies);
     });
 
     it('should set head competency on selection if undefined', () => {

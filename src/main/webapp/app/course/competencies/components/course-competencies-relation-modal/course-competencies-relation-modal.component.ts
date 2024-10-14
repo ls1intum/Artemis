@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, signal, viewChild } from '@angular/core';
+import { Component, effect, inject, input, model, signal, viewChild } from '@angular/core';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
 import { CompetencyRelationDTO, CourseCompetency } from 'app/entities/competency.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -26,10 +26,10 @@ export class CourseCompetenciesRelationModalComponent {
     readonly courseId = input.required<number>();
     readonly courseCompetencies = input.required<CourseCompetency[]>();
 
-    readonly selectedRelationId = signal<number | undefined>(undefined);
+    readonly selectedRelationId = model<number | undefined>(undefined);
 
     readonly isLoading = signal<boolean>(false);
-    readonly relations = signal<CompetencyRelationDTO[]>([]);
+    readonly relations = model<CompetencyRelationDTO[]>([]);
 
     constructor() {
         effect(() => this.loadRelations(this.courseId()), { allowSignalWrites: true });

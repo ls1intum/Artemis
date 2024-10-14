@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, model, output, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, model, signal } from '@angular/core';
 import { CompetencyRelationDTO, CompetencyRelationType, CourseCompetency, UpdateCourseCompetencyRelationDTO } from 'app/entities/competency.model';
 import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
 import { CourseCompetencyApiService } from 'app/course/competencies/services/course-competency-api.service';
@@ -22,16 +22,11 @@ export class CourseCompetencyRelationFormComponent {
 
     readonly courseId = input.required<number>();
     readonly courseCompetencies = input.required<CourseCompetency[]>();
-    readonly relations = input.required<CompetencyRelationDTO[]>();
-    readonly selectedRelationId = input.required<number | undefined>();
-    readonly onRelationDeselection = output<void>();
-
-    readonly onRelationCreation = output<CompetencyRelationDTO>();
-    readonly onRelationUpdate = output<CompetencyRelationDTO>();
-    readonly onRelationDeletion = output<number>();
+    readonly relations = model.required<CompetencyRelationDTO[]>();
+    readonly selectedRelationId = model.required<number | undefined>();
 
     readonly headCompetencyId = signal<number | undefined>(undefined);
-    readonly tailCompetencyId = model<number | undefined>(undefined);
+    readonly tailCompetencyId = signal<number | undefined>(undefined);
     readonly relationType = model<CompetencyRelationType | undefined>(undefined);
 
     readonly isLoading = signal<boolean>(false);
@@ -46,25 +41,24 @@ export class CourseCompetencyRelationFormComponent {
         ),
     );
 
-    readonly selectableTailCourseCompetencies = computed(() => {
+    readonly selectableTailCourseCompetencyIds = computed(() => {
         if (this.headCompetencyId() && this.relationType()) {
-            return this.getSelectableTailCompetencies(this.headCompetencyId()!, this.relationType()!);
+            return this.getSelectableTailCompetencyIds(this.headCompetencyId()!, this.relationType()!);
         }
-        return this.courseCompetencies();
+        return this.courseCompetencies().map(({ id }) => id!);
     });
 
+    readonly showCircularDependencyError = computed(() => this.tailCompetencyId() && !this.selectableTailCourseCompetencyIds().includes(this.tailCompetencyId()!));
+
     constructor() {
-        effect(
-            () => {
-                if (this.selectedRelationId()) {
-                    this.selectRelation(this.selectedRelationId()!);
-                }
-            },
-            { allowSignalWrites: true },
-        );
+        effect(() => this.selectRelation(this.selectedRelationId()), { allowSignalWrites: true });
     }
 
-    public selectRelation(relationId: number): void {
+    protected isCourseCompetencySelectable(courseCompetencyId: number): boolean {
+        return this.selectableTailCourseCompetencyIds().includes(courseCompetencyId);
+    }
+
+    public selectRelation(relationId?: number): void {
         const relation = this.relations().find(({ id }) => id === relationId);
         this.headCompetencyId.set(relation?.headCompetencyId);
         this.tailCompetencyId.set(relation?.tailCompetencyId);
@@ -77,7 +71,7 @@ export class CourseCompetencyRelationFormComponent {
             this.tailCompetencyId.set(undefined);
             this.relationType.set(undefined);
         } else {
-            if (this.selectableTailCourseCompetencies().find(({ id }) => id === courseCompetencyId)) {
+            if (this.selectableTailCourseCompetencyIds().find((id) => id === courseCompetencyId)) {
                 this.tailCompetencyId.set(courseCompetencyId);
             }
         }
@@ -86,14 +80,11 @@ export class CourseCompetencyRelationFormComponent {
     protected selectHeadCourseCompetency(headId: string) {
         this.headCompetencyId.set(Number(headId));
         this.tailCompetencyId.set(undefined);
-        this.onRelationDeselection.emit();
+        this.selectedRelationId.set(undefined);
     }
 
-    protected resetForm() {
-        this.headCompetencyId.set(undefined);
-        this.tailCompetencyId.set(undefined);
-        this.relationType.set(undefined);
-        this.onRelationDeselection.emit();
+    protected selectTailCourseCompetency(tailId: string) {
+        this.tailCompetencyId.set(Number(tailId));
     }
 
     protected async createRelation(): Promise<void> {
@@ -104,8 +95,8 @@ export class CourseCompetencyRelationFormComponent {
                 tailCompetencyId: Number(this.tailCompetencyId()!),
                 relationType: this.relationType()!,
             });
-            this.onRelationCreation.emit(courseCompetencyRelation);
-            this.resetForm();
+            this.relations.update((relations) => [...relations, courseCompetencyRelation]);
+            this.selectedRelationId.set(courseCompetencyRelation.id!);
         } catch (error) {
             this.alertService.error(error.message);
         } finally {
@@ -114,16 +105,20 @@ export class CourseCompetencyRelationFormComponent {
     }
 
     protected async updateRelation(): Promise<void> {
-        const currentRelation = this.relations().find(
-            ({ headCompetencyId, tailCompetencyId }) => headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId(),
-        );
         try {
             this.isLoading.set(true);
             const newRelationType = this.relationType()!;
-            await this.courseCompetencyApiService.updateCourseCompetencyRelation(this.courseId(), currentRelation!.id!, <UpdateCourseCompetencyRelationDTO>{
+            await this.courseCompetencyApiService.updateCourseCompetencyRelation(this.courseId(), this.selectedRelationId()!, <UpdateCourseCompetencyRelationDTO>{
                 newRelationType: newRelationType,
             });
-            this.onRelationUpdate.emit({ ...currentRelation, relationType: newRelationType });
+            this.relations.update((relations) =>
+                relations.map((relation) => {
+                    if (relation.id === this.selectedRelationId()) {
+                        return { ...relation, relationType: newRelationType };
+                    }
+                    return relation;
+                }),
+            );
         } catch (error) {
             this.alertService.error(error.message);
         } finally {
@@ -139,8 +134,8 @@ export class CourseCompetencyRelationFormComponent {
                     headCompetencyId == this.headCompetencyId() && tailCompetencyId == this.tailCompetencyId() && relationType === this.relationType(),
             );
             await this.courseCompetencyApiService.deleteCourseCompetencyRelation(this.courseId(), deletedRelation!.id!);
-            this.onRelationDeletion.emit(deletedRelation!.id!);
-            this.resetForm();
+            this.relations.update((relations) => relations.filter(({ id }) => id !== deletedRelation!.id));
+            this.selectedRelationId.set(undefined);
         } catch (error) {
             this.alertService.error(error.message);
         } finally {
@@ -156,16 +151,22 @@ export class CourseCompetencyRelationFormComponent {
      *
      * @returns The selectable tail competencies
      */
-    private getSelectableTailCompetencies(headCompetencyId: number, relationType: CompetencyRelationType): CourseCompetency[] {
+    private getSelectableTailCompetencyIds(headCompetencyId: number, relationType: CompetencyRelationType): number[] {
         return this.courseCompetencies()
-            .filter(({ id }) => id !== headCompetencyId) // Exclude the head itself
-            .filter(({ id }) => {
+            .map(({ id }) => id!)
+            .filter((id) => id !== headCompetencyId) // Exclude the head itself
+            .filter((id) => {
+                let relations = this.relations();
+                const existingRelation = relations.find((relation) => relation.headCompetencyId === headCompetencyId && relation.tailCompetencyId === id);
+                if (existingRelation) {
+                    relations = relations.filter((relation) => relation.id !== existingRelation.id);
+                }
                 const potentialRelation: CompetencyRelationDTO = {
                     headCompetencyId: headCompetencyId,
                     tailCompetencyId: id,
                     relationType: relationType,
                 };
-                return !this.detectCycleInCompetencyRelations(this.relations().concat(potentialRelation), this.courseCompetencies().length);
+                return !this.detectCycleInCompetencyRelations(relations.concat(potentialRelation), this.courseCompetencies().length);
             });
     }
 
@@ -218,9 +219,9 @@ export class CourseCompetencyRelationFormComponent {
         return this.hasCycle(reducedGraph, numOfCompetencies);
     }
 
-    private hasCycle(graph: number[][], n: number): boolean {
-        const visited: boolean[] = Array(n).fill(false);
-        const recursionStack: boolean[] = Array(n).fill(false);
+    private hasCycle(graph: number[][], noOfCourseCompetencies: number): boolean {
+        const visited: boolean[] = Array(noOfCourseCompetencies).fill(false);
+        const recursionStack: boolean[] = Array(noOfCourseCompetencies).fill(false);
 
         // Depth-first search to detect cycles
         const depthFirstSearch = (v: number): boolean => {
@@ -239,7 +240,7 @@ export class CourseCompetencyRelationFormComponent {
             return false;
         };
 
-        for (let node = 0; node < n; node++) {
+        for (let node = 0; node < noOfCourseCompetencies; node++) {
             if (!visited[node]) {
                 if (depthFirstSearch(node)) {
                     return true;
@@ -260,7 +261,7 @@ class UnionFind {
         this.rank = Array(size).fill(1);
     }
 
-    // Find the representative of the set that contains `u`
+    // Find the representative of the set that contains the `competencyId`
     find(competencyId: number): number {
         if (this.parent[competencyId] !== competencyId) {
             this.parent[competencyId] = this.find(this.parent[competencyId]); // Path compression

@@ -16,14 +16,10 @@
         } @else {
             <div class="p-3">
                 <jhi-course-competency-relation-form
-                    [selectedRelationId]="selectedRelationId()"
+                    [(selectedRelationId)]="selectedRelationId"
                     [courseId]="courseId()"
-                    [relations]="relations()"
+                    [(relations)]="relations"
                     [courseCompetencies]="courseCompetencies()"
-                    (onRelationCreation)="addRelation($event)"
-                    (onRelationUpdate)="updateRelation($event)"
-                    (onRelationDeletion)="deleteRelation($event)"
-                    (onRelationDeselection)="deselectRelation()"
                 />
             </div>
             <jhi-course-competencies-relation-graph
