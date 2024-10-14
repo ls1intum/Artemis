@@ -41,7 +41,7 @@
         </select>
     </div>
     <div class="col-2 pe-0 d-flex justify-content-end">
-        @if (relationTypeAlreadyExists()) {
+        @if (exactRelationAlreadyExists()) {
             <button (click)="deleteRelation()" class="btn btn-danger">
                 @if (isLoading()) {
                     <fa-icon [icon]="faSpinner" animation="spin" />
@@ -65,6 +65,7 @@
         }
     </div>
     @if (showCircularDependencyError()) {
-        <small class="p-0 mt-2 text-danger">The selected relation can not be updated as it would create a circular dependency</small>
+        <!--        TODO: Translation-->
+        <small class="p-0 mt-2 text-danger">The selected relation can not be created as it would create a circular dependency</small>
     }
 </div>

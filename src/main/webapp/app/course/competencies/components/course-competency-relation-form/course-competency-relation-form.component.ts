@@ -31,15 +31,8 @@ export class CourseCompetencyRelationFormComponent {
 
     readonly isLoading = signal<boolean>(false);
 
-    readonly relationAlreadyExists = computed(() =>
-        this.relations().some((relation) => relation.headCompetencyId == this.headCompetencyId() && relation.tailCompetencyId == this.tailCompetencyId()),
-    );
-    readonly relationTypeAlreadyExists = computed(() =>
-        this.relations().some(
-            (relation) =>
-                relation.headCompetencyId == this.headCompetencyId() && relation.tailCompetencyId == this.tailCompetencyId() && relation.relationType == this.relationType(),
-        ),
-    );
+    readonly relationAlreadyExists = computed(() => this.getRelation(this.headCompetencyId(), this.tailCompetencyId()) !== undefined);
+    readonly exactRelationAlreadyExists = computed(() => this.getExactRelation(this.headCompetencyId(), this.tailCompetencyId(), this.relationType()) !== undefined);
 
     readonly selectableTailCourseCompetencyIds = computed(() => {
         if (this.headCompetencyId() && this.relationType()) {
@@ -60,9 +53,11 @@ export class CourseCompetencyRelationFormComponent {
 
     public selectRelation(relationId?: number): void {
         const relation = this.relations().find(({ id }) => id === relationId);
-        this.headCompetencyId.set(relation?.headCompetencyId);
-        this.tailCompetencyId.set(relation?.tailCompetencyId);
-        this.relationType.set(relation?.relationType);
+        if (relation) {
+            this.headCompetencyId.set(relation?.headCompetencyId);
+            this.tailCompetencyId.set(relation?.tailCompetencyId);
+            this.relationType.set(relation?.relationType);
+        }
     }
 
     public selectCourseCompetency(courseCompetencyId: number): void {
@@ -85,6 +80,12 @@ export class CourseCompetencyRelationFormComponent {
 
     protected selectTailCourseCompetency(tailId: string) {
         this.tailCompetencyId.set(Number(tailId));
+        const existingRelation = this.getExactRelation(this.headCompetencyId(), this.tailCompetencyId(), this.relationType());
+        if (existingRelation) {
+            this.selectedRelationId.set(existingRelation.id);
+        } else {
+            this.selectedRelationId.set(undefined);
+        }
     }
 
     protected async createRelation(): Promise<void> {
@@ -102,6 +103,16 @@ export class CourseCompetencyRelationFormComponent {
         } finally {
             this.isLoading.set(false);
         }
+    }
+
+    protected getExactRelation(headCompetencyId?: number, tailCompetencyId?: number, relationType?: CompetencyRelationType): CompetencyRelationDTO | undefined {
+        return this.relations().find(
+            (relation) => relation.headCompetencyId === headCompetencyId && relation.tailCompetencyId === tailCompetencyId && relation.relationType === relationType,
+        );
+    }
+
+    protected getRelation(headCompetencyId?: number, tailCompetencyId?: number): CompetencyRelationDTO | undefined {
+        return this.relations().find((relation) => relation.headCompetencyId === headCompetencyId && relation.tailCompetencyId === tailCompetencyId);
     }
 
     protected async updateRelation(): Promise<void> {
@@ -157,7 +168,7 @@ export class CourseCompetencyRelationFormComponent {
             .filter((id) => id !== headCompetencyId) // Exclude the head itself
             .filter((id) => {
                 let relations = this.relations();
-                const existingRelation = relations.find((relation) => relation.headCompetencyId === headCompetencyId && relation.tailCompetencyId === id);
+                const existingRelation = this.getRelation(headCompetencyId, id);
                 if (existingRelation) {
                     relations = relations.filter((relation) => relation.id !== existingRelation.id);
                 }

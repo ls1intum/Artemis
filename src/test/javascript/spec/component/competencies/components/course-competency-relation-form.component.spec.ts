@@ -104,7 +104,7 @@ describe('CourseCompetencyRelationFormComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.relationTypeAlreadyExists()).toBeTrue();
+        expect(component.exactRelationAlreadyExists()).toBeTrue();
     });
 
     it('should select relation if selectedRelationId is set', () => {
