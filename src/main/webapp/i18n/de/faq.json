@@ -28,7 +28,9 @@
                 "categories": "Kategorien",
                 "state": "Status"
             },
-            "course": "Kurs"
+            "course": "Kurs",
+            "noExisting": "Momentan existiert für diesen Kurs noch kein FAQ.",
+            "noMatching": "Es gibt kein FAQ, das die Kombination aus Filter- und Suchkriterien erfüllt."
         }
     }
 }

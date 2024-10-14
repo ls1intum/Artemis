@@ -28,7 +28,9 @@
                 "categories": "Categories",
                 "state": "State"
             },
-            "course": "Course"
+            "course": "Course",
+            "noExisting": "Currently, there is no FAQ available for this course.",
+            "noMatching": "There is no FAQ that matches the combination of filter and search criteria."
         }
     }
 }

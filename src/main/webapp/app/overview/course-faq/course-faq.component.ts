@@ -16,6 +16,7 @@ import { loadCourseFaqCategories } from 'app/faq/faq.utils';
 import { CustomExerciseCategoryBadgeComponent } from 'app/shared/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { onError } from 'app/shared/util/global.utils';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @Component({
     selector: 'jhi-course-faq',
@@ -23,7 +24,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
     styleUrls: ['../course-overview.scss', 'course-faq.component.scss'],
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent],
+    imports: [ArtemisSharedComponentModule, ArtemisSharedModule, CourseFaqAccordionComponent, CustomExerciseCategoryBadgeComponent, SearchFilterComponent, ArtemisMarkdownModule],
 })
 export class CourseFaqComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
