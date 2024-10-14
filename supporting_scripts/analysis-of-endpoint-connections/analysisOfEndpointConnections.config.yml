@@ -10,9 +10,6 @@ restCallAnalysisResultPath: 'restCallAnalysisResult.json'
 clientDirPath: 'src/main/webapp/app'
 
 # This sections holds a list of files that should be excluded from the parsing and the analysis. Adjust the list as necessary.
-excludedServerFiles:
-  -
-
 excludedEndpointFiles:
   # These files only contain endpoints that are not used by the WebApp
   - 'de/tum/in/www1/artemis/web/rest/open/PublicBuildPlanResource.java'

@@ -8,6 +8,8 @@ import { load } from 'js-yaml';
 interface Config {
     excludedEndpointFiles: string[];
     excludedEndpoints: string[];
+    excludedRestCallFiles: string[];
+    excludedRestCalls: string[];
 
     endpointParsingResultPath: string;
     restCallParsingResultPath: string;

@@ -44,7 +44,7 @@ public class EndpointParser {
 
         String[] filesToParse = {};
         try (Stream<Path> paths = Files.walk(absoluteDirectoryPath)) {
-            filesToParse = paths.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".java") && !CONFIG.excludedServerFiles().contains(path)).map(Path::toString)
+            filesToParse = paths.filter(path -> Files.isRegularFile(path) && path.toString().endsWith(".java") && !CONFIG.excludedEndpointFiles().contains(path)).map(Path::toString)
                     .toArray(String[]::new);
         }
         catch (IOException e) {
