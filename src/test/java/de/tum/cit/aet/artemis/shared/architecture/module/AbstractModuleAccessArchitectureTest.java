@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.shared.architecture.AbstractArchitectureTest;
 public abstract class AbstractModuleAccessArchitectureTest extends AbstractArchitectureTest implements ModuleArchitectureTest {
 
     @Test
-    // ToDo: In the future, we might replace this Spring Modulith Checks
+    // ToDo: In the future, we might replace this with Spring Modulith Checks
     void shouldOnlyAccessApiDomainDto() {
         noClasses().that().resideOutsideOfPackage(getModuleWithSubpackage()).should()
                 .dependOnClassesThat(
