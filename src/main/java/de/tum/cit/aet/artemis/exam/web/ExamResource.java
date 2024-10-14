@@ -77,6 +77,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
@@ -88,6 +89,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamInformationDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamScoresDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
@@ -1316,5 +1318,20 @@ public class ExamResource {
                 analyzeSessionsForTheSameStudentExamWithDifferentIpAddresses, analyzeSessionsForTheSameStudentExamWithDifferentBrowserFingerprints,
                 analyzeSessionsIpOutsideOfRange);
         return ResponseEntity.ok(examSessionService.retrieveAllSuspiciousExamSessionsByExamId(examId, options, ipSubnet));
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/deletion-summary : Get a summary of the deletion of an exam.
+     *
+     * @param courseId the id of the course
+     * @param examId   the id of the exam
+     *
+     * @return the ResponseEntity with status 200 (OK) and with body a summary of the deletion of the exam
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/deletion-summary")
+    @EnforceAtLeastInstructorInCourse
+    public ResponseEntity<ExamDeletionSummaryDTO> getDeletionSummary(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get deletion summary for exam : {}", examId);
+        return ResponseEntity.ok(examDeletionService.getExamDeletionSummary(examId));
     }
 }

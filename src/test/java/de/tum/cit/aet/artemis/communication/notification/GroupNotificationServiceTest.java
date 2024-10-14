@@ -62,7 +62,6 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.repository.ExamRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -82,9 +81,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationIndependentT
 
     @Autowired
     private NotificationSettingRepository notificationSettingRepository;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     @Autowired
     private ExamRepository examRepository;

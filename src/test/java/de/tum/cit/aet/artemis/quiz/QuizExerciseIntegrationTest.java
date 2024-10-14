@@ -306,7 +306,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationIndependentTe
     }
 
     private void checkCreatedFile(String path) throws Exception {
-        MvcResult result = request.performMvcRequest(get(path)).andExpect(status().isOk()).andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM)).andReturn();
+        MediaType mediaType = path.endsWith(".png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
+        MvcResult result = request.performMvcRequest(get(path)).andExpect(status().isOk()).andExpect(content().contentType(mediaType)).andReturn();
         byte[] image = result.getResponse().getContentAsByteArray();
         assertThat(image).isNotEmpty();
     }

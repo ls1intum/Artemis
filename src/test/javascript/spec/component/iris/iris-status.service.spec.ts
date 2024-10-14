@@ -1,9 +1,10 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { of } from 'rxjs';
 import { IrisStatusService } from 'app/iris/iris-status.service';
 import { IrisRateLimitInformation } from 'app/entities/iris/iris-ratelimit-info.model';
+import { provideHttpClient } from '@angular/common/http';
 
 describe('IrisStatusService', () => {
     let service: IrisStatusService;
@@ -11,8 +12,10 @@ describe('IrisStatusService', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule],
+            imports: [],
             providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
                 IrisStatusService,
                 { provide: JhiWebsocketService, useValue: { connectionState: of({ connected: true, intendedDisconnect: false, wasEverConnectedBefore: true }) } },
             ],

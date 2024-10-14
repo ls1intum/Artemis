@@ -34,6 +34,7 @@ import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
  * Handles administrative actions for LTI platforms, including configuration, deletion, and dynamic registration.
  */
 @RestController
+@EnforceAdmin
 @RequestMapping("api/admin/")
 @Profile(PROFILE_LTI)
 public class AdminLtiConfigurationResource {
@@ -76,7 +77,6 @@ public class AdminLtiConfigurationResource {
      * @return a {@code ResponseEntity} with an {@code Optional<LtiPlatformConfiguration>} and HTTP status.
      */
     @GetMapping("lti-platform/{platformId}")
-    @EnforceAdmin
     public ResponseEntity<LtiPlatformConfiguration> getLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
         log.debug("REST request to configured lti platform");
         LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
@@ -90,7 +90,6 @@ public class AdminLtiConfigurationResource {
      * @return a {@code ResponseEntity<Void>} with status {@code 200 (OK)} and a header indicating the deletion.
      */
     @DeleteMapping("lti-platform/{platformId}")
-    @EnforceAdmin
     public ResponseEntity<Void> deleteLtiPlatformConfiguration(@PathVariable("platformId") String platformId) {
         log.debug("REST request to configured lti platform");
         LtiPlatformConfiguration platform = ltiPlatformConfigurationRepository.findByIdElseThrow(Long.parseLong(platformId));
@@ -106,7 +105,6 @@ public class AdminLtiConfigurationResource {
      *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
      */
     @PutMapping("lti-platform")
-    @EnforceAdmin
     public ResponseEntity<Void> updateLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
         log.debug("REST request to update configured lti platform");
 
@@ -126,7 +124,6 @@ public class AdminLtiConfigurationResource {
      *         or with status 400 (Bad Request) if the provided platform configuration is invalid (e.g., missing ID)
      */
     @PostMapping("lti-platform")
-    @EnforceAdmin
     public ResponseEntity<Void> addLtiPlatformConfiguration(@RequestBody LtiPlatformConfiguration platform) {
         log.debug("REST request to add new lti platform");
 
@@ -148,7 +145,6 @@ public class AdminLtiConfigurationResource {
      * @return a {@link ResponseEntity} with status 200 (OK) if the dynamic registration process was successful.
      */
     @PostMapping("lti13/dynamic-registration")
-    @EnforceAdmin
     public ResponseEntity<Void> lti13DynamicRegistration(@RequestParam(name = "openid_configuration") String openIdConfiguration,
             @RequestParam(name = "registration_token") Optional<String> registrationToken) {
 

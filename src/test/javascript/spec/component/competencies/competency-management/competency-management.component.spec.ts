@@ -4,9 +4,8 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { Competency, CompetencyRelation, CompetencyWithTailRelationDTO, CourseCompetencyProgress, CourseCompetencyType } from 'app/entities/competency.model';
 import { CompetencyManagementComponent } from 'app/course/competencies/competency-management/competency-management.component';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, provideRouter } from '@angular/router';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { RouterTestingModule } from '@angular/router/testing';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../../test.module';
@@ -47,7 +46,7 @@ describe('CompetencyManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([]), NgbProgressbar],
+            imports: [ArtemisTestModule, NgbProgressbar],
             declarations: [
                 CompetencyManagementComponent,
                 MockHasAnyAuthorityDirective,
@@ -61,6 +60,7 @@ describe('CompetencyManagementComponent', () => {
                 MockDirective(DeleteButtonDirective),
             ],
             providers: [
+                provideRouter([]),
                 MockProvider(AccountService),
                 MockProvider(AlertService),
                 { provide: NgbModal, useClass: MockNgbModalService },

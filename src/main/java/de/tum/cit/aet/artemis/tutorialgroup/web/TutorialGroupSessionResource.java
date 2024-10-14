@@ -55,6 +55,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurati
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Profile(PROFILE_CORE)
+@FeatureToggle(Feature.TutorialGroups)
 @RestController
 @RequestMapping("api/")
 public class TutorialGroupSessionResource {
@@ -100,7 +101,6 @@ public class TutorialGroupSessionResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> getOneOfTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
         log.debug("REST request to get session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var session = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
@@ -123,7 +123,6 @@ public class TutorialGroupSessionResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody @Valid TutorialGroupSessionDTO tutorialGroupSessionDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
@@ -169,7 +168,6 @@ public class TutorialGroupSessionResource {
      */
     @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count")
     @EnforceAtLeastTutor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> updateAttendanceCount(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestParam Optional<@Range(min = 0, max = 3000) Integer> attendanceCount) { // @Range is [from; to]
 
@@ -192,7 +190,6 @@ public class TutorialGroupSessionResource {
      */
     @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deleteSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
         log.debug("REST request to delete session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionFromDatabase = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
@@ -212,7 +209,6 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @EnforceAtLeastTutor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody @Valid TutorialGroupSessionDTO tutorialGroupSessionDTO) throws URISyntaxException {
         log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
@@ -255,7 +251,6 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody TutorialGroupStatusDTO tutorialGroupStatusDTO) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
@@ -283,7 +278,6 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupSession> activate(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId) throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
