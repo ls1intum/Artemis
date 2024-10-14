@@ -67,7 +67,7 @@ import de.tum.cit.aet.artemis.assessment.service.ComplaintService;
 import de.tum.cit.aet.artemis.assessment.service.CourseScoreCalculationService;
 import de.tum.cit.aet.artemis.assessment.service.GradingScaleService;
 import de.tum.cit.aet.artemis.athena.service.AthenaModuleService;
-import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
+import de.tum.cit.aet.artemis.atlas.api.LearningPathApi;
 import de.tum.cit.aet.artemis.communication.service.ConductAgreementService;
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -177,7 +177,7 @@ public class CourseResource {
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
 
-    private final LearningPathService learningPathService;
+    private final LearningPathApi learningPathApi;
 
     private final ExamRepository examRepository;
 
@@ -190,7 +190,7 @@ public class CourseResource {
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, GradingScaleService gradingScaleService,
-            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathService learningPathService,
+            CourseScoreCalculationService courseScoreCalculationService, GradingScaleRepository gradingScaleRepository, LearningPathApi learningPathApi,
             ConductAgreementService conductAgreementService, Optional<AthenaModuleService> athenaModuleService, ExamRepository examRepository, ComplaintService complaintService,
             TeamRepository teamRepository) {
         this.courseService = courseService;
@@ -210,7 +210,7 @@ public class CourseResource {
         this.gradingScaleService = gradingScaleService;
         this.courseScoreCalculationService = courseScoreCalculationService;
         this.gradingScaleRepository = gradingScaleRepository;
-        this.learningPathService = learningPathService;
+        this.learningPathApi = learningPathApi;
         this.conductAgreementService = conductAgreementService;
         this.athenaModuleService = athenaModuleService;
         this.examRepository = examRepository;
@@ -338,7 +338,7 @@ public class CourseResource {
         // if learning paths got enabled, generate learning paths for students
         if (existingCourse.getLearningPathsEnabled() != courseUpdate.getLearningPathsEnabled() && courseUpdate.getLearningPathsEnabled()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
-            learningPathService.generateLearningPaths(courseWithCompetencies);
+            learningPathApi.generateLearningPaths(courseWithCompetencies);
         }
 
         // if access to restricted athena modules got disabled for the course, we need to set all exercises that use restricted modules to null
@@ -1254,7 +1254,7 @@ public class CourseResource {
             courseService.addUserToGroup(userToAddToGroup.get(), group);
             if (role == Role.STUDENT && course.getLearningPathsEnabled()) {
                 Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(course.getId());
-                learningPathService.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());
+                learningPathApi.generateLearningPathForUser(courseWithCompetencies, userToAddToGroup.get());
             }
             return ResponseEntity.ok().body(null);
         }

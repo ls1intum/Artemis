@@ -44,7 +44,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -182,7 +182,7 @@ public class ProgrammingExerciseService {
 
     private final ExerciseService exerciseService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, GitService gitService, Optional<VersionControlService> versionControlService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
@@ -198,7 +198,7 @@ public class ProgrammingExerciseService {
             ProgrammingSubmissionService programmingSubmissionService, Optional<IrisSettingsService> irisSettingsService, Optional<AeolusTemplateService> aeolusTemplateService,
             Optional<BuildScriptGenerationService> buildScriptGenerationService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProfileService profileService, ExerciseService exerciseService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressService competencyProgressService) {
+            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, CompetencyProgressApi competencyProgressApi) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.gitService = gitService;
         this.versionControlService = versionControlService;
@@ -231,7 +231,7 @@ public class ProgrammingExerciseService {
         this.profileService = profileService;
         this.exerciseService = exerciseService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -336,7 +336,7 @@ public class ProgrammingExerciseService {
         // Step 12c: Check notifications for new exercise
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(savedProgrammingExercise);
         // Step 12d: Update student competency progress
-        competencyProgressService.updateProgressByLearningObjectAsync(savedProgrammingExercise);
+        competencyProgressApi.updateProgressByLearningObjectAsync(savedProgrammingExercise);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -617,7 +617,7 @@ public class ProgrammingExerciseService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(programmingExerciseBeforeUpdate, Optional.of(updatedProgrammingExercise));
 
         return savedProgrammingExercise;
     }

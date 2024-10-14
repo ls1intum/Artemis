@@ -21,9 +21,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
+import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.FilePathService;
 import de.tum.cit.aet.artemis.core.service.FileService;
@@ -59,13 +59,13 @@ public class LectureUnitService {
 
     private final Optional<PyrisWebhookService> pyrisWebhookService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
-    private final CourseCompetencyRepository courseCompetencyRepository;
+    private final CourseCompetencyApi courseCompetencyApi;
 
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository,
             FileService fileService, SlideRepository slideRepository, ExerciseRepository exerciseRepository, Optional<PyrisWebhookService> pyrisWebhookService,
-            CompetencyProgressService competencyProgressService, CourseCompetencyRepository courseCompetencyRepository) {
+            CompetencyProgressApi competencyProgressApi, CourseCompetencyApi courseCompetencyApi) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -73,8 +73,8 @@ public class LectureUnitService {
         this.slideRepository = slideRepository;
         this.exerciseRepository = exerciseRepository;
         this.pyrisWebhookService = pyrisWebhookService;
-        this.courseCompetencyRepository = courseCompetencyRepository;
-        this.competencyProgressService = competencyProgressService;
+        this.courseCompetencyApi = courseCompetencyApi;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -156,15 +156,7 @@ public class LectureUnitService {
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithCompetenciesAndSlidesElseThrow(lectureUnit.getId());
 
-        if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
-            // update associated competencies
-            Set<CourseCompetency> competencies = lectureUnitToDelete.getCompetencies();
-            courseCompetencyRepository.saveAll(competencies.stream().map(competency -> {
-                competency = courseCompetencyRepository.findByIdWithLectureUnitsElseThrow(competency.getId());
-                competency.getLectureUnits().remove(lectureUnitToDelete);
-                return competency;
-            }).toList());
-        }
+        courseCompetencyApi.deleteCompetencyOfLectureUnit(lectureUnitToDelete);
 
         if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
             fileService.schedulePathForDeletion(FilePathService.actualPathForPublicPathOrThrow(URI.create((attachmentUnit.getAttachment().getLink()))), 5);
@@ -185,7 +177,7 @@ public class LectureUnitService {
 
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated competency progress objects
-            competencyProgressService.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
+            competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(lectureUnitToDelete, Optional.empty());
         }
     }
 

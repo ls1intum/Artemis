@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -44,14 +44,14 @@ public class TextUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final CompetencyProgressService competencyProgressService;
+    private final CompetencyProgressApi competencyProgressApi;
 
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService,
-            CompetencyProgressService competencyProgressService) {
+            CompetencyProgressApi competencyProgressApi) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.competencyProgressService = competencyProgressService;
+        this.competencyProgressApi = competencyProgressApi;
     }
 
     /**
@@ -103,7 +103,7 @@ public class TextUnitResource {
         textUnitForm.setLecture(existingTextUnit.getLecture());
         TextUnit result = textUnitRepository.save(textUnitForm);
 
-        competencyProgressService.updateProgressForUpdatedLearningObjectAsync(existingTextUnit, Optional.of(textUnitForm));
+        competencyProgressApi.updateProgressForUpdatedLearningObjectAsync(existingTextUnit, Optional.of(textUnitForm));
 
         return ResponseEntity.ok(result);
     }
@@ -139,7 +139,7 @@ public class TextUnitResource {
         Lecture updatedLecture = lectureRepository.save(lecture);
         TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().getLast();
 
-        competencyProgressService.updateProgressByLearningObjectAsync(persistedTextUnit);
+        competencyProgressApi.updateProgressByLearningObjectAsync(persistedTextUnit);
 
         return ResponseEntity.created(new URI("/api/text-units/" + persistedTextUnit.getId())).body(persistedTextUnit);
     }
