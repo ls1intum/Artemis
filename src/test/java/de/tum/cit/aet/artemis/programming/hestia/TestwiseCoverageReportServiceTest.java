@@ -69,6 +69,11 @@ class TestwiseCoverageReportServiceTest extends AbstractLocalCILocalVCIntegratio
 
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
+    @Override
+    protected String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @BeforeEach
     void setup() throws Exception {
         userUtilService.addUsers(TEST_PREFIX, 1, 0, 0, 1);

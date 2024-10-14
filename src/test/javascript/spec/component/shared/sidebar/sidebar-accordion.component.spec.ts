@@ -28,6 +28,7 @@ describe('SidebarAccordionComponent', () => {
                 SearchFilterPipe,
                 SearchFilterComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(SearchFilterComponent),
             ],
         }).compileComponents();
     });

@@ -15,6 +15,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { SidebarCardDirective } from 'app/shared/sidebar/sidebar-card.directive';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
+import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 
 @NgModule({
     imports: [
@@ -27,6 +28,7 @@ import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
         SubmissionResultStatusModule,
         SidebarCardDirective,
         ArtemisExamSharedModule,
+        SearchFilterComponent,
     ],
     declarations: [
         SidebarAccordionComponent,

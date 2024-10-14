@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed, fakeAsync, flush } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
@@ -93,6 +93,9 @@ describe('FaqComponent', () => {
                     applyFilters: () => {
                         return [faq2, faq3];
                     },
+                    hasSearchTokens: () => {
+                        return true;
+                    },
                 }),
             ],
         })
@@ -158,20 +161,31 @@ describe('FaqComponent', () => {
         expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
     });
 
-    it('should catch error if no categories are found', fakeAsync(() => {
+    it('should catch error if no categories are found', () => {
         alertServiceStub = jest.spyOn(alertService, 'error');
         const error = { status: 404 };
         jest.spyOn(faqService, 'findAllCategoriesByCourseId').mockReturnValue(throwError(() => new HttpErrorResponse(error)));
         faqComponentFixture.detectChanges();
         expect(alertServiceStub).toHaveBeenCalledOnce();
-        flush();
-    }));
+    });
+
+    it('should search through already filtered array', () => {
+        const searchSpy = jest.spyOn(faqService, 'hasSearchTokens');
+        const applyFilterSpy = jest.spyOn(faqService, 'applyFilters');
+        faqComponent.setSearchValue('questionTitle');
+        faqComponent.refreshFaqList(faqComponent.searchInput.getValue());
+        expect(applyFilterSpy).toHaveBeenCalledOnce();
+        expect(searchSpy).toHaveBeenCalledTimes(2);
+        expect(searchSpy).toHaveBeenCalledWith(faq2, 'questionTitle');
+        expect(searchSpy).toHaveBeenCalledWith(faq3, 'questionTitle');
+        expect(faqComponent.filteredFaqs).toHaveLength(2);
+        expect(faqComponent.filteredFaqs).not.toContain(faq1);
+        expect(faqComponent.filteredFaqs).toEqual([faq2, faq3]);
+    });
 
     it('should call sortService when sortRows is called', () => {
         jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
-
         faqComponent.sortRows();
-
         expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
 });

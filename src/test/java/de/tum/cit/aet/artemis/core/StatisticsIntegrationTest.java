@@ -95,7 +95,6 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationIndependentTest
 
     @BeforeEach
     void initTestCase() {
-        participantScoreScheduleService.activate();
         userUtilService.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
 
         course = modelingExerciseUtilService.addCourseWithOneModelingExercise();

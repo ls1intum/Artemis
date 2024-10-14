@@ -71,6 +71,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService
 import de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupService;
 
 @Profile(PROFILE_CORE)
+@FeatureToggle(Feature.TutorialGroups)
 @RestController
 @RequestMapping("api/")
 public class TutorialGroupResource {
@@ -131,7 +132,6 @@ public class TutorialGroupResource {
      */
     @GetMapping("tutorial-groups/{tutorialGroupId}/title")
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
         log.debug("REST request to get title of TutorialGroup : {}", tutorialGroupId);
         return tutorialGroupRepository.getTutorialGroupTitle(tutorialGroupId).map(ResponseEntity::ok)
@@ -147,7 +147,6 @@ public class TutorialGroupResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups/campus-values")
     @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<String>> getUniqueCampusValues(@PathVariable Long courseId) {
         log.debug("REST request to get unique campus values used for tutorial groups in course : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -165,7 +164,6 @@ public class TutorialGroupResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups/language-values")
     @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<String>> getUniqueLanguageValues(@PathVariable Long courseId) {
         log.debug("REST request to get unique language values used for tutorial groups in course : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -182,7 +180,6 @@ public class TutorialGroupResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<List<TutorialGroup>> getAllForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -202,7 +199,6 @@ public class TutorialGroupResource {
      */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastStudent
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -221,7 +217,6 @@ public class TutorialGroupResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) throws URISyntaxException {
         log.debug("REST request to create TutorialGroup: {} in course: {}", tutorialGroup, courseId);
         if (tutorialGroup.getId() != null) {
@@ -282,7 +277,6 @@ public class TutorialGroupResource {
      */
     @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.info("REST request to delete a TutorialGroup: {} of course: {}", tutorialGroupId, courseId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
@@ -317,7 +311,6 @@ public class TutorialGroupResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> update(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestBody @Valid TutorialGroupUpdateDTO tutorialGroupUpdateDTO) {
         TutorialGroup updatedTutorialGroup = tutorialGroupUpdateDTO.tutorialGroup();
@@ -405,7 +398,6 @@ public class TutorialGroupResource {
      */
     @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @EnforceAtLeastTutor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
@@ -427,7 +419,6 @@ public class TutorialGroupResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @EnforceAtLeastTutor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
@@ -454,7 +445,6 @@ public class TutorialGroupResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestBody Set<StudentDTO> studentDtos) {
         log.debug("REST request to register {} to tutorial group {}", studentDtos, tutorialGroupId);
@@ -476,7 +466,6 @@ public class TutorialGroupResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/import")
     @EnforceAtLeastInstructor
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<List<TutorialGroupRegistrationImportDTO>> importRegistrations(@PathVariable Long courseId,
             @RequestBody @Valid Set<TutorialGroupRegistrationImportDTO> importDTOs) {
         log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);
@@ -549,7 +538,6 @@ public class TutorialGroupResource {
      */
     @GetMapping(value = "courses/{courseId}/tutorial-groups/export/csv", produces = "text/csv")
     @EnforceAtLeastInstructorInCourse
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<byte[]> exportTutorialGroupsToCSV(@PathVariable Long courseId, @RequestParam List<String> fields) {
         log.debug("REST request to export TutorialGroups to CSV for course: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -580,7 +568,6 @@ public class TutorialGroupResource {
      */
     @GetMapping(value = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastInstructorInCourse
-    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<String> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
         log.debug("REST request to export TutorialGroups to JSON for course: {}", courseId);
         try {
