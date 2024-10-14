@@ -1,4 +1,19 @@
-import { ChangeDetectorRef, Component, OnChanges, SimpleChanges, ViewEncapsulation, computed, effect, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    OnChanges,
+    SimpleChanges,
+    ViewEncapsulation,
+    computed,
+    effect,
+    inject,
+    input,
+    output,
+    signal,
+    viewChild,
+    viewChildren,
+} from '@angular/core';
 import { RepositoryFileService } from 'app/exercises/shared/result/repository.service';
 import { CodeEditorRepositoryFileService, ConnectionError } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeEditorFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-file.service';
@@ -22,6 +37,9 @@ import { CodeEditorTutorAssessmentInlineFeedbackSuggestionComponent } from 'app/
 import { MonacoEditorLineHighlight } from 'app/shared/monaco-editor/model/monaco-editor-line-highlight.model';
 import { FileTypeService } from 'app/exercises/programming/shared/service/file-type.service';
 import { EditorPosition } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
+import { ArtemisProgrammingManualAssessmentModule } from 'app/exercises/programming/assess/programming-manual-assessment.module';
+import { CodeEditorHeaderComponent } from 'app/exercises/programming/shared/code-editor/header/code-editor-header.component';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; loadingError: boolean } };
 export type Annotation = { fileName: string; row: number; column: number; text: string; type: string; timestamp: number; hash?: string };
@@ -30,7 +48,10 @@ export type Annotation = { fileName: string; row: number; column: number; text: 
     templateUrl: './code-editor-monaco.component.html',
     styleUrls: ['./code-editor-monaco.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    providers: [RepositoryFileService], // TODO: standalone
+    imports: [ArtemisSharedModule, ArtemisProgrammingManualAssessmentModule, MonacoEditorComponent, CodeEditorHeaderComponent],
+    providers: [RepositoryFileService],
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CodeEditorMonacoComponent implements OnChanges {
     static readonly CLASS_DIFF_LINE_HIGHLIGHT = 'monaco-diff-line-highlight';

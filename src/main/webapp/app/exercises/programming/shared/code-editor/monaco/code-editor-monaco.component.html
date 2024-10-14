@@ -1,5 +1,5 @@
 <div class="card">
-    <jhi-code-editor-header [showTabSizeSelector]="false" [filename]="selectedFile()" [isLoading]="loadingCount() > 0" />
+    <jhi-code-editor-header [showTabSizeSelector]="false" [fileName]="selectedFile()" [isLoading]="loadingCount() > 0" />
     <div class="card-body card-body-monaco">
         @if (selectedFile()) {
             @for (feedback of filterFeedbackForSelectedFile(feedbackInternal()); track feedback.id) {
