@@ -39,7 +39,7 @@ public class LLMTokenUsageService {
      * @param exercise to map the token cost to an exercise
      * @param user     to map the token cost to a user
      * @param course   to map the token to a course
-     * @param tokens   token cost lsit of type PyrisLLMCostDTO
+     * @param tokens   token cost list of type PyrisLLMCostDTO
      * @return list of the saved data
      */
     public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, IrisMessage message, Exercise exercise, User user, Course course, List<PyrisLLMCostDTO> tokens) {
@@ -63,8 +63,22 @@ public class LLMTokenUsageService {
             llmTokenUsage.setCostPerMillionOutputTokens(cost.costPerOutputToken());
             llmTokenUsage.setModel(cost.modelInfo());
             llmTokenUsage.setTraceId(job.jobId());
-            tokenUsages.add(llmTokenUsageRepository.save(llmTokenUsage));
+            tokenUsages.add(llmTokenUsage);
         }
+        llmTokenUsageRepository.saveAll(tokenUsages);
         return tokenUsages;
+    }
+
+    // Overloaded methods without optional parameters
+    public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, User user, Course course, List<PyrisLLMCostDTO> tokens) {
+        return saveIrisTokenUsage(job, null, null, user, course, tokens);
+    }
+
+    public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, IrisMessage message, User user, Course course, List<PyrisLLMCostDTO> tokens) {
+        return saveIrisTokenUsage(job, message, null, user, course, tokens);
+    }
+
+    public List<LLMTokenUsage> saveIrisTokenUsage(PyrisJob job, Course course, List<PyrisLLMCostDTO> tokens) {
+        return saveIrisTokenUsage(job, null, null, null, course, tokens);
     }
 }

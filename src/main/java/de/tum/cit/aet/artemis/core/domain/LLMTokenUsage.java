@@ -60,7 +60,6 @@ public class LLMTokenUsage extends DomainObject {
     @Column(name = "user_id")
     private long userId;
 
-    @Nullable
     @Column(name = "time")
     private ZonedDateTime time = ZonedDateTime.now();
 
@@ -71,7 +70,7 @@ public class LLMTokenUsage extends DomainObject {
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "iris_message_id")
-    IrisMessage irisMessage;
+    private IrisMessage irisMessage;
 
     public LLMServiceType getServiceType() {
         return serviceType;
@@ -171,8 +170,8 @@ public class LLMTokenUsage extends DomainObject {
 
     @Override
     public String toString() {
-        return "LLMTokenUsage{" + "serviceType=" + serviceType + ", model=" + model + ", num_input_tokens=" + numInputTokens + ", cost_per_input_token=" + costPerMillionInputTokens
-                + ", num_output_tokens=" + numOutputTokens + ", cost_per_output_token=" + costPerMillionOutputTokens + ", course=" + course + ", exercise=" + exercise + ", userId="
-                + userId + ", timestamp=" + time + ", trace_id=" + traceId + ", irisMessage=" + irisMessage + '}';
+        return "LLMTokenUsage{" + "serviceType=" + serviceType + ", model=" + model + ", numInputTokens=" + numInputTokens + ", costPerMillionInputTokens="
+                + costPerMillionInputTokens + ", numOutputTokens=" + numOutputTokens + ", costPerMillionOutputTokens=" + costPerMillionOutputTokens + ", course=" + course
+                + ", exercise=" + exercise + ", userId=" + userId + ", timestamp=" + time + ", traceId=" + traceId + ", irisMessage=" + irisMessage + '}';
     }
 }

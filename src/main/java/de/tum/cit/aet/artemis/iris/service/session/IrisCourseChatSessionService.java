@@ -63,7 +63,7 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
     public IrisCourseChatSessionService(IrisMessageService irisMessageService, LLMTokenUsageService llmTokenUsageService, IrisSettingsService irisSettingsService,
             IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService, IrisSessionRepository irisSessionRepository,
             IrisRateLimitService rateLimitService, IrisCourseChatSessionRepository irisCourseChatSessionRepository, PyrisPipelineService pyrisPipelineService,
-            ObjectMapper objectMapper, LLMTokenUsageService lLMTokenUsageService) {
+            ObjectMapper objectMapper) {
         super(irisSessionRepository, objectMapper);
         this.irisMessageService = irisMessageService;
         this.llmTokenUsageService = llmTokenUsageService;
@@ -142,11 +142,11 @@ public class IrisCourseChatSessionService extends AbstractIrisChatSessionService
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
             var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            llmTokenUsageService.saveIrisTokenUsage(job, savedMessage, null, session.getUser(), session.getCourse(), statusUpdate.tokens());
+            llmTokenUsageService.saveIrisTokenUsage(job, savedMessage, session.getUser(), session.getCourse(), statusUpdate.tokens());
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
-            llmTokenUsageService.saveIrisTokenUsage(job, null, null, session.getUser(), session.getCourse(), statusUpdate.tokens());
+            llmTokenUsageService.saveIrisTokenUsage(job, session.getUser(), session.getCourse(), statusUpdate.tokens());
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
         }
         updateLatestSuggestions(session, statusUpdate.suggestions());

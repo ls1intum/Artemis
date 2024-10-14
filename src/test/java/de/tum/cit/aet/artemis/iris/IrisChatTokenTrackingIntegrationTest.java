@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
@@ -13,7 +12,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -156,15 +154,15 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
         // Verify that the tokens are saved correctly
         List<PyrisLLMCostDTO> savedTokenUsages = captor.getValue();
-        assertEquals(5, savedTokenUsages.size());
+        assertThat(savedTokenUsages).hasSize(5);
         for (int i = 0; i < savedTokenUsages.size(); i++) {
             PyrisLLMCostDTO usage = savedTokenUsages.get(i);
             PyrisLLMCostDTO expectedCost = tokens.get(i);
 
-            assertEquals(expectedCost.numInputTokens(), usage.numInputTokens());
-            assertEquals(expectedCost.costPerInputToken(), usage.costPerInputToken());
-            assertEquals(expectedCost.numOutputTokens(), usage.numOutputTokens());
-            assertEquals(expectedCost.costPerOutputToken(), usage.costPerOutputToken());
+            assertThat(usage.numInputTokens()).isEqualTo(expectedCost.numInputTokens());
+            assertThat(usage.costPerInputToken()).isEqualTo(expectedCost.costPerInputToken());
+            assertThat(usage.numOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
+            assertThat(usage.costPerOutputToken()).isEqualTo(expectedCost.costPerOutputToken());
         }
     }
 
@@ -183,17 +181,17 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         // Capture the saved token usages
         List<LLMTokenUsage> returnedTokenUsages = llmTokenUsageService.saveIrisTokenUsage(job, irisMessage, exercise, irisSession.getUser(), course, tokens);
 
-        assertEquals(5, returnedTokenUsages.size());
+        assertThat(returnedTokenUsages).hasSize(5);
         for (int i = 0; i < returnedTokenUsages.size(); i++) {
             LLMTokenUsage usage = returnedTokenUsages.get(i);
             PyrisLLMCostDTO expectedCost = tokens.get(i);
 
-            assertEquals(expectedCost.modelInfo(), usage.getModel());
-            assertEquals(expectedCost.numInputTokens(), usage.getNumInputTokens());
-            assertEquals(expectedCost.numOutputTokens(), usage.getNumOutputTokens());
-            assertEquals(expectedCost.costPerInputToken(), usage.getCostPerMillionInputTokens());
-            assertEquals(expectedCost.costPerOutputToken(), usage.getCostPerMillionOutputTokens());
-            assertEquals(expectedCost.pipeline(), usage.getServiceType());
+            assertThat(usage.getModel()).isEqualTo(expectedCost.modelInfo());
+            assertThat(usage.getNumInputTokens()).isEqualTo(expectedCost.numInputTokens());
+            assertThat(usage.getNumOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
+            assertThat(usage.getCostPerMillionInputTokens()).isEqualTo(expectedCost.costPerInputToken());
+            assertThat(usage.getCostPerMillionOutputTokens()).isEqualTo(expectedCost.costPerOutputToken());
+            assertThat(usage.getServiceType()).isEqualTo(expectedCost.pipeline());
         }
     }
 
@@ -226,15 +224,15 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
 
         // Verify that the tokens are saved correctly
         List<PyrisLLMCostDTO> savedTokenUsages = captor.getValue();
-        assertEquals(5, savedTokenUsages.size());
+        assertThat(savedTokenUsages).hasSize(5);
         for (int i = 0; i < savedTokenUsages.size(); i++) {
             PyrisLLMCostDTO usage = savedTokenUsages.get(i);
             PyrisLLMCostDTO expectedCost = tokens.get(i);
 
-            assertEquals(expectedCost.numInputTokens(), usage.numInputTokens());
-            assertEquals(expectedCost.costPerInputToken(), usage.costPerInputToken());
-            assertEquals(expectedCost.numOutputTokens(), usage.numOutputTokens());
-            assertEquals(expectedCost.costPerOutputToken(), usage.costPerOutputToken());
+            assertThat(usage.numInputTokens()).isEqualTo(expectedCost.numInputTokens());
+            assertThat(usage.costPerInputToken()).isEqualTo(expectedCost.costPerInputToken());
+            assertThat(usage.numOutputTokens()).isEqualTo(expectedCost.numOutputTokens());
+            assertThat(usage.costPerOutputToken()).isEqualTo(expectedCost.costPerOutputToken());
         }
     }
 
@@ -253,14 +251,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
     }
 
     private IrisMessageContent createMockTextContent() {
-        String[] adjectives = { "happy", "sad", "angry", "funny", "silly", "crazy", "beautiful", "smart" };
-        String[] nouns = { "dog", "cat", "house", "car", "book", "computer", "phone", "shoe" };
-
-        var rdm = ThreadLocalRandom.current();
-        String randomAdjective = adjectives[rdm.nextInt(adjectives.length)];
-        String randomNoun = nouns[rdm.nextInt(nouns.length)];
-
-        var text = "The " + randomAdjective + " " + randomNoun + " jumped over the lazy dog.";
+        var text = "The happy dog jumped over the lazy dog.";
         return new IrisTextMessageContent(text);
     }
 

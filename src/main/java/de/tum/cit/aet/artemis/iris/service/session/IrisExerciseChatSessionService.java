@@ -172,22 +172,20 @@ public class IrisExerciseChatSessionService extends AbstractIrisChatSessionServi
      */
     public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         var session = (IrisExerciseChatSession) irisSessionRepository.findByIdWithMessagesAndContents(job.sessionId());
+        IrisMessage savedMessage = null;
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
             message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            if (statusUpdate.tokens() != null) {
-                llmTokenUsageService.saveIrisTokenUsage(job, savedMessage, session.getExercise(), session.getUser(),
-                        session.getExercise().getCourseViaExerciseGroupOrCourseMember(), statusUpdate.tokens());
-            }
+            savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
             irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages());
         }
         else {
-            if (statusUpdate.tokens() != null) {
-                llmTokenUsageService.saveIrisTokenUsage(job, null, session.getExercise(), session.getUser(), session.getExercise().getCourseViaExerciseGroupOrCourseMember(),
-                        statusUpdate.tokens());
-            }
             irisChatWebsocketService.sendStatusUpdate(session, statusUpdate.stages(), statusUpdate.suggestions(), statusUpdate.tokens());
+        }
+
+        if (statusUpdate.tokens() != null) {
+            llmTokenUsageService.saveIrisTokenUsage(job, savedMessage, session.getExercise(), session.getUser(), session.getExercise().getCourseViaExerciseGroupOrCourseMember(),
+                    statusUpdate.tokens());
         }
 
         updateLatestSuggestions(session, statusUpdate.suggestions());
