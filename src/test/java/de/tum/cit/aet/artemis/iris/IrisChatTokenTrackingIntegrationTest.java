@@ -25,13 +25,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import de.tum.cit.aet.artemis.connector.IrisRequestMockProvider;
+import de.tum.cit.aet.artemis.core.connector.IrisRequestMockProvider;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsage;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
@@ -44,7 +45,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisExerciseChatSessionService;
-import de.tum.cit.aet.artemis.participation.ParticipationUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -136,7 +136,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         List<PyrisStageDTO> doneStage = new ArrayList<>();
         doneStage.add(new PyrisStageDTO("DoneTest", 10, PyrisStageState.DONE, "Done"));
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", doneStage, null, tokens));
@@ -206,7 +206,7 @@ class IrisChatTokenTrackingIntegrationTest extends AbstractIrisIntegrationTest {
         List<PyrisStageDTO> failedStages = new ArrayList<>();
         failedStages.add(new PyrisStageDTO("TestTokenFail", 10, PyrisStageState.ERROR, "Failed running pipeline"));
 
-        irisRequestMockProvider.mockRunResponse(dto -> {
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
             assertThat(dto.settings().authenticationToken()).isNotNull();
 
             assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), null, failedStages, null, tokens));

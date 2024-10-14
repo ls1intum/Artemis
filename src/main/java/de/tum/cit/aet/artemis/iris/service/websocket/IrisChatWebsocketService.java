@@ -62,6 +62,7 @@ public class IrisChatWebsocketService {
      * @param session     the session to send the status update to
      * @param stages      the stages to send
      * @param suggestions the suggestions to send
+     * @param tokens      token usage and cost send by Pyris
      */
     public void sendStatusUpdate(IrisChatSession session, List<PyrisStageDTO> stages, List<String> suggestions, List<PyrisLLMCostDTO> tokens) {
         var user = session.getUser();
