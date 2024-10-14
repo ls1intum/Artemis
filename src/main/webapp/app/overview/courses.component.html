@@ -24,7 +24,7 @@
         <h3 class="fw-medium mb-0">{{ 'artemisApp.studentDashboard.title' | artemisTranslate }} ({{ regularCourses.length + recentlyAccessedCourses.length }})</h3>
         <div class="d-flex gap-3 align-items-center ms-1">
             <div class="text-primary d-inline-flex">
-                <a (click)="onSort()" class="d-inline-flex align-items-center">
+                <a id="test-sort" (click)="onSort()" class="d-inline-flex align-items-center">
                     <fa-icon [icon]="isSortAscending ? faArrowDownAZ : faArrowUpAZ" />
                     <span class="d-none d-md-inline ms-1" jhiTranslate="artemisApp.studentDashboard.sort"></span>
                 </a>

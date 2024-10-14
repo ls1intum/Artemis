@@ -130,14 +130,6 @@ export class CourseArchiveComponent implements OnInit, OnDestroy {
                 // filter down to unique values
                 .filter((course, index, courses) => courses.indexOf(course) === index)
                 .sort((semesterA, semesterB) => {
-                    // Sort last if the semester is unset
-                    if (semesterA === '') {
-                        return 1;
-                    }
-                    if (semesterB === '') {
-                        return -1;
-                    }
-
                     // Parse years in base 10 by extracting the two digits after the WS or SS prefix
                     const yearsCompared = parseInt(semesterB.slice(2, 4), 10) - parseInt(semesterA.slice(2, 4), 10);
                     if (yearsCompared !== 0) {
