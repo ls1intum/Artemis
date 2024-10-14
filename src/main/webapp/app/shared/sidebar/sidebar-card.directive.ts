@@ -58,7 +58,7 @@ export class SidebarCardDirective implements OnInit, OnDestroy {
         }
     }
 
-    private removeChannelPrefix(name: string): string {
+    removeChannelPrefix(name: string): string {
         const prefixes = ['exercise-', 'lecture-', 'exam-'];
         const channelTypes = ['exerciseChannels', 'lectureChannels', 'examChannels'];
 
